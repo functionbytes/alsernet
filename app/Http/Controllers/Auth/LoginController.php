@@ -22,6 +22,7 @@ class LoginController extends Controller
     protected $redirectTo = '/login';
 
     public function showLoginForm(){
+
         if($this->guard()->check()){
             return redirect()->route($this->guard()->user()->redirect());
         }else{

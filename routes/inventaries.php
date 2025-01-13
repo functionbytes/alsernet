@@ -46,7 +46,6 @@ Route::group(['prefix' => 'inventarie', 'middleware' => ['auth','inventarie']], 
         Route::get('/locations/modalitie/automatic/{location}', [InventariesLocationsController::class, 'automatic'])->name('inventarie.inventarie.location.automatic');
         Route::get('/locations/modalitie/manual/{location}', [InventariesLocationsController::class, 'manual'])->name('inventarie.inventarie.location.manual');
 
-
         Route::get('/locations/modalitie/{location}/{inventarie}', [InventariesLocationsController::class, 'location'])->name('inventarie.inventarie.location.validate.modalitie');
 
 
@@ -64,8 +63,8 @@ Route::group(['prefix' => 'inventarie', 'middleware' => ['auth','inventarie']], 
     });
 
     Route::group(['prefix' => 'settings'], function () {
-        Route::get('/', [SettingsController::class, 'index'])->name('inventarie.settings');
-        Route::post('/update', [SettingsController::class, 'update'])->name('inventarie.settings.update');
+       // Route::get('/', [SettingsController::class, 'index'])->name('inventarie.settings');
+        //Route::post('/update', [SettingsController::class, 'update'])->name('inventarie.settings.update');
     });
 
 });
