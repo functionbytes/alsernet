@@ -85,7 +85,7 @@
                     },
                     password: {
                         required: true,
-                        minlength: 6,
+                        minlength: 3,
                         maxlength: 100,
                     },
                 },
@@ -96,7 +96,7 @@
                     },
                     password: {
                         required: 'El campo de contraseña es necesario.',
-                        minlength: 'Debe contener al menos 6 caracteres.',
+                        minlength: 'Debe contener al menos 3 caracteres.',
                         maxlength: 'Debe contener como máximo 100 caracteres.',
                     },
                 },
