@@ -6,7 +6,7 @@
                 <div class="col-md-4">
                     <div class="barcode">
                         <p><strong>{{ $product->name }}</strong></p>
-                        {!! DNS1D::getBarcodeHTML($product->barcode, 'C39') !!}
+                        {!! DNS1D::getBarcodeHTML($product->barcode, 'C128') !!}
                         <p>{{ $product->barcode }}</p>
                         <p>{{ $product->reference }}</p>
                     </div>

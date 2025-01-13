@@ -6,7 +6,7 @@
             @foreach($locations as $location)
                 <div class="col-md-6">
                     <div class="barcode">
-                        {!! DNS1D::getBarcodeHTML($location->title, 'C39') !!}
+                        {!! DNS1D::getBarcodeHTML($location->title, 'C128') !!}
                         <p><strong>{{ $location->title }}</strong></p>
                     </div>
                 </div>
