@@ -6,6 +6,8 @@ use App\Models\Inventarie\InventarieLocation;
 use App\Models\Inventarie\InventarieLocationItem;
 use App\Models\Location;
 use App\Models\Product\Product;
+use App\Models\Product\ProductLocation;
+use App\Models\Shop;
 use DB;
 use Dflydev\DotAccessData\Data;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -200,13 +202,13 @@ class LocationsController extends Controller
 
                 $productItem = Product::slack($product['slack']);
                 // $locationProductItem = $productItem->localization;
-                $locationProductItem = 1;
+                //$locationProductItem = 1;
 
                 $inventarieItem = new InventarieLocationItem();
                 $inventarieItem->slack = $this->generate_slack('inventarie_locations_items');
                 $inventarieItem->product_id = $productItem->id;
                 $inventarieItem->location_id = $locationItem->id;
-                $inventarieItem->original_id = $locationProductItem;
+                $inventarieItem->original_id = null;
                 $inventarieItem->validate_id = $locationValidate->id;
                 $inventarieItem->user_id = $user->id;
                 $inventarieItem->count = 1;
@@ -215,12 +217,10 @@ class LocationsController extends Controller
                 // if($inventarieItem->validate_id == $inventarieItem->original_id){
                 //    $inventarieItem->condition_id = 1;
                 // }
+
                 $inventarieItem->save();
             }
 
-
-            $locationItem->complete = 1;
-            $locationItem->update();
 
             $itemsGroupedByProduct = $locationItem->items() // Relación de items
             ->select('product_id', DB::raw('count(*) as product_count'))
@@ -228,20 +228,32 @@ class LocationsController extends Controller
                 ->get();
 
             foreach ($itemsGroupedByProduct as $itemGroup) {
+
                 $product = Product::id($itemGroup->product_id);
                 $shopId = $user->shop_id;
 
-                $locations = $product->localizations->filter(function($localization) use ($shopId) {
-                    return $localization->shop_id == $shopId;
-                });
-
                 if ($product) {
-                    foreach ($locations as $location) {
-                        $location->count+= $itemGroup->product_count;
-                        $location->update();
-                    }
+                    $location = ProductLocation::where('product_id', $product->id)->first();
+                    $location->count+= $itemGroup->product_count;
+                    $location->update();
                 }
+
+               // $locations = $product->localizations->filter(function($localization) use ($shopId) {
+               //     return $localization->shop_id == $shopId;
+                //});$locations->first();
+
+                //if ($product) {
+                //    foreach ($locations as $location) {
+                //        $location->count+= $itemGroup->product_count;
+                //        $location->update();
+               //     }
+               // }
+
+                //$location = $product->localizations->first();
+
+
             }
+
 
         }elseif ($request->modalitie == 'manual') {
 
@@ -264,33 +276,42 @@ class LocationsController extends Controller
                 //    $inventarieItem->condition_id = 1;
                 // }
                 $inventarieItem->save();
-                $locationItem->complete = 1;
-                $locationItem->update();
 
                 $itemsGroupedByProduct = $locationItem->items() // Relación de items
                 ->select('product_id', DB::raw('SUM(count) as total_count'))
                 ->groupBy('product_id')  // Agrupar por 'product_id'
                 ->get();
 
-
                 foreach ($itemsGroupedByProduct as $itemGroup) {
-                    $product = Product::id($itemGroup->product_id);
-                    $shopId = $user->shop_id;
 
-                    $locations = $product->localizations->filter(function($localization) use ($shopId) {
-                        return $localization->shop_id == $shopId;
-                    });
+                            $product = Product::id($itemGroup->product_id);
+                            $shopId = $user->shop_id;
 
-                    if ($product) {
-                        foreach ($locations as $location) {
-                            $location->count+= $itemGroup->total_count;
-                            $location->update();
+                            if ($product) {
+                                $location = ProductLocation::where('product_id', $product->id)->first();
+                                $location->count+= $itemGroup->total_count;
+                                $location->update();
+                            }
+
+                            //$product = Product::id($itemGroup->product_id);
+                            //$shopId = $user->shop_id;
+
+                            //$locations = $product->localizations->filter(function($localization) use ($shopId) {
+                            //    return $localization->shop_id == $shopId;
+                            //});
+
+                            //if ($product) {
+                            //    foreach ($locations as $location) {
+                            //        $location->count+= $itemGroup->total_count;
+                            //        $location->update();
+                             //   }
+                           // }
                         }
-                    }
+
                 }
 
-        }
-
+              $locationItem->complete = 1;
+              $locationItem->update();
 
                   return response()->json([
                     'success' => true,
@@ -299,11 +320,6 @@ class LocationsController extends Controller
 
       }
 
-    public function destroy($slack){
-        $plan = Plan::slack($slack);
-        $plan->delete();
-        return redirect()->route('manager.plans');
-    }
 
 }
 

@@ -49,17 +49,8 @@
 
 </head>
 
-<body class="">
-
-<div
-        class="page-wrapper"
-        id="main-wrapper"
-        data-layout="vertical"
-        data-navbarbg="skin6"
-        data-sidebartype="full"
-        data-sidebar-position="fixed"
-        data-header-position="fixed"
->
+<div class="page-wrapper" id="main-wrapper" data-navbarbg="skin6" data-sidebartype="full" data-sidebar-position="fixed"
+     data-header-position="fixed" data-layout="horizontal">
 
     @include ('managers.includes.nav')
 
@@ -67,16 +58,14 @@
 
     <div class="body-wrapper">
 
-
         @include ('managers.includes.header')
 
         <div class="container-fluid">
             @yield('content')
         </div>
 
-        @include('managers.includes.delete')
-
     </div>
+
 </div>
 
 <script src="{{ url('managers/libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>

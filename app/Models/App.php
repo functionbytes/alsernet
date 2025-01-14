@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
-class Shop extends Model
+class App extends Model
 {
 
     use HasFactory;
 
-    protected $table = "shops";
+    protected $table = "apps";
 
     protected $fillable = [
         'slack',

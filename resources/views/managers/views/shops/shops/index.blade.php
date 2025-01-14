@@ -81,6 +81,11 @@
                                             </a>
                                         </li>
                                         <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.shops.locations', $shop->slack) }}">
+                                                Localizacion
+                                            </a>
+                                        </li>
+                                        <li>
                                             <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.shops.destroy', $shop->slack) }}">Eliminar</a>
                                         </li>
                                     </ul>

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Managers\Products;
 
+use App\Models\App;
+use App\Models\Product\ProductLocation;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Http\Controllers\Controller;
@@ -11,7 +13,66 @@ use Illuminate\Support\Str;
 
 class ProductsController extends Controller
 {
-        public function index(Request $request){
+
+
+    public function validate(Request $request){
+
+        $products = App::where('validate', 0)->take(6000)->get();
+
+
+        foreach ($products as $product) {
+
+            $existingProduct = Product::where('reference', $product->reference)->first();
+
+            if ($existingProduct) {
+                // Actualizar título y slug
+                $existingProduct->title = Str::upper($product->title);
+                $existingProduct->slug  = Str::slug(Str::lower($product->title), '-');
+
+                // Verificar y actualizar referencia si está vacía
+                if (empty($existingProduct->reference) && !empty($product->reference)) {
+                    $existingProduct->reference = $product->reference;
+                }
+
+                // Verificar y actualizar barcode si está vacío
+                if (empty($existingProduct->barcode) && !empty($product->barcode)) {
+                    $existingProduct->barcode = $product->barcode;
+                }
+
+                $existingProduct->save();
+
+            } else {
+                // Crear nuevo producto si no existe
+                $newProduct = new Product;
+                $newProduct->slack = $this->generate_slack('products');
+                $newProduct->title = Str::upper($product->title);
+                $newProduct->slug  = Str::slug(Str::lower($product->title), '-');
+                $newProduct->reference = $product->reference;
+                $newProduct->barcode = $product->barcode;
+                $newProduct->available = 1;
+                $newProduct->save();
+
+                $newProductLocation = new ProductLocation();
+                $newProductLocation->product_id = $newProduct->id;
+                $newProductLocation->location_id = null;
+                $newProductLocation->shop_id = 1;
+                $newProductLocation->count = 0;
+                $newProductLocation->save();
+
+            }
+
+            $product->validate = 1;
+            $product->save();
+            dump($product->reference);
+
+
+        }
+
+    }
+
+
+
+    public function index(Request $request){
 
             $searchKey = null ?? $request->search;
             $available = null ?? $request->available;
@@ -30,7 +91,7 @@ class ProductsController extends Controller
                 $products = $products->where('available', $available);
             }
 
-            $products = $products->get();
+            $products = $products->paginate(paginationNumber());
 
             return view('managers.views.products.products.index')->with([
                 'products' => $products,
@@ -87,9 +148,9 @@ class ProductsController extends Controller
           $product->update();
 
           return response()->json([
-            'status' => true,
+            'success' => true,
             'slack' => $product->slack,
-            'message' => 'Se actualizo la clase correctamente',
+            'message' => 'Se actualizo el producto correctamente',
           ]);
 
       }
@@ -106,59 +167,12 @@ class ProductsController extends Controller
           $product->save();
 
           return response()->json([
-            'status' => true,
+            'success' => true,
             'slack' => $product->slack,
-            'message' => 'Se creo el curso correctamente',
+            'message' => 'Se creo el producto correctamente',
           ]);
 
       }
-
-      public function getThumbnails($slack){
-
-        $product = Product::slack($slack);
-
-        if ($product->getMedia('thumbnail')->count()>0) {
-
-            $thumbnails = $product->getMedia('thumbnail');
-
-            foreach ($thumbnails as $thumbnail) {
-
-                $images[] = [
-                    'id' => $thumbnail->id,
-                    'uuid' => $thumbnail->uuid,
-                    'name' => $thumbnail->name,
-                    'file' => $thumbnail->file_name,
-                    'path' => $thumbnail->getfullUrl(),
-                    'size' =>  $thumbnail->size
-                ];
-            }
-
-            return response()->json($images);
-        }
-
-        $images = [];
-
-        return response()->json($images);
-
-    }
-
-    public function storeThumbnails(Request $request){
-
-        if($request->hasFile('file') && $request->file('file')->isValid()){
-
-            $product = Product::slack(Str::remove('"', $request->product));
-            $product->addMediaFromRequest('file')->toMediaCollection('thumbnail');
-
-            return response()->json(['status' => "success", 'product' => $product->slack]);
-
-        }
-
-    }
-
-    public function deleteThumbnails($id){
-        Media::find($id)->delete();
-        return response()->json(['status' => "success"]);
-    }
 
     public function destroy($slack){
         $product = Product::slack($slack);

@@ -93,7 +93,12 @@
                     </tbody>
                 </table>
             </div>
-
+            <div class="result-body ">
+                <span>Mostrar {{ $products->firstItem() }}-{{ $products->lastItem() }} de {{ $products->total() }} resultados</span>
+                <nav>
+                    {{ $products->appends(request()->input())->links() }}
+                </nav>
+            </div>
         </div>
     </div>
 @endsection

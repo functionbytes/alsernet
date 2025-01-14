@@ -3,182 +3,175 @@
 namespace App\Http\Controllers\Managers\Shops\Locations;
 
 use App\Http\Controllers\Controller;
-use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\Location;
+use App\Models\Shop;
 
 class LocationsController extends Controller
 {
-    public function index(Request $request){
+    public function index(Request $request,$slack){
 
+        $shop = Shop::slack($slack);
         $searchKey = null ?? $request->search;
         $available = null ?? $request->available;
-        $website = null ?? $request->website;
 
-        $plans = Plan::latest();
+        $locations = $shop->locations()->orderBy('id', 'desc');
 
         if ($searchKey != null) {
-            $plans = $plans->where('title', 'like', '%' . $searchKey . '%');
+            $locations = $locations->where('title', 'like', '%' . $searchKey . '%');
         }
 
         if ($available != null) {
-            $plans = $plans->where('available', $available);
+            $locations = $locations->where('available', $available);
         }
 
-        if ($website != null) {
-            $plans = $plans->where('website', $website);
-        }
+        $locations = $locations->paginate(paginationNumber());
 
-        $plans = $plans->paginate(paginationNumber());
-
-        return view('managers.views.plans.index')->with([
-            'plans' => $plans,
+        return view('managers.views.shops.locations.locations.index')->with([
+            'shop' => $shop,
+            'locations' => $locations,
             'available' => $available,
-            'website' => $website,
             'searchKey' => $searchKey,
         ]);
 
     }
+    public function create(){
 
-    public function navegation( $slack){
+        $availables = collect([
+            ['id' => '1', 'label' => 'Publico'],
+            ['id' => '0', 'label' => 'Oculto'],
+        ]);
 
-          $plan = Plan::slack($slack);
+        $availables->prepend('' , '');
+        $availables = $availables->pluck('label','id');
 
-          return view('managers.views.plans.navegation')->with([
-              'plan' => $plan,
-          ]);
+        $shops = Shop::available()->get();
+        $shops->prepend('', '');
+        $shops = $shops->pluck('title', 'id');
+
+
+        return view('managers.views.shops.locations.locations.create')->with([
+            'availables' => $availables,
+            'shops' => $shops,
+        ]);
 
     }
 
-      public function create(){
+    public function exists($slack){
 
+        $shop = Shop::slack($slack);
 
-          $availables = collect([
-              ['id' => '1', 'label' => 'Publico'],
-              ['id' => '0', 'label' => 'Oculto'],
-          ]);
+        return view('managers.views.shops.locations.locations.exists')->with([
+            'shop' => $shop,
+        ]);
 
-          $availables->prepend('' , '');
-          $availables = $availables->pluck('label','id');
+    }
 
-          return view('managers.views.plans.create')->with([
-              'availables' => $availables
+    public function validate(Request $request){
+
+        $shop  = Shop::slack($request->shop);
+        $locationValidate = Location::validateExits($request->location,$shop->id);
+
+        if (!$locationValidate) {
+
+            $location = new Location;
+            $location->slack = $this->generate_slack('locations');
+            $location->title = Str::upper($request->location);
+            $location->barcode = $request->location;
+            $location->latitude = null;
+            $location->longitude = null;
+            $location->available = 1;
+            $location->shop_id = $shop->id;
+            $location->save();
+
+            return response()->json([
+                'success' => true,
+                'slack' => $location->slack,
+                'message' => 'Se actualizo la clase correctamente',
             ]);
 
-      }
+        }else{
 
-      public function edit($slack){
-
-            $plan = Plan::slack($slack);
-
-            $availables = collect([
-                ['id' => '1', 'label' => 'Publico'],
-                ['id' => '0', 'label' => 'Oculto'],
+            return response()->json([
+                'success' => false,
+                'message' => 'Se actualizo la clase correctamente',
             ]);
-
-            $availables = $availables->pluck('label','id');
-
-            return view('managers.views.plans.edit')->with([
-              'plan' => $plan,
-              'availables' => $availables,
-            ]);
-
-      }
+        }
 
 
-      public function update(Request $request){
 
-          $plan = Plan::slack($request->slack);
-          $plan->title = Str::upper($request->title);
-          $plan->price = $request->price;
-          $plan->discount = $request->discount;
-          $plan->slug  = Str::slug($request->title, '-');
-          $plan->description = $request->description;
-          $plan->specific = $request->specific;
-          $plan->available = $request->available;
-          $plan->update();
+    }
 
-          return response()->json([
-            'status' => true,
-            'slack' => $plan->slack,
+
+    public function edit($slack){
+
+        $location = Location::slack($slack);
+
+        $availables = collect([
+            ['id' => '1', 'label' => 'Publico'],
+            ['id' => '0', 'label' => 'Oculto'],
+        ]);
+
+        $availables = $availables->pluck('label','id');
+
+        $shops = Shop::available()->get();
+        $shops->prepend('', '');
+        $shops = $shops->pluck('title', 'id');
+
+        return view('managers.views.shops.locations.locations.edit')->with([
+            'location' => $location,
+            'availables' => $availables,
+            'shop' => $location->shop,
+            'shops' => $shops,
+        ]);
+
+    }
+
+
+    public function update(Request $request){
+
+        $location = Location::slack($request->slack);
+        $location->title = Str::upper($request->title);
+        $location->barcode = $request->barcode;
+        $location->latitude = $request->latitude;
+        $location->available = $request->available;
+        $location->shop_id = $request->shop;
+        $location->update();
+
+        return response()->json([
+            'success' => true,
+            'slack' => $location->slack,
             'message' => 'Se actualizo la clase correctamente',
-          ]);
+        ]);
 
-      }
+    }
 
-      public function store(Request $request){
+    public function store(Request $request){
 
-          $plan = new Plan;
-          $plan->slack = $this->generate_slack('plans');
-          $plan->title = Str::upper($request->title);
-          $plan->slug  = Str::slug($request->title, '-');
-          $plan->price = $request->price;
-          $plan->discount = $request->discount;
-          $plan->description = $request->description;
-          $plan->specific = $request->specific;
-          $plan->available = $request->available;
-          $plan->save();
+        $location = new Location;
+        $location->slack = $this->generate_slack('locations');
+        $location->title = Str::upper($request->title);
+        $location->barcode = $request->barcode;
+        $location->latitude = $request->latitude;
+        $location->available = $request->available;
+        $location->shop_id = $request->shop;
+        $location->save();
 
-          return response()->json([
-            'status' => true,
-            'slack' => $plan->slack,
+        return response()->json([
+            'success' => true,
+            'slack' => $location->slack,
             'message' => 'Se creo el curso correctamente',
-          ]);
-
-      }
-
-      public function getThumbnails($slack){
-
-        $plan = Plan::slack($slack);
-
-        if ($plan->getMedia('thumbnail')->count()>0) {
-
-            $thumbnails = $plan->getMedia('thumbnail');
-
-            foreach ($thumbnails as $thumbnail) {
-
-                $images[] = [
-                    'id' => $thumbnail->id,
-                    'uuid' => $thumbnail->uuid,
-                    'name' => $thumbnail->name,
-                    'file' => $thumbnail->file_name,
-                    'path' => $thumbnail->getfullUrl(),
-                    'size' =>  $thumbnail->size
-                ];
-            }
-
-            return response()->json($images);
-        }
-
-        $images = [];
-
-        return response()->json($images);
+        ]);
 
     }
-
-    public function storeThumbnails(Request $request){
-
-        if($request->hasFile('file') && $request->file('file')->isValid()){
-
-            $plan = Plan::slack(Str::remove('"', $request->plan));
-            $plan->addMediaFromRequest('file')->toMediaCollection('thumbnail');
-
-            return response()->json(['status' => "success", 'plan' => $plan->slack]);
-
-        }
-
-    }
-
-    public function deleteThumbnails($id){
-        Media::find($id)->delete();
-        return response()->json(['status' => "success"]);
-    }
-
     public function destroy($slack){
-        $plan = Plan::slack($slack);
-        $plan->delete();
-        return redirect()->route('manager.plans');
+
+        $shop = null;
+        $location = Location::slack($slack);
+        $shop = $location->shop;
+        $location->delete();
+        return redirect()->route('manager.shops.locations',$shop->slack);
     }
 
 }

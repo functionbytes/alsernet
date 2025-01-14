@@ -219,6 +219,7 @@
                         setTimeout(function() {
                             $("#product").focus();
                         }, 200);
+
                     } else {
 
                         $("#product").val('');

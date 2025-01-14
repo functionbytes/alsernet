@@ -22787,7 +22787,6 @@ html[dir=rtl] .welcome-bg-img {
         width: calc(100% - 270px);
     }
     #main-wrapper[data-layout=vertical][data-sidebartype=full] .body-wrapper {
-        margin-left: 270px;
     }
     #main-wrapper[data-layout=vertical][data-sidebartype=mini-sidebar] .body-wrapper {
         margin-left: 87px;

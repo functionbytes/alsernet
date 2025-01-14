@@ -17,7 +17,6 @@ use App\Http\Controllers\Managers\Users\UsersController;
 use Illuminate\Support\Facades\Route;
 
 
-
 Route::group(['prefix' => 'manager', 'middleware' => ['auth','manager']], function () {
 
     Route::get('/', [DashboardController::class, 'dashboard'])->name('manager.dashboard');
@@ -30,19 +29,25 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth','manager']], functi
         Route::get('/edit/{slack}', [ShopsController::class, 'edit'])->name('manager.shops.edit');
         Route::get('/view/{slack}', [ShopsController::class, 'view'])->name('manager.shops.view');
         Route::get('/destroy/{slack}', [ShopsController::class, 'destroy'])->name('manager.shops.destroy');
-        Route::get('/report/{slack}', [ShopsController::class, 'report'])->name('manager.shops.report');
 
-        Route::get('/locations/', [ShopsLocationsController::class, 'index'])->name('manager.shops.locations');
+
+        Route::get('/locations/{slack}', [ShopsLocationsController::class, 'index'])->name('manager.shops.locations');
         Route::get('/locations/all/barcode', [LocationsBarcodesController::class, 'index'])->name('manager.shops.locations.barcodes.all');
         Route::get('/locations/create', [ShopsLocationsController::class, 'create'])->name('manager.shops.locations.create');
         Route::post('/locations/update', [ShopsLocationsController::class, 'update'])->name('manager.shops.locations.update');
         Route::get('/locations/edit/{slack}', [ShopsLocationsController::class, 'edit'])->name('manager.shops.locations.edit');
         Route::get('/locations/view/{slack}', [ShopsLocationsController::class, 'view'])->name('manager.shops.locations.view');
+        Route::get('/locations/exists/{slack}', [ShopsLocationsController::class, 'exists'])->name('manager.shops.locations.exists');
         Route::get('/locations/destroy/{slack}', [ShopsLocationsController::class, 'destroy'])->name('manager.shops.locations.destroy');
         Route::get('/locations/single/barcode/{slack}', [LocationsBarcodesController::class, 'destroy'])->name('manager.shops.locations.barcodes.single');
+
+        Route::post('/locations/exists/validate', [ShopsLocationsController::class, 'validate'])->name('manager.shops.locations.exists.validate');
+
     });
 
     Route::group(['prefix' => 'products'], function () {
+
+        Route::get('/validate', [ProductsController::class, 'validate'])->name('manager.products');
 
         Route::get('/', [ProductsController::class, 'index'])->name('manager.products');
         Route::get('/all/barcode', [ProductsBarcodesController::class, 'index'])->name('manager.products.barcodes.all');
@@ -52,12 +57,10 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth','manager']], functi
         Route::get('/view/{slack}', [ProductsController::class, 'view'])->name('manager.locations.view');
         Route::get('/destroy/{slack}', [ProductsController::class, 'destroy'])->name('manager.products.destroy');
         Route::get('/single/barcode/{slack}', [ProductsBarcodesController::class, 'destroy'])->name('manager.products.barcodes.single');
-
     });
 
 
     Route::group(['prefix' => 'inventaries'], function () {
-
         Route::get('/', [InventariesController::class, 'index'])->name('manager.inventaries');
         Route::get('/create', [InventariesController::class, 'create'])->name('manager.inventaries.create');
         Route::post('/update', [InventariesController::class, 'update'])->name('manager.inventaries.update');
@@ -73,19 +76,17 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth','manager']], functi
         Route::get('/historys/locations/{slack}', [InventariesLocationsController::class, 'index'])->name('manager.inventaries.locations');
         Route::get('/history/locations/details/{slack}', [InventariesLocationsController::class, 'details'])->name('manager.inventaries.locations.details');
         Route::get('/history/locations/destroy/{slack}', [InventariesLocationsController::class, 'destroy'])->name('manager.inventaries.locations.destroy');
-
-
     });
 
 
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/', [SettingsController::class, 'index'])->name('manager.settings');
         Route::post('/update', [SettingsController::class, 'update'])->name('manager.settings.update');
+
     });
 
 
     Route::group(['prefix' => 'users'], function () {
-
         Route::get('/', [UsersController::class, 'index'])->name('manager.users');
         Route::get('/create', [UsersController::class, 'create'])->name('manager.users.create');
         Route::post('/store', [UsersController::class, 'store'])->name('manager.users.store');

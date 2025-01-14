@@ -59,11 +59,11 @@ class Location extends Model
         return $this->belongsTo('App\Models\Location');
     }
 
-
-    public function orders(): HasMany
+    public function shop(): BelongsTo
     {
-        return $this->hasMany('App\Models\Order\Order');
+        return $this->belongsTo('App\Models\Shop','shop_id','id');
     }
+
 
 
 }

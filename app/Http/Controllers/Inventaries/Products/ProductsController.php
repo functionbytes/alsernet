@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventaries\Products;
 
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Http\Controllers\Controller;
 use App\Models\Product\Product;
@@ -10,7 +11,8 @@ use Illuminate\Support\Str;
 
 class ProductsController extends Controller
 {
-        public function index(Request $request){
+
+    public function index(Request $request){
 
             $searchKey = null ?? $request->search;
             $available = null ?? $request->available;

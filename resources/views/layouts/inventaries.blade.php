@@ -57,7 +57,6 @@
 
     <div class="body-wrapper">
 
-
         @include ('inventaries.includes.header')
 
         <div class="container-fluid">
@@ -67,6 +66,7 @@
         @include ('inventaries.includes.support')
 
     </div>
+
 </div>
 
 <script src="{{ url('managers/libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>

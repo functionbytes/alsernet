@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventaries\Inventaries;
 
+use App\Models\Product\ProductLocation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Http\Controllers\Controller;
 use App\Models\Inventarie\Inventarie;

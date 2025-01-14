@@ -11,6 +11,7 @@ use App\Models\Inventarie\InventarieLocationItem;
 use App\Models\Order\OrderCondition;
 use App\Models\Order\OrderMethod;
 use App\Models\Order\OrderType;
+use App\Models\Product\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -39,6 +40,5 @@ class LocationsController extends Controller
         ]);
 
     }
-
 
 }
