@@ -47,7 +47,7 @@
                         <tr class="search-items">
 
                             <td>
-                                <span class="usr-email-addr" data-email="{{$order->slack }}">{{$order->slack }}</span>
+                                <span class="usr-email-addr" data-email="{{$order->uid }}">{{$order->uid }}</span>
                             </td> <td>
                                 <span class="usr-email-addr" data-email="{{ number_format($order->total, 0, ',', '.') }}">$ {{ number_format($order->total, 0, ',', '.') }}</span>
                             </td>
@@ -68,7 +68,7 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('customer.orders.view',$order->slack) }}"><i class="fa-duotone fa-money-check-pen"></i>Visualizar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('customer.orders.view',$order->uid) }}"><i class="fa-duotone fa-money-check-pen"></i>Visualizar</a>
                                         </li>
 
 

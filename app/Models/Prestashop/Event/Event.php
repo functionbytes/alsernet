@@ -67,9 +67,9 @@ class Event extends Model
         return $query->where('id', $id)->first();
     }
 
-    public function scopeSlack($query ,$slack)
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
 
 

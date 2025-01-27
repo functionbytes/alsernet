@@ -75,10 +75,10 @@
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.tickets.status.edit', $statu->slack) }}">Editar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.tickets.status.edit', $statu->uid) }}">Editar</a>
                         </li>
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.tickets.status.destroy', $statu->slack) }}">Eliminar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.tickets.status.destroy', $statu->uid) }}">Eliminar</a>
                         </li>
                       </ul>
                     </div>

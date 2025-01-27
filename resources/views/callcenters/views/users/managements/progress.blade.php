@@ -73,7 +73,7 @@
                                     <p class="card-subtitle">Detalle del curso y seguimiento del progreso</p>
 
 
-                                    <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.enterprises.users.managements.progress.restore', $inscription->slack) }}"> progreso</a>
+                                    <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.enterprises.users.managements.progress.restore', $inscription->uid) }}"> progreso</a>
 
                                 </div>
                             </div>
@@ -110,7 +110,7 @@
 
                                             <td>
                                                 @if($validate)
-                                                    <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.enterprises.users.managements.progress.restore.single', $return->id) }}">Eliminar</a>
+                                                    <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.enterprises.users.managements.progress.restore.single', $return->id) }}">Eliminar</a>
                                                 @endif
                                             </td>
 

@@ -37,15 +37,8 @@ class StatusController extends Controller
 
     public function create(){
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Publico'],
-            ['id' => '0', 'label' => 'Oculto'],
-        ]);
-
-        $availables = $availables->pluck('label','id');
 
         return view('managers.views.tickets.status.create')->with([
-            'availables' => $availables
         ]);
 
     }
@@ -64,16 +57,8 @@ class StatusController extends Controller
 
         $status = TicketStatus::uid($slack);
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Publico'],
-            ['id' => '0', 'label' => 'Oculto'],
-        ]);
-
-        $availables = $availables->pluck('label','id');
-
         return view('managers.views.tickets.status.edit')->with([
             'status' => $status,
-            'availables' => $availables
         ]);
 
     }

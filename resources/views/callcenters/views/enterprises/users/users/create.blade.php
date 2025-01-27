@@ -14,7 +14,7 @@
                 <input type="hidden" id="id" name="id" value="">
                 <input type="hidden" id="slack" name="slack" value="">
                 <input type="hidden" id="edit" name="edit" value="true">
-                <input type="hidden" id="enterprise" name="enterprise" value="{{ $enterprise->slack }}">
+                <input type="hidden" id="enterprise" name="enterprise" value="{{ $enterprise->uid }}">
 
                 <div class="card-body border-top">
                     <div class="d-flex no-block align-items-center">
@@ -294,7 +294,7 @@
                 formData.append('enterprises', enterprise);
 
                 $.ajax({
-                    url: "{{ route('support.enterprises.users.store') }}",
+                    url: "{{ route('callcenter.enterprises.users.store') }}",
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
@@ -313,7 +313,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('support.enterprises.users',$enterprise->slack) }}";
+                                    window.location.href = "{{ route('callcenter.enterprises.users',$enterprise->uid) }}";
                                 }, 4000);
 
 

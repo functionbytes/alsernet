@@ -6,9 +6,9 @@
 @section('content')
     <div class="container-fluid note-has-grid inventaries-content">
 
-            <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->slack}}">
-            <input type="hidden" id="item" name="item"  value="{{$item->slack}}">
-            <input type="hidden" id="location" name="location"  value="{{$location->slack}}">
+            <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->uid}}">
+            <input type="hidden" id="item" name="item"  value="{{$item->uid}}">
+            <input type="hidden" id="location" name="location"  value="{{$location->uid}}">
             <input type="text" id="product" name="product"  autofocus >
 
 
@@ -35,7 +35,7 @@
 @push('scripts')
     <script type="text/javascript">
         $(document).ready(function() {
-                    
+
                         // Función para guardar productos en localStorage
             function saveArrayToLocalStorage(name, array) {
                 localStorage.setItem(name, JSON.stringify(array));
@@ -62,9 +62,9 @@
 
                     if (product.startsWith('100')) {
 
-                       
-                        product = product.slice(0, -1); 
-                       
+
+                        product = product.slice(0, -1);
+
 
                         $.ajax({
                             url: "{{ route('inventarie.inventarie.location.validate.product') }}",
@@ -117,7 +117,7 @@
                                     }, 400);
 
                                 } else {
-                                    
+
                                     $("#product").val('');
                                     $('#product').focus();
                                     let errorSound = new Audio("/inventaries/sound/error.mp3");
@@ -147,7 +147,7 @@
             function renderProductList(products, option = null) {
     let productList = $('#product-list');
     productList.empty(); // Limpiar la lista de productos antes de renderizar
-    
+
     let tableHtml = `
         <table class="table table-bordered ">
             <thead>
@@ -184,7 +184,7 @@
             `;
         });
     }
-   
+
     tableHtml += '</tbody></table>';
 
     productList.append(tableHtml);
@@ -197,7 +197,7 @@
 
         // Mostrar un popup de confirmación
         let confirmDelete = confirm("¿Estás seguro de que quieres eliminar este producto?");
-        
+
         if (confirmDelete) {
             // Eliminar el producto correspondiente utilizando el ID único
             products = products.filter(function(product) {
@@ -231,10 +231,10 @@
             $('#sendLocations').on('click', function() {
                 var location = $("#location").val();
                 var item = $("#item").val();
-                
+
                 // Retrieve and parse products from localStorage
                 var products = getArrayFromLocalStorage(location);
-                
+
                 try {
                     products = JSON.stringify(products);
                 } catch (e) {

@@ -11,7 +11,7 @@
 
                     {{ csrf_field() }}
 
-                    <input type="hidden" id="slack" name="slack" value="{{ $instruction->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $instruction->uid }}">
                     <input type="hidden" id="description" name="description" value="{!! $instruction->description !!}">
 
                     <div class="card-body border-top">
@@ -204,7 +204,7 @@
 
 
                     $.ajax({
-                        url: "{{ route('support.instructions.update') }}",
+                        url: "{{ route('callcenter.instructions.update') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -223,7 +223,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location = "{{ route('support.instructions') }}";
+                                    window.location = "{{ route('callcenter.instructions') }}";
                                 }, 3000);
 
 

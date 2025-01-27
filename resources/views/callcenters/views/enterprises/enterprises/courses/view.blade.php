@@ -85,17 +85,17 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li class="{{ $inscription->culminated == 1 ? '' : 'd-none'}}">
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.certificate.user', $inscription->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.certificate.user', $inscription->uid) }}">
                                                 Certificado
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item  d-flex align-items-center gap-3" href="{{ route('support.enterprises.courses.details', $inscription->slack) }}">
+                                            <a class="dropdown-item  d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.courses.details', $inscription->uid) }}">
                                                 Detalle
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.courses.progress', $inscription->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.courses.progress', $inscription->uid) }}">
                                                 Reporte
                                             </a>
                                         </li>

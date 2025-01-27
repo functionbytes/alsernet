@@ -112,89 +112,87 @@
                             </thead>
                             <tbody class="border-top">
                                 @foreach($tickets as $ticket)
-                                <tr class="ticket-details">
-                                    <td class="ps-0">
-                                        <div class="d-flex align-items-center">
-                                            <div>
-                                                <h6 class="fw-semibold mb-1">
-                                                    <a href="{{route('support.tickets.view', $ticket->slack)}}"
-                                                        class="text-inherit subject">{{ $ticket->subject }}</a>
-                                                </h6>
-                                                <p class="fs-2 mb-0 ">
-                                                <ul class="d-flex custom-ul">
-                                                    <li class="pe-2 ">#{{$ticket->number}}</li>
-                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="Fecha">
-                                                        <i class="fa-duotone fa-calendar-days"></i>
-                                                        {{$ticket->created_at->format(setting('date_format'))}}
-                                                    </li>
-                                                    @if($ticket->priority != null)
-                                                    <li class="px-2 preference preference-{{ $ticket->priority->slug }}"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="{{ $ticket->priority->title }}">
-                                                        {{ $ticket->priority->title }}
-                                                    </li>
-                                                    @else
-                                                    ~
-                                                    @endif
-                                                    @if($ticket->category != null)
-                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="{{ $ticket->category->title }}">
-                                                        <i class="fa-duotone fa-layer-group"></i>
-                                                        {{Str::limit($ticket->category->title, '40')}}
-                                                    </li>
-                                                    @else
-                                                    ~
-                                                    @endif
-                                                    @if($ticket->last_reply == null)
-                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="Última respuesta">
-                                                        <i class="fa-duotone fa-clock"></i>
-                                                        {{$ticket->created_at->diffForHumans()}}
-                                                    </li>
-                                                    @else
-                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="Última respuesta">
-                                                        <i class="fa-duotone fa-clock"></i>
-                                                        {{$ticket->last_reply->diffForHumans()}}
-                                                    </li>
-                                                    @endif
-                                                </ul>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {{ $ticket->user->firstname }} {{ $ticket->user->lastname }}
-                                    </td>
 
-                                    <td>
-                                        <span class="badge bg-light-{{ $ticket->status->slug }} fw-semibold fs-2 gap-1 d-inline-flex align-items-center">
-                                            {{ $ticket->status->title }}
-                                        </span>
-                                    </td>
+{{--                                <tr class="ticket-details">--}}
+{{--                                    <td class="ps-0">--}}
+{{--                                        <div class="d-flex align-items-center">--}}
+{{--                                            <div>--}}
+{{--                                                <h6 class="fw-semibold mb-1">--}}
+{{--                                                    <a href="{{route('callcenter.tickets.view', $ticket->uid)}}"--}}
+{{--                                                        class="text-inherit subject">{{ $ticket->subject }}</a>--}}
+{{--                                                </h6>--}}
+{{--                                                <p class="fs-2 mb-0 ">--}}
+{{--                                                <ul class="d-flex custom-ul">--}}
+{{--                                                    <li class="pe-2 ">#{{$ticket->number}}</li>--}}
+{{--                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"--}}
+{{--                                                        title="Fecha">--}}
+{{--                                                        <i class="fa-duotone fa-calendar-days"></i>--}}
+{{--                                                        {{$ticket->created_at->format(setting('date_format'))}}--}}
+{{--                                                    </li>--}}
+{{--                                                    @if($ticket->priority != null)--}}
+{{--                                                    <li class="px-2 preference preference-{{ $ticket->priority }}"--}}
+{{--                                                        data-bs-toggle="tooltip" data-bs-placement="top"--}}
+{{--                                                        title="{{ $ticket->priority->title }}">--}}
+{{--                                                        {{ $ticket->priority->title }}--}}
+{{--                                                    </li>--}}
+{{--                                                    @else--}}
+{{--                                                    ~--}}
+{{--                                                    @endif--}}
+{{--                                                    @if($ticket->category != null)--}}
+{{--                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"--}}
+{{--                                                        title="{{ $ticket->category->title }}">--}}
+{{--                                                        <i class="fa-duotone fa-layer-group"></i>--}}
+{{--                                                        {{Str::limit($ticket->category->title, '40')}}--}}
+{{--                                                    </li>--}}
+{{--                                                    @else--}}
+{{--                                                    ~--}}
+{{--                                                    @endif--}}
+{{--                                                    @if($ticket->last_reply == null)--}}
+{{--                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"--}}
+{{--                                                        title="Última respuesta">--}}
+{{--                                                        <i class="fa-duotone fa-clock"></i>--}}
+{{--                                                        {{$ticket->created_at->diffForHumans()}}--}}
+{{--                                                    </li>--}}
+{{--                                                    @else--}}
+{{--                                                    <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top"--}}
+{{--                                                        title="Última respuesta">--}}
+{{--                                                        <i class="fa-duotone fa-clock"></i>--}}
+{{--                                                        {{$ticket->last_reply->diffForHumans()}}--}}
+{{--                                                    </li>--}}
+{{--                                                    @endif--}}
+{{--                                                </ul>--}}
+{{--                                                </p>--}}
+{{--                                            </div>--}}
+{{--                                        </div>--}}
+{{--                                    </td>--}}
+{{--                                    <td>--}}
+{{--                                        {{ $ticket->user->firstname }} {{ $ticket->user->lastname }}--}}
+{{--                                    </td>--}}
 
-                                    <td>
-                                        <div class="dropdown dropstart">
-                                            <a href="#" class="text-muted" id="dropdownMenuButton"
-                                                data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="ti ti-dots fs-5"></i>
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-3"
-                                                        href="{{route('support.tickets.view', $ticket->slack)}}">Visualizar</a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{route('support.tickets.view', $ticket->slack)}}">Edit</a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{route('support.tickets.view', $ticket->slack)}}"></i>Delete</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
-                                </tr>
+{{--                                    <td>--}}
+{{--                                        <span class="badge bg-light-{{ $ticket->status->slug }} fw-semibold fs-2 gap-1 d-inline-flex align-items-center">--}}
+{{--                                            {{ $ticket->status->title }}--}}
+{{--                                        </span>--}}
+{{--                                    </td>--}}
+
+{{--                                    <td>--}}
+{{--                                        <div class="dropdown dropstart">--}}
+{{--                                            <a href="#" class="text-muted" id="dropdownMenuButton"--}}
+{{--                                                data-bs-toggle="dropdown" aria-expanded="false">--}}
+{{--                                                <i class="ti ti-dots fs-5"></i>--}}
+{{--                                            </a>--}}
+{{--                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">--}}
+{{--                                                <li>--}}
+{{--                                                    <a class="dropdown-item d-flex align-items-center gap-3"--}}
+{{--                                                        href="{{route('callcenter.tickets.view', $ticket->uid)}}">Visualizar</a>--}}
+{{--                                                </li>--}}
+{{--                                                <li>--}}
+{{--                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{route('callcenter.tickets.view', $ticket->uid)}}">Edit</a>--}}
+{{--                                                </li>--}}
+{{--                                            </ul>--}}
+{{--                                        </div>--}}
+{{--                                    </td>--}}
+{{--                                </tr>--}}
                                 @endforeach
                             </tbody>
                         </table>

@@ -82,10 +82,10 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.results.view', $certificate->slack) }}">Visualizar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.results.view', $certificate->uid) }}">Visualizar</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.results.download', $certificate->slack) }}">Descargar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.results.download', $certificate->uid) }}">Descargar</a>
                                         </li>
                                     </ul>
                                 </div>

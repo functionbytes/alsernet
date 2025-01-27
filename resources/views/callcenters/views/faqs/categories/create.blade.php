@@ -99,7 +99,7 @@
           $submitButton.prop('disabled', true);
 
           $.ajax({
-            url: "{{ route('support.faqs.categories.store') }}",
+            url: "{{ route('callcenter.faqs.categories.store') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -120,7 +120,7 @@
                       });
 
                       setTimeout(function() {
-                          window.location = "{{ route('support.faqs.categories') }}";
+                          window.location = "{{ route('callcenter.faqs.categories') }}";
                       }, 2000);
 
                   }else{

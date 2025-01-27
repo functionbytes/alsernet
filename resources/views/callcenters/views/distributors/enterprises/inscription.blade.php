@@ -12,7 +12,7 @@
                 {{ csrf_field() }}
 
 
-                <input id="enterprise" name="enterprise" type="hidden" value="{{ $enterprise->slack }}">
+                <input id="enterprise" name="enterprise" type="hidden" value="{{ $enterprise->uid }}">
 
                 <div class="card-body border-top">
                     <div class="d-flex no-block align-items-center">
@@ -107,7 +107,7 @@
                 var $submitButton = $('button[type="submit"]');
 
                 $.ajax({
-                    url: '{{ route('support.enterprises.inscriptions.enroll') }}',
+                    url: '{{ route('callcenter.enterprises.inscriptions.enroll') }}',
                     type: 'POST',
                     data: {
                         enterprise: enterprise,
@@ -192,7 +192,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.enterprises.inscriptions.store') }}",
+                        url: "{{ route('callcenter.enterprises.inscriptions.store') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },

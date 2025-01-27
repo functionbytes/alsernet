@@ -13,7 +13,7 @@
 
                     <input type="hidden" id="description" name="description" value="{!! $contact->description !!}">
                     <input type="hidden" id="id" name="id" value="{{ $contact->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $contact->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $contact->uid }}">
                     <input type="hidden" id="statuSignatures" name="statuSignatures" value="true">
                     <input type="hidden" id="statuThumbnails" name="statuThumbnails" value="true">
                     <input type="hidden" id="edit" name="edit" value="true">
@@ -135,7 +135,7 @@
 
 
                     $.ajax({
-                        url: "{{route('support.contacts.update')}}",
+                        url: "{{route('callcenter.contacts.update')}}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -154,7 +154,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('support.contacts') }}";
+                                    window.location.href = "{{ route('callcenter.contacts') }}";
                                 }, 3000);
 
 

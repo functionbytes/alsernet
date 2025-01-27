@@ -33,7 +33,7 @@
 
 
                         <input type="hidden" id="id" name="id" value="{{ $team->id }}">
-                        <input type="hidden" id="slack" name="slack" value="{{ $team->slack }}">
+                        <input type="hidden" id="slack" name="slack" value="{{ $team->uid }}">
                         <input type="hidden" id="status" name="status" value="true">
                         <input type="hidden" id="edit" name="edit" value="true">
                         <div>
@@ -71,7 +71,7 @@
                                     </div>
                                 </div>
                                 <div class="row clearfix">
-                                   
+
 
                                      <div class="col-lg-6 mb-2">
                                             <div class="form-group">
@@ -223,7 +223,7 @@
                         $("#slack").val(data);
                         myThumbnail.processQueue();
                         uploadThumbnail();
-                        
+
                     }
                 });
 
@@ -372,7 +372,7 @@
 			theme: 'snow'
 		});
 
-		
+
 		description.on('selection-change', function (range, oldRange, source) {
 			if (range === null && oldRange !== null) {
 				$('body').removeClass('overlay-disabled');

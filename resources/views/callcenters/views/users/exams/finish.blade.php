@@ -49,7 +49,7 @@
                                             </h5>
                                             <p class="mb-5 px-xl-5">Felicitaciones, toque para generar el certificado.</p>
                                             <div class="mt-5">
-                                                <a class="btn btn-light-primary text-primary  w-100 mt-3" href="{{ route('customer.certificate.download', $certificate->slack) }}">Certificado</a>
+                                                <a class="btn btn-light-primary text-primary  w-100 mt-3" href="{{ route('customer.certificate.download', $certificate->uid) }}">Certificado</a>
                                                 <a class="btn btn-light-primary text-primary  w-100 mt-3" href="{{ route('customer.dashboard') }}">Volver</a>
                                             </div>
 

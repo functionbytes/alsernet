@@ -95,18 +95,18 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists.details', $list->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists.details', $list->uid) }}">
                                                 Listado
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists.edit', $list->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists.edit', $list->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.newsletters.lists.destroy', $list->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.newsletters.lists.destroy', $list->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

@@ -10,7 +10,7 @@ class Group extends Model
 {
     use HasFactory;
 
-    protected $table = 'groups';
+    protected $table = 'ticket_groups';
 
     protected $fillable = [
         'slack',
@@ -20,7 +20,7 @@ class Group extends Model
         'created_at',
         'updated_at'
     ];
-    
+
     public function scopeDescending($query)
 {
     return $query->orderBy('created_at', 'desc');
@@ -35,15 +35,15 @@ public function scopeAscending($query)
     {
         return $query->where('id', $id)->first();
     }
-    
+
     public function scopeSlug($query ,$slug)
     {
         return $query->where('slug', $slug)->first();
     }
 
-    public function scopeSlack($query ,$slack)
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
 
     public function scopeAvailable($query)
@@ -53,12 +53,12 @@ public function scopeAscending($query)
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\User', 'groups_users', 'group_id', 'user_id');
+        return $this->belongsToMany('App\Models\User', 'ticket_groups_users', 'group_id', 'user_id');
     }
 
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\Ticket\TicketCategorie', 'groups_categories', 'group_id', 'category_id');
+        return $this->belongsToMany('App\Models\Ticket\TicketCategorie', 'ticket_groups_categories', 'group_id', 'category_id');
     }
 
     public function user()

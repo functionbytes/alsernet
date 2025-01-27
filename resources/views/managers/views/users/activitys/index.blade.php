@@ -23,7 +23,7 @@
                     <li class="fw-semibold text-dark text-uppercase mx-9 my-2 px-3 fs-2">CATEGORIES</li>
                     @foreach ($models as $key => $model)
                         <li class="list-group-item border-0 p-0 mx-9">
-                            <a class="d-flex align-items-center gap-2 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1 list-model" data-model="{{$model}}" data-user="{{$user->slack}}">
+                            <a class="d-flex align-items-center gap-2 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1 list-model" data-model="{{$model}}" data-user="{{$user->uid}}">
                                 <i class="ti ti-bookmark fs-5 text-primary"></i>{{$model}} {{ $modelCounts[$model] ?? 0 }}</a>
                         </li>
                     @endforeach

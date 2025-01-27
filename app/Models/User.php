@@ -179,9 +179,9 @@ class User extends Authenticatable
         return $query->where('id', $id)->first();
     }
 
-    public function scopeSlack($query ,$slack)
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
 
     public function scopeEmail($query ,$email)

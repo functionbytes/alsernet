@@ -200,7 +200,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.instructions.store') }}",
+                        url: "{{ route('callcenter.instructions.store') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -219,7 +219,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location = "{{ route('support.instructions') }}";
+                                    window.location = "{{ route('callcenter.instructions') }}";
                                 }, 2000);
 
 

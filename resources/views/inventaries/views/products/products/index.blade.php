@@ -73,10 +73,10 @@
                                                     <div class="dropdown">
                                                         <button class="option btn-primary tp-btn-light sharp" type="button" data-toggle="dropdown"><span class="fs--1"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18px" height="18px" viewbox="0 0 24 24" version="1.1"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><rect x="0" y="0" width="24" height="24"></rect><circle fill="#000000" cx="5" cy="12" r="2"></circle><circle fill="#000000" cx="12" cy="12" r="2"></circle><circle fill="#000000" cx="19" cy="12" r="2"></circle></g></svg></span></button>
                                                         <div class="dropdown-menu dropdown-menu-right border py-0">
-                                                            <a class="dropdown-item" href="{{ route('manager.products.edit', $product->slack) }}" >Editar</a>
+                                                            <a class="dropdown-item" href="{{ route('manager.products.edit', $product->uid) }}" >Editar</a>
 
 
-                                                            <a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="/manager/products/destroy/" data-slack="{{ $product->slack }}" >
+                                                            <a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="/manager/products/destroy/" data-slack="{{ $product->uid }}" >
                                                                 Eliminar
                                                             </a>
                                                         </div>

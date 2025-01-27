@@ -13,7 +13,7 @@
 
                     <input type="hidden" id="description" name="description" value="{!! $document->description  !!}">
                     <input type="hidden" id="id" name="id" value="{{ $document->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $document->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $document->uid }}">
                     <input type="hidden" id="status" name="status" value="{{ $file }}">
                     <input type="hidden" id="edit" name="edit" value="true">
                     <input type="hidden" id="files" name="files">
@@ -145,7 +145,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.documents.update') }}",
+                        url: "{{ route('callcenter.documents.update') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -174,7 +174,7 @@
                                 });
 
                                 setTimeout(function() {
-                                        window.location = "{{ route('support.documents') }}";
+                                        window.location = "{{ route('callcenter.documents') }}";
                                 }, 2000);
                             }else{
 
@@ -208,7 +208,7 @@
 
             var myFiles = new Dropzone("div#files", {
                 paramName: "file",
-                url: "{{ route('support.documents.files') }}",
+                url: "{{ route('callcenter.documents.files') }}",
                 method: 'POST',
                 addRemoveLinks: true,
                 autoProcessQueue: false,
@@ -226,7 +226,7 @@
 
                     item = $("#slack").val();
 
-                    $.getJSON("{{ route('support.documents.files.get', ':item') }}".replace(':item', item), function(data) {
+                    $.getJSON("{{ route('callcenter.documents.files.get', ':item') }}".replace(':item', item), function(data) {
                         if (data.length > 0) {
                             $("#status").val('true');
                             $("#files").val(data[0].file);
@@ -275,7 +275,7 @@
                         if (file.id) {
                             $.ajax({
                                 type: 'GET',
-                                url: "{{ route('support.documents.files.delete', ':id') }}".replace(':id', file.id),
+                                url: "{{ route('callcenter.documents.files.delete', ':id') }}".replace(':id', file.id),
                                 success: function(result) {
                                     $("#status").val('false');
                                 }

@@ -33,7 +33,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('support.documents.create') }}" class="btn btn-primary">
+                                <a href=" {{ route('callcenter.documents.create') }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -85,10 +85,10 @@
                                                 </li>
                                             @endif
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.documents.edit', $document->slack) }}">Editar</a>
+                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.documents.edit', $document->uid) }}">Editar</a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.documents.destroy', $document->slack) }}">Eliminar</a>
+                                                <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.documents.destroy', $document->uid) }}">Eliminar</a>
                                             </li>
                                         </ul>
                                     </div>

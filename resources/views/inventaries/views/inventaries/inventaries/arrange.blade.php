@@ -10,8 +10,8 @@
                     @if(!$shop->generate_location)
                         <input type="text" id="location" name="location"  autofocus>
                     @endif
-                    <input type="hidden" id="shop" name="shop"  value="{{$shop->slack}}">
-                    <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->slack}}" >
+                    <input type="hidden" id="shop" name="shop"  value="{{$shop->uid}}">
+                    <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->uid}}" >
                     <p>OPCION</p>
                     <i class="fa-duotone fa-solid fa-rectangle-barcode"></i>
                     <h5 class="fw-semibold fs-5 mb-2">Leer codigo de barras de la ubiacion</h5>

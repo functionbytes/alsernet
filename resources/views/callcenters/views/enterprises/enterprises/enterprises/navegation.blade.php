@@ -14,7 +14,7 @@
 
                 <div class="row justify-content-center mt--20">
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.enterprises.users', $enterprise->slack) }}">
+                        <a class="card" href="{{ route('callcenter.enterprises.users', $enterprise->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -25,7 +25,7 @@
                         </a>
                     </div>
                         <div class="col-sm-6 col-lg-4">
-                            <a class="card" href="{{ route('support.enterprises.staffs', $enterprise->slack) }}">
+                            <a class="card" href="{{ route('callcenter.enterprises.staffs', $enterprise->uid) }}">
                                 <div class="card-body text-center">
                                     <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                     <div class="my-4">
@@ -36,7 +36,7 @@
                             </a>
                         </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.enterprises.courses', $enterprise->slack) }}">
+                        <a class="card" href="{{ route('callcenter.enterprises.courses', $enterprise->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -47,7 +47,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.enterprises.users.income', $enterprise->slack) }}">
+                        <a class="card" href="{{ route('callcenter.enterprises.users.income', $enterprise->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -58,7 +58,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.enterprises.inscriptions', $enterprise->slack) }}">
+                        <a class="card" href="{{ route('callcenter.enterprises.inscriptions', $enterprise->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -69,7 +69,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.enterprises.reassign', $enterprise->slack) }}">
+                        <a class="card" href="{{ route('callcenter.enterprises.reassign', $enterprise->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">

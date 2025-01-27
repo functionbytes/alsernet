@@ -74,19 +74,19 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li class="{{ $user->culminated == 1 ? '' : 'd-none'}}">
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.certificate.user', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.certificate.user', $user->uid) }}">
                                                 <i class="fa-duotone fa-money-check-pen"></i>
                                                 Certificado
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item  d-flex align-items-center gap-3" href="{{ route('support.courses.details', $user->slack) }}">
+                                            <a class="dropdown-item  d-flex align-items-center gap-3" href="{{ route('callcenter.courses.details', $user->uid) }}">
                                                 <i class="fa-light fa-file-certificate"></i>
                                                 Detalle
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.courses.progress', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.courses.progress', $user->uid) }}">
                                                 <i class="fa-duotone fa-money-check-pen"></i>
                                                 Reporte
                                             </a>

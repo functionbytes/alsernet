@@ -9,13 +9,13 @@ class GroupUser extends Model
 {
     use HasFactory;
 
-    protected $table = 'groups_users';
+    protected $table = 'ticket_groups_users';
 
     protected $fillable = [
         'group_id',
         'user_id',
     ];
-    
+
     public function groups()
     {
         return $this->belongsTo('App\Models\Group\Group', 'group_id', 'id');

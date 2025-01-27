@@ -81,17 +81,17 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists', $newsletter->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.lists', $newsletter->uid) }}">
                                                 Listado
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.edit', $newsletter->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.edit', $newsletter->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.newsletters.destroy', $newsletter->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.newsletters.destroy', $newsletter->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

@@ -13,7 +13,7 @@
 
                 <div class="row justify-content-center mt--20">
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.enterprises', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.enterprises', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -24,7 +24,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.staffs', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.staffs', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -35,7 +35,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.courses', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.courses', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -47,7 +47,7 @@
                     </div>
                     @if(count($distributor->rates) > 0)
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.rates', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.rates', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -61,7 +61,7 @@
 
 
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.registers', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.registers', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -73,7 +73,7 @@
                     </div>
 
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.inscriptions', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.inscriptions', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -86,7 +86,7 @@
 
 
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.orders', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.orders', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -98,7 +98,7 @@
                     </div>
 
                     <div class="col-sm-6 col-lg-3">
-                        <a class="card" href="{{ route('support.distributors.invoices', $distributor->slack) }}">
+                        <a class="card" href="{{ route('callcenter.distributors.invoices', $distributor->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">

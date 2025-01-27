@@ -126,7 +126,7 @@
                 var $submitButton = $('button[type="submit"]');
 
                 $.ajax({
-                    url: '{{ route('support.inscriptions.enroll') }}', // Ruta para el método en el controlador
+                    url: '{{ route('callcenter.inscriptions.enroll') }}', // Ruta para el método en el controlador
                     type: 'POST',
                     data: {
                         enterprise: enterprise,
@@ -167,7 +167,7 @@
                 var enterpriseId = $(this).val();
 
                 $.ajax({
-                    url: '{{ route('support.inscriptions.get.users') }}',
+                    url: '{{ route('callcenter.inscriptions.get.users') }}',
                     type: 'POST',
                     data: {
                         enterprise: enterpriseId
@@ -193,7 +193,7 @@
                 });
 
                 $.ajax({
-                    url: '{{ route('support.inscriptions.get.courses') }}',
+                    url: '{{ route('callcenter.inscriptions.get.courses') }}',
                     type: 'POST',
                     data: {
                         enterprise: enterpriseId
@@ -278,7 +278,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.inscriptions.store') }}",
+                        url: "{{ route('callcenter.inscriptions.store') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },

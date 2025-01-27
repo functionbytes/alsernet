@@ -33,22 +33,23 @@
                   <input type="color" class="form-control" id="color"  name="color"  placeholder="Ingresa titulo">
                 </div>
               </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, null , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                 <label id="available-error" class="error d-none" for="available"></label>
+
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" >Público</option>
+                            <option value="0" >Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
+                <div class="col-12">
+                    <div class="border-top pt-1 mt-4">
+                          <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                              Guardar
+                         </button>
+                    </div>
+                </div>
 
             </div>
           </div>

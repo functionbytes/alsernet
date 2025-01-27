@@ -25,7 +25,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('support.enterprises.users.create', $enterprise->slack) }}" class="btn btn-primary">
+                                <a href=" {{ route('callcenter.enterprises.users.create', $enterprise->uid) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -74,32 +74,32 @@
 
                                         @if(count($user->certificates)>0)
                                             <li>
-                                                <a class="dropdown-item {{ $user->role == 'customer' ? '': 'd-none' }} d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.results', $user->slack) }}">
+                                                <a class="dropdown-item {{ $user->role == 'customer' ? '': 'd-none' }} d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.results', $user->uid) }}">
                                                     Resultados
                                                 </a>
                                             </li>
 
                                             <li>
-                                                <a class="dropdown-item {{ $user->role == 'customer' ? '': 'd-none' }} d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.certificates', $user->slack) }}">
+                                                <a class="dropdown-item {{ $user->role == 'customer' ? '': 'd-none' }} d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.certificates', $user->uid) }}">
                                                     Certificados
                                                 </a>
                                             </li>
                                         @endif
                                         @if(count($user->inscriptions)>0)
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.courses', $user->slack) }}">
+                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.courses', $user->uid) }}">
                                                     Cursos
                                                 </a>
                                             </li>
                                         @endif
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.view', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.view', $user->uid) }}">
                                                 Visualizar
                                             </a>
                                         </li>
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.edit', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.edit', $user->uid) }}">
                                                 Editar
                                             </a>
                                         </li>

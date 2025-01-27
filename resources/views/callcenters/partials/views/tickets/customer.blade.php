@@ -6,11 +6,11 @@
             @else
                 <img alt="{{$ticket->cust->image}}"  src="{{asset('/managers/profile/'. $ticket->cust->image)}}" width="150" class="rounded-circle" alt="user">
             @endif
-           
+
             <h4 class="mt-3 mb-0">{{$ticket->cust->firstname}} {{$ticket->cust->lastname}}</h4>
             <a >{{ $ticket->cust->email }}</a>
         </div>
-        
+
 
         <table class="table table-borderless">
             <tbody>
@@ -26,7 +26,7 @@
                         <td class="font-weight-medium">{{ $ticket->cust->phone}}</td>
                     </tr>
                 @endif
-               
+
                 <tr>
                     <td>Celular</td>
                     <td class="font-weight-medium">{{ $ticket->cust->cellphone}}</td>
@@ -53,10 +53,10 @@
                         @endif
                     </td>
                 </tr>
-                
+
             </tbody>
-        </table><a href="{{ route('support.tickets.previous', $ticket->cust->slack) }}" class="btn btn-primary w-100">Ver reportes</a>
-        
+        </table><a href="{{ route('callcenter.tickets.previous', $ticket->cust->uid) }}" class="btn btn-primary w-100">Ver reportes</a>
+
     </div>
-    
+
 </div>

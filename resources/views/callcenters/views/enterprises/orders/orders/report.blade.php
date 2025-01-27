@@ -122,7 +122,7 @@
                         course: $("#course").val(),
                     }
 
-                    var url = "{{ route('support.orders.generate') }}?" + $.param(query);
+                    var url = "{{ route('callcenter.orders.generate') }}?" + $.param(query);
 
                     window.location = url;
 

@@ -34,7 +34,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('support.distributors.staffs.create', $distributor->slack) }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Crear">
+                                <a href="{{ route('callcenter.distributors.staffs.create', $distributor->uid) }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Crear">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -88,17 +88,17 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.staffs.view', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.staffs.view', $user->uid) }}">
                                                 Visualizar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.staffs.edit', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.staffs.edit', $user->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.distributors.staffs.destroy', $user->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.distributors.staffs.destroy', $user->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

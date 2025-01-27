@@ -4,7 +4,7 @@
 
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
-            
+
             <div class="card w-100">
 
                 <form id="formTrusted" enctype="multipart/form-data" role="form" onSubmit="return false">
@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $trusted->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $trusted->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $trusted->uid }}">
                     <input type="hidden" id="status" name="status" value="{{ $thumbnail }}">
                     <input type="hidden" id="edit" name="edit" value="true">
                     <input type="hidden" id="thumbnail" name="thumbnail">
@@ -232,7 +232,7 @@
                 addRemoveLinks: true,
                 autoProcessQueue: false,
                 uploadMultiple: false,
-                acceptedFiles: "image/*", 
+                acceptedFiles: "image/*",
                 parallelUploads: 1,
                 maxFiles: 1,
                 headers: {

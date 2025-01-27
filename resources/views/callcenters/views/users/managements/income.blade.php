@@ -120,7 +120,7 @@
                         course: $("#course").val(),
                     }
 
-                    var url = "{{ route('support.enterprises.users.incoming') }}?" + $.param(query);
+                    var url = "{{ route('callcenter.enterprises.users.incoming') }}?" + $.param(query);
 
                     window.location = url;
 

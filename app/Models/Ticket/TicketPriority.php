@@ -23,6 +23,16 @@ class TicketPriority extends Model
         'updated_at'
     ];
 
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
     public function scopeId($query ,$id)
     {
         return $query->where('id', $id)->first();
@@ -31,9 +41,9 @@ class TicketPriority extends Model
     {
         return $query->where('slug', $slug)->first();
     }
-    public function scopeSlack($query ,$slack)
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
     public function scopeAvailable($query)
     {

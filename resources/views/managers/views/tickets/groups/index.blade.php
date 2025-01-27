@@ -43,7 +43,7 @@
       </div>
     </div>
     <div class="card card-body">
-      <div class="table-responsive"> 
+      <div class="table-responsive">
         <table class="table search-table align-middle text-nowrap">
           <thead class="header-item">
               <tr>
@@ -74,10 +74,10 @@
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.tickets.groups.edit', $group->slack) }}">Editar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.tickets.groups.edit', $group->uid) }}">Editar</a>
                         </li>
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.tickets.groups.destroy', $group->slack) }}">Eliminar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.tickets.groups.destroy', $group->uid) }}">Eliminar</a>
                         </li>
                       </ul>
                     </div>

@@ -305,7 +305,7 @@
                         data: formData,
                         success: function(response) {
                              if(response.success == true){
-                                window.location.href = "{{ route('support.users') }}";
+                                window.location.href = "{{ route('callcenter.users') }}";
                             }else{
                                 error = response.message;
                                 $('.errors').removeClass('d-none');

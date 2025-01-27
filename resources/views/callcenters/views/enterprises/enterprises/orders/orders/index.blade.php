@@ -90,7 +90,7 @@
                         <tr class="search-items">
 
                             <td>
-                                <span class="usr-email-addr" data-email="{{$order->slack }}">{{$order->slack }}</span>
+                                <span class="usr-email-addr" data-email="{{$order->uid }}">{{$order->uid }}</span>
                             </td>
                             <td>
                                 <span class="usr-email-addr" data-email="{{ $order->user->firstname . ' ' . $order->user->lastname  }}">{{$order->user->firstname . ' ' . $order->user->lastname }}</span>
@@ -122,11 +122,11 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.orders.edit',$order->slack) }}">Editar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.orders.edit',$order->uid) }}">Editar</a>
                                         </li>
 
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3 {{$order->condition->slug == 'pagada' ? '' : 'd-none'}}" href="{{ route('manager.orders.view',$order->slack) }}">Imprimir</a>
+                                                <a class="dropdown-item d-flex align-items-center gap-3 {{$order->condition->slug == 'pagada' ? '' : 'd-none'}}" href="{{ route('manager.orders.view',$order->uid) }}">Imprimir</a>
                                             </li>
 
 

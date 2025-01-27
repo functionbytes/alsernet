@@ -71,12 +71,12 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.historys.edit', $item->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.historys.edit', $item->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.historys.items.destroy', $item->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.historys.items.destroy', $item->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

@@ -9,7 +9,7 @@
 
                       {{ csrf_field() }}
 
-                      <input type="hidden" id="slack" name="slack" value="{{ $department->slack }}">
+                      <input type="hidden" id="slack" name="slack" value="{{ $department->uid }}">
 
                       <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">

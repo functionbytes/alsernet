@@ -75,10 +75,10 @@
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.contacts.edit', $contact->slack) }}">Editar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.contacts.edit', $contact->uid) }}">Editar</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.contacts.destroy', $contact->slack) }}">Eliminar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.contacts.destroy', $contact->uid) }}">Eliminar</a>
                     </li>
                   </ul>
                 </div>

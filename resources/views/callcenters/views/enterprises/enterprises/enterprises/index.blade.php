@@ -25,7 +25,7 @@
                 </button>
               </div>
               <div class="col-auto">
-                <a href=" {{ route('support.enterprises.create') }}" class="btn btn-primary">
+                <a href=" {{ route('callcenter.enterprises.create') }}" class="btn btn-primary">
                   <i class="fa-duotone fa-plus"></i>
                 </a>
               </div>
@@ -70,13 +70,13 @@
                   </a>
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.navegation', $enterprise->slack) }}">Dashboard</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.navegation', $enterprise->uid) }}">Dashboard</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.edit', $enterprise->slack) }}">Editar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.edit', $enterprise->uid) }}">Editar</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.enterprises.destroy', $enterprise->slack) }}">Eliminar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.enterprises.destroy', $enterprise->uid) }}">Eliminar</a>
                     </li>
                   </ul>
                 </div>

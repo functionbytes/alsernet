@@ -30,7 +30,7 @@
                                         {!! Form::open(['route' => ['manager.enterprises.courses.action'], 'method' => 'POST', 'files' => true, 'enctype' => 'multipart/form-data']) !!}
                                         {{ csrf_field() }}
 
-                                        <input name="inscription" type="hidden" value="{{ inscription->slack }}">
+                                        <input name="inscription" type="hidden" value="{{ inscription->uid }}">
 
                                         <div class="form-group-attached">
                                             <div class="row clearfix">

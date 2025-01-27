@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $newsletter->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $newsletter->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $newsletter->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">

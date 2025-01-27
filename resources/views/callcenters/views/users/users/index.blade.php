@@ -38,7 +38,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('support.users.create') }}" class="btn btn-primary">
+                                <a href=" {{ route('callcenter.users.create') }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -103,22 +103,22 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.users.navegation', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.users.navegation', $user->uid) }}">
                                                 Dashboard
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.users.view', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.users.view', $user->uid) }}">
                                                 Visualizar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.users.edit', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.users.edit', $user->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.users.destroy', $user->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.users.destroy', $user->uid) }}">
                                                 Eliminar
                                             </a>
                                         </li>

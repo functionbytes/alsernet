@@ -242,7 +242,7 @@
           $submitButton.prop('disabled', true);
 
           $.ajax({
-            url: "{{ route('support.distributors.store') }}",
+            url: "{{ route('callcenter.distributors.store') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -263,7 +263,7 @@
                 });
 
                 setTimeout(function() {
-                  window.location.href = "{{ route('support.distributors') }}";
+                  window.location.href = "{{ route('callcenter.distributors') }}";
                 }, 2000);
 
               }else{

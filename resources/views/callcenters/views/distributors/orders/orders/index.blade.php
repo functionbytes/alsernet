@@ -59,7 +59,7 @@
                         <tr class="search-items">
 
                             <td>
-                                <span class="usr-email-addr" >{{$order->slack }}</span>
+                                <span class="usr-email-addr" >{{$order->uid }}</span>
                             </td>
                             <td>
                                 <span class="usr-email-addr" >{{$order->reference }}</span>
@@ -83,7 +83,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('supportorders.view',$order->slack) }}">Visualizar</a>
+                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('supportorders.view',$order->uid) }}">Visualizar</a>
                                             </li>
                                     </ul>
                                 </div>

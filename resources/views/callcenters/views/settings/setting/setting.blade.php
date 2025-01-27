@@ -15,7 +15,7 @@
 
         <form id="formNotifications" enctype="multipart/form-data" role="form" onSubmit="return false">
 
-          <input type="hidden" name="slack"  id="slack" value="{{ $user->slack }}">
+          <input type="hidden" name="slack"  id="slack" value="{{ $user->uid }}">
           {{ csrf_field() }}
 
           <div class="card-body border-top mb-20">
@@ -129,7 +129,7 @@
             $submitButton.prop('disabled', true);
 
             $.ajax({
-            url: "{{ route('support.settings.notifications.update') }}",
+            url: "{{ route('callcenter.settings.notifications.update') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -147,7 +147,7 @@
                 });
 
                 setTimeout(function() {
-                  window.location.href = "{{ route('support.dashboard') }}";
+                  window.location.href = "{{ route('callcenter.dashboard') }}";
                 }, 2000);
 
               }else{

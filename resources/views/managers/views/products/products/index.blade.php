@@ -93,18 +93,18 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.locations', $product->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.locations', $product->uid) }}">
                                                 Ubicacines
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.edit', $product->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.edit', $product->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.products.destroy', $product->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.products.destroy', $product->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

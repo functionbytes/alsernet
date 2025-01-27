@@ -82,22 +82,22 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.historys', $inventarie->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.historys', $inventarie->uid) }}">
                                                 Historico
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.locations', $inventarie->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.locations', $inventarie->uid) }}">
                                                 Ubicaciones
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.edit', $inventarie->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.inventaries.edit', $inventarie->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.inventaries.destroy', $inventarie->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.inventaries.destroy', $inventarie->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

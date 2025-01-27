@@ -14,7 +14,7 @@
           <input type="hidden" id="id" name="id" value="">
           <input type="hidden" id="slack" name="slack" value="">
           <input type="hidden" id="edit" name="edit" value="true">
-          <input type="hidden" id="distributor" name="distributor" value="{{ $distributor->slack }}">
+          <input type="hidden" id="distributor" name="distributor" value="{{ $distributor->uid }}">
 
           <div class="card-body border-top">
             <div class="d-flex no-block align-items-center">
@@ -256,7 +256,7 @@
             $submitButton.prop('disabled', true);
 
           $.ajax({
-            url: "{{ route('support.distributors.staffs.store') }}",
+            url: "{{ route('callcenter.distributors.staffs.store') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -278,8 +278,8 @@
                        });
 
                         setTimeout(function() {
-                            let slack = @json($distributor->slack);
-                            window.location.href = "{{ route('support.distributors.staffs', ':slack') }}".replace(':slack', slack);
+                            let slack = @json($distributor->uid);
+                            window.location.href = "{{ route('callcenter.distributors.staffs', ':slack') }}".replace(':slack', slack);
                         }, 2000);
 
                 }else{

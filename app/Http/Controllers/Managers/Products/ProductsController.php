@@ -315,7 +315,6 @@ class ProductsController extends Controller
 
     }
 
-
     public function details($slack){
 
         $product = Product::uid($slack);
@@ -329,8 +328,6 @@ class ProductsController extends Controller
         ]);
 
     }
-
-
 
     public function update(Request $request){
 

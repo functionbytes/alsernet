@@ -39,21 +39,11 @@ class GroupsController extends Controller
 
     public function create(){
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Publico'],
-            ['id' => '0', 'label' => 'Oculto'],
-        ]);
+        $users = User::role('callcenters')->get()->pluck('email', 'id');
 
-        $availables = $availables->pluck('label','id');
-
-        $users = User::latest()->available()->whereIn('role', ['manager','support'])->get();
-        $users = $users->pluck('email','id');
-
-        $categories = TicketCategorie::latest()->available()->get();
-        $categories = $categories->pluck('title','id');
+        $categories = TicketCategorie::latest()->available()->get()->pluck('title','id');
 
         return view('managers.views.tickets.groups.create')->with([
-            'availables' => $availables,
             'users' => $users,
             'categories' => $categories,
         ]);
@@ -64,23 +54,13 @@ class GroupsController extends Controller
 
         $group = Group::uid($slack);
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Publico'],
-            ['id' => '0', 'label' => 'Oculto'],
-        ]);
+        $users = User::role('callcenters')->get()->pluck('email', 'id');
 
-        $availables = $availables->pluck('label','id');
-
-        $users = User::latest()->available()->whereIn('role', ['manager','support'])->get();
-        $users = $users->pluck('email','id');
-
-        $categories = TicketCategorie::latest()->available()->get();
-        $categories = $categories->pluck('title','id');
+        $categories = TicketCategorie::latest()->available()->get()->pluck('title','id');
 
         return view('managers.views.tickets.groups.edit')->with([
             'group' => $group,
             'users' => $users,
-            'availables' => $availables,
             'categories' => $categories,
         ]);
 
@@ -120,7 +100,7 @@ class GroupsController extends Controller
     public function store(Request $request){
 
         $group = new Group;
-        $group->uid = $this->generate_uid('groups');
+        $group->uid = $this->generate_uid('ticket_groups');
         $group->title = $request->title;
         $group->slug  = Str::slug($request->title, '-');
         $group->available = $request->available;

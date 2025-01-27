@@ -34,7 +34,7 @@
                 </button>
               </div>
               <div class="col-auto">
-                <a href=" {{ route('support.instructions.create') }}" class="btn btn-primary">
+                <a href=" {{ route('callcenter.instructions.create') }}" class="btn btn-primary">
                   <i class="fa-duotone fa-plus"></i>
                 </a>
               </div>
@@ -82,10 +82,10 @@
                   </a>
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.instructions.edit', $instruction->slack) }}">Editar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.instructions.edit', $instruction->uid) }}">Editar</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.instructions.destroy', $instruction->slack) }}">Eliminar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.instructions.destroy', $instruction->uid) }}">Eliminar</a>
                     </li>
                   </ul>
                 </div>

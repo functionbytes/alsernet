@@ -11,7 +11,7 @@
 
                     {{ csrf_field() }}
 
-                    <input  id="slack" name="slack" type="hidden" value="{{ $distributor->slack }}">
+                    <input  id="slack" name="slack" type="hidden" value="{{ $distributor->uid }}">
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
@@ -109,7 +109,7 @@
 
 
                     $.ajax({
-                        url: "{{ route('support.distributors.rates.update') }}",
+                        url: "{{ route('callcenter.distributors.rates.update') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -130,8 +130,8 @@
                                 });
 
                                 setTimeout(function() {
-                                    let slack = @json($distributor->slack);
-                                    window.location.href = "{{ route('support.distributors.navegation', ':slack') }}".replace(':slack', slack);
+                                    let slack = @json($distributor->uid);
+                                    window.location.href = "{{ route('callcenter.distributors.navegation', ':slack') }}".replace(':slack', slack);
                                 }, 2000);
 
                             }else{

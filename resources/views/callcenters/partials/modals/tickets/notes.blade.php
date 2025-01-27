@@ -10,9 +10,9 @@
             </div>
 
              <form id="formNotes" enctype="multipart/form-data" role="form" onSubmit="return false">
-                <input type="hidden" name="slack" id="slack" value="{{  $ticket->slack }}">
+                <input type="hidden" name="slack" id="slack" value="{{  $ticket->uid }}">
                 @csrf
-                
+
                 <div class="modal-body">
                     <div class="form-group">
                         <textarea class="form-control" rows="10" name="notes"  id="notes" required></textarea>
@@ -41,7 +41,7 @@
             $('.modal-title').html(`Agregar nota`);
             $('#newNotes').modal('show');
         });
-        
+
 
 
 
@@ -59,17 +59,17 @@ $("#formNotes").validate({
         },
     },
     submitHandler: function(form) {
-    
+
     var $form = $('#formNotes');
     var formData = new FormData($form[0]);
     var notes = $('#formNotes').find("[name='notes']").val();
     var slack = $('#formNotes').find("[name='slack']").val();
-    
+
     formData.append('notes', notes);
     formData.append('slack', slack);
-    
+
     $.ajax({
-        url: "{{ route('support.tickets.notes.store') }}",
+        url: "{{ route('callcenter.tickets.notes.store') }}",
             headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -81,12 +81,12 @@ $("#formNotes").validate({
                 console.log("data");
             }
         });
-    
+
     }
-    
+
     });
 
-        
+
         // Note Submit button
         $('body').on('submit', '#note_form', function (e) {
             e.preventDefault();
@@ -105,14 +105,14 @@ $("#formNotes").validate({
             cache:false,
             contentType: false,
             processData: false,
-        
+
         success: (data) => {
         $('#note_form').trigger("reset");
         $('#newNotes').modal('hide');
         $('#btnsave').html('Guardar');
         location.reload();
         toastr.success(data.success);
-        
+
         },
         error: function(data){
         console.log('Error:', data);
@@ -120,7 +120,7 @@ $("#formNotes").validate({
         }
         });
         });
-        
+
 
         });
 

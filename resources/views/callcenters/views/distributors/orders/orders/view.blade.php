@@ -2,7 +2,7 @@
 
 @section('content')
 
-    @include('distributors.includes.card', ['title' => 'Detalle Ordenes '. $order->slack])
+    @include('distributors.includes.card', ['title' => 'Detalle Ordenes '. $order->uid])
 
     <div class="row">
         <div class="col-lg-12 ">

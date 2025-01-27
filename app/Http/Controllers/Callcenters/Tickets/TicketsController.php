@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Callcenters\Tickets;
 
 use App\Mail\Supports\Tickets\NotificationCustomerReplayMails;
 use App\Mail\Supports\Tickets\NotificatioCustomernMails;
+use App\Models\Ticket\TicketCanned;
 use App\Notifications\TicketCreateNotifications;
 use App\Mail\Supports\Tickets\Note\NoteMails;
 use App\Models\Ticket\TicketCategorie;
 use App\Models\Ticket\TicketHistory;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket\TicketComment;
-use App\Models\Ticket\TicketCanned;
 use App\Models\Ticket\TicketStatus;
 use App\Models\Ticket\TicketNote;
 use App\Models\Ticket\Ticket;
@@ -30,7 +30,7 @@ class TicketsController extends Controller
         $searchKey = null ?? $request->search;
         $status = null ?? $request->status;
 
-        $tickets = $user->tickets();
+        $tickets = Ticket::descending();
 
         if ($searchKey) {
             $tickets = $tickets->where('title', 'like', '%' . $searchKey . '%');
@@ -266,23 +266,20 @@ class TicketsController extends Controller
 
         return response()->json(['success' => "Se ha abierto un ticket con el ID del ticket" . $ticket->ticket_id], 200);
     }
-    public function view($slack)
+    public function view($uid)
     {
         $user =  Auth::user();
-        $ticket = Ticket::uid($slack);
+        $ticket = Ticket::uid($uid);
 
         $category = $ticket->category;
-        $comments = $ticket->comments()->latest()->paginate(10);
+        $comments = $ticket->comments()->latest()->get();
         $notes =  $ticket->notes()->latest()->get();
 
         $simillars = Ticket::where('cust_id', $ticket->cust->id)->count();
 
-        $status = TicketStatus::available()->get();
-        $status->prepend('', '');
-        $status = $status->pluck('title', 'id');
+        $status = TicketStatus::available()->get()->pluck('title', 'id');
 
-
-        $canneds =TicketCanned::available()->get();
+        $canneds = TicketCanned::available()->get();
         $canneds->prepend('', '');
         $canneds = $canneds->pluck('title', 'id');
 
@@ -1066,5 +1063,153 @@ class TicketsController extends Controller
 
 
     }
+
+    public function selfassign(Request $request)
+    {
+
+        try {
+
+
+            $callcenter = app('callcenters');
+
+            $ticketselfassign = Ticket::uid($request->uid);
+
+            if (!$ticketselfassign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El ticket no existe.'
+                ], 404);
+            }
+
+            $ticketselfassign->toassignuser_id = $callcenter->id;
+            $ticketselfassign->myassignuser_id = null;
+            $ticketselfassign->update();
+
+            if ($request->assigned_userid) {
+                $ticketselfassign->assign()->detach($request->assigned_userid);
+            }
+
+            $tickethistory = new TicketHistory();
+            $tickethistory->ticket_id = $ticketselfassign->id;
+            $tickethistory->ticketnote = $ticketselfassign->notes()->exists();
+            $tickethistory->overdue = $ticketselfassign->overdue;
+            $tickethistory->status = $ticketselfassign->status->title ?? 'Desconocido';
+            $tickethistory->actions = 'Autoasignado';
+            $tickethistory->username = $callcenter->firstname.' '.$callcenter->lastname;
+            $tickethistory->type = $callcenter->roles()->first()->name ?? 'Sin rol';
+            $tickethistory->save();
+
+            return response()->json([
+                'success' => true,
+                'slack' => $ticketselfassign->uid,
+                'message' => 'El ticket se asignó correctamente.'
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error: ' . $e->getMessage()
+           ]);
+
+        }
+    }
+
+
+    public function ticketunassigns(Request $request)
+    {
+        try {
+
+                $callcenter = app('callcenters');
+
+                $calID = Ticket::uid($request->uid);
+                $calID->toassignuser_id	 = null;
+                $calID->myassignuser_id = null;
+                $calID->save();
+                $calID->assign()->detach($request->assigned_userid);
+
+                $tickethistory = new TicketHistory();
+                $tickethistory->ticket_id = $calID->id;
+                $tickethistory->ticketnote = $calID->notes()->exists();
+                $tickethistory->overdue = $calID->overdue;
+                $tickethistory->status = $calID->status;
+                $tickethistory->actions = 'UnAssigned Ticket';
+                $tickethistory->username = $callcenter->firstname.' '.$callcenter->lastname;
+                $tickethistory->type = $callcenter->roles()->first()->name ?? 'Sin rol';
+                $tickethistory->save();
+
+                return response()->json([
+                    'success' => true,
+                    'slack' => $calID->uid,
+                    'message' => 'El ticket se asignó correctamente.'
+                ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+            'success' => false,
+            'message' => 'Ocurrió un error: ' . $e->getMessage()
+            ]);
+
+        }
+
+    }
+
+
+    public function ticketassigneds(Request $request)
+    {
+        if ($request->ajax()) {
+
+            $assign = Ticket::uid($request->uid);
+
+            if (!$assign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El ticket no existe.'
+                ], 404);
+            }
+
+            $assignedUserIds = $assign->assigns->pluck('toassignuser_id')->toArray();
+
+            $users = User::role('callcenters')->get();
+
+            $options = '<option label="Seleccionar agente"></option>';
+
+            foreach ($users as $user) {
+
+                if (Auth::id() === $user->id && !in_array($user->id, $assignedUserIds)) {
+                    continue;
+                }
+
+                $selected = in_array($user->id, $assignedUserIds) ? 'selected' : '';
+                $roleName = $user->getRoleNames()->first() ?? '';
+
+                $options .= sprintf(
+                    '<option value="%d" %s>%s (%s)</option>',
+                    $user->id,
+                    $selected,
+                    e($user->firstname.' '.$user->lastname),
+                    e($roleName)
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'assign_user_exist' => !empty($assignedUserIds) ? 'yes' : 'no',
+                'assign_data' => $assign,
+                'table_data' => $options,
+                'total_data' => $users->count(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Solicitud inválida.'
+        ], 400);
+    }
+
+
+
+
 
 }

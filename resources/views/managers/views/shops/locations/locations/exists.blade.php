@@ -10,13 +10,13 @@
             <div class="col-md-6">
                 <div class="card">
                         <div class="card-body text-center">
-                            <input type="hidden" id="shop" name="shop"  value="{{ $shop->slack }}" >
+                            <input type="hidden" id="shop" name="shop"  value="{{ $shop->uid }}" >
                             <p>OPCION</p>
                             <i class="fa-duotone fa-solid fa-rectangle-barcode"></i>
                             <input type="text" class="form-control pl-4 pr-4 mt-2 mb-2" id="location" name="location"  autofocus>
                             <h5 class="fw-semibold fs-5 mb-2">Leer codigo de barras de la ubiacion</h5>
                             <p class="mb-3 px-xl-5">Acercalo al lector</p>
-                        </div> 
+                        </div>
                     </div>
             </div>
         </div>

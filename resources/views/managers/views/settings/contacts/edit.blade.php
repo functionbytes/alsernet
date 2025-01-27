@@ -13,7 +13,7 @@
 
                     <input type="hidden" id="description" name="description" value="{!! $contact->description !!}">
                     <input type="hidden" id="id" name="id" value="{{ $contact->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $contact->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $contact->uid }}">
                     <input type="hidden" id="statuSignatures" name="statuSignatures" value="true">
                     <input type="hidden" id="statuThumbnails" name="statuThumbnails" value="true">
                     <input type="hidden" id="edit" name="edit" value="true">
@@ -76,7 +76,7 @@
                                 <label id="message-error" class="error d-none" for="message"></label>
                             </div>
                         </div>
-                        
+
                         <div class="col-12">
                                 <div class="border-top pt-1 mt-4">
                                     <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
@@ -185,25 +185,25 @@
         });
 
         var toolbarOptions = [
-            ['bold', 'italic', 'underline', 'strike'],        
+            ['bold', 'italic', 'underline', 'strike'],
             ['blockquote', 'code-block'],
-            [{ 'header': 1 }, { 'header': 2 }],               
+            [{ 'header': 1 }, { 'header': 2 }],
             [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            [{ 'script': 'sub' }, { 'script': 'super' }],      
-            [{ 'indent': '-1' }, { 'indent': '+1' }],          
-            [{ 'direction': 'rtl' }],                         
-            [{ 'size': ['small', false, 'large', 'huge'] }],  
+            [{ 'script': 'sub' }, { 'script': 'super' }],
+            [{ 'indent': '-1' }, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
             [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
             [ 'link', 'image', 'video' ],
-            [{ 'color': [] }, { 'background': [] }],          
+            [{ 'color': [] }, { 'background': [] }],
             [{ 'font': [] }],
             [{ 'align': [] }],
 
-            ['clean']                                        
+            ['clean']
         ];
 
         var toolbarOption = [
-            ['clean']                                       
+            ['clean']
         ];
 
         var description = new Quill('#messages', {

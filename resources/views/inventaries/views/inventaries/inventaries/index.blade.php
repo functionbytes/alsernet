@@ -16,7 +16,7 @@
                 @foreach($inventaries as $inventarie)
                     <div class="col-xl-4 col-md-6 col-sm-12 single-note-item order-all ">
                         <div class="card p-4" >
-                            <a class="card-body p-0" href="{{ route('inventarie.inventarie.content', $inventarie->slack ) }}">
+                            <a class="card-body p-0" href="{{ route('inventarie.inventarie.content', $inventarie->uid ) }}">
                                 <span class="bg-light-primary text-primary badge mb-3 fw-semibold">{{ date('Y', strtotime($inventarie->closet_at)) }}</span>
                                 <div class="d-flex align-items-center mb-3">
                                     <h4 class="fw-semibold mb-0 text-black">
@@ -47,7 +47,7 @@
                                 @if ($inventarie->complete == 1 )
                                     <p>
                                         <a class="btn btn-light-primary text-primary w-100 mt-1"
-                                       href="{{ route('inventarie.inventarie.report', $inventarie->slack) }}"
+                                       href="{{ route('inventarie.inventarie.report', $inventarie->uid) }}"
                                        target="_blank"> Reporte </a>
                                     </p>
                                 @endif

@@ -25,7 +25,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('support.enterprises.courses.assign',$enterprise->slack) }}" class="btn btn-primary">
+                                <a href="{{ route('callcenter.enterprises.courses.assign',$enterprise->uid) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -59,7 +59,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.courses.view', [$enterprise->slack,  $course->slack]) }}">Detalle</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.courses.view', [$enterprise->uid,  $course->uid]) }}">Detalle</a>
                                         </li>
                                     </ul>
                                 </div>

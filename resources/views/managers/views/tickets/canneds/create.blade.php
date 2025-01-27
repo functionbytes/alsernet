@@ -28,15 +28,15 @@
                   </div>
               </div>
 
-              <div class="col-12">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, null , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                 <label id="available-error" class="error d-none" for="available"></label>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" >Público</option>
+                            <option value="0" >Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
 
               <div class="col-12">
                 <label class="control-label col-form-label">Contenido</label>
@@ -46,13 +46,13 @@
                 <label id="description-error" class="error d-none" for="description"></label>
               </div>
 
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
+              <div class="col-12">
+                 <div class="border-top pt-1 mt-4">
+                     <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                         Guardar
+                     </button>
+                  </div>
+              </div>
 
             </div>
 
@@ -76,37 +76,37 @@
                 <td class="ps-0 text-end"><strong>El nombre de la aplicación</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;site_url&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La URL del sitio</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;ticket_id&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El ID del billete</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;ticket_user&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del cliente que ha abierto el ticket.</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;ticket_title&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El título del ticket</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;ticket_priority&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La prioridad del ticket</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;user_reply&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del empleado que responde al ticket.</strong></td>
               </tr>
               <tr>
-    
+
                 <td class="ps-0">&lcub;&lcub;user_role&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El papel del empleado</strong></td>
               </tr>
@@ -221,7 +221,7 @@
       });
 
       var toolbarOptions = [
-      ['bold', 'italic', 'underline', 'strike'], 
+      ['bold', 'italic', 'underline', 'strike'],
       ['blockquote', 'code-block'],
       [{
       'header': 1
@@ -237,7 +237,7 @@
       'indent': '-1'
       }, {
       'indent': '+1'
-      }], 
+      }],
       [{
       'direction': 'rtl'
       }],
@@ -259,17 +259,17 @@
       [{
       'align': []
       }],
-      
+
       ['clean']
       ];
-      
-     
+
+
       var toolbarOption = [
       ['clean']
       ];
-      
+
       var description = new Quill('#descriptions', {
-      
+
       modules: {
       toolbar: toolbarOptions,
       clipboard: {
@@ -279,8 +279,8 @@
       placeholder: 'Escriba aquí...',
       theme: 'snow'
       });
-      
-     
+
+
       description.on('selection-change', function (range, oldRange, source) {
       if (range === null && oldRange !== null) {
       $('body').removeClass('overlay-disabled');
@@ -288,9 +288,9 @@
       $('body').addClass('overlay-disabled');
       }
       });
-      
+
       description.on('text-change', function (delta, oldDelta, source) {
-      
+
       var text = description.container.firstChild.innerHTML.replaceAll("<p><br></p>", "");
       $('#description').val(text);
       });

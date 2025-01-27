@@ -11,7 +11,7 @@
 
                     {{ csrf_field() }}
 
-                    <input type="hidden" id="slack" name="slack" value="{{ $faq->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $faq->uid }}">
                     <input type="hidden" id="description" name="description" value="{!! $faq->description !!}">
 
                     <div class="card-body border-top">
@@ -88,26 +88,26 @@
 
 
         var toolbarOptions = [
-            ['bold', 'italic', 'underline', 'strike'],        
+            ['bold', 'italic', 'underline', 'strike'],
             ['blockquote', 'code-block'],
-            [{ 'header': 1 }, { 'header': 2 }],              
+            [{ 'header': 1 }, { 'header': 2 }],
             [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            [{ 'script': 'sub' }, { 'script': 'super' }],     
-            [{ 'indent': '-1' }, { 'indent': '+1' }],          
-            [{ 'direction': 'rtl' }],                        
-            [{ 'size': ['small', false, 'large', 'huge'] }], 
+            [{ 'script': 'sub' }, { 'script': 'super' }],
+            [{ 'indent': '-1' }, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
             [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
             [ 'link', 'image', 'video' ],
-            [{ 'color': [] }, { 'background': [] }],         
+            [{ 'color': [] }, { 'background': [] }],
             [{ 'font': [] }],
             [{ 'align': [] }],
 
-            ['clean']                                        
+            ['clean']
         ];
 
 
         var toolbarOption = [
-            ['clean']                                        
+            ['clean']
         ];
 
         var description = new Quill('#descriptions', {
@@ -121,7 +121,7 @@
             theme: 'snow'
         });
 
-       
+
         description.on('selection-change', function (range, oldRange, source) {
             if (range === null && oldRange !== null) {
                 $('body').removeClass('overlay-disabled');

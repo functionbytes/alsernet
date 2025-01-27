@@ -140,7 +140,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.documents.store') }}",
+                        url: "{{ route('callcenter.documents.store') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -166,7 +166,7 @@
 
                                 myFiles.on("queuecomplete", function() {
                                     setTimeout(function() {
-                                        window.location = "{{ route('support.documents') }}";
+                                        window.location = "{{ route('callcenter.documents') }}";
                                     }, 2000);
                                 });
 
@@ -201,7 +201,7 @@
 
             var myFiles = new Dropzone("div#files", {
                 paramName: "file",
-                url: "{{ route('support.documents.files') }}",
+                url: "{{ route('callcenter.documents.files') }}",
                 addRemoveLinks: true,
                 autoProcessQueue: false,
                 uploadMultiple: false,
@@ -237,7 +237,7 @@
                         if (file.id) {
                             $.ajax({
                                 type: 'GET',
-                                url: "{{ route('support.documents.files.delete', ':id') }}".replace(':id', file.id),
+                                url: "{{ route('callcenter.documents.files.delete', ':id') }}".replace(':id', file.id),
                                 success: function(result) {
                                     $("#status").val('false');
                                 }

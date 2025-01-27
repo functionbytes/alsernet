@@ -1,6 +1,6 @@
 @extends('layouts.callcenters')
 @section('content')
-    @include('customer.includes.card', ['title' => 'Detalle orden '. $order->slack])
+    @include('customer.includes.card', ['title' => 'Detalle orden '. $order->uid])
     <div class="row">
         <div class="col-lg-12 ">
             <div class="checkout">
@@ -21,7 +21,7 @@
                                                             <h4>Para</h4>
                                                             <p class="mt-0 mb-0">
                                                                 <span class="fw-semibold mb-0">Orden :</span>
-                                                                {{ $order->slack}}
+                                                                {{ $order->uid}}
                                                             </p>
                                                             <h6 class="fw-bold invoice-customer mb-0">
                                                                 <span class="fw-semibold mb-0">Cliente :</span>

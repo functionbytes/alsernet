@@ -74,10 +74,10 @@
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.trusteds.edit', $trusted->slack) }}">Editar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.trusteds.edit', $trusted->uid) }}">Editar</a>
                         </li>
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.trusteds.destroy', $trusted->slack) }}">Eliminar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.trusteds.destroy', $trusted->uid) }}">Eliminar</a>
                         </li>
                       </ul>
                     </div>

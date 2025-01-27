@@ -33,7 +33,7 @@
                 </button>
               </div>
               <div class="col-auto">
-                <a href=" {{ route('support.faqs.create') }}" class="btn btn-primary">
+                <a href=" {{ route('callcenter.faqs.create') }}" class="btn btn-primary">
                   <i class="fa-duotone fa-plus"></i>
                 </a>
               </div>
@@ -78,10 +78,10 @@
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.faqs.edit', $faq->slack) }}">Editar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.faqs.edit', $faq->uid) }}">Editar</a>
                         </li>
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.faqs.destroy', $faq->slack) }}">Eliminar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.faqs.destroy', $faq->uid) }}">Eliminar</a>
                         </li>
                       </ul>
                     </div>

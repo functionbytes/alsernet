@@ -29,9 +29,9 @@ class Categorie extends Model
 
 
     public function scopeUid($query, $uid)
-{
-        return $query->where('uid', $uid)->first();
-}
+    {
+            return $query->where('uid', $uid)->first();
+    }
 
 
     public function scopeAvailable($query)

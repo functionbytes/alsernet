@@ -40,9 +40,9 @@ class NewsletterList extends Model
         return $query->where('code', $code)->first();
     }
 
-    public function scopeSlack($query ,$slack)
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
 
     public function lang(): BelongsTo

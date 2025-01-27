@@ -87,7 +87,7 @@
                                         <div class="d-flex align-items-center">
                                             <div>
                                                 <h6 class="fw-semibold mb-1">
-                                                    <a href="{{route('customer.tickets.view', $ticket->slack)}}" class="text-inherit subject">{{ $ticket->subject }}</a>
+                                                    <a href="{{route('callcenter.tickets.view', $ticket->uid)}}" class="text-inherit subject">{{ $ticket->subject }}</a>
                                                 </h6>
                                                 <p class="fs-2 mb-0 ">
                                                 <ul class="d-flex custom-ul">
@@ -96,13 +96,7 @@
                                                         <i class="fa-duotone fa-calendar-days"></i>
                                                         {{$ticket->created_at->format(setting('date_format'))}}
                                                     </li>
-                                                    @if($ticket->priority != null)
-                                                       <li class="px-2 preference preference-{{ $ticket->priority->slug }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $ticket->priority->title }}">
-                                                           {{ $ticket->priority->title }}
-                                                       </li>
-                                                    @else
-                                                        ~
-                                                    @endif
+
                                                     @if($ticket->category != null)
                                                         <li class="px-2 " data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $ticket->category->title }}">
                                                             <i class="fa-duotone fa-layer-group"></i>
@@ -137,7 +131,7 @@
                                             </a>
                                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                                 <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{route('customer.tickets.view', $ticket->slack)}}"><i class="fs-4 ti ti-plus"></i>Visualizar</a>
+                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{route('callcenter.tickets.view', $ticket->uid)}}"><i class="fs-4 ti ti-plus"></i>Visualizar</a>
                                                 </li>
                                                 <li>
                                                     <a class="dropdown-item d-flex align-items-center gap-3" href="#"><i class="fs-4 ti ti-edit"></i>Edit</a>

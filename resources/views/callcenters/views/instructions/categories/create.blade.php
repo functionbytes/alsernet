@@ -116,7 +116,7 @@
 
 
             $.ajax({
-            url: "{{ route('support.instructions.categories.store') }}",
+            url: "{{ route('callcenter.instructions.categories.store') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -136,7 +136,7 @@
                       });
 
                       setTimeout(function() {
-                          window.location = "{{ route('support.instructions.categories') }}";
+                          window.location = "{{ route('callcenter.instructions.categories') }}";
                       }, 2000);
 
 

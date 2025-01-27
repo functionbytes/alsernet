@@ -27,24 +27,28 @@
                     <input type="text" class="form-control" id="title"  name="title"  placeholder="Ingresa titulo">
                 </div>
               </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, null , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                 <label id="available-error" class="error d-none" for="available"></label>
+
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" >Público</option>
+                            <option value="0" >Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Prioridad</label>
-                  <div class="input-group">
-                    {!! Form::select('prioritie', $priorities, null , ['class' => 'select2 form-control' ,'name' => 'prioritie', 'id' => 'prioritie' ]) !!}
-                  </div>
-                  <label id="prioritie-error" class="error d-none" for="prioritie"></label>
+
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="prioritie" class="control-label col-form-label">Prioridad</label>
+                        <select class="form-control select2" id="prioritie" name="prioritie">
+                            @foreach($priorities as $id => $name)
+                                <option value="{{ $id }}" >{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-              </div>
+
               <div class="col-12">
                   <div class="action-form border-top mt-4">
                     <div class="text-center">

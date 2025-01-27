@@ -36,16 +36,15 @@ class Product extends Model
         return $query->where('barcode',$barcode)->first();
     }
 
-
     public function scopeBarcodeExits($query, $barcode)
     {
         return $query->where('barcode',$barcode)  ->exists();
     }
 
     public function scopeUid($query, $uid)
-{
-        return $query->where('uid', $uid)->first();
-}
+    {
+            return $query->where('uid', $uid)->first();
+    }
 
     public function scopeSlug($query ,$slug)
     {

@@ -60,6 +60,23 @@ class TicketsController extends Controller
 
     }
 
+    public function control($slack){
+
+        $categorie = Categorie::uid($slack);
+
+        $availables = collect([
+            ['id' => '1', 'label' => 'Publico'],
+            ['id' => '0', 'label' => 'Oculto'],
+        ]);
+
+        $availables = $availables->pluck('label','id');
+
+        return view('managers.views.tickets.tickets.control')->with([
+            'categorie' => $categorie,
+            'availables' => $availables
+        ]);
+
+    }
     public function edit($slack){
 
         $categorie = Categorie::uid($slack);

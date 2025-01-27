@@ -8,7 +8,7 @@
 
                 <div class="row bread">
                             <div class="row col-lg-8 col-sm-12">
-                               
+
                                 <div class="col-sm-12">
                                     <ol class="breadcrumb">
                                         <li class="breadcrumb-item active"><a href="{{ route('manager.dashboard') }}">Dashboard</a></li>
@@ -43,7 +43,7 @@
                                                 <td class="py-3">
                                                     <a href="#">
                                                         <div class="media d-flex align-items-center">
-                                                          
+
                                                             <div class="media-body">
                                                                 <h5 class="mb-0 fs--1">{{ $team->firstname }} {{ $team->lastname }}</h5>
                                                             </div>
@@ -53,7 +53,7 @@
                                                 <td class="py-3">
                                                     <a href="#">
                                                         <div class="media d-flex align-items-center">
-                                                          
+
                                                             <div class="media-body">
                                                                 <h5 class="mb-0 fs--1">{{ $team->charge }} </h5>
                                                             </div>
@@ -74,10 +74,10 @@
                                                     <div class="dropdown">
                                                         <button class="option btn-primary tp-btn-light sharp" type="button" data-toggle="dropdown"><span class="fs--1"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18px" height="18px" viewbox="0 0 24 24" version="1.1"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><rect x="0" y="0" width="24" height="24"></rect><circle fill="#000000" cx="5" cy="12" r="2"></circle><circle fill="#000000" cx="12" cy="12" r="2"></circle><circle fill="#000000" cx="19" cy="12" r="2"></circle></g></svg></span></button>
                                                         <div class="dropdown-menu dropdown-menu-right border py-0">
-                                                            <a class="dropdown-item" href="{{ route('manager.teams.edit', $team->slack) }}" >Editar</a>
+                                                            <a class="dropdown-item" href="{{ route('manager.teams.edit', $team->uid) }}" >Editar</a>
 
 
-                                                            <a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="/manager/teams/destroy/" data-slack="{{ $team->slack }}" >
+                                                            <a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="/manager/teams/destroy/" data-slack="{{ $team->uid }}" >
                                                                 Eliminar
                                                             </a>
                                                         </div>

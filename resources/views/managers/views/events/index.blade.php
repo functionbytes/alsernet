@@ -58,7 +58,7 @@
                     <tbody>
 
                     @foreach ($events as $key => $event)
-                 
+
                         <tr class="search-items">
                             <td>
                                 {{ $event->title  }}
@@ -86,13 +86,13 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.events.edit', $event->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.events.edit', $event->uid) }}">
                                                 Editar
                                             </a>
                                         </li>
 
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.events.destroy', $event->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.events.destroy', $event->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

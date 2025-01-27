@@ -36,7 +36,7 @@
                             </div>
                             @if (count($certificates) > 1)
                                 <div class="col-auto">
-                                    <a href=" {{ route('distributors.certificate.broad', $user->slack) }}" class="btn btn-primary">
+                                    <a href=" {{ route('distributors.certificate.broad', $user->uid) }}" class="btn btn-primary">
                                         <i class="fa-light fa-file-certificate"></i>
                                     </a>
                                 </div>
@@ -78,7 +78,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.certificate.course', $certificate->slack) }}">Descargar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.certificate.course', $certificate->uid) }}">Descargar</a>
                                         </li>
                                     </ul>
                                 </div>

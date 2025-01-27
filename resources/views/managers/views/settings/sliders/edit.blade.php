@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $slider->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $slider->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $slider->uid }}">
                     <input type="hidden" id="status" name="status" value="{{ $thumbnail }}">
                     <input type="hidden" id="edit" name="edit" value="true">
                     <input type="hidden" id="thumbnail" name="thumbnail">
@@ -108,7 +108,7 @@
         Dropzone.autoDiscover = false;
 
         $(document).ready(function() {
-          
+
             $("#formSlider").validate({
                 submit: false,
                 ignore: ".ignore",
@@ -182,7 +182,7 @@
                     }
                 },
                 submitHandler: function(form) {
-                    
+
                     var $form = $('#formSlider');
                     var formData = new FormData($form[0]);
                     var slack = $("#slack").val();
@@ -229,13 +229,13 @@
                                 });
 
                                 myThumbnail.on("queuecomplete", function() {
-                                    
+
                                 });
 
                                 setTimeout(function() {
                                         window.location = "{{ route('manager.sliders') }}";
                                  }, 2000);
-                                 
+
                             }else{
 
                                 $submitButton.prop('disabled', false);
@@ -262,7 +262,7 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         }
             });
-            
+
             var myThumbnail = new Dropzone("div#thumbnail", {
                 paramName: "file",
                 url: "{{ route('manager.sliders.thumbnails') }}",
@@ -270,7 +270,7 @@
                 addRemoveLinks: true,
                 autoProcessQueue: false,
                 uploadMultiple: false,
-                acceptedFiles: "image/*", 
+                acceptedFiles: "image/*",
                 parallelUploads: 1,
                 maxFiles: 1,
                 headers: {

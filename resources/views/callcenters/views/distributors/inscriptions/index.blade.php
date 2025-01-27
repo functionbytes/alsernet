@@ -13,7 +13,7 @@
 
                     {{ csrf_field() }}
 
-                    <input id="distributor" name="distributor" type="hidden" value="{{ $distributor->slack }}">
+                    <input id="distributor" name="distributor" type="hidden" value="{{ $distributor->uid }}">
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
@@ -128,7 +128,7 @@
                 var $submitButton = $('button[type="submit"]');
 
                 $.ajax({
-                    url: '{{ route('support.distributors.inscriptions.enroll') }}', // Ruta para el método en el controlador
+                    url: '{{ route('callcenter.distributors.inscriptions.enroll') }}', // Ruta para el método en el controlador
                     type: 'POST',
                     data: {
                         enterprise: enterprise,
@@ -169,7 +169,7 @@
                 var enterpriseId = $(this).val();
 
                 $.ajax({
-                    url: '{{ route('support.distributors.inscriptions.get.users') }}',
+                    url: '{{ route('callcenter.distributors.inscriptions.get.users') }}',
                     type: 'POST',
                     data: {
                         enterprise: enterpriseId
@@ -195,7 +195,7 @@
                 });
 
                 $.ajax({
-                    url: '{{ route('support.distributors.inscriptions.get.courses') }}',
+                    url: '{{ route('callcenter.distributors.inscriptions.get.courses') }}',
                     type: 'POST',
                     data: {
                         enterprise: enterpriseId
@@ -280,7 +280,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.distributors.inscriptions.store') }}",
+                        url: "{{ route('callcenter.distributors.inscriptions.store') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },

@@ -20,7 +20,7 @@
                             @endif
                             <div>
                                 <h6 class="mb-0 fw-semibold">{{$ticket->cust->firstname}} {{$ticket->cust->lastname}}</h6>
-                                <span  class="fs-2 text-black fw-semibold">({{ $ticket->cust->type() }})</span>
+                                <span  class="fs-2 text-black fw-semibold">( )</span>
                             </div>
                             <div class="ms-auto text-end">
                                 <h6 class="mb-0 text-black">{{$ticket->created_at->timezone(setting('default_timezone'))->format(setting('date_format'))}}</h6>
@@ -37,7 +37,7 @@
                             @endif
                             <div>
                                 <h6 class="mb-0 fw-semibold">{{$ticket->users->firstname}} {{$ticket->users->lastname}}</h6>
-                                <span  class="fs-2 text-black fw-semibold">({{ $ticket->users->type() }})</span>
+                                <span  class="fs-2 text-black fw-semibold">()</span>
                             </div>
                             <div class="ms-auto text-end">
                                 <h6 class="mb-0 text-black">

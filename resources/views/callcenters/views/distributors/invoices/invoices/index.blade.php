@@ -49,7 +49,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('support.distributors.invoices.report') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Reporte">
+                                <a href="{{ route('callcenter.distributors.invoices.report') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Reporte">
                                     <i class="fa-solid fa-file-chart-column"></i>
                                 </a>
                             </div>
@@ -104,10 +104,10 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.invoices.view',$invoice->slack) }}">General</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.invoices.view',$invoice->uid) }}">General</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.invoices.detail',$invoice->slack) }}">Detallado</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.invoices.detail',$invoice->uid) }}">Detallado</a>
                                         </li>
                                     </ul>
                                 </div>

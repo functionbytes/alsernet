@@ -25,12 +25,12 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('support.distributors.enterprises.create', $distributor->slack ) }}" class="btn btn-primary">
+                                <a href=" {{ route('callcenter.distributors.enterprises.create', $distributor->uid ) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('support.distributors.enterprises.assignments', $distributor->slack ) }}" class="btn btn-primary">
+                                <a href=" {{ route('callcenter.distributors.enterprises.assignments', $distributor->uid ) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-solid fa-right-left"></i>
                                 </a>
                             </div>
@@ -74,13 +74,13 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.navegation', $enterprise->slack) }}">Dashboard</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.navegation', $enterprise->uid) }}">Dashboard</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.enterprises.edit', $enterprise->slack) }}">Editar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.enterprises.edit', $enterprise->uid) }}">Editar</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.distributors.enterprises.destroy', $enterprise->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.distributors.enterprises.destroy', $enterprise->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

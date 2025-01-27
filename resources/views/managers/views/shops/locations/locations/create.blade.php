@@ -208,7 +208,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('manager.shops.locations' , $shop->slack ) }}";
+                                    window.location.href = "{{ route('manager.shops.locations' , $shop->uid ) }}";
                                 }, 2000);
 
                             }else{

@@ -117,7 +117,7 @@
 										<div class="d-flex align-items-center">
 											<div>
 												<h6 class="fw-semibold mb-1">
-													<a href="{{route('support.tickets.view', $ticket->slack)}}"
+													<a href="{{route('callcenter.tickets.view', $ticket->uid)}}"
 														class="text-inherit subject">{{ $ticket->subject }}</a>
 												</h6>
 												<p class="fs-2 mb-0 ">
@@ -184,15 +184,15 @@
 											<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 												<li>
 													<a class="dropdown-item d-flex align-items-center gap-3"
-														href="{{route('support.tickets.view', $ticket->slack)}}">Visualizar</a>
+														href="{{route('callcenter.tickets.view', $ticket->uid)}}">Visualizar</a>
 												</li>
 												<li>
 													<a class="dropdown-item d-flex align-items-center gap-3"
-														href="{{route('support.tickets.view', $ticket->slack)}}">Edit</a>
+														href="{{route('callcenter.tickets.view', $ticket->uid)}}">Edit</a>
 												</li>
 												<li>
 													<a class="dropdown-item d-flex align-items-center gap-3"
-														href="{{route('support.tickets.view', $ticket->slack)}}"></i>Delete</a>
+														href="{{route('callcenter.tickets.view', $ticket->uid)}}"></i>Delete</a>
 												</li>
 											</ul>
 										</div>
@@ -641,7 +641,7 @@ type: "get",
 url: SITEURL + "/admin/delete-ticket/"+_id,
 success: function (data) {
 toastr.success(data.success);
-location.replace('{{route('support.dashboard')}}');
+location.replace('{{route('callcenter.dashboard')}}');
 },
 error: function (data) {
 console.log('Error:', data);

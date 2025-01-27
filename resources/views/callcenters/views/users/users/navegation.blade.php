@@ -14,7 +14,7 @@
 
                 <div class="row justify-content-center mt--20">
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.edit', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.edit', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -25,7 +25,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.activitys', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.activitys', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -36,7 +36,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.courses.index', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.courses.index', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -47,7 +47,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.orders.index', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.orders.index', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -58,7 +58,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.courses.certificates', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.courses.certificates', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">
@@ -69,7 +69,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <a class="card" href="{{ route('support.users.courses.results', $user->slack) }}">
+                        <a class="card" href="{{ route('callcenter.users.courses.results', $user->uid) }}">
                             <div class="card-body text-center">
                                 <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                                 <div class="my-4">

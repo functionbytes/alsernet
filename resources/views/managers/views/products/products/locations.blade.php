@@ -57,7 +57,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.locations.details', $product->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.products.locations.details', $product->uid) }}">
                                                 Detalle
                                             </a>
                                         </li>

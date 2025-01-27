@@ -16,7 +16,7 @@
                         <div class="pane padding-20 sm-no-padding">
 
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="{{ route('support.dashboard') }}">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="{{ route('callcenter.dashboard') }}">Dashboard</a></li>
                                 <li class="breadcrumb-item"><a>Cursos</a></li>
                                 <li class="breadcrumb-item"><a>{{ $course->title }}</a></li>
                                 <li class="breadcrumb-item active">Ampliar</li>
@@ -33,7 +33,7 @@
 
 
 
-                                        <input name="order" type="hidden" value="{{ $order->slack }}">
+                                        <input name="order" type="hidden" value="{{ $order->uid }}">
 
 
                                         <div class="form-group-attached">

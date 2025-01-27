@@ -50,7 +50,7 @@
                             {{ csrf_field() }}
 
                             <input type="hidden" id="id" name="id" value="{{ $user->id }}">
-                            <input type="hidden" id="slack" name="slack" value="{{ $user->slack }}">
+                            <input type="hidden" id="slack" name="slack" value="{{ $user->uid }}">
                             <input type="hidden" id="edit" name="edit" value="true">
 
                             <div class="col-12 ">
@@ -144,7 +144,7 @@
                             {{ csrf_field() }}
 
                             <input type="hidden" id="id" name="id" value="{{ $user->id }}">
-                            <input type="hidden" id="slack" name="slack" value="{{ $user->slack }}">
+                            <input type="hidden" id="slack" name="slack" value="{{ $user->uid }}">
                             <input type="hidden" id="edit" name="edit" value="true">
 
                             <div class="col-12 ">
@@ -584,7 +584,7 @@
                     formData.append('role', role);
 
                     $.ajax({
-                        url: "{{ route('support.users.information') }}",
+                        url: "{{ route('callcenter.users.information') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -603,7 +603,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('support.users') }}";
+                                    window.location.href = "{{ route('callcenter.users') }}";
                                 }, 2000);
 
                             }else{
@@ -658,7 +658,7 @@
                     formData.append('cookies_notification', cookies_notification);
 
                     $.ajax({
-                        url: "{{ route('support.users.notification') }}",
+                        url: "{{ route('callcenter.users.notification') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -677,7 +677,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('support.users') }}";
+                                    window.location.href = "{{ route('callcenter.users') }}";
                                 }, 2000);
 
                             }else{
@@ -739,7 +739,7 @@
                     formData.append('password_confirmation', password_confirmation);
 
                     $.ajax({
-                        url: "{{ route('support.users.resetpassword') }}",
+                        url: "{{ route('callcenter.users.resetpassword') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -782,7 +782,7 @@
                 var slack = $("#slack").val();
 
                 $.ajax({
-                    url: "{{ route('support.users.forgotpassword') }}",
+                    url: "{{ route('callcenter.users.forgotpassword') }}",
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },

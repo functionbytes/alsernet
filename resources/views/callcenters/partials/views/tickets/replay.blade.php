@@ -1,7 +1,7 @@
 
 @if ($allowreply)
     @if ($ticket->status->slug != 'closed' && $ticket->status->slug != 'suspend' )
-       
+
             <div class="card">
                     <form id="formrReplay" enctype="multipart/form-data" role="form" onSubmit="return false">
                         @csrf
@@ -10,27 +10,30 @@
 
                         <div class="card-body">
                             <h4 class="mb-4 fw-semibold">Respuesta</h4>
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Respuesta</label>
-                                    <div class="input-group">
-                                        {!! Form::select('canned', $canneds, null , ['class' => 'select2 form-control','id' => 'canneds'])
-                                        !!}
-                                    </div>
-                                    <label id="canned-error" class="error d-none" for="canned"></label>
-                                </div>
-                            </div>
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Estado</label>
-                                    <div class="input-group">
-                                        {!! Form::select('status', $status, null , ['class' => 'select2 form-control','id' => 'status'])
-                                        !!}
-                                    </div>
-                                    <label id="status-error" class="error d-none" for="status"></label>
+                                    <label for="canned" class="control-label col-form-label">Categorias</label>
+                                    <select class="form-control select2" id="canned" name="canned">
+                                        @foreach($canneds as $id => $name)
+                                            <option value="{{ $id }}" >{{ $name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
+
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="status" class="control-label col-form-label">Estado</label>
+                                    <select class="form-control select2" id="status" name="status">
+                                        @foreach($status as $id => $name)
+                                            <option value="{{ $id }}" >{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
 
                             <div class="col-12">
                                 <div class="mb-3">
@@ -69,7 +72,7 @@
         if(hold != null){
             hold.addEventListener('click',(e)=>{
             if( status == false){
-            
+
             }
         }, false)
 
@@ -155,10 +158,10 @@
             });
         });
 
-   
+
 
       var toolbarOptions = [
-        ['bold', 'italic', 'underline', 'strike'], 
+        ['bold', 'italic', 'underline', 'strike'],
         ['blockquote', 'code-block'],
         [{
         'header': 1
@@ -179,7 +182,7 @@
         'indent': '-1'
         }, {
         'indent': '+1'
-        }], 
+        }],
         [{
         'direction': 'rtl'
         }],
@@ -203,8 +206,8 @@
         }],
         ['clean']
       ];
-      
-     
+
+
       var toolbarOption = [
       ['clean']
       ];
@@ -218,14 +221,14 @@
             status = true;
 
         }else if(value == 6){
-            
+
         }else if(value == 9){2
-        
+
         }
-    
+
     });
 
-      
+
       var comment = new Quill('#comments', {
         modules: {
             toolbar: toolbarOption,
@@ -236,8 +239,8 @@
         placeholder: 'Escriba aquí...',
         theme: 'snow'
       });
-      
-     
+
+
       comment.on('selection-change', function (range, oldRange, source) {
         if (range === null && oldRange !== null) {
             $('body').removeClass('overlay-disabled');
@@ -245,7 +248,7 @@
             $('body').addClass('overlay-disabled');
         }
       });
-      
+
       comment.on('text-change', function (delta, oldDelta, source) {
          var text = comment.container.firstChild.innerHTML.replaceAll("<p><br></p>", "");
         $('#comment').val(text);

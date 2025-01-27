@@ -11,7 +11,7 @@
 
                     {{ csrf_field() }}
 
-                    <input type="hidden" id="slack" name="slack" value="{{ $user->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $user->uid }}">
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
@@ -101,7 +101,7 @@
                     $submitButton.prop('disabled', true);
 
                     $.ajax({
-                        url: "{{ route('support.enterprises.users.reassign.single') }}",
+                        url: "{{ route('callcenter.enterprises.users.reassign.single') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -123,7 +123,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('support.enterprises.users', ':slack') }}".replace(':slack', slack);
+                                    window.location.href = "{{ route('callcenter.enterprises.users', ':slack') }}".replace(':slack', slack);
                                 }, 2000);
 
                             }else{

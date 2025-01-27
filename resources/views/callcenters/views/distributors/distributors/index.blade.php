@@ -33,7 +33,7 @@
                 </button>
               </div>
               <div class="col-auto">
-                <a href=" {{ route('support.distributors.create') }}" class="btn btn-primary">
+                <a href=" {{ route('callcenter.distributors.create') }}" class="btn btn-primary">
                   <i class="fa-duotone fa-plus"></i>
                 </a>
               </div>
@@ -77,13 +77,13 @@
                   </a>
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.navegation', $distributor->slack) }}">Dashboard</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.navegation', $distributor->uid) }}">Dashboard</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.distributors.edit', $distributor->slack) }}">Editar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.distributors.edit', $distributor->uid) }}">Editar</a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.distributors.destroy', $distributor->slack) }}">Eliminar</a>
+                      <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.distributors.destroy', $distributor->uid) }}">Eliminar</a>
                     </li>
                   </ul>
                 </div>

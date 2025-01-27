@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $categorie->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $categorie->slack }}">
+          <input type="hidden" id="slack" name="slack" value="{{ $categorie->uid }}">
 
           <div class="card-body border-top">
             <div class="d-flex no-block align-items-center">
@@ -32,32 +32,36 @@
                   </div>
               </div>
 
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, $categorie->available , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                  <label id="available-error" class="error d-none" for="available"></label>
-                </div>
-              </div>
 
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Prioridad</label>
-                  <div class="input-group">
-                    {!! Form::select('prioritie', $priorities, $categorie->priority_id  , ['class' => 'select2 form-control' ,'name' => 'prioritie', 'id' => 'prioritie' ]) !!}
-                  </div>
-                  <label id="prioritie-error" class="error d-none" for="prioritie"></label>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" {{ $categorie->available == 1 ? 'selected' : '' }}>Público</option>
+                            <option value="0" {{ $categorie->available == 0 ? 'selected' : '' }}>Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
+
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="prioritie" class="control-label col-form-label">Prioridad</label>
+                        <select class="form-control select2" id="prioritie" name="prioritie">
+                            @foreach($priorities as $id => $name)
+                                <option value="{{ $id }}" {{ $categorie->priority_id == $id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border-top pt-1 mt-4">
+                         <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                                Guardar
+                         </button>
+                     </div>
+                </div>
+
             </div>
           </div>
 

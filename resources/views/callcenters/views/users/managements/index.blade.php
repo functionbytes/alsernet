@@ -6,7 +6,7 @@
 
         <div class="row justify-content-center navegation-content">
             <div class="col-lg-12 text-center">
-                <span class="fw-bolder text-uppercase fs-2 d-block mb-1">CURSO {{ $inscription->slack }}</span>
+                <span class="fw-bolder text-uppercase fs-2 d-block mb-1">CURSO {{ $inscription->uid }}</span>
                 <h3 class="fw-bolder mb-0 fs-8 lh-base">{{ $course->title }}</h3>
             </div>
         </div>
@@ -14,7 +14,7 @@
 
         <div class="row justify-content-center mt--20">
             <div class="col-sm-6 col-lg-4">
-                <a class="card" href="{{ route('support.enterprises.users.managements.progress.view', $inscription->slack) }}">
+                <a class="card" href="{{ route('callcenter.enterprises.users.managements.progress.view', $inscription->uid) }}">
                     <div class="card-body text-center">
                         <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                         <div class="my-4">
@@ -25,7 +25,7 @@
                 </a>
             </div>
             <div class="col-sm-6 col-lg-4">
-                <a class="card" href="{{ route('support.enterprises.users.managements.quiz.view', $inscription->slack) }}">
+                <a class="card" href="{{ route('callcenter.enterprises.users.managements.quiz.view', $inscription->uid) }}">
                     <div class="card-body text-center">
                         <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                         <div class="my-4">
@@ -36,7 +36,7 @@
                 </a>
             </div>
             <div class="col-sm-6 col-lg-4">
-                <a class="card" href="{{ route('support.enterprises.users.managements.exam.view', $inscription->slack) }}">
+                <a class="card" href="{{ route('callcenter.enterprises.users.managements.exam.view', $inscription->uid) }}">
                     <div class="card-body text-center">
                         <span class="fw-bolder text-uppercase fs-2 d-block mb-7">Opción</span>
                         <div class="my-4">

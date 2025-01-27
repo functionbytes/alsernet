@@ -36,12 +36,12 @@
                                             </button>
                                         </div>
                                         <div class="col-auto">
-                                            <a href=" {{ route('manager.shops.locations.create' , $shop->slack) }}" class="btn btn-primary">
+                                            <a href=" {{ route('manager.shops.locations.create' , $shop->uid) }}" class="btn btn-primary">
                                                 <i class="fa-duotone fa-plus"></i>
                                             </a>
                                         </div>
                                        <div class="col-auto">
-                                            <a href=" {{ route('manager.shops.locations.exists' , $shop->slack) }}" class="btn btn-primary">
+                                            <a href=" {{ route('manager.shops.locations.exists' , $shop->uid) }}" class="btn btn-primary">
                                                 <i class="fa-duotone fa-barcode"></i>
                                             </a>
                                         </div>
@@ -85,24 +85,24 @@
 
 
                                                     <li>
-                                                        <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.shops.locations.history',  $location->slack) }}">
+                                                        <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.shops.locations.history',  $location->uid) }}">
                                                             Historico
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.shops.locations.edit',  $location->slack) }}">
+                                                        <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.shops.locations.edit',  $location->uid) }}">
                                                             Editar
                                                         </a>
                                                     </li>
 
 
 
-                                                    <li><a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="{{ route('manager.shops.locations.destroy',  $location->slack) }}" data-slack="{{ $location->slack }}" >
+                                                    <li><a class="dropdown-item h-modal-delete" data-modal="delete-modal" data-href="{{ route('manager.shops.locations.destroy',  $location->uid) }}" data-slack="{{ $location->uid }}" >
                                                                 Eliminar
                                                     </a>
                                                     </li>
 
-                                                    
+
                                                 </ul>
                                             </div>
                                         </td>

@@ -19,6 +19,16 @@ class TicketComment extends Model implements HasMedia
         'ticket_id', 'user_id', 'comment', 'image','cust_id','display'
     ];
 
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
     public function ticket(): BelongsTo
     {
     return $this->belongsTo('App\Models\Ticket');

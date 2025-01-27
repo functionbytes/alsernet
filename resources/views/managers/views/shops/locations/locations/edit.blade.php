@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $location->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $location->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $location->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">
@@ -214,7 +214,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('manager.shops.locations' , $shop->slack ) }}";
+                                    window.location.href = "{{ route('manager.shops.locations' , $shop->uid ) }}";
                                 }, 2000);
 
                             }else{

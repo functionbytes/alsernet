@@ -17,10 +17,10 @@
 
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item">
-                                    <a href="{{ route('support.dashboard') }}">Dashboard</a>
+                                    <a href="{{ route('callcenter.dashboard') }}">Dashboard</a>
                                 </li>
                                 <li class="breadcrumb-item">
-                                    <a href="{{ route('support.users') }}">Usuarios</a>
+                                    <a href="{{ route('callcenter.users') }}">Usuarios</a>
                                 </li>
                                 <li class="breadcrumb-item active">Reporte
                                 </li>

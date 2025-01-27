@@ -16,4 +16,14 @@ class TicketMail extends Model
         'ccemails',
     ];
 
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
 }

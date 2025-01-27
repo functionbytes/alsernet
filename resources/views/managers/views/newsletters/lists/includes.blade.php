@@ -10,7 +10,7 @@
                 <form id="formIncludes" enctype="multipart/form-data" role="form" onSubmit="return false">
 
 
-                    <input type="hidden" id="list"  name="list" value="{{ $list->slack }}">
+                    <input type="hidden" id="list"  name="list" value="{{ $list->uid }}">
 
                     {{ csrf_field() }}
 
@@ -120,7 +120,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('manager.newsletters.lists.details' ,$list->slack) }}";
+                                    window.location.href = "{{ route('manager.newsletters.lists.details' ,$list->uid) }}";
                                 }, 2000);
 
                             }else{

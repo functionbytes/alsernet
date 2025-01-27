@@ -11,7 +11,7 @@
 
           {{ csrf_field() }}
 
-          <input type="hidden" id="slack" name="slack" value="{{ $distributor->slack }}">
+          <input type="hidden" id="slack" name="slack" value="{{ $distributor->uid }}">
 
 
           <div class="card-body border-top">
@@ -239,7 +239,7 @@
           $submitButton.prop('disabled', true);
 
           $.ajax({
-            url: "{{ route('support.distributors.update') }}",
+            url: "{{ route('callcenter.distributors.update') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -261,7 +261,7 @@
                 });
 
                 setTimeout(function() {
-                  window.location.href = "{{ route('support.distributors') }}";
+                  window.location.href = "{{ route('callcenter.distributors') }}";
                 }, 2000);
 
               }else{

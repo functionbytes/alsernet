@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $shop->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $shop->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $shop->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">

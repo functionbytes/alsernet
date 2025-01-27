@@ -9,7 +9,7 @@ class GroupCategorie extends Model
 {
     use HasFactory;
 
-    protected $table = 'groups_categories';
+    protected $table = 'ticket_groups_categories';
 
     protected $fillable = [
         'group_id',

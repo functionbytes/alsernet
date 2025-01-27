@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $group->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $group->slack }}">
+          <input type="hidden" id="slack" name="slack" value="{{ $group->uid }}">
 
           <div class="card-body border-top">
             <div class="d-flex no-block align-items-center">
@@ -25,7 +25,7 @@
 
             <div class="row">
 
-              <div class="col-6">
+              <div class="col-12">
                 <div class="mb-3">
                   <div class="mb-3">
                     <label  class="control-label col-form-label">Titulo</label>
@@ -35,41 +35,47 @@
               </div>
 
 
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, $group->available , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                  <label id="available-error" class="error d-none" for="available"></label>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" {{ $group->available == 1 ? 'selected' : '' }}>Público</option>
+                            <option value="0" {{ $group->available == 0 ? 'selected' : '' }}>Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
 
-              <div class="col-12">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Usuarios</label>
-                  <div class="input-group">
-                    {!! Form::select('users[]', $users, $group->users, ['class' => 'select2 form-control'  , 'multiple' => 'multiple' , 'id' => 'users']) !!}
-                  </div>
-                  <label id="users-error" class="error d-none" for="users"></label>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="prioritie" class="control-label col-form-label">Categorias</label>
+                        <select class="form-control select2" id="prioritie" name="prioritie">
+                            @foreach($categories as $id => $name)
+                                <option value="{{ $id }}" {{ $group->categorie_id == $id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-              </div>
-              <div class="col-12">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Categorias</label>
-                  <div class="input-group">
-                    {!! Form::select('categories[]', $categories, $group->categories, ['class' => 'select2 form-control'  , 'multiple' => 'multiple' , 'id' => 'categories']) !!}
-                  </div>
-                  <label id="categories-error" class="error d-none" for="categories"></label>
+
+
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="users" class="control-label col-form-label">Usuarios</label>
+                        <select class="form-control select2" id="users" name="users[]" multiple="multiple">
+                            @foreach($users as $id => $name)
+                                <option value="{{ $id }}" {{ in_array($id, $group->users->pluck('id')->toArray()) ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <label id="users-error" class="error d-none" for="users"></label>
+                    </div>
                 </div>
-              </div>
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
+
+                <div class="col-12">
+                    <div class="border-top pt-1 mt-4">
+                       <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                             Guardar
+                       </button>
+                    </div>
+                </div>
 
             </div>
           </div>

@@ -171,7 +171,7 @@
           $submitButton.prop('disabled', true);
 
           $.ajax({
-            url: "{{ route('support.enterprises.store') }}",
+            url: "{{ route('callcenter.enterprises.store') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -192,7 +192,7 @@
                       });
 
                       setTimeout(function() {
-                          window.location.href = "{{ route('support.enterprises') }}";
+                          window.location.href = "{{ route('callcenter.enterprises') }}";
                       }, 4000);
 
                   }else{

@@ -5,7 +5,7 @@
   @include('managers.includes.card', ['title' => 'Categorias'])
 
   <div class="widget-content searchable-container list">
-    
+
     <div class="card card-body">
       <div class="row">
         <div class="col-md-12 col-xl-12">
@@ -75,10 +75,10 @@
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.faqs.categories.edit', $categorie->slack) }}">Editar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.faqs.categories.edit', $categorie->uid) }}">Editar</a>
                         </li>
                         <li>
-                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.faqs.categories.destroy', $categorie->slack) }}">Eliminar</a>
+                          <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.faqs.categories.destroy', $categorie->uid) }}">Eliminar</a>
                         </li>
                       </ul>
                     </div>

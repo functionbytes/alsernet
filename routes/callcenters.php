@@ -43,15 +43,15 @@ Route::group(['prefix' => 'callcenter', 'middleware' => ['auth', 'roles:callcent
         Route::get('/create', [FaqsController::class, 'create'])->name('callcenter.faqs.create');
         Route::post('/store', [FaqsController::class, 'store'])->name('callcenter.faqs.store');
         Route::post('/update', [FaqsController::class, 'update'])->name('callcenter.faqs.update');
-        Route::get('/edit/{slack}', [FaqsController::class, 'edit'])->name('callcenter.faqs.edit');
-        Route::get('/destroy/{slack}', [FaqsController::class, 'destroy'])->name('callcenter.faqs.destroy');
+        Route::get('/edit/{uid}', [FaqsController::class, 'edit'])->name('callcenter.faqs.edit');
+        Route::get('/destroy/{uid}', [FaqsController::class, 'destroy'])->name('callcenter.faqs.destroy');
 
         Route::get('/categories', [FaqsCategoriesController::class, 'index'])->name('callcenter.faqs.categories');
         Route::get('/categories/create', [FaqsCategoriesController::class, 'create'])->name('callcenter.faqs.categories.create');
         Route::post('/categories/store', [FaqsCategoriesController::class, 'store'])->name('callcenter.faqs.categories.store');
         Route::post('/categories/update', [FaqsCategoriesController::class, 'update'])->name('callcenter.faqs.categories.update');
-        Route::get('/categories/edit/{slack}', [FaqsCategoriesController::class, 'edit'])->name('callcenter.faqs.categories.edit');
-        Route::get('/categories/destroy/{slack}', [FaqsCategoriesController::class, 'destroy'])->name('callcenter.faqs.categories.destroy');
+        Route::get('/categories/edit/{uid}', [FaqsCategoriesController::class, 'edit'])->name('callcenter.faqs.categories.edit');
+        Route::get('/categories/destroy/{uid}', [FaqsCategoriesController::class, 'destroy'])->name('callcenter.faqs.categories.destroy');
 
     });
 
@@ -61,34 +61,38 @@ Route::group(['prefix' => 'callcenter', 'middleware' => ['auth', 'roles:callcent
         Route::get('/create', [TicketsController::class, 'create'])->name('callcenter.tickets.create');
         Route::post('/store', [TicketsController::class, 'store'])->name('callcenter.tickets.store');
         Route::post('/update', [TicketsController::class, 'update'])->name('callcenter.tickets.update');
-        Route::get('/edit/{slack}', [TicketsController::class, 'edit'])->name('callcenter.tickets.edit');
-        Route::get('/view/{slack}', [TicketsController::class, 'view'])->name('callcenter.tickets.view');
+        Route::get('/edit/{uid}', [TicketsController::class, 'edit'])->name('callcenter.tickets.edit');
+        Route::get('/view/{uid}', [TicketsController::class, 'view'])->name('callcenter.tickets.view');
 
-        Route::delete('/destroy/{slack}', [TicketsController::class, 'destroy'])->name('callcenter.tickets.destroy');
-        Route::post('/reopen/{slack}', [CommentsController::class, 'reopenticket'])->name('callcenter.tickets.reopen');
-        Route::get('/previous/{slack}', [TicketsController::class, 'previous'])->name('callcenter.tickets.previous');
+        Route::delete('/destroy/{uid}', [TicketsController::class, 'destroy'])->name('callcenter.tickets.destroy');
+        Route::post('/reopen/{uid}', [CommentsController::class, 'reopenticket'])->name('callcenter.tickets.reopen');
+        Route::get('/previous/{uid}', [TicketsController::class, 'previous'])->name('callcenter.tickets.previous');
 
-        Route::post('/image/upload/{slack}', [TicketsController::class, 'storeMedia'])->name('callcenter.tickets.image.store');
+        Route::post('/image/upload/{uid}', [TicketsController::class, 'storeMedia'])->name('callcenter.tickets.image.store');
         Route::post('/image/upload', [TicketsController::class, 'guestmedia'])->name('callcenter.tickets.image.upload');
 
         Route::post('/priority/change', [TicketsController::class, 'changepriority'])->name('callcenter.tickets.change.priority');
 
         Route::post('/note/create', [TicketsController::class, 'note'])->name('callcenter.tickets.note.create');
-        Route::delete('/note/{slack}', [TicketsController::class, 'notedestroy'])->name('callcenter.tickets.note.destroy');
+        Route::delete('/note/{uid}', [TicketsController::class, 'notedestroy'])->name('callcenter.tickets.note.destroy');
 
-        Route::get('/comment/{slack}', [CommentsController::class, 'view'])->name('callcenter.tickets.comments');
-        Route::post('/comment/post/{slack}', [CommentsController::class, 'postComment'])->name('callcenter.tickets.comments.post');
-        Route::post('/comment/edit/{slack}', [CommentsController::class, 'updateedit'])->name('callcenter.tickets.comments.edit');
-        Route::get('/comment/delete/{slack}', [CommentsController::class, 'deletecomment'])->name('callcenter.tickets.comments.delete');
-        Route::delete('/comment/image/upload/{slack}', [CommentsController::class, 'imagedestroy'])->name('callcenter.tickets.image.destroy');
+        Route::get('/comment/{uid}', [CommentsController::class, 'view'])->name('callcenter.tickets.comments');
+        Route::post('/comment/post/{uid}', [CommentsController::class, 'postComment'])->name('callcenter.tickets.comments.post');
+        Route::post('/comment/edit/{uid}', [CommentsController::class, 'updateedit'])->name('callcenter.tickets.comments.edit');
+        Route::get('/comment/delete/{uid}', [CommentsController::class, 'deletecomment'])->name('callcenter.tickets.comments.delete');
+        Route::delete('/comment/image/upload/{uid}', [CommentsController::class, 'imagedestroy'])->name('callcenter.tickets.image.destroy');
+
+        Route::post('/selfassign', [TicketsController::class, 'selfassign'])->name('callcenter.tickets.selfassign');
+        Route::post('/ticketassigneds', [TicketsController::class, 'ticketassigneds'])->name('callcenter.tickets.ticketassigneds');
+        Route::post('/ticketunassigns', [TicketsController::class, 'ticketunassigns'])->name('callcenter.tickets.ticketunassigns');
 
         Route::post('/assigned', [TicketsController::class, 'create'])->name('callcenter.tickets.assigned');
-        Route::get('/assigned/{slack}', [TicketsController::class, 'edit'])->name('callcenter.tickets.assigned.view');
-        Route::get('/assigned/edit/{slack}', [TicketsController::class, 'view'])->name('callcenter.tickets.assigned.edit');
+        Route::get('/assigned/{uid}', [TicketsController::class, 'edit'])->name('callcenter.tickets.assigned.view');
+        Route::get('/assigned/edit/{uid}', [TicketsController::class, 'view'])->name('callcenter.tickets.assigned.edit');
 
         Route::post('/notes/store', [TicketsController::class, 'notestore'])->name('callcenter.tickets.notes.store');
-        Route::get('/notes/show/{slack}', [TicketsController::class, 'noteshow'])->name('callcenter.tickets.notes.show');
-        Route::get('/notes/delete/{slack}', [TicketsController::class, 'notedelete'])->name('callcenter.tickets.notes.delete');
+        Route::get('/notes/show/{uid}', [TicketsController::class, 'noteshow'])->name('callcenter.tickets.notes.show');
+        Route::get('/notes/delete/{uid}', [TicketsController::class, 'notedelete'])->name('callcenter.tickets.notes.delete');
 
         Route::post('/employeesreplyingremove', 'AdminTicketController@employeesreplyingremove')->name('employeesreplyingremove');
         Route::post('/employeesreplyingstore', 'AdminTicketController@employeesreplyingstore')->name('employeesreplyingstore');
@@ -115,14 +119,14 @@ Route::group(['prefix' => 'callcenter', 'middleware' => ['auth', 'roles:callcent
         Route::get('/suspends', [TrashedsController::class, 'mysuspendtickets'])->name('callcenter.tickets.history.suspendss');
 
         Route::get('/trasheds', [TrashedsController::class, 'tickettrashed'])->name('callcenter.tickets.trasheds');
-        Route::get('/trasheds/view/{slack}', [TrashedsController::class, 'tickettrashedview'])->name('callcenter.tickets.trasheds.view');
-        Route::post('/trasheds/restore/{slack}', [TrashedsController::class, 'tickettrashedrestore'])->name('callcenter.tickets.trasheds.restore');
-        Route::delete('/trasheds/destroy/{slack}', [TrashedsController::class, 'tickettrasheddestroy'])->name('callcenter.tickets.trasheds.destroy');
+        Route::get('/trasheds/view/{uid}', [TrashedsController::class, 'tickettrashedview'])->name('callcenter.tickets.trasheds.view');
+        Route::post('/trasheds/restore/{uid}', [TrashedsController::class, 'tickettrashedrestore'])->name('callcenter.tickets.trasheds.restore');
+        Route::delete('/trasheds/destroy/{uid}', [TrashedsController::class, 'tickettrasheddestroy'])->name('callcenter.tickets.trasheds.destroy');
         Route::post('/trasheds/restore/all', [TrashedsController::class, 'alltrashedticketrestore'])->name('callcenter.tickets.trasheds.restore.all');
         Route::post('/trasheds/destroy/all', [TrashedsController::class, 'alltrashedticketdelete'])->name('callcenter.tickets.trasheds.destroy.all');
 
-        Route::get('/history/{slack}', [TrashedsController::class, 'tickethistory'])->name('callcenter.tickets.history');
-        Route::get('/history/users/{slack}', [TrashedsController::class, 'customerprevioustickets'])->name('callcenter.tickets.history.users');
+        Route::get('/history/{uid}', [TrashedsController::class, 'tickethistory'])->name('callcenter.tickets.history');
+        Route::get('/history/users/{uid}', [TrashedsController::class, 'customerprevioustickets'])->name('callcenter.tickets.history.users');
 
     });
 

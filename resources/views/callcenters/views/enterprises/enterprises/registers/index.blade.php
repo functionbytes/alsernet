@@ -11,7 +11,7 @@
 
                     {{ csrf_field() }}
 
-                    <input id="distributor" name="distributor" type="hidden" value="{{ $distributor->slack }}">
+                    <input id="distributor" name="distributor" type="hidden" value="{{ $distributor->uid }}">
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
@@ -331,7 +331,7 @@
                 formData.append('enterprise', enterprise);
 
                 $.ajax({
-                    url: "{{ route('support.registers.store') }}",
+                    url: "{{ route('callcenter.registers.store') }}",
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
@@ -345,8 +345,8 @@
 
                             enterprise = response.success;
 
-                            var urlEnterprises =  "{{ route('support.enterprises.users', ':slack') }}".replace(':slack', enterprise);
-                            var url =  "{{ route('support.enterprises.users', ':slack') }}".replace(':slack', enterprise);
+                            var urlEnterprises =  "{{ route('callcenter.enterprises.users', ':slack') }}".replace(':slack', enterprise);
+                            var url =  "{{ route('callcenter.enterprises.users', ':slack') }}".replace(':slack', enterprise);
 
                             $("#firstname").val('');
                             $("#lastname").val('');

@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $location->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $location->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $location->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">
@@ -27,7 +27,7 @@
 
                         <div class="row">
 
-                           
+
                             <div class="col-12">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Estado</label>
@@ -72,7 +72,7 @@
 
         $(document).ready(function() {
 
-         
+
             $("#formLocations").validate({
                 submit: false,
                 ignore: ".ignore",
@@ -93,7 +93,7 @@
                     var formData = new FormData($form[0]);
                     var slack = $("#slack").val();
                     var available = $("#available").val();
-                    
+
 
                     formData.append('slack', slack);
                     formData.append('available', available);

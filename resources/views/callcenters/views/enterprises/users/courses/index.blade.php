@@ -58,13 +58,13 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.users.managements', $inscription->slack) }}">Gestionar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.users.managements', $inscription->uid) }}">Gestionar</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.courses.details', $inscription->slack) }}">Detalle</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.courses.details', $inscription->uid) }}">Detalle</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.enterprises.courses.progress', $inscription->slack) }}">Progreso</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.enterprises.courses.progress', $inscription->uid) }}">Progreso</a>
                                         </li>
                                     </ul>
                                 </div>

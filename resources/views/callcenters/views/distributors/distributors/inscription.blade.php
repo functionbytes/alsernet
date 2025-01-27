@@ -12,7 +12,7 @@
                 {{ csrf_field() }}
 
 
-                <input id="enterprise" name="enterprise" type="hidden" value="{{ $enterprise->slack }}">
+                <input id="enterprise" name="enterprise" type="hidden" value="{{ $enterprise->uid }}">
 
                 <div class="card-body border-top">
                     <div class="d-flex no-block align-items-center">
@@ -133,8 +133,8 @@
                                 });
 
                                 setTimeout(function() {
-                                    let slack = @json($enterprise->slack);
-                                    window.location.href = "{{ route('support.distributors.navegation', ':slack') }}".replace(':slack', slack);
+                                    let slack = @json($enterprise->uid);
+                                    window.location.href = "{{ route('callcenter.distributors.navegation', ':slack') }}".replace(':slack', slack);
                                 }, 2000);
 
                             }else{

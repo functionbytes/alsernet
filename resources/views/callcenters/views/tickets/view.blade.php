@@ -2,7 +2,7 @@
 
 @section('content')
 
-    @include('customer.includes.card', ['title' => 'Detalle tikects '. $ticket->number])
+    @include('callcenters.includes.card', ['title' => 'Detalle tikect - '.  $ticket->reference])
 
 
     <div class="container-fluid">
@@ -30,25 +30,27 @@
                         </div>
                         <div class="card-body border-top p-4">
                             <div class="mb-3">
-                               {!! $ticket->subject !!}
+                               {!! $ticket->message !!}
                             </div>
                         </div>
                     </div>
 
 
-                @include ('supports.partials.views.tickets.replay')
+                @include ('callcenters.partials.views.tickets.replay')
 
-                @include ('supports.partials.views.tickets.comments')
+                @include ('callcenters.partials.views.tickets.comments')
 
             </div>
 
             <div class="col-lg-4">
 
-                @include ('supports.partials.views.tickets.details')
-                @include ('supports.partials.views.tickets.customer')
-                @include ('supports.partials.views.tickets.history')
-                @include ('supports.partials.views.tickets.notes')
+                @include ('callcenters.partials.views.tickets.details')
 
+                @include ('callcenters.partials.views.tickets.assign')
+
+                @include ('callcenters.partials.views.tickets.customer')
+                @include ('callcenters.partials.views.tickets.history')
+                @include ('callcenters.partials.views.tickets.notes')
 
                 <div class="card w-100">
                     <div class="card-body">
@@ -112,10 +114,10 @@
 
 @section('modal')
 
-    @include ('supports.partials.modals.tickets.assign')
-    @include ('supports.partials.modals.tickets.notes')
-    @include ('supports.partials.modals.tickets.priority')
-    @include ('supports.partials.modals.tickets.category')
+    @include ('callcenters.partials.modals.tickets.assign')
+    @include ('callcenters.partials.modals.tickets.notes')
+    @include ('callcenters.partials.modals.tickets.priority')
+    @include ('callcenters.partials.modals.tickets.category')
 
 @endsection
 
@@ -294,62 +296,6 @@ if(ticket_status == 'Closed'){
 }
 
 
-
-// Remove the assigned from the ticket
-$('body').on('click', '#btnremove', function () {
-	var asid = $(this).data("id");
-
-	swal({
-			title: `Are you sure you want to unassign this agent?`,
-			text: "This agent may no longer exist for this ticket.",
-			icon: "warning",
-			buttons: true,
-			dangerMode: true,
-		})
-		.then((willDelete) => {
-		if (willDelete) {
-
-			$.ajax({
-				type: "get",
-				url: SITEURL + "/admin/assigned/update/"+asid,
-				success: function (data) {
-				toastr.success(data.success);
-				location.reload();
-
-				},
-				error: function (data) {
-				console.log('Error:', data);
-				}
-				});
-
-		}
-	});
-
-
-
-});
-
-// Reopen the ticket
-$('body').on('click', '#reopen', function(){
-	var reopenid = $(this).data('id');
-	$.ajax({
-		type:'POST',
-		url: SITEURL + "/admin/ticket/reopen/" + reopenid,
-		data: {
-			reopenid:reopenid
-		},
-		success:function(data){
-			console.log(data);
-			toastr.success(data.success);
-			location.reload();
-
-		},
-		error:function(data){
-			toastr.error(data);
-		}
-	});
-
-});
 
 
 // delete note dunction
@@ -536,7 +482,7 @@ type: "get",
 url: SITEURL + "/admin/delete-ticket/"+_id,
 success: function (data) {
 toastr.success(data.success);
-location.replace('{{route('support.dashboard')}}');
+location.replace('{{route('callcenter.dashboard')}}');
 },
 error: function (data) {
 console.log('Error:', data);

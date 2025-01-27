@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $status->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $status->slack }}">
+          <input type="hidden" id="uid" name="uid" value="{{ $status->uid }}">
 
           <div class="card-body border-top">
             <div class="d-flex no-block align-items-center">
@@ -38,24 +38,24 @@
                 </div>
               </div>
 
-              <div class="col-6">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, $status->available , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                  <label id="available-error" class="error d-none" for="available"></label>
+
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" {{ $status->available == 1 ? 'selected' : '' }}>Público</option>
+                            <option value="0" {{ $status->available == 0 ? 'selected' : '' }}>Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
 
-
+                <div class="col-12">
+                     <div class="border-top pt-1 mt-4">
+                         <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                               Guardar
+                         </button>
+                      </div>
+                </div>
 
             </div>
 
@@ -116,11 +116,13 @@
           var title = $("#title").val();
           var available = $("#available").val();
           var color = $("#color").val();
+          var uid = $("#uid").val();
 
           formData.append('id', id);
           formData.append('title', title);
           formData.append('available', available);
           formData.append('color', color);
+          formData.append('uid', uid);
 
 
             var $submitButton = $('button[type="submit"]');

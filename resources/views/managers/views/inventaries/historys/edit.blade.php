@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $item->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $item->slack }}">
+                    <input type="hidden" id="slack" name="slack" value="{{ $item->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">
@@ -185,7 +185,7 @@
                                 });
 
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('manager.inventaries.historys', $inventarie->slack) }}";
+                                    window.location.href = "{{ route('manager.inventaries.historys', $inventarie->uid) }}";
                                 }, 2000);
 
                             }else{

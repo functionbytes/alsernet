@@ -6,9 +6,9 @@
 @section('content')
     <div class="container-fluid note-has-grid inventaries-content">
 
-        <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->slack}}">
-        <input type="hidden" id="item" name="item"  value="{{$item->slack}}">
-        <input type="hidden" id="location" name="location"  value="{{$location->slack}}">
+        <input type="hidden" id="inventarie" name="inventarie"  value="{{$inventarie->uid}}">
+        <input type="hidden" id="item" name="item"  value="{{$item->uid}}">
+        <input type="hidden" id="location" name="location"  value="{{$location->uid}}">
 
         <div class="card w-100">
             <div class="card-body">
@@ -101,12 +101,12 @@
 
             // Handle product input
             $("#barcode").on('input', function() {
-                
+
                 let product = $(this).val();
                 let location = $("#location").val();
 
                 if (product !== '') {
-                    
+
                     if (product.startsWith('100')) {
 
                         product = product.slice(0, -1);
@@ -150,7 +150,7 @@
                                         errorSound.pause();
                                         errorSound.currentTime = 0; // Reiniciar el sonido a su inicio
                                     }, 400);
-                                    
+
                                 } else {
                                     $("#barcode").val('');
                                     $("#count").val('');

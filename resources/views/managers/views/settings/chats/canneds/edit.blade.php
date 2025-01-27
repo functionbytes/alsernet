@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $canned->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $canned->slack }}">
+          <input type="hidden" id="slack" name="slack" value="{{ $canned->uid }}">
           <textarea style="display: none"  id="description" name="description">{!! $canned->messages !!}</textarea>
 
           <div class="card-body border-top">
@@ -70,42 +70,42 @@
           <table class="table mt-3 table-borderless v-middle">
             <tbody>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;app_name&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre de la aplicación</strong></td>
               </tr>
               <tr>
-                
+
                 <td class="ps-0">&lcub;&lcub;site_url&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La URL del sitio</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_id&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El ID del billete</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_user&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del cliente que ha abierto el ticket.</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_title&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El título del ticket</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_priority&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La prioridad del ticket</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;user_reply&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del empleado que responde al ticket.</strong></td>
               </tr>
               <tr>
-                
+
                 <td class="ps-0">&lcub;&lcub;user_role&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El papel del empleado</strong></td>
               </tr>
@@ -189,7 +189,7 @@
 
       });
 var toolbarOptions = [
-['bold', 'italic', 'underline', 'strike'], 
+['bold', 'italic', 'underline', 'strike'],
 ['blockquote', 'code-block'],
 [{
 'header': 1
@@ -210,7 +210,7 @@ var toolbarOptions = [
 'indent': '-1'
 }, {
 'indent': '+1'
-}], 
+}],
 [{
 'direction': 'rtl'
 }],

@@ -1,6 +1,6 @@
 @extends('layouts.callcenters')
 @section('content')
-    @include('distributors.includes.card', ['title' => 'Detalle orden '. $order->slack])
+    @include('distributors.includes.card', ['title' => 'Detalle orden '. $order->uid])
     <div class="row">
         <div class="col-lg-12 ">
             <div class="checkout">
@@ -30,7 +30,7 @@
                                                             <p class="mt-0 mb-0">
                                                                 <span>Orden :</span>
 
-                                                                {{  $order->slack}}
+                                                                {{  $order->uid}}
                                                             </p>
                                                             <p class="mt-0 mb-0">
                                                                 <span>Fecha de la factura :</span>

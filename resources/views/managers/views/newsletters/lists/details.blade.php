@@ -26,7 +26,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href=" {{ route('manager.newsletters.lists.includes', $list->slack) }}" class="btn btn-primary">
+                                <a href=" {{ route('manager.newsletters.lists.includes', $list->uid) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -66,7 +66,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.edit', $item->slack) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.newsletters.edit', $item->uid) }}">
                                                 Editar
                                             </a>
                                         </li>

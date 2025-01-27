@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $categorie->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $categorie->slack }}">
+          <input type="hidden" id="slack" name="slack" value="{{ $categorie->uid }}">
 
           <div class="card-body border-top">
             <div class="d-flex no-block align-items-center">
@@ -131,7 +131,7 @@
 
 
             $.ajax({
-            url: "{{ route('support.instructions.categories.update') }}",
+            url: "{{ route('callcenter.instructions.categories.update') }}",
             headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -150,7 +150,7 @@
                       });
 
                       setTimeout(function() {
-                          window.location = "{{ route('support.instructions.categories') }}";
+                          window.location = "{{ route('callcenter.instructions.categories') }}";
                       }, 3000);
 
 

@@ -31,8 +31,8 @@ class Faq extends Model
     {
 
         return LogOptions::defaults()
-            ->logOnlyDirty() 
-            ->logFillable() 
+            ->logOnlyDirty()
+            ->logFillable()
             ->setDescriptionForEvent(fn(string $eventName) => "This model has been {$eventName}");
 
     }
@@ -55,15 +55,15 @@ class Faq extends Model
     {
         return $query->where('id' ,$id)->first();
     }
-    
-    public function scopeSlack($query ,$slack)
+
+    public function scopeUid($query ,$uid)
     {
-        return $query->where('slack', $slack)->first();
+        return $query->where('uid', $uid)->first();
     }
 
     public function categorie(): BelongsTo
     {
         return $this->belongsTo('App\Models\Faq\FaqCategorie','category_id','id');
     }
-    
+
 }

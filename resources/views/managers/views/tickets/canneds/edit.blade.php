@@ -12,7 +12,7 @@
           {{ csrf_field() }}
 
           <input type="hidden" id="id" name="id" value="{{ $canned->id }}">
-          <input type="hidden" id="slack" name="slack" value="{{ $canned->slack }}">
+          <input type="hidden" id="uid" name="uid" value="{{ $canned->uid }}">
           <textarea style="display: none"  id="description" name="description">{!! $canned->messages !!}</textarea>
 
           <div class="card-body border-top">
@@ -32,15 +32,15 @@
                     <input type="text" class="form-control" id="title"  name="title"  placeholder="Ingresa titulo" value=" {{ $canned->title  }}">
                   </div>
               </div>
-              <div class="col-12">
-                <div class="mb-3">
-                  <label class="control-label col-form-label">Estado</label>
-                  <div class="input-group">
-                    {!! Form::select('available', $availables, $canned->available , ['class' => 'select2 form-control' ,'name' => 'available', 'id' => 'available' ]) !!}
-                  </div>
-                  <label id="available-error" class="error d-none" for="available"></label>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="control-label col-form-label">Estado</label>
+                        <select class="form-control select2" id="available" name="available">
+                            <option value="1" {{ $canned->available == 1 ? 'selected' : '' }}>Público</option>
+                            <option value="0" {{ $canned->available == 0 ? 'selected' : '' }}>Oculto</option>
+                        </select>
+                    </div>
                 </div>
-              </div>
               <div class="col-12">
                 <label class="control-label col-form-label">Contenido</label>
                 <div class="">
@@ -48,14 +48,13 @@
                 </div>
                 <label id="description-error" class="error d-none" for="description"></label>
               </div>
-<div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
-                            </div>
-                        </div>
-
+              <div class="col-12">
+                   <div class="border-top pt-1 mt-4">
+                       <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                           Guardar
+                       </button>
+                   </div>
+              </div>
             </div>
 
           </div>
@@ -70,42 +69,42 @@
           <table class="table mt-3 table-borderless v-middle">
             <tbody>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;app_name&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre de la aplicación</strong></td>
               </tr>
               <tr>
-                
+
                 <td class="ps-0">&lcub;&lcub;site_url&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La URL del sitio</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_id&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El ID del billete</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_user&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del cliente que ha abierto el ticket.</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_title&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El título del ticket</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;ticket_priority&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>La prioridad del ticket</strong></td>
               </tr>
               <tr>
-               
+
                 <td class="ps-0">&lcub;&lcub;user_reply&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El nombre del empleado que responde al ticket.</strong></td>
               </tr>
               <tr>
-                
+
                 <td class="ps-0">&lcub;&lcub;user_role&rcub;&rcub;</td>
                 <td class="ps-0 text-end"><strong>El papel del empleado</strong></td>
               </tr>
@@ -164,12 +163,14 @@
           var id = $("#id").val();
           var title = $("#title").val();
           var available = $("#available").val();
-          var description = $("#description").val();
+          var description = $("#description").val()
+          var uid = $("#uid").val();
 
           formData.append('id', id);
           formData.append('title', title);
           formData.append('available', available);
           formData.append('description', description);
+          formData.append('uid', uid);
 
             var $submitButton = $('button[type="submit"]');
             $submitButton.prop('disabled', true);
@@ -222,9 +223,9 @@
         }
 
       });
-      
+
       var toolbarOptions = [
-      ['bold', 'italic', 'underline', 'strike'], 
+      ['bold', 'italic', 'underline', 'strike'],
       ['blockquote', 'code-block'],
       [{
       'header': 1
@@ -240,7 +241,7 @@
       'indent': '-1'
       }, {
       'indent': '+1'
-      }], 
+      }],
       [{
       'direction': 'rtl'
       }],
@@ -262,7 +263,7 @@
       [{
       'align': []
       }],
-      
+
       ['clean']
       ];
 

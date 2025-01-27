@@ -65,10 +65,10 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('support.users.courses.postpone', $inscription->slack) }}">Gestionar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.users.courses.postpone', $inscription->uid) }}">Gestionar</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('support.users.courses.destroy', $inscription->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.users.courses.destroy', $inscription->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>

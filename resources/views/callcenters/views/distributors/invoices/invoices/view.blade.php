@@ -1,7 +1,7 @@
 @extends('layouts.callcenters')
 @section('content')
 
-    @include('distributors.includes.card', ['title' => 'Detalle Factura '. $invoice->slack])
+    @include('distributors.includes.card', ['title' => 'Detalle Factura '. $invoice->uid])
 
     <div class="row">
         <div class="col-lg-12 ">

@@ -18,5 +18,15 @@ class TicketHistory extends Model
         'ticketstatus',
     ];
 
-    
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
+
 }

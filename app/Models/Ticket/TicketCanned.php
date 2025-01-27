@@ -22,18 +22,26 @@ class TicketCanned extends Model implements HasMedia
         'title', 'messages', 'available'
     ];
 
-    public function scopeUid($query, $uid)
-{
-        return $query->where('uid', $uid)->first();
-}
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
 
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
+
+    public function scopeUid($query, $uid)
+    {
+            return $query->where('uid', $uid)->first();
+    }
 
     public function scopeAvailable($query)
     {
         return $query->where('available', 1);
     }
-
-
 
     public static function getDetailsList(){
 	    $return_object=array();
@@ -77,10 +85,10 @@ class TicketCanned extends Model implements HasMedia
 	}
 
 
-    public static function details($slack)
+    public static function details($uid)
     {
 
-        $ticket = Ticket::slack($slack);
+        $ticket = Ticket::uid($uid);
 
         if($ticket){
 
@@ -97,7 +105,6 @@ class TicketCanned extends Model implements HasMedia
                 $details["ticket_priority"]= $ticket->priority->slug;
                 $details["user_reply"]= $auth->name;
                 $details["user_role"]= $auth->role;
-
                 foreach ($cannedmessages as $msg){
                     $msg->messages=self::get_real_message($details, $msg->messages);
                     $response_object[$msg->id]=$msg;

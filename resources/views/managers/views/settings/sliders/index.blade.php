@@ -5,7 +5,7 @@
     @include('managers.includes.card', ['title' => 'Banners'])
 
     <div class="widget-content searchable-container list">
-        
+
         <div class="card card-body">
             <div class="row">
                 <div class="col-md-12 col-xl-12">
@@ -55,7 +55,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                   
+
                     @foreach ($sliders as $key => $slider)
                         <tr class="search-items">
 
@@ -78,10 +78,10 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.sliders.edit', $slider->slack) }}">Editar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.sliders.edit', $slider->uid) }}">Editar</a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.sliders.destroy', $slider->slack) }}">Eliminar</a>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.sliders.destroy', $slider->uid) }}">Eliminar</a>
                                         </li>
                                     </ul>
                                 </div>
