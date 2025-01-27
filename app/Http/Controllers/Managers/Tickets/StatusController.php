@@ -1,0 +1,125 @@
+<?php
+
+namespace App\Http\Controllers\Managers\Tickets;
+
+use App\Http\Controllers\Controller;
+use App\Models\Ticket\TicketStatus;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class StatusController extends Controller
+{
+
+    public function index(Request $request){
+
+            $searchKey = null ?? $request->search;
+            $available = null ?? $request->available;
+
+            $status = TicketStatus::descending();
+
+            if ($searchKey) {
+                $status = $status->where('title', 'like', '%' . $searchKey . '%');
+            }
+
+            if ($request->available != null) {
+                $status = $status->where('available', $available);
+            }
+
+            $status = $status->paginate(paginationNumber());
+
+            return view('managers.views.tickets.status.index')->with([
+                'status' => $status,
+                'available' => $available,
+                'searchKey' => $searchKey,
+            ]);
+
+    }
+
+    public function create(){
+
+        $availables = collect([
+            ['id' => '1', 'label' => 'Publico'],
+            ['id' => '0', 'label' => 'Oculto'],
+        ]);
+
+        $availables = $availables->pluck('label','id');
+
+        return view('managers.views.tickets.status.create')->with([
+            'availables' => $availables
+        ]);
+
+    }
+
+    public function view($slack){
+
+        $status = TicketStatus::uid($slack);
+
+        return view('managers.views.tickets.status.view')->with([
+            'categorie' => $status
+        ]);
+
+    }
+
+    public function edit($slack){
+
+        $status = TicketStatus::uid($slack);
+
+        $availables = collect([
+            ['id' => '1', 'label' => 'Publico'],
+            ['id' => '0', 'label' => 'Oculto'],
+        ]);
+
+        $availables = $availables->pluck('label','id');
+
+        return view('managers.views.tickets.status.edit')->with([
+            'status' => $status,
+            'availables' => $availables
+        ]);
+
+    }
+
+    public function update(Request $request){
+
+        $status = TicketStatus::uid($request->uid);
+        $status->title = $request->title;
+        $status->color = $request->color;
+        $status->slug  = Str::slug($request->title, '-');
+        $status->available = $request->available;
+        $status->update();
+
+        return response()->json([
+            'success' => true,
+            'slack' => $status->uid,
+            'message' => 'Se actualiza el estado correctamente',
+        ]);
+
+    }
+
+    public function store(Request $request){
+
+        $status = new TicketStatus;
+        $status->uid = $this->generate_uid('ticket_status');
+        $status->title = $request->title;
+        $status->color = $request->color;
+        $status->slug  = Str::slug($request->title, '-');
+        $status->available = $request->available;
+        $status->save();
+
+        return response()->json([
+            'success' => true,
+            'slack' => $status->uid,
+            'message' => 'Se creo el estado correctamente',
+        ]);
+
+    }
+
+    public function destroy($slack){
+
+        $status = TicketStatus::uid($slack);
+        $status->delete();
+
+        return redirect()->route('manager.tickets.status');
+
+    }
+
+}
