@@ -66,8 +66,8 @@
                                 <span class="usr-email-addr" data-email="{{ $user->email }}">{{ $user->email }}</span>
                             </td>
                             <td>
-                               <span class="badge {{ $user->role == 'manager' ? 'bg-light-primary' : 'bg-light-secondary' }} rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">
-                                       {{ $user->type()  }}
+                               <span class="badge bg-light-secondary rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">
+                                      {{ $user->getRoleNames()->first() ?? 'Sin rol' }}
                                </span>
                             </td>
 

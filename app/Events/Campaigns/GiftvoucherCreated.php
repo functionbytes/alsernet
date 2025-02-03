@@ -2,7 +2,7 @@
 
 namespace App\Events\Campaigns;
 
-use App\Models\Newsletter\Newsletter;
+use App\Models\Subscriber\Subscriber;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -14,7 +14,7 @@ class GiftvoucherCreated
 
     public $newsletter;
 
-    public function __construct(Newsletter $newsletter)
+    public function __construct(Subscriber $newsletter)
     {
         $this->newsletter = $newsletter;
     }

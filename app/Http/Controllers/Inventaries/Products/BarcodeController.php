@@ -9,7 +9,7 @@ use App\Models\Faq\FaqCategorie;
 use App\Models\Product\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Faq\Faq;
+use App\Models\Faq\Template;
 
 class BarcodeController extends Controller
 {

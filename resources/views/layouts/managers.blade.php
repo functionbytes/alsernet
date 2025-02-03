@@ -34,8 +34,16 @@
     <link rel="stylesheet" href="{{ url('managers/libs/daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ url('managers/css/style.css') }}">
 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
+
+   <link rel="stylesheet" href="{{ url('core/tooltipster/css/tooltipster.bundle.min.css') }}">
+   <link rel="stylesheet" href="{{ url('core/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-light.min.css') }}">
+    <link rel="stylesheet" href="{{ url('core/css/google-font-icon.css') }}">
+
 
     @stack('css')
+    @stack('scripts-head')
+
 
 </head>
 
@@ -72,9 +80,7 @@
 <script src="{{ url('managers/libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/simplebar/dist/simplebar.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}" type="text/javascript"></script>
-
-<!-- core files -->
-
+<script src="{{ url('core/tooltipster/js/tooltipster.bundle.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/taginput/bootstrap-tagsinput.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/select2/dist/js/select2.min.js') }}" type="text/javascript"></script>
@@ -91,12 +97,30 @@
 <script src="{{ url('managers/js/custom.js') }}" type="text/javascript"></script>
 
 
+<script src="{{ url('core/js/functions.js') }}" type="text/javascript"></script>
+
+<script src="{{ url('core/js/link.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/box.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/popup.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/sidebar.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/list.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/anotify.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/dialog.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/iframe_modal.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/search.js') }}" type="text/javascript"></script>
+<script src="{{ url('core/js/image_popup.js') }}" type="text/javascript"></script>
+
+<script src="{{ url('core/js/app.js') }}" type="text/javascript"></script>
+
 <script>
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
+    $(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        });
     });
+
 </script>
 
 <script>

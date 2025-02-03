@@ -35,26 +35,29 @@
                     </a>
                 </li>
 
+
                 <li class="sidebar-item">
-                    <a class="sidebar-link"  aria-expanded="false">
+                    <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
                           <span class="d-flex">
-                           <i class="fa-duotone fa-barcode"></i>
+                            <i class="fa-duotone fa-note"></i>
                           </span>
                         <span class="hide-menu">Suscriptiones</span>
                     </a>
+
+
                     <ul aria-expanded="false" class="collapse first-level">
                         <li class="sidebar-item">
-                            <a href="{{ route('manager.newsletters') }}" class="sidebar-link">
+                            <a href="{{ route('manager.subscribers') }}" class="sidebar-link">
                                 <span class="hide-menu">Suscriptiones </span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="{{ route('manager.newsletters.lists') }}" class="sidebar-link">
+                            <a href="{{ route('manager.subscribers.lists') }}" class="sidebar-link">
                                 <span class="hide-menu">Listas</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="{{ route('manager.newsletters.conditions') }}" class="sidebar-link">
+                            <a href="{{ route('manager.subscribers.conditions') }}" class="sidebar-link">
                                 <span class="hide-menu">Estados</span>
                             </a>
                         </li>
@@ -238,6 +241,26 @@
                                 <span class="hide-menu">Mantenimiento</span>
                             </a>
                         </li>
+
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.templates') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Plantillas campaña</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.layouts') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Plantilla correos</span>
+                            </a>
+                        </li>
+
+
                     </ul>
                 </li>
 

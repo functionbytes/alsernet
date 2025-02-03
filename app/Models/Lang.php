@@ -48,5 +48,55 @@ class Lang extends Model
         return $query->where('available', 1);
     }
 
+    public static function getSelectOptions()
+    {
+        $options = self::available()->get()->map(function ($item) {
+            return ['value' => $item->id, 'text' => $item->name];
+        });
+
+        // japan only en and ja
+        if (config('custom.japan')) {
+            $options = self::active()->get()->filter(function ($item) {
+                return in_array($item->code, ['en','ja']);
+            })->map(function ($item) {
+                return ['value' => $item->id, 'text' => $item->name];
+            });
+        }
+
+        return $options;
+    }
+
+    /**
+     * Search items.
+     *
+     * @return collect
+     */
+    public function scopeSearch($query, $keyword)
+    {
+        // Keyword
+        if (!empty(trim($keyword))) {
+            $keyword = trim($keyword);
+            foreach (explode(' ', $keyword) as $keyword) {
+                $query = $query->where(function ($q) use ($keyword) {
+                    $q->orwhere('languages.name', 'like', '%'.$keyword.'%')
+                        ->orwhere('languages.code', 'like', '%'.$keyword.'%')
+                        ->orwhere('languages.region_code', 'like', '%'.$keyword.'%');
+                });
+            }
+        }
+    }
+
+    public function getBuilderLang()
+    {
+        return include $this->languageDir() . DIRECTORY_SEPARATOR . 'builder.php';
+    }
+
+    public function languageDir()
+    {
+        return resource_path(join_paths('lang', $this->iso_code));
+    }
+
+
+
 
 }

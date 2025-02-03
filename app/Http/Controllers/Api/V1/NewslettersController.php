@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Events\Campaigns\GiftvoucherCreated;
 use App\Http\Resources\V1\NewsletterResource;
 use App\Models\Lang;
-use App\Models\Newsletter\Newsletter;
-use App\Models\Newsletter\NewsletterCategorie;
-use App\Models\Newsletter\NewsletterCondition;
+use App\Models\Subscriber\Subscriber;
+use App\Models\Subscriber\SubscriberCategorie;
+use App\Models\Subscriber\SubscriberCondition;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -63,7 +63,7 @@ class NewslettersController extends ApiController
     public function newsletterCampaigns($data)
     {
 
-        $item = Newsletter::checkWithBTree($data['email']);
+        $item = Subscriber::checkWithBTree($data['email']);
 
         if ($item["exists"]) {
             if (!$item["data"]->send) {
@@ -124,7 +124,7 @@ class NewslettersController extends ApiController
 
         $lang = Lang::iso($data['iso']);
         dd($lang);
-        $item = Newsletter::checkWithBTree($data['email']);
+        $item = Subscriber::checkWithBTree($data['email']);
         dd($item['exists']);
 
         if($item['exists']){
@@ -143,7 +143,7 @@ class NewslettersController extends ApiController
         }else{
 
 
-            $newsletter = new Newsletter;
+            $newsletter = new Subscriber;
             $newsletter->uid = $this->generate_uid('newsletters');
             $newsletter->firstname = Str::upper($request->firstname);
             $newsletter->lastname  =  Str::upper($request->lastname);
@@ -175,7 +175,7 @@ class NewslettersController extends ApiController
     {
 
 
-        $data = Newsletter::checkWithBTree($data['email']);
+        $data = Subscriber::checkWithBTree($data['email']);
 
         $newsletter = $data["data"];
         $newsletter->none = 1;
@@ -199,7 +199,7 @@ class NewslettersController extends ApiController
     public function newsletterCheckat($data)
     {
 
-        $data = Newsletter::checkWithBTree($data['email']);
+        $data = Subscriber::checkWithBTree($data['email']);
 
         if($data['exists']){
 
@@ -263,7 +263,7 @@ class NewslettersController extends ApiController
      */
     public function index()
     {
-        return NewsletterResource::collection(Newsletter::paginate());
+        return NewsletterResource::collection(Subscriber::paginate());
     }
 
     /**
@@ -273,7 +273,7 @@ class NewslettersController extends ApiController
      */
     public function store(StoreNewsletterRequest $request)
     {
-        $newsletter = Newsletter::create($request->validated());
+        $newsletter = Subscriber::create($request->validated());
 
         return new NewsletterResource($newsletter);
     }
@@ -283,7 +283,7 @@ class NewslettersController extends ApiController
      *
      * @group Managing Newsletters
      */
-    public function show(Newsletter $newsletter)
+    public function show(Subscriber $newsletter)
     {
         return new NewsletterResource($newsletter);
     }
@@ -293,7 +293,7 @@ class NewslettersController extends ApiController
      *
      * @group Managing Newsletters
      */
-    public function update(UpdateNewsletterRequest $request, Newsletter $newsletter)
+    public function update(UpdateNewsletterRequest $request, Subscriber $newsletter)
     {
         $newsletter->update($request->validated());
 
@@ -305,7 +305,7 @@ class NewslettersController extends ApiController
      *
      * @group Managing Newsletters
      */
-    public function destroy(Newsletter $newsletter)
+    public function destroy(Subscriber $newsletter)
     {
         $newsletter->delete();
 

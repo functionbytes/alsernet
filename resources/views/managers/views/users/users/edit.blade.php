@@ -12,7 +12,7 @@
                     {{ csrf_field() }}
 
                     <input type="hidden" id="id" name="id" value="{{ $user->id }}">
-                    <input type="hidden" id="slack" name="slack" value="{{ $user->uid }}">
+                    <input type="hidden" id="uid" name="uid" value="{{ $user->uid }}">
                     <input type="hidden" id="edit" name="edit" value="true">
 
                     <div class="card-body border-top">
@@ -61,12 +61,16 @@
                                         <input type="password" class="form-control" id="password"  name="password" value="" placeholder="Ingresar contraseña">
                                 </div>
                             </div>
-                            <div class="col-6 divEnterprise {{ $user->getRole()->id == 2  ? '' : 'd-none' }}">
+
+                            <div class="col-6 divEnterprise {{ $user->hasAnyRole(['inventaries', 'shop']) ? '' : 'd-none' }}">
+
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Tienda</label>
-                                    <div class="input-group">
-                                        {!! Form::select('shops', $shops, $user->shop_id, ['class' => 'select2 form-control','id' => 'shops']) !!}
-                                    </div>
+                                    <select class="form-control select2" id="lang" name="lang">
+                                        @foreach($shops as $id => $name)
+                                            <option value="{{ $id }}" {{  $user->shop_id == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
                                     <label id="shops-error" class="error d-none" for="shops"></label>
                                 </div>
                             </div>
@@ -74,26 +78,25 @@
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Estado</label>
-                                    <div class="input-group">
-                                        {!! Form::select('available', $availables, $user->available , ['class' => 'select2 form-control','id' => 'available']) !!}
-                                    </div>
-                                    <label id="available-error" class="error d-none" for="available"></label>
+                                    <select class="form-control select2" id="available" name="available">
+                                        <option value="1" {{ $user->available == 1 ? 'selected' : '' }}>Público</option>
+                                        <option value="0" {{ $user->available == 0 ? 'selected' : '' }}>Oculto</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Perfil</label>
-                                    <div class="input-group">
-                                            {!! Form::select('role', $roles, $user->getRole()->id , ['class' => 'select2 form-control','id' => 'roles']) !!}
-                                    </div>
-                                    <label id="role-error" class="error d-none" for="role"></label>
-                                </div>
-                            </div>
+                            <select name="role" required>
+                                <option value="">Seleccione un rol</option>
+                                @foreach($roles as $id => $name)
+                                    <option value="{{ $id }}" {{ $user->roles->first()->id == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+
                             <div class="col-12">
                                 <div class="errors d-none">
                                 </div>
                             </div>
+
                             <div class="col-12">
                             <div class="border-top pt-1 mt-4">
                                 <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
@@ -204,7 +207,7 @@
 
                     var $form = $('#formUsers');
                     var formData = new FormData($form[0]);
-                    var slack = $("#slack").val();
+                    var uid = $("#uid").val();
                     var firstname = $("#firstname").val();
                     var lastname = $("#lastname").val();
                     var email = $("#email").val();
@@ -213,7 +216,7 @@
                     var role = $("#roles").val();
                     var shop = $("#shops").val();
 
-                    formData.append('slack', slack);
+                    formData.append('uid', uid);
                     formData.append('firstname', firstname);
                     formData.append('lastname', lastname);
                     formData.append('email', email);

@@ -11134,8 +11134,8 @@ textarea.form-control-lg {
 }
 
 .bg-light-primary {
-    color: #000;
-    background: #f3f3f3;
+    color: #ffffff !important;!i;!;
+    background: #90bb13a1;
     box-shadow: var(--bs-card-box-shadow);
 }
 
@@ -24967,8 +24967,8 @@ body .revenue-chart .apexcharts-bar-series.apexcharts-plot-series .apexcharts-se
 }
 
 .select2-container--classic .select2-selection--multiple .select2-selection__choice, .select2-container--default .select2-selection--multiple .select2-selection__choice, .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    background-color: #008bce;
-    border-color: #008bce;
+    background-color: #90bb13;
+    border-color: #90bb13;
     color: #fff;
 }
 
@@ -33032,4 +33032,7 @@ h3.main_question {
     color: #fff;
     opacity: 1;
     position: relative;
+}
+.dropdown-menu {
+    z-index: 1050 !important;
 }

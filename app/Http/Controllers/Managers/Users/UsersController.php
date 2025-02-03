@@ -47,24 +47,12 @@ class UsersController extends Controller
     }
     public function create()
     {
-        $availables = collect([
-            ['id' => '1', 'label' => 'Activo'],
-            ['id' => '0', 'label' => 'Inactivo'],
-        ]);
 
-        $availables = $availables->pluck('label','id');
-
-        $shops = Shop::get();
-        $shops->prepend('', '');
-        $shops = $shops->pluck('title', 'id');
-
-        $roles = Role::get();
-        $roles->prepend('', '');
-        $roles = $roles->pluck('title', 'id');
+        $shops = Shop::get()->prepend('', '')->pluck('title', 'id');
+        $roles = Role::get()->prepend('', '')->pluck('name', 'id');
 
         return view('managers.views.users.users.create')->with([
             'shops' => $shops,
-            'availables' => $availables,
             'roles' => $roles,
         ]);
 
@@ -73,7 +61,6 @@ class UsersController extends Controller
     {
 
         $validates = User::where('email', $request->email)->exists();
-
 
         if($validates){
 
@@ -117,25 +104,12 @@ class UsersController extends Controller
     {
         $user = User::uid($slack);
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Activo'],
-            ['id' => '0', 'label' => 'Inactivo'],
-        ]);
-
-        $availables = $availables->pluck('label','id');
-
-        $shops = Shop::get();
-        $shops->prepend('', '');
-        $shops = $shops->pluck('title', 'id');
-
-        $roles = Role::get();
-        $roles->prepend('', '');
-        $roles = $roles->pluck('title', 'id');
+        $shops = Shop::get()->prepend('', '')->pluck('title', 'id');
+        $roles = Role::get()->prepend('', '')->pluck('name', 'id');
 
         return view('managers.views.users.users.view')->with([
             'user' => $user,
             'shops' => $shops,
-            'availables' => $availables,
             'roles' => $roles,
         ]);
 
@@ -144,110 +118,51 @@ class UsersController extends Controller
     {
         $user = User::uid($slack);
 
-        $availables = collect([
-            ['id' => '1', 'label' => 'Activo'],
-            ['id' => '0', 'label' => 'Inactivo'],
-        ]);
-
-        $availables = $availables->pluck('label','id');
-
-        $shops = Shop::get();
-        $shops->prepend('', '');
-        $shops = $shops->pluck('title', 'id');
-
-        $roles = Role::get();
-        $roles->prepend('', '');
-        $roles = $roles->pluck('title', 'id');
+        $shops = Shop::get()->prepend('', '')->pluck('title', 'id');
+        $roles = Role::get()->prepend('', '')->pluck('name', 'id');
 
         return view('managers.views.users.users.edit')->with([
             'user' => $user,
             'shops' => $shops,
-            'availables' => $availables,
             'roles' => $roles,
         ]);
 
     }
     public function update(Request $request)
     {
-
         $user = User::uid($request->uid);
 
-        if($user->email != $request->email ){
-
-            $validates = User::where('email', $request->email)->get();
-
-            if (count($validates)>0) {
-
-                $email =  User::where('email', $request->email)->get();
-
-                if(count($email)>0){
-
-                    if($user->email != $request->email){
-
-                        $response = [
-                            'success' => false,
-                            'message' => 'El correo electronico ya estan regitrada en nuestro sistema',
-                        ];
-
-                        return response()->json($response);
-                    }
-
-                }
-
-                $user = User::uid($request->uid);
-                $user->firstname = Str::upper($request->firstname);
-                $user->lastname  = Str::upper($request->lastname);
-                $user->email = $request->email;
-                $request->password != null ? $user->password = $request->password : null;
-                $user->available = $request->available;
-                if ($request->role == 2) {
-                    $user->shop_id = $request->shop;
-                } else {
-                    $user->shop_id = null;
-                }
-
-                $user->update();
-
-                if ($user->roles()->where('role_id', $request->role)->doesntExist()) {
-                    $user->roles()->sync([$request->role]);
-                }
-
-                return response()->json([
-                    'success' => true,
-                    'message' => '',
-                ]);
-
-            }
-        }else {
-
-            $user = User::uid($request->uid);
-            $user->firstname = Str::upper($request->firstname);
-            $user->lastname  = Str::upper($request->lastname);
-            $user->email = $request->email;
-            $request->password != null ? $user->password = $request->password : null;
-            $user->available = $request->available;
-            if ($request->role == 2) {
-                $user->shop_id = $request->shop;
-            } else {
-                $user->shop_id = null;
-            }
-
-            $user->update();
-
-            if ($user->roles()->where('role_id', $request->role)->doesntExist()) {
-                $user->roles()->sync([$request->role]);
-            }
-
-            $response = [
-                'success' => true,
-                'message' => '',
-            ];
-
-            return response()->json($response);
+        // Validar si el email ya está registrado en otro usuario
+        if ($user->email !== $request->email && User::where('email', $request->email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El correo electrónico ya está registrado en nuestro sistema',
+            ]);
         }
 
+        // Actualizar los datos del usuario
+        $user->firstname = Str::upper($request->firstname);
+        $user->lastname  = Str::upper($request->lastname);
+        $user->email = $request->email;
 
+        if (!empty($request->password)) {
+            $user->password = bcrypt($request->password);
+        }
+
+        $user->available = $request->available;
+        $user->shop_id = ($request->role == 2) ? $request->shop : null;
+        $user->update();
+
+        if (!empty($request->role) && is_numeric($request->role)) {
+            $user->roles()->sync([$request->role]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario actualizado correctamente',
+        ]);
     }
+
     public function destroy($slack)
     {
         $user = User::uid($slack);

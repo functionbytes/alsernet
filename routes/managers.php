@@ -1,12 +1,14 @@
 <?php
 
+use App\Http\Controllers\Managers\Automations\AutomationsController;
 use App\Http\Controllers\Managers\DashboardController;
 use App\Http\Controllers\Managers\Events\EventsController;
 use App\Http\Controllers\Managers\Inventaries\InventariesController;
 use App\Http\Controllers\Managers\Inventaries\LocationssController as InventariessLocationsController;
+use App\Http\Controllers\Managers\Layouts\LayoutController;
 use App\Http\Controllers\Managers\Livechat\LivechatController;
-use App\Http\Controllers\Managers\Newsletters\NewslettersListsUserController;
-use App\Http\Controllers\Managers\Newsletters\NewslettersReportController;
+use App\Http\Controllers\Managers\Maillist\MaillistController;
+use App\Http\Controllers\Managers\NotificationController;
 use App\Http\Controllers\Managers\Products\BarcodeController as ProductsBarcodesController;
 use App\Http\Controllers\Managers\Products\ProductsController;
 use App\Http\Controllers\Managers\Products\ReportController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Managers\Settings\TicketsSettingsController;
 use App\Http\Controllers\Managers\Shops\Locations\BarcodeController as LocationsBarcodesController;
 use App\Http\Controllers\Managers\Shops\Locations\LocationsController as ShopsLocationsController;
 use App\Http\Controllers\Managers\Shops\Shops\ShopsController;
+use App\Http\Controllers\Managers\Templates\TemplatesController;
 use App\Http\Controllers\Managers\Users\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,10 +29,6 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Managers\Faqs\CategoriesController as FaqsCategoriesController;
 use App\Http\Controllers\Managers\Faqs\FaqsController;
-
-use App\Http\Controllers\Managers\Newsletters\NewslettersController;
-use App\Http\Controllers\Managers\Newsletters\NewslettersConditionsController;
-use App\Http\Controllers\Managers\Newsletters\NewslettersListsController;
 
 
 
@@ -40,6 +39,13 @@ use App\Http\Controllers\Managers\Tickets\PrioritiesController as PrioritiesTick
 use App\Http\Controllers\Managers\Tickets\StatusController as StatusTicketsController;
 use App\Http\Controllers\Managers\Tickets\TicketsController;
 
+
+use App\Http\Controllers\Managers\Subscribers\SubscribersConditionsController;
+use App\Http\Controllers\Managers\Subscribers\SubscribersReportController;
+use App\Http\Controllers\Managers\Subscribers\SubscribersListsController;
+
+
+use App\Http\Controllers\Managers\Campaigns\CampaignsController;
 
 
 Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']], function () {
@@ -107,10 +113,10 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/destroy/{uid}', [InventariesController::class, 'destroy'])->name('manager.inventaries.destroy');
         Route::get('/report/{uid}', [InventariesController::class, 'report'])->name('manager.inventaries.report');
 
-        Route::get('/historys/{uid}', [NewslettersController::class, 'index'])->name('manager.inventaries.historys');
-        Route::get('/history/edit/{uid}', [NewslettersController::class, 'edit'])->name('manager.historys.edit');
-        Route::get('/history/destroy/{uid}', [NewslettersController::class, 'destroy'])->name('manager.historys.destroy');
-        Route::get('/history/update', [NewslettersController::class, 'update'])->name('manager.historys.update');
+        Route::get('/historys/{uid}', [TemplatesController::class, 'index'])->name('manager.inventaries.historys');
+        Route::get('/history/edit/{uid}', [TemplatesController::class, 'edit'])->name('manager.historys.edit');
+        Route::get('/history/destroy/{uid}', [TemplatesController::class, 'destroy'])->name('manager.historys.destroy');
+        Route::get('/history/update', [TemplatesController::class, 'update'])->name('manager.historys.update');
 
         Route::get('/historys/locations/{uid}', [InventariesLocationsController::class, 'index'])->name('manager.inventaries.locations');
         Route::get('/history/locations/details/{uid}', [InventariesLocationsController::class, 'details'])->name('manager.inventaries.locations.details');
@@ -139,7 +145,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/edit/{uid}', [UsersController::class, 'edit'])->name('manager.users.edit');
         Route::get('/view/{uid}', [UsersController::class, 'view'])->name('manager.users.view');
         Route::get('/destroy/{uid}', [UsersController::class, 'destroy'])->name('manager.users.destroy');
-
     });
 
 
@@ -156,43 +161,45 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
     });
 
 
-    Route::group(['prefix' => 'newsletters'], function () {
-
-        Route::get('/', [NewslettersController::class, 'index'])->name('manager.newsletters');
-        Route::get('/create', [NewslettersController::class, 'create'])->name('manager.newsletters.create');
-        Route::get('/lists', [NewslettersListsController::class, 'index'])->name('manager.newsletters.lists');
-        Route::post('/update', [NewslettersController::class, 'update'])->name('manager.newsletters.update');
-
-        Route::get('/lists/report', [NewslettersListsController::class, 'report'])->name('manager.newsletters.lists.reports');
-        Route::get('/lists/create', [NewslettersListsController::class, 'create'])->name('manager.newsletters.lists.create');
-        Route::post('/lists/update', [NewslettersListsController::class, 'update'])->name('manager.newsletters.lists.update');
-        Route::post('/lists/store', [NewslettersListsController::class, 'store'])->name('manager.newsletters.lists.store');
-        Route::get('/edit/{uid}', [NewslettersController::class, 'edit'])->name('manager.newsletters.edit');
-        Route::get('/view/{uid}', [NewslettersController::class, 'view'])->name('manager.newsletters.view');
-        Route::get('/destroy/{uid}', [NewslettersController::class, 'destroy'])->name('manager.newsletters.destroy');
-        Route::get('/list/{uid}', [NewslettersController::class, 'list'])->name('manager.newsletters.list');
+    Route::group(['prefix' => 'subscribers'], function () {
 
 
-        Route::get('/lists/reports', [NewslettersReportController::class, 'report'])->name('manager.newsletters.lists.reports');
-        Route::get('/lists/details/{uid}', [NewslettersListsController::class, 'details'])->name('manager.newsletters.lists.details');
-        Route::get('/lists/edit/{uid}', [NewslettersListsController::class, 'edit'])->name('manager.newsletters.lists.edit');
-        Route::get('/lists/view/{uid}', [NewslettersListsController::class, 'view'])->name('manager.newsletters.lists.view');
-        Route::get('/lists/destroy/{uid}', [NewslettersListsController::class, 'destroy'])->name('manager.newsletters.lists.destroy');
-        Route::get('/lists/includes/{uid}', [NewslettersListsController::class, 'includes'])->name('manager.newsletters.lists.includes');
-        Route::post('/lists/includes/update', [NewslettersListsController::class, 'updateIncludes'])->name('manager.newsletters.lists.includes.update');
+        Route::get('/', [TemplatesController::class, 'index'])->name('manager.subscribers');
+        Route::get('/create', [TemplatesController::class, 'create'])->name('manager.subscribers.create');
+        Route::get('/lists', [TemplatesController::class, 'index'])->name('manager.subscribers.lists');
+        Route::post('/update', [TemplatesController::class, 'update'])->name('manager.subscribers.update');
 
-        Route::get('/lists/report/generate', [NewslettersReportController::class, 'generate'])->name('manager.newsletters.lists.reports.generate');
-
-        Route::get('/conditions', [NewslettersConditionsController::class, 'index'])->name('manager.newsletters.conditions');
-        Route::get('/conditions/create', [NewslettersConditionsController::class, 'create'])->name('manager.newsletters.conditions.create');
-        Route::post('/conditions/store', [NewslettersConditionsController::class, 'store'])->name('manager.newsletters.conditions.store');
-        Route::post('/conditions/update', [NewslettersConditionsController::class, 'update'])->name('manager.newsletters.conditions.update');
-        Route::get('/conditions/edit/{uid}', [NewslettersConditionsController::class, 'edit'])->name('manager.newsletters.conditions.edit');
-        Route::get('/conditions/view/{uid}', [NewslettersConditionsController::class, 'view'])->name('manager.newsletters.conditions.view');
-        Route::get('/conditions/destroy/{uid}', [NewslettersConditionsController::class, 'destroy'])->name('manager.newsletters.conditions.destroy');
+        Route::get('/lists/report', [SubscribersListsController::class, 'report'])->name('manager.subscribers.lists.reports');
+        Route::get('/lists/create', [SubscribersListsController::class, 'create'])->name('manager.subscribers.lists.create');
+        Route::post('/lists/update', [SubscribersListsController::class, 'update'])->name('manager.subscribers.lists.update');
+        Route::post('/lists/store', [SubscribersListsController::class, 'store'])->name('manager.subscribers.lists.store');
+        Route::get('/edit/{uid}', [TemplatesController::class, 'edit'])->name('manager.subscribers.edit');
+        Route::get('/view/{uid}', [TemplatesController::class, 'view'])->name('manager.subscribers.view');
+        Route::get('/destroy/{uid}', [TemplatesController::class, 'destroy'])->name('manager.subscribers.destroy');
+        Route::get('/list/{uid}', [TemplatesController::class, 'list'])->name('manager.subscribers.list');
+        Route::get('/logs/{slack}', [TemplatesController::class, 'logs'])->name('manager.subscribers.logs');
 
 
-        Route::get('/lists/destroy/newsletter/{uid}', [NewslettersListsUserController::class, 'destroy'])->name('manager.newsletters.lists.user.destroy');
+        Route::get('/lists/reports', [SubscribersReportController::class, 'report'])->name('manager.subscribers.lists.reports');
+        Route::get('/lists/details/{uid}', [SubscribersListsController::class, 'details'])->name('manager.subscribers.lists.details');
+        Route::get('/lists/edit/{uid}', [SubscribersListsController::class, 'edit'])->name('manager.subscribers.lists.edit');
+        Route::get('/lists/view/{uid}', [SubscribersListsController::class, 'view'])->name('manager.subscribers.lists.view');
+        Route::get('/lists/destroy/{uid}', [SubscribersListsController::class, 'destroy'])->name('manager.subscribers.lists.destroy');
+        Route::get('/lists/includes/{uid}', [SubscribersListsController::class, 'includes'])->name('manager.subscribers.lists.includes');
+        Route::post('/lists/includes/update', [SubscribersListsController::class, 'updateIncludes'])->name('manager.subscribers.lists.includes.update');
+
+        Route::get('/lists/report/generate', [SubscribersReportController::class, 'generate'])->name('manager.subscribers.lists.reports.generate');
+
+        Route::get('/conditions', [SubscribersConditionsController::class, 'index'])->name('manager.subscribers.conditions');
+        Route::get('/conditions/create', [SubscribersConditionsController::class, 'create'])->name('manager.subscribers.conditions.create');
+        Route::post('/conditions/store', [SubscribersConditionsController::class, 'store'])->name('manager.subscribers.conditions.store');
+        Route::post('/conditions/update', [SubscribersConditionsController::class, 'update'])->name('manager.subscribers.conditions.update');
+        Route::get('/conditions/edit/{uid}', [SubscribersConditionsController::class, 'edit'])->name('manager.subscribers.conditions.edit');
+        Route::get('/conditions/view/{uid}', [SubscribersConditionsController::class, 'view'])->name('manager.subscribers.conditions.view');
+        Route::get('/conditions/destroy/{uid}', [SubscribersConditionsController::class, 'destroy'])->name('manager.subscribers.conditions.destroy');
+
+
+        Route::get('/lists/destroy/newsletter/{uid}', [SubscribersListsUserController::class, 'destroy'])->name('manager.subscribers.lists.user.destroy');
 
     });
 
@@ -397,6 +404,308 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/groups/destroy/{uid}', [GroupsTicketsController::class, 'destroy'])->name('manager.tickets.groups.destroy');
 
     });
+
+
+
+    Route::group(['prefix' => 'templates'], function () {
+
+        Route::get('/', [TemplatesController::class, 'index'])->name('manager.templates');
+        Route::get('/create', [TemplatesController::class, 'create'])->name('manager.templates.create');
+        Route::get('/chat', [TemplatesController::class, 'chat'])->name('manager.templates.chat');
+        Route::post('/store', [TemplatesController::class, 'store'])->name('manager.templates.store');
+        Route::post('/upload', [TemplatesController::class, 'uploadTemplate'])->name('manager.templates.uploadTemplate');
+        Route::post('/update', [TemplatesController::class, 'update'])->name('manager.templates.update');
+        Route::get('/delete', [TemplatesController::class, 'delete'])->name('manager.templates.delete');
+        Route::get('/edit/{uid}', [TemplatesController::class, 'edit'])->name('manager.templates.edit');
+        Route::get('/view/{uid}', [TemplatesController::class, 'view'])->name('manager.templates.view');
+        Route::get('/destroy/{uid}', [TemplatesController::class, 'destroy'])->name('manager.templates.destroy');
+        Route::get('/{uid}/preview',[TemplatesController::class, 'preview'])->name('manager.templates.preview');
+        Route::get('/{uid}/edit', [TemplatesController::class, 'edit'])->name('manager.templates.edit');
+        Route::post('/{uid}/copy',[TemplatesController::class, 'copy'])->name('manager.templates.copy');
+        Route::get('/{uid}/copy',[TemplatesController::class, 'copy'])->name('manager.templates.copy');
+        Route::post('/{uid}/export', [TemplatesController::class, 'export'])->name('manager.templates.export');
+        Route::patch('/{uid}/update', [TemplatesController::class, 'update'])->name('manager.templates.update');
+
+        Route::get('/rss/parse', [TemplatesController::class, 'parseRss'])->name('manager.templates.parseRss');
+
+        Route::get('/listing/{page?}',[TemplatesController::class, 'listing'])->name('manager.templates.listing');
+        Route::get('/choosing/{campaign_uid}/{page?}',[TemplatesController::class, 'choosing'])->name('manager.templates.choosing');
+
+        Route::match(['get', 'post'], '/builder/create', [TemplatesController::class, 'builderCreate'])->name('manager.templates.builder.create');
+        Route::match(['get', 'post'], '/{uid}/change-name', [TemplatesController::class, 'changeName'])->name('manager.templates.changemame');
+        Route::match(['get', 'post'], '/{uid}/categories', [TemplatesController::class, 'categories'])->name('manager.templates.categories');
+        Route::match(['get', 'post'], '/{uid}/update-thumb-url', [TemplatesController::class, 'updateThumbUrl'])->name('manager.templates.update.thumburl');
+        Route::match(['get', 'post'], '/{uid}/update-thumb', [TemplatesController::class, 'updateThumb'])->name('manager.templates.update.thumb');
+        Route::match(['get', 'post'], '/{uid}/builder/edit', [TemplatesController::class, 'builderEdit'])->name('manager.templates.builder.edit');
+
+        Route::get('/builder/templates/{category_uid?}', [TemplatesController::class, 'builderTemplates'])->name('manager.templates.builder.templates');
+        Route::post('/{uid}/builder/edit/asset', [TemplatesController::class, 'uploadTemplateAssets'])->name('manager.templates.upload.template.assets');
+        Route::get('/{uid}/builder/edit/content', [TemplatesController::class, 'builderEditContent'])->name('manager.templates.builder.edit.content');
+        Route::get('/{uid}/builder/change-template/{change_uid}', [TemplatesController::class, 'builderChangeTemplate'])->name('manager.templates.builder.change.template');
+
+    });
+
+
+    Route::group(['prefix' => 'campaigns'], function () {
+
+        Route::get('/', [CampaignsController::class, 'index'])->name('manager.campaigns');
+        Route::get('/create', [CampaignsController::class, 'create'])->name('manager.campaigns.create');
+        Route::post('/store', [CampaignsController::class, 'store'])->name('manager.campaigns.store');
+        Route::post('/update', [CampaignsController::class, 'update'])->name('manager.campaigns.update');
+        Route::get('/edit/{uid}', [CampaignsController::class, 'edit'])->name('manager.campaigns.edit');
+        Route::get('/view/{uid}', [CampaignsController::class, 'view'])->name('manager.campaigns.view');
+        Route::get('/destroy/{uid}', [CampaignsController::class, 'destroy'])->name('manager.campaigns.destroy');
+
+        Route::post('/{uid}/preheader/remove', [CampaignsController::class, 'preheaderRemove'])->name('manager.campaigns.preheaderRemove');
+        Route::match(['get', 'post'], '/{uid}/preheader/add', [CampaignsController::class, 'preheaderAdd'])->name('manager.campaigns.preheaderAdd');
+        Route::get('/{uid}/preheader', [CampaignsController::class, 'preheader'])->name('manager.campaigns.preheader');
+
+        Route::post('/webhooks/{webhook_uid}/test/{message_id}', [CampaignsController::class, 'webhooksTestMessage'])->name('manager.campaigns.webhooksTestMessage');
+        Route::get('/{uid}/click-log/{message_id}/execute', [CampaignsController::class, 'clickLogExecute'])->name('manager.campaigns.clickLogExecute');
+        Route::get('/{uid}/open-log/{message_id}/execute', [CampaignsController::class, 'openLogExecute'])->name('manager.campaigns.openLogExecute');
+        Route::match(['get', 'post'], '/webhooks/{webhook_uid}/test', [CampaignsController::class, 'webhooksTest'])->name('manager.campaigns.webhooksTest');
+        Route::get('/webhooks/{webhook_uid}/sample/request', [CampaignsController::class, 'webhooksSampleRequest'])->name('manager.campaigns.webhooksSampleRequest');
+        Route::post('/webhooks/{webhook_uid}/delete', [CampaignsController::class, 'webhooksDelete'])->name('manager.campaigns.webhooksDelete');
+        Route::match(['get', 'post'], '/webhooks/{webhook_uid}/edit', [CampaignsController::class, 'webhooksEdit'])->name('manager.campaigns.webhooksEdit');
+        Route::get('/{uid}/webhooks/list', [CampaignsController::class, 'webhooksList'])->name('manager.campaigns.webhooksList');
+        Route::get('/{uid}/webhooks/link-select', [CampaignsController::class, 'webhooksLinkSelect'])->name('manager.campaigns.webhooksLinkSelect');
+        Route::match(['get', 'post'], '/{uid}/webhooks/add', [CampaignsController::class, 'webhooksAdd'])->name('manager.campaigns.webhooksAdd');
+        Route::get('/{uid}/webhooks', [CampaignsController::class, 'webhooks'])->name('manager.campaigns.webhooks');
+
+        Route::get('/{uid}/preview-as/list', [CampaignsController::class, 'previewAsList'])->name('manager.campaigns.previewAsList');
+        Route::get('/{uid}/preview-as', [CampaignsController::class, 'previewAs'])->name('manager.campaigns.previewAs');
+
+        Route::post('/{uid}/custom-plain/off', [CampaignsController::class, 'customPlainOff'])->name('manager.campaigns.export');
+        Route::post('/{uid}/custom-plain/on', [CampaignsController::class, 'customPlainOn'])->name('manager.campaigns.export');
+        Route::post('/{uid}/remove-attachment', [CampaignsController::class, 'removeAttachment'])->name('manager.campaigns.export');
+        Route::get('/{uid}/download-attachment', [CampaignsController::class, 'downloadAttachment'])->name('manager.campaigns.export');
+        Route::post('/{uid}/upload-attachment', [CampaignsController::class, 'uploadAttachment'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/builder-select', [CampaignsController::class, 'templateBuilderSelect'])->name('manager.campaigns.export');
+
+        Route::match(['get', 'post'], '/{uid}/template/builder-plain', [CampaignsController::class, 'builderPlainEdit'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/template/builder-classic', [CampaignsController::class, 'builderClassic'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/plain', [CampaignsController::class, 'plain'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/change/{template_uid}', [CampaignsController::class, 'templateChangeTemplate'])->name('manager.campaigns.export');
+
+        Route::get('/{uid}/template/content', [CampaignsController::class, 'templateContent'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/template/edit', [CampaignsController::class, 'templateEdit'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/template/upload', [CampaignsController::class, 'templateUpload'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/layout/list', [CampaignsController::class, 'templateLayoutList'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/template/layout', [CampaignsController::class, 'templateLayout'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/create', [CampaignsController::class, 'templateCreate'])->name('manager.campaigns.export');
+
+        Route::get('/{uid}/spam-score', [CampaignsController::class, 'spamScore'])->name('manager.campaigns.export');
+        Route::get('/{from_uid}/copy-move-from/{action}', [CampaignsController::class, 'copyMoveForm'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/{uid}/resend', [CampaignsController::class, 'resend'])->name('manager.campaigns.export');
+        Route::get('/{uid}/tracking-log/download', [CampaignsController::class, 'trackingLogDownload'])->name('manager.campaigns.export');
+        Route::get('/job/{uid}/progress', [CampaignsController::class, 'trackingLogExportProgress'])->name('manager.campaigns.export');
+        Route::get('/job/{uid}/download', [CampaignsController::class, 'download'])->name('manager.campaigns.export');
+
+        Route::get('/{uid}/template/review-iframe', [CampaignsController::class, 'templateReviewIframe'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/review', [CampaignsController::class, 'templateReview'])->name('manager.campaigns.export');
+        Route::get('/select-type', [CampaignsController::class, 'selectType'])->name('manager.campaigns.export');
+        Route::get('/{uid}/list-segment-form', [CampaignsController::class, 'listSegmentForm'])->name('manager.campaigns.export');
+        Route::get('/{uid}/preview/content/{subscriber_uid?}', [CampaignsController::class, 'previewContent'])->name('manager.campaigns.export');
+        Route::get('/{uid}/preview', [CampaignsController::class, 'preview'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/send-test-email', [CampaignsController::class, 'sendTestEmail'])->name('manager.campaigns.export');
+        Route::get('/delete/confirm', [CampaignsController::class, 'deleteConfirm'])->name('manager.campaigns.export');
+        Route::match(['get', 'post'], '/copy', [CampaignsController::class, 'copy'])->name('manager.campaigns.export');
+
+        Route::get('/{uid}/subscribers', [CampaignsController::class, 'subscribers'])->name('manager.campaigns.export');
+        Route::get('/{uid}/subscribers/listing', [CampaignsController::class, 'subscribersListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/open-map', [CampaignsController::class, 'openMap'])->name('manager.campaigns.export');
+        Route::get('/{uid}/tracking-log', [CampaignsController::class, 'trackingLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/tracking-log/listing', [CampaignsController::class, 'trackingLogListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/bounce-log', [CampaignsController::class, 'bounceLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/bounce-log/listing', [CampaignsController::class, 'bounceLogListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/feedback-log', [CampaignsController::class, 'feedbackLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/feedback-log/listing', [CampaignsController::class, 'feedbackLogListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/open-log', [CampaignsController::class, 'openLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/open-log/listing', [CampaignsController::class, 'openLogListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/click-log', [CampaignsController::class, 'clickLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/click-log/listing', [CampaignsController::class, 'clickLogListing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/unsubscribe-log', [CampaignsController::class, 'unsubscribeLog'])->name('manager.campaigns.export');
+        Route::get('/{uid}/unsubscribe-log/listing', [CampaignsController::class, 'unsubscribeLogListing'])->name('manager.campaigns.export');
+
+        Route::get('/quick-view', [CampaignsController::class, 'quickView'])->name('manager.campaigns.export');
+        Route::get('/{uid}/chart24h', [CampaignsController::class, 'chart24h'])->name('manager.campaigns.export');
+        Route::get('/{uid}/chart', [CampaignsController::class, 'chart'])->name('manager.campaigns.export');
+        Route::get('/{uid}/chart/countries/open', [CampaignsController::class, 'chartCountry'])->name('manager.campaigns.export');
+        Route::get('/{uid}/chart/countries/click', [CampaignsController::class, 'chartClickCountry'])->name('manager.campaigns.export');
+        Route::get('/{uid}/overview', [CampaignsController::class, 'overview'])->name('manager.campaigns.export');
+        Route::get('/{uid}/links', [CampaignsController::class, 'links'])->name('manager.campaigns.export');
+
+        Route::get('/listing/{page?}', [CampaignsController::class, 'listing'])->name('manager.campaigns.export');
+        Route::get('/{uid}/recipients', [CampaignsController::class, 'recipients'])->name('manager.campaigns.export');
+        Route::post('/{uid}/recipients', [CampaignsController::class, 'recipients'])->name('manager.campaigns.export');
+        Route::get('/{uid}/setup', [CampaignsController::class, 'setup'])->name('manager.campaigns.export');
+        Route::post('/{uid}/setup', [CampaignsController::class, 'setup'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template', [CampaignsController::class, 'template'])->name('manager.campaigns.export');
+        Route::post('/{uid}/template', [CampaignsController::class, 'template'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/select', [CampaignsController::class, 'templateSelect'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/choose/{template_uid}', [CampaignsController::class, 'templateChoose'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/preview', [CampaignsController::class, 'templatePreview'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/iframe', [CampaignsController::class, 'templateIframe'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/build/{style}', [CampaignsController::class, 'templateBuild'])->name('manager.campaigns.export');
+        Route::get('/{uid}/template/rebuild', [CampaignsController::class, 'templateRebuild'])->name('manager.campaigns.export');
+        Route::get('/{uid}/schedule', [CampaignsController::class, 'schedule'])->name('manager.campaigns.export');
+        Route::post('/{uid}/schedule', [CampaignsController::class, 'schedule'])->name('manager.campaigns.export');
+        Route::get('/{uid}/confirm', [CampaignsController::class, 'confirm'])->name('manager.campaigns.export');
+        Route::post('/{uid}/confirm', [CampaignsController::class, 'confirm'])->name('manager.campaigns.export');
+        Route::post('/delete', [CampaignsController::class, 'delete'])->name('manager.campaigns.export');
+        Route::get('/select2', [CampaignsController::class, 'select2'])->name('manager.campaigns.export');
+        Route::post('/pause', [CampaignsController::class, 'pause'])->name('manager.campaigns.export');
+        Route::post('/restart', [CampaignsController::class, 'restart'])->name('manager.campaigns.export');
+        Route::get('/{uid}/edit', [CampaignsController::class, 'edit'])->name('manager.campaigns.export');
+        Route::patch('/{uid}/update', [CampaignsController::class, 'update'])->name('manager.campaigns.export');
+        Route::get('/{uid}/run', [CampaignsController::class, 'run'])->name('manager.campaigns.export');
+        Route::get('/{uid}/update-stats', [CampaignsController::class, 'updateStats'])->name('manager.campaigns.export');
+
+
+    });
+
+
+
+    Route::group(['prefix' => 'automations'], function () {
+
+            // Automation2
+            Route::post('/{uid}/trigger-all', [AutomationsController::class, 'triggerAll'])->name('manager.automations.triggerAll');
+
+            Route::match(['get', 'post'], 'automation/{uid}/copy', [AutomationsController::class, 'copy'])->name('manager.automations.copy');
+            Route::get('/{uid}/condition/remove', [AutomationsController::class, 'conditionRemove'])->name('manager.automations.conditionRemove');
+
+            Route::post('/{uid}/template/{email_uid}/preheader/remove', [AutomationsController::class, 'emailPreheaderRemove'])->name('manager.automations.emailPreheaderRemove');
+            Route::match(['get', 'post'], 'automation/{uid}/template/{email_uid}/preheader/add', [AutomationsController::class, 'emailPreheaderAdd'])->name('manager.automations.emailPreheaderAdd');
+            Route::get('/{uid}/template/{email_uid}/preheader', [AutomationsController::class, 'emailPreheader'])->name('manager.automations.emailPreheader');
+
+            Route::match(['get', 'post'], 'automation/condition/wait/custom', [AutomationsController::class, 'conditionWaitCustom'])->name('manager.automations.conditionWaitCustom');
+            Route::match(['get', 'post'], 'automation/{email_uid}/send-test-email', [AutomationsController::class, 'sendTestEmail'])->name('manager.automations.sendTestEmail');
+            Route::get('/{uid}/cart/items', [AutomationsController::class, 'cartItems'])->name('manager.automations.cartItems');
+            Route::get('/{uid}/cart/list', [AutomationsController::class, 'cartList'])->name('manager.automations.cartList');
+            Route::get('/{uid}/cart/stats', [AutomationsController::class, 'cartStats'])->name('manager.automations.cartStats');
+            Route::match(['get', 'post'], 'automation/{uid}/cart/change-store', [AutomationsController::class, 'cartChangeStore'])->name('manager.automations.cartChangeStore');
+            Route::match(['get', 'post'], 'automation/{uid}/cart/wait', [AutomationsController::class, 'cartWait'])->name('manager.automations.cartWait');
+            Route::match(['get', 'post'], 'automation/{uid}/cart/change-list', [AutomationsController::class, 'cartChangeList'])->name('manager.automations.cartChangeList');
+
+            Route::get('/{uid}/condition/setting', [AutomationsController::class, 'conditionSetting'])->name('manager.automations.conditionSetting');
+            Route::get('/{uid}/operation/show', [AutomationsController::class, 'operationShow'])->name('manager.automations.operationShow');
+            Route::match(['get', 'post'], 'automation/{uid}/operation/edit', [AutomationsController::class, 'operationEdit'])->name('manager.automations.operationEdit');
+            Route::match(['get', 'post'], 'automation/{uid}/operation/create', [AutomationsController::class, 'operationCreate'])->name('manager.automations.operationCreate');
+            Route::get('/{uid}/operation/select', [AutomationsController::class, 'operationSelect'])->name('manager.automations.operationSelect');
+
+            Route::post('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
+            Route::get('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
+            Route::get('/{uid}/last-saved', [AutomationsController::class, 'lastSaved'])->name('manager.automations.lastSaved');
+
+            Route::post('/{uid}/subscribers/{subscriber_uid}/restart', [AutomationsController::class, 'subscribersRestart'])->name('manager.automations.subscribersRestart');
+            Route::post('/{uid}/subscribers/{subscriber_uid}/remove', [AutomationsController::class, 'subscribersRemove'])->name('manager.automations.subscribersRemove');
+            Route::get('/{uid}/subscribers/{subscriber_uid}/show', [AutomationsController::class, 'subscribersShow'])->name('manager.automations.subscribersShow');
+            Route::get('/{uid}/subscribers/list', [AutomationsController::class, 'subscribersList'])->name('manager.automations.subscribersList');
+            Route::get('/{uid}/subscribers', [AutomationsController::class, 'subscribers'])->name('manager.automations.subscribers');
+
+            Route::get('/{uid}/insight', [AutomationsController::class, 'insight'])->name('manager.automations.insight');
+            Route::post('/{uid}/data/save', [AutomationsController::class, 'saveData'])->name('manager.automations.saveData');
+            Route::post('/{uid}/update', [AutomationsController::class, 'update'])->name('manager.automations.update');
+            Route::get('/{uid}/settings', [AutomationsController::class, 'settings'])->name('manager.automations.settings');
+
+            Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/test', [AutomationsController::class,'webhooksTest'])->name('manager.automations.webhooksTest');
+            Route::get('/emails/webhooks/{webhook_uid}/sample/request', [AutomationsController::class,'webhooksSampleRequest'])->name('manager.automations.webhooksSampleRequest');
+            Route::post('/emails/webhooks/{webhook_uid}/delete', [AutomationsController::class,'webhooksDelete'])->name('manager.automations.webhooksDelete');
+            Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/edit', [AutomationsController::class,'webhooksEdit'])->name('manager.automations.webhooksEdit');
+            Route::get('/emails/{email_uid}/webhooks/list', [AutomationsController::class,'webhooksList'])->name('manager.automations.webhooksList');
+            Route::get('/emails/{email_uid}/webhooks/link-select', [AutomationsController::class,'webhooksLinkSelect'])->name('manager.automations.webhooksLinkSelect');
+            Route::match(['get', 'post'], 'automation/emails/{email_uid}/webhooks/add', [AutomationsController::class,'webhooksAdd'])->name('manager.automations.webhooksAdd');
+            Route::get('/emails/{email_uid}/webhooks', [AutomationsController::class,'webhooks'])->name('manager.automations.webhooks');
+
+            Route::post('/disable', [AutomationsController::class, 'disable'])->name('manager.automations.disable');
+            Route::post('/enable', [AutomationsController::class, 'enable'])->name('manager.automations.enable');
+            Route::delete('/delete', [AutomationsController::class, 'delete'])->name('manager.automations.delete');
+            Route::get('/listing', [AutomationsController::class, 'listing'])->name('manager.automations.listing');
+            Route::get('/', [AutomationsController::class, 'index'])->name('manager.automations');
+            Route::get('/{uid}/debug', [AutomationsController::class, 'debug'])->name('manager.automations.debug');
+            Route::get('trigger/{id}', [AutomationsController::class, 'show'])->name('manager.automations.show');
+            Route::get('/{automation}/{subscriber}/trigger', [AutomationsController::class, 'triggerNow'])->name('manager.automations.triggerNow');
+            Route::get('/{automation}/run', [AutomationsController::class, 'run'])->name('manager.automations.run');
+
+
+    });
+
+
+
+    Route::group(['prefix' => 'maillists'], function () {
+
+        Route::get('/', [MaillistController::class, 'index'])->name('manager.maillists');
+        Route::get('/create', [MaillistController::class, 'create'])->name('manager.maillists.create');
+        Route::post('/store', [MaillistController::class, 'store'])->name('manager.maillists.store');
+        Route::post('/update', [MaillistController::class, 'update'])->name('manager.maillists.update');
+        Route::get('/edit/{uid}', [MaillistController::class, 'edit'])->name('manager.maillists.edit');
+        Route::get('/view/{uid}', [MaillistController::class, 'view'])->name('manager.maillists.view');
+        Route::get('/destroy/{uid}', [MaillistController::class, 'destroy'])->name('manager.maillists.destroy');
+
+        Route::match(['get', 'post'], '/lists/select', [MaillistController::class, 'selectList'])->name('manager.maillists.selectList');
+        Route::get('/lists/{uid}/email-verification/chart', [MaillistController::class, 'emailVerificationChart'])->name('manager.maillists.emailVerificationChart');
+        Route::get('/lists/{uid}/clone-to-customers/choose', [MaillistController::class, 'cloneForCustomersChoose'])->name('manager.maillists.cloneForCustomersChoose');
+        Route::post('/lists/{uid}/clone-to-customers', [MaillistController::class, 'cloneForCustomers'])->name('manager.maillists.cloneForCustomers');
+
+        Route::get('/lists/{uid}/verification/{job_uid}/progress', [MaillistController::class, 'verificationProgress'])->name('manager.maillists.verificationProgress');
+        Route::get('/lists/{uid}/verification', [MaillistController::class, 'verification'])->name('manager.maillists.verification');
+        Route::post('/lists/{uid}/verification/start', [MaillistController::class, 'startVerification'])->name('manager.maillists.startVerification');
+        Route::post('/lists/{uid}/verification/{job_uid}/stop', [MaillistController::class, 'stopVerification'])->name('manager.maillists.stopVerification');
+        Route::post('/lists/{uid}/verification/reset', [MaillistController::class, 'resetVerification'])->name('manager.maillists.resetVerification');
+
+        Route::match(['get', 'post'], '/lists/copy', [MaillistController::class, 'copy'])->name('manager.maillists.copy');
+        Route::get('/lists/quick-view', [MaillistController::class, 'quickView'])->name('manager.maillists.quickView');
+        Route::get('/lists/{uid}/list-growth', [MaillistController::class, 'listGrowthChart'])->name('manager.maillists.listGrowthChart');
+        Route::get('/lists/{uid}/list-statistics-chart', [MaillistController::class, 'statisticsChart'])->name('manager.maillists.statisticsChart');
+        Route::get('/lists/sort', [MaillistController::class, 'sort'])->name('manager.maillists.sort');
+        Route::get('/lists/listing/{page?}', [MaillistController::class, 'listing'])->name('manager.maillists.listing');
+        Route::post('/lists/delete', [MaillistController::class, 'delete'])->name('manager.maillists.delete');
+        Route::get('/lists/delete/confirm', [MaillistController::class, 'deleteConfirm'])->name('manager.maillists.deleteConfirm');
+
+        Route::get('/lists/{uid}/overview', [MaillistController::class, 'overview'])->name('manager.maillists.overview');
+        Route::get('/lists/{uid}/edit', [MaillistController::class, 'edit'])->name('manager.maillists.edit');
+        Route::patch('/lists/{uid}/update', [MaillistController::class, 'update'])->name('manager.maillists.update');
+        Route::match(['get', 'post'], '/lists/{uid}/embedded-form', [MaillistController::class, 'embeddedForm'])->name('manager.maillists.embeddedForm');
+        Route::get('/lists/{uid}/embedded-form-frame', [MaillistController::class, 'embeddedFormFrame'])->name('manager.maillists.embeddedFormFrame');
+
+        Route::post('/lists/{uid}/embedded-form-subscribe', [MaillistController::class, 'embeddedFormSubscribe'])->name('manager.maillists.embeddedFormSubscribe');
+        Route::post('/lists/{uid}/embedded-form-subscribe-captcha', [MaillistController::class, 'embeddedFormSubscribe'])->name('manager.automations.maillists');
+
+        Route::get('/lists/{uid}/check-email', [AutomationsController::class, 'checkEmail'])->name('manager.maillists.checkEmail');
+
+
+    });
+
+
+
+    Route::group(['prefix' => 'notifications'], function () {
+
+        Route::get('/', [NotificationController::class, 'index'])->name('manager.notifications');
+        Route::get('/popup', [NotificationController::class, 'popup'])->name('manager.notifications.popup');
+
+        Route::post('/delete', [MaillistController::class, 'delete'])->name('manager.automations.delete');
+        Route::post('/listing', [MaillistController::class, 'listing'])->name('manager.automations.listing');
+
+
+    });
+
+
+
+    Route::group(['prefix' => 'layouts'], function () {
+
+        Route::get('/', [LayoutController::class, 'index'])->name('manager.layouts');
+        Route::get('/create', [LayoutController::class, 'create'])->name('manager.layouts.create');
+        Route::post('/store', [LayoutController::class, 'store'])->name('manager.layouts.store');
+        Route::patch('/update/{uid}', [LayoutController::class, 'update'])->name('manager.layouts.update');
+        Route::get('/edit/{uid}', [LayoutController::class, 'edit'])->name('manager.layouts.edit');
+        Route::get('/view/{uid}', [LayoutController::class, 'view'])->name('manager.layouts.view');
+        Route::get('/destroy/{uid}', [LayoutController::class, 'destroy'])->name('manager.layouts.destroy');
+
+        Route::get('/listing/{page?}', [LayoutController::class, 'listing'])->name('manager.layouts.listing');
+        Route::get('/sort', [LayoutController::class, 'sort'])->name('manager.layouts.sort');
+
+    });
+
 
 
 });

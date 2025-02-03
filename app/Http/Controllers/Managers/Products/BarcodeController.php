@@ -8,7 +8,7 @@ use App\Models\Faq\FaqCategorie;
 use App\Models\Product\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Faq\Faq;
+use App\Models\Faq\Template;
 
 class BarcodeController extends Controller
 {
@@ -45,7 +45,7 @@ class BarcodeController extends Controller
 
     public function edit($slack){
 
-        $faq = Faq::uid($slack);
+        $faq = Template::uid($slack);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -66,7 +66,7 @@ class BarcodeController extends Controller
 
     public function store(Request $request){
 
-        $faq = new Faq;
+        $faq = new Template;
         $faq->uid = $this->generate_uid('faqs');
         $faq->title = $request->title;
         $faq->description = $request->description;
@@ -87,7 +87,7 @@ class BarcodeController extends Controller
 
     public function update(Request $request){
 
-        $faq = Faq::uid($request->uid);
+        $faq = Template::uid($request->uid);
         $faq->title = $request->title;
         $faq->description = $request->description;
         $faq->slug = Str::slug($request->title, '-');
@@ -107,7 +107,7 @@ class BarcodeController extends Controller
 
     public function destroy($slack){
 
-       $faq = Faq::uid($slack);
+       $faq = Template::uid($slack);
        $faq->delete();
 
        return redirect()->route('manager.faqs');

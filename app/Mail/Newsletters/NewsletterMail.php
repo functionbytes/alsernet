@@ -2,7 +2,7 @@
 
 namespace App\Mail\Newsletters;
 
-use App\Models\Newsletter\Newsletter;
+use App\Models\Subscriber\Subscriber;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -16,9 +16,9 @@ class NewsletterMail extends Mailable
     /**
      * Crea una nueva instancia de la clase de correo.
      *
-     * @param Newsletter $newsletter
+     * @param Subscriber $newsletter
      */
-    public function __construct(Newsletter $newsletter)
+    public function __construct(Subscriber $newsletter)
     {
         $this->newsletter = $newsletter;
     }

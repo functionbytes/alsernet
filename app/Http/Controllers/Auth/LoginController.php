@@ -25,7 +25,7 @@ class LoginController extends Controller
     public function showLoginForm(){
 
         if($this->guard()->check()){
-            return redirect()->route('home');
+            return $this->guard()->user()->redirect();
         }else{
             return view('auth.login');
         }

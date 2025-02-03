@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Faq\FaqCategorie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Faq\Faq;
+use App\Models\Faq\Template;
 
 class FaqsController extends Controller
 {
@@ -17,7 +17,7 @@ class FaqsController extends Controller
         $searchKey = null ?? $request->search;
         $available = null ?? $request->available;
 
-        $faqs = Faq::descending();
+        $faqs = Template::descending();
 
         if ($searchKey) {
             $faqs = $faqs->where('title', 'like', '%' . $searchKey . '%');
@@ -58,7 +58,7 @@ class FaqsController extends Controller
 
     public function edit($slack){
 
-        $faq = Faq::uid($slack);
+        $faq = Template::uid($slack);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -79,7 +79,7 @@ class FaqsController extends Controller
 
     public function store(Request $request){
 
-        $faq = new Faq;
+        $faq = new Template;
         $faq->uid = $this->generate_uid('faqs');
         $faq->title = $request->title;
         $faq->description = $request->description;
@@ -97,7 +97,7 @@ class FaqsController extends Controller
 
     public function update(Request $request){
 
-        $faq = Faq::uid($request->uid);
+        $faq = Template::uid($request->uid);
         $faq->title = $request->title;
         $faq->description = $request->description;
         $faq->slug = Str::slug($request->title, '-');
@@ -114,7 +114,7 @@ class FaqsController extends Controller
 
     public function destroy($slack){
 
-       $faq = Faq::uid($slack);
+       $faq = Template::uid($slack);
        $faq->delete();
 
        return redirect()->route('manager.faqs');

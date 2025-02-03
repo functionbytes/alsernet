@@ -24,7 +24,7 @@ class User extends Authenticatable
     protected static $recordEvents = ['deleted','updated','created'];
 
     protected $fillable = [
-        'slack',
+        'uid',
         'firstname',
         'lastname',
         'identification',
@@ -171,7 +171,7 @@ class User extends Authenticatable
 
     public function scopeValidations($query )
     {
-        return $query->where('slack', null)->get();
+        return $query->where('uid', null)->get();
     }
 
     public function scopeId($query ,$id)
@@ -189,8 +189,8 @@ class User extends Authenticatable
         return $query->where('email', $email)->first();
     }
 
-    public static function existence($slack){
-        return User::where("slack", '=', $slack)->first();
+    public static function existence($uid){
+        return User::where("uid", '=', $uid)->first();
     }
 
     public function setPasswordAttribute($password)
@@ -198,6 +198,24 @@ class User extends Authenticatable
         $this->attributes['password'] = bcrypt($password);
     }
 
+
+    public function getLanguageCode()
+    {
+        return $this->language ? $this->language->code : null;
+    }
+
+    public function getLanguageCodeFull()
+    {
+        $region_code = $this->language->region_code ? strtoupper($this->language->region_code) : strtoupper($this->language->code);
+        return $this->language ? ($this->language->code.'-'.$region_code) : null;
+    }
+
+
+
+    public function language()
+    {
+        return $this->belongsTo('App\Models\Lang');
+    }
 
     public function shop(): BelongsTo
     {
@@ -212,9 +230,15 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\Ticket\Ticket');
     }
 
+    public function getFullNameAttribute()
+    {
+        return "{$this->firstname} {$this->lastname}";
+    }
 
-
-
+    public function getImageAttribute()
+    {
+        return asset('images/default-user.png');
+    }
 
 }
 
