@@ -15,7 +15,6 @@ if (!function_exists('setCoupon')) {
 
 
 if (!function_exists('updateSettings')) {
-    // remove coupon code from  cookie
     function updateSettings($data)
     {
 
@@ -28,7 +27,6 @@ if (!function_exists('updateSettings')) {
         }
 
     }
-
 
 }
 
@@ -473,35 +471,8 @@ function input_date($dates): string{
 
 
 
-use function Acelle\Helpers\xml_to_array;
+use function App\Helpers\xml_to_array;
 
-/**
- *
- * Globally available helper methods.
- *
- * LICENSE: This product includes software developed at
- * the Acelle Co., Ltd. (http://acellemail.com/).
- *
- * @category   MVC Model
- *
- * @author     N. Pham <n.pham@acellemail.com>
- * @author     L. Pham <l.pham@acellemail.com>
- * @copyright  Acelle Co., Ltd
- * @license    Acelle Co., Ltd
- *
- * @version    1.0
- *
- * @link       http://acellemail.com
- *
- */
-
-/**
- * Get full table name by adding the DB prefix.
- *
- * @param string table name
- *
- * @return string fulle table name with prefix
- */
 function table($name)
 {
     return \DB::getTablePrefix() . $name;
@@ -630,7 +601,7 @@ function array_unique_by($array, $callback)
 
 function get_localization_config($name, $locale)
 {
-    $defaultConfig = config('localization')['*'];
+   $defaultConfig = config('localization')['*'];
 
     if (array_key_exists($locale, config('localization'))) {
         $config = config('localization')[$locale];
@@ -756,7 +727,7 @@ function number_with_delimiter($number, $precision = null, $seperator = null, $l
     }
 
     if (is_null($locale)) {
-        $locale = config('app.locale');
+        $locale = 'es';
     }
 
     // Trick!
@@ -1296,8 +1267,8 @@ function parseRss($config)
     $rss = [];
 
     // Parse RSS content
-    $rssArray = xml_to_array(simplexml_load_string(\Acelle\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA));
-    $rssFeed = simplexml_load_string(\Acelle\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA);
+    $rssArray = xml_to_array(simplexml_load_string(\App\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA));
+    $rssFeed = simplexml_load_string(\App\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA);
 
     // Take 10 records only
     $records = array_slice($rssArray['rss']['channel']['item'], 0, $config['size']);

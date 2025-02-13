@@ -3,19 +3,19 @@
 namespace App\Library\Traits;
 
 use Illuminate\Contracts\Bus\Dispatcher;
-use App\Model\JobMonitor;
-use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
+use App\Models\JobMonitor;
+use Illuminate\Bus\Batch;
 use Throwable;
 use Exception;
 use DB;
 
 trait TrackJobs
 {
-    // Currently, only one monitor per campaign (soft business)
+
     public function jobMonitors()
     {
-        return $this->hasMany(JobMonitor::class, 'subject_id')->where('subject_name', self::class);
+        return $this->hasMany('App\Models\JobMonitor', 'subject_id')->where('subject_name', self::class);
     }
 
     // DO NOT USE DB TRANSACTION
@@ -29,24 +29,17 @@ trait TrackJobs
         $monitor->save();
         $job->setMonitor($monitor);
 
-        // Store the closures (for executing after dispatched) to a temporary place
-        // It is because Jobs are not allowed to store closures (not serializable)
         $events = [
             $job->eventAfterDispatched
         ];
 
-        // Destroy closure attributes which cannot be serialized
-        // Otherwise Laravel will throw an exception when dispatching
-        $job->eventAfterDispatched = null; // Destroy the closure
+        $job->eventAfterDispatched = null;
 
-        // Actually dispatch
         $dispatchedJobId = app(Dispatcher::class)->dispatch($job);
 
-        // Associate job ID with monitor
         $monitor->job_id = $dispatchedJobId;
         $monitor->save();
 
-        // Execute job's callback
         foreach ($events as $closure) {
             if (!is_null($closure)) {
                 $closure($job, $monitor);
@@ -57,32 +50,24 @@ trait TrackJobs
         return $monitor;
     }
 
-    // IMPORTANT: this is normally for jobs that create other jobs
     public function dispatchWithBatchMonitor($job, $thenCallback, $catchCallback, $finallyCallback)
     {
-        // IMPORTANT:
-        // UPdate QUEUE events in order NOT to set AFTER / FAILING... for job used in a batch (only BEFORE event is OK);
+
         if (!property_exists($job, 'monitor')) {
             throw new Exception(sprintf('Job class `%s` should use `Trackable` trait in order to use $eventAfterDispatched callback', get_class($job)));
         }
 
-        // Create job monitor record
         $monitor = JobMonitor::makeInstance($this, get_class($job));
         $monitor->save();
 
-        // Set job monitor
         $job->setMonitor($monitor);
 
-        // Store the closures (for executing after dispatched) to a temporary place
-        // It is because Jobs are not allowed to store closures (not serializable)
         $events = [
             'afterDispatched' => $job->eventAfterDispatched,
             'afterFinished' => $job->eventAfterFinished,
         ];
 
-        // Destroy closure attributes which cannot be serialized
-        // Otherwise Laravel will throw an exception when dispatching
-        $job->eventAfterDispatched = null; // Destroy the closure
+        $job->eventAfterDispatched = null;
         $job->eventAfterFinished = null;
 
         $batch = Bus::batch($job)->then(function (Batch $batch) use ($monitor, $thenCallback) {

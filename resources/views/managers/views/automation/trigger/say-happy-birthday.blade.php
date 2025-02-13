@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-md-6">
-        <input type="hidden" name="options[type]" value="event" />
-        <input type="hidden" name="options[field]" value="date_of_birth" />
-        
+        <input type="hidden" name="options[type]" value="event"/>
+        <input type="hidden" name="options[field]" value="date_of_birth"/>
+
         @include('helpers.form_control', [
             'type' => 'select',
             'class' => '',
@@ -10,7 +10,7 @@
             'name' => 'options[before]',
             'value' => $trigger->getOption('before'),
             'help_class' => 'trigger',
-            'options' => Acelle\Model\Automation2::getDelayBeforeOptions(),
+            'options' => Acelle\Model\Automation::getDelayBeforeOptions(),
             'rules' => $rules,
         ])
 
@@ -49,5 +49,5 @@
             'level' => 'warning',
             'message' => trans('messages.list.no_date_or_datetime_field'),
         ])
-    </div>        
+    </div>
 @endif

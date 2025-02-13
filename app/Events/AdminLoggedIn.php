@@ -1,8 +1,8 @@
 <?php
 
-namespace Acelle\Events;
+namespace App\Events;
 
-use Acelle\Events\Event;
+use App\Events\Event;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
@@ -12,23 +12,14 @@ class AdminLoggedIn extends Event
 
     protected $admin;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct($admin = null)
     {
         $this->admin = $admin;
     }
 
-    /**
-     * Get the channels the event should be broadcast on.
-     *
-     * @return array
-     */
     public function broadcastOn()
     {
         return [];
     }
+
 }

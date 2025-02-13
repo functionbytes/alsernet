@@ -4,7 +4,7 @@ namespace App\Library\HtmlHandler;
 
 use League\Pipeline\StageInterface;
 use App\Library\StringHelper;
-use App\Model\Product;
+use App\Models\Product;
 use Exception;
 
 class TransformWidgets implements StageInterface

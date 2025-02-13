@@ -7,7 +7,7 @@
 
 <div class="row">
     @php
-        $delayOptions = \Acelle\Model\Automation2::getDelayOptions();
+        $delayOptions = \Acelle\Model\Automation::getDelayOptions();
         $exist = false;
 
         foreach($delayOptions as $deplayOption) {
@@ -41,7 +41,7 @@
 <script>
     var waitTimePopup = new Popup();
 
-    $('.wait-time [name=time]').change(function() {
+    $('.wait-time [name=time]').change(function () {
         var val = $(this).val();
 
         if (val == 'custom') {

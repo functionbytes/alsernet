@@ -3,10 +3,10 @@
 namespace App\Library;
 
 use Exception;
-use App\Model\MailList;
+use App\Models\Campaign\CampaignMaillist;
 use DB;
 
-class MailListFieldMapping
+class CampaignMaillistFieldMapping
 {
     public $mapping = [];
     public $list;
@@ -25,7 +25,7 @@ class MailListFieldMapping
         return "field_{$id}";
     }
 
-    public static function parse(array $mapping, MailList $list)
+    public static function parse(array $mapping, CampaignMaillist $list)
     {
         self::validate($mapping, $list);
 

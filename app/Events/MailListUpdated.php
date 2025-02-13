@@ -1,6 +1,6 @@
 <?php
 
-namespace Acelle\Events;
+namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -19,22 +19,12 @@ class MailListUpdated
     public $mailList;
     public $delayed;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct($mailList, $delayed = true)
     {
         $this->mailList = $mailList;
         $this->delayed = $delayed;
     }
 
-    /**
-     * Get the channels the event should be broadcast on.
-     *
-     * @return array
-     */
     public function broadcastOn()
     {
         return [];

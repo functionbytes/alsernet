@@ -3,7 +3,7 @@
         <label
 			{!! isset($option['tooltip']) ? 'data-popup="tooltip" title="' . $option['tooltip'] . '"' : '' !!}
 		>
-            <input{!! isset($group)  ? " group='" . $group . "'" : "" !!} {!! isset($radio_group)  ? " radio-group='" . $radio_group . "'" : "" !!} {{ (isset($option['disabled']) && $option['disabled'] == true) ? "disabled='disabled'" : '' }} {{ $option['value'] == $value ? " checked" : "" }} type="radio" name="{{ $name }}" value="{{ $option['value'] }}" class="styled  {{ (isset($option['disabled']) && $option['disabled'] == true) ? "disabled" : ''}}" />
+            <input{!! isset($group)  ? " group='" . $group . "'" : "" !!} {!! isset($radio_group)  ? " radio-group='" . $radio_group . "'" : "" !!} {{ (isset($option['disabled']) && $option['disabled'] == true) ? "disabled='disabled'" : '' }} {{ $option['value'] == $value ? " checked" : "" }} type="radio" name="{{ $name }}" value="{{ $option['value'] }}" class="form-check-input success check-light-success  {{ (isset($option['disabled']) && $option['disabled'] == true) ? "disabled" : ''}}" />
             {!! $option['text'] !!}
 			@if(isset($option['description']))
 				<div class="desc text-normal mb-10">

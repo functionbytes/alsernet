@@ -1,13 +1,14 @@
 @extends('layouts.popup.small')
 
 @section('content')
-	<div class="row">
+    <div class="row">
         <div class="col-md-12">
             <div class="mc_section">
-                <form class="cart-wait" action="{{ route('Automation2Controller@cartWait', $automation->uid) }}" method="POST">
+                <form class="cart-wait" action="{{ route('Automation2Controller@cartWait', $automation->uid) }}"
+                      method="POST">
                     {{ csrf_field() }}
 
-                    <input type="hidden" name="plan[options][billing_cycle]" value="other" />
+                    <input type="hidden" name="plan[options][billing_cycle]" value="other"/>
 
                     <h2 class="text-semibold">{{ trans('messages.cart.wait') }}</h2>
 
@@ -29,21 +30,22 @@
                             @include('helpers.form_control', ['type' => 'select',
                                 'name' => 'unit',
                                 'value' => $trigger->getOption('wait') ? explode('_', $trigger->getOption('wait'))[1] : 'hour',
-                                'options' => Acelle\Model\Automation2::cartWaitTimeUnitOptions(),
+                                'options' => Acelle\Model\Automation::cartWaitTimeUnitOptions(),
                                 'help_class' => 'plan',
                             ])
                         </div>
                     </div>
                     <hr>
                     <button class="btn btn-secondary me-2">{{ trans('messages.save') }}</button>
-                    <a href="javascript:;" onclick="cartWait.hide()" class="btn btn-link me-2" data-dismiss="modal">{{ trans('messages.close') }}</a>
+                    <a href="javascript:;" onclick="cartWait.hide()" class="btn btn-link me-2"
+                       data-dismiss="modal">{{ trans('messages.close') }}</a>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        $('form.cart-wait').on('submit', function(e) {
+        $('form.cart-wait').on('submit', function (e) {
             e.preventDefault();
 
             var form = $(this);
@@ -65,13 +67,13 @@
                     tree.setOptions($.extend(tree.getOptions(), response.options));
 
                     // save tree
-                    saveData(function() {
+                    saveData(function () {
                         // notify
                         notify({
-    type: 'success',
-    title: '{!! trans('messages.notify.success') !!}',
-    message: response.message
-});
+                            type: 'success',
+                            title: '{!! trans('messages.notify.success') !!}',
+                            message: response.message
+                        });
 
                         // reload sidebar
                         sidebar.load();

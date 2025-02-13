@@ -1,6 +1,6 @@
 <?php
 
-namespace Acelle\Events;
+namespace App\Events;
 
 abstract class Event
 {

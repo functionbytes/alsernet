@@ -4,7 +4,7 @@ namespace App\Models\Campaign;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Acelle\Library\Traits\HasUid;
+use App\Library\Traits\HasUid;
 use Illuminate\Support\Facades\Http;
 
 class CampaignWebhook extends Model
@@ -18,12 +18,12 @@ class CampaignWebhook extends Model
 
     public function campaignLink()
     {
-        return $this->belongsTo('Acelle\Model\CampaignLink');
+        return $this->belongsTo('App\Models\Campaign\CampaignLink');
     }
 
     public function campaign()
     {
-        return $this->belongsTo('Acelle\Model\Campaign');
+        return $this->belongsTo('App\Models\Campaign\Campaign');
     }
 
     public function createFromArray($params)
@@ -128,4 +128,5 @@ class CampaignWebhook extends Model
     {
         return $this->type == self::TYPE_UNSUBSCRIBE;
     }
+
 }

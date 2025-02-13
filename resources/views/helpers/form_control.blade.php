@@ -13,7 +13,7 @@
 @elseif (!empty($errors))
     <div class="form-group{{ $errors->has($var_name) ? ' has-error' : '' }} control-{{ $type }}">
         @if (!empty($label) && $type != 'checkbox2' && $type != 'mc_checkbox')
-            <label>
+            <label class="mb-2">
                 {!! $label !!}
                 @if ($required)
                     <span class="text-danger">*</span>
@@ -51,7 +51,7 @@
                 {!! trans('messages.' . $help_class . '.' . $name . '.help') !!}
             </div>
         @endif
-        
+
         @if (isset($help))
             <div class="help alert alert-info">
                 {!! $help !!}

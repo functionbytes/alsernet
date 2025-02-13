@@ -46,7 +46,7 @@ trait HasCache
     {
         $cacheIndex = $this->getCacheIndex();
         foreach ($cacheIndex as $key => $callback) {
-            $this->forgetCache($key, $callback());
+            $this->forgetCache($key);  // Corrected: No second argument for forgetCache()
         }
     }
 }

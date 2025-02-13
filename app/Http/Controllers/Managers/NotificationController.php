@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Managers;
 
-use Acelle\Http\Controllers\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Acelle\Model\Notification as AppNotification;
+use App\Model\Notification as AppNotification;
 
 class NotificationController extends Controller
 {

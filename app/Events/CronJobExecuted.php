@@ -1,8 +1,8 @@
 <?php
 
-namespace Acelle\Events;
+namespace App\Events;
 
-use Acelle\Events\Event;
+use App\Events\Event;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 

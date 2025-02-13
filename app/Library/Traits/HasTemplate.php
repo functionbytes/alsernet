@@ -2,10 +2,10 @@
 
 namespace App\Library\Traits;
 
-use App\Model\Template;
+use App\Models\Template\Template;
 use Exception;
 use App\Library\ExtendedSwiftMessage;
-use App\Model\Setting;
+use App\Models\Setting;
 use App\Library\StringHelper;
 use League\Pipeline\PipelineBuilder;
 use App\Library\HtmlHandler\ParseRss;
@@ -34,7 +34,7 @@ trait HasTemplate
      */
     public function template()
     {
-        return $this->belongsTo('Acelle\Model\Template');
+        return $this->belongsTo('App\Models\Template\Template');
     }
 
     /**

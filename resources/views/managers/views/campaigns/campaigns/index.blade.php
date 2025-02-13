@@ -118,7 +118,7 @@
                                                 </li>
 
                                                 <li>
-                                                    <a class="dropdown-item"  link-method="POST" link-confirm="{{ trans('messages.restart_campaigns_confirm', ['number' => '1']) }}" href="{{ route('manager.campaigns.restart', $campaign->uid) }}" >Pausar</a>
+                                                    <a class="dropdown-item"  link-method="POST" link-confirm="{{ trans('messages.restart_campaigns_confirm', ['number' => '1']) }}" href="{{ route('manager.campaigns.restart', $campaign->uid) }}" >Reiniciar</a>
                                                 </li>
 
                                                <li>
@@ -141,12 +141,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="result-body ">
-                <span>Mostrar {{ $campaigns->firstItem() }}-{{ $campaigns->lastItem() }} de {{ $campaigns->total() }} resultados</span>
-                <nav>
-                    {{ $campaigns->appends(request()->input())->links() }}
-                </nav>
-            </div>
+
         </div>
     </div>
 @endsection

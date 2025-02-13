@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-md-6">
-        <input type="hidden" name="options[type]" value="event" />
-        <input type="hidden" name="options[field]" value="created_at" />
-    
+        <input type="hidden" name="options[type]" value="event"/>
+        <input type="hidden" name="options[field]" value="created_at"/>
+
         @include('helpers.form_control', [
             'type' => 'select',
             'class' => '',
@@ -10,9 +10,9 @@
             'name' => 'options[delay]',
             'value' => '',
             'help_class' => 'trigger',
-            'options' => \Acelle\Model\Automation2::getDelayOptions(),
+            'options' => \Acelle\Model\Automation::getDelayOptions(),
         ])
-        
+
         @include('helpers.form_control', [
             'type' => 'time2',
             'name' => 'options[at]',

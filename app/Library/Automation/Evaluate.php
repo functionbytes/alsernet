@@ -2,8 +2,8 @@
 
 namespace App\Library\Automation;
 
-use App\Model\Email;
-use App\Model\EmailLink;
+use App\Models\Email;
+use App\Models\EmailLink;
 use Illuminate\Support\Carbon;
 use Exception;
 

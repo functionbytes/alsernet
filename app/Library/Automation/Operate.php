@@ -2,7 +2,7 @@
 
 namespace App\Library\Automation;
 
-use App\Model\MailList;
+use App\Models\Campaign\CampaignMaillist;
 use Exception;
 
 class Operate extends Action
@@ -43,7 +43,7 @@ class Operate extends Action
                 throw new Exception("Cannot copy/move contact, target list not set");
             }
 
-            $toList = MailList::findByUid($toListUid);
+            $toList = CampaignMaillist::findByUid($toListUid);
 
             if (is_null($toList)) {
                 throw new Exception("Cannot copy/move contact, target list does not exist: {$toListUid}");
@@ -89,7 +89,7 @@ class Operate extends Action
                 throw new Exception("Cannot get trigger info contact, target list not set");
             }
 
-            $toList = MailList::findByUid($toListUid);
+            $toList = CampaignMaillist::findByUid($toListUid);
 
             if (is_null($toList)) {
                 throw new Exception("Cannot get trigger information, list does not exist: {$toListUid}");

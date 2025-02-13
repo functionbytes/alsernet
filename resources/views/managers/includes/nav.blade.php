@@ -66,6 +66,33 @@
                 </li>
 
 
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
+                          <span class="d-flex">
+                            <i class="fa-duotone fa-note"></i>
+                          </span>
+                        <span class="hide-menu">Campañas</span>
+                    </a>
+
+
+                    <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                            <a href="{{ route('manager.campaigns') }}" class="sidebar-link">
+                                <span class="hide-menu">Campañas </span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ route('manager.maillists') }}" class="sidebar-link">
+                                <span class="hide-menu">Listas</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                </li>
+
+
+
                 <li class="sidebar-item">
                     <a class="sidebar-link" href="{{ route('manager.products') }}" aria-expanded="false">
                           <span class="d-flex">

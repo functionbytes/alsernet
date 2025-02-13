@@ -2,27 +2,24 @@
 
 namespace App\Models\Campaign;
 
-use App\Library\HtmlHandler\InjectTrackingPixel;
-use App\Library\Contracts\HasTemplateInterface;
-use App\Library\Contracts\CampaignInterface;
-use App\Library\HtmlHandler\TransformUrl;
 use App\Jobs\ExecuteCampaignCallback;
-use App\Library\Traits\HasTemplate;
-use KubAT\PhpSimple\HtmlDomParser;
-use App\Library\RouletteWheel;
-use App\Library\BaseCampaign;
-use App\Library\StringHelper;
-use App\Models\SendingServer;
 use App\Jobs\SendMessage;
+use App\Library\BaseCampaign;
+use App\Library\Contracts\CampaignInterface;
+use App\Library\Contracts\HasTemplateInterface;
+use App\Library\HtmlHandler\InjectTrackingPixel;
+use App\Library\HtmlHandler\TransformUrl;
+use App\Library\RouletteWheel;
+use App\Library\StringHelper;
+use App\Library\Traits\HasTemplate;
+use App\Models\SendingServer;
 use App\Models\Setting;
-use League\Csv\Writer;
 use Carbon\Carbon;
-use ZipArchive;
-use Validator;
-use Exception;
-use Throwable;
 use Closure;
 use DB;
+use Exception;
+use League\Csv\Writer;
+use Validator;
 
 class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInterface
 {
@@ -38,7 +35,6 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
 
     protected $table = "campaigns";
 
-
     protected $dates = [
         'created_at',
         'updated_at',
@@ -51,7 +47,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
      */
     public function defaultMailList()
     {
-        return $this->belongsTo('App\Models\Maillist\MailList', 'default_mail_list_id');
+        return $this->belongsTo('App\Models\Campaign\CampaignMaillist', 'default_maillist_id');
     }
 
     /**
@@ -59,7 +55,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
      */
     public function mailLists()
     {
-        return $this->belongsToMany('App\Models\Maillist\MailList', 'campaigns_lists_segments');
+        return $this->belongsToMany('App\Models\Campaign\CampaignMaillist', 'campaigns_lists_segments');
     }
 
     /**
@@ -141,7 +137,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
      */
     public function openLogs()
     {
-        return OpenLog::select('open_logs.*')->leftJoin('tracking_logs', 'tracking_logs.message_id', '=', 'open_logs.message_id')
+        return CampaignOpenLog::select('open_logs.*')->leftJoin('tracking_logs', 'tracking_logs.message_id', '=', 'open_logs.message_id')
             ->where('tracking_logs.campaign_id', '=', $this->id);
     }
 
@@ -152,7 +148,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
      */
     public function clickLogs()
     {
-        return ClickLog::select('click_logs.*')->leftJoin('tracking_logs', 'tracking_logs.message_id', '=', 'click_logs.message_id')
+        return CampaignClickLog::select('click_logs.*')->leftJoin('tracking_logs', 'tracking_logs.message_id', '=', 'click_logs.message_id')
             ->where('tracking_logs.campaign_id', '=', $this->id);
     }
 
@@ -185,7 +181,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
      */
     public function listsSegments()
     {
-        return $this->hasMany('App\Models\CampaignsListsSegment');
+        return $this->hasMany('App\Models\Campaign\CampaignListsSegment');
     }
 
     /**
@@ -198,7 +194,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         $lists_segments = $this->listsSegments;
 
         if ($lists_segments->isEmpty()) {
-            $lists_segment = new CampaignsListsSegment();
+            $lists_segment = new CampaignListsSegment();
             $lists_segment->campaign_id = $this->id;
             $lists_segment->is_default = true;
 
@@ -219,18 +215,18 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         $groups = [];
 
         foreach ($lists_segments as $lists_segment) {
-            if (!isset($groups[$lists_segment->mail_list_id])) {
-                $groups[$lists_segment->mail_list_id] = [];
-                $groups[$lists_segment->mail_list_id]['list'] = $lists_segment->mailList;
-                if ($this->default_mail_list_id == $lists_segment->mail_list_id) {
-                    $groups[$lists_segment->mail_list_id]['is_default'] = true;
+            if (!isset($groups[$lists_segment->maillist_id])) {
+                $groups[$lists_segment->maillist_id] = [];
+                $groups[$lists_segment->maillist_id]['list'] = $lists_segment->mailList;
+                if ($this->default_maillist_id == $lists_segment->maillist_id) {
+                    $groups[$lists_segment->maillist_id]['is_default'] = true;
                 } else {
-                    $groups[$lists_segment->mail_list_id]['is_default'] = false;
+                    $groups[$lists_segment->maillist_id]['is_default'] = false;
                 }
-                $groups[$lists_segment->mail_list_id]['segment_uids'] = [];
+                $groups[$lists_segment->maillist_id]['segment_uids'] = [];
             }
-            if ($lists_segment->segment && !in_array($lists_segment->segment->uid, $groups[$lists_segment->mail_list_id]['segment_uids'])) {
-                $groups[$lists_segment->mail_list_id]['segment_uids'][] = $lists_segment->segment->uid;
+            if ($lists_segment->segment && !in_array($lists_segment->segment->uid, $groups[$lists_segment->maillist_id]['segment_uids'])) {
+                $groups[$lists_segment->maillist_id]['segment_uids'][] = $lists_segment->segment->uid;
             }
         }
 
@@ -506,7 +502,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         ];
 
         if ($this->defaultMailList) {
-            $data['list_id'] = $this->default_mail_list_id;
+            $data['list_id'] = $this->default_maillist_id;
             $data['list_name'] = $this->defaultMailList->name;
         }
 
@@ -1107,7 +1103,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
 
         // Foreign key
         $copy->customer_id = $this->customer_id;
-        $copy->default_mail_list_id = $this->default_mail_list_id;
+        $copy->default_maillist_id = $this->default_maillist_id;
         $copy->tracking_domain_id = $this->tracking_domain_id;
 
         // Overwrite attributes
@@ -1144,7 +1140,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         foreach ($this->listsSegments as $listSegment) {
             $newListSegment = $copy->listsSegments()->make();
 
-            $newListSegment->mail_list_id = $listSegment->mail_list_id;
+            $newListSegment->maillist_id = $listSegment->maillist_id;
             $newListSegment->segment_id = $listSegment->segment_id;
             $newListSegment->created_at = $now;
             $newListSegment->updated_at = $now;
@@ -1295,31 +1291,31 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
                 $mail_list = null;
 
                 if (!empty($param['mail_list_uid'])) {
-                    $mail_list = MailList::findByUid($param['mail_list_uid']);
+                    $mail_list = CampaignMaillist::findByUid($param['mail_list_uid']);
 
                     // default mail list id
                     if (isset($param['is_default']) && $param['is_default'] == 'true') {
-                        $this->default_mail_list_id = $mail_list->id;
+                        $this->default_maillist_id = $mail_list->id;
                     }
                 }
 
                 if (!empty($param['segment_uids'])) {
                     foreach ($param['segment_uids'] as $segment_uid) {
-                        $segment = Segment::findByUid($segment_uid);
+                        $segment = CampaignSegment::findByUid($segment_uid);
 
-                        $lists_segment = new CampaignsListsSegment();
+                        $lists_segment = new CampaignListsSegment();
                         $lists_segment->campaign_id = $this->id;
                         if ($mail_list) {
-                            $lists_segment->mail_list_id = $mail_list->id;
+                            $lists_segment->maillist_id = $mail_list->id;
                         }
                         $lists_segment->segment_id = $segment->id;
                         $this->listsSegments->push($lists_segment);
                     }
                 } else {
-                    $lists_segment = new CampaignsListsSegment();
+                    $lists_segment = new CampaignListsSegment();
                     $lists_segment->campaign_id = $this->id;
                     if ($mail_list) {
-                        $lists_segment->mail_list_id = $mail_list->id;
+                        $lists_segment->maillist_id = $mail_list->id;
                     }
                     $this->listsSegments->push($lists_segment);
                 }
@@ -1340,17 +1336,17 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         foreach ($lists_segments_groups as $lists_segments_group) {
             if (!empty($lists_segments_group['segment_uids'])) {
                 foreach ($lists_segments_group['segment_uids'] as $segment_uid) {
-                    $segment = Segment::findByUid($segment_uid);
+                    $segment = CampaignSegment::findByUid($segment_uid);
                     $data[] = [
                         'campaign_id' => $this->id,
-                        'mail_list_id' => $lists_segments_group['list']->id,
+                        'maillist_id' => $lists_segments_group['list']->id,
                         'segment_id' => $segment->id,
                     ];
                 }
             } else {
                 $data[] = [
                     'campaign_id' => $this->id,
-                    'mail_list_id' => $lists_segments_group['list']->id,
+                    'maillist_id' => $lists_segments_group['list']->id,
                     'segment_id' => null,
                 ];
             }
@@ -1360,11 +1356,11 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
         $this->listsSegments()->delete();
 
         // Insert Data
-        CampaignsListsSegment::insert($data);
+        CampaignListsSegment::insert($data);
 
         // Save campaign with default list id
         $campaign = Campaign::find($this->id);
-        $campaign->default_mail_list_id = $this->default_mail_list_id;
+        $campaign->default_maillist_id = $this->default_maillist_id;
         $campaign->save();
     }
 
@@ -1382,7 +1378,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
                 $segment_names = [];
                 if (!empty($lists_segments_group['segment_uids'])) {
                     foreach ($lists_segments_group['segment_uids'] as $segment_uid) {
-                        $segment = Segment::findByUid($segment_uid);
+                        $segment = CampaignSegment::findByUid($segment_uid);
                         $segment_names[] = $segment->name;
                     }
                 }
@@ -1456,7 +1452,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
     public function activeSubscribersCount()
     {
         // return distinctCount($this->subscribers([])->where('subscribers.status', Subscriber::STATUS_SUBSCRIBED), 'subscribers.email');
-        return $this->subscribers([])->where('subscribers.status', Subscriber::STATUS_SUBSCRIBED)->count();
+        return $this->subscribers([])->where('subscribers.status', CampaignMailListsSubscriber::STATUS_SUBSCRIBED)->count();
     }
 
     public function openUniqHours($start = null, $end = null)
@@ -1997,9 +1993,9 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
             '%skipped' => self::DELIVERY_STATUS_SKIPPED,
             '%bounced' => self::DELIVERY_STATUS_BOUNCED,
             '%feedback' => self::DELIVERY_STATUS_FEEDBACK,
-            '%subscribed' => Subscriber::STATUS_SUBSCRIBED,
-            '%unsubscribed' => Subscriber::STATUS_UNSUBSCRIBED,
-            '%deliverable' => Subscriber::VERIFICATION_STATUS_DELIVERABLE,
+            '%subscribed' => CampaignMailListsSubscriber::STATUS_SUBSCRIBED,
+            '%unsubscribed' => CampaignMailListsSubscriber::STATUS_UNSUBSCRIBED,
+            '%deliverable' => CampaignMailListsSubscriber::VERIFICATION_STATUS_DELIVERABLE,
             '%tracking_logs' => table('tracking_logs'),
             '%subscribers' => table('subscribers'),
             '%bounce_logs' => table('bounce_logs'),
@@ -2141,7 +2137,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
             }
         }
 
-        $query = Subscriber::getByListsAndSegments(...$listsAndSegments);
+        $query = CampaignMailListsSubscriber::getByListsAndSegments(...$listsAndSegments);
 
         // Filters
         $filters = isset($params['filters']) ? $params['filters'] : null;
@@ -2330,7 +2326,7 @@ class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInt
 
         // default mail list id
         if (isset($params['mail_list_uid'])) {
-            $this->default_mail_list_id = \App\Models\MailList::findByUid($params['mail_list_uid'])->id;
+            $this->default_maillist_id = \App\Models\MailList::findByUid($params['mail_list_uid'])->id;
         }
 
         $this->save();

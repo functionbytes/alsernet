@@ -3,9 +3,8 @@
 namespace App\Library\Traits;
 
 use Illuminate\Contracts\Bus\Dispatcher;
+use App\Models\JobMonitor;
 use Exception;
-use App\Model\JobMonitor;
-
 trait Trackable
 {
     public $monitor;

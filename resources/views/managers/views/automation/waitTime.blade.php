@@ -1,13 +1,14 @@
 @extends('layouts.popup.small')
 
 @section('content')
-	<div class="row">
+    <div class="row">
         <div class="col-md-12">
             <div class="mc_section">
-                <form class="custom-wait-time-form" action="{{ route('Automation2Controller@waitTime', $automation->uid) }}" method="POST">
+                <form class="custom-wait-time-form"
+                      action="{{ route('Automation2Controller@waitTime', $automation->uid) }}" method="POST">
                     {{ csrf_field() }}
 
-                    <input type="hidden" name="plan[options][billing_cycle]" value="other" />
+                    <input type="hidden" name="plan[options][billing_cycle]" value="other"/>
 
                     <h2 class="text-semibold">{{ trans('messages.automation.wait') }}</h2>
 
@@ -29,21 +30,22 @@
                             @include('helpers.form_control', ['type' => 'select',
                                 'name' => 'unit',
                                 'value' => '',
-                                'options' => Acelle\Model\Automation2::waitTimeUnitOptions(),
+                                'options' => Acelle\Model\Automation::waitTimeUnitOptions(),
                                 'help_class' => 'plan',
                             ])
                         </div>
                     </div>
                     <hr>
                     <button class="btn btn-secondary me-2">{{ trans('messages.save') }}</button>
-                    <a href="javascript:;" onclick="waitTimePopup.hide()" class="btn btn-link me-2">{{ trans('messages.close') }}</a>
+                    <a href="javascript:;" onclick="waitTimePopup.hide()"
+                       class="btn btn-link me-2">{{ trans('messages.close') }}</a>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        $('.custom-wait-time-form').on('submit', function(e) {
+        $('.custom-wait-time-form').on('submit', function (e) {
             e.preventDefault();
 
             var form = $(this);
@@ -60,16 +62,16 @@
                     }
                 },
                 success: function (response) {
-                    $('.custom-wait-time').html(`<input type="hidden" name="time" value="`+response.amount+` `+response.unit+`" />`);
+                    $('.custom-wait-time').html(`<input type="hidden" name="time" value="` + response.amount + ` ` + response.unit + `" />`);
                     waitTimePopup.hide();
 
-                    setTimeout(function() {
-                        if($('.select-action-confirm').is(':visible')) {
+                    setTimeout(function () {
+                        if ($('.select-action-confirm').is(':visible')) {
                             $('.select-action-confirm').click();
                         } else {
                             $('.action-save-change').click();
                         }
-                    },100);
+                    }, 100);
                 }
             });
         });

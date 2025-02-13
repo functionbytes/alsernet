@@ -2,7 +2,7 @@
 
 namespace App\Library\Automation;
 
-use App\Model\Email;
+use App\Models\Email;
 use Exception;
 
 class Send extends Action

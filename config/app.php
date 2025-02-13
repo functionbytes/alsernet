@@ -187,6 +187,7 @@ return [
          */
 
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
+        //Intervention\Image\ImageServiceProvider::class,
 
 
         /*
@@ -197,6 +198,8 @@ return [
         App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\JobServiceProvider::class,
+
     ])->toArray(),
 
     /*
@@ -258,5 +261,10 @@ return [
         //'permission' => App\Http\Middleware\PermissionMiddleware::class, // cloned from Spatie\Permission\Middleware
         'role'       => App\Http\Middleware\RoleMiddleware::class,
     ])->toArray(),
+
+
+
+    'redis_enabled' => env('REDIS_ENABLED', false),
+    'import_batch_size' => env('IMPORT_BATCH_SIZE', 9993),
 
 ];

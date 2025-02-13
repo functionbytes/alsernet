@@ -25,14 +25,8 @@ class AgentMessageEvent implements ShouldBroadcastNow
     public $groupInclude;
     public $messageType;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct($message,$receiverId,$senderId,$senderName,$typingMessage=null,$openedUser=null,$senderImage=null,$groupInclude=null,$messageType=null)
     {
-        //
         $this->message = $message;
         $this->receiverId = $receiverId;
         $this->senderId = $senderId;
@@ -44,14 +38,9 @@ class AgentMessageEvent implements ShouldBroadcastNow
         $this->messageType = $messageType;
 
     }
-
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return \Illuminate\Broadcasting\Channel|array
-     */
     public function broadcastOn()
     {
         return new PresenceChannel('agentMessage');
     }
+
 }

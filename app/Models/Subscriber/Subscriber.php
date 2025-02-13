@@ -2,6 +2,7 @@
 
 namespace App\Models\Subscriber;
 
+use App\Library\Traits\HasUid;
 use App\Http\Resources\V1\NewsletterResource;
 use Dflydev\DotAccessData\Data;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,9 +15,27 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Subscriber extends Model
 {
-    use HasFactory , LogsActivity;
+    use HasFactory , LogsActivity , HasUid;
 
     protected $table = "subscribers";
+
+    public const STATUS_SUBSCRIBED = 'subscribed';
+    public const STATUS_UNSUBSCRIBED = 'unsubscribed';
+    public const STATUS_BLACKLISTED = 'blacklisted';
+    public const STATUS_SPAM_REPORTED = 'spam-reported';
+    public const STATUS_UNCONFIRMED = 'unconfirmed';
+
+    public const SUBSCRIPTION_TYPE_ADDED = 'added';
+    public const SUBSCRIPTION_TYPE_DOUBLE_OPTIN = 'double';
+    public const SUBSCRIPTION_TYPE_SINGLE_OPTIN = 'single';
+    public const SUBSCRIPTION_TYPE_IMPORTED = 'imported';
+
+    public const VERIFICATION_STATUS_DELIVERABLE = 'deliverable';
+    public const VERIFICATION_STATUS_UNDELIVERABLE = 'undeliverable';
+    public const VERIFICATION_STATUS_UNKNOWN = 'unknown';
+    public const VERIFICATION_STATUS_RISKY = 'risky';
+    public const VERIFICATION_STATUS_UNVERIFIED = 'unverified';
+
 
     protected $fillable = [
         'slack',

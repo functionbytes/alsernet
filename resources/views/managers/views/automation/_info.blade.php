@@ -20,7 +20,7 @@
                         'name' => '',
                         'label' => '',
                         'class' => 'automation_status styled3',
-                        'value' => ($automation->status == \Acelle\Model\Automation2::STATUS_ACTIVE ? true : false),
+                        'value' => ($automation->status == \Acelle\Model\Automation::STATUS_ACTIVE ? true : false),
                         'options' => [false,true],
                         'help_class' => '',
                         'rules' => []
@@ -32,7 +32,7 @@
                     'name' => 'automation_status',
                     'label' => '',
                     'class' => 'automation_status styled3',
-                    'value' => ($automation->status == \Acelle\Model\Automation2::STATUS_ACTIVE ? true : false),
+                    'value' => ($automation->status == \Acelle\Model\Automation::STATUS_ACTIVE ? true : false),
                     'options' => [false,true],
                     'help_class' => '',
                     'rules' => []
@@ -46,7 +46,8 @@
         {!! $automation->getIntro() !!}
     </p>
     <div>
-        <a href="javascript:;" class="btn btn-info text-nowrap d-flex align-items-center" onclick="sidebar.load('{{ route('Automation2Controller@settings', $automation->uid) }}')">
+        <a href="javascript:;" class="btn btn-info text-nowrap d-flex align-items-center"
+           onclick="sidebar.load('{{ route('Automation2Controller@settings', $automation->uid) }}')">
             <i class="material-symbols-rounded me-2">auto_graph</i> {{ trans('messages.automation.settings') }}
         </a>
     </div>
@@ -54,7 +55,7 @@
 
 <script>
     // change automation status
-    $('[name="automation_status"]').change(function() {
+    $('[name="automation_status"]').change(function () {
         var value = $(this).is(":checked");
         var url, confirm;
 
@@ -68,7 +69,7 @@
 
         var dialog = new Dialog('confirm', {
             message: confirm,
-            ok: function(dialog) {
+            ok: function (dialog) {
                 $.ajax({
                     url: url,
                     type: 'POST',
@@ -76,27 +77,27 @@
                     data: {
                         _token: CSRF_TOKEN
                     }
-                }).done(function(response) {
+                }).done(function (response) {
                     if (!value) {
                         notify(response.status, '{{ trans('messages.notify.success') }}', response.message);
                     } else {
                         var dialog = new Dialog('alert', {
                             title: '{{ trans('messages.automation.started.title') }}  ',
                             message: `{!! trans('messages.automation.started.desc') !!}`,
-                            ok: function(dialog) {
+                            ok: function (dialog) {
                                 sidebar.load();
                             },
-                            cancel: function(dialog) {
+                            cancel: function (dialog) {
                                 sidebar.load();
                             },
-                            close: function(dialog) {
+                            close: function (dialog) {
                                 sidebar.load();
                             },
                         });
                     }
 
                     sidebar.load();
-                }).fail(function(e) {
+                }).fail(function (e) {
                     var error = JSON.parse(e.responseText);
                     notify({
                         type: 'danger',
@@ -106,10 +107,10 @@
                     sidebar.load();
                 });
             },
-            cancel: function(dialog) {
+            cancel: function (dialog) {
                 sidebar.load();
             },
-            close: function(dialog) {
+            close: function (dialog) {
                 sidebar.load();
             },
         });

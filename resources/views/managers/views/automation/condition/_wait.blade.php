@@ -14,7 +14,7 @@
                 'name' => 'wait',
                 'value' => $element->getOption('wait') ? $element->getOption('wait') : '1 day',
                 'required' => true,
-                'options' => \Acelle\Model\Automation2::getConditionWaitOptions($element->getOption('wait')),
+                'options' => \Acelle\Model\Automation::getConditionWaitOptions($element->getOption('wait')),
             ])
         </div>
         <div class="text-muted fst-italic">
@@ -31,14 +31,14 @@
 <script>
     var Automation2ConditionWait = {
         labels: $('#condition_wait_container_{{ $id }} .wait_day'),
-        selectBox: function() {
+        selectBox: function () {
             return $('#condition_wait_container_{{ $id }} [name=wait]');
         },
         selectContainer: $('#condition_wait_container_{{ $id }} .wait-select-container'),
 
         customUrl: '{{ route('Automation2Controller@conditionWaitCustom') }}',
 
-        select: function() {
+        select: function () {
             var _this = this;
 
             var val = _this.selectBox().val();
@@ -51,29 +51,29 @@
             Automation2ConditionWait.updateCurrentVal();
         },
 
-        updateCurrentVal: function() {
+        updateCurrentVal: function () {
             var text = this.selectBox().find('option:selected').html();
             this.labels.html(text);
             this.currentVal = this.selectBox().val();
         },
 
-        init: function() {
+        init: function () {
             var _this = this;
 
-            _this.selectBox().on('change', function() {
+            _this.selectBox().on('change', function () {
                 _this.select();
             });
 
             Automation2ConditionWait.updateCurrentVal();
         },
 
-        showCustomPopup: function() {
+        showCustomPopup: function () {
             var _this = this;
 
             _this.customPopup = new Popup({
                 url: _this.customUrl,
-                onclose: function() {
-                    if(_this.selectBox().val() == 'custom') {
+                onclose: function () {
+                    if (_this.selectBox().val() == 'custom') {
                         _this.selectBox().val(_this.currentVal).change();
                     }
                 }
@@ -83,7 +83,7 @@
         }
     }
 
-    $(function() {
+    $(function () {
         Automation2ConditionWait.init();
     });
 </script>

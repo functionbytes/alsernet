@@ -4,7 +4,7 @@ namespace App\Library;
 
 use Symfony\Component\CssSelector\Exception\ParseException;
 
-use function Acelle\Helpers\url_get_contents_ssl_safe;
+use function App\Helpers\url_get_contents_ssl_safe;
 
 /**
  * Parses a html file and applies all embedded and external stylesheets inline

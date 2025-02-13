@@ -4,8 +4,8 @@ namespace App\Library\HtmlHandler;
 
 use League\Pipeline\StageInterface;
 use App\Library\StringHelper;
-use App\Model\TrackingDomain;
-use App\Model\Template;
+use App\Models\Campaign\CampaignTrackingDomain;
+use App\Models\Template\Template;
 use Exception;
 
 class TransformUrl implements StageInterface
@@ -14,7 +14,7 @@ class TransformUrl implements StageInterface
     public $msgId;
     public $domain;
 
-    public function __construct(Template $template, $msgId, TrackingDomain $domain = null)
+    public function __construct(Template $template, $msgId, CampaignTrackingDomain $domain = null)
     {
         $this->template = $template;
         $this->msgId = $msgId;

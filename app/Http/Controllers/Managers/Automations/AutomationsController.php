@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use Validator;
 use App\Http\Requests;
 use App\Models\Automation2;
-use App\Models\MailList;
+use App\Models\Segment;
 use App\Models\Email;
 use App\Models\Attachment;
 use App\Models\Template;

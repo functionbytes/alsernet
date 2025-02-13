@@ -22,7 +22,7 @@
 
 namespace App\Library\Notification;
 
-use App\Model\Notification;
+use App\Models\Notification;
 
 class SystemUrl extends Notification
 {

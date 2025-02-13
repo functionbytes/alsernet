@@ -25,7 +25,7 @@ namespace App\Library;
 use ZipArchive;
 use Illuminate\Support\Facades\Log as LaravelLog; // something wrong, cannot use the default name Log
 use App\Library\Facades\Hook;
-use App\Model\Language;
+use App\ModelS\Lang;
 
 class UpgradeManager
 {
@@ -51,7 +51,7 @@ class UpgradeManager
     private function findTranslationFiles()
     {
         $allTranslationFiles = [];
-        foreach (Language::all() as $lang) {
+        foreach (Lang::all() as $lang) {
             foreach (Hook::execute('add_translation_file') as $source) {
                 $path = join_paths($source['translation_folder'], $lang->code, $source['file_name']);
                 $allTranslationFiles[] = $path;

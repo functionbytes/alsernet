@@ -22,8 +22,9 @@
 
 namespace App\Library\Notification;
 
-use App\Model\Setting;
-use App\Model\Notification;
+use App\Models\Setting;
+use App\Models\Notification;
+use Carbon\Carbon;
 
 class CronJob extends Notification
 {
@@ -58,8 +59,8 @@ class CronJob extends Notification
             return false;
         }
 
-        $lastexec = \Carbon\Carbon::createFromTimestamp($timestamp);
-        $checked = new \Carbon\Carbon(sprintf('%s ago', $diff));
+        $lastexec = Carbon::createFromTimestamp($timestamp);
+        $checked = new Carbon(sprintf('%s ago', $diff));
 
         return $lastexec->gte($checked);
     }
@@ -76,7 +77,6 @@ class CronJob extends Notification
             return '#unknown';
         }
 
-        // Return the datetime object with selected timezone
-        return \Carbon\Carbon::createFromTimestamp($timestamp)->toDateTimeString();
+        return Carbon::createFromTimestamp($timestamp)->toDateTimeString();
     }
 }
