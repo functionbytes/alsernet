@@ -52,9 +52,9 @@ class ShopsController  extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $shop = Shop::uid($slack);
+        $shop = Shop::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -81,7 +81,7 @@ class ShopsController  extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $shop->uid,
+            'uid' => $shop->uid,
             'message' => 'Se actualizo la clase correctamente',
         ]);
 
@@ -98,14 +98,14 @@ class ShopsController  extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $shop->uid,
+            'uid' => $shop->uid,
             'message' => 'Se creo el curso correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
-        $shop = Shop::uid($slack);
+    public function destroy($uid){
+        $shop = Shop::uid($uid);
         $shop->delete();
         return redirect()->route('manager.shops');
     }

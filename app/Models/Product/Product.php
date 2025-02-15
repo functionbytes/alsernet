@@ -15,7 +15,7 @@ class Product extends Model
     protected $table = "products";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'reference',

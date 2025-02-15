@@ -282,9 +282,9 @@ class ProductsController extends Controller
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $product = Product::uid($slack);
+            $product = Product::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -301,9 +301,9 @@ class ProductsController extends Controller
       }
 
 
-    public function locations($slack){
+    public function locations($uid){
 
-        $product = Product::uid($slack);
+        $product = Product::uid($uid);
         $locations  = $product->locations();
 
         $locations = $locations->paginate(paginationNumber());
@@ -315,9 +315,9 @@ class ProductsController extends Controller
 
     }
 
-    public function details($slack){
+    public function details($uid){
 
-        $product = Product::uid($slack);
+        $product = Product::uid($uid);
         $items  = $product->items();
 
         $items = $items->paginate(paginationNumber());
@@ -341,7 +341,7 @@ class ProductsController extends Controller
 
           return response()->json([
             'success' => true,
-            'slack' => $product->uid,
+            'uid' => $product->uid,
             'message' => 'Se actualizo el producto correctamente',
           ]);
 
@@ -369,14 +369,14 @@ class ProductsController extends Controller
 
           return response()->json([
             'success' => true,
-            'slack' => $product->uid,
+            'uid' => $product->uid,
             'message' => 'Se creo el producto correctamente',
           ]);
 
       }
 
-    public function destroy($slack){
-        $product = Product::uid($slack);
+    public function destroy($uid){
+        $product = Product::uid($uid);
         $product->delete();
         return redirect()->route('manager.products');
     }

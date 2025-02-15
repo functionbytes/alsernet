@@ -13,9 +13,9 @@ use App\Models\Inventarie\InventarieLocation;
 
 class LocationsController extends Controller
 {
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
-        $shop = Shop::uid($slack);
+        $shop = Shop::uid($uid);
         $searchKey = null ?? $request->search;
         $available = null ?? $request->available;
 
@@ -39,10 +39,10 @@ class LocationsController extends Controller
         ]);
 
     }
-    public function create($slack,$lang = 'es'){
+    public function create($uid,$lang = 'es'){
 
 
-        $shop = Shop::uid($slack);
+        $shop = Shop::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -64,9 +64,9 @@ class LocationsController extends Controller
 
     }
 
-    public function exists($slack){
+    public function exists($uid){
 
-        $shop = Shop::uid($slack);
+        $shop = Shop::uid($uid);
 
         return view('managers.views.shops.locations.locations.exists')->with([
             'shop' => $shop,
@@ -93,7 +93,7 @@ class LocationsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'slack' => $location->uid,
+                'uid' => $location->uid,
                 'message' => 'Se actualizo la clase correctamente',
             ]);
 
@@ -108,9 +108,9 @@ class LocationsController extends Controller
     }
 
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $location = Location::uid($slack);
+        $location = Location::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -145,7 +145,7 @@ class LocationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $location->uid,
+            'uid' => $location->uid,
             'message' => 'Se actualizo la clase correctamente',
         ]);
 
@@ -164,24 +164,24 @@ class LocationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $location->uid,
+            'uid' => $location->uid,
             'message' => 'Se creo el curso correctamente',
         ]);
 
     }
-    public function destroy($slack){
+    public function destroy($uid){
 
         $shop = null;
-        $location = Location::uid($slack);
+        $location = Location::uid($uid);
         $shop = $location->shop;
         $location->delete();
         return redirect()->route('manager.shops.locations',$shop->uid);
     }
 
-    public function history(Request $request,$slack){
+    public function history(Request $request,$uid){
 
         $searchKey = null ?? $request->search;
-        $location = Location::uid($slack);
+        $location = Location::uid($uid);
         $inventarielocation = InventarieLocation::where('location_id', $location->id)->first();
 
         $items = $inventarielocation->items();

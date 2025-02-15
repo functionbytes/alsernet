@@ -13,7 +13,7 @@ class CreateNewsletterListsTable extends Migration
      */
     public function up()
     {
-            Schema::create('newsletter_lists', function (Blueprint $table) {
+            Schema::create('subscribers_lists', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('slack', 30)->unique();
                 $table->string('title');
@@ -31,6 +31,6 @@ class CreateNewsletterListsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_lists');
+        Schema::dropIfExists('subscribers_lists');
     }
 }

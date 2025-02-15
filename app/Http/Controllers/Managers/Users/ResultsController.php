@@ -13,13 +13,13 @@ use Maatwebsite\Excel\Facades\Excel;
 class ResultsController extends Controller
 {
 
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
         $searchKey = null ?? $request->search;
         $course = null ?? $request->course;
 
         $courses = Course::latest()->get();
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $certificates = $user->certificates();
 
         if ($searchKey) {
@@ -40,9 +40,9 @@ class ResultsController extends Controller
         ]);
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $certificate = Certificate::uid($slack);
+        $certificate = Certificate::uid($uid);
         $exam = $certificate->exam;
         $answers = $certificate->exam?->answers;
         $wrongs = $certificate->exam?->answers()?->wrong()->count();
@@ -58,9 +58,9 @@ class ResultsController extends Controller
 
     }
 
-    public function download($slack){
+    public function download($uid){
 
-        $certificate = Certificate::uid($slack);
+        $certificate = Certificate::uid($uid);
         $exam = $certificate->exam;
         $user = $certificate->user;
         $answers = $certificate->exam?->answers();

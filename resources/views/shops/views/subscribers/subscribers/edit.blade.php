@@ -131,11 +131,21 @@
                                 </div>
                             </div>
 
+                            @if($subscriber->check_at)
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="control-label col-form-label">Fecha verificación</label>
+                                        <input type="text" class="form-control" id="check_at" name="check_at"
+                                               value="{{ \Carbon\Carbon::parse($subscriber->check_at)->format('d/m/Y H:i') }}"
+                                               placeholder="Fecha no disponible" autocomplete="off" readonly>
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label  class="control-label col-form-label">Fecha verificacion</label>
-                                    <input type="text" class="form-control" id="check_at"  name="check_at" value="{{ $subscriber->check_at }}" placeholder="Ingresar el correo electronico" autocomplete="new-password" disabled>
+                                    <label  class="control-label col-form-label">Observacion</label>
+                                    <input type="text" class="form-control" id="observation"  name="observation" value="" placeholder="Ingresar observacion por el cual haces la edicion" autocomplete="new-password">
                                 </div>
                             </div>
 
@@ -225,7 +235,11 @@
                     "categories[]": {
                         required: true,
                     },
-
+                    observation: {
+                        required: true,
+                        minlength: 0,
+                        maxlength: 10000,
+                    },
                 },
                 messages: {
                     firstname: {
@@ -269,6 +283,11 @@
                     "categories[]": {
                         required: "El parametro es necesario.",
                     },
+                    observation: {
+                        required: "El parametro es necesario.",
+                        minlength: "Debe contener al menos 0 caracter",
+                        maxlength: "Debe contener al menos 10000 caracter",
+                    },
                 },
                 submitHandler: function(form) {
 
@@ -288,6 +307,7 @@
                     var check = $("#check").val();
                     var lang = $("#lang").val();
                     var checkat = $("#check_at").val();
+                    var observation = $("#observation").val();
 
                     formData.append('uid', uid);
                     formData.append('firstname', firstname);
@@ -303,6 +323,7 @@
                     formData.append('check', check);
                     formData.append('checkat', checkat);
                     formData.append('categories', categories);
+                    formData.append('observation', observation);
 
                     var $submitButton = $('button[type="submit"]');
                     $submitButton.prop('disabled', true);

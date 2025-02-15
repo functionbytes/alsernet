@@ -2,21 +2,21 @@
 
 namespace App\Models\Subscriber;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
 
 class SubscriberLog extends Model
 {
-    use HasFactory , LogsActivity;
+    use  LogsActivity;
 
     protected $table = "subscriber_logs";
 
     protected $fillable = [
         'log_name',
         'description',
+        'observation',
         'properties',
         'user_properties',
         'subject_type',
@@ -28,8 +28,8 @@ class SubscriberLog extends Model
     ];
 
     protected $casts = [
-        'properties' => 'array', // Para almacenar datos en JSON
-        'user_properties' => 'array', // Para almacenar datos en JSON
+        'properties' => 'array',
+        'user_properties' => 'array',
     ];
 
     public function scopeId($query ,$id)
@@ -49,7 +49,6 @@ class SubscriberLog extends Model
 
     public function getActivitylogOptions(): LogOptions
     {
-
         return LogOptions::defaults()->logOnlyDirty()->logFillable()->setDescriptionForEvent(fn(string $eventName) => "This model has been {$eventName}");
     }
 

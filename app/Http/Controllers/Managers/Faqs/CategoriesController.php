@@ -50,9 +50,9 @@ class CategoriesController extends Controller
 
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $categorie = FaqCategorie::uid($slack);
+        $categorie = FaqCategorie::uid($uid);
 
         return view('managers.views.settings.faqs.categories.view')->with([
             'categorie' => $categorie
@@ -60,9 +60,9 @@ class CategoriesController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $categorie = FaqCategorie::uid($slack);
+        $categorie = FaqCategorie::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -109,9 +109,9 @@ class CategoriesController extends Controller
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $categorie = FaqCategorie::uid($slack);
+        $categorie = FaqCategorie::uid($uid);
         $categorie->delete();
 
         return redirect()->back();

@@ -18,9 +18,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class LocationssController extends Controller
 {
-    public function index(Request $request, $slack)
+    public function index(Request $request, $uid)
     {
-        $inventarie = Event::uid($slack)->firstOrFail();
+        $inventarie = Event::uid($uid)->firstOrFail();
         $searchKey = $request->search ?? null;
 
         $locations = $inventarie->locations();
@@ -47,9 +47,9 @@ class LocationssController extends Controller
 
 
 
-    public function details($slack){
+    public function details($uid){
 
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
         $items = $location->items;
 
         return view('managers.views.inventaries.locations.details')->with([
@@ -61,9 +61,9 @@ class LocationssController extends Controller
 
 
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Cerrado'],
@@ -88,16 +88,16 @@ class LocationssController extends Controller
 
       return response()->json([
         'success' => true,
-        'slack' => $location->uid,
+        'uid' => $location->uid,
         'message' => 'Se actualizo la clase correctamente',
       ]);
 
   }
 
 
-    public function destroy($slack){
+    public function destroy($uid){
         $shop = null;
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
         $shop = $location->inventarie->uid;
         $location->delete();
         return redirect()->route('manager.inventaries.locations',$shop);

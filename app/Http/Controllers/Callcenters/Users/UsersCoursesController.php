@@ -9,9 +9,9 @@ use App\Models\User;
 
 class UsersCoursesController extends Controller
 {
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $searchKey = null ?? $request->search;
 
         $inscriptions = $user->inscriptions();
@@ -27,9 +27,9 @@ class UsersCoursesController extends Controller
         ]);
 
     }
-    public function postpone($slack)
+    public function postpone($uid)
     {
-        $inscription = Inscription::uid($slack);
+        $inscription = Inscription::uid($uid);
         $user = $inscription->user;
         $enterprise = $user->enterprise;
         $course = $inscription->course;
@@ -42,9 +42,9 @@ class UsersCoursesController extends Controller
         ]);
 
     }
-    public function destroy($slack)
+    public function destroy($uid)
     {
-        $inscription = Inscription::uid($slack);
+        $inscription = Inscription::uid($uid);
         $inscription->delete();
 
         return back();

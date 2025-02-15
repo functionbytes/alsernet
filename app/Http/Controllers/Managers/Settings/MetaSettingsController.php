@@ -53,9 +53,9 @@ class MetaSettingsController extends Controller
 
     }
 
-    public function getMetas($slack){
+    public function getMetas($uid){
 
-        $setting = Setting::key($slack);
+        $setting = Setting::key($uid);
 
 
         $images = $setting->getMedia('meta')->map(function ($thumbnail) {

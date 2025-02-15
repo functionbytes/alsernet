@@ -14,7 +14,7 @@ class TicketPriority extends Model
     protected $table = 'ticket_priorities';
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'color',

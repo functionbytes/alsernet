@@ -131,9 +131,9 @@ class UsersController extends Controller
         }
 
     }
-    public function view($slack){
+    public function view($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
 
         $roles = collect([
             ['id' => 'admin', 'title' => 'Administrador'],
@@ -157,17 +157,17 @@ class UsersController extends Controller
         ]);
 
     }
-    public function navegation($slack){
-        $user = User::uid($slack);
+    public function navegation($uid){
+        $user = User::uid($uid);
 
         return view('callcenters.views.users.users.navegation')->with([
             'user' => $user,
         ]);
 
     }
-    public function edit($slack)
+    public function edit($uid)
     {
-        $user = User::uid($slack);
+        $user = User::uid($uid);
 
         $roles = collect([
             ['id' => 'admin', 'title' => 'Administrador'],
@@ -346,8 +346,8 @@ class UsersController extends Controller
 
 
     }
-    public function destroy($slack){
-        $user = User::uid($slack);
+    public function destroy($uid){
+        $user = User::uid($uid);
         $user->delete();
         return redirect()->back();
     }
@@ -547,7 +547,7 @@ class UsersController extends Controller
 
         $user = User::uid($request->uid);
 
-            $user->newsletter_notification = $request->newsletter_notification == 'true' ? 1 : 0;
+            $user->subscribers_notification = $request->subscribers_notification == 'true' ? 1 : 0;
             $user->order_notification = $request->order_notification == 'true' ? 1 : 0;
             $user->status_notification = $request->status_notification  == 'true' ? 1 : 0;
             $user->email_notification = $request->email_notification  == 'true' ? 1 : 0;

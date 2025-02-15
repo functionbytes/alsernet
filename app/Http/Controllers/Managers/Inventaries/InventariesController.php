@@ -36,9 +36,9 @@ class InventariesController extends Controller
 
     }
 
-    public function navegation( $slack){
+    public function navegation( $uid){
 
-          $inventarie = Plan::uid($slack);
+          $inventarie = Plan::uid($uid);
 
           return view('managers.views.inventaries.inventaries.navegation')->with([
               'plan' => $inventarie,
@@ -63,9 +63,9 @@ class InventariesController extends Controller
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $inventarie = Plan::uid($slack);
+            $inventarie = Plan::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -96,7 +96,7 @@ class InventariesController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $inventarie->uid,
+            'uid' => $inventarie->uid,
             'message' => 'Se actualizo la clase correctamente',
           ]);
 
@@ -117,15 +117,15 @@ class InventariesController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $inventarie->uid,
+            'uid' => $inventarie->uid,
             'message' => 'Se creo el curso correctamente',
           ]);
 
       }
 
-      public function getThumbnails($slack){
+      public function getThumbnails($uid){
 
-        $inventarie = Plan::uid($slack);
+        $inventarie = Plan::uid($uid);
 
         if ($inventarie->getMedia('thumbnail')->count()>0) {
 
@@ -170,8 +170,8 @@ class InventariesController extends Controller
         return response()->json(['status' => "success"]);
     }
 
-    public function destroy($slack){
-        $inventarie = Plan::uid($slack);
+    public function destroy($uid){
+        $inventarie = Plan::uid($uid);
         $inventarie->delete();
         return redirect()->route('manager.plans');
     }

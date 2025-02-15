@@ -48,18 +48,18 @@ class CannedsController extends Controller
         ]);
 
     }
-    public function view($slack){
+    public function view($uid){
 
-        $canned = TicketCanned::uid($slack);
+        $canned = TicketCanned::uid($uid);
 
         return view('managers.views.tickets.canneds.view')->with([
             'canned' => $canned
         ]);
 
     }
-    public function edit($slack){
+    public function edit($uid){
 
-        $canned = TicketCanned::uid($slack);
+        $canned = TicketCanned::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -85,7 +85,7 @@ class CannedsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Se ha actualizado correctamente',
-            'slack' => $canned->uid,
+            'uid' => $canned->uid,
         ]);
 
 
@@ -103,13 +103,13 @@ class CannedsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Se ha creado correctamente',
-            'slack' => $canned->uid,
+            'uid' => $canned->uid,
         ]);
 
     }
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $canned = TicketCanned::uid($slack);
+        $canned = TicketCanned::uid($uid);
         $canned->delete();
 
         return redirect()->route('manager.tickets.canneds');

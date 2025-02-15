@@ -10,12 +10,12 @@ use Spatie\Activitylog\Models\Activity;
 class ActivitysController extends Controller
 {
 
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
         $modelSearch = null ?? $request->model;
         $propertySearch = null ?? $request->property;
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
 
         $query = Activity::causedBy($user);
 
@@ -61,11 +61,11 @@ class ActivitysController extends Controller
     }
 
 
-    public function lists($slack){
+    public function lists($uid){
 
     }
 
-    public function detail($slack){
+    public function detail($uid){
 
     }
 

@@ -18,7 +18,7 @@ class Inventarie extends Model
     protected static $recordEvents = ['deleted','updated','created'];
 
     protected $fillable = [
-        'slack',
+        'uid',
         'available',
         'shop_id',
         'created_at',

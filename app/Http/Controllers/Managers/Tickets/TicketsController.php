@@ -50,9 +50,9 @@ class TicketsController extends Controller
 
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $categorie = Categorie::uid($slack);
+        $categorie = Categorie::uid($uid);
 
         return view('managers.views.tickets.tickets.view')->with([
             'categorie' => $categorie
@@ -60,9 +60,9 @@ class TicketsController extends Controller
 
     }
 
-    public function control($slack){
+    public function control($uid){
 
-        $categorie = Categorie::uid($slack);
+        $categorie = Categorie::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -77,9 +77,9 @@ class TicketsController extends Controller
         ]);
 
     }
-    public function edit($slack){
+    public function edit($uid){
 
-        $categorie = Categorie::uid($slack);
+        $categorie = Categorie::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -120,9 +120,9 @@ class TicketsController extends Controller
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $categorie = Categorie::uid($slack);
+        $categorie = Categorie::uid($uid);
         $categorie->delete();
 
         return redirect()->route('manager.tickets');

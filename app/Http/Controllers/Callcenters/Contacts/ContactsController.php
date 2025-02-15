@@ -36,10 +36,10 @@ class ContactsController extends Controller
             'searchKey' => $searchKey,
         ]);
     }
-    public function edit($slack)
+    public function edit($uid)
     {
 
-        $contact = Contact::uid($slack);;
+        $contact = Contact::uid($uid);;
 
         $revieweds = collect([
             ['id' => '1', 'label' => 'Gestionado'],
@@ -67,9 +67,9 @@ class ContactsController extends Controller
         ]);
 
     }
-    public function destroy($slack)
+    public function destroy($uid)
     {
-        $contact = Contact::uid($slack);
+        $contact = Contact::uid($uid);
         $contact->delete();
 
         return redirect()->route('support.contacts');

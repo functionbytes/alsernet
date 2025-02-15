@@ -42,9 +42,9 @@ class BarcodeController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $faq = Faq::uid($slack);
+        $faq = Faq::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -104,9 +104,9 @@ class BarcodeController extends Controller
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-       $faq = Faq::uid($slack);
+       $faq = Faq::uid($uid);
        $faq->delete();
 
        return redirect()->route('manager.faqs');

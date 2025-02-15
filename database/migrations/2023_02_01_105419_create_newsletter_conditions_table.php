@@ -13,7 +13,7 @@ class CreateNewsletterConditionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('newsletter_conditions', function (Blueprint $table) {
+        Schema::create('subscribers_conditions', function (Blueprint $table) {
             $table->bigIncrements('id');
            $table->string('slack', 30)->unique();
             $table->string('title');
@@ -29,6 +29,6 @@ class CreateNewsletterConditionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_conditions');
+        Schema::dropIfExists('subscribers_conditions');
     }
 }

@@ -28,7 +28,7 @@ class SubscribersConditionsController extends Controller
 
             if ($searchKey) {
                 $conditions->when(!strpos($searchKey, '-'), function ($query) use ($searchKey) {
-                    $query->where('newsletter_conditions.title', 'like', '%' . $searchKey . '%');
+                    $query->where('subscribers_conditions.title', 'like', '%' . $searchKey . '%');
                 });
             }
 
@@ -63,9 +63,9 @@ class SubscribersConditionsController extends Controller
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $condition = SubscriberCondition::uid($slack);
+            $condition = SubscriberCondition::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -91,7 +91,7 @@ class SubscribersConditionsController extends Controller
 
           return response()->json([
             'success' => true,
-            'slack' => $condition->uid,
+            'uid' => $condition->uid,
             'message' => 'Se actualizo el estado correctamente',
           ]);
 
@@ -100,21 +100,21 @@ class SubscribersConditionsController extends Controller
       public function store(Request $request){
 
           $condition = new SubscriberCondition;
-          $condition->uid = $this->generate_uuid('newsletter_conditions');
+          $condition->uid = $this->generate_uuid('subscribers_conditions');
           $condition->title = Str::upper($request->title);
           $condition->available = $request->available;
           $condition->save();
 
           return response()->json([
             'success' => true,
-            'slack' => $condition->uid,
+            'uid' => $condition->uid,
             'message' => 'Se creo el estado correctamente',
           ]);
 
       }
 
-    public function destroy($slack){
-        $condition = SubscriberCondition::uid($slack);
+    public function destroy($uid){
+        $condition = SubscriberCondition::uid($uid);
         $condition->delete();
         return redirect()->route('manager.subscribers.conditions');
     }

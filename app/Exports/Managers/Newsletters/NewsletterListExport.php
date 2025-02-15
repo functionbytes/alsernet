@@ -35,16 +35,16 @@ class NewsletterListExport implements FromQuery, Responsable, WithMapping, WithH
     public function query() {
 
         $query = DB::table('newsletters')
-            ->join('newsletter_lists_users', function ($join) {
-                $join->on('newsletter_lists_users.newsletter_id', '=', 'newsletters.id');
+            ->join('subscribers_lists_users', function ($join) {
+                $join->on('subscribers_lists_users.subscribers_id', '=', 'newsletters.id');
             });
 
         if ($this->list != 0) {
-            $query->where('newsletter_lists_users.list_id', '=', $this->list);
+            $query->where('subscribers_lists_users.list_id', '=', $this->list);
         }
 
         //if ($this->start !== $this->end) {
-        //    $query->whereBetween('newsletter_lists_users.created_at', [$this->start, $this->end]);
+        //    $query->whereBetween('subscribers_lists_users.created_at', [$this->start, $this->end]);
         //}
 
         return $query->select(
@@ -52,7 +52,7 @@ class NewsletterListExport implements FromQuery, Responsable, WithMapping, WithH
             'newsletters.lastname',
             'newsletters.email',
             'newsletters.updated_at',
-        )->orderBy('newsletter_lists_users.updated_at', 'desc');
+        )->orderBy('subscribers_lists_users.updated_at', 'desc');
 
 
     }

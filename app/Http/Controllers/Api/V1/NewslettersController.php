@@ -2,7 +2,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Events\Campaigns\GiftvoucherCreated;
-use App\Http\Resources\V1\NewsletterResource;
+use App\Http\Resources\V1\SubscriberResource;
 use App\Models\Lang;
 use App\Models\Subscriber\Subscriber;
 use App\Models\Subscriber\SubscriberCategorie;
@@ -263,7 +263,7 @@ class NewslettersController extends ApiController
      */
     public function index()
     {
-        return NewsletterResource::collection(Subscriber::paginate());
+        return SubscriberResource::collection(Subscriber::paginate());
     }
 
     /**
@@ -275,7 +275,7 @@ class NewslettersController extends ApiController
     {
         $newsletter = Subscriber::create($request->validated());
 
-        return new NewsletterResource($newsletter);
+        return new SubscriberResource($newsletter);
     }
 
     /**
@@ -285,7 +285,7 @@ class NewslettersController extends ApiController
      */
     public function show(Subscriber $newsletter)
     {
-        return new NewsletterResource($newsletter);
+        return new SubscriberResource($newsletter);
     }
 
     /**
@@ -297,7 +297,7 @@ class NewslettersController extends ApiController
     {
         $newsletter->update($request->validated());
 
-        return new NewsletterResource($newsletter);
+        return new SubscriberResource($newsletter);
     }
 
     /**

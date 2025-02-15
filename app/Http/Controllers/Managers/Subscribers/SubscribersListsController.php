@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Managers\Subscribers;
 
+use App\Models\Categorie;
 use App\Models\Lang;
 use App\Models\Subscriber\Subscriber;
+use App\Models\Subscriber\SubscriberCategorie;
+use App\Models\Subscriber\SubscriberListCategorie;
 use App\Models\Subscriber\SubscriberList;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
-use App\Models\Subscriber\NewsletterLIstUser;
 use App\Models\Product\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,78 +50,62 @@ class SubscribersListsController extends Controller
 
       public function create(){
 
-          $availables = collect([
-              ['id' => '1', 'title' => 'Publico'],
-              ['id' => '0', 'title' => 'Oculto'],
-          ]);
-
-          $availables->prepend('' , '');
-          $availables = $availables->pluck('title','id');
-
-          $langs = Lang::available()->get();
-          $langs->prepend('' , '');
-          $langs = $langs->pluck('title','id');
-
+          $categories = Categorie::available()->get()->pluck('title','id');
+          $langs = Lang::available()->get()->prepend('' , '')->pluck('title','id');
 
           return view('managers.views.subscribers.lists.create')->with([
-              'availables' => $availables,
-              'langs' => $langs
+              'langs' => $langs,
+              'categories' => $categories,
             ]);
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $list = SubscriberList::uid($slack);
-
-            $availables = collect([
-                ['id' => '1', 'title' => 'Publico'],
-                ['id' => '0', 'title' => 'Oculto'],
-            ]);
-
-            $availables = $availables->pluck('title','id');
-
-            $langs = Lang::available()->get();
-            $langs = $langs->pluck('title','id');
+            $list = SubscriberList::uid($uid);
+            $categories = Categorie::available()->get()->pluck('title','id');
+            $langs = Lang::available()->get()->pluck('title','id');
 
             return view('managers.views.subscribers.lists.edit')->with([
-              'list' => $list,
-                'availables' => $availables,
+                'list' => $list,
                 'langs' => $langs,
+                'categories' => $categories,
             ]);
 
       }
 
+    public function details(Request $request, $uid)
+    {
+        // Obtener la lista por UID
+        $list = SubscriberList::uid($uid);
 
+        // Obtener la búsqueda si existe
+        $searchKey = $request->search ?? null;
 
-    public function details(Request $request,$slack){
+        // Relación correcta con paginación
+        $items = SubscriberList::where('subscriber_lists.id', $list->id) // 🔹 SOLUCIÓN AQUÍ
+        ->join('subscriber_list_users', 'subscriber_list_users.list_id', '=', 'subscriber_lists.id')
+            ->join('subscribers', 'subscribers.id', '=', 'subscriber_list_users.subscriber_id')
+            ->when($searchKey, function ($query) use ($searchKey) {
+                $query->where(function ($q) use ($searchKey) {
+                    $q->where('subscribers.firstname', 'like', "%$searchKey%")
+                        ->orWhere('subscribers.lastname', 'like', "%$searchKey%")
+                        ->orWhere(DB::raw("CONCAT(subscribers.firstname, ' ', subscribers.lastname)"), 'like', "%$searchKey%")
+                        ->orWhere('subscribers.email', 'like', "%$searchKey%");
+                });
+            })
+            ->select(
+                'subscribers.*',
+                'subscriber_list_users.id as list_user_id', // 🔹 Evita conflicto de 'id'
+                'subscriber_lists.id as list_id' // 🔹 Evita conflicto de 'id'
+            )
+            ->paginate(100);
 
-        $list = SubscriberList::uid($slack);
-        $items = $list->newsletters();
-
-        $searchKey = null ?? $request->search;
-
+        // Lista de opciones disponibles
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
             ['id' => '0', 'label' => 'Oculto'],
-        ]);
-
-        $availables = $availables->pluck('label','id');
-
-        if ($searchKey) {
-            $items = $items->join('newsletters', 'subscribers.id', '=', 'newsletter_lists_users.newsletter_id')
-                ->where(function ($query) use ($searchKey) {
-                    $query->where('subscribers.firstname', 'like', '%' . $searchKey . '%')
-                        ->orWhere('subscribers.lastname', 'like', '%' . $searchKey . '%')
-                        ->orWhere(DB::raw("CONCAT(subscribers.firstname, ' ', subscribers.lastname)"), 'like', '%' . $searchKey . '%')
-                        ->orWhere('subscribers.email', 'like', '%' . $searchKey . '%');
-                })
-                ->select('subscribers.*' , 'newsletter_lists_users.id as id');
-        }else{
-            $items = $items->join('newsletters', 'subscribers.id', '=', 'newsletter_lists_users.newsletter_id')->select('subscribers.*' , 'newsletter_lists_users.id as id');
-        }
-
-        $items = $items->paginate(100);
+        ])->pluck('label', 'id');
 
         return view('managers.views.subscribers.lists.details')->with([
             'list' => $list,
@@ -127,20 +113,17 @@ class SubscribersListsController extends Controller
             'availables' => $availables,
             'searchKey' => $searchKey,
         ]);
-
     }
 
+    public function includes(Request $request,$uid){
 
-    public function includes(Request $request,$slack){
-
-        $list = SubscriberList::uid($slack);
-        $itemsListIds = $list->newsletters->pluck('id');
-
-        $newsletters = Subscriber::whereNotIn('id', $itemsListIds)->latest()->pluck('email', 'id');
+        $list = SubscriberList::uid($uid);
+        $itemsListIds = $list->subscribers->pluck('id');
+        $subscribers = Subscriber::whereNotIn('id', $itemsListIds)->latest()->pluck('email', 'id');
 
         return view('managers.views.subscribers.lists.includes')->with([
             'list' => $list,
-            'newsletters' => $newsletters
+            'subscribers' => $subscribers
         ]);
 
     }
@@ -149,14 +132,14 @@ class SubscribersListsController extends Controller
 
         $list = SubscriberList::uid($request->list);
 
-        if ($request->has('newsletters')) {
-            $newslettersIds = array_filter(explode(',', $request->newsletters));
-            $list->users()->syncWithoutDetaching($newslettersIds);
+        if ($request->has('subscribers')) {
+            $subscribersIds = array_filter(explode(',', $request->subscribers));
+            $list->users()->syncWithoutDetaching($subscribersIds);
         }
 
         return response()->json([
             'success' => true,
-            'slack' => $list->uid,
+            'uid' => $list->uid,
             'message' => 'Se actualizo la lista correctamente',
         ]);
 
@@ -164,33 +147,26 @@ class SubscribersListsController extends Controller
 
     public function update(Request $request){
 
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'available' => 'required|boolean',
-            'code' => 'required|string|max:255|unique:newsletter_lists,code,' . $request->uid,
-        ]);
 
-
-        $list = SubscriberList::uid($request->uid);
-
-        if ($validator->fails()) {
-            $firstError = $validator->errors()->first('code');
-            return response()->json([
-                'success' => false,
-                'slack' => $list->uid,
-                'message' => $firstError,
-            ]);
-        }
-
+          $list = SubscriberList::uid($request->uid);
           $list->title = Str::upper($request->title);
           $list->available = $request->available;
+            $list->default = $request->default;
           $list->code = Str::upper($request->code);
           $list->lang_id = $request->lang;
           $list->update();
 
+        $categoryIds = collect(explode(',', $request->categories))
+            ->map(fn($id) => (int) trim($id))
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->toArray();
+
+        $list->categorie()->sync($categoryIds);
+
           return response()->json([
             'success' => true,
-            'slack' => $list->uid,
+            'uid' => $list->uid,
             'message' => 'Se actualizo la lista correctamente',
           ]);
 
@@ -202,27 +178,35 @@ class SubscribersListsController extends Controller
               return response()->json([
                   'success' => false,
                   'message' => 'El código ya está en uso. Por favor, elige otro.',
-              ], 422);
+              ]);
           }
 
           $list = new SubscriberList;
-          $list->uid = $this->generate_uuid('newsletter_lists');
           $list->title = Str::upper($request->title);
           $list->available = $request->available;
+          $list->default = $request->default;
           $list->code = Str::upper($request->code);
           $list->lang_id = $request->lang;
           $list->save();
 
+          $categoryIds = collect(explode(',', $request->categories))
+              ->map(fn($id) => (int) trim($id))
+              ->filter(fn($id) => $id > 0)
+              ->unique()
+              ->toArray();
+
+          $list->categorie()->sync($categoryIds);
+
           return response()->json([
             'success' => true,
-            'slack' => $list->uid,
+            'uid' => $list->uid,
             'message' => 'Se creo el la lista correctamente',
           ]);
 
       }
 
-    public function destroy($slack){
-        $list = SubscriberList::uid($slack);
+    public function destroy($uid){
+        $list = SubscriberList::uid($uid);
         $list->delete();
         return redirect()->route('manager.subscribers.lists');
     }

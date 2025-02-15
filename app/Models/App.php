@@ -14,7 +14,7 @@ class App extends Model
     protected $table = "apps";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'reference',

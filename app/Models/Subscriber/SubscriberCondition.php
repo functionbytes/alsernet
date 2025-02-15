@@ -2,19 +2,18 @@
 
 namespace App\Models\Subscriber;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Kardex;
+use App\Library\Traits\HasUid;
 
 class SubscriberCondition extends Model
 {
-    use HasFactory;
+
+    use HasUid;
 
     protected $table = "subscriber_conditions";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'reference',
@@ -31,9 +30,9 @@ class SubscriberCondition extends Model
     }
 
     public function scopeUid($query, $uid)
-{
+    {
         return $query->where('uid', $uid)->first();
-}
+    }
 
     public function scopeAvailable($query)
     {

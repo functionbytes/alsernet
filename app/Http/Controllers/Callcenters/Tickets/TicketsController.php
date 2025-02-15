@@ -48,10 +48,10 @@ class TicketsController extends Controller
     }
 
 
-    public function previous(Request $request, $slack)
+    public function previous(Request $request, $uid)
     {
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $searchKey = null ?? $request->search;
         $status = null ?? $request->status;
 
@@ -369,11 +369,11 @@ class TicketsController extends Controller
 
 
     }
-    public function close($slack)
+    public function close($uid)
     {
 
         $status = TicketStatus::slug('re-open');
-        $ticket = Ticket::uid($slack);
+        $ticket = Ticket::uid($uid);
 
         $ticket->status = $status->id;
         $ticket->replystatus = null;
@@ -1101,7 +1101,7 @@ class TicketsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'slack' => $ticketselfassign->uid,
+                'uid' => $ticketselfassign->uid,
                 'message' => 'El ticket se asignó correctamente.'
             ]);
 
@@ -1140,7 +1140,7 @@ class TicketsController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'slack' => $calID->uid,
+                    'uid' => $calID->uid,
                     'message' => 'El ticket se asignó correctamente.'
                 ]);
 

@@ -36,9 +36,9 @@ class InventariesController extends Controller
 
     }
 
-    public function arrange( $slack){
+    public function arrange( $uid){
 
-        $inventarie = Event::uid($slack);
+        $inventarie = Event::uid($uid);
         $user = app('inventarie');
         $shop = $user->shop;
 
@@ -49,9 +49,9 @@ class InventariesController extends Controller
 
     }
 
-    public function content($slack){
+    public function content($uid){
 
-        $inventarie = Event::uid($slack);
+        $inventarie = Event::uid($uid);
 
         return view('inventaries.views.inventaries.inventaries.content')->with([
             'inventarie' => $inventarie,
@@ -59,8 +59,8 @@ class InventariesController extends Controller
 
     }
 
-    public function destroy($slack){
-        $inventarie = Event::uid($slack);
+    public function destroy($uid){
+        $inventarie = Event::uid($uid);
         $inventarie->delete();
         return redirect()->route('inventaries.inventaries.index');
     }

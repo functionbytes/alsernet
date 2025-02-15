@@ -57,9 +57,9 @@ class CategoriesController extends Controller
 
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $categorie = TicketCategorie::uid($slack);
+        $categorie = TicketCategorie::uid($uid);
 
         $priorities = TicketPriority::latest()->available()->get();
         $priorities->prepend('' , '');
@@ -72,9 +72,9 @@ class CategoriesController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $categorie = TicketCategorie::uid($slack);
+        $categorie = TicketCategorie::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -106,7 +106,7 @@ class CategoriesController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $categorie->uid,
+            'uid' => $categorie->uid,
             'message' => 'Se actualiza la categoria correctamente',
         ]);
 
@@ -124,15 +124,15 @@ class CategoriesController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $categorie->uid,
+            'uid' => $categorie->uid,
             'message' => 'Se creo la categoria correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $categorie = TicketCategorie::uid($slack);
+        $categorie = TicketCategorie::uid($uid);
         $categorie->delete();
 
         return redirect()->route('manager.tickets.categories');

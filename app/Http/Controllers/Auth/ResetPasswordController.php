@@ -18,10 +18,10 @@ class ResetPasswordController extends Controller
         $this->middleware('guest');
     }
 
-    public function showResetForm($slack){
+    public function showResetForm($uid){
 
         return view('auth.passwords.reset')->with([
-            'email' => $slack,
+            'email' => $uid,
         ]);
 
     }

@@ -13,12 +13,12 @@ class CreateNewsletterCategoriesTable extends Migration
      */
     public function up()
     {
-            Schema::create('newsletter_categories', function (Blueprint $table) {
+            Schema::create('subscribers_categories', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('category_id')->unsigned();
-                $table->unsignedBigInteger('newsletter_id')->unsigned();
+                $table->unsignedBigInteger('subscribers_id')->unsigned();
                 $table->foreign('category_id')->references('id')->on('categories')->onUpdate('cascade')->onDelete('cascade');
-                $table->foreign('newsletter_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('subscribers_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
                 $table->timestamps();
             });
     }
@@ -30,6 +30,6 @@ class CreateNewsletterCategoriesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_categories');
+        Schema::dropIfExists('subscribers_categories');
     }
 }

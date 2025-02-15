@@ -14,7 +14,7 @@ class InventarieCondition extends Model
     protected $table = "inventarie_conditions";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'created_at',

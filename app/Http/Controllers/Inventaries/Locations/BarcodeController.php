@@ -19,9 +19,9 @@ class BarcodeController extends Controller
         ]);
 
     }
-    public function single($slack){
+    public function single($uid){
 
-        $location = Location::uid($slack);
+        $location = Location::uid($uid);
 
         return view('inventaries.views.locations.barcodes.all')->with([
             'location' => $location,

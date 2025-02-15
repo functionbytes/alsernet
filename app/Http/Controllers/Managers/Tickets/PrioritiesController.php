@@ -50,9 +50,9 @@ class PrioritiesController extends Controller
 
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $prioritie = TicketPriority::uid($slack);
+        $prioritie = TicketPriority::uid($uid);
 
         return view('managers.views.tickets.priorities.view')->with([
             'prioritie' => $prioritie
@@ -60,9 +60,9 @@ class PrioritiesController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $prioritie = TicketPriority::uid($slack);
+        $prioritie = TicketPriority::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -89,7 +89,7 @@ class PrioritiesController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $prioritie->uid,
+            'uid' => $prioritie->uid,
             'message' => 'Se actualiza la prioridad correctamente',
         ]);
 
@@ -107,15 +107,15 @@ class PrioritiesController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $prioritie->uid,
+            'uid' => $prioritie->uid,
             'message' => 'Se creo la prioridad correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $prioritie = TicketPriority::uid($slack);
+        $prioritie = TicketPriority::uid($uid);
         $prioritie->delete();
 
         return redirect()->route('manager.tickets.priorities');

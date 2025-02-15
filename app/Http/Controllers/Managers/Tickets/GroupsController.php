@@ -50,9 +50,9 @@ class GroupsController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $group = Group::uid($slack);
+        $group = Group::uid($uid);
 
         $users = User::role('callcenters')->get()->pluck('email', 'id');
 
@@ -91,7 +91,7 @@ class GroupsController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $group->uid,
+            'uid' => $group->uid,
             'message' => 'Se actualiza el grupo correctamente',
         ]);
 
@@ -116,15 +116,15 @@ class GroupsController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $group->uid,
+            'uid' => $group->uid,
             'message' => 'Se creado el grupo correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $categorie = Group::uid($slack);
+        $categorie = Group::uid($uid);
         $categorie->delete();
 
         return redirect()->route('manager.tickets.groups');

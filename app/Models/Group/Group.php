@@ -13,7 +13,7 @@ class Group extends Model
     protected $table = 'ticket_groups';
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'available',

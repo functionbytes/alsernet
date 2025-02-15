@@ -67,10 +67,10 @@ class ChatCanned extends Model implements HasMedia
 	}
 
 
-    public static function details($slack)
+    public static function details($uid)
     {
 
-        $ticket = Ticket::slack($slack);
+        $ticket = Ticket::uid($uid);
 
         if($ticket){
 

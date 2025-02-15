@@ -13,14 +13,14 @@ use App\Models\User;
 class ResultsController extends Controller
 {
 
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
         $searchKey = null ?? $request->search;
         $course = null ?? $request->course;
         $year = null ?? $request->year;
 
         $courses = Course::latest()->get();
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $certificates = $user->certificates()->latest();
 
         $years = $user->certificates()
@@ -56,9 +56,9 @@ class ResultsController extends Controller
         ]);
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $certificate = Certificate::uid($slack);
+        $certificate = Certificate::uid($uid);
         $course = $certificate->course;
         $exam = $certificate->exam;
         $answers = $certificate->exam?->answers;
@@ -76,9 +76,9 @@ class ResultsController extends Controller
 
     }
 
-    public function download($slack){
+    public function download($uid){
 
-        $certificate = Certificate::uid($slack);
+        $certificate = Certificate::uid($uid);
         $course = $certificate->course;
         $exam = $certificate->exam;
         $user = $certificate->user;

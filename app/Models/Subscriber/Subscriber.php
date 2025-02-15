@@ -2,20 +2,23 @@
 
 namespace App\Models\Subscriber;
 
-use App\Library\Traits\HasUid;
-use App\Http\Resources\V1\NewsletterResource;
+use App\Jobs\AddSuscriberListJob;
+use App\Jobs\SyncSuscriberListJob;
+use App\Jobs\RemoveSuscriberListJob;
+use App\Models\Categorie;
 use Dflydev\DotAccessData\Data;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\LogOptions;
+use App\Http\Resources\V1\SubscriberResource;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use App\Library\Traits\HasUid;
 
 class Subscriber extends Model
 {
-    use HasFactory , LogsActivity , HasUid;
+    use LogsActivity , HasUid;
 
     protected $table = "subscribers";
 
@@ -24,7 +27,6 @@ class Subscriber extends Model
     public const STATUS_BLACKLISTED = 'blacklisted';
     public const STATUS_SPAM_REPORTED = 'spam-reported';
     public const STATUS_UNCONFIRMED = 'unconfirmed';
-
     public const SUBSCRIPTION_TYPE_ADDED = 'added';
     public const SUBSCRIPTION_TYPE_DOUBLE_OPTIN = 'double';
     public const SUBSCRIPTION_TYPE_SINGLE_OPTIN = 'single';
@@ -36,9 +38,38 @@ class Subscriber extends Model
     public const VERIFICATION_STATUS_RISKY = 'risky';
     public const VERIFICATION_STATUS_UNVERIFIED = 'unverified';
 
+//
+//    protected static function boot()
+//    {
+//        parent::boot();
+//
+//
+//        static::saved(function ($subscriber) {
+//
+//            $subscriber->syncCategories();
+//
+//        });
+//
+//        static::updated(function ($subscriber) {
+//
+//            dd($subscriber);
+//            if ($subscriber->isDirty('parties') && $subscriber->parties == 1) {
+//                $subscriber->removeFromAllMailingLists();
+//            }
+//
+//            $subscriber->syncCategories();
+//
+//        });
+//
+//        static::deleted(function ($subscriber) {
+//            $subscriber->removeFromAllMailingLists();
+//            $subscriber->categories()->detach();
+//        });
+//
+//    }
 
     protected $fillable = [
-        'slack',
+        'uid',
         'firstname',
         'lastname',
         'email',
@@ -63,9 +94,9 @@ class Subscriber extends Model
     }
 
     public function scopeUid($query, $uid)
-{
-        return $query->where('uid', $uid)->first();
-}
+    {
+            return $query->where('uid', $uid)->first();
+    }
 
     public function scopeAvailable($query)
     {
@@ -74,17 +105,17 @@ class Subscriber extends Model
 
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\Categorie', 'subscriber_categories', 'subscriber_id', 'category_id');
+        return $this->belongsToMany('App\Models\Categorie', 'subscriber_categories', 'subscriber_id', 'categorie_id');
     }
 
-    public function categoriess() : HasMany
+    public function subcategorie() : HasMany
     {
         return $this->hasMany('App\Models\Subscriber\SubscriberCategorie');
     }
 
     public function lists(): HasMany
     {
-        return $this->hasMany('App\Models\Subscriber\SubscriberListsUser');
+        return $this->hasMany('App\Models\Subscriber\SubscriberListUser');
     }
 
     public function records(): HasMany
@@ -110,9 +141,6 @@ class Subscriber extends Model
         return ['exists' => $exists, 'data' => $data];
     }
 
-    /**
-     * Verificar con Índice HASH (Ideal para búsquedas exactas)
-     */
     public static function checkWithHash($email)
     {
         $email = strtolower($email);
@@ -132,9 +160,6 @@ class Subscriber extends Model
         return ['exists' => $exists, 'data' => $data];
     }
 
-    /**
-     * Verificar con Particionamiento (Basado en dominio del email)
-     */
     public static function checkWithPartition($email)
     {
         $email = strtolower($email);
@@ -148,9 +173,6 @@ class Subscriber extends Model
         return ['exists' => $exists, 'data' => $data];
     }
 
-    /**
-     * Verificar con Vista Materializada (Tabla estática actualizada)
-     */
     public static function checkWithMaterializedView($email)
     {
         $email = strtolower($email);
@@ -164,12 +186,11 @@ class Subscriber extends Model
     }
 
 
-    public function updateNewsletter($data)
+    public function updateSubscriber($data)
     {
-        $fieldsToTrack = SubscriberCondition::available()->get()->pluck('slack');
+        $fieldsToTrack = SubscriberCondition::available()->get()->pluck('uid');
         $idUser = (int)$data['user'];
 
-        // Obtener los datos actuales del usuario
         $currentData = $this->find($idUser);
 
         $updateData = [];
@@ -185,7 +206,7 @@ class Subscriber extends Model
                 }
 
                 // Crear un registro de historial
-                $historyEntries[] = new NewsletterResource([
+                $historyEntries[] = new SubscriberResource([
                     'id_susc_newsletter' => $idUser,
                     'action_type' => $field,
                     'old_value' => $currentData[$field],
@@ -198,11 +219,10 @@ class Subscriber extends Model
             }
         }
 
-        // Insertar los registros de historial
         if (!empty($historyEntries)) {
-            NewsletterHistory::insert($historyEntries);
 
-            // Crear trabajos para cada entrada del historial
+            SubscriberHistory::insert($historyEntries);
+
             foreach ($historyEntries as $historyEntry) {
                 $jobData = [
                     'id_history' => $historyEntry->id,
@@ -210,11 +230,10 @@ class Subscriber extends Model
                     'created_at' => now(),
                 ];
 
-                NewsletterJob::create($jobData);
+                SubscriberJob::create($jobData);
             }
         }
 
-        // Actualizar los datos del usuario
         if (!empty($updateData)) {
             $this->where('id_susc_newsletter', $idUser)->update($updateData);
         }
@@ -223,7 +242,6 @@ class Subscriber extends Model
 
     public function getActivitylogOptions(): LogOptions
     {
-
         return LogOptions::defaults()->logOnlyDirty()->logFillable()->setDescriptionForEvent(fn(string $eventName) => "This model has been {$eventName}");
     }
 
@@ -237,7 +255,6 @@ class Subscriber extends Model
             if ($this->isFillable($field)) {
                 $oldValue = $this->$field;
 
-                // Solo registrar cambios si el valor es diferente
                 if ($oldValue != $newValue) {
                     $changes[$field] = [
                         'old_value' => $oldValue,
@@ -248,11 +265,12 @@ class Subscriber extends Model
             }
         }
 
-        // Solo registrar log y actualizar si hay cambios
         if (!empty($changes)) {
+
             SubscriberLog::create([
                 'log_name' => 'subscriber_update',
                 'description' => "Updated subscriber fields",
+                'observation' => $data['observation'] ?? null,
                 'properties' => json_encode($changes),
                 'user_properties' => json_encode([
                     'user' => $auth->getFullNameAttribute(),
@@ -280,7 +298,7 @@ class Subscriber extends Model
             'properties' => json_encode($data),
             'user_properties' => json_encode([
                 'user' => $auth->getFullNameAttribute(),
-                'shop' => $auth->shop?->title
+                'shop' => $auth->shop->title
             ]),
             'subject_type' => self::class,
             'subject_id' => $subscriber->id,
@@ -293,14 +311,43 @@ class Subscriber extends Model
         return $subscriber;
     }
 
-    public function updateCategoriesWithLog(array $categoriesIds, $auth)
+    public function updateCategoriesWithLog($categoriesIds, $auth)
     {
         $changes = [];
-        $currentCategories = $this->categories->pluck('id')->toArray();
 
-        $addedCategories = array_diff($categoriesIds, $currentCategories);
-        $removedCategories = array_diff($currentCategories, $categoriesIds);
+        // Verificar y normalizar $categoriesIds
+        $categoriesIds = is_string($categoriesIds)
+            ? array_filter(array_map('trim', explode(',', $categoriesIds)))
+            : (array) $categoriesIds;
 
+        $categoriesIds = array_map('strval', $categoriesIds);
+        $defaultCategoriesOriginal = $this->subcategorie()->pluck('categorie_id')->toArray();
+
+        // Obtener listas predeterminadas de suscriptores según el idioma
+        $defaultSubscriberLists = SubscriberList::default()->lang($this->lang_id)->pluck('id')->toArray();
+        $originalLists = $this->lists()->pluck('id')->unique()->toArray();
+
+        // Determinar categorías añadidas y eliminadas
+        $addedCategories = array_diff($categoriesIds, $defaultCategoriesOriginal);
+        $removedCategories = array_diff($defaultCategoriesOriginal, $categoriesIds);
+
+        // 🔥 Determinar listas de suscriptores a eliminar
+        if ($this->parties == 1) {
+            // 🔥 Caso 1: Eliminar TODAS las listas activas
+            $subscriberListsToRemove = $originalLists;
+            $subscriberListsToAdd = []; // No agregamos listas en este caso
+
+        } elseif (empty($categoriesIds) && $this->parties==0) {
+            // 🔥 Caso 2: Si no hay categorías, eliminar solo listas predeterminadas
+            $subscriberListsToRemove = $defaultSubscriberLists;
+            $subscriberListsToAdd = [];
+        } else {
+            // Caso normal: Agregar listas predeterminadas si es necesario
+            $subscriberListsToRemove = [];
+            $subscriberListsToAdd = array_diff($defaultSubscriberLists, $originalLists);
+        }
+
+        // Registrar cambios en categorías
         foreach ($addedCategories as $categoryId) {
             $changes[] = [
                 'old_value' => null,
@@ -317,28 +364,120 @@ class Subscriber extends Model
             ];
         }
 
-        // Solo registrar log y actualizar si hubo cambios
+        // Registrar cambios en listas de suscriptores
+        foreach ($subscriberListsToAdd as $listId) {
+            $changes[] = [
+                'old_value' => null,
+                'new_value' => $listId,
+                'description' => "Added to subscriber list ID {$listId}"
+            ];
+        }
+
+        foreach ($subscriberListsToRemove as $listId) {
+            $changes[] = [
+                'old_value' => $listId,
+                'new_value' => null,
+                'description' => "Removed from subscriber list ID {$listId}"
+            ];
+        }
+
+        // Registrar log solo si hubo cambios
         if (!empty($changes)) {
+
             SubscriberLog::create([
                 'log_name' => 'category_update',
                 'description' => "Updated subscriber categories",
                 'properties' => json_encode($changes),
                 'user_properties' => json_encode([
                     'user' => $auth->getFullNameAttribute(),
-                    'shop' => $auth->shop?->title
+                    'shop' => optional($auth->shop)->title,
                 ]),
                 'subject_type' => self::class,
                 'subject_id' => $this->id,
-                'causer_type' => auth()->check() ? get_class(auth()->user()) : null,
-                'causer_id' => auth()->id(),
+                'causer_type' => isset($auth) ? get_class($auth) : null,
+                'causer_id' => $auth->id ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            $this->categories()->sync($categoriesIds);
+            // Procesar suscripciones y desuscripciones a categorías
+            $this->processListUpdates($addedCategories, 'subscribeToCategorie');
+            $this->processListUpdates($removedCategories, 'unsubscribeFromCategorie');
+
+            // Procesar suscripciones y desuscripciones a listas de suscriptores
+            if (!empty($subscriberListsToAdd)) {
+                AddSuscriberListJob::dispatch($this->id, $subscriberListsToAdd);
+            }
+
+            if (!empty($subscriberListsToRemove)) {
+                RemoveSuscriberListJob::dispatch($this->id, $subscriberListsToRemove);
+            }
         }
     }
 
+    private function processListUpdates($categories, $method)
+    {
+        if (empty($categories)) {
+            return;
+        }
 
+        $newLists = SubscriberList::whereIn('id', function ($query) use ($categories) {
+            $query->select('list_id')
+                ->distinct()
+                ->from('subscriber_list_categories')
+                ->whereIn('categorie_id', $categories)
+                ->where('lang_id', $this->lang_id);
+        })->pluck('id')->toArray();
+
+        $this->$method($categories, $newLists);
+    }
+
+    /**
+     * Suscribirse a una categoría y asignar listas de suscriptores.
+     */
+    public function subscribeToCategorie($categoriesIds, $mailingLists)
+    {
+        if (empty($categoriesIds)) {
+            return;
+        }
+
+        foreach ($categoriesIds as $id) {
+            $this->categories()->syncWithoutDetaching([$id]);
+        }
+
+        if (!empty($mailingLists)) {
+            AddSuscriberListJob::dispatch($this->id, $mailingLists);
+        }
+    }
+
+    /**
+     * Desuscribirse de una categoría y quitar listas de suscriptores.
+     */
+    public function unsubscribeFromCategorie($categoriesIds, $mailingLists)
+    {
+        if (empty($categoriesIds)) {
+            return;
+        }
+
+        foreach ($categoriesIds as $id) {
+            $this->categories()->detach($id);
+        }
+
+        if (!empty($mailingLists)) {
+            RemoveSuscriberListJob::dispatch($this->id, $mailingLists);
+        }
+    }
+
+    /**
+     * Remover todas las listas de suscriptores.
+     */
+    public function removeFromAllMailingLists()
+    {
+        $mailingListIds = $this->mailingLists()->pluck('list_id')->toArray();
+
+        if (!empty($mailingListIds)) {
+            RemoveSuscriberListJob::dispatch($this->id, $mailingListIds);
+        }
+    }
 
 }

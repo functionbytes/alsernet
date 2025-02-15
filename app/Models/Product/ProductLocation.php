@@ -16,7 +16,7 @@ class ProductLocation extends Model
 
 
     protected $fillable = [
-        'slack',
+        'uid',
         'product_id',
         'location_id',
         'shop_id',

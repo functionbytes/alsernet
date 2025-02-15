@@ -31,20 +31,20 @@ class SubscribersController extends Controller
 
         $subscribers = $subscribers->paginate(100);
 
-        return view('shops.views.subscribers.subscribers.index')->with([
+        return view('managers.views.subscribers.subscribers.index')->with([
             'subscribers' => $subscribers,
             'searchKey' => $searchKey,
         ]);
 
     }
-    public function edit($slack){
+    public function edit($uid){
 
-        $subscriber = Subscriber::uid($slack);
+        $subscriber = Subscriber::uid($uid);
         $categories = Categorie::available()->get()->prepend('' , '')->pluck('title','id');
         $langs = Lang::available()->get()->prepend('' , '')->pluck('title','id');
 
 
-        return view('shops.views.subscribers.subscribers.edit')->with([
+        return view('managers.views.subscribers.subscribers.edit')->with([
             'subscriber' => $subscriber,
             'categories' => $categories,
             'langs' => $langs,
@@ -53,9 +53,9 @@ class SubscribersController extends Controller
     }
 
 
-    public function logs(Request $request,$slack){
+    public function logs(Request $request,$uid){
 
-        $subscriber = Subscriber::uid($slack);
+        $subscriber = Subscriber::uid($uid);
 
         if (!$subscriber) {
             abort(404, 'Suscriptor no encontrado');
@@ -75,7 +75,7 @@ class SubscribersController extends Controller
 
         $logs = $query->paginate(20);
 
-        return view('shops.views.subscribers.subscribers.logs')->with([
+        return view('managers.views.subscribers.subscribers.logs')->with([
             'subscriber' => $subscriber,
             'logs' => $logs,
         ]);
@@ -90,7 +90,7 @@ class SubscribersController extends Controller
         $categories = Categorie::available()->get()->pluck('title','id');
         $langs = Lang::available()->get()->prepend('' , '')->pluck('title','id');
 
-        return view('shops.views.subscribers.subscribers.create')->with([
+        return view('managers.views.subscribers.subscribers.create')->with([
             'categories' => $categories,
             'langs' => $langs,
         ]);
@@ -100,7 +100,7 @@ class SubscribersController extends Controller
     public function update(Request $request){
 
 
-        $auth = app('shops');
+        $auth = app('managers');
         $subscriber = Subscriber::uid($request->uid);
 
         $data = [
@@ -114,94 +114,22 @@ class SubscribersController extends Controller
             'sports' => $request->sports,
             'parties' => $request->parties,
             'suscribe' => $request->suscribe,
+            'observation' => $request->observation,
             'lang_id' => $request->lang,
-            'check_at' => $request->check_at,
         ];
 
-        $subscriber->updateSubscriber($data);
-
+        $subscriber->updateWithLog($data, $auth);
 
         if ($request->has('categories')) {
-
-            $categoriesIds = array_filter(explode(',', $request->categories));
-            $currentCategories = $subscriber->categories->pluck('id')->toArray();
-
-            $addedCategories = array_diff($categoriesIds, $currentCategories);
-            $removedCategories = array_diff($currentCategories, $categoriesIds);
-
-            foreach ($addedCategories as $categoryId) {
-                SubscriberLog::create([
-                    'log_name' => 'category',
-                    'description' => "Added category ID {$categoryId}",
-                    'properties' => json_encode([
-                        'old_value' => null,
-                        'new_value' => $categoryId
-                    ]),
-                    'user_properties' => json_encode([
-                        'user' => $auth,
-                        'shop' => $auth->hasRole('shops') ? $auth->shop : null
-                    ]),
-                    'subject_type' => self::class,
-                    'subject_id' => $subscriber->id,
-                    'causer_type' => auth()->check() ? get_class($auth) : null,
-                    'causer_id' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            foreach ($removedCategories as $categoryId) {
-                SubscriberLog::create([
-                    'log_name' => 'category',
-                    'description' => "Removed category ID {$categoryId}",
-                    'properties' => json_encode([
-                        'old_value' => $categoryId,
-                        'new_value' => null
-                    ]),
-                    'user_properties' => json_encode([
-                        'user' => $auth,
-                        'shop' => auth()->check() && $auth->hasRole('shops') ? $auth->shop : null
-                    ]),
-                    'subject_type' => self::class,
-                    'subject_id' => $subscriber->id,
-                    'causer_type' => auth()->check() ? get_class($auth) : null,
-                    'causer_id' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $subscriber->categories()->sync($categoriesIds);
-
+            $subscriber->updateCategoriesWithLog($request->categories, $auth);
         } else {
-            foreach ($subscriber->categories->pluck('id') as $categoryId) {
-                SubscriberLog::create([
-                    'log_name' => 'category',
-                    'description' => "Removed all categories",
-                    'properties' => json_encode([
-                        'old_value' => $categoryId,
-                        'new_value' => null
-                    ]),
-                    'user_properties' => json_encode([
-                        'user' => $auth,
-                        'shop' => $auth->hasRole('shops') ? $auth->shop : null
-                    ]),
-                    'subject_type' => self::class,
-                    'subject_id' => $subscriber->id,
-                    'causer_type' => auth()->check() ? get_class($auth) : null,
-                    'causer_id' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $subscriber->categories()->detach();
+            $subscriber->updateCategoriesWithLog([], $auth);
         }
 
 
         return response()->json([
             'success' => true,
-            'slack' => $subscriber->uid,
+            'uid' => $subscriber->uid,
             'message' => 'Se actualizo el producto correctamente',
         ]);
 
@@ -231,14 +159,14 @@ class SubscribersController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $subscriber->uid,
+            'uid' => $subscriber->uid,
             'message' => 'Se creo el producto correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
-        $subscriber = Product::uid($slack);
+    public function destroy($uid){
+        $subscriber = Product::uid($uid);
         $subscriber->delete();
         return redirect()->route('manager.products');
     }

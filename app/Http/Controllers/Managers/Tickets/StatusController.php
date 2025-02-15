@@ -43,9 +43,9 @@ class StatusController extends Controller
 
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $status = TicketStatus::uid($slack);
+        $status = TicketStatus::uid($uid);
 
         return view('managers.views.tickets.status.view')->with([
             'categorie' => $status
@@ -53,9 +53,9 @@ class StatusController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $status = TicketStatus::uid($slack);
+        $status = TicketStatus::uid($uid);
 
         return view('managers.views.tickets.status.edit')->with([
             'status' => $status,
@@ -74,7 +74,7 @@ class StatusController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $status->uid,
+            'uid' => $status->uid,
             'message' => 'Se actualiza el estado correctamente',
         ]);
 
@@ -92,15 +92,15 @@ class StatusController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $status->uid,
+            'uid' => $status->uid,
             'message' => 'Se creo el estado correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-        $status = TicketStatus::uid($slack);
+        $status = TicketStatus::uid($uid);
         $status->delete();
 
         return redirect()->route('manager.tickets.status');

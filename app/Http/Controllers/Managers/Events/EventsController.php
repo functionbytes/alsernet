@@ -63,9 +63,9 @@ class EventsController extends Controller
 
       }
 
-      public function edit($slack,$lang = 'es' ){
+      public function edit($uid,$lang = 'es' ){
 
-            $event = Event::uid($slack);
+            $event = Event::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -121,7 +121,7 @@ class EventsController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $event->uid,
+            'uid' => $event->uid,
             'message' => 'Se actualizo el producto correctamente',
         ]);
 
@@ -154,14 +154,14 @@ class EventsController extends Controller
 
           return response()->json([
             'success' => true,
-            'slack' => $event->uid,
+            'uid' => $event->uid,
             'message' => 'Se creo el producto correctamente',
           ]);
 
       }
 
-    public function destroy($slack){
-        $event = Event::uid($slack);
+    public function destroy($uid){
+        $event = Event::uid($uid);
         $event->delete();
         return redirect()->route('manager.events');
     }

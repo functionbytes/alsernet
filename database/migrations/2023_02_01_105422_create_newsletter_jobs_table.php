@@ -13,12 +13,12 @@ class CreateNewsletterJobsTable extends Migration
      */
     public function up()
     {
-            Schema::create('newsletter_jobs', function (Blueprint $table) {
+            Schema::create('subscribers_jobs', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('condition_id')->unsigned();
-                $table->unsignedBigInteger('newsletter_id')->unsigned();
-                $table->foreign('condition_id')->references('id')->on('newsletter_conditions')->onUpdate('cascade')->onDelete('cascade');
-                $table->foreign('newsletter_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
+                $table->unsignedBigInteger('subscribers_id')->unsigned();
+                $table->foreign('condition_id')->references('id')->on('subscribers_conditions')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('subscribers_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
                 $table->timestamps();
             });
     }
@@ -30,6 +30,6 @@ class CreateNewsletterJobsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_jobs');
+        Schema::dropIfExists('subscribers_jobs');
     }
 }

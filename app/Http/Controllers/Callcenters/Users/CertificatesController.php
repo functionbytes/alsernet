@@ -12,13 +12,13 @@ use App\Models\User;
 
 class CertificatesController extends Controller
 {
-    public function index(Request $request,$slack){
+    public function index(Request $request,$uid){
 
         $searchKey = null ?? $request->search;
         $course = null ?? $request->course;
 
         $courses = Course::latest()->get();
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $certificates = $user->certificates()->latest();
 
         if ($searchKey) {
@@ -41,26 +41,26 @@ class CertificatesController extends Controller
 
     }
 
-    public function user($slack){
+    public function user($uid){
 
-        $inscription = Inscription::uid($slack);
+        $inscription = Inscription::uid($uid);
         $certificate = $inscription->certificate;
         $pdf = PDF::loadview('callcenters.views.enterprises.users.certificates.download', compact('certificate'))->setPaper('A4', 'landscape');
         return $pdf->stream();
 
     }
 
-    public function course($slack){
+    public function course($uid){
 
-        $certificate = Certificate::uid($slack);
+        $certificate = Certificate::uid($uid);
         $pdf = Pdf::loadview('callcenters.views.enterprises.users.certificates.download', compact('certificate'))->setPaper('a4', 'landscape');
         return $pdf->stream();
 
     }
 
-    public function broad($slack){
+    public function broad($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $certificates = $user->certificates;
         $pdf = PDF::loadview('callcenters.views.enterprises.users.certificates.broad', compact('certificates'))->setWarnings(false)->setPaper('a4', 'landscape');
         return $pdf->stream();

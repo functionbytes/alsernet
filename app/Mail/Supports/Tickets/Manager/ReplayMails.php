@@ -16,7 +16,7 @@ class ReplayMails extends Mailable
     public function __construct($ticket)
     {
         $this->ticket = $order->ticket;
-        $this->slack = $order->slack;
+        $this->uid = $order->uid;
         $this->email = $order->user->email;
         $this->firstname = $order->user->firstname;
         $this->lastname = $order->user->lastname;
@@ -31,7 +31,7 @@ class ReplayMails extends Mailable
                     ->to($this->email)
                     ->markdown('mailers.orders.approved')
                     ->with([
-                        'slack' => $this->slack,
+                        'uid' => $this->uid,
                         'email' => $this->email,
                         'firstname' => $this->firstname,
                         'lastname' => $this->lastname,

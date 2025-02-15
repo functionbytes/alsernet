@@ -16,7 +16,7 @@ class ReplayMails extends Mailable
     public function __construct($ticket)
     {
         $this->ticket = $tikect->ticket;
-        $this->slack = $tikect->slack;
+        $this->uid = $tikect->uid;
         $this->email = $tikect->user->email;
         $this->firstname = $tikect->user->firstname;
         $this->lastname = $tikect->user->lastname;
@@ -31,7 +31,7 @@ class ReplayMails extends Mailable
                     ->to($this->email)
                     ->markdown('mailers.tikects.approved')
                     ->with([
-                        'slack' => $this->slack,
+                        'uid' => $this->uid,
                         'email' => $this->email,
                         'firstname' => $this->firstname,
                         'lastname' => $this->lastname,

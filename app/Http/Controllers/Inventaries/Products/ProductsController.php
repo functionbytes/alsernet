@@ -54,9 +54,9 @@ class ProductsController extends Controller
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $product = Product::uid($slack);
+            $product = Product::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -85,7 +85,7 @@ class ProductsController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $product->uid,
+            'uid' => $product->uid,
             'message' => 'Se actualizo la clase correctamente',
           ]);
 
@@ -104,15 +104,15 @@ class ProductsController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $product->uid,
+            'uid' => $product->uid,
             'message' => 'Se creo el curso correctamente',
           ]);
 
       }
 
-      public function getThumbnails($slack){
+      public function getThumbnails($uid){
 
-        $product = Product::uid($slack);
+        $product = Product::uid($uid);
 
         if ($product->getMedia('thumbnail')->count()>0) {
 
@@ -157,8 +157,8 @@ class ProductsController extends Controller
         return response()->json(['status' => "success"]);
     }
 
-    public function destroy($slack){
-        $product = Product::uid($slack);
+    public function destroy($uid){
+        $product = Product::uid($uid);
         $product->delete();
         return redirect()->route('manager.products');
     }

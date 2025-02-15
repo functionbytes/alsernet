@@ -23,9 +23,9 @@ class BarcodeController extends Controller
         ]);
 
     }
-    public function single($slack){
+    public function single($uid){
 
-        $product = Product::uid($slack);
+        $product = Product::uid($uid);
 
         return view('inventaries.views.products.barcodes.all')->with([
             'product' => $product,

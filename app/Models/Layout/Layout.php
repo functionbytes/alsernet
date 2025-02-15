@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 class Layout extends Model
 {
     use HasUid;
-
     protected $fillable = [
         'name', 'alias', 'content', 'subject',
     ];

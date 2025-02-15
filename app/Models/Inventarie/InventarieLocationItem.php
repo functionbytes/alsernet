@@ -13,7 +13,7 @@ class InventarieLocationItem extends Model
     protected $table = 'inventarie_locations_items';
 
     protected $fillable = [
-        'slack',
+        'uid',
         'count',
         'product_id',
         'location_id',

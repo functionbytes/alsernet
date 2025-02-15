@@ -21,7 +21,7 @@ class Event extends Model
     //protected static $recordEvents = ['deleted','updated','created'];
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'color_flag',
         'filter_flag',

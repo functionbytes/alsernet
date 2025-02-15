@@ -97,7 +97,7 @@ class MaillistController extends Controller
 
             return response()->json([
                 'success' => true,
-                'slack' => $list->uid,
+                'uid' => $list->uid,
                 'message' => 'Se creado al lista correctamente',
             ]);
 
@@ -173,7 +173,7 @@ class MaillistController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $list->uid,
+            'uid' => $list->uid,
             'message' => 'Se actualizado al lista correctamente',
         ]);
 

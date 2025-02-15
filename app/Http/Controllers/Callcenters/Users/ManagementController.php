@@ -21,9 +21,9 @@ use Maatwebsite\Excel\Facades\Excel;
 class ManagementController extends Controller
 {
 
-    public function index(Request $request, $slack){
+    public function index(Request $request, $uid){
 
-        $inscription = Inscription::uid($slack);
+        $inscription = Inscription::uid($uid);
         $course = $inscription->course;
 
         return view('callcenters.views.users.managements.index')->with([
@@ -34,9 +34,9 @@ class ManagementController extends Controller
 
 
 
-    public function progressView($slack){
+    public function progressView($uid){
 
-        $inscription = Inscription::uid($slack);
+        $inscription = Inscription::uid($uid);
         $progress = $inscription->progress;
         $user = $inscription->user;
         $course = $inscription->course;
@@ -52,31 +52,31 @@ class ManagementController extends Controller
 
     }
 
-    public function progressRestoreSingle($slack){
+    public function progressRestoreSingle($uid){
         $inscription = null;
-        $progress = CourseProgress::id($slack);
+        $progress = CourseProgress::id($uid);
         $inscription = $progress->inscription;
         $progress->delete();
         return redirect()->route('support.enterprises.users.managements.progress.view', $inscription->uid);
     }
 
-    public function progressRestore($slack){
-        $inscription = Inscription::uid($slack);
+    public function progressRestore($uid){
+        $inscription = Inscription::uid($uid);
         $inscription->progress()->delete(); // Elimina todos los registros relacionados
         return redirect()->route('support.enterprises.users.managements.progress.view', $inscription->uid);
     }
 
 
 
-    public function reassign($slack){
+    public function reassign($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $enterprise = $user->getEnterprise();
 
         $distributor = app('distributor');
         $enterprises = $distributor->enterprises;
         $enterprises->prepend('' , '');
-        $enterprises = $enterprises->pluck('title', 'slack');
+        $enterprises = $enterprises->pluck('title', 'uid');
 
         $enterprises = $enterprises->forget($enterprise->uid);
 
@@ -120,9 +120,9 @@ class ManagementController extends Controller
 
     }
 
-    public function dashboard($slack){
+    public function dashboard($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
 
         return view('callcenters.views.enterprises.users.users.dashboard')->with([
             'enterprise' => $enterprise,
@@ -130,9 +130,9 @@ class ManagementController extends Controller
 
     }
 
-    public function create($slack){
+    public function create($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Activo'],
@@ -147,9 +147,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function view($slack){
+    public function view($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $enterprise = $user->relations;
         return view('callcenters.views.enterprises.users.users.view')->with([
             'user' => $user,
@@ -157,9 +157,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $enterprise = $user->relations;
 
         $availables = collect([
@@ -320,9 +320,9 @@ class ManagementController extends Controller
 
     }
 
-    public function users($slack){
+    public function users($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
         $users = $enterprise->users;
 
         return view('callcenters.views.enterprises.users.users.index')->with([
@@ -331,9 +331,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function courses($slack){
+    public function courses($uid){
 
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $inscriptions = $user->inscriptions()->with('course');
         $inscriptions = $inscriptions->paginate(paginationNumber());
 
@@ -343,9 +343,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function report($slack){
+    public function report($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
 
         $modalities = collect([
             ['id' => '0', 'title' => 'Todos'],
@@ -361,9 +361,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function income($slack){
+    public function income($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
 
         $courses = $enterprise->courses;
         $courses = $courses->pluck('title', 'id');
@@ -374,9 +374,9 @@ class ManagementController extends Controller
         ]);
     }
 
-    public function import($slack){
+    public function import($uid){
 
-        $enterprise = Enterprise::uid($slack);
+        $enterprise = Enterprise::uid($uid);
 
         return view('callcenters.views.enterprises.users.users.import')->with([
             'enterprise' => $enterprise,
@@ -447,7 +447,7 @@ class ManagementController extends Controller
                             'message' => 'Este usuario ya está registrado y asignado a la empresa: ' . $enterprise->title,
                             'enterprise' => $enterprise->title,
                             'distributor' => $distributor->title,
-                            'url' => route('distributor.supports.users', ['slack' => $enterprise->uid])
+                            'url' => route('distributor.supports.users', ['uid' => $enterprise->uid])
                         ]);
 
 

@@ -13,12 +13,12 @@ class CreateNewsletterListsUsersTable extends Migration
      */
     public function up()
     {
-            Schema::create('newsletter_lists_users', function (Blueprint $table) {
+            Schema::create('subscribers_lists_users', function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('newsletter_id')->unsigned();
+                $table->unsignedBigInteger('subscribers_id')->unsigned();
                 $table->unsignedBigInteger('list_id')->unsigned();
-                $table->foreign('newsletter_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
-                $table->foreign('list_id')->references('id')->on('newsletter_lists')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('subscribers_id')->references('id')->on('newsletters')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('list_id')->references('id')->on('subscribers_lists')->onUpdate('cascade')->onDelete('cascade');
                 $table->timestamps();
             });
     }
@@ -30,6 +30,6 @@ class CreateNewsletterListsUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_lists_users');
+        Schema::dropIfExists('subscribers_lists_users');
     }
 }

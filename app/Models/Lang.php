@@ -15,7 +15,7 @@ class Lang extends Model
     protected $table = "langs";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'iso_code',
         'lenguage_code',

@@ -23,7 +23,7 @@ class NoteMails extends Mailable
                     ->to($this->email)
                     ->markdown('mailers.tikects.approved')
                     ->with([
-                        'slack' => $this->slack,
+                        'uid' => $this->uid,
                         'email' => $this->email,
                         'firstname' => $this->firstname,
                         'lastname' => $this->lastname,

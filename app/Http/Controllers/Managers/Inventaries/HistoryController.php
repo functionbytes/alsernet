@@ -43,9 +43,9 @@ class HistoryController extends Controller
         ]);
 
     }
-    public function edit($slack){
+    public function edit($uid){
 
-        $item = InventarieLocationItem::uid($slack);
+        $item = InventarieLocationItem::uid($uid);
 
         $inventarie = $item->location;
         $conditions = InventarieCondition::get();

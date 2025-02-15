@@ -15,7 +15,7 @@ class Location extends Model
     protected $table = "locations";
 
     protected $fillable = [
-        'slack',
+        'uid',
         'product_id',
         'location_id',
         'shop_id',

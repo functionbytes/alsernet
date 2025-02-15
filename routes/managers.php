@@ -27,6 +27,7 @@ use App\Http\Controllers\Managers\Shops\Locations\BarcodeController as Locations
 use App\Http\Controllers\Managers\Shops\Locations\LocationsController as ShopsLocationsController;
 use App\Http\Controllers\Managers\Shops\Shops\ShopsController;
 use App\Http\Controllers\Managers\Subscribers\SubscribersConditionsController;
+use App\Http\Controllers\Managers\Subscribers\SubscribersController;
 use App\Http\Controllers\Managers\Subscribers\SubscribersListsController;
 use App\Http\Controllers\Managers\Subscribers\SubscribersReportController;
 use App\Http\Controllers\Managers\Templates\TemplatesController;
@@ -155,30 +156,29 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     Route::group(['prefix' => 'subscribers'], function () {
 
+        Route::get('/', [SubscribersController::class, 'index'])->name('manager.subscribers');
+        Route::get('/create', [SubscribersController::class, 'create'])->name('manager.subscribers.create');
+        Route::post('/update', [SubscribersController::class, 'update'])->name('manager.subscribers.update');
+        Route::get('/edit/{uid}', [SubscribersController::class, 'edit'])->name('manager.subscribers.edit');
+        Route::get('/view/{uid}', [SubscribersController::class, 'view'])->name('manager.subscribers.view');
+        Route::get('/destroy/{uid}', [SubscribersController::class, 'destroy'])->name('manager.subscribers.destroy');
+        Route::get('/logs/{slack}', [SubscribersController::class, 'logs'])->name('manager.subscribers.logs');
 
-        Route::get('/', [TemplatesController::class, 'index'])->name('manager.subscribers');
-        Route::get('/create', [TemplatesController::class, 'create'])->name('manager.subscribers.create');
-        Route::get('/lists', [TemplatesController::class, 'index'])->name('manager.subscribers.lists');
-        Route::post('/update', [TemplatesController::class, 'update'])->name('manager.subscribers.update');
-
+        Route::get('/lists', [SubscribersListsController::class, 'index'])->name('manager.subscribers.lists');
+        Route::get('/list/{uid}', [SubscribersListsController::class, 'list'])->name('manager.subscribers.list');
         Route::get('/lists/report', [SubscribersListsController::class, 'report'])->name('manager.subscribers.lists.reports');
         Route::get('/lists/create', [SubscribersListsController::class, 'create'])->name('manager.subscribers.lists.create');
         Route::post('/lists/update', [SubscribersListsController::class, 'update'])->name('manager.subscribers.lists.update');
         Route::post('/lists/store', [SubscribersListsController::class, 'store'])->name('manager.subscribers.lists.store');
-        Route::get('/edit/{uid}', [TemplatesController::class, 'edit'])->name('manager.subscribers.edit');
-        Route::get('/view/{uid}', [TemplatesController::class, 'view'])->name('manager.subscribers.view');
-        Route::get('/destroy/{uid}', [TemplatesController::class, 'destroy'])->name('manager.subscribers.destroy');
-        Route::get('/list/{uid}', [TemplatesController::class, 'list'])->name('manager.subscribers.list');
-        Route::get('/logs/{slack}', [TemplatesController::class, 'logs'])->name('manager.subscribers.logs');
-
-
         Route::get('/lists/reports', [SubscribersReportController::class, 'report'])->name('manager.subscribers.lists.reports');
         Route::get('/lists/details/{uid}', [SubscribersListsController::class, 'details'])->name('manager.subscribers.lists.details');
         Route::get('/lists/edit/{uid}', [SubscribersListsController::class, 'edit'])->name('manager.subscribers.lists.edit');
         Route::get('/lists/view/{uid}', [SubscribersListsController::class, 'view'])->name('manager.subscribers.lists.view');
+        Route::get('/lists/categories/{uid}', [SubscribersListsController::class, 'categories'])->name('manager.subscribers.lists.categories');
         Route::get('/lists/destroy/{uid}', [SubscribersListsController::class, 'destroy'])->name('manager.subscribers.lists.destroy');
         Route::get('/lists/includes/{uid}', [SubscribersListsController::class, 'includes'])->name('manager.subscribers.lists.includes');
         Route::post('/lists/includes/update', [SubscribersListsController::class, 'updateIncludes'])->name('manager.subscribers.lists.includes.update');
+        Route::post('/lists/categories/update', [SubscribersListsController::class, 'updateCategories'])->name('manager.subscribers.lists.categories.update');
 
         Route::get('/lists/report/generate', [SubscribersReportController::class, 'generate'])->name('manager.subscribers.lists.reports.generate');
 
@@ -190,13 +190,9 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/conditions/view/{uid}', [SubscribersConditionsController::class, 'view'])->name('manager.subscribers.conditions.view');
         Route::get('/conditions/destroy/{uid}', [SubscribersConditionsController::class, 'destroy'])->name('manager.subscribers.conditions.destroy');
 
-
-        Route::get('/lists/destroy/newsletter/{uid}', [SubscribersListsUserController::class, 'destroy'])->name('manager.subscribers.lists.user.destroy');
+        Route::get('/lists/destroy/subscribers/{uid}', [SubscribersListsUserController::class, 'destroy'])->name('manager.subscribers.lists.user.destroy');
 
     });
-
-
-
 
 
     Route::group(['prefix' => 'settings'], function () {
@@ -230,9 +226,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
     });
 
 
-
-
-
     Route::group(['prefix' => 'faqs'], function () {
 
         Route::get('/', [FaqsController::class, 'index'])->name('manager.faqs');
@@ -250,8 +243,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/categories/destroy/{uid}', [FaqsCategoriesController::class, 'destroy'])->name('manager.faqs.categories.destroy');
 
     });
-
-
 
     Route::group(['prefix' => 'livechat'], function () {
 
@@ -396,8 +387,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/groups/destroy/{uid}', [GroupsTicketsController::class, 'destroy'])->name('manager.tickets.groups.destroy');
 
     });
-
-
 
     Route::group(['prefix' => 'templates'], function () {
 
@@ -584,7 +573,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/edit/{uid}', [MaillistController::class, 'edit'])->name('manager.maillists.edit');
         Route::get('/view/{uid}', [MaillistController::class, 'view'])->name('manager.maillists.view');
         Route::get('/destroy/{uid}', [MaillistController::class, 'destroy'])->name('manager.maillists.destroy');
-
 
         Route::match(['get', 'post'], 'lists/select', [MailListController::class, 'selectList'])->name('manager.campaigns.maillists.selectList');
         Route::get('/{uid}/email-verification/chart', [MailListController::class, 'emailVerificationChart'])->name('manager.campaigns.maillists.emailVerificationChart');
@@ -793,27 +781,17 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::post('/lists/{uid}/embedded-form-subscribe-captcha', [MaillistController::class, 'embeddedFormSubscribe'])->name('manager.automations.maillists');
 
         Route::get('/lists/{uid}/check-email', [AutomationsController::class, 'checkEmail'])->name('manager.campaigns.maillists.checkEmail');
-
-
     });
-
 
 
     Route::group(['prefix' => 'notifications'], function () {
-
         Route::get('/', [NotificationController::class, 'index'])->name('manager.notifications');
         Route::get('/popup', [NotificationController::class, 'popup'])->name('manager.notifications.popup');
-
         Route::post('/delete', [NotificationController::class, 'delete'])->name('manager.automations.delete');
         Route::post('/listing', [NotificationController::class, 'listing'])->name('manager.automations.listing');
-
-
     });
 
-
-
     Route::group(['prefix' => 'layouts'], function () {
-
         Route::get('/', [LayoutController::class, 'index'])->name('manager.layouts');
         Route::get('/create', [LayoutController::class, 'create'])->name('manager.layouts.create');
         Route::post('/store', [LayoutController::class, 'store'])->name('manager.layouts.store');
@@ -824,7 +802,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
         Route::get('/listing/{page?}', [LayoutController::class, 'listing'])->name('manager.layouts.listing');
         Route::get('/sort', [LayoutController::class, 'sort'])->name('manager.layouts.sort');
-
     });
 
 

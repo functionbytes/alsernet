@@ -52,9 +52,9 @@ class SettingsController extends Controller
 
     }
 
-    public function getLogo($slack){
+    public function getLogo($uid){
 
-        $setting = Setting::key($slack);
+        $setting = Setting::key($uid);
 
         if ($setting->getMedia('logo')->count()>0) {
 
@@ -96,9 +96,9 @@ class SettingsController extends Controller
         return response()->json(['status' => "success"]);
     }
 
-    public function getFavicon($slack){
+    public function getFavicon($uid){
 
-        $setting = Setting::key($slack);
+        $setting = Setting::key($uid);
 
         if ($setting->getMedia('favicon')->count()>0) {
 

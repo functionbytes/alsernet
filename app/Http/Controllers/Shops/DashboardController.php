@@ -341,9 +341,9 @@ class DashboardController extends Controller
 
     }
 
-    public function view($slack)
+    public function view($uid)
     {
-        $ticket = Ticket::uid($slack);
+        $ticket = Ticket::uid($uid);
         dd($ticket);
         $comments = $ticket->comments()->with('ticket')->paginate(5);
         $category = $ticket->category;
@@ -431,11 +431,11 @@ class DashboardController extends Controller
     }
 
 
-    public function close($slack)
+    public function close($uid)
     {
 
         $status = TicketStatus::slug('re-open');
-        $ticket = Ticket::uid($slack);
+        $ticket = Ticket::uid($uid);
 
         $ticket->status = $status->id;
         $ticket->replystatus = null;

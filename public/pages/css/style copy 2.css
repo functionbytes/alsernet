@@ -11615,7 +11615,7 @@ footer .footer-top {
     min-width: max-content;
     height: 50px;
   }
-  
+
   .footer-subscribe-wrapper .btn i, .footer-subscribe-wrapper .wp-block-button__link i {
      display: none;
    }
@@ -11625,7 +11625,7 @@ footer .footer-top {
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
   }
-  
+
   footer .footer-title {
      margin: 0;
      font-weight: 600;
@@ -11653,26 +11653,26 @@ footer .footer-top {
      padding-top: 60px;
      padding-bottom: 60px;
    }
-  
+
   .footer-logo {
   }
-  
+
   .footer-logo .logo{
     filter: invert(100%) sepia(0%) saturate(7492%) hue-rotate(195deg) brightness(118%) contrast(100%);
     width: 60%;
   }
-  
+
   .footer-subscribe-wrapper .title {
   font-size: 2rem;
   line-height: 1.2;
   }
-  
+
   .form-control.transparent, .default-select.style-2 .transparent.btn.dropdown-toggle, .default-select.style-2 .transparent.dropdown-toggle.wp-block-button__link, .default-select.style-3 .transparent.btn.dropdown-toggle, .default-select.style-3 .transparent.dropdown-toggle.wp-block-button__link, .wp-block-categories-dropdown select.transparent, .wp-block-archives-dropdown select.transparent, .comment-respond .comment-form p.comment-form-author input.transparent, .comment-respond .comment-form p.comment-form-email input.transparent, .comment-respond .comment-form p.comment-form-url input.transparent, .comment-respond .comment-form p textarea.transparent {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff !important;
   }
-  
+
   .dzSubscribe .btn {
     color: #081A28;
     text-decoration: none;
@@ -11682,7 +11682,7 @@ footer .footer-top {
     font-weight: 600;
     width: max-content;
   }
-  
+
   .dzSubscribe  .btn:hover {
     color: #fff;
     text-decoration: none;
@@ -11703,7 +11703,7 @@ footer .footer-top {
         bottom: 135px;
         color: #fff;
     }
-    
+
     .theme-btns{
         background-color: #081A28;
         border-radius: 37px;
@@ -11717,26 +11717,26 @@ footer .footer-top {
         text-align: center;
         z-index: 9999;
     }
-    
+
     .theme-btnsi {
         font-size: 25px;
         line-height: 50px;
     }
-    
+
     .theme-btn.bt-support-now {
         background: #02a34c;
         bottom: 76px;
     }
-    
+
     .theme-btn.bt-buy-now {
         background: #02a34c;
     }
-    
+
     .theme-btn:hover {
         color: #fff;
         padding: 10px 20px;
     }
-    
+
     .theme-btnsspan {
         display: table-cell;
         vertical-align: middle;
@@ -11749,7 +11749,7 @@ footer .footer-top {
         -moz-transition: all .5s;
         text-transform: uppercase
     }
-    
+
     .theme-btn:hover span {
         opacity: 1;
         letter-spacing: 1px;
@@ -11786,7 +11786,7 @@ footer .footer-top {
     top: 0;
     width: 100%;
     height: 100%;
-} 
+}
 
 .btn {
     user-select: none;
@@ -12071,7 +12071,7 @@ footer .footer-top {
 }
 
 
-.menu-btn-sidebar a i { 
+.menu-btn-sidebar a i {
 
     font-size: 21px;
 }
@@ -12852,7 +12852,7 @@ input[data-autocompleted] {
 }.account__form-passcheck {
     gap: 10px;
 }.account__form button.trk-btn {
-}.newsletter__content-inner a, .sidebar__commentForm, .coursedetails--style1 .coursedetails__overview h5, .account__form-passcheck {
+}.subscribers__content-inner a, .sidebar__commentForm, .coursedetails--style1 .coursedetails__overview h5, .account__form-passcheck {
     margin-block-start: 25px;
 }
 .studentreview__thumb-top, .sidebar__comment .body ul li .comment .content__top, .sidebar__comment .body ul li .comment, .sidebar__recentpost .body ul li, .order__option-item, .order__details .table tr td .o-info .c-reviews ul, .order__details .table tr td .o-info .c-reviews, .order__details .table tr td .o-info, .cart__bottom-checkoutbox .cart-checkout, .cart__top table tbody tr td.course-item .c-content .c-reviews ul, .cart__top table tbody tr td.course-item .c-content .c-reviews, .accordion__button .lesson, .accordion__button, .cta__content-inner .subtitle, .coursedetails--style1 .coursedetails__coursereviews-author, .coursedetails--style1 .coursedetails__coursereviews, .coursedetails--style1 .coursedetails__footer, .coursedetails--style1 .coursedetails__offer-price, .coursedetails--style1 .coursedetails__overview .overview-list li, .coursedetails--style1 .coursedetails__focus-star ul, .coursedetails--style1 .coursedetails__focus, .testimonial--style3 .testimonial__storyteller, .testimonial--style2 .testimonial__author, .testimonial--style2 .testimonial__footer, .blog--details .blog__tag .tags, .blog--details .blog__tag .social-link-list, .blog--details .blog__meta ul, .blog--style2 .blog__writer, .blog--style2 .blog__author, .blog--style2 .blog__header, .blog--style1 .blog__header, .course--style4 .course__content-top, .course--style3 .course__mentor, .course--style3 .course__content-bottom, .course--style3 .course__content-top, .course--style2 .course__content, .course--style1 .course__content-top, .about--style5 .about__counter, .about--style3 .about__details-item, .about--style2 .about__content-item, .categories--style2 .categories__item, .footer__end-links, .footer__post .footer__wrapper ul li, .footer__about-inner, .account__form-passcheck, .contact__item, .banner .reviews__thumb ul, .banner .reviews__thumb, .banner__content-star, .subtitle, .paginations ul li a, .community__reviews-content ul, .community__reviews-content {
@@ -12860,7 +12860,7 @@ input[data-autocompleted] {
 }
 .account__form-passcheck, .banner__content--style1 h1 {
     margin-block-end: 25px;
-    
+
 .account__form-passcheck {
     gap: 10px;
 };
@@ -13158,19 +13158,19 @@ input[data-autocompleted] {
 
 
 
-.bundle-items .bundle-item{position: relative;padding: 30px;border-radius: 5px;background-color: #fff;border: 1px solid #e9eaeb05;box-shadow: 10px 0 60px rgba(76, 76, 76, 0.1);} 
-.bundle-items .bundle-item .bundle-head{border-bottom: 1px solid rgb(100 121 150 / 20%);padding-bottom: 20px;margin-bottom: 10px;display: flex;} 
+.bundle-items .bundle-item{position: relative;padding: 30px;border-radius: 5px;background-color: #fff;border: 1px solid #e9eaeb05;box-shadow: 10px 0 60px rgba(76, 76, 76, 0.1);}
+.bundle-items .bundle-item .bundle-head{border-bottom: 1px solid rgb(100 121 150 / 20%);padding-bottom: 20px;margin-bottom: 10px;display: flex;}
 
 .bundle-items .bundle-item .bundle-head .bundle-title{
   gap: 12px;
   width: 75%;
-} 
+}
 
 .bundle-items .bundle-item .bundle-head .bundle-price{
   gap: 12px;
   width: 20%;
   height: 100%;
-} 
+}
 
 .bundle-items .bundle-item .bundle-head .bundle-price .price{
   color: #008bce;
@@ -13178,10 +13178,10 @@ input[data-autocompleted] {
   font-weight: 600;
   line-height: 24px;
   margin-bottom: 0px;
-} 
+}
 
 
-.bundle-items .bundle-item .bundle-head .bundle-title .name{font-size: 22px;font-weight: 600;line-height: 22px;color: #081A28;margin-bottom: 5px;} 
+.bundle-items .bundle-item .bundle-head .bundle-title .name{font-size: 22px;font-weight: 600;line-height: 22px;color: #081A28;margin-bottom: 5px;}
 
 .bundle-items .bundle-item .bundle-head .bundle-title .info{
     font-size: 15px;
@@ -13190,12 +13190,12 @@ input[data-autocompleted] {
     color: #647996;
     text-transform: uppercase;
     margin-bottom: 0px;
-} 
+}
 
 
 .bundle-items .bundle-item .bundle-head .bundle-title .bundle-price{
 
-} 
+}
 
 .bundle-items .bundle-item .bundle-head .bundle-title .bundle-price .price {
 
@@ -13203,14 +13203,14 @@ input[data-autocompleted] {
     font-weight: 600;
     line-height: 40px;
     color: var(--color-11);
-} 
+}
 
 .bundle-items .bundle-item .bundle-body  {
 
     max-height: 270px !important;
     min-height: 180px !important;
     overflow-y: auto;
-} 
+}
 
 .bundle-items .bundle-item .bundle-body  ul li {
     padding: 20px 0;
@@ -13268,7 +13268,7 @@ input[data-autocompleted] {
 
 .bundle-items .bundle-item .bundle-footer   {
   margin-top: 40px;
-} 
+}
 
 .bundle-items .bundle-item .bundle-footer .bundle-foot {
   display: flex;
@@ -13282,7 +13282,7 @@ input[data-autocompleted] {
   line-height: 15px;
   color: #fff;
   text-transform: uppercase;
-} 
+}
 
 .bundle-items .bundle-item .bundle-footer .bundle-foot:hover {
     color: white;

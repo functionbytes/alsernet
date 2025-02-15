@@ -15,7 +15,7 @@
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
-                            <h5 class="mb-0">Crear suscripcion
+                            <h5 class="mb-0">Crear lista
                             </h5>
 
                         </div>
@@ -25,7 +25,7 @@
 
                         <div class="row">
 
-                            <div class="col-6">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Titulo</label>
                                     <input type="text" class="form-control" id="title"  name="title" value="" placeholder="Ingresar nombre">
@@ -47,6 +47,7 @@
                                             <option value="{{ $id }}" >{{ $name }}</option>
                                         @endforeach
                                     </select>
+                                    <label id="lang-error" class="error d-none" for="lang"></label>
                                 </div>
                             </div>
 
@@ -57,6 +58,31 @@
                                         <option value="1" >Público</option>
                                         <option value="0" >Oculto</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Predeterminado</label>
+                                    <select class="form-control select2" id="available" name="available">
+                                        <option value="1" >Si</option>
+                                        <option value="0" >No</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Categorias</label>
+                                    <select class="form-control select2" id="categories" name="categories[]" multiple="multiple">
+                                        @foreach($categories as $id => $name)
+                                            <option value="{{ $id }}" >
+                                                {{ $name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <label id="categories-error" class="error d-none" for="categories"></label>
                                 </div>
                             </div>
 
@@ -109,6 +135,12 @@
                     available: {
                         required: true,
                     },
+                    lang: {
+                        required: true,
+                    },
+                    "categories[]": {
+                        required: true,
+                    },
                 },
                 messages: {
                     title: {
@@ -121,7 +153,13 @@
                         minlength: "Debe contener al menos 1 caracter",
                         maxlength: "Debe contener al menos 100 caracter",
                     },
+                    lang: {
+                        required: "El parametro es necesario.",
+                    },
                     available: {
+                        required: "El parametro es necesario.",
+                    },
+                    "categories[]": {
                         required: "El parametro es necesario.",
                     },
                 },
@@ -132,10 +170,12 @@
                     var title = $("#title").val();
                     var code = $("#code").val();
                     var available = $("#available").val();
+                    var categories = $("#categories").val();
 
                     formData.append('title', title);
                     formData.append('code', code)
                     formData.append('available', available);
+                    formData.append('categories', categories);
 
                     var $submitButton = $('button[type="submit"]');
                     $submitButton.prop('disabled', true);

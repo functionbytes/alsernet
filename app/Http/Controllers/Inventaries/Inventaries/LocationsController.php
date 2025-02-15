@@ -43,9 +43,9 @@ class LocationsController extends Controller
 
     }
 
-    public function content($slack){
+    public function content($uid){
 
-        $inventarie = Event::uid($slack);
+        $inventarie = Event::uid($uid);
 
         return view('inventaries.views.inventaries.inventaries.content')->with([
             'inventarie' => $inventarie,
@@ -53,11 +53,11 @@ class LocationsController extends Controller
 
     }
 
-    public function modalitie($slack){
+    public function modalitie($uid){
 
         $user = app('inventarie');
         $shop = $user->shop;
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
 
         return view('inventaries.views.inventaries.inventaries.modalities.modalitie')->with([
                 'location' => $location,
@@ -68,10 +68,10 @@ class LocationsController extends Controller
     }
 
 
-    public function location($slackLocation,$slackInventarie){
+    public function location($uidLocation,$uidInventarie){
 
-        $location = Location::uid($slackLocation);
-        $inventarie = Event::uid($slackInventarie);
+        $location = Location::uid($uidLocation);
+        $inventarie = Event::uid($uidInventarie);
 
         $locationValidate = InventarieLocation::validateExists($location->id,$inventarie->id);
 
@@ -108,9 +108,9 @@ class LocationsController extends Controller
     }
 
 
-    public function automatic($slackLocation){
+    public function automatic($uidLocation){
 
-        $item = InventarieLocation::uid($slackLocation);
+        $item = InventarieLocation::uid($uidLocation);
         $inventarie =  $item->inventarie;
         $location = $item->location;
 
@@ -123,9 +123,9 @@ class LocationsController extends Controller
 
     }
 
-    public function manual($slackLocation){
+    public function manual($uidLocation){
 
-        $item = InventarieLocation::uid($slackLocation);
+        $item = InventarieLocation::uid($uidLocation);
         $inventarie =  $item->inventarie;
         $location = $item->location;
 
@@ -161,7 +161,7 @@ class LocationsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'slack' => $location->uid,
+                'uid' => $location->uid,
                 'message' => 'Se actualizo la clase correctamente',
             ]);
 
@@ -190,7 +190,7 @@ class LocationsController extends Controller
 
               return response()->json([
                   'success' => true,
-                  'slack'   => $location->uid
+                  'uid'   => $location->uid
               ]);
 
           }else {
@@ -242,7 +242,7 @@ class LocationsController extends Controller
 
             foreach ($products as $product) {
 
-                $productItem = Product::uid($product['slack']);
+                $productItem = Product::uid($product['uid']);
                 // $locationProductItem = $productItem->localization;
                 //$locationProductItem = 1;
 

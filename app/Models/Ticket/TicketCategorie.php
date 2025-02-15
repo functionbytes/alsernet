@@ -18,7 +18,7 @@ class TicketCategorie extends Model
     protected $table = 'ticket_categories';
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'available',

@@ -41,9 +41,9 @@ class LocationsController extends Controller
 
     }
 
-    public function navegation( $slack){
+    public function navegation( $uid){
 
-          $plan = Plan::uid($slack);
+          $plan = Plan::uid($uid);
 
           return view('inventaries.views.plans.navegation')->with([
               'plan' => $plan,
@@ -68,9 +68,9 @@ class LocationsController extends Controller
 
       }
 
-      public function edit($slack){
+      public function edit($uid){
 
-            $plan = Plan::uid($slack);
+            $plan = Plan::uid($uid);
 
             $availables = collect([
                 ['id' => '1', 'label' => 'Publico'],
@@ -101,7 +101,7 @@ class LocationsController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $plan->uid,
+            'uid' => $plan->uid,
             'message' => 'Se actualizo la clase correctamente',
           ]);
 
@@ -122,15 +122,15 @@ class LocationsController extends Controller
 
           return response()->json([
             'status' => true,
-            'slack' => $plan->uid,
+            'uid' => $plan->uid,
             'message' => 'Se creo el curso correctamente',
           ]);
 
       }
 
-      public function getThumbnails($slack){
+      public function getThumbnails($uid){
 
-        $plan = Plan::uid($slack);
+        $plan = Plan::uid($uid);
 
         if ($plan->getMedia('thumbnail')->count()>0) {
 
@@ -175,8 +175,8 @@ class LocationsController extends Controller
         return response()->json(['status' => "success"]);
     }
 
-    public function destroy($slack){
-        $plan = Plan::uid($slack);
+    public function destroy($uid){
+        $plan = Plan::uid($uid);
         $plan->delete();
         return redirect()->route('manager.plans');
     }

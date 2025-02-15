@@ -10,9 +10,9 @@ use Illuminate\Http\Request;
 
 class LocationsController extends Controller
 {
-    public function index(Request $request, $slack)
+    public function index(Request $request, $uid)
     {
-        $inventarie = Inventarie::uid($slack)->firstOrFail();
+        $inventarie = Inventarie::uid($uid)->firstOrFail();
         $searchKey = $request->search ?? null;
 
         $locations = $inventarie->locations();
@@ -37,9 +37,9 @@ class LocationsController extends Controller
 
 
 
-    public function details($slack){
+    public function details($uid){
 
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
         $items = $location->items;
 
         return view('managers.views.inventaries.locations.details')->with([
@@ -51,9 +51,9 @@ class LocationsController extends Controller
 
 
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Cerrado'],
@@ -78,25 +78,25 @@ class LocationsController extends Controller
 
       return response()->json([
         'success' => true,
-        'slack' => $location->uid,
+        'uid' => $location->uid,
         'message' => 'Se actualizo la clase correctamente',
       ]);
 
   }
 
 
-    public function destroy($slack){
+    public function destroy($uid){
         $shop = null;
-        $location = InventarieLocation::uid($slack);
+        $location = InventarieLocation::uid($uid);
         $shop = $location->inventarie->uid;
         $location->delete();
         return redirect()->route('manager.inventaries.locations',$shop);
     }
 
 
-    public function destroyItem($slack){
+    public function destroyItem($uid){
         $location = null;
-        $item = InventarieLocationItem::uid($slack);
+        $item = InventarieLocationItem::uid($uid);
         $location = $item->location->uid;
         $item->delete();
         return redirect()->route('manager.inventaries.locations.details',$location);

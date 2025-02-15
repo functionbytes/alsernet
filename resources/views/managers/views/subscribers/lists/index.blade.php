@@ -75,7 +75,7 @@
                                 <span class="usr-email-addr" >{{ $list->code }}</span>
                             </td>
                             <td>
-                                <span class="usr-email-addr" >{{ $list->newsletters()->count() }}</span>
+                                <span class="usr-email-addr" >{{ $list->subscribers()->count() }}</span>
                             </td>
                             <td>
                                 <span class="usr-email-addr" >{{ $list->lang->title }}</span>

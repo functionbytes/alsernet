@@ -13,7 +13,7 @@ class FaqCategorie extends Model
     protected $table = 'faq_categories';
 
     protected $fillable = [
-        'slack',
+        'uid',
         'title',
         'slug',
         'available',

@@ -166,7 +166,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="form-check form-switch mb-0">
-                                                    <input class="form-check-input" type="checkbox" role="switch" name="newsletter_notification" id="newsletter_notification"   @if($user->newsletter_notification==1 ) checked @endif>
+                                                    <input class="form-check-input" type="checkbox" role="switch" name="subscribers_notification" id="subscribers_notification"   @if($user->subscribers_notification==1 ) checked @endif>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center justify-content-between mb-4">
@@ -644,14 +644,14 @@
                     var $form = $('#formNotification');
                     var formData = new FormData($form[0]);
                     var slack = $("#slack").val();
-                    var newsletter_notification = $("#newsletter_notification").is(':checked');
+                    var subscribers_notification = $("#subscribers_notification").is(':checked');
                     var order_notification = $("#order_notification").is(':checked');
                     var status_notification = $("#status_notification").is(':checked');
                     var email_notification = $("#email_notification").is(':checked');
                     var cookies_notification = $("#cookies_notification").is(':checked');
 
                     formData.append('slack', slack);
-                    formData.append('newsletter_notification', newsletter_notification);
+                    formData.append('subscribers_notification', subscribers_notification);
                     formData.append('order_notification', order_notification);
                     formData.append('status_notification', status_notification);
                     formData.append('email_notification', email_notification);

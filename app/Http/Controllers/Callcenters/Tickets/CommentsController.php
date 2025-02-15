@@ -15,10 +15,10 @@ use Auth;
 
 class CommentsController extends Controller
 {
-    public function comment(Request $request,  $slack)
+    public function comment(Request $request,  $uid)
     {
 
-        $ticket = Ticket::uid($slack);
+        $ticket = Ticket::uid($uid);
 
         if($ticket->status->slug == "Closed"){
 
@@ -259,18 +259,18 @@ class CommentsController extends Controller
         }
 
     }
-    public function update(Request $request, $slack){
+    public function update(Request $request, $uid){
 
         if ($request->has('message')) {
 
-            $ticket = Ticket::uid($slack);
+            $ticket = Ticket::uid($uid);
             $ticket->message = $request->input('message');
             $ticket->update();
             return redirect()->back()->with('success', 'Actualizado con éxito');
 
         }else{
 
-            $comment = TicketComment::uid($slack);
+            $comment = TicketComment::uid($uid);
             $comment->comment = $request->input('editcomment');
             $comment->update();
 

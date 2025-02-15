@@ -13,12 +13,12 @@ class CreateNewsletterRecordsTable extends Migration
      */
     public function up()
     {
-            Schema::create('newsletter_records', function (Blueprint $table) {
+            Schema::create('subscribers_records', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('old_value');
                 $table->string('new_value');
                 $table->unsignedBigInteger('condition_id')->unsigned();
-                $table->foreign('condition_id')->references('id')->on('newsletter_conditions')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('condition_id')->references('id')->on('subscribers_conditions')->onUpdate('cascade')->onDelete('cascade');
                 $table->timestamp('synced_at')->nullable();
                 $table->timestamps();
             });
@@ -31,6 +31,6 @@ class CreateNewsletterRecordsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('newsletter_records');
+        Schema::dropIfExists('subscribers_records');
     }
 }

@@ -100,9 +100,9 @@ class UsersController extends Controller
 
     }
 
-    public function view($slack)
+    public function view($uid)
     {
-        $user = User::uid($slack);
+        $user = User::uid($uid);
 
         $shops = Shop::get()->prepend('', '')->pluck('title', 'id');
         $roles = Role::get()->prepend('', '')->pluck('name', 'id');
@@ -114,9 +114,9 @@ class UsersController extends Controller
         ]);
 
     }
-    public function edit($slack)
+    public function edit($uid)
     {
-        $user = User::uid($slack);
+        $user = User::uid($uid);
 
         $shops = Shop::get()->prepend('', '')->pluck('title', 'id');
         $roles = Role::get()->prepend('', '')->pluck('name', 'id');
@@ -163,9 +163,9 @@ class UsersController extends Controller
         ]);
     }
 
-    public function destroy($slack)
+    public function destroy($uid)
     {
-        $user = User::uid($slack);
+        $user = User::uid($uid);
         $user->delete();
         return redirect()->route('manager.users');
 

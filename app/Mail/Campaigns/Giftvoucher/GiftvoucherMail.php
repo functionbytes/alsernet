@@ -17,7 +17,7 @@ class GiftvoucherMail extends Mailable
     public $firstname;
     public $lastname;
     public $email;
-    public $slack;
+    public $uid;
     public $subject;
     public $template;
     public $iso;
@@ -26,7 +26,7 @@ class GiftvoucherMail extends Mailable
     {
         $this->newsletter = $newsletter;
         $this->iso = $newsletter->lang->iso_code;
-        $this->slack = $newsletter->slack;
+        $this->uid = $newsletter->uid;
         $this->firstname = $newsletter->firstname;
         $this->lastname = $newsletter->lastname;
         $this->email = $newsletter->email;

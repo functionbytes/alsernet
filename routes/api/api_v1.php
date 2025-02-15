@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\V1\AuthorTicketsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\NewslettersController;
 use App\Http\Controllers\AuthController;
-use App\Http\Resources\V1\NewsletterResource;
+use App\Http\Resources\V1\SubscriberResource;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;

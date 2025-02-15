@@ -43,9 +43,9 @@ class SubscribersController extends Controller
         ]);
 
     }
-    public function edit($slack){
+    public function edit($uid){
 
-        $subscriber = Subscriber::uid($slack);
+        $subscriber = Subscriber::uid($uid);
         $categories = Categorie::available()->get()->prepend('' , '')->pluck('title','id');
         $langs = Lang::available()->get()->prepend('' , '')->pluck('title','id');
 
@@ -56,9 +56,9 @@ class SubscribersController extends Controller
         ]);
 
     }
-    public function logs(Request $request,$slack){
+    public function logs(Request $request,$uid){
 
-        $subscriber = Subscriber::uid($slack);
+        $subscriber = Subscriber::uid($uid);
 
         if (!$subscriber) {
             abort(404, 'Suscriptor no encontrado');
@@ -127,7 +127,7 @@ class SubscribersController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $subscriber->uid,
+            'uid' => $subscriber->uid,
             'message' => 'Se actualizo el producto correctamente',
         ]);
 
@@ -157,14 +157,14 @@ class SubscribersController extends Controller
 
         return response()->json([
             'success' => true,
-            'slack' => $subscriber->uid,
+            'uid' => $subscriber->uid,
             'message' => 'Se creo el producto correctamente',
         ]);
 
     }
 
-    public function destroy($slack){
-        $subscriber = Product::uid($slack);
+    public function destroy($uid){
+        $subscriber = Product::uid($uid);
         $subscriber->delete();
         return redirect()->route('manager.products');
     }

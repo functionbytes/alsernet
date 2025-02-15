@@ -56,9 +56,9 @@ class FaqsController extends Controller
 
     }
 
-    public function edit($slack){
+    public function edit($uid){
 
-        $faq = Template::uid($slack);
+        $faq = Template::uid($uid);
 
         $availables = collect([
             ['id' => '1', 'label' => 'Publico'],
@@ -112,9 +112,9 @@ class FaqsController extends Controller
 
     }
 
-    public function destroy($slack){
+    public function destroy($uid){
 
-       $faq = Template::uid($slack);
+       $faq = Template::uid($uid);
        $faq->delete();
 
        return redirect()->route('manager.faqs');
