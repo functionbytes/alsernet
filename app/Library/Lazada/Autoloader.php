@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Library\Lazada;
+
 class Autoloader
 {
     /**

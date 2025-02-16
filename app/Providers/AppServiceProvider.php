@@ -4,105 +4,88 @@ namespace App\Providers;
 
 use App\Library\Facades\Hook;
 use App\Models\Setting\Setting;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View;
 
 class AppServiceProvider extends ServiceProvider
 {
-
-    public function register(){
-
-        view()->composer("*",function($view){
-            $view->with("setting", $this->setting());
-        });
-
-
-    }
-
-    public function setting()
+    /**
+     * Register services.
+     */
+    public function register(): void
     {
-        return Setting::first();
+        // Compartir configuración en todas las vistas sin usar view composer globalmente
+        $this->app->singleton('app.settings', fn () => $this->getSettings());
     }
 
-
-    public function boot()
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
     {
         Schema::defaultStringLength(191);
 
         $this->changeDefaultSettings();
 
-            config(['websockets.dashboard.port' => setting('liveChatPort')]);
-            config(['broadcasting.connections.pusher.options.port' => setting('liveChatPort')]);
-            config(['broadcasting.connections.pusher.options.host' => parse_url(url('/'))["host"]]);
+        // Configuración de WebSockets y Pusher
+        $settings = $this->getSettings();
+        if ($settings) {
+            config([
+                'websockets.dashboard.port' => $settings->liveChatPort ?? env('LIVE_CHAT_PORT', 6001),
+                'broadcasting.connections.pusher.options.port' => $settings->liveChatPort ?? env('LIVE_CHAT_PORT', 6001),
+                'broadcasting.connections.pusher.options.host' => parse_url(url('/'))["host"] ?? env('PUSHER_HOST', 'localhost'),
+            ]);
+        }
 
-
-        // Register plugins' registered translation folders
+        // Registrar archivos de traducción desde los plugins
         foreach (Hook::execute('add_translation_file') as $source) {
-            if (array_key_exists('translation_prefix', $source)) {
-                $prefix = $source['translation_prefix'];
-                $folder = $source['translation_folder'];
-                $this->loadTranslationsFrom($folder, $prefix);
+            if (!empty($source['translation_prefix']) && !empty($source['translation_folder'])) {
+                $this->loadTranslationsFrom($source['translation_folder'], $source['translation_prefix']);
             }
         }
 
-        Queue::before(function (JobProcessing $event) {
-            // $event->connectionName
-            // $event->job
-            // $event->job->payload()
-        });
+        // Manejo de colas con Laravel 11
+        Queue::before(fn (JobProcessing $event) => $this->handleQueueEvent($event, 'before'));
+        Queue::after(fn (JobProcessed $event) => $this->handleQueueEvent($event, 'after'));
 
-        Queue::after(function (JobProcessed $event) {
-            // $event->connectionName
-            // $event->job
-            // $event->job->payload()
-        });
-
-        Queue::failing(function (JobFailed $event) {
-            // $event->connectionName
-            // $event->job
-            // $event->exception
-        });
+        // Usar Queue::failing() en lugar de catching() para compatibilidad con DatabaseQueue
+        Queue::failing(fn (JobFailed $event) => $this->handleQueueEvent($event, 'failed'));
     }
 
-    private function changeDefaultSettings()
+    /**
+     * Obtener configuración de la base de datos.
+     */
+    private function getSettings(): ?Setting
+    {
+        return cache()->remember('app_settings', now()->addMinutes(10), fn () => Setting::first());
+    }
+
+    /**
+     * Configuración global del sistema.
+     */
+    private function changeDefaultSettings(): void
     {
         ini_set('memory_limit', '-1');
-        ini_set('pcre.backtrack_limit', 1000000000);
+        ini_set('pcre.backtrack_limit', '1000000000');
 
-        // Laravel 5.5 to 5.6 compatibility
-        Blade::withoutDoubleEncoding();
-
-        // Check if HTTPS (including proxy case)
-        $isSecure = false;
-        if (isset($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'on') == 0) {
-            $isSecure = true;
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strcasecmp($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') == 0 || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strcasecmp($_SERVER['HTTP_X_FORWARDED_SSL'], 'on') == 0) {
-            $isSecure = true;
-        }
-
-        if ($isSecure) {
-            // To deal with Ajax pagination link issue (always use HTTP)
-            $this->app['request']->server->set('HTTPS', 'on');
+        // Configuración de HTTPS si es necesario
+        if (request()->isSecure() || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strcasecmp($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') === 0)) {
             URL::forceScheme('https');
         }
-
-        // HTTP or HTTPS
-        // parse_url will return either 'http' or 'https'
-        //$scheme = parse_url(config('app.url'), PHP_URL_SCHEME);
-        //if (!empty($scheme)) {
-        //    AppUrl::forceScheme($scheme);
-        //}
-
-        // Fix Laravel 5.4 error
-        // [Illuminate\Database\QueryException]
-        // SQLSTATE[42000]: Syntax error or access violation: 1071 Specified key was too long; max key length is 767 bytes
-        Schema::defaultStringLength(191);
     }
 
+    /**
+     * Manejar eventos de la cola.
+     */
+    private function handleQueueEvent($event, string $type): void
+    {
+        // Aquí puedes agregar logs o lógica adicional para manejar eventos de la cola
+    }
 }

@@ -145,7 +145,7 @@
                             <div class="col-12">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Observacion</label>
-                                    <input type="text" class="form-control" id="observation"  value="" placeholder="Ingresar observacion por el cual haces la edicion" autocomplete="new-password">
+                                    <input type="text" class="form-control" id="observation" name="observation"  value="" placeholder="Ingresar observacion por el cual haces la edicion" autocomplete="new-password">
                                 </div>
                             </div>
 

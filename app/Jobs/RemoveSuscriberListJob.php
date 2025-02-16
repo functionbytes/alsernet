@@ -3,50 +3,38 @@
 namespace App\Jobs;
 
 use App\Models\Subscriber\Subscriber;
-use App\Models\Subscriber\SubscriberCategorie;
-use App\Models\Subscriber\SubscriberList;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Models\Subscriber\SubscriberListUser;
-use App\Models\Subscriber\SubscriberListCategorie;
 
 class RemoveSuscriberListJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected  $subscriberId;
-    protected  $listIds;
+    protected Subscriber $subscriber;
+    protected array $listIds;
 
-    public function __construct(int $subscriberId, $mailingLists)
+    public function __construct(Subscriber $subscriber, array $mailingLists)
     {
-        $this->subscriberId = $subscriberId;
+        $this->subscriber = $subscriber;
         $this->listIds = $mailingLists;
     }
 
-    public function handle()
+    public function handle(): void
     {
         try {
-
-            $subscriber = Subscriber::id($this->subscriberId);
-
-            if (empty($subscriber->categories) || $subscriber->parties) {
-                SubscriberListUser::where('subscriber_id', $this->subscriberId)->delete();
-                SubscriberCategorie::where('subscriber_id', $this->subscriberId)->delete();
-                Log::info("Suscriptor ID {$this->subscriberId} eliminado de TODAS las listas de mailing.");
+            if ($this->subscriber->categories->isEmpty() || $this->subscriber->parties) {
+                $this->subscriber->removeAllSubscriptions();
+                Log::info("Suscriptor ID {$this->subscriber->id} eliminado de TODAS las listas de mailing.");
             } else {
-
-                foreach ($this->listIds as $listId) {
-                    SubscriberListUser::where('subscriber_id', $this->subscriberId)->where('list_id', $listId)->delete();
-                    Log::info("Suscriptor ID {$this->subscriberId} eliminado de lista ID {$listId}");
-                }
+                $this->subscriber->removeSpecificLists($this->listIds);
+                Log::info("Suscriptor ID {$this->subscriber->id} eliminado de listas: " . implode(', ', $this->listIds));
             }
         } catch (\Exception $e) {
-            Log::error("Error al eliminar Suscriptor ID {$this->subscriberId} de las listas: " . $e->getMessage());
+            Log::error("Error al eliminar Suscriptor ID {$this->subscriber->id} de las listas: {$e->getMessage()}");
         }
     }
-
 }

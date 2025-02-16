@@ -333,20 +333,18 @@ class Subscriber extends Model
 
         // 🔥 Determinar listas de suscriptores a eliminar
         if ($this->parties == 1) {
-            // 🔥 Caso 1: Eliminar TODAS las listas activas
             $subscriberListsToRemove = $originalLists;
-            $subscriberListsToAdd = []; // No agregamos listas en este caso
+            $subscriberListsToAdd = [];
 
-        } elseif (empty($categoriesIds) && $this->parties==0) {
-            // 🔥 Caso 2: Si no hay categorías, eliminar solo listas predeterminadas
+        } elseif (empty($categoriesIds) && $this->parties == 0) {
             $subscriberListsToRemove = $defaultSubscriberLists;
             $subscriberListsToAdd = [];
         } else {
-            // Caso normal: Agregar listas predeterminadas si es necesario
             $subscriberListsToRemove = [];
             $subscriberListsToAdd = array_diff($defaultSubscriberLists, $originalLists);
         }
 
+        dd($addedCategories , $removedCategories);
         // Registrar cambios en categorías
         foreach ($addedCategories as $categoryId) {
             $changes[] = [
@@ -383,7 +381,6 @@ class Subscriber extends Model
 
         // Registrar log solo si hubo cambios
         if (!empty($changes)) {
-
             SubscriberLog::create([
                 'log_name' => 'category_update',
                 'description' => "Updated subscriber categories",
@@ -404,13 +401,13 @@ class Subscriber extends Model
             $this->processListUpdates($addedCategories, 'subscribeToCategorie');
             $this->processListUpdates($removedCategories, 'unsubscribeFromCategorie');
 
-            // Procesar suscripciones y desuscripciones a listas de suscriptores
+            // Procesar suscripciones y desuscripciones a listas de suscriptores enviando el objeto completo
             if (!empty($subscriberListsToAdd)) {
-                AddSuscriberListJob::dispatch($this->id, $subscriberListsToAdd);
+                AddSuscriberListJob::dispatch($this, $subscriberListsToAdd);
             }
 
             if (!empty($subscriberListsToRemove)) {
-                RemoveSuscriberListJob::dispatch($this->id, $subscriberListsToRemove);
+                RemoveSuscriberListJob::dispatch($this, $subscriberListsToRemove);
             }
         }
     }
@@ -432,9 +429,6 @@ class Subscriber extends Model
         $this->$method($categories, $newLists);
     }
 
-    /**
-     * Suscribirse a una categoría y asignar listas de suscriptores.
-     */
     public function subscribeToCategorie($categoriesIds, $mailingLists)
     {
         if (empty($categoriesIds)) {
@@ -479,5 +473,49 @@ class Subscriber extends Model
             RemoveSuscriberListJob::dispatch($this->id, $mailingListIds);
         }
     }
+
+    public function removeAllSubscriptions(): void
+    {
+        SubscriberListUser::where('subscriber_id', $this->id)->delete();
+        SubscriberCategorie::where('subscriber_id', $this->id)->delete();
+    }
+
+    public function removeSpecificLists(array $listIds): void
+    {
+        if (!empty($listIds)) {
+            SubscriberListUser::where('subscriber_id', $this->id)
+                ->whereIn('list_id', $listIds)
+                ->delete();
+        }
+    }
+
+    public function addToLists(array $listIds): void
+    {
+        if (empty($listIds)) {
+            return;
+        }
+
+        $existingLists = SubscriberListUser::where('subscriber_id', $this->id)
+            ->whereIn('list_id', $listIds)
+            ->pluck('list_id')
+            ->toArray();
+
+        $newLists = array_diff($listIds, $existingLists);
+
+        if (!empty($newLists)) {
+            $batchInsert = array_map(fn($listId) => [
+                'subscriber_id' => $this->id,
+                'list_id' => $listId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], $newLists);
+
+            SubscriberListUser::insert($batchInsert);
+            Log::info("Suscriptor ID {$this->id} añadido a listas: " . implode(', ', $newLists));
+        }
+    }
+
+
+
 
 }

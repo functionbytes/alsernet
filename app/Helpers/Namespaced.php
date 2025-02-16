@@ -245,7 +245,6 @@ function isValidPublicHostnameOrIpAddress($host)
         return false;
     }
 }
-
 function write_env($key, $value, $overwrite = true)
 {
     // Important, make the new environment var available
@@ -380,7 +379,7 @@ function load_env_from_file($path)
  * Parameter 1: \App\Library\RateTracker[]
  * Parameter 2: \App\Library\CreditTracker[]
  */
-function execute_with_limits(array $rateTrackers, array $creditTrackers, Closure $task = null)
+function execute_with_limits(array $rateTrackers, array $creditTrackers, ?Closure $task = null)
 {
     // Remove null tracker from array
     $rateTrackers = array_values(array_filter($rateTrackers));

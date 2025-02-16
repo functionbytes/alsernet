@@ -3,49 +3,63 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Config;
-use DB;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class MailConfigServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
-        // emailtemplatesetting();
         try {
-            DB::connection()->getPdo();
+            // Verifica si la conexión a la base de datos está disponible
+            if (!DB::connection()->getPdo()) {
+                return;
+            }
+
+            // Verifica si la tabla `settings` existe
             if (!DB::getSchemaBuilder()->hasTable('settings')) {
                 return;
-            } else {
-                $config = array(
-                    'driver'     => @('smtp'),
-                    'host'       => @(DB::table('settings')->where('key', 'mail_host')->first()->value),
-                    'port'       => @(DB::table('settings')->where('key', 'mail_port')->first()->value),
-                    'from'       => @array('address' => @(DB::table('settings')->where('key', 'mail_from_address')->first()->value), 'name' => @(DB::table('settings')->where('key', 'mail_from_name')->first()->value)),
-                    'encryption' => @(DB::table('settings')->where('key', 'mail_encryption')->first()->value),
-                    'username'   => @(DB::table('settings')->where('key', 'mail_username')->first()->value),
-                    'password'   => @(DB::table('settings')->where('key', 'mail_password')->first()->value),
-                    'sendmail'   => @'/usr/sbin/sendmail -bs',
-                    'pretend'    => @false,
-                );
-                Config::set('mail', $config);
             }
+
+            // Usa caché para mejorar el rendimiento
+            $settings = Cache::remember('mail_settings', now()->addMinutes(10), function () {
+                return DB::table('settings')
+                    ->whereIn('key', [
+                        'mail_host', 'mail_port', 'mail_from_address', 'mail_from_name',
+                        'mail_encryption', 'mail_username', 'mail_password'
+                    ])
+                    ->pluck('value', 'key');
+            });
+
+            // Configurar mail en Laravel
+            Config::set('mail', [
+                'driver'     => 'smtp',
+                'host'       => $settings['mail_host'] ?? 'smtp.example.com',
+                'port'       => $settings['mail_port'] ?? 587,
+                'from'       => [
+                    'address' => $settings['mail_from_address'] ?? 'noreply@example.com',
+                    'name'    => $settings['mail_from_name'] ?? 'Example App',
+                ],
+                'encryption' => $settings['mail_encryption'] ?? 'tls',
+                'username'   => $settings['mail_username'] ?? null,
+                'password'   => $settings['mail_password'] ?? null,
+                'sendmail'   => '/usr/sbin/sendmail -bs',
+                'pretend'    => false,
+            ]);
         } catch (\Exception $e) {
-            return;
-            die('Could not connect to the database.  Please check your configuration. error:' . $e);
+            \Log::error('MailConfigServiceProvider Error: ' . $e->getMessage());
         }
     }
 
     /**
      * Bootstrap services.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
+        //
     }
 }

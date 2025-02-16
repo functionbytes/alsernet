@@ -7,7 +7,7 @@
         <div class="card card-body">
             <div class="row">
                 <div class="col-md-12 col-xl-12">
-                    <form class="position-relative form-search" action="{{ Request::fullUrl() }}" method="GET">
+                    <form class="position-relative form-search" action="{{ request()->fullUrl() }}" method="GET">
                         <input type="hidden" name="enterprise" value="{{$enterprise_id}}">
                         <div class="row justify-content-between g-2 ">
                             <div class="col-auto flex-grow-1">

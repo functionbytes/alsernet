@@ -18,7 +18,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/dragonmantank/cron-expression" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/egulias/email-validator" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/fakerphp/faker" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/filp/whoops" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/fruitcake/php-cors" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/graham-campbell/result-type" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/guzzlehttp/guzzle" />
@@ -48,7 +47,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/nette/schema" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nette/utils" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nikic/php-parser" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/nunomaduro/collision" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/nunomaduro/termwind" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/phar-io/manifest" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/phar-io/version" />
@@ -148,12 +146,8 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/soundasleep/html2text" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/options-resolver" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/bacon/bacon-qr-code" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/beyondcode/laravel-websockets" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/cboden/ratchet" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/dasprid/enum" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/evenement/evenement" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/facade/ignition-contracts" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/fig/http-message-util" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/ifsnop/mysqldump-php" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/paragonie/sodium_compat" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/propaganistas/laravel-disposable-email" />
@@ -162,22 +156,28 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/cache" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/dns" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/event-loop" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/react/http" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/promise" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/socket" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/react/stream" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/spatie/laravel-cookie-consent" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/spatie/macroable" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/spatie/ssl-certificate" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/swiftmailer/swiftmailer" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/psr-http-message-bridge" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/torann/geoip" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/webklex/laravel-imap" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/webklex/php-imap" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/league/pipeline" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/polyfill-php81" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/twig/twig" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/league/csv" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/clue/redis-protocol" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/clue/redis-react" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/sql-formatter" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/laravel/horizon" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/laravel/pulse" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/laravel/reverb" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/league/uri" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/league/uri-interfaces" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/livewire/livewire" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/react/promise-timer" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

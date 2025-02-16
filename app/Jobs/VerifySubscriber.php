@@ -9,7 +9,6 @@ use App\Library\Exception\VerificationTakesLongerThanNormal;
 use Exception;
 use Closure;
 
-use function Acelle\Helpers\execute_with_limits;
 
 class VerifySubscriber extends Base
 {

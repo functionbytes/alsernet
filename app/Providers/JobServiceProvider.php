@@ -6,51 +6,41 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Queue;
 use App\Library\Log as MailLog;
-use Queue;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class JobServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
      */
-    public function boot()
+    public function boot(): void
     {
-        // IMPORTANT:
-        // ONLY TRIGGER QUEUE EVENTS FOR JOB_MONITORS THAT DO NOT HAVE BATCH
-        // IT IS BECAUSE ONES WIH A BATCH WILL BE UPDATED BY BATCH EVENTS, EXCEPT FOR "BEFORE"
         // Initialize the MailLog which writes logs to mail.log
         $this->initMailLog();
 
-        // 'before' event is triggered for both standalone jobs and batch jobs
+        // 'before' event for both standalone and batch jobs
         Queue::before(function (JobProcessing $event) {
             $job = $this->getJobObject($event);
-            if (property_exists($job, 'monitor')) {
-                // 'before' events should be applied to both JOB and BATCH monitor
-                $monitor = $job->monitor;
-                $monitor->setRunning();
+            if ($job && property_exists($job, 'monitor')) {
+                $job->monitor->setRunning();
             }
         });
 
-        // 'after' event is triggered for standalone jobs only, NOT batch jobs
+        // 'after' event for standalone jobs only (not batch jobs)
         Queue::after(function (JobProcessed $event) {
             $job = $this->getJobObject($event);
-            if (property_exists($job, 'monitor')) {
-                $monitor = $job->monitor;
-                if (is_null($monitor->batch_id)) {
-                    $monitor->setDone();
-                }
+            if ($job && property_exists($job, 'monitor') && is_null($job->monitor->batch_id)) {
+                $job->monitor->setDone();
             }
         });
 
-        // 'failing' event is triggered for standalone jobs only, NOT batch jobs
+        // Use failing instead of catching for compatibility with DatabaseQueue
         Queue::failing(function (JobFailed $event) {
             $job = $this->getJobObject($event);
-            if (property_exists($job, 'monitor')) {
-                $monitor = $job->monitor;
-                if (is_null($monitor->batch_id)) {
-                    $monitor->setFailed($event->exception);
-                }
+            if ($job && property_exists($job, 'monitor') && is_null($job->monitor->batch_id)) {
+                $job->monitor->setFailed($event->exception);
             }
         });
     }
@@ -58,26 +48,38 @@ class JobServiceProvider extends ServiceProvider
     /**
      * Register the application services.
      */
-    public function register()
+    public function register(): void
     {
         //
     }
 
     /**
-     * Register the application services.
+     * Extract the job object safely.
      */
-    private function getJobObject($event)
+    private function getJobObject($event): ?object
     {
-        $data = $event->job->payload();
+        try {
+            $data = $event->job->payload();
+            $command = unserialize($data['data']['command']);
 
-        return unserialize($data['data']['command']);
+            return $command instanceof ShouldQueue ? $command : null;
+        } catch (\Throwable $e) {
+            \Log::error('Failed to unserialize job command: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
      * Init the MailLog.
      */
-    private function initMailLog()
+    private function initMailLog(): void
     {
-        MailLog::configure(storage_path().'/logs/' . php_sapi_name() . '/mail.log');
+        $logPath = storage_path('logs/' . php_sapi_name() . '/mail.log');
+
+        if (!is_dir(dirname($logPath))) {
+            mkdir(dirname($logPath), 0755, true);
+        }
+
+        MailLog::configure($logPath);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Managers\Subscribers;
 
+use App\Jobs\UpdateSubscriberCategoriesJob;
 use App\Models\Subscriber\SubscriberLog;
 use App\Models\Subscriber\Subscriber;
 use App\Http\Controllers\Controller;
@@ -97,42 +98,38 @@ class SubscribersController extends Controller
 
     }
 
-    public function update(Request $request){
-
-
+    public function update(Request $request)
+    {
         $auth = app('managers');
         $subscriber = Subscriber::uid($request->uid);
 
+        // Validar y procesar los datos
         $data = [
-            'user' => $subscriber->id,
-            'firstname' => Str::upper($request->firstname),
-            'lastname' => Str::upper($request->lastname),
-            'email' => Str::lower($request->email),
-            'erp' => $request->erp,
-            'lopd' => $request->lopd,
-            'none' => $request->none,
-            'sports' => $request->sports,
-            'parties' => $request->parties,
-            'suscribe' => $request->suscribe,
+            'user'        => $subscriber->id,
+            'firstname'   => Str::upper($request->firstname),
+            'lastname'    => Str::upper($request->lastname),
+            'email'       => Str::lower($request->email),
+            'erp'         => $request->erp,
+            'lopd'        => $request->lopd,
+            'none'        => $request->none,
+            'sports'      => $request->sports,
+            'parties'     => $request->parties,
+            'suscribe'    => $request->suscribe,
             'observation' => $request->observation,
-            'lang_id' => $request->lang,
+            'lang_id'     => $request->lang,
         ];
 
-        $subscriber->updateWithLog($data, $auth);
-
-        if ($request->has('categories')) {
-            $subscriber->updateCategoriesWithLog($request->categories, $auth);
-        } else {
-            $subscriber->updateCategoriesWithLog([], $auth);
+        if ($subscriber->isDirty($data)) {
+            $subscriber->updateWithLog($data, $auth);
         }
 
+        dispatch(new UpdateSubscriberCategoriesJob($subscriber, $request->categories ?? []));
 
         return response()->json([
             'success' => true,
             'uid' => $subscriber->uid,
-            'message' => 'Se actualizo el producto correctamente',
+            'message' => 'Suscriptor actualizado correctamente.',
         ]);
-
     }
 
     public function store(Request $request){

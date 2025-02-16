@@ -8,10 +8,14 @@ use App\Listeners\SendNewUserNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
+    /**
+     * The event listener mappings for the application.
+     *
+     * @var array
+     */
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
@@ -21,9 +25,13 @@ class EventServiceProvider extends ServiceProvider
             GiftvoucherListener::class,
         ],
     ];
+
+    /**
+     * Bootstrap any event bindings.
+     */
     public function boot(): void
     {
-
+        parent::boot(); // Asegura que las configuraciones del padre se ejecuten si es necesario
     }
 
     /**
@@ -31,7 +39,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function shouldDiscoverEvents(): bool
     {
-        return false;
+        return true;
     }
-
 }

@@ -38,6 +38,8 @@ use App\Http\Controllers\Managers\Tickets\PrioritiesController as PrioritiesTick
 use App\Http\Controllers\Managers\Tickets\StatusController as StatusTicketsController;
 use App\Http\Controllers\Managers\Tickets\TicketsController;
 use App\Http\Controllers\Managers\Users\UsersController;
+use App\Http\Controllers\Managers\PulseController;
+
 use Illuminate\Support\Facades\Route;
 
 
@@ -45,7 +47,15 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     Route::get('/', [DashboardController::class, 'dashboard'])->name('manager.dashboard');
 
-    Route::group(['prefix' => 'shops'], function () {
+
+    Route::group(['prefix' => 'pulse'], function () {
+
+        Route::get('/', [PulseController::class, 'dashboard'])->name('manager.pulse');
+
+
+    });
+
+        Route::group(['prefix' => 'shops'], function () {
 
         Route::get('/', [ShopsController::class, 'index'])->name('manager.shops');
         Route::get('/create', [ShopsController::class, 'create'])->name('manager.shops.create');

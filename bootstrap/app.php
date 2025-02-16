@@ -1,55 +1,90 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Create The Application
-|--------------------------------------------------------------------------
-|
-| The first thing we will do is create a new Laravel application instance
-| which serves as the "glue" for all the components of Laravel, and is
-| the IoC container for the system binding all of the various parts.
-|
-*/
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
 
-$app = new Illuminate\Foundation\Application(
-    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
-);
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        // Middleware globales
+        $middleware->append([
+            \App\Http\Middleware\TrustProxies::class,
+            \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+            \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+            \App\Http\Middleware\TrimStrings::class,
+            \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        ]);
 
-/*
-|--------------------------------------------------------------------------
-| Bind Important Interfaces
-|--------------------------------------------------------------------------
-|
-| Next, we need to bind some important interfaces into the container so
-| we will be able to resolve them when needed. The kernels serve the
-| incoming requests to this application from both the web and CLI.
-|
-*/
+        // Middleware de grupos (Web y API)
+        $middleware->group('web', [
+            \App\Http\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
 
-$app->singleton(
-    Illuminate\Contracts\Http\Kernel::class,
-    App\Http\Kernel::class
-);
+        $middleware->group('api', [
+            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
 
-$app->singleton(
-    Illuminate\Contracts\Console\Kernel::class,
-    App\Console\Kernel::class
-);
+        $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+            'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
+            'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+            'can' => \Illuminate\Auth\Middleware\Authorize::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+            'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+            'signed' => \App\Http\Middleware\ValidateSignature::class,
+            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'session' => \App\Http\Middleware\CheckSession::class,
+            'roles' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
 
-$app->singleton(
-    Illuminate\Contracts\Debug\ExceptionHandler::class,
-    App\Exceptions\Handler::class
-);
+        ]);
+    })->withProviders([
+        Illuminate\Cache\CacheServiceProvider::class, // NECESARIO para Cache::get(), Cache::put()
+        Illuminate\Database\DatabaseServiceProvider::class, // NECESARIO para DB::schema(), consultas Eloquent
+        Illuminate\Filesystem\FilesystemServiceProvider::class, // NECESARIO para Storage::disk()
+        Illuminate\View\ViewServiceProvider::class, // NECESARIO para Blade y Views
+        Illuminate\Pagination\PaginationServiceProvider::class, // NECESARIO si usas paginación en Eloquent
+        Illuminate\Translation\TranslationServiceProvider::class, // NECESARIO si usas trans() o __('')
+        Illuminate\Validation\ValidationServiceProvider::class, // NECESARIO para Validator::make()
+        Illuminate\Session\SessionServiceProvider::class, // NECESARIO si usas sesiones con auth
+        Illuminate\Hashing\HashServiceProvider::class, // NECESARIO para Hash::make()
+        Illuminate\Bus\BusServiceProvider::class, // NECESARIO si usas Jobs y Queue
+        Illuminate\Queue\QueueServiceProvider::class, // NECESARIO si usas Queue::push()
+        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class, // NECESARIO si usas restablecimiento de contraseñas
+        Illuminate\Notifications\NotificationServiceProvider::class, // NECESARIO para Notificaciones con Mail/SMS
+        App\Providers\AppServiceProvider::class, // Registra configuraciones personalizadas de tu app
+        App\Providers\EventServiceProvider::class, // Registra eventos y listeners
+        App\Providers\RouteServiceProvider::class, // Configura rutas y middlewares
+        Illuminate\Foundation\Providers\FoundationServiceProvider::class, // NECESARIO para MaintenanceMode
+        Illuminate\Encryption\EncryptionServiceProvider::class, // Agregado para corregir "encrypter"
+        Illuminate\Cookie\CookieServiceProvider::class, // NECESARIO para Cookie::queue()
+        Illuminate\Auth\AuthServiceProvider::class, // NECESARIO para Auth::attempt(), Auth::user()
+        Illuminate\Redis\RedisServiceProvider::class, // Agregado para corregir "redis"
+        Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Database\DatabaseServiceProvider::class,
+        Illuminate\Filesystem\FilesystemServiceProvider::class,
+        Illuminate\View\ViewServiceProvider::class,
+        Illuminate\Translation\TranslationServiceProvider::class,
+        Illuminate\Foundation\Providers\FoundationServiceProvider::class, // Fixes missing commands
 
-/*
-|--------------------------------------------------------------------------
-| Return The Application
-|--------------------------------------------------------------------------
-|
-| This script returns the application instance. The instance is given to
-| the calling script so we can separate the building of the instances
-| from the actual running of the application and sending responses.
-|
-*/
-
-return $app;
+    ])
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();

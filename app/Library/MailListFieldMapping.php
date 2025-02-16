@@ -6,7 +6,7 @@ use Exception;
 use App\Models\Campaign\CampaignMaillist;
 use DB;
 
-class CampaignMaillistFieldMapping
+class MailListFieldMapping
 {
     public $mapping = [];
     public $list;

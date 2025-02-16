@@ -2,57 +2,33 @@
 
 namespace App\Jobs;
 
+use App\Models\Subscriber\Subscriber;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Models\Subscriber\SubscriberListUser;
-use App\Models\Subscriber\SubscriberListCategorie;
 
 class AddSuscriberListJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $subscriberId;
-    protected $listIds;
+    protected Subscriber $subscriber;
+    protected array $listIds;
 
-    public function __construct(int $subscriberId, $mailingLists)
+    public function __construct(Subscriber $subscriber, array $mailingLists)
     {
-        $this->subscriberId = $subscriberId;
+        $this->subscriber = $subscriber;
         $this->listIds = $mailingLists;
-
-
     }
 
-    public function handle()
+    public function handle(): void
     {
         try {
-
-            if (!empty($this->listIds)) {
-
-                $batchInsert = [];
-
-                foreach ($this->listIds as $listId) {
-                    $exists = SubscriberListUser::where('subscriber_id', $this->subscriberId)->where('list_id', $listId)->exists();
-                    if (!$exists) {
-                        $batchInsert[] = [
-                            'subscriber_id' => $this->subscriberId,
-                            'list_id' => $listId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
-                }
-
-                if (!empty($batchInsert)) {
-                    SubscriberListUser::insert($batchInsert);
-                }
-            }
+            $this->subscriber->addToLists($this->listIds);
         } catch (\Exception $e) {
-            Log::error("Error al añadir Suscriptor ID {$this->subscriberId} a las listas: " . $e->getMessage());
+            Log::error("Error al añadir Suscriptor ID {$this->subscriber->id} a las listas: {$e->getMessage()}");
         }
     }
 }
-
