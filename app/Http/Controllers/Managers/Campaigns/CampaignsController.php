@@ -20,7 +20,7 @@ use App\Models\ClickLog;
 use App\Models\OpenLog;
 use App\Models\TemplateCategory;
 use App\Models\JobMonitor;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Carbon\Carbon;
 

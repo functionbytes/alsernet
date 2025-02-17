@@ -16,10 +16,11 @@ use App\Models\SendingServer;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Closure;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use League\Csv\Writer;
 use Validator;
+use Illuminate\Support\Str;
 
 class Campaign extends BaseCampaign implements HasTemplateInterface, CampaignInterface
 {

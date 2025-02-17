@@ -9,6 +9,7 @@ use App\Events\MailListUpdated;
 use App\Jobs\ExportSubscribersJob;
 use App\Jobs\ImportSubscribers2;
 use App\Jobs\ImportSubscribersJob;
+use App\Jobs\ImportSubscribersListsJob;
 use App\Jobs\VerifyMailListJob;
 use App\Library\ExtendedSwiftMessage;
 use App\Library\MailListFieldMapping;
@@ -18,13 +19,17 @@ use App\Library\Traits\HasCache;
 use App\Library\Traits\HasUid;
 use App\Library\Traits\QueryHelper;
 use App\Library\Traits\TrackJobs;
+use App\Models\Subscriber\SubscriberList;
 use App\Models\Setting;
-use DB;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use League\Csv\Writer;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Models\Subscriber\Subscriber;
+
 
 class CampaignMaillist extends Model
 {
@@ -191,6 +196,15 @@ class CampaignMaillist extends Model
         $monitor = $this->dispatchWithMonitor($job);
         return $monitor;
     }
+
+    public function dispatchImportListsJob($filepath, $lists)
+    {
+        // Example: /home/App/storage/app/tmp/import-000000.csv
+        $job = new ImportSubscribersListsJob($this, $filepath, $lists);
+        $monitor = $this->dispatchWithMonitor($job);
+        return $monitor;
+    }
+
 
     public function getExportTempDir($file = null)
     {
@@ -1067,14 +1081,255 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Import subscriber from a CSV file.
-     *
-     * @param string original value
-     *
-     * @return string quoted value
-     * @todo: use MySQL escape function to correctly escape string with astrophe
-     */
+    public function importLists($file, $lists = null ,$progressCallback = null, $invalidRecordCallback = null)
+    {
+
+
+        if (is_null($file) && !is_null($lists) && is_array($lists) && count($lists) > 0) {
+
+            $processed = 0;
+            $failed = 0;
+            $total = 0;
+            $message = null;
+
+            if (!is_null($progressCallback)) {
+                $progressCallback($processed, $total, $failed, $message = trans('messages.list.import.starting'));
+            }
+
+            try {
+                $subscribersCollection = collect();
+
+                foreach ($lists as $listId) {
+
+                    $listSubscriber = SubscriberList::find($listId);
+
+                    if (!$listSubscriber) {
+                        continue;
+                    }
+
+                    $listSubscriber->subscribers()
+                        ->select(
+                            'subscribers.id',  // Especificamos la tabla para evitar ambigüedad
+                            'subscribers.*',
+                            'subscriber_list_users.list_id as pivot_list_id',
+                            'subscriber_list_users.subscriber_id as pivot_subscriber_id'
+                        )
+                        ->distinct()
+                        ->chunk(1000, function ($subscribers) use (&$subscribersCollection) {
+                            $subscribersCollection = $subscribersCollection->merge($subscribers->pluck('id'));
+                        });
+                }
+
+                // Eliminamos duplicados
+                $subscribersCollection = $subscribersCollection->unique();
+                $total = $subscribersCollection->count();
+
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message = 'Validando cabeceras de suscriptores...');
+                }
+
+                $batchSize = max(1, config('app.import_batch_size', 1000));
+
+                each_batch($subscribersCollection, $batchSize, false, function ($batch) use (&$processed, &$failed, $total, &$message, $progressCallback) {
+
+
+                    DB::beginTransaction();
+                    $importBatchId = uniqid('', true);
+
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, $message = 'Insertando suscriptores en la base de datos...');
+                    }
+
+                    $data = collect($batch)->map(fn($subscriberId) => [
+                        'uid' => uniqid('', true),
+                        'maillist_id' => $this->id,
+                        'subscriber_id' => $subscriberId,
+                        'tags' => json_encode([]),
+                        'import_batch_id' => $importBatchId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ])->toArray();
+
+                    DB::table('campaigns_maillists_subscribers')->insert($data);
+                    DB::commit();
+
+                    $processed += count($batch);
+
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, trans('messages.list.import.completed'));
+                    }
+
+                });
+
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message = "Procesado: {$processed}/{$total} registros, omitidos: {$failed}.");
+                }
+
+            } catch (\Throwable $e) {
+
+                DB::rollBack();
+
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $e->getMessage());
+                }
+
+                throw new Exception(substr($e->getMessage(), 0, 512));
+            } finally {
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message);
+                }
+            }
+
+
+        }elseif (!is_null($file) && !is_null($lists) && is_array($lists) && count($lists) > 0) {
+
+
+            $subscribersCollection = collect();
+            $subscribersCollectionRemover = collect();
+
+            if (!is_null($file)) {
+
+                $processed = 0;
+                $failed = 0;
+                $total = 0;
+                $message = null;
+
+                list($headers, $total, $results) = $this->readCsv($file);
+
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message = trans('messages.list.import.starting'));
+                }
+
+                $batchSize = max(1, config('app.import_batch_size', 1000));
+
+                $subscribersCollectionRemover = collect(); // Asegurar que la colección existe
+
+                each_batch($results, $batchSize, false, function ($batch) use (&$processed,  &$subscribersCollectionRemover) {
+                    foreach ($batch as $row) {
+                        $email = strtolower($row['EMAIL']);
+
+                        // Verifica si el email existe en la base de datos
+                        $subscriberData = Subscriber::checkWithPartition($email);
+                        if ($subscriberData['exists']) {
+                            $subscribersCollectionRemover->push($subscriberData['data']->id ?? null);
+                        }
+
+                        $processed += count($batch);
+
+                    }
+                });
+
+                // Removemos valores nulos si hay algún problema con los IDs
+                $subscribersCollectionRemover = $subscribersCollectionRemover->filter();
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message = trans('messages.list.import.starting'));
+                }
+
+
+            }
+
+
+            if (!is_null($lists) && is_array($lists) && count($lists) > 0) {
+
+                $processed = 0;
+                $failed = 0;
+                $total = 0;
+                $message = null;
+
+                if (!is_null($progressCallback)) {
+                    $progressCallback($processed, $total, $failed, $message = trans('messages.list.import.starting'));
+                }
+
+                try {
+
+                    foreach ($lists as $listId) {
+
+                        $listSubscriber = SubscriberList::find($listId);
+
+                        if (!$listSubscriber) {
+                            continue;
+                        }
+
+                        $listSubscriber->subscribers()
+                            ->select(
+                                'subscribers.id',  // Especificamos la tabla para evitar ambigüedad
+                                'subscribers.*',
+                                'subscriber_list_users.list_id as pivot_list_id',
+                                'subscriber_list_users.subscriber_id as pivot_subscriber_id'
+                            )
+                            ->distinct()
+                            ->chunk(1000, function ($subscribers) use (&$subscribersCollection) {
+                                $subscribersCollection = $subscribersCollection->merge($subscribers->pluck('id'));
+                            });
+                    }
+
+                    $subscribersCollection = $subscribersCollection->unique();
+
+                    $subscribersCollection = $subscribersCollection->diff($subscribersCollectionRemover);
+                    $total = $subscribersCollection->count();
+
+
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, $message = 'Validando cabeceras de suscriptores...');
+                    }
+
+                    $batchSize = max(1, config('app.import_batch_size', 1000));
+
+                    each_batch($subscribersCollection, $batchSize, false, function ($batch) use (&$processed, &$failed, $total, &$message, $progressCallback) {
+
+
+                        DB::beginTransaction();
+                        $importBatchId = uniqid('', true);
+
+                        if (!is_null($progressCallback)) {
+                            $progressCallback($processed, $total, $failed, $message = 'Insertando suscriptores en la base de datos...');
+                        }
+
+                        $data = collect($batch)->map(fn($subscriberId) => [
+                            'uid' => uniqid('', true),
+                            'maillist_id' => $this->id,
+                            'subscriber_id' => $subscriberId,
+                            'tags' => json_encode([]),
+                            'import_batch_id' => $importBatchId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ])->toArray();
+
+                        DB::table('campaigns_maillists_subscribers')->insert($data);
+                        DB::commit();
+
+                        $processed += count($batch);
+
+                        if (!is_null($progressCallback)) {
+                            $progressCallback($processed, $total, $failed, trans('messages.list.import.completed'));
+                        }
+
+                    });
+
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, $message = "Procesado: {$processed}/{$total} registros, omitidos: {$failed}.");
+                    }
+
+                } catch (\Throwable $e) {
+
+                    DB::rollBack();
+
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, $e->getMessage());
+                    }
+
+                    throw new Exception(substr($e->getMessage(), 0, 512));
+                } finally {
+                    if (!is_null($progressCallback)) {
+                        $progressCallback($processed, $total, $failed, $message);
+                    }
+                }
+            }
+
+        }
+    }
+
+
     public function import($file, $mapArray = null, $progressCallback = null, $invalidRecordCallback = null)
     {
         /* START trick: auto generate map if there is no map passed to the function */
@@ -1324,6 +1579,8 @@ class CampaignMaillist extends Model
             }
         }
     }
+
+
 
     // Call by the LoadImportJobs JOB
     public function parseCsvFile($file, $callback)
@@ -1869,6 +2126,10 @@ class CampaignMaillist extends Model
     public function importJobs()
     {
         return $this->jobMonitors()->orderBy('job_monitors.id', 'DESC')->whereIn('job_type', [ ImportSubscribersJob::class, ImportSubscribers2::class ]);
+    }
+    public function importListsJobs()
+    {
+        return $this->jobMonitors()->orderBy('job_monitors.id', 'DESC')->whereIn('job_type', [ ImportSubscribersListsJob::class]);
     }
 
     public function exportJobs()

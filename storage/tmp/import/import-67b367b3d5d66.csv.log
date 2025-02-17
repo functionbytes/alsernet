@@ -1,0 +1,22 @@
+[2025-02-17T16:45:42.723827+00:00] 18152.INFO: Initiated
+[2025-02-17T16:45:42.729572+00:00] 18152.INFO: Import is starting...
+[2025-02-17T16:45:42.729614+00:00] 18152.INFO: Procesado: 0/1, Saltado: 0
+[2025-02-17T16:45:42.733793+00:00] 18152.INFO: Import is starting...
+[2025-02-17T16:45:42.733824+00:00] 18152.INFO: Procesado: 1/1, Saltado: 0
+[2025-02-17T16:45:42.737292+00:00] 18152.INFO: Import is starting...
+[2025-02-17T16:45:42.737322+00:00] 18152.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T16:45:42.742486+00:00] 18152.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T16:45:42.742596+00:00] 18152.INFO: Procesado: 0/1, Saltado: 0
+[2025-02-17T16:45:42.743097+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:45:42.743117+00:00] 18152.INFO: Procesado: 0/1, Saltado: 0
+[2025-02-17T16:45:42.749944+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T16:45:42.749967+00:00] 18152.INFO: Procesado: 0/1, Saltado: 0
+[2025-02-17T16:45:42.750549+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:45:42.750577+00:00] 18152.INFO: Procesado: 0/1, Saltado: 0
+[2025-02-17T16:45:42.758281+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T16:45:42.758303+00:00] 18152.INFO: Procesado: 1/1, Saltado: 0
+[2025-02-17T16:45:42.761784+00:00] 18152.INFO: Procesado: 1/1 registros, omitidos: 0.
+[2025-02-17T16:45:42.761805+00:00] 18152.INFO: Procesado: 1/1, Saltado: 0
+[2025-02-17T16:45:42.761844+00:00] 18152.INFO: Procesado: 1/1 registros, omitidos: 0.
+[2025-02-17T16:45:42.761854+00:00] 18152.INFO: Procesado: 1/1, Saltado: 0
+[2025-02-17T16:45:42.761888+00:00] 18152.INFO: Finished

@@ -8,7 +8,7 @@ use App\Models\JobMonitor;
 use Illuminate\Bus\Batch;
 use Throwable;
 use Exception;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 trait TrackJobs
 {

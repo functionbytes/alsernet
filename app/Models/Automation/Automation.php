@@ -24,7 +24,7 @@ namespace App\Models\Automation;
 
 use Illuminate\Database\Eloquent\Model;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Library\Automation\Action;
 use App\Library\Automation\Trigger;
 use App\Library\Automation\Send;

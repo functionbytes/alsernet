@@ -118,6 +118,11 @@
                                                 </a>
                                             </li>
                                         <li>
+                                            <a class="dropdown-item" href="{{ route('manager.campaigns.maillists.subscribers.import.lists', $maillist->uid) }}">
+                                                Importar listas
+                                            </a>
+                                        </li>
+                                        <li>
                                             <a class="dropdown-item" href="{{ route('manager.campaigns.maillists.subscribers.import.wizard', $maillist->uid) }}">
                                                 Importar wizard
                                             </a>

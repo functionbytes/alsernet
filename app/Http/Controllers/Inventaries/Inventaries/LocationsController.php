@@ -8,7 +8,7 @@ use App\Models\Location;
 use App\Models\Product\Product;
 use App\Models\Product\ProductLocation;
 use App\Models\Shop;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Dflydev\DotAccessData\Data;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Http\Controllers\Controller;

@@ -101,83 +101,73 @@ class SubscribersController extends Controller
 
     public function update(Request $request)
     {
-        try {
-            $auth = app('managers');
-            $subscriber = Subscriber::uid($request->uid);
 
-            // Verificar si el suscriptor existe
-            if (!$subscriber) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Suscriptor no encontrado.',
-                ], 404);
+        $auth = app('managers');
+        $subscriber = Subscriber::uid($request->uid);
+
+        if (!$subscriber) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Suscriptor no encontrado.',
+            ]);
+        }
+
+        $data = [
+            'firstname'   => Str::upper($request->firstname),
+            'lastname'    => Str::upper($request->lastname),
+            'email'       => Str::lower($request->email),
+            'erp'         => $request->erp,
+            'lopd'        => $request->lopd,
+            'none'        => $request->none,
+            'sports'      => $request->sports,
+            'parties'     => $request->parties,
+            'suscribe'    => $request->suscribe,
+            'observation' => $request->observation,
+            'lang_id'     => $request->lang,
+        ];
+
+        $previousLangId = (int) $subscriber->lang_id;
+        $currentLangId = (int) $request->lang;
+        $hasLangChanged = $previousLangId !== $currentLangId;
+
+        $categories = is_array($request->categories)  ? $request->categories : (empty($request->categories) ? [] : explode(',', $request->categories));
+
+        $hasCategoryChanges = $subscriber->categories()->count() !== count($categories);
+        $changes = collect($data)->filter(fn($value, $key) => $subscriber->$key !== $value)->isNotEmpty();
+
+        if ($changes || $hasCategoryChanges || $hasLangChanged) {
+
+            if ($changes) {
+                $subscriber->updateWithLog($data, $auth);
             }
 
-            // Validar y procesar los datos
-            $data = [
-                'firstname'   => Str::upper($request->firstname),
-                'lastname'    => Str::upper($request->lastname),
-                'email'       => Str::lower($request->email),
-                'erp'         => $request->erp,
-                'lopd'        => $request->lopd,
-                'none'        => $request->none,
-                'sports'      => $request->sports,
-                'parties'     => $request->parties,
-                'suscribe'    => $request->suscribe,
-                'observation' => $request->observation,
-                'lang_id'     => $request->lang, // Nuevo idioma
-            ];
-
-            // 🔹 Obtener el idioma anterior directamente desde la base de datos
-            $previousLangId = (int) Subscriber::where('id', $subscriber->id)->value('lang_id');
-            $currentLangId = (int) $request->lang; // Nuevo idioma recibido en la solicitud
-
-            // Detectar si hubo un cambio de idioma
-            $hasLangChanged = $previousLangId !== $currentLangId;
-
-            // Detectar cambios en las categorías
-            $categories = is_array($request->categories)
-                ? $request->categories
-                : (empty($request->categories) ? [] : explode(',', $request->categories));
-
-            $hasCategoryChanges = $subscriber->categories()->count() !== count($categories);
-
-            // Detectar cambios en los datos del suscriptor
-            $changes = collect($data)->filter(fn($value, $key) => $subscriber->$key !== $value)->isNotEmpty();
-
-            Log::info("📌 LangID Anterior={$previousLangId}, NuevoLangID={$currentLangId}, hasLangChanged=" . ($hasLangChanged ? 'Sí' : 'No'));
-            Log::info("📌 Cambios detectados: " . ($changes ? 'Sí' : 'No') . " | Cambio en categorías: " . ($hasCategoryChanges ? 'Sí' : 'No'));
-
-            if ($changes || $hasCategoryChanges || $hasLangChanged) {
-                if ($changes) {
-                    $subscriber->updateWithLog($data, $auth);
-                }
-
-                if ($hasCategoryChanges || $hasLangChanged) {
-                    Log::info("📌 Enviando parámetros a updateCategoriesWithLog()...");
-                    $subscriber->updateCategoriesWithLog($categories, $auth, $hasLangChanged, $currentLangId,$previousLangId);
-                }
-
-                return response()->json([
-                    'success' => true,
-                    'uid' => $subscriber->uid,
-                    'message' => 'Suscriptor actualizado correctamente.',
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No hay cambios para actualizar.',
-                ]);
+            if ($hasCategoryChanges || $hasLangChanged) {
+                //$subscriber->updateCategoriesWithLog($categories, $auth, $hasLangChanged, $currentLangId,$previousLangId);
+                UpdateSubscriberCategoriesJob::dispatch(
+                    $subscriber,
+                    $categories,
+                    $auth,
+                    $hasLangChanged,
+                    $currentLangId,
+                    $previousLangId
+                );
             }
-        } catch (\Exception $e) {
-            Log::error("📌 Error en update(): " . $e->getMessage());
+
+            return response()->json([
+                'success' => true,
+                'uid' => $subscriber->uid,
+                'message' => 'Suscriptor actualizado correctamente.',
+            ]);
+
+        } else {
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar el suscriptor.',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'No hay cambios para actualizar.',
+            ]);
+
         }
+
     }
 
 

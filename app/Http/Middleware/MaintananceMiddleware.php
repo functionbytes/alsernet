@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Closure;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class MaintananceMiddleware
 {

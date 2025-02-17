@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Managers\Maillists;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign\CampaignMaillist;
 use App\Models\Subscriber\Subscriber;
+use App\Models\Subscriber\SubscriberList;
 use Illuminate\Http\Request;
 use App\Models\EmailVerificationServer;
 use App\Models\Campaign\CampaignMaillistsSubscriber;
@@ -380,6 +381,7 @@ class SubscriberController extends Controller
         }
     }
 
+
     public function dispatchImportJob(Request $request)
     {
 
@@ -402,13 +404,6 @@ class SubscriberController extends Controller
 
     }
 
-    /**
-     * Import from file.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function cancelImport(Request $request)
     {
         $job = JobMonitor::findByUid($request->job_uid);
@@ -422,13 +417,6 @@ class SubscriberController extends Controller
         }
     }
 
-    /**
-     * Import from file.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function cancelExport(Request $request)
     {
         $job = JobMonitor::findByUid($request->job_uid);
@@ -450,6 +438,94 @@ class SubscriberController extends Controller
         return response()->download($job->getJsonData()['logfile']);
     }
 
+
+
+    public function lists(Request $request)
+    {
+        $list = CampaignMaillist::findByUid($request->list_uid);
+        $currentJob = $list->importJobs()->first();
+
+        $importNotifications = Hook::execute('list_import_notifications');
+        $listssubscribers = SubscriberList::orderBy('title' , 'desc')->pluck('title','id');
+
+        if ($currentJob) {
+            return view('managers.views.maillists.subscribers.importlists', [
+                'list' => $list,
+                'listssubscribers' => $listssubscribers,
+                'currentJobUid' => $currentJob->uid,
+                'progressCheckUrl' => route('manager.campaigns.maillists.import.progress', ['job_uid' => $currentJob->uid, 'list_uid' => $list->uid]),
+                'cancelUrl' => route('manager.campaigns.maillists.import.cancel', ['job_uid' => $currentJob->uid]),
+                'logDownloadUrl' => route('manager.campaigns.maillists.import.log.download', ['job_uid' => $currentJob->uid]),
+                'importNotifications' => $importNotifications,
+            ]);
+        } else {
+            return view('managers.views.maillists.subscribers.importlists', [
+                'list' => $list,
+                'listssubscribers' => $listssubscribers,
+                'importNotifications' => $importNotifications,
+            ]);
+        }
+    }
+
+
+    public function dispatchImportListsJobs(Request $request)
+    {
+
+        $list = CampaignMaillist::findByUid($request->list_uid);
+
+        $filepath = $request->hasFile('file') ? $list->uploadCsv($request->file('file')) : null;
+        $lists = $request->input('lists', []);
+
+        Hook::registerIfEmpty('dispatch_list_import_lists_job', function ($list, $filepath) use ($lists) {
+            return $list->dispatchImportListsJob($filepath, $lists);
+        });
+
+        $currentJob = Hook::perform('dispatch_list_import_lists_job', [$list, $filepath]);
+
+        return response()->json([
+            'currentJobUid' => $currentJob->uid,
+            'progressCheckUrl' => route('manager.campaigns.maillists.import.progress.lists', ['job_uid' => $currentJob->uid, 'list_uid' => $list->uid]),
+            'cancelUrl' => route('manager.campaigns.maillists.import.cancel.lists', ['job_uid' => $currentJob->uid]),
+            'logDownloadUrl' => route('manager.campaigns.maillists.import.log.download.lists', ['job_uid' => $currentJob->uid]),
+        ]);
+
+    }
+
+    public function cancelImportLists(Request $request)
+    {
+        $job = JobMonitor::findByUid($request->job_uid);
+
+        try {
+            $job->cancel();
+            return response()->json(['status' => 'done']);
+        } catch (\Exception $ex) {
+            $job->delete(); // delete anyway if already done or failed, to make it simple to user
+            return response()->json(['status' => '']);
+        }
+    }
+
+
+
+    public function cancelExportLists(Request $request)
+    {
+        $job = JobMonitor::findByUid($request->job_uid);
+
+        try {
+            $job->cancel();
+            return response()->json(['status' => 'done']);
+        } catch (\Exception $ex) {
+            $job->delete(); // delete anyway if already done or failed, to make it simple to user
+            return response()->json(['status' => '']);
+        }
+    }
+
+    public function downloadImportListsLog(Request $request)
+    {
+        $job = JobMonitor::findByUid($request->job_uid);
+
+        return response()->download($job->getJsonData()['logfile']);
+    }
+
     public function downloadExportedFile(Request $request)
     {
         $job = JobMonitor::findByUid($request->job_uid);
@@ -467,6 +543,17 @@ class SubscriberController extends Controller
     {
         $list = CampaignMaillist::findByUid($request->list_uid);
         $job = $list->importJobs()->first();
+
+        $progress = $list->getProgress($job);
+
+        // Get progress updated by the import process and status of the final job monitor
+        return response()->json($progress);
+    }
+
+    public function importListsProgress(Request $request)
+    {
+        $list = CampaignMaillist::findByUid($request->list_uid);
+        $job = $list->importListsJobs()->first();
 
         $progress = $list->getProgress($job);
 

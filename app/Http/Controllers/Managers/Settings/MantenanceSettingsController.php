@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Managers\Settings;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Str;
+use Illuminate\Support\Str;
 
 class MantenanceSettingsController extends Controller
 {

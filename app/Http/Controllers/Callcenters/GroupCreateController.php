@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use Auth;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\Apptitle;
 use App\Models\Footertext;
 use App\Models\Seosetting;
@@ -15,7 +15,7 @@ use DataTables;
 use App\Models\User;
 use App\Models\CategoryUser;
 use App\Models\Groups;
-use Str;
+use Illuminate\Support\Str;
 
 
 class GroupCreateController extends Controller

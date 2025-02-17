@@ -4,34 +4,47 @@ namespace App\Jobs;
 
 use App\Models\Subscriber\Subscriber;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class UpdateSubscriberCategoriesJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected Subscriber $subscriber;
-    protected  $categories;
+    protected $subscriber;
+    protected $categories;
     protected $auth;
+    protected $hasLangChanged;
+    protected $currentLangId;
+    protected $previousLangId;
 
-    public function __construct(Subscriber $subscriber, $categories, $auth)
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(Subscriber $subscriber, array $categories, $auth, bool $hasLangChanged, int $currentLangId, int $previousLangId)
     {
         $this->subscriber = $subscriber;
         $this->categories = $categories;
         $this->auth = $auth;
+        $this->hasLangChanged = $hasLangChanged;
+        $this->currentLangId = $currentLangId;
+        $this->previousLangId = $previousLangId;
     }
 
-    public function handle(): void
+    /**
+     * Execute the job.
+     */
+    public function handle()
     {
-        try {
-            $this->subscriber->updateCategoriesWithLog($this->categories, $this->auth);
-            Log::info("Actualización de categorías para el suscriptor ID {$this->subscriber->id} completada.");
-        } catch (\Exception $e) {
-            Log::error("Error en UpdateSubscriberCategoriesJob: {$e->getMessage()}");
-        }
+        $this->subscriber->updateCategoriesWithLog(
+            $this->categories,
+            $this->auth,
+            $this->hasLangChanged,
+            $this->currentLangId,
+            $this->previousLangId
+        );
     }
 }

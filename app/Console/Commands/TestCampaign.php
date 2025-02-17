@@ -16,7 +16,7 @@ use Acelle\Model\SendingServerElasticEmailApi;
 use Acelle\Model\SendingServerElasticEmail;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class TestCampaign extends Command

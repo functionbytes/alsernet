@@ -2,7 +2,7 @@
 
 namespace App\Library\Traits;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 
 trait QueryHelper
 {

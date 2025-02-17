@@ -1,0 +1,18 @@
+[2025-02-17T16:05:51.621283+00:00] 25064.INFO: Initiated
+[2025-02-17T16:05:51.699422+00:00] 25064.INFO: Import is starting...
+[2025-02-17T16:05:51.699470+00:00] 25064.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T16:05:51.799329+00:00] 25064.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T16:05:51.799384+00:00] 25064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:05:51.809976+00:00] 25064.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:05:51.810024+00:00] 25064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:05:51.817299+00:00] 25064.INFO: messages.list.import.completed
+[2025-02-17T16:05:51.817430+00:00] 25064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:05:51.818106+00:00] 25064.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:05:51.818129+00:00] 25064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:05:51.825451+00:00] 25064.INFO: messages.list.import.completed
+[2025-02-17T16:05:51.825478+00:00] 25064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:05:51.829144+00:00] 25064.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:05:51.829166+00:00] 25064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:05:51.829207+00:00] 25064.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:05:51.829217+00:00] 25064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:05:51.829227+00:00] 25064.INFO: Finished

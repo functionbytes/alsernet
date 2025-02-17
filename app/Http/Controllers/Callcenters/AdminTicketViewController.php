@@ -14,7 +14,7 @@ use App\Models\Ticket\TicketComment;
 use App\Models\Ticket\Category;
 use App\Models\Groupsusers;
 use Auth;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\tickethistory;
 use App\Models\Customer;
 

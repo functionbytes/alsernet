@@ -2,10 +2,14 @@
 
 namespace App\Models\Subscriber;
 
+use App\Library\Traits\HasUid;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+
 class SubscriberListUser extends Model
 {
+    use HasUid;
 
     protected $table = "subscriber_list_users";
 

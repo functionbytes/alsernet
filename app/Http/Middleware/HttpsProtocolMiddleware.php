@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Closure;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class HttpsProtocolMiddleware
 {
@@ -30,7 +30,7 @@ class HttpsProtocolMiddleware
             return $next($request);
             die("Could not connect to the database.  Please check your configuration. error:" . $e );
         }
-        
-       
+
+
     }
 }

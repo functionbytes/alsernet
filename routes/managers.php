@@ -648,6 +648,12 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::post('/{list_uid}/subscribers/subscribe', [MaillistSubscriberController::class, 'subscribe'])->name('manager.campaigns.maillists.subscribers.subscribe');
         Route::post('/{list_uid}/subscribers/unsubscribe', [MaillistSubscriberController::class, 'unsubscribe'])->name('manager.campaigns.maillists.subscribers.unsubscribe');
 
+        Route::get('/{list_uid}/subscribers/import/lists', [MaillistSubscriberController::class, 'lists'])->name('manager.campaigns.maillists.subscribers.import.lists');
+        Route::post('/{list_uid}/subscribers/import/lists/dispatch', [MaillistSubscriberController::class, 'dispatchImportListsJobs'])->name('manager.campaigns.maillists.subscribers.import.dispatch.lists');
+        Route::get('/{list_uid}/import/{job_uid}/lists/progress', [MaillistSubscriberController::class, 'importListsProgress'])->name('manager.campaigns.maillists.import.progress.lists');
+        Route::get('/import/{job_uid}/log/lists/download', [MaillistSubscriberController::class, 'downloadImportListsLog'])->name('manager.campaigns.maillists.import.log.download.lists');
+        Route::post('/import/{job_uid}/lists/cancel', [MaillistSubscriberController::class, 'cancelImportLists'])->name('manager.campaigns.maillists.import.cancel.lists');
+
 // Import & Export
         Route::get('/{list_uid}/subscribers/import', [MaillistSubscriberController::class, 'import'])->name('manager.campaigns.maillists.subscribers.import');
         Route::post('/{list_uid}/subscribers/import/dispatch', [MaillistSubscriberController::class, 'dispatchImportJob'])->name('manager.campaigns.maillists.subscribers.import.dispatch');

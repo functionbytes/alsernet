@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Password;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Str;
+use Illuminate\Support\Str;
 
 class ForgotPasswordController extends Controller
 {

@@ -14,20 +14,35 @@ class AddSuscriberListJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected Subscriber $subscriber;
+    protected ?Subscriber $subscriber;
     protected array $listIds;
 
-    public function __construct(Subscriber $subscriber, array $mailingLists)
+    public function __construct($subscriber, array $mailingLists)
     {
+        if ($subscriber instanceof Subscriber) {
+            $this->subscriber = $subscriber;
+        } else {
+            $this->subscriber = Subscriber::find($subscriber);
+        }
 
-        $this->subscriber = $subscriber;
-        $this->listIds = array_filter($mailingLists); // Asegurar que solo se almacenen valores válidos
+        $this->listIds = array_filter($mailingLists);
+
     }
 
     public function handle(): void
     {
+        if (!$this->subscriber || !$this->subscriber->exists) {
+            Log::error("No se encontró el suscriptor en AddSuscriberListJob.");
+            return;
+        }
+
         if (empty($this->listIds)) {
             Log::warning("No hay listas para añadir al suscriptor ID {$this->subscriber->id}.");
+            return;
+        }
+
+        if (!method_exists($this->subscriber, 'addToLists')) {
+            Log::error("El método addToLists no existe en la clase Subscriber.");
             return;
         }
 

@@ -235,7 +235,6 @@
                             form.find('.finish').removeClass('hide');
                             form.find('.success').removeClass("hide");
 
-
                             if (completeAlert) {
 
                                 toastr.success("El proceso de exportación finalizó exitosamente. Haga clic en el botón de descarga para obtener el archivo de salida.", "Operación exitosa", {
@@ -284,8 +283,6 @@
                     success: function (data) {
                         SuscriptionExport.setCurrentJob(data);
                         SuscriptionExport.checkProgress();
-
-
                     }
                 }).fail(function( jqXHR, textStatus, errorThrown ) {
                     return true;

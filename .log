@@ -1,0 +1,644 @@
+[2025-02-17T12:26:40.587899+00:00] 19204.INFO: Initiated
+[2025-02-17T12:40:36.026048+00:00] 11012.INFO: Initiated
+[2025-02-17T12:40:36.136278+00:00] 11012.INFO: Initiated
+[2025-02-17T12:40:36.176527+00:00] 11012.INFO: Initiated
+[2025-02-17T12:40:36.217994+00:00] 11012.INFO: Initiated
+[2025-02-17T12:44:17.626795+00:00] 9068.INFO: Initiated
+[2025-02-17T12:44:17.687892+00:00] 9068.INFO: Initiated
+[2025-02-17T12:49:35.355145+00:00] 26540.INFO: Initiated
+[2025-02-17T12:50:37.241981+00:00] 2092.INFO: Initiated
+[2025-02-17T12:50:58.057781+00:00] 25444.INFO: Initiated
+[2025-02-17T12:51:38.055008+00:00] 16740.INFO: Initiated
+[2025-02-17T12:52:19.307827+00:00] 26412.INFO: Initiated
+[2025-02-17T12:52:54.034406+00:00] 7620.INFO: Initiated
+[2025-02-17T12:53:31.636818+00:00] 10900.INFO: Initiated
+[2025-02-17T12:55:52.055372+00:00] 22624.INFO: Initiated
+[2025-02-17T12:58:37.603758+00:00] 22624.INFO: Initiated
+[2025-02-17T12:59:13.770582+00:00] 22624.INFO: Initiated
+[2025-02-17T13:01:10.883939+00:00] 10048.INFO: Initiated
+[2025-02-17T13:03:50.375561+00:00] 10048.INFO: Initiated
+[2025-02-17T13:11:36.484301+00:00] 24740.INFO: Initiated
+[2025-02-17T13:12:02.940312+00:00] 10164.INFO: Initiated
+[2025-02-17T13:12:02.949044+00:00] 10164.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:12:02.949075+00:00] 10164.INFO: Procesado: 0/7, Saltado: 0
+[2025-02-17T13:13:15.206849+00:00] 10164.INFO: Initiated
+[2025-02-17T13:13:15.215211+00:00] 10164.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:13:15.215282+00:00] 10164.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:13:41.229221+00:00] 11672.INFO: Initiated
+[2025-02-17T13:13:41.239983+00:00] 11672.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:13:41.240041+00:00] 11672.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:13:41.240147+00:00] 11672.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:13:41.240165+00:00] 11672.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:17:50.803270+00:00] 15712.INFO: Initiated
+[2025-02-17T13:17:50.811846+00:00] 15712.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:17:50.811877+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:17:50.839512+00:00] 15712.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:17:50.839560+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:17:50.843260+00:00] 15712.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:17:50.843291+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:24:12.879073+00:00] 15712.INFO: Initiated
+[2025-02-17T13:24:12.885173+00:00] 15712.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:24:12.885196+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:24:12.888963+00:00] 15712.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:24:12.888984+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:24:12.892460+00:00] 15712.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:24:12.892481+00:00] 15712.INFO: Procesado: 0/6, Saltado: 0
+[2025-02-17T13:27:41.723121+00:00] 2348.INFO: Initiated
+[2025-02-17T13:27:41.731167+00:00] 2348.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:27:41.731208+00:00] 2348.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T13:27:41.735453+00:00] 2348.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:27:41.735478+00:00] 2348.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T13:27:41.739092+00:00] 2348.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:27:41.739114+00:00] 2348.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T13:34:33.857916+00:00] 2348.INFO: Initiated
+[2025-02-17T13:34:33.861851+00:00] 2348.INFO: Finished
+[2025-02-17T13:37:07.209892+00:00] 15236.INFO: Initiated
+[2025-02-17T13:37:07.216283+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:37:07.216322+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:37:07.220862+00:00] 15236.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:37:07.220934+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:37:07.225035+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:37:07.225077+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:37:55.387956+00:00] 15236.INFO: Initiated
+[2025-02-17T13:37:55.394073+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:37:55.394108+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:37:55.398269+00:00] 15236.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:37:55.398296+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:37:55.402027+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:37:55.402048+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:39:55.756644+00:00] 15236.INFO: Initiated
+[2025-02-17T13:39:55.762395+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:39:55.762426+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:39:55.766247+00:00] 15236.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:39:55.766273+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:39:55.769854+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:39:55.769877+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:40:28.898305+00:00] 15236.INFO: Initiated
+[2025-02-17T13:40:28.905193+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:40:28.905234+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:40:28.909269+00:00] 15236.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:40:28.909296+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:40:28.912937+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:40:28.912969+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:42:02.160243+00:00] 15236.INFO: Initiated
+[2025-02-17T13:42:02.165622+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:42:02.165646+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:42:02.169219+00:00] 15236.INFO: Class "App\Models\Campaign\Str" not found
+[2025-02-17T13:42:02.169239+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:42:02.177561+00:00] 15236.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:42:02.177594+00:00] 15236.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:42:49.875247+00:00] 6732.INFO: Initiated
+[2025-02-17T13:42:49.883194+00:00] 6732.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:42:49.883225+00:00] 6732.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:43:43.355888+00:00] 25376.INFO: Initiated
+[2025-02-17T13:43:43.364192+00:00] 25376.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:43:43.364226+00:00] 25376.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:45:00.697809+00:00] 14748.INFO: Initiated
+[2025-02-17T13:45:00.706200+00:00] 14748.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:45:00.706230+00:00] 14748.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:45:53.535495+00:00] 20940.INFO: Initiated
+[2025-02-17T13:45:53.544329+00:00] 20940.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:45:53.544362+00:00] 20940.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:48:57.054360+00:00] 24944.INFO: Initiated
+[2025-02-17T13:48:57.063108+00:00] 24944.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:48:57.063139+00:00] 24944.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:51:01.129510+00:00] 384.INFO: Initiated
+[2025-02-17T13:51:01.137563+00:00] 384.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:51:01.137591+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:51:01.142077+00:00] 384.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription`, `tags`, `uid`, `updated_at`) values (2025-02-17 13:51:01, 67b33ec521a54, 2, 41070, [], KWzq13Ds6kSEx, 2025-02-17 13:51:01), (2025-02-17 13:51:01, 67b33ec521a54, 2, 41053, [], lhSX6NDAUGmdY, 2025-02-17 13:51:01), (2025-02-17 13:51:01, 67b33ec521a54, 2, 41070, [], QQXR5HGdjKXhC, 2025-02-17 13:51:01), (2025-02-17 13:51:01, 67b33ec521a54, 2, 41053, [], tQ0Ge3fsGuc4x, 2025-02-17 13:51:01))
+[2025-02-17T13:51:01.142136+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:51:46.307401+00:00] 384.INFO: Initiated
+[2025-02-17T13:51:46.312711+00:00] 384.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:51:46.312739+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:51:46.316600+00:00] 384.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription`, `tags`, `uid`, `updated_at`) values (2025-02-17 13:51:46, 67b33ef24c5f8, 2, 41070, [], qc5IdYjm2uBZe, 2025-02-17 13:51:46), (2025-02-17 13:51:46, 67b33ef24c5f8, 2, 41053, [], fYLq3YGYoxqoO, 2025-02-17 13:51:46), (2025-02-17 13:51:46, 67b33ef24c5f8, 2, 41070, [], B9n7bDh5TyGMp, 2025-02-17 13:51:46), (2025-02-17 13:51:46, 67b33ef24c5f8, 2, 41053, [], nGUjOK1PvvefX, 2025-02-17 13:51:46))
+[2025-02-17T13:51:46.316624+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:55:29.034871+00:00] 384.INFO: Initiated
+[2025-02-17T13:55:29.041195+00:00] 384.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:55:29.041230+00:00] 384.INFO: Procesado: 0/3, Saltado: 0
+[2025-02-17T13:55:29.045464+00:00] 384.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription`, `tags`, `uid`, `updated_at`) values (2025-02-17 13:55:29, 67b33fd10a16e, 2, 41070, [], MOa6YBeGfJMvS, 2025-02-17 13:55:29), (2025-02-17 13:55:29, 67b33fd10a16e, 2, 41070, [], kmchk2OAwZsju, 2025-02-17 13:55:29), (2025-02-17 13:55:29, 67b33fd10a16e, 2, 41053, [], ZlqGeTUGay3uU, 2025-02-17 13:55:29))
+[2025-02-17T13:55:29.045487+00:00] 384.INFO: Procesado: 0/3, Saltado: 0
+[2025-02-17T13:56:02.218542+00:00] 384.INFO: Initiated
+[2025-02-17T13:56:02.224792+00:00] 384.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:56:02.224832+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:56:02.229067+00:00] 384.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription`, `tags`, `uid`, `updated_at`) values (2025-02-17 13:56:02, 67b33ff236ec6, 2, 41070, [], ickXKbacTYe8X, 2025-02-17 13:56:02), (2025-02-17 13:56:02, 67b33ff236ec6, 2, 41053, [], BW8iALrc99HtS, 2025-02-17 13:56:02), (2025-02-17 13:56:02, 67b33ff236ec6, 2, 41070, [], B8g26enoYMcKK, 2025-02-17 13:56:02), (2025-02-17 13:56:02, 67b33ff236ec6, 2, 41053, [], r9zodFRfCkS0N, 2025-02-17 13:56:02))
+[2025-02-17T13:56:02.229114+00:00] 384.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:58:05.297055+00:00] 8780.INFO: Initiated
+[2025-02-17T13:58:05.306367+00:00] 8780.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T13:58:05.306410+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T13:58:05.311426+00:00] 8780.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription_id' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription_id`, `tags`, `uid`, `updated_at`) values (2025-02-17 13:58:05, 67b3406d4ae43, 2, 41070, [], ycXo6gFDQLcJA, 2025-02-17 13:58:05), (2025-02-17 13:58:05, 67b3406d4ae43, 2, 41053, [], MwjohZGRZntsp, 2025-02-17 13:58:05), (2025-02-17 13:58:05, 67b3406d4ae43, 2, 41070, [], 2CDJj6FtJXA4A, 2025-02-17 13:58:05), (2025-02-17 13:58:05, 67b3406d4ae43, 2, 41053, [], 2GrcxSEeAdqPx, 2025-02-17 13:58:05))
+[2025-02-17T13:58:05.311492+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:00:32.745654+00:00] 8780.INFO: Initiated
+[2025-02-17T14:00:32.752690+00:00] 8780.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:00:32.752730+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:00:32.757542+00:00] 8780.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription_id' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription_id`, `tags`, `uid`, `updated_at`) values (2025-02-17 14:00:32, 67b34100b7cc6, 2, 41070, [], wGqQDP2Ny46XA, 2025-02-17 14:00:32), (2025-02-17 14:00:32, 67b34100b7cc6, 2, 41053, [], EqBpgbdo7Tl5y, 2025-02-17 14:00:32), (2025-02-17 14:00:32, 67b34100b7cc6, 2, 41070, [], 3rDtjhNqH4F1x, 2025-02-17 14:00:32), (2025-02-17 14:00:32, 67b34100b7cc6, 2, 41053, [], nPjqd8EB29kiq, 2025-02-17 14:00:32))
+[2025-02-17T14:00:32.757582+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:02:42.128014+00:00] 8780.INFO: Initiated
+[2025-02-17T14:02:42.133909+00:00] 8780.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:02:42.133935+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:02:42.137993+00:00] 8780.INFO: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'subscription_id' in 'field list' (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscription_id`, `tags`, `uid`, `updated_at`) values (2025-02-17 14:02:42, 67b3418220b83, 2, 41070, [], mBRdTrjLiVRM2, 2025-02-17 14:02:42), (2025-02-17 14:02:42, 67b3418220b83, 2, 41053, [], MenGMhkmNUuXB, 2025-02-17 14:02:42), (2025-02-17 14:02:42, 67b3418220b83, 2, 41070, [], PJjPmdF6IUZfA, 2025-02-17 14:02:42), (2025-02-17 14:02:42, 67b3418220b83, 2, 41053, [], EgkOh59f2WU4L, 2025-02-17 14:02:42))
+[2025-02-17T14:02:42.138030+00:00] 8780.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:02:59.212452+00:00] 22140.INFO: Initiated
+[2025-02-17T14:02:59.220911+00:00] 22140.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:02:59.220940+00:00] 22140.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:02:59.231479+00:00] 22140.INFO: messages.list.import.completed
+[2025-02-17T14:02:59.231513+00:00] 22140.INFO: Procesado: 4/4, Saltado: 0
+[2025-02-17T14:04:05.457413+00:00] 22140.INFO: Initiated
+[2025-02-17T14:04:05.463000+00:00] 22140.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:04:05.463038+00:00] 22140.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:04:05.471654+00:00] 22140.INFO: messages.list.import.completed
+[2025-02-17T14:04:05.471696+00:00] 22140.INFO: Procesado: 4/4, Saltado: 0
+[2025-02-17T14:04:46.674231+00:00] 9480.INFO: Initiated
+[2025-02-17T14:04:46.683933+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:04:46.683983+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:04:46.694506+00:00] 9480.INFO: messages.list.import.completed
+[2025-02-17T14:04:46.694547+00:00] 9480.INFO: Procesado: 4/4, Saltado: 0
+[2025-02-17T14:04:46.701379+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:04:46.701409+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:04:46.701423+00:00] 9480.INFO: Finished
+[2025-02-17T14:05:19.813285+00:00] 9480.INFO: Initiated
+[2025-02-17T14:05:19.817917+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:05:19.817940+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:05:19.826127+00:00] 9480.INFO: messages.list.import.completed
+[2025-02-17T14:05:19.826153+00:00] 9480.INFO: Procesado: 4/4, Saltado: 0
+[2025-02-17T14:05:19.829707+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:05:19.829730+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:05:19.829743+00:00] 9480.INFO: Finished
+[2025-02-17T14:45:48.493012+00:00] 9480.INFO: Initiated
+[2025-02-17T14:45:48.499224+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:45:48.499284+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:45:48.506916+00:00] 9480.INFO: messages.list.import.completed
+[2025-02-17T14:45:48.506944+00:00] 9480.INFO: Procesado: 4/4, Saltado: 0
+[2025-02-17T14:45:48.510238+00:00] 9480.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:45:48.510265+00:00] 9480.INFO: Procesado: 0/4, Saltado: 0
+[2025-02-17T14:45:48.510278+00:00] 9480.INFO: Finished
+[2025-02-17T14:46:27.335741+00:00] 14484.INFO: Initiated
+[2025-02-17T14:47:05.963371+00:00] 11584.INFO: Initiated
+[2025-02-17T14:47:05.972338+00:00] 11584.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:47:05.972375+00:00] 11584.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:47:05.976590+00:00] 11584.INFO: Attempt to read property "id" on int
+[2025-02-17T14:47:05.976625+00:00] 11584.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:47:05.980257+00:00] 11584.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:47:05.980279+00:00] 11584.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:00.083011+00:00] 10172.INFO: Initiated
+[2025-02-17T14:48:00.092022+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:48:00.092062+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:00.096381+00:00] 10172.INFO: Attempt to read property "id" on int
+[2025-02-17T14:48:00.096415+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:00.100115+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:48:00.100145+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:54.317826+00:00] 10172.INFO: Initiated
+[2025-02-17T14:48:54.323584+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:48:54.323608+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:54.327071+00:00] 10172.INFO: Attempt to read property "id" on int
+[2025-02-17T14:48:54.327094+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:48:54.330626+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:48:54.330647+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:53:58.368206+00:00] 10172.INFO: Initiated
+[2025-02-17T14:53:58.374813+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:53:58.374849+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:53:58.378833+00:00] 10172.INFO: Attempt to read property "id" on int
+[2025-02-17T14:53:58.378867+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:53:58.382814+00:00] 10172.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T14:53:58.382849+00:00] 10172.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T14:55:45.613467+00:00] 22048.INFO: Initiated
+[2025-02-17T14:55:58.050288+00:00] 26780.INFO: Initiated
+[2025-02-17T14:57:26.422325+00:00] 27836.INFO: Initiated
+[2025-02-17T14:58:12.132324+00:00] 25640.INFO: Initiated
+[2025-02-17T14:58:30.237263+00:00] 25640.INFO: Initiated
+[2025-02-17T14:59:06.778795+00:00] 10740.INFO: Initiated
+[2025-02-17T14:59:58.151035+00:00] 27520.INFO: Initiated
+[2025-02-17T15:00:32.065972+00:00] 4908.INFO: Initiated
+[2025-02-17T15:01:05.242352+00:00] 4908.INFO: Initiated
+[2025-02-17T15:02:26.516822+00:00] 4908.INFO: Initiated
+[2025-02-17T15:03:41.007008+00:00] 14792.INFO: Initiated
+[2025-02-17T15:04:07.687638+00:00] 17072.INFO: Initiated
+[2025-02-17T15:04:07.695744+00:00] 17072.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:04:07.695778+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:04:07.700022+00:00] 17072.INFO: Attempt to read property "id" on int
+[2025-02-17T15:04:07.700050+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:04:07.703708+00:00] 17072.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:04:07.703732+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:04:22.799728+00:00] 17072.INFO: Initiated
+[2025-02-17T15:04:22.805117+00:00] 17072.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:04:22.805169+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:04:22.808810+00:00] 17072.INFO: Attempt to read property "id" on int
+[2025-02-17T15:04:22.808832+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:04:22.812368+00:00] 17072.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:04:22.812390+00:00] 17072.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:07:16.708307+00:00] 2132.INFO: Initiated
+[2025-02-17T15:07:16.716731+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:07:16.716762+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:07:16.720912+00:00] 2132.INFO: Attempt to read property "id" on int
+[2025-02-17T15:07:16.720935+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:07:16.723968+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:07:16.723991+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:08:44.049278+00:00] 2132.INFO: Initiated
+[2025-02-17T15:08:44.054993+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:08:44.055019+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:08:44.058769+00:00] 2132.INFO: Attempt to read property "id" on int
+[2025-02-17T15:08:44.058791+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:08:44.062305+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:08:44.062327+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:09:23.222412+00:00] 2132.INFO: Initiated
+[2025-02-17T15:09:23.228643+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:09:23.228684+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:09:23.232881+00:00] 2132.INFO: Attempt to read property "id" on int
+[2025-02-17T15:09:23.232930+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:09:23.236970+00:00] 2132.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:09:23.237017+00:00] 2132.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:10:01.746800+00:00] 9244.INFO: Initiated
+[2025-02-17T15:10:12.931608+00:00] 24420.INFO: Initiated
+[2025-02-17T15:10:12.940172+00:00] 24420.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:10:12.940202+00:00] 24420.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:10:12.950031+00:00] 24420.INFO: messages.list.import.completed
+[2025-02-17T15:10:12.950062+00:00] 24420.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:10:12.956729+00:00] 24420.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:10:12.956761+00:00] 24420.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:10:12.956776+00:00] 24420.INFO: Finished
+[2025-02-17T15:11:34.281944+00:00] 24420.INFO: Initiated
+[2025-02-17T15:11:34.288511+00:00] 24420.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:11:34.288554+00:00] 24420.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:11:34.296853+00:00] 24420.INFO: messages.list.import.completed
+[2025-02-17T15:11:34.296896+00:00] 24420.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:11:34.300864+00:00] 24420.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:11:34.300906+00:00] 24420.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:11:34.300926+00:00] 24420.INFO: Finished
+[2025-02-17T15:11:47.410282+00:00] 22496.INFO: Initiated
+[2025-02-17T15:11:47.419419+00:00] 22496.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:11:47.419454+00:00] 22496.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:11:47.424182+00:00] 22496.INFO: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'uid' cannot be null (Connection: mysql, SQL: insert into `campaigns_maillists_subscribers` (`created_at`, `import_batch_id`, `maillist_id`, `subscriber_id`, `tags`, `uid`, `updated_at`) values (2025-02-17 15:11:47, 67b351b366791, 2, 41053, [], ?, 2025-02-17 15:11:47), (2025-02-17 15:11:47, 67b351b366791, 2, 41070, [], ?, 2025-02-17 15:11:47))
+[2025-02-17T15:11:47.424217+00:00] 22496.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:11:47.427929+00:00] 22496.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:11:47.427957+00:00] 22496.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:12:34.423095+00:00] 27956.INFO: Initiated
+[2025-02-17T15:12:34.431728+00:00] 27956.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:12:34.431759+00:00] 27956.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:12:34.441914+00:00] 27956.INFO: messages.list.import.completed
+[2025-02-17T15:12:34.441944+00:00] 27956.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:12:34.448351+00:00] 27956.INFO: Importando suscriptores desde listas existentes...
+[2025-02-17T15:12:34.448377+00:00] 27956.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:12:34.448391+00:00] 27956.INFO: Finished
+[2025-02-17T15:20:50.525343+00:00] 15316.INFO: Initiated
+[2025-02-17T15:20:50.532562+00:00] 15316.INFO: Import is starting...
+[2025-02-17T15:20:50.532601+00:00] 15316.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:20:50.541318+00:00] 15316.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:20:50.541354+00:00] 15316.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:20:50.546015+00:00] 15316.INFO: Modulo by zero
+[2025-02-17T15:20:50.546057+00:00] 15316.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:20:50.550141+00:00] 15316.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:20:50.550183+00:00] 15316.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:21:33.228098+00:00] 26660.INFO: Initiated
+[2025-02-17T15:21:33.235709+00:00] 26660.INFO: Import is starting...
+[2025-02-17T15:21:33.235754+00:00] 26660.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:21:33.245241+00:00] 26660.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:21:33.245284+00:00] 26660.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:21:33.250024+00:00] 26660.INFO: Modulo by zero
+[2025-02-17T15:21:33.250061+00:00] 26660.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:21:33.254024+00:00] 26660.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:21:33.254060+00:00] 26660.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:23:21.963404+00:00] 12064.INFO: Initiated
+[2025-02-17T15:23:21.970038+00:00] 12064.INFO: Import is starting...
+[2025-02-17T15:23:21.970080+00:00] 12064.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:23:21.981059+00:00] 12064.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:23:21.981104+00:00] 12064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:23:21.982171+00:00] 12064.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:23:21.982202+00:00] 12064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:23:21.989269+00:00] 12064.INFO: messages.list.import.completed
+[2025-02-17T15:23:21.989309+00:00] 12064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:23:21.990447+00:00] 12064.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:23:21.990481+00:00] 12064.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:23:21.999251+00:00] 12064.INFO: messages.list.import.completed
+[2025-02-17T15:23:21.999295+00:00] 12064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:23:22.003174+00:00] 12064.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:23:22.003212+00:00] 12064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:23:22.003272+00:00] 12064.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:23:22.003285+00:00] 12064.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:23:22.003296+00:00] 12064.INFO: Finished
+[2025-02-17T15:26:57.459311+00:00] 11592.INFO: Initiated
+[2025-02-17T15:26:57.465352+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:26:57.465386+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:26:57.474213+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:26:57.474246+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:26:57.475019+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:26:57.475046+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:26:57.482079+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:26:57.482134+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:26:57.482760+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:26:57.482782+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:26:57.492091+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:26:57.492128+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:26:57.496110+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:26:57.496154+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:26:57.496212+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:26:57.496224+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:26:57.496235+00:00] 11592.INFO: Finished
+[2025-02-17T15:27:27.627405+00:00] 11592.INFO: Initiated
+[2025-02-17T15:27:27.631562+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:27:27.631593+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:27:27.638632+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:27:27.638668+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:27:27.639315+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:27:27.639342+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:27:27.652059+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:27:27.652101+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:27:27.652946+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:27:27.652979+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:27:27.660524+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:27:27.660562+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:27:27.664380+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:27:27.664419+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:27:27.664484+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:27:27.664494+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:27:27.664504+00:00] 11592.INFO: Finished
+[2025-02-17T15:29:49.111534+00:00] 11592.INFO: Initiated
+[2025-02-17T15:29:49.115894+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:29:49.115922+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:29:49.121455+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:29:49.121486+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:29:49.122049+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:29:49.122073+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:29:49.129132+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:29:49.129156+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:29:49.129683+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:29:49.129706+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:29:49.138152+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:29:49.138180+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:29:49.141802+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:29:49.141834+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:29:49.141890+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:29:49.141903+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:29:49.141914+00:00] 11592.INFO: Finished
+[2025-02-17T15:30:49.299514+00:00] 11592.INFO: Initiated
+[2025-02-17T15:30:49.303470+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:30:49.303496+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:30:49.308828+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:30:49.308855+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:30:49.309429+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:30:49.309467+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:30:49.316157+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:30:49.316206+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:30:49.316767+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:30:49.316786+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:30:49.324840+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:30:49.324865+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:30:49.328517+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:30:49.328544+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:30:49.328589+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:30:49.328600+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:30:49.328609+00:00] 11592.INFO: Finished
+[2025-02-17T15:34:34.983770+00:00] 11592.INFO: Initiated
+[2025-02-17T15:34:34.987895+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:34:34.987930+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:34:34.993884+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:34:34.993920+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:34:34.994599+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:34:34.994633+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:34:35.002125+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:34:35.002158+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:34:35.002780+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:34:35.002807+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:34:35.010322+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:34:35.010357+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:34:35.013990+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:34:35.014021+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:34:35.014078+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:34:35.014096+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:34:35.014112+00:00] 11592.INFO: Finished
+[2025-02-17T15:35:20.178316+00:00] 11592.INFO: Initiated
+[2025-02-17T15:35:20.182702+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:35:20.182748+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:35:20.188992+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:35:20.189027+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:35:20.189640+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:35:20.189662+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:35:20.197106+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:35:20.197142+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:35:20.197775+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:35:20.197803+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:35:20.205157+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:35:20.205189+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:35:20.209251+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:35:20.209292+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:35:20.209353+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:35:20.209366+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:35:20.209378+00:00] 11592.INFO: Finished
+[2025-02-17T15:38:59.867417+00:00] 11592.INFO: Initiated
+[2025-02-17T15:38:59.872006+00:00] 11592.INFO: Import is starting...
+[2025-02-17T15:38:59.872037+00:00] 11592.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:38:59.878115+00:00] 11592.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:38:59.878160+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:38:59.878917+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:38:59.878946+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:38:59.886068+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:38:59.886102+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:38:59.886630+00:00] 11592.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:38:59.886653+00:00] 11592.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:38:59.894229+00:00] 11592.INFO: messages.list.import.completed
+[2025-02-17T15:38:59.894275+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:38:59.898190+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:38:59.898227+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:38:59.898279+00:00] 11592.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:38:59.898289+00:00] 11592.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:38:59.898299+00:00] 11592.INFO: Finished
+[2025-02-17T15:44:09.368651+00:00] 4112.INFO: Initiated
+[2025-02-17T15:44:09.374978+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:44:09.375015+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:44:09.384235+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:44:09.384270+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.397734+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:09.397772+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.404750+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:09.404773+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.405227+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:09.405247+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.417426+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:09.417450+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.421057+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:09.421079+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.421121+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:09.421132+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.421142+00:00] 4112.INFO: Finished
+[2025-02-17T15:44:09.470225+00:00] 4112.INFO: Initiated
+[2025-02-17T15:44:09.474394+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:44:09.474422+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:44:09.479964+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:44:09.479988+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.480544+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:09.480567+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.493317+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:09.493358+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.504819+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:09.504851+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:09.523552+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:09.523579+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.530961+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:09.530986+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.531031+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:09.531041+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:09.531052+00:00] 4112.INFO: Finished
+[2025-02-17T15:44:15.595248+00:00] 4112.INFO: Initiated
+[2025-02-17T15:44:15.602835+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:44:15.602868+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:44:15.612986+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:44:15.613027+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:15.613859+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:15.613889+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:15.629270+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:15.629314+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:15.630254+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:44:15.630284+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:44:15.644261+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:44:15.644302+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:15.651561+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:15.651602+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:15.651668+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:44:15.651681+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:44:15.651693+00:00] 4112.INFO: Finished
+[2025-02-17T15:47:55.360927+00:00] 4112.INFO: Initiated
+[2025-02-17T15:47:55.365042+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:47:55.365064+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:47:55.370142+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:47:55.370169+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:47:55.370616+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:47:55.370635+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:47:55.377503+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:47:55.377531+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:47:55.378075+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:47:55.378102+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:47:55.385439+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:47:55.385463+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:47:55.388904+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:47:55.388924+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:47:55.388962+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:47:55.388973+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:47:55.388982+00:00] 4112.INFO: Finished
+[2025-02-17T15:51:47.206477+00:00] 4112.INFO: Initiated
+[2025-02-17T15:51:47.211597+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:51:47.211629+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:51:47.217331+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:51:47.217353+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:51:47.217812+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:51:47.217831+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:51:47.224687+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:51:47.224713+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:51:47.225263+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:51:47.225288+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:51:47.233649+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:51:47.233671+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:51:47.240165+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:51:47.240196+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:51:47.240257+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:51:47.240273+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:51:47.240286+00:00] 4112.INFO: Finished
+[2025-02-17T15:53:32.620953+00:00] 4112.INFO: Initiated
+[2025-02-17T15:53:32.624616+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:53:32.624637+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:53:32.629623+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:53:32.629644+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:53:32.630116+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:53:32.630138+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:53:32.637014+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:53:32.637064+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:53:32.637520+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:53:32.637540+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:53:32.645082+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:53:32.645103+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:53:32.648532+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:53:32.648552+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:53:32.648590+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:53:32.648600+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:53:32.648609+00:00] 4112.INFO: Finished
+[2025-02-17T15:55:21.047207+00:00] 4112.INFO: Initiated
+[2025-02-17T15:55:21.051311+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:55:21.051343+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:55:21.056885+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:55:21.056907+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:55:21.057357+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:55:21.057376+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:55:21.064126+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:55:21.064157+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:55:21.064786+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:55:21.064815+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:55:21.072146+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:55:21.072167+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:55:21.075570+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:55:21.075591+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:55:21.075630+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:55:21.075640+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:55:21.075649+00:00] 4112.INFO: Finished
+[2025-02-17T15:56:00.256710+00:00] 4112.INFO: Initiated
+[2025-02-17T15:56:00.260482+00:00] 4112.INFO: Import is starting...
+[2025-02-17T15:56:00.260503+00:00] 4112.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T15:56:00.265616+00:00] 4112.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T15:56:00.265638+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:56:00.266096+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:56:00.266115+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:56:00.272667+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:56:00.272688+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:56:00.273118+00:00] 4112.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T15:56:00.273137+00:00] 4112.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T15:56:00.281260+00:00] 4112.INFO: messages.list.import.completed
+[2025-02-17T15:56:00.281283+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:56:00.284831+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:56:00.284859+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:56:00.284916+00:00] 4112.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T15:56:00.284931+00:00] 4112.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T15:56:00.284945+00:00] 4112.INFO: Finished
+[2025-02-17T16:28:47.177415+00:00] 25456.INFO: Initiated
+[2025-02-17T16:28:47.183650+00:00] 25456.INFO: Import is starting...
+[2025-02-17T16:28:47.183684+00:00] 25456.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T16:28:47.191044+00:00] 25456.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T16:28:47.191076+00:00] 25456.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:28:47.191945+00:00] 25456.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:28:47.191972+00:00] 25456.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:28:47.198964+00:00] 25456.INFO: messages.list.import.completed
+[2025-02-17T16:28:47.199014+00:00] 25456.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:28:47.199453+00:00] 25456.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:28:47.199472+00:00] 25456.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:28:47.207854+00:00] 25456.INFO: messages.list.import.completed
+[2025-02-17T16:28:47.207875+00:00] 25456.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:28:47.211084+00:00] 25456.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:28:47.211105+00:00] 25456.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:28:47.211143+00:00] 25456.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:28:47.211154+00:00] 25456.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:28:47.211164+00:00] 25456.INFO: Finished
+[2025-02-17T16:45:51.828831+00:00] 18152.INFO: Initiated
+[2025-02-17T16:45:51.832741+00:00] 18152.INFO: Import is starting...
+[2025-02-17T16:45:51.832764+00:00] 18152.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T16:45:51.838076+00:00] 18152.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T16:45:51.838098+00:00] 18152.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:45:51.838550+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:45:51.838570+00:00] 18152.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:45:51.844820+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T16:45:51.844841+00:00] 18152.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:45:51.845263+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T16:45:51.845282+00:00] 18152.INFO: Procesado: 0/2, Saltado: 0
+[2025-02-17T16:45:51.853916+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T16:45:51.853938+00:00] 18152.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:45:51.857484+00:00] 18152.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:45:51.857504+00:00] 18152.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:45:51.857543+00:00] 18152.INFO: Procesado: 2/2 registros, omitidos: 0.
+[2025-02-17T16:45:51.857553+00:00] 18152.INFO: Procesado: 2/2, Saltado: 0
+[2025-02-17T16:45:51.857563+00:00] 18152.INFO: Finished
+[2025-02-17T17:01:06.353357+00:00] 18152.INFO: Initiated
+[2025-02-17T17:01:06.357560+00:00] 18152.INFO: Import is starting...
+[2025-02-17T17:01:06.357592+00:00] 18152.INFO: Procesado: 0/0, Saltado: 0
+[2025-02-17T17:01:06.386832+00:00] 18152.INFO: Validando cabeceras de suscriptores...
+[2025-02-17T17:01:06.386872+00:00] 18152.INFO: Procesado: 0/1364, Saltado: 0
+[2025-02-17T17:01:06.387618+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T17:01:06.387648+00:00] 18152.INFO: Procesado: 0/1364, Saltado: 0
+[2025-02-17T17:01:06.397133+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T17:01:06.397161+00:00] 18152.INFO: Procesado: 0/1364, Saltado: 0
+[2025-02-17T17:01:06.397702+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T17:01:06.397724+00:00] 18152.INFO: Procesado: 0/1364, Saltado: 0
+[2025-02-17T17:01:06.449569+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T17:01:06.449605+00:00] 18152.INFO: Procesado: 1000/1364, Saltado: 0
+[2025-02-17T17:01:06.450320+00:00] 18152.INFO: Insertando suscriptores en la base de datos...
+[2025-02-17T17:01:06.450350+00:00] 18152.INFO: Procesado: 1000/1364, Saltado: 0
+[2025-02-17T17:01:06.474241+00:00] 18152.INFO: messages.list.import.completed
+[2025-02-17T17:01:06.474283+00:00] 18152.INFO: Procesado: 1364/1364, Saltado: 0
+[2025-02-17T17:01:06.478136+00:00] 18152.INFO: Procesado: 1364/1364 registros, omitidos: 0.
+[2025-02-17T17:01:06.478162+00:00] 18152.INFO: Procesado: 1364/1364, Saltado: 0
+[2025-02-17T17:01:06.478204+00:00] 18152.INFO: Procesado: 1364/1364 registros, omitidos: 0.
+[2025-02-17T17:01:06.478214+00:00] 18152.INFO: Procesado: 1364/1364, Saltado: 0
+[2025-02-17T17:01:06.478225+00:00] 18152.INFO: Finished

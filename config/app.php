@@ -131,7 +131,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
 
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
-        Laravel\Horizon\HorizonServiceProvider::class,
+        //Laravel\Horizon\HorizonServiceProvider::class,
 
         App\Providers\AppServiceProvider::class,
         App\Providers\EventServiceProvider::class,

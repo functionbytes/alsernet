@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Callcenters\Contacts;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Contact;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class ContactsController extends Controller
 {

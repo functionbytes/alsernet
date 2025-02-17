@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Ticket\Category;
 use App\Models\Ticket\Ticket;
 use Auth;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Mail;
 use App\Mail\mailmailablesend;
 use App\Models\Apptitle;
@@ -24,7 +24,7 @@ use App\Models\Subcategorychild;
 use App\Models\CategoryUser;
 use Illuminate\Support\Facades\Validator;
 use Response;
-use Str;
+use Illuminate\Support\Str;
 use Modules\Uhelpupdate\Entities\CategoryEnvato;
 use App\Models\tickethistory;
 

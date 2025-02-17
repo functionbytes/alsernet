@@ -19,7 +19,7 @@ class SubscriberList extends Model
         'title',
         'code',
         'available',
-        'availadefaultble',
+        'default',
         'lang_id',
         'created_at',
         'updated_at'
@@ -90,6 +90,10 @@ class SubscriberList extends Model
         );
     }
 
+    public function listcategories(): BelongsToMany
+    {
+        return $this->belongsToMany('App\Models\Categorie', 'subscriber_list_categories', 'list_id', 'categorie_id');
+    }
 
     public function subscribers(): BelongsToMany
     {

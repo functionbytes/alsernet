@@ -33,7 +33,7 @@ use App\Events\CampaignMaillistSubscription;
 use App\Events\CampaignMaillistUnsubscription;
 use App\Library\Traits\HasUid;
 use App\Library\StringHelper;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Closure;
 use Carbon\Carbon;
@@ -117,9 +117,9 @@ class CampaignMaillistsSubscriber extends Model
     {
         return $query->whereRaw(sprintf(
             "(%s = '%s' OR %s IS NULL)",
-            table('subscribers.verification_status'),
+            table('verification_status.verification_status'),
             self::VERIFICATION_STATUS_DELIVERABLE,
-            table('subscribers.verification_status')
+            table('verification_status.verification_status')
         ));
     }
 

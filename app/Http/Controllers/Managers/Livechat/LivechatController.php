@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
 use App\Models\Ticket\Ticket;
 use Auth;
 use GeoIP;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
@@ -302,7 +302,7 @@ class LivechatController extends Controller
         if($flow && $flow->active == 1 && $flow->active_draft){
             $flow->liveChatFlow = $flow->active_draft;
         }
-       
+
 
         $flowChatId = $id;
 
@@ -310,7 +310,7 @@ class LivechatController extends Controller
             'flowChatId' => $flowChatId,
             'flow' => $flow,
         ]);
-        
+
     }
 
     public function operators(Request $request)
@@ -321,11 +321,11 @@ class LivechatController extends Controller
         $user = User::where('id','!=',Auth::id())->get();
 
         $userId = AgentConversation::where('sender_user_id',Auth::id())->first();
-        
+
         if($userId != null){
             $userconversation = AgentConversation::where('unique_id',$userId->unique_id)->get();
         }
-        
+
         $agenconver = AgentConversation::where(function ($query) {
             $query->where('sender_user_id', Auth::id())
                   ->orWhere('receiver_user_id', Auth::id());
@@ -366,14 +366,14 @@ class LivechatController extends Controller
             return isset($item[0]['created_user_id']) ? $item[count($item)-1]['created_at'] : $item[0]['created_at'];
         });
 
-        
+
         return view('managers.views.livechat.livechat.operator')->with([
             'allconver' => $allconver,
             'user' => $user,
             'livecust' => $livecust,
             'userconversation' => $userconversation,
         ]);
-        
+
     }
 
     public function groupconversion(Request $request, $id)
@@ -419,7 +419,7 @@ class LivechatController extends Controller
 
 
         return response()->json(['groupconversion' => $conversationGroup,'receiverUsersInfo' => $receiverUsersInfo]);
-        
+
     }
 
 
@@ -714,7 +714,7 @@ class LivechatController extends Controller
 
     public function chatResponses()
     {
-      
+
         $flow = LiveChatFlow::where('active', 1)->first();
         $allDraftflow = LiveChatFlow::where('active', 0)->get();
 
@@ -722,22 +722,22 @@ class LivechatController extends Controller
             'flow' => $flow,
             'allDraftflow' => $allDraftflow,
         ]);
-        
+
     }
 
 
     public function testItOut($id){
-        
+
         $flowChatId = $id;
 
         return view('managers.views.livechat.livechat.testitout')->with([
             'flowChatId' => $flowChatId,
         ]);
-        
+
     }
 
     public function engageConversation(Request $request){
-        
+
         $livecust = LiveChatCustomers::find($request->custId);
 
         $existingEngageConversation = json_decode($livecust->engage_conversation, true);
@@ -784,7 +784,7 @@ class LivechatController extends Controller
 
     public function solvedChats()
     {
-       
+
         $user = User::where('id','!=',Auth::id())->get();
 
         $livecust = LiveChatCustomers::latest('updated_at')->get();
@@ -818,7 +818,7 @@ class LivechatController extends Controller
             'user' => $user,
         ]);
 
-        
+
     }
 
     public function myOpenedChats()
@@ -1119,14 +1119,14 @@ class LivechatController extends Controller
         foreach ($soundNames as $soundName) {
             $sounds[] = (object)['name' => $soundName->getFilename()];
         }
-        
+
         return view('managers.views.livechat.livechat.sonds')->with([
             'sounds' => $sounds,
             'flow' => $flow,
         ]);
 
-        
-        
+
+
     }
 
     function livechatNotificationsSondsDelete(Request $request){
@@ -1342,9 +1342,9 @@ class LivechatController extends Controller
     }
 
     function livechatTickets(Request $request){
-       
+
         $flow = LiveChatFlow::where('active', 1)->first();
-       
+
         $livechatTickets = Ticket::where('cust_id',$request->id)->get();
 
         // $data['tickets'] = $livechatTickets;
@@ -1517,5 +1517,5 @@ class LivechatController extends Controller
         }
 
     }
-    
+
 }

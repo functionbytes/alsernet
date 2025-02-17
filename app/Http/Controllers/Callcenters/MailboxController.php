@@ -17,7 +17,7 @@ use Session;
 use DataTables;
 use App\Notifications\CustomerCustomNotifications;
 use App\Mail\AppMailer;
-use Str;
+use Illuminate\Support\Str;
 
 use Mail;
 use App\Mail\mailmailablesend;
