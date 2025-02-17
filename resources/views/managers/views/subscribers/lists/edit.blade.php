@@ -137,6 +137,9 @@
                     available: {
                         required: true,
                     },
+                    default: {
+                        required: true,
+                    },
                     lang: {
                         required: true,
                     },
@@ -154,6 +157,9 @@
                         required: "El parametro es necesario.",
                         minlength: "Debe contener al menos 1 caracter",
                         maxlength: "Debe contener al menos 100 caracter",
+                    },
+                    default: {
+                        required: "El parametro es necesario.",
                     },
                     available: {
                         required: "El parametro es necesario.",
@@ -173,6 +179,7 @@
                     var title = $("#title").val();
                     var code = $("#code").val();
                     var lang = $("#lang").val();
+                    var defaults = $("#default").val();
                     var available = $("#available").val();
                     var categories = $("#categories").val();
 
@@ -180,6 +187,7 @@
                     formData.append('title', title);
                     formData.append('code', code);
                     formData.append('lang', lang);
+                    formData.append('default', defaults);
                     formData.append('available', available);
                     formData.append('categories', categories);
 

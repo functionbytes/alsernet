@@ -162,7 +162,7 @@ class SubscribersListsController extends Controller
             ->unique()
             ->toArray();
 
-        $list->categorie()->sync($categoryIds);
+        $list->categories()->sync($categoryIds);
 
           return response()->json([
             'success' => true,
@@ -195,7 +195,7 @@ class SubscribersListsController extends Controller
               ->unique()
               ->toArray();
 
-          $list->categorie()->sync($categoryIds);
+          $list->categories()->sync($categoryIds);
 
           return response()->json([
             'success' => true,

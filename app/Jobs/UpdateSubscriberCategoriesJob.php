@@ -16,17 +16,19 @@ class UpdateSubscriberCategoriesJob implements ShouldQueue
 
     protected Subscriber $subscriber;
     protected  $categories;
+    protected $auth;
 
-    public function __construct(Subscriber $subscriber, $categories)
+    public function __construct(Subscriber $subscriber, $categories, $auth)
     {
         $this->subscriber = $subscriber;
         $this->categories = $categories;
+        $this->auth = $auth;
     }
 
     public function handle(): void
     {
         try {
-            $this->subscriber->updateCategoriesWithLog($this->categories, app('managers'));
+            $this->subscriber->updateCategoriesWithLog($this->categories, $this->auth);
             Log::info("Actualización de categorías para el suscriptor ID {$this->subscriber->id} completada.");
         } catch (\Exception $e) {
             Log::error("Error en UpdateSubscriberCategoriesJob: {$e->getMessage()}");

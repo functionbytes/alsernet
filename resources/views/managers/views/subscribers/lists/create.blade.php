@@ -64,7 +64,7 @@
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Predeterminado</label>
-                                    <select class="form-control select2" id="available" name="available">
+                                    <select class="form-control select2" id="default" name="default">
                                         <option value="1" >Si</option>
                                         <option value="0" >No</option>
                                     </select>
@@ -135,6 +135,9 @@
                     available: {
                         required: true,
                     },
+                    default: {
+                        required: true,
+                    },
                     lang: {
                         required: true,
                     },
@@ -159,6 +162,9 @@
                     available: {
                         required: "El parametro es necesario.",
                     },
+                    default: {
+                        required: "El parametro es necesario.",
+                    },
                     "categories[]": {
                         required: "El parametro es necesario.",
                     },
@@ -170,12 +176,15 @@
                     var title = $("#title").val();
                     var code = $("#code").val();
                     var available = $("#available").val();
+                    var defaults = $("#default").val();
                     var categories = $("#categories").val();
 
                     formData.append('title', title);
                     formData.append('code', code)
                     formData.append('available', available);
+                    formData.append('default', defaults);
                     formData.append('categories', categories);
+
 
                     var $submitButton = $('button[type="submit"]');
                     $submitButton.prop('disabled', true);
