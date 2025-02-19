@@ -72,7 +72,8 @@
             @yield('content')
         </div>
 
-        @include ('inventaries.includes.delete')
+        @include ('managers.includes.delete')
+
     </div>
 
 </div>

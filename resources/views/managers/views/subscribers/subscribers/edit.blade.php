@@ -375,6 +375,48 @@
 
 
 
+            $('#lang').on('change', function() {
+                let langId = $(this).val();
+                let categorySelect = $('#categories');
+
+                if (langId) {
+                    $.ajax({
+                        url: '{{ route('manager.langs.categories') }}', // Ruta del controlador
+                        type: 'GET',
+                        data: { term: langId },
+                        dataType: 'json',
+                        success: function(response) {
+                            let selectedValues = categorySelect.val() || []; // Obtener valores seleccionados actuales
+                            let newCategoryIds = response.map(category => category.id); // IDs de las nuevas categorías disponibles
+
+                            // Limpiar select2 y agregar nueva opción por defecto
+                            categorySelect.empty();
+                            categorySelect.append(new Option('Selecciona una categoría', '', false, false));
+
+                            let newSelectedValues = [];
+
+                            // Agregar nuevas opciones
+                            $.each(response, function(index, category) {
+                                let isSelected = selectedValues.includes(category.id.toString()); // Verificar si estaba seleccionado
+                                categorySelect.append(new Option(category.text, category.id, false, isSelected));
+
+                                if (isSelected) {
+                                    newSelectedValues.push(category.id.toString()); // Mantener seleccionados los válidos
+                                }
+                            });
+
+                            // Asignar los valores seleccionados filtrados
+                            categorySelect.val(newSelectedValues).trigger('change');
+                        }
+                    });
+                }else {
+                    // Si no hay lang seleccionado, vaciar el select
+                    categorySelect.empty().trigger('change');
+                }
+            });
+
+
+
         });
 
     </script>

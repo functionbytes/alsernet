@@ -38,6 +38,8 @@ class NewslettersController extends ApiController
 
     public function process(Request $request)
     {
+        dd($request->all());
+
         $action = $request->input('action');
         $data = $request->all();
 
@@ -118,51 +120,53 @@ class NewslettersController extends ApiController
      */
     public function newsletterSubscribe($data)
     {
+
+        dd($data);
         // Validar y procesar la suscripción
         // Aquí va la lógica para suscribir al usuario
         // Ejemplo:
 
-        $lang = Lang::iso($data['iso']);
-        dd($lang);
-        $item = Subscriber::checkWithBTree($data['email']);
-        dd($item['exists']);
+//        $lang = Lang::iso($data['iso']);
+//        dd($lang);
+//        $item = Subscriber::checkWithBTree($data['email']);
+//        dd($item['exists']);
 
-        if($item['exists']){
-            $newsletter = $item["data"];
-            $newsletter->firstname = Str::upper($data['firstname']);
-            $newsletter->lastname  =  Str::upper($data['lastname']);
-            $newsletter->erp = 1;
-            $newsletter->lopd = 1;
-            $newsletter->none = 1;
-            $newsletter->sports = 1;
-            $newsletter->parties = 1;
-            $newsletter->check = 1;
-            $newsletter->suscribe = 1;
-            $newsletter->check_at = Carbon::now()->setTimezone('Europe/Madrid');
-            $newsletter->update();
-        }else{
-
-
-            $newsletter = new Subscriber;
-            $newsletter->uid = $this->generate_uid('newsletters');
-            $newsletter->firstname = Str::upper($request->firstname);
-            $newsletter->lastname  =  Str::upper($request->lastname);
-            $newsletter->email = Str::upper($request->email);
-            $newsletter->erp = $request->erp;
-            $newsletter->lopd = $request->lopd;
-            $newsletter->none = $request->none;
-            $newsletter->sports = 1;
-            $newsletter->parties = 1;
-            $newsletter->suscribe = 1;
-            $newsletter->lang_id = $lang->id;
-            $newsletter->check_at = $request->check_at;
-            $newsletter->update();
-
-            if ($request->has('categories')) {
-                $categoriesIds = array_filter(explode(',', $request->categories));
-                $newsletter->categories()->attach($categoriesIds);
-            }
-        }
+//        if($item['exists']){
+//            $newsletter = $item["data"];
+//            $newsletter->firstname = Str::upper($data['firstname']);
+//            $newsletter->lastname  =  Str::upper($data['lastname']);
+//            $newsletter->erp = 1;
+//            $newsletter->lopd = 1;
+//            $newsletter->none = 1;
+//            $newsletter->sports = 1;
+//            $newsletter->parties = 1;
+//            $newsletter->check = 1;
+//            $newsletter->suscribe = 1;
+//            $newsletter->check_at = Carbon::now()->setTimezone('Europe/Madrid');
+//            $newsletter->update();
+//        }else{
+//
+//
+//            $newsletter = new Subscriber;
+//            $newsletter->uid = $this->generate_uid('newsletters');
+//            $newsletter->firstname = Str::upper($request->firstname);
+//            $newsletter->lastname  =  Str::upper($request->lastname);
+//            $newsletter->email = Str::upper($request->email);
+//            $newsletter->erp = $request->erp;
+//            $newsletter->lopd = $request->lopd;
+//            $newsletter->none = $request->none;
+//            $newsletter->sports = 1;
+//            $newsletter->parties = 1;
+//            $newsletter->suscribe = 1;
+//            $newsletter->lang_id = $lang->id;
+//            $newsletter->check_at = $request->check_at;
+//            $newsletter->update();
+//
+//            if ($request->has('categories')) {
+//                $categoriesIds = array_filter(explode(',', $request->categories));
+//                $newsletter->categories()->attach($categoriesIds);
+//            }
+//        }
 
         return response()->json([
             'status' => 'success',

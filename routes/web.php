@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Pages\ChatbotController;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,9 @@ Route::get('/prestashop', function () {
 Route::group(['middleware' => ['web']], function () {
 
     //Route::get('/', [PagesController::class, 'index'])->name('index');
+
+    Route::get('/chatbot', [ChatbotController::class, 'show'])->name('chatbot.show');
+    Route::post('/chatbot/handle', [ChatbotController::class, 'handle'])->name('chatbot.handle');
 
     Route::get('/', [LoginController::class, 'showLoginForm'])->name('index');
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

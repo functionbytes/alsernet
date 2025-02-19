@@ -17,8 +17,10 @@ use App\Http\Controllers\Managers\NotificationController;
 use App\Http\Controllers\Managers\Products\BarcodeController as ProductsBarcodesController;
 use App\Http\Controllers\Managers\Products\ProductsController;
 use App\Http\Controllers\Managers\Products\ReportController;
+use App\Http\Controllers\Managers\Settings\CategoriesController;
 use App\Http\Controllers\Managers\Settings\EmailsSettingsController;
 use App\Http\Controllers\Managers\Settings\HoursSettingsController;
+use App\Http\Controllers\Managers\Settings\LangsController;
 use App\Http\Controllers\Managers\Settings\LiveSettingsController;
 use App\Http\Controllers\Managers\Settings\MantenanceSettingsController;
 use App\Http\Controllers\Managers\Settings\SettingsController;
@@ -162,6 +164,33 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/destroy/{uid}', [EventsController::class, 'destroy'])->name('manager.events.destroy');
 
     });
+
+
+    Route::group(['prefix' => 'categories'], function () {
+        Route::get('/', [CategoriesController::class, 'index'])->name('manager.categories');
+        Route::get('/create', [CategoriesController::class, 'create'])->name('manager.categories.create');
+        Route::post('/store', [CategoriesController::class, 'store'])->name('manager.categories.store');
+        Route::post('/update', [CategoriesController::class, 'update'])->name('manager.categories.update');
+        Route::get('/create', [CategoriesController::class, 'create'])->name('manager.categories.create');
+        Route::get('/edit/{uid}', [CategoriesController::class, 'edit'])->name('manager.categories.edit');
+        Route::get('/view/{uid}', [CategoriesController::class, 'view'])->name('manager.categories.view');
+        Route::get('/destroy/{uid}', [CategoriesController::class, 'destroy'])->name('manager.categories.destroy');
+
+    });
+
+
+    Route::group(['prefix' => 'langs'], function () {
+        Route::get('/', [LangsController::class, 'index'])->name('manager.langs');
+        Route::get('/create', [LangsController::class, 'create'])->name('manager.langs.create');
+        Route::post('/store', [LangsController::class, 'store'])->name('manager.langs.store');
+        Route::post('/update', [LangsController::class, 'update'])->name('manager.langs.update');
+        Route::get('/create', [LangsController::class, 'create'])->name('manager.langs.create');
+        Route::get('/edit/{uid}', [LangsController::class, 'edit'])->name('manager.langs.edit');
+        Route::get('/view/{uid}', [LangsController::class, 'view'])->name('manager.langs.view');
+        Route::get('/destroy/{uid}', [LangsController::class, 'destroy'])->name('manager.langs.destroy');
+        Route::get('/categories', [LangsController::class, 'getCategories'])->name('manager.langs.categories');
+    });
+
 
 
     Route::group(['prefix' => 'subscribers'], function () {

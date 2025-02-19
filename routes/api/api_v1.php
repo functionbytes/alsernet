@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\SubscribersController;
 use App\Http\Controllers\Api\V1\TicketController;
 use App\Http\Controllers\Api\V1\AuthorsController;
 use App\Http\Controllers\Api\V1\AuthorTicketsController;
@@ -11,29 +12,15 @@ use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
 
-// http://localhost:8000/api/
-// univseral resource locator
-// tickets
-// users
+Route::group(['prefix' => 'subscribers'], function () {
+    Route::post('/', [SubscribersController::class, 'process']);
+    Route::put('/replace', [SubscribersController::class, 'replace']);
+    Route::patch('patch', [SubscribersController::class, 'update']);
+    Route::post('process', [SubscribersController::class, 'process']);
+    Route::post('campaigns', [SubscribersController::class, 'campaigns']);
 
-
-
-Route::apiResource('newsletters', NewslettersController::class)->except(['update']);
-Route::put('newsletters/{ticket}', [NewslettersController::class, 'replace']);
-Route::patch('newsletters/store', [NewslettersController::class, 'update']);
-Route::post('newsletters/process', [NewslettersController::class, 'process']);
-Route::post('newsletters/campaigns', [NewslettersController::class, 'campaigns']);
+});
 
 Route::middleware('auth:sanctum')->group(function() {
 

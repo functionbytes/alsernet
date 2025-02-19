@@ -42,9 +42,8 @@ class SubscribersController extends Controller
     public function edit($uid){
 
         $subscriber = Subscriber::uid($uid);
-        $categories = Categorie::available()->get()->prepend('' , '')->pluck('title','id');
+        $categories =  $subscriber->lang->categories()->available()->get()->pluck('title','id');
         $langs = Lang::available()->get()->prepend('' , '')->pluck('title','id');
-
 
         return view('managers.views.subscribers.subscribers.edit')->with([
             'subscriber' => $subscriber,
@@ -82,10 +81,7 @@ class SubscribersController extends Controller
             'logs' => $logs,
         ]);
 
-
-
     }
-
 
     public function create(){
 
@@ -101,7 +97,6 @@ class SubscribersController extends Controller
 
     public function update(Request $request)
     {
-
         $auth = app('managers');
         $subscriber = Subscriber::uid($request->uid);
 

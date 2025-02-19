@@ -1,5 +1,8 @@
 <?php $index = isset($index) ? $index : '__index__' ?>
 
+@php
+dd($lists_segment_group);
+@endphp
 <div class="condition-line" rel="{{ $index }}">
     <div class="row list-segment-container">
         <div class="col-md-1 d-flex justify-content-center align-items-center ">
@@ -11,7 +14,7 @@
                         'type' => 'radio',
                         'name' => 'lists_segments[' . $index . '][is_default]',
                         'label' => '',
-                        'popup' => 'Se requiere una lista predeterminada si selecciona más de una lista. La campaña utilizará la información de la lista predeterminada para traducir las ETIQUETAS que se encuentran en el contenido del correo electrónico.',
+                        'popup' => 'Se requiere una lista predeterminada si selecciona más de una lista.',
                         'value' => $lists_segment_group['is_default'],
                         'options' => [['text' => '' , 'value' => 'true']],
                         'rules' => [],

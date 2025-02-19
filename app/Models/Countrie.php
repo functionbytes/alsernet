@@ -17,15 +17,14 @@ class Countrie extends Model
         'updated_at'
     ];
 
-
-
     public function scopeDescending($query)
-{
-    return $query->orderBy('created_at', 'desc');
-}
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
 
-public function scopeAscending($query)
-{
-    return $query->orderBy('created_at', 'asc');
-}
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
 }

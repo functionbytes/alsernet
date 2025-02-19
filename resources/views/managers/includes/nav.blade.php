@@ -253,6 +253,22 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.categories') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Categorias</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.langs') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Idiomas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
                             <a class="sidebar-link"  href="{{ route('manager.settings.hours') }}" aria-expanded="false">
                                   <span>
                                     <i class="ti ti-circle"></i>

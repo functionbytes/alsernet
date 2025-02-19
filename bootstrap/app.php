@@ -83,7 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
         Illuminate\View\ViewServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Foundation\Providers\FoundationServiceProvider::class, // Fixes missing commands
-
+        BotMan\BotMan\BotManServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions) {
         //

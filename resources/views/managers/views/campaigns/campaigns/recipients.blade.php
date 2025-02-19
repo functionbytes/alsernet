@@ -46,14 +46,11 @@
                         <input type="hidden" id="uid" name="uid" value="{{$campaign->uid}}">
                         <div class="addable-multiple-form">
                             <div class="addable-multiple-container campaign-list-segments">
-
                                 <?php $num = 0 ?>
-
                                     @foreach ($campaign->getListsSegmentsGroups() as $index =>  $lists_segment_group)
                                             @include('managers.partials.campaigns.lists', ['lists_segment_group' => $lists_segment_group,'index' => $num,])
                                             <?php $num++ ?>
                                     @endforeach
-
                             </div>
 
                             <a sample-url="{{ route('manager.campaigns.list.segment.form', $campaign->uid) }}" href="#add_condition" class="btn btn-secondary add-form">Nueva lista/segmento</a>
@@ -63,7 +60,7 @@
                         <hr>
 
                         <div class="text-end">
-                            <button class="btn btn-secondary">Guardar y siguiente</button>
+                            <button class="btn btn-secondary w-100 ">Guardar y siguiente</button>
                         </div>
 
                     </form>
@@ -107,7 +104,6 @@
                 addRow: function(row) {
                     group = this.rowToGroup(row);
                     this.getManager().add(group);
-
                     this.groupAction(group);
                 },
 
@@ -161,7 +157,6 @@
             $(function() {
                 CampaignsReciepientsSegment.getManager();
 
-
                 $('.recipients-form').submit(function(e) {
                     if (!$('[radio-group=campaign_list_info_defaulf]:checked').length) {
                         new Dialog('alert', {
@@ -180,7 +175,6 @@
                     var status = $(this).attr('automation-status');
 
                     if(status == 'active') {
-                        //show disable automation confirm
                         $('#disable_automation_confirm').modal('show');
                         return;
                     }

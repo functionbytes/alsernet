@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Managers\Campaigns;
 
+use App\Events\CampaignUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign\Campaign;
 use Illuminate\Http\Request;
@@ -26,26 +27,16 @@ use Carbon\Carbon;
 
 class CampaignsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function index(Request $request)
     {
         $campaigns = Campaign::all();
-
 
         return view('managers.views.campaigns.campaigns.index', [
             'campaigns' => $campaigns,
         ]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function listing(Request $request)
     {
         $customer = $request->user()->customer;
@@ -66,11 +57,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create(Request $request)
     {
         $campaign = Campaign::newDefault();
@@ -82,13 +68,6 @@ class CampaignsController extends Controller
         return redirect()->route('manager.campaigns.recipients', ['uid' => $campaign->uid]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         $campaign = Campaign::findByUid($id);
@@ -107,15 +86,15 @@ class CampaignsController extends Controller
         $campaign = Campaign::findByUid($id);
 
         if ($campaign->step() == 0) {
-            return redirect()->route('CampaignController@recipients', ['uid' => $campaign->uid]);
+            return redirect()->route('manager.campaigns.recipients', ['uid' => $campaign->uid]);
         } elseif ($campaign->step() == 1) {
-            return redirect()->route('CampaignController@setup', ['uid' => $campaign->uid]);
+            return redirect()->route('manager.campaigns.setup', ['uid' => $campaign->uid]);
         } elseif ($campaign->step() == 2) {
-            return redirect()->route('CampaignController@template', ['uid' => $campaign->uid]);
+            return redirect()->route('manager.campaigns.template', ['uid' => $campaign->uid]);
         } elseif ($campaign->step() == 3) {
-            return redirect()->route('CampaignController@schedule', ['uid' => $campaign->uid]);
+            return redirect()->route('manager.campaigns.schedule', ['uid' => $campaign->uid]);
         } elseif ($campaign->step() >= 4) {
-            return redirect()->route('CampaignController@confirm', ['uid' => $campaign->uid]);
+            return redirect()->route('manager.campaigns.confirm', ['uid' => $campaign->uid]);
         }
     }
 
@@ -127,7 +106,6 @@ class CampaignsController extends Controller
         $lastExecutedTimeUtc = Carbon::createFromTimestamp(Setting::get('cronjob_last_execution') ?? 0);
         $lastExecutedTime = $lastExecutedTimeUtc->timezone('Europe/Madrid');
 
-
         $cronjobWarning = null;
         $rules = $campaign->recipientsRules($request->all());
         $campaign->fillRecipients($request->all());
@@ -138,16 +116,11 @@ class CampaignsController extends Controller
         }
 
         if ($request->isMethod('post')) {
-            // Check validation
+
             $this->validate($request, $rules);
-
             $campaign->saveRecipients($request->all());
+            event(new CampaignUpdated($campaign));
 
-            // Trigger the CampaignUpdate event to update the campaign cache information
-            // The second parameter of the constructor function is false, meanining immediate update
-            event(new \App\Events\CampaignUpdated($campaign));
-
-            // redirect to the next step
             return redirect()->route('CampaignController@setup', ['uid' => $campaign->uid]);
         }
 
@@ -158,13 +131,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Campaign setup.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function setup(Request $request)
     {
         $customer = $request->user()->customer;
@@ -201,13 +167,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function template(Request $request)
     {
         $customer = $request->user()->customer;
@@ -228,13 +187,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Create template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateCreate(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -244,13 +196,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Create template from layout.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateLayout(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -277,11 +222,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateLayoutList(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -312,13 +252,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Select builder for editing template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateBuilderSelect(Request $request, $uid)
     {
         $campaign = Campaign::findByUid($uid);
@@ -328,13 +261,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Edit campaign template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateEdit(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -372,13 +298,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Campaign html content.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateContent(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -388,13 +307,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Upload template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateUpload(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -416,13 +328,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Choose an existed template.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function plain(Request $request)
     {
         $user = $request->user();
@@ -445,13 +350,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Template preview iframe.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function templateIframe(Request $request)
     {
         $user = $request->user();
@@ -463,13 +361,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Schedule.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function schedule(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -520,13 +411,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Cofirm.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function confirm(Request $request)
     {
         $customer = $request->user()->customer;
@@ -581,13 +465,7 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function delete(Request $request)
     {
         if (isSiteDemo()) {
@@ -638,13 +516,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Campaign links.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function links(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -662,13 +533,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * 24-hour chart.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function chart24h(Request $request)
     {
         $currentTimezone = $request->user()->customer->getTimezone();
@@ -771,13 +635,7 @@ class CampaignsController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Chart.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function chart(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -820,13 +678,6 @@ class CampaignsController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Chart Country.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function chartCountry(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -857,13 +708,6 @@ class CampaignsController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Chart Country by clicks.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function chartClickCountry(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -893,13 +737,6 @@ class CampaignsController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * 24-hour quickView.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function quickView(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -909,13 +746,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Select2 campaign.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function select2(Request $request)
     {
         $data = ['items' => [], 'more' => true];
@@ -928,9 +758,6 @@ class CampaignsController extends Controller
         echo json_encode($data);
     }
 
-    /**
-     * Tracking when open.
-     */
     public function open(Request $request)
     {
         try {
@@ -948,9 +775,6 @@ class CampaignsController extends Controller
         return response()->file(public_path('images/transparent.gif'));
     }
 
-    /**
-     * Tracking when click link.
-     */
     public function click(Request $request)
     {
         list($url, $log) = ClickLog::createFromRequest($request);
@@ -962,9 +786,6 @@ class CampaignsController extends Controller
         return redirect()->away($url);
     }
 
-    /**
-     * Unsubscribe url.
-     */
     public function unsubscribe(Request $request)
     {
         $subscriber = Subscriber::findByUid($request->subscriber);
@@ -1008,9 +829,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Tracking logs.
-     */
     public function trackingLog(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -1023,9 +841,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Tracking logs ajax listing.
-     */
     public function trackingLogListing(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -1038,9 +853,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Download tracking logs.
-     */
     public function trackingLogDownload(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -1056,9 +868,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Tracking logs export progress.
-     */
     public function trackingLogExportProgress(Request $request)
     {
         $job = JobMonitor::findByUid($request->uid);
@@ -1071,9 +880,6 @@ class CampaignsController extends Controller
         return response()->json($progress);
     }
 
-    /**
-     * Actually download.
-     */
     public function download(Request $request)
     {
         $job = JobMonitor::findByUid($request->uid);
@@ -1081,9 +887,6 @@ class CampaignsController extends Controller
         return response()->download($path)->deleteFileAfterSend(true);
     }
 
-    /**
-     * Bounce logs.
-     */
     public function bounceLog(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);
@@ -1096,9 +899,6 @@ class CampaignsController extends Controller
         ]);
     }
 
-    /**
-     * Bounce logs listing.
-     */
     public function bounceLogListing(Request $request)
     {
         $campaign = Campaign::findByUid($request->uid);

@@ -63,7 +63,8 @@ class SubscribersListsController extends Controller
       public function edit($uid){
 
             $list = SubscriberList::uid($uid);
-            $categories = Categorie::available()->get()->pluck('title','id');
+            $categories =  $list->lang->categories()->available()->get()->pluck('title','id');
+
             $langs = Lang::available()->get()->pluck('title','id');
 
             return view('managers.views.subscribers.lists.edit')->with([

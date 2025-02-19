@@ -27,6 +27,16 @@ class Lang extends Model
         'updated_at'
     ];
 
+    public function scopeDescending($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeAscending($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
     public function scopeId($query ,$id)
     {
         return $query->where('id', $id)->first();
@@ -95,7 +105,10 @@ class Lang extends Model
     {
         return resource_path(join_paths('lang', $this->iso_code));
     }
-
+    public function categories()
+    {
+        return $this->belongsToMany('App\Models\Categorie', 'lang_categorie', 'lang_id', 'categorie_id');
+    }
 
 
 

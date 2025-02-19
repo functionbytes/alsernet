@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Campaign\CampaignMaillist;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Events\MailListSubscription;
 use App\Models\Subscriber;
@@ -81,8 +83,9 @@ class SubscriberController extends Controller
     public function store(Request $request)
     {
         try {
-            $user = \Auth::guard('api')->user();
-            $list = MailList::findByUid($request->list_uid);
+
+            $user = Auth::guard('api')->user();
+            $list = CampaignMaillist::findByUid($request->list_uid);
 
             // authorize
             if (!$list) {
@@ -137,16 +140,6 @@ class SubscriberController extends Controller
         }
     }
 
-    /**
-     * Display the specified subscriber information.
-     *
-     * GET /api/v1/subscribers/{id}
-     *
-     * @param string $list_id List's id
-     * @param string $id      Subsciber's id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function show($uid)
     {
         $user = \Auth::guard('api')->user();
