@@ -3,6 +3,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Events\Campaigns\GiftvoucherCreated;
 use App\Http\Resources\V1\SubscriberResource;
+use App\Jobs\SubscriberCategoriesJob;
+use App\Jobs\UpdateSubscriberCategoriesJob;
 use App\Models\Lang;
 use App\Models\Subscriber\Subscriber;
 use App\Models\Subscriber\SubscriberCategorie;
@@ -113,74 +115,92 @@ class SubscribersController extends ApiController
 
     }
 
-    /**
-     * Crear una nueva suscripción.
-     *
-     * @group Managing suscribers
-     */
     public function suscriberSubscribe($data)
     {
 
+        $categoriesRequest = $data['sports'];
+        $lang = Lang::locate($data['lang']);
+
+        $validation = Subscriber::checkWithPartition($data['email']);
+
+        if ($validation["exists"]) {
+            $subscriber = $validation["data"];
+
+            // Actualizar los datos del suscriptor
+            $subscriber->update([
+                'email' => $data['email'],
+                'firstname' => Str::upper($data['firstname']),
+                'lastname' => Str::upper($data['lastname']),
+            ]);
+
+            // Si se recibe el campo 'sports', validar las categorías
+            if ($validation["exists"]) {
+                $subscriber = $validation["data"];
+
+                // Actualizar los datos del suscriptor
+                $subscriber->update([
+                    'email' => $data['email'],
+                    'firstname' => Str::upper($data['firstname']),
+                    'lastname' => Str::upper($data['lastname']),
+                ]);
+
+                // Si se recibe el campo 'sports', validar las categorías
+                if (isset($data['sports'])) {
+                    $categoryIds = [];
+                    $categoriesIds = array_filter(explode(',', $data['sports']));
+                    $currentCategoryIds = $subscriber->categories()->pluck('categories.id')->toArray();
+
+                    if (empty($currentCategoryIds)) {
+                        $categoryIds  = $categoriesIds;
+                        //$subscriber->categories()->syncWithoutDetaching($categoryIds);
+                    } else {
+                        $categoryIds = array_diff($categoriesIds, $currentCategoryIds);
+                        if (!empty($categoryIds)) {
+                           // $subscriber->categories()->syncWithoutDetaching($categoryIds);
+                        }
+                    }
+
+                    SubscriberCategoriesJob::dispatch(
+                        $subscriber,
+                        $categoryIds,
+                    );
+                }
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Subscription successful',
+                    'subscriber' => $subscriber,
+                ], 200);
+            } }
+
+        else{
+
+            $suscriber = Subscriber::create([
+                'email' => $data['email'],
+                'firstname' => Str::upper($data['firstname']),
+                'lastname' => Str::upper($data['lastname']),
+                'lang_id' => $lang->id ?? null,
+            ]);
+
+            if (isset($data['sports'])) {
+                $categoriesIds = array_filter(explode(',', $data['sports']));
+                $suscriber->categories()->sync($categoriesIds);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Subscription successful',
+                'suscriber' => $suscriber,
+            ], 200);
+
+        }
+
         return response()->json([
             'status' => 'success',
-            'data ' => $data,
-            'message' => 'Subscription successful'
+            'message' => 'Subscription successful',
+            'suscriber' => $validation,
         ], 200);
 
-        //dd('subscribe1233');
-        //$lang = Lang::iso($data['iso']);
-        //$suscriber = Subscriber::checkWithBTree($data['email']);
-
-//        if($suscriber['exists']){
-//
-//            $data = [
-//                'firstname' => Str::upper($data['firstname']),
-//                'lastname'  => Str::upper($data['lastname']),
-//                'lopd' =>
-//            ];
-//
-//            $suscriber->fill();
-//
-//            //$suscriber = $data["data"];
-//            $suscriber->firstname = Str::upper($data['firstname']);
-//            $suscriber->lastname  =  Str::upper($data['lastname']);
-//            $suscriber->erp = 1;
-//            $suscriber->lopd = 1;
-//            $suscriber->none = 1;
-//            $suscriber->sports = 1;
-//            $suscriber->parties = 1;
-//            $suscriber->check = 1;
-//            $suscriber->suscribe = 1;
-//            $suscriber->check_at = Carbon::now()->setTimezone('Europe/Madrid');
-//            $suscriber->update();
-//        }else{
-//
-//
-//            $suscriber = new Subscriber;
-//            $suscriber->uid = $this->generate_uid('suscribers');
-//            $suscriber->firstname = Str::upper($request->firstname);
-//            $suscriber->lastname  =  Str::upper($request->lastname);
-//            $suscriber->email = Str::upper($request->email);
-//            $suscriber->erp = $request->erp;
-//            $suscriber->lopd = $request->lopd;
-//            $suscriber->none = $request->none;
-//            $suscriber->sports = 1;
-//            $suscriber->parties = 1;
-//            $suscriber->suscribe = 1;
-//            $suscriber->lang_id = $lang->id;
-//            $suscriber->check_at = $request->check_at;
-//            $suscriber->update();
-//
-//            if ($request->has('categories')) {
-//                $categoriesIds = array_filter(explode(',', $request->categories));
-//                $suscriber->categories()->attach($categoriesIds);
-//            }
-//        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Subscription successful'
-        ], 200);
     }
 
 

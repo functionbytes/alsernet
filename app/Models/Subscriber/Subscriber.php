@@ -372,6 +372,85 @@ class Subscriber extends Model
 
     }
 
+
+
+    public function suscriberCategoriesWithLog($categoriesIds)
+    {
+        $changes = [];
+
+        $categoriesIds = is_array($categoriesIds) ? $categoriesIds : explode(',', $categoriesIds);
+        $categoriesIds = array_filter(array_map('intval', $categoriesIds), fn($id) => $id > 0);
+        $currentCategories = $this->subcategorie()->pluck('categorie_id')->toArray();
+
+        $addedCategories = array_diff($categoriesIds, $currentCategories);
+        $removedCategories = array_diff($currentCategories, $categoriesIds);
+
+        $defaultLangLists = SubscriberList::query()
+            ->where('lang_id', $this->lang_id)
+            ->where('default', true)->pluck('id')->toArray();
+
+        if (!empty($categoriesIds)) {
+            $this->categories()->sync($categoriesIds);
+
+            $listsToAdd = SubscriberList::whereIn('id', function ($query) use ($addedCategories) {
+                $query->select('list_id')
+                    ->from('subscriber_list_categories')
+                    ->whereIn('categorie_id', $addedCategories);
+            })->pluck('id')->toArray();
+
+            $listsToAdd = array_unique(array_merge($defaultLangLists, $listsToAdd));
+
+            if (!empty($listsToAdd)) {
+                AddSuscriberListJob::dispatch($this, $listsToAdd);
+                $changes[] = [
+                    'old_value' => null,
+                    'new_value' => $listsToAdd,
+                    'description' => 'Listas añadidas debido a la adición de categorías y listas predeterminadas.'
+                ];
+            }
+
+            if (!empty($removedCategories)) {
+                $listsToRemove = SubscriberList::whereIn('id', function ($query) use ($removedCategories) {
+                    $query->select('list_id')
+                        ->from('subscriber_list_categories')
+                        ->whereIn('categorie_id', $removedCategories);
+                })->pluck('id')->toArray();
+
+                if (!empty($listsToRemove)) {
+                    RemoveSuscriberListJob::dispatch($this, $listsToRemove, false);
+                    $changes[] = [
+                        'old_value' => $listsToRemove,
+                        'new_value' => null,
+                        'description' => 'Listas eliminadas debido a la eliminación de categorías.'
+                    ];
+                }
+            }
+        } else {
+            $this->categories()->detach();
+            $this->removeAllSubscriptions();
+
+            $changes[] = [
+                'old_value' => $this->lists()->pluck('id')->toArray(),
+                'new_value' => null,
+                'description' => 'Todas las listas y categorías eliminadas porque el usuario no tiene categorías asignadas.'
+            ];
+        }
+
+        if (!empty($changes)) {
+            SubscriberLog::create([
+                'log_name' => 'category_update',
+                'description' => 'Actualización de categorías y listas del suscriptor.',
+                'properties' => json_encode($changes),
+                'subject_type' => self::class,
+                'subject_id' => $this->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+
+
     public static function createWithLog(array $data, $auth)
     {
         $subscriber = self::create($data);

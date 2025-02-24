@@ -52,6 +52,11 @@ class Lang extends Model
         return $query->where('iso_code', $iso)->first();
     }
 
+    public function scopeLocate($query, $iso)
+    {
+        return $query->where('locate', $iso)->first();
+    }
+
 
     public function scopeAvailable($query)
     {
