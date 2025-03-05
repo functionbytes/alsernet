@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Events\Campaigns\GiftvoucherCreated;
+use App\Jobs\Subscribers\SubscriberCheckatJob;
 use App\Listeners\Campaigns\GiftvoucherListener;
 use App\Listeners\SendNewUserNotification;
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use App\Listeners\Subscribers\SubscriberCheckatListener;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -21,9 +23,15 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
             SendNewUserNotification::class,
         ],
+
         GiftvoucherCreated::class => [
             GiftvoucherListener::class,
         ],
+
+        SubscriberCheckatJob::class => [
+            SubscriberCheckatListener::class,
+        ],
+
     ];
 
     /**

@@ -54,10 +54,9 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
         Route::get('/', [PulseController::class, 'dashboard'])->name('manager.pulse');
 
-
     });
 
-        Route::group(['prefix' => 'shops'], function () {
+    Route::group(['prefix' => 'shops'], function () {
 
         Route::get('/', [ShopsController::class, 'index'])->name('manager.shops');
         Route::get('/create', [ShopsController::class, 'create'])->name('manager.shops.create');
@@ -100,7 +99,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/view/{uid}', [ProductsController::class, 'view'])->name('manager.locations.view');
         Route::get('/destroy/{uid}', [ProductsController::class, 'destroy'])->name('manager.products.destroy');
 
-
         Route::get('/locations/{uid}', [ProductsController::class, 'locations'])->name('manager.products.locations');
         Route::get('/locations/details/{uid}', [ProductsController::class, 'details'])->name('manager.products.locations.details');
 
@@ -134,13 +132,11 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     });
 
-
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/', [SettingsController::class, 'index'])->name('manager.settings');
         Route::post('/update', [SettingsController::class, 'update'])->name('manager.settings.update');
 
     });
-
 
     Route::group(['prefix' => 'users'], function () {
         Route::get('/', [UsersController::class, 'index'])->name('manager.users');
@@ -151,7 +147,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/view/{uid}', [UsersController::class, 'view'])->name('manager.users.view');
         Route::get('/destroy/{uid}', [UsersController::class, 'destroy'])->name('manager.users.destroy');
     });
-
 
     Route::group(['prefix' => 'events'], function () {
         Route::get('/', [EventsController::class, 'index'])->name('manager.events');
@@ -165,7 +160,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     });
 
-
     Route::group(['prefix' => 'categories'], function () {
         Route::get('/', [CategoriesController::class, 'index'])->name('manager.categories');
         Route::get('/create', [CategoriesController::class, 'create'])->name('manager.categories.create');
@@ -178,7 +172,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     });
 
-
     Route::group(['prefix' => 'langs'], function () {
         Route::get('/', [LangsController::class, 'index'])->name('manager.langs');
         Route::get('/create', [LangsController::class, 'create'])->name('manager.langs.create');
@@ -190,8 +183,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/destroy/{uid}', [LangsController::class, 'destroy'])->name('manager.langs.destroy');
         Route::get('/categories', [LangsController::class, 'getCategories'])->name('manager.langs.categories');
     });
-
-
 
     Route::group(['prefix' => 'subscribers'], function () {
 
@@ -723,64 +714,64 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
     Route::group(['prefix' => 'automations'], function () {
 
-            // Automation2
-            Route::post('/{uid}/trigger-all', [AutomationsController::class, 'triggerAll'])->name('manager.automations.triggerAll');
+        // Automation2
+        Route::post('/{uid}/trigger-all', [AutomationsController::class, 'triggerAll'])->name('manager.automations.triggerAll');
 
-            Route::match(['get', 'post'], 'automation/{uid}/copy', [AutomationsController::class, 'copy'])->name('manager.automations.copy');
-            Route::get('/{uid}/condition/remove', [AutomationsController::class, 'conditionRemove'])->name('manager.automations.conditionRemove');
+        Route::match(['get', 'post'], 'automation/{uid}/copy', [AutomationsController::class, 'copy'])->name('manager.automations.copy');
+        Route::get('/{uid}/condition/remove', [AutomationsController::class, 'conditionRemove'])->name('manager.automations.conditionRemove');
 
-            Route::post('/{uid}/template/{email_uid}/preheader/remove', [AutomationsController::class, 'emailPreheaderRemove'])->name('manager.automations.emailPreheaderRemove');
-            Route::match(['get', 'post'], 'automation/{uid}/template/{email_uid}/preheader/add', [AutomationsController::class, 'emailPreheaderAdd'])->name('manager.automations.emailPreheaderAdd');
-            Route::get('/{uid}/template/{email_uid}/preheader', [AutomationsController::class, 'emailPreheader'])->name('manager.automations.emailPreheader');
+        Route::post('/{uid}/template/{email_uid}/preheader/remove', [AutomationsController::class, 'emailPreheaderRemove'])->name('manager.automations.emailPreheaderRemove');
+        Route::match(['get', 'post'], 'automation/{uid}/template/{email_uid}/preheader/add', [AutomationsController::class, 'emailPreheaderAdd'])->name('manager.automations.emailPreheaderAdd');
+        Route::get('/{uid}/template/{email_uid}/preheader', [AutomationsController::class, 'emailPreheader'])->name('manager.automations.emailPreheader');
 
-            Route::match(['get', 'post'], 'automation/condition/wait/custom', [AutomationsController::class, 'conditionWaitCustom'])->name('manager.automations.conditionWaitCustom');
-            Route::match(['get', 'post'], 'automation/{email_uid}/send-test-email', [AutomationsController::class, 'sendTestEmail'])->name('manager.automations.send.test');
-            Route::get('/{uid}/cart/items', [AutomationsController::class, 'cartItems'])->name('manager.automations.cartItems');
-            Route::get('/{uid}/cart/list', [AutomationsController::class, 'cartList'])->name('manager.automations.cartList');
-            Route::get('/{uid}/cart/stats', [AutomationsController::class, 'cartStats'])->name('manager.automations.cartStats');
-            Route::match(['get', 'post'], 'automation/{uid}/cart/change-store', [AutomationsController::class, 'cartChangeStore'])->name('manager.automations.cartChangeStore');
-            Route::match(['get', 'post'], 'automation/{uid}/cart/wait', [AutomationsController::class, 'cartWait'])->name('manager.automations.cartWait');
-            Route::match(['get', 'post'], 'automation/{uid}/cart/change-list', [AutomationsController::class, 'cartChangeList'])->name('manager.automations.cartChangeList');
+        Route::match(['get', 'post'], 'automation/condition/wait/custom', [AutomationsController::class, 'conditionWaitCustom'])->name('manager.automations.conditionWaitCustom');
+        Route::match(['get', 'post'], 'automation/{email_uid}/send-test-email', [AutomationsController::class, 'sendTestEmail'])->name('manager.automations.send.test');
+        Route::get('/{uid}/cart/items', [AutomationsController::class, 'cartItems'])->name('manager.automations.cartItems');
+        Route::get('/{uid}/cart/list', [AutomationsController::class, 'cartList'])->name('manager.automations.cartList');
+        Route::get('/{uid}/cart/stats', [AutomationsController::class, 'cartStats'])->name('manager.automations.cartStats');
+        Route::match(['get', 'post'], 'automation/{uid}/cart/change-store', [AutomationsController::class, 'cartChangeStore'])->name('manager.automations.cartChangeStore');
+        Route::match(['get', 'post'], 'automation/{uid}/cart/wait', [AutomationsController::class, 'cartWait'])->name('manager.automations.cartWait');
+        Route::match(['get', 'post'], 'automation/{uid}/cart/change-list', [AutomationsController::class, 'cartChangeList'])->name('manager.automations.cartChangeList');
 
-            Route::get('/{uid}/condition/setting', [AutomationsController::class, 'conditionSetting'])->name('manager.automations.conditionSetting');
-            Route::get('/{uid}/operation/show', [AutomationsController::class, 'operationShow'])->name('manager.automations.operationShow');
-            Route::match(['get', 'post'], 'automation/{uid}/operation/edit', [AutomationsController::class, 'operationEdit'])->name('manager.automations.operation.edit');
-            Route::match(['get', 'post'], 'automation/{uid}/operation/create', [AutomationsController::class, 'operationCreate'])->name('manager.automations.operation.create');
-            Route::get('/{uid}/operation/select', [AutomationsController::class, 'operationSelect'])->name('manager.automations.operation.select');
+        Route::get('/{uid}/condition/setting', [AutomationsController::class, 'conditionSetting'])->name('manager.automations.conditionSetting');
+        Route::get('/{uid}/operation/show', [AutomationsController::class, 'operationShow'])->name('manager.automations.operationShow');
+        Route::match(['get', 'post'], 'automation/{uid}/operation/edit', [AutomationsController::class, 'operationEdit'])->name('manager.automations.operation.edit');
+        Route::match(['get', 'post'], 'automation/{uid}/operation/create', [AutomationsController::class, 'operationCreate'])->name('manager.automations.operation.create');
+        Route::get('/{uid}/operation/select', [AutomationsController::class, 'operationSelect'])->name('manager.automations.operation.select');
 
-            Route::post('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
-            Route::get('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
-            Route::get('/{uid}/last-saved', [AutomationsController::class, 'lastSaved'])->name('manager.automations.lastSaved');
+        Route::post('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
+        Route::get('/{uid}/wait-time', [AutomationsController::class, 'waitTime'])->name('manager.automations.waitTime');
+        Route::get('/{uid}/last-saved', [AutomationsController::class, 'lastSaved'])->name('manager.automations.lastSaved');
 
-            Route::post('/{uid}/subscribers/{subscriber_uid}/restart', [AutomationsController::class, 'subscribersRestart'])->name('manager.automations.subscribers.restart');
-            Route::post('/{uid}/subscribers/{subscriber_uid}/remove', [AutomationsController::class, 'subscribersRemove'])->name('manager.automations.subscribers.remove');
-            Route::get('/{uid}/subscribers/{subscriber_uid}/show', [AutomationsController::class, 'subscribersShow'])->name('manager.automations.subscribers.Show');
-            Route::get('/{uid}/subscribers/list', [AutomationsController::class, 'subscribersList'])->name('manager.automations.subscribers.List');
-            Route::get('/{uid}/subscribers', [AutomationsController::class, 'subscribers'])->name('manager.automations.subscribers.');
+        Route::post('/{uid}/subscribers/{subscriber_uid}/restart', [AutomationsController::class, 'subscribersRestart'])->name('manager.automations.subscribers.restart');
+        Route::post('/{uid}/subscribers/{subscriber_uid}/remove', [AutomationsController::class, 'subscribersRemove'])->name('manager.automations.subscribers.remove');
+        Route::get('/{uid}/subscribers/{subscriber_uid}/show', [AutomationsController::class, 'subscribersShow'])->name('manager.automations.subscribers.Show');
+        Route::get('/{uid}/subscribers/list', [AutomationsController::class, 'subscribersList'])->name('manager.automations.subscribers.List');
+        Route::get('/{uid}/subscribers', [AutomationsController::class, 'subscribers'])->name('manager.automations.subscribers.');
 
-            Route::get('/{uid}/insight', [AutomationsController::class, 'insight'])->name('manager.automations.insight');
-            Route::post('/{uid}/data/save', [AutomationsController::class, 'saveData'])->name('manager.automations.saveData');
-            Route::post('/{uid}/update', [AutomationsController::class, 'update'])->name('manager.automations.update');
-            Route::get('/{uid}/settings', [AutomationsController::class, 'settings'])->name('manager.automations.settings');
+        Route::get('/{uid}/insight', [AutomationsController::class, 'insight'])->name('manager.automations.insight');
+        Route::post('/{uid}/data/save', [AutomationsController::class, 'saveData'])->name('manager.automations.saveData');
+        Route::post('/{uid}/update', [AutomationsController::class, 'update'])->name('manager.automations.update');
+        Route::get('/{uid}/settings', [AutomationsController::class, 'settings'])->name('manager.automations.settings');
 
-            Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/test', [AutomationsController::class,'webhooksTest'])->name('manager.automations.webhooksTest');
-            Route::get('/emails/webhooks/{webhook_uid}/sample/request', [AutomationsController::class,'webhooksSampleRequest'])->name('manager.automations.webhooksSampleRequest');
-            Route::post('/emails/webhooks/{webhook_uid}/delete', [AutomationsController::class,'webhooksDelete'])->name('manager.automations.webhooksDelete');
-            Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/edit', [AutomationsController::class,'webhooksEdit'])->name('manager.automations.webhooksEdit');
-            Route::get('/emails/{email_uid}/webhooks/list', [AutomationsController::class,'webhooksList'])->name('manager.automations.webhooksList');
-            Route::get('/emails/{email_uid}/webhooks/link-select', [AutomationsController::class,'webhooksLinkSelect'])->name('manager.automations.webhooksLinkSelect');
-            Route::match(['get', 'post'], 'automation/emails/{email_uid}/webhooks/add', [AutomationsController::class,'webhooksAdd'])->name('manager.automations.webhooksAdd');
-            Route::get('/emails/{email_uid}/webhooks', [AutomationsController::class,'webhooks'])->name('manager.automations.webhooks');
+        Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/test', [AutomationsController::class,'webhooksTest'])->name('manager.automations.webhooksTest');
+        Route::get('/emails/webhooks/{webhook_uid}/sample/request', [AutomationsController::class,'webhooksSampleRequest'])->name('manager.automations.webhooksSampleRequest');
+        Route::post('/emails/webhooks/{webhook_uid}/delete', [AutomationsController::class,'webhooksDelete'])->name('manager.automations.webhooksDelete');
+        Route::match(['get', 'post'], 'automation/emails/webhooks/{webhook_uid}/edit', [AutomationsController::class,'webhooksEdit'])->name('manager.automations.webhooksEdit');
+        Route::get('/emails/{email_uid}/webhooks/list', [AutomationsController::class,'webhooksList'])->name('manager.automations.webhooksList');
+        Route::get('/emails/{email_uid}/webhooks/link-select', [AutomationsController::class,'webhooksLinkSelect'])->name('manager.automations.webhooksLinkSelect');
+        Route::match(['get', 'post'], 'automation/emails/{email_uid}/webhooks/add', [AutomationsController::class,'webhooksAdd'])->name('manager.automations.webhooksAdd');
+        Route::get('/emails/{email_uid}/webhooks', [AutomationsController::class,'webhooks'])->name('manager.automations.webhooks');
 
-            Route::post('/disable', [AutomationsController::class, 'disable'])->name('manager.automations.disable');
-            Route::post('/enable', [AutomationsController::class, 'enable'])->name('manager.automations.enable');
-            Route::delete('/delete', [AutomationsController::class, 'delete'])->name('manager.automations.delete');
-            Route::get('/listing', [AutomationsController::class, 'listing'])->name('manager.automations.listing');
-            Route::get('/', [AutomationsController::class, 'index'])->name('manager.automations');
-            Route::get('/{uid}/debug', [AutomationsController::class, 'debug'])->name('manager.automations.debug');
-            Route::get('trigger/{id}', [AutomationsController::class, 'show'])->name('manager.automations.show');
-            Route::get('/{automation}/{subscriber}/trigger', [AutomationsController::class, 'triggerNow'])->name('manager.automations.triggerNow');
-            Route::get('/{automation}/run', [AutomationsController::class, 'run'])->name('manager.automations.run');
+        Route::post('/disable', [AutomationsController::class, 'disable'])->name('manager.automations.disable');
+        Route::post('/enable', [AutomationsController::class, 'enable'])->name('manager.automations.enable');
+        Route::delete('/delete', [AutomationsController::class, 'delete'])->name('manager.automations.delete');
+        Route::get('/listing', [AutomationsController::class, 'listing'])->name('manager.automations.listing');
+        Route::get('/', [AutomationsController::class, 'index'])->name('manager.automations');
+        Route::get('/{uid}/debug', [AutomationsController::class, 'debug'])->name('manager.automations.debug');
+        Route::get('trigger/{id}', [AutomationsController::class, 'show'])->name('manager.automations.show');
+        Route::get('/{automation}/{subscriber}/trigger', [AutomationsController::class, 'triggerNow'])->name('manager.automations.triggerNow');
+        Route::get('/{automation}/run', [AutomationsController::class, 'run'])->name('manager.automations.run');
 
 
     });

@@ -14,22 +14,15 @@ use Illuminate\Support\Str;
 use App\Models\Categorie;
 use App\Models\Lang;
 
+
 class SubscribersController extends Controller
 {
 
     public function index(Request $request){
 
         $searchKey = null ?? $request->search;
-        $subscribers = Subscriber::latest();
 
-        if ($searchKey) {
-            $subscribers->when(!strpos($searchKey, '-'), function ($query) use ($searchKey) {
-                $query->where('subscribers.firstname', 'like', '%' . $searchKey . '%')
-                    ->orWhere('subscribers.lastname', 'like', '%' . $searchKey . '%')
-                    ->orWhere(DB::raw("CONCAT(subscribers.firstname, ' ', subscribers.lastname)"), 'like', '%' . $searchKey . '%')
-                    ->orWhere('subscribers.email', 'like', '%' . $searchKey . '%');
-            });
-        }
+        $subscribers = Subscriber::search($searchKey);
 
         $subscribers = $subscribers->paginate(100);
 
@@ -53,7 +46,6 @@ class SubscribersController extends Controller
 
     }
 
-
     public function logs(Request $request,$uid){
 
         $subscriber = Subscriber::uid($uid);
@@ -62,17 +54,14 @@ class SubscribersController extends Controller
             abort(404, 'Suscriptor no encontrado');
         }
 
-        // Obtener logs a través de la relación con 'causer'
         $query = $subscriber->logs()->with('causer')->orderBy('created_at', 'desc');
 
-        // Aplicar filtro de búsqueda si se envía un término
         if ($request->has('search') && !empty($request->search)) {
             $query->where('log_name', 'LIKE', '%' . $request->search . '%')
                 ->orWhereHas('causer', function ($q) use ($request) {
                     $q->where('name', 'LIKE', '%' . $request->search . '%');
                 });
         }
-
 
         $logs = $query->paginate(20);
 
@@ -111,22 +100,18 @@ class SubscribersController extends Controller
             'firstname'   => Str::upper($request->firstname),
             'lastname'    => Str::upper($request->lastname),
             'email'       => Str::lower($request->email),
-            'erp'         => $request->erp,
-            'lopd'        => $request->lopd,
-            'none'        => $request->none,
-            'sports'      => $request->sports,
+            'commercial'  => $request->commercial,
             'parties'     => $request->parties,
-            'suscribe'    => $request->suscribe,
             'observation' => $request->observation,
             'lang_id'     => $request->lang,
         ];
 
         $previousLangId = (int) $subscriber->lang_id;
         $currentLangId = (int) $request->lang;
-        $hasLangChanged = $previousLangId !== $currentLangId;
 
         $categories = is_array($request->categories)  ? $request->categories : (empty($request->categories) ? [] : explode(',', $request->categories));
 
+        $hasLangChanged = $previousLangId !== $currentLangId;
         $hasCategoryChanges = $subscriber->categories()->count() !== count($categories);
         $changes = collect($data)->filter(fn($value, $key) => $subscriber->$key !== $value)->isNotEmpty();
 
@@ -173,12 +158,8 @@ class SubscribersController extends Controller
         $subscriber->firstname = Str::upper($request->firstname);
         $subscriber->lastname  =  Str::upper($request->lastname);
         $subscriber->email = Str::upper($request->email);
-        $subscriber->erp = $request->erp;
-        $subscriber->lopd = $request->lopd;
-        $subscriber->none = $request->none;
-        $subscriber->sports = $request->sports;
         $subscriber->parties = $request->parties;
-        $subscriber->suscribe = $request->suscribe;
+        $subscriber->commercial = $request->commercial;
         $subscriber->lang_id = $request->lang;
         $subscriber->check_at = $request->check_at;
         $subscriber->update();
@@ -201,10 +182,6 @@ class SubscribersController extends Controller
         $subscriber->delete();
         return redirect()->route('manager.products');
     }
-
-
-
-
 
 }
 

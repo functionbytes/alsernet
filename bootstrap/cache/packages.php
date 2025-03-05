@@ -14,6 +14,24 @@
       0 => 'Artesaos\\SEOTools\\Providers\\SEOToolsServiceProvider',
     ),
   ),
+  'botman/botman' => 
+  array (
+    'aliases' => 
+    array (
+      'BotMan' => 'BotMan\\BotMan\\Facades\\BotMan',
+    ),
+    'providers' => 
+    array (
+      0 => 'BotMan\\BotMan\\BotManServiceProvider',
+    ),
+  ),
+  'botman/driver-web' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'BotMan\\Drivers\\Web\\Providers\\WebServiceProvider',
+    ),
+  ),
   'laravel/pulse' => 
   array (
     'aliases' => 

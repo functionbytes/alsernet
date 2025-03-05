@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,6 +19,7 @@
 </head>
 
 <body class="{{ isset($body_class) ? $body_class : '' }} theme-dark barmode">
+
 
 	@if (config('app.saas'))
 		@include('layouts.core._menu_backend')

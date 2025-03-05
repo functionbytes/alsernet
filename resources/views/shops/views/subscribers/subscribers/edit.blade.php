@@ -1,5 +1,9 @@
 @extends('layouts.shops')
 
+@php
+    use Carbon\Carbon;
+@endphp
+
 @section('content')
 
     <div class="row">
@@ -29,26 +33,38 @@
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Nombres</label>
-                                    <input type="text" class="form-control" id="firstname"  name="firstname" value="{{ $subscriber->firstname }}" placeholder="Ingresar nombres"  autocomplete="new-password">
+                                    <input type="text" class="form-control" id="firstname"   value="{{ $subscriber->firstname }}" placeholder="Ingresar nombres"  autocomplete="new-password">
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Apellidos</label>
-                                    <input type="text" class="form-control" id="lastname"  name="lastname" value="{{ $subscriber->lastname }}" placeholder="Ingresar apellidos" autocomplete="new-password">
+                                    <input type="text" class="form-control" id="lastname"   value="{{ $subscriber->lastname }}" placeholder="Ingresar apellidos" autocomplete="new-password">
                                 </div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Correo electronico</label>
-                                    <input type="text" class="form-control" id="email"  name="email" value="{{ $subscriber->email }}" placeholder="Ingresar el correo electronico" autocomplete="new-password">
+                                    <input type="text" class="form-control"   value="{{ $subscriber->email }}" placeholder="Ingresar el correo electronico" autocomplete="new-password" disabled>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="categories" class="control-label col-form-label">Categorias</label>
+                                    <select class="form-control select2" id="categories" multiple="multiple">
+                                        @foreach($categories as $id => $name)
+                                            <option value="{{ $id }}" {{ in_array($id, $subscriber->categories->pluck('id')->toArray()) ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label id="categories-error" class="error d-none" for="categories"></label>
                                 </div>
                             </div>
 
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label for="prioritie" class="control-label col-form-label">Idioma</label>
-                                    <select class="form-control select2" id="lang" name="lang">
+                                    <select class="form-control select2" id="lang" >
                                         @foreach($langs as $id => $name)
                                             <option value="{{ $id }}" {{  $subscriber->lang_id == $id ? 'selected' : '' }}>{{ $name }}</option>
                                         @endforeach
@@ -58,42 +74,10 @@
 
                             <div class="col-6">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir erp</label>
-                                    <select class="form-control select2" id="erp" name="erp">
-                                        <option value="1" {{ $subscriber->erp == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->erp == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir lopd</label>
-                                    <select class="form-control select2" id="lopd" name="lopd">
-                                        <option value="1" {{ $subscriber->lopd == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->lopd == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir none</label>
-                                    <select class="form-control select2" id="none" name="none">
-                                        <option value="1" {{ $subscriber->none == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->none == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir sports</label>
-                                    <select class="form-control select2" id="sports" name="sports">
-                                        <option value="1" {{ $subscriber->sports == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->sports == 0 ? 'selected' : '' }}>No</option>
+                                    <label class="control-label col-form-label">Recibir notificacion comercial</label>
+                                    <select class="form-control select2" id="commercial" >
+                                        <option value="1" {{ $subscriber->commercial == 1 ? 'selected' : '' }}>Si</option>
+                                        <option value="0" {{ $subscriber->commercial == 0 ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
                             </div>
@@ -101,42 +85,19 @@
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Recibir parties</label>
-                                    <select class="form-control select2" id="parties" name="parties">
+                                    <select class="form-control select2" id="parties" >
                                         <option value="1" {{ $subscriber->parties == 1 ? 'selected' : '' }}>Si</option>
                                         <option value="0" {{ $subscriber->parties == 0 ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir suscribe</label>
-                                    <select class="form-control select2" id="suscribe" name="suscribe">
-                                        <option value="1" {{ $subscriber->suscribe == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->suscribe == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="users" class="control-label col-form-label">Categorias</label>
-                                    <select class="form-control select2" id="categories" name="categories[]" multiple="multiple">
-                                        @foreach($categories as $id => $name)
-                                            <option value="{{ $id }}" {{ in_array($id, $subscriber->categories->pluck('id')->toArray()) ? 'selected' : '' }}>{{ $name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <label id="categories-error" class="error d-none" for="users"></label>
-                                </div>
-                            </div>
-
                             @if($subscriber->check_at)
-                                <div class="col-12">
+                                <div class="col-6">
                                     <div class="mb-3">
                                         <label class="control-label col-form-label">Fecha verificación</label>
-                                        <input type="text" class="form-control" id="check_at" name="check_at"
-                                               value="{{ \Carbon\Carbon::parse($subscriber->check_at)->format('d/m/Y H:i') }}"
+                                        <input type="text" class="form-control" id="check_at"
+                                               value="{{ Carbon::parse($subscriber->check_at)->format('d/m/Y H:i') }}"
                                                placeholder="Fecha no disponible" autocomplete="off" readonly>
                                     </div>
                                 </div>
@@ -145,7 +106,7 @@
                             <div class="col-12">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Observacion</label>
-                                    <input type="text" class="form-control" id="observation"  name="observation" value="" placeholder="Ingresar observacion por el cual haces la edicion" autocomplete="new-password">
+                                    <input type="text" class="form-control" id="observation" name="observation"  value="" placeholder="Ingresar observacion por el cual haces la edicion" autocomplete="new-password">
                                 </div>
                             </div>
 
@@ -181,16 +142,6 @@
 
         $(document).ready(function() {
 
-            jQuery.validator.addMethod(
-                'emailExt',
-                function (value, element, param) {
-                    return value.match(
-                        /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
-                    )
-                },
-                'Porfavor ingrese email valido',
-            );
-
 
             $("#formSubcriptions").validate({
                 submit: false,
@@ -206,27 +157,10 @@
                         minlength: 3,
                         maxlength: 100,
                     },
-                    email: {
-                        required: true,
-                        email: true,
-                        emailExt: true,
-                    },
-                    erp: {
-                        required: true,
-                    },
-                    lopd: {
-                        required: true,
-                    },
-                    none: {
-                        required: true,
-                    },
-                    sports: {
+                    commercial: {
                         required: true,
                     },
                     parties: {
-                        required: true,
-                    },
-                    suscribe: {
                         required: true,
                     },
                     lang: {
@@ -240,6 +174,7 @@
                         minlength: 0,
                         maxlength: 10000,
                     },
+
                 },
                 messages: {
                     firstname: {
@@ -252,29 +187,13 @@
                         minlength: "Debe contener al menos 3 caracter",
                         maxlength: "Debe contener al menos 100 caracter",
                     },
-                    email: {
-                        required: 'Tu email ingresar correo electrónico es necesario.',
-                        email: 'Por favor, introduce una dirección de correo electrónico válida.',
-                    },
-                    erp: {
-                        required: "El parametro es necesario.",
-                    },
-                    lopd: {
-                        required: "El parametro es necesario.",
-                    },
-                    none: {
-                        required: "El parametro es necesario.",
-                    },
-                    sports: {
+                    commercial: {
                         required: "El parametro es necesario.",
                     },
                     parties: {
                         required: "El parametro es necesario.",
                     },
                     suscribe: {
-                        required: "El parametro es necesario.",
-                    },
-                    check: {
                         required: "El parametro es necesario.",
                     },
                     lang: {
@@ -296,32 +215,18 @@
                     var uid = $("#uid").val();
                     var firstname = $("#firstname").val();
                     var lastname = $("#lastname").val();
-                    var email = $("#email").val();
-                    var erp = $("#erp").val();
-                    var lopd = $("#lopd").val();
-                    var none = $("#none").val();
-                    var sports = $("#sports").val();
+                    var commercial = $("#commercial").val();
                     var parties = $("#parties").val();
-                    var suscribe = $("#suscribe").val();
                     var categories = $("#categories").val();
-                    var check = $("#check").val();
                     var lang = $("#lang").val();
-                    var checkat = $("#check_at").val();
                     var observation = $("#observation").val();
 
                     formData.append('uid', uid);
                     formData.append('firstname', firstname);
                     formData.append('lastname', lastname);
-                    formData.append('email', email);
-                    formData.append('erp', erp);
-                    formData.append('lopd', lopd);
-                    formData.append('none', none);
-                    formData.append('sports', sports);
                     formData.append('parties', parties);
-                    formData.append('suscribe', suscribe);
+                    formData.append('commercial', commercial);
                     formData.append('lang', lang);
-                    formData.append('check', check);
-                    formData.append('checkat', checkat);
                     formData.append('categories', categories);
                     formData.append('observation', observation);
 
@@ -349,8 +254,11 @@
                                     positionClass: "toast-bottom-right"
                                 });
 
+
+                                $submitButton.prop('disabled', false);
+
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('shop.subscribers') }}";
+                                    window.location.href = "{{ route('manager.subscribers.edit', $subscriber->uid) }}";
                                 }, 2000);
 
                             }else{
@@ -374,6 +282,48 @@
 
                 }
 
+            });
+
+
+
+            $('#lang').on('change', function() {
+                let langId = $(this).val();
+                let categorySelect = $('#categories');
+
+                if (langId) {
+                    $.ajax({
+                        url: '{{ route('manager.langs.categories') }}', // Ruta del controlador
+                        type: 'GET',
+                        data: { term: langId },
+                        dataType: 'json',
+                        success: function(response) {
+                            let selectedValues = categorySelect.val() || []; // Obtener valores seleccionados actuales
+                            let newCategoryIds = response.map(category => category.id); // IDs de las nuevas categorías disponibles
+
+                            // Limpiar select2 y agregar nueva opción por defecto
+                            categorySelect.empty();
+                            categorySelect.append(new Option('Selecciona una categoría', '', false, false));
+
+                            let newSelectedValues = [];
+
+                            // Agregar nuevas opciones
+                            $.each(response, function(index, category) {
+                                let isSelected = selectedValues.includes(category.id.toString()); // Verificar si estaba seleccionado
+                                categorySelect.append(new Option(category.text, category.id, false, isSelected));
+
+                                if (isSelected) {
+                                    newSelectedValues.push(category.id.toString()); // Mantener seleccionados los válidos
+                                }
+                            });
+
+                            // Asignar los valores seleccionados filtrados
+                            categorySelect.val(newSelectedValues).trigger('change');
+                        }
+                    });
+                }else {
+                    // Si no hay lang seleccionado, vaciar el select
+                    categorySelect.empty().trigger('change');
+                }
             });
 
 

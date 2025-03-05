@@ -2,13 +2,11 @@
 
 namespace App\Models\Subscriber;
 
-use App\Jobs\SyncSuscriberListJob;
-use App\Jobs\RemoveSuscriberListJob;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class   SubscriberCategorie extends Model
+class  SubscriberCategorie extends Model
 {
 
     protected $table = "subscriber_categories";

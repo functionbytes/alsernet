@@ -1,5 +1,9 @@
 @extends('layouts.managers')
 
+@php
+    use Carbon\Carbon;
+@endphp
+
 @section('content')
 
     <div class="row">
@@ -70,42 +74,10 @@
 
                             <div class="col-6">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir erp</label>
-                                    <select class="form-control select2" id="erp" >
-                                        <option value="1" {{ $subscriber->erp == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->erp == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir lopd</label>
-                                    <select class="form-control select2" id="lopd" >
-                                        <option value="1" {{ $subscriber->lopd == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->lopd == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir none</label>
-                                    <select class="form-control select2" id="none" >
-                                        <option value="1" {{ $subscriber->none == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->none == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir sports</label>
-                                    <select class="form-control select2" id="sports" >
-                                        <option value="1" {{ $subscriber->sports == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->sports == 0 ? 'selected' : '' }}>No</option>
+                                    <label class="control-label col-form-label">Recibir notificacion comercial</label>
+                                    <select class="form-control select2" id="commercial" >
+                                        <option value="1" {{ $subscriber->commercial == 1 ? 'selected' : '' }}>Si</option>
+                                        <option value="0" {{ $subscriber->commercial == 0 ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
                             </div>
@@ -120,19 +92,8 @@
                                 </div>
                             </div>
 
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir suscribe</label>
-                                    <select class="form-control select2" id="suscribe" >
-                                        <option value="1" {{ $subscriber->suscribe == 1 ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $subscriber->suscribe == 0 ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
                             @if($subscriber->check_at)
-                                <div class="col-12">
+                                <div class="col-6">
                                     <div class="mb-3">
                                         <label class="control-label col-form-label">Fecha verificación</label>
                                         <input type="text" class="form-control" id="check_at"
@@ -211,22 +172,10 @@
                         email: true,
                         emailExt: true,
                     },
-                    erp: {
-                        required: true,
-                    },
-                    lopd: {
-                        required: true,
-                    },
-                    none: {
-                        required: true,
-                    },
-                    sports: {
+                    commercial: {
                         required: true,
                     },
                     parties: {
-                        required: true,
-                    },
-                    suscribe: {
                         required: true,
                     },
                     lang: {
@@ -257,16 +206,7 @@
                         required: 'Tu email ingresar correo electrónico es necesario.',
                         email: 'Por favor, introduce una dirección de correo electrónico válida.',
                     },
-                    erp: {
-                        required: "El parametro es necesario.",
-                    },
-                    lopd: {
-                        required: "El parametro es necesario.",
-                    },
-                    none: {
-                        required: "El parametro es necesario.",
-                    },
-                    sports: {
+                    commercial: {
                         required: "El parametro es necesario.",
                     },
                     parties: {
@@ -295,12 +235,8 @@
                     var firstname = $("#firstname").val();
                     var lastname = $("#lastname").val();
                     var email = $("#email").val();
-                    var erp = $("#erp").val();
-                    var lopd = $("#lopd").val();
-                    var none = $("#none").val();
-                    var sports = $("#sports").val();
+                    var commercial = $("#commercial").val();
                     var parties = $("#parties").val();
-                    var suscribe = $("#suscribe").val();
                     var categories = $("#categories").val();
                     var lang = $("#lang").val();
                     var observation = $("#observation").val();
@@ -309,12 +245,8 @@
                     formData.append('firstname', firstname);
                     formData.append('lastname', lastname);
                     formData.append('email', email);
-                    formData.append('erp', erp);
-                    formData.append('lopd', lopd);
-                    formData.append('none', none);
-                    formData.append('sports', sports);
                     formData.append('parties', parties);
-                    formData.append('suscribe', suscribe);
+                    formData.append('commercial', commercial);
                     formData.append('lang', lang);
                     formData.append('categories', categories);
                     formData.append('observation', observation);

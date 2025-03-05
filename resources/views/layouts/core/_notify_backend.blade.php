@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Facades\Session;
+@endphp
+
 <script>
     @if (null !== Session::get('orig_admin_id') && Auth::user()->admin)
         notify({

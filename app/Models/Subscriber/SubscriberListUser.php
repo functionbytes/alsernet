@@ -9,7 +9,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class SubscriberListUser extends Model
 {
-    use HasUid;
 
     protected $table = "subscriber_list_users";
 

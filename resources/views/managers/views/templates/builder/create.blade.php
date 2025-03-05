@@ -20,6 +20,7 @@
                         <input type="text" class="form-control" id="name"  name="title" value="{{$template->title}}" placeholder="Ingresar nombre">
                     </div>
 
+
                     <div>
                         <div class="text-start">
                             <button class="btn btn-primary w-100 "><i class="icon-check"></i> Iniciar diseño</button>

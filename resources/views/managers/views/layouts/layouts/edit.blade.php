@@ -61,6 +61,7 @@
                 ])
             </div>
             <div class="col-md-3 pr-0 pb-0 sidebar pr-4 pt-4 pl-4" style="overflow:auto;background:#f5f5f5">
+
                 @include('helpers.form_control', [
                     'class' => 'form-control',
                     'type' => 'text',
@@ -69,7 +70,19 @@
                     'value' => $layout->subject,
                     'rules' => ['subject' => 'subject']
                 ])
-                <hr>
+
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="categories" class="control-label col-form-label">Idiomas</label>
+                        <select class="form-control select2" id="categories" multiple="multiple">
+                            @foreach($langs as $id => $name)
+                                <option value="{{ $id }}" {{ $id == $layout->lang_id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <label id="categories-error" class="error d-none" for="categories"></label>
+                    </div>
+                </div>
+                    <hr>
                 @if (count($layout->tags()) > 0)
                     <div class="tags_list">
                         <label class="text-semibold text-teal mb-2">Etiquetas disponibles:</label>

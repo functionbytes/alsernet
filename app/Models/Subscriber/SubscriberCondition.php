@@ -39,5 +39,4 @@ class SubscriberCondition extends Model
         return $query->where('available', 1);
     }
 
-
 }

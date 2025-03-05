@@ -6,6 +6,7 @@ use App\Library\ExtendedSwiftMessage;
 use App\Library\Traits\HasUid;
 use Closure;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
@@ -92,6 +93,12 @@ class Layout extends Model
         }
 
         $tags = array_merge($tags, [
+            ['name' => '{UNSUBSCRIBE_URL}', 'required' => false],
+            ['name' => '{UNSUBSCRIBE_CODE}', 'required' => false],
+            ['name' => '{SUBSCRIBER_UID}', 'required' => false],
+            ['name' => '{SUBSCRIBER_EMAIL}', 'required' => false],
+            ['name' => '{SUBSCRIBER_FIRSTNAME}', 'required' => false],
+            ['name' => '{SUBSCRIBER_LASTNAME}', 'required' => false],
             ['name' => '{LIST_NAME}', 'required' => false],
             ['name' => '{CONTACT_NAME}', 'required' => false],
             ['name' => '{CONTACT_STATE}', 'required' => false],
@@ -164,6 +171,7 @@ class Layout extends Model
         }
 
         $tags = array_merge($tags, [
+            ['name' => 'UNSUBSCRIBE_CODE', 'required' => false],
             ['name' => 'UNSUBSCRIBE_URL', 'required' => false],
             ['name' => 'SUBSCRIBER_UID', 'required' => false],
             ['name' => 'WEB_VIEW_URL', 'required' => false],
@@ -185,6 +193,9 @@ class Layout extends Model
         return $tags;
     }
 
-
+    public function lang(): BelongsTo
+    {
+        return $this->belongsTo('App\Models\Lang','lang_id','id');
+    }
 
 }

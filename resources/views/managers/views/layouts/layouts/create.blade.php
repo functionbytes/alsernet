@@ -69,7 +69,20 @@
                     'value' => '',
                     'rules' => ['subject' => 'subject']
                 ])
-                <hr>
+
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="categories" class="control-label col-form-label">Idiomas</label>
+                        <select class="form-control select2" id="categories" multiple="multiple">
+                            @foreach($langs as $id => $name)
+                                <option value="{{ $id }}" >{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <label id="categories-error" class="error d-none" for="categories"></label>
+                    </div>
+                </div>
+
+                              <hr>
                 @if (count($tags) > 0)
                     <div class="tags_list">
                         <label class="text-semibold text-teal mb-2">Etiquetas disponibles:</label>

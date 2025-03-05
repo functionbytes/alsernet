@@ -24,12 +24,12 @@ class SubscriberListCategorie extends Model
 
     public function list(): BelongsTo
     {
-        return $this->belongsTo(SubscriberList::class, 'list_id');
+        return $this->belongsTo('App\Models\Subscriber\SubscriberList', 'list_id');
     }
 
     public function categorie(): BelongsTo
     {
-        return $this->belongsTo(SubscriberCategorie::class, 'categorie_id');
+        return $this->belongsTo('App\Models\Subscriber\SubscriberCategorie', 'categorie_id');
     }
 
 

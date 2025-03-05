@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Managers\Layouts;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lang;
 use App\Models\Layout\Layout;
 use App\Models\Template\Template;
 use Illuminate\Http\Request;
@@ -46,13 +47,15 @@ class LayoutController extends Controller
             $layout->fill($request->old());
         }
 
+        $langs = Lang::available()->get()->pluck('title','id');
+
         return view('managers.views.layouts.layouts.create', [
             'layout' => $layout,
             'tags' => $tags,
+            'langs' => $langs,
         ]);
 
     }
-
 
     public function store(Request $request)
     {
@@ -72,8 +75,11 @@ class LayoutController extends Controller
             $layout->fill($request->old());
         }
 
+        $langs = Lang::available()->get()->pluck('title','id');
+
         return view('managers.views.layouts.layouts.edit', [
             'layout' => $layout,
+            'langs' => $langs,
         ]);
     }
 
@@ -89,8 +95,6 @@ class LayoutController extends Controller
                 'content' => 'required',
                 'subject' => 'required',
             );
-
-            // $this->validate($request, $rules);
 
             $validator = \Validator::make($request->all(), $rules);
 

@@ -60,7 +60,9 @@
                     @foreach ($layouts as $key => $layout)
                         <tr class="search-items">
                             <td>
-                                <span class="usr-email-addr" >{{ Str::words( Str::upper($layout->subject), 12, '...')  }}</span>
+                                <span class="usr-email-addr" >{{ Str::words( Str::upper($layout->subject), 12, '...')  }}
+                                    {{ Str::words( Str::upper($layout->lang->title), 12, '...')  }}
+                                </span>
                             </td>
                             <td>
                                 <span class="usr-email-addr" >{{ $layout->group_name  }}</span>

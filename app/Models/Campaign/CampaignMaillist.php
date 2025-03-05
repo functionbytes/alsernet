@@ -7,9 +7,9 @@ use App\Events\MailListImported;
 use App\Events\MailListSubscription;
 use App\Events\MailListUpdated;
 use App\Jobs\ExportSubscribersJob;
-use App\Jobs\ImportSubscribers2;
-use App\Jobs\ImportSubscribersJob;
-use App\Jobs\ImportSubscribersListsJob;
+use App\Jobs\Subscribers\ImportSubscribers2;
+use App\Jobs\Subscribers\ImportSubscribersJob;
+use App\Jobs\Subscribers\ImportSubscribersListsJob;
 use App\Jobs\VerifyMailListJob;
 use App\Library\ExtendedSwiftMessage;
 use App\Library\MailListFieldMapping;
@@ -19,16 +19,16 @@ use App\Library\Traits\HasCache;
 use App\Library\Traits\HasUid;
 use App\Library\Traits\QueryHelper;
 use App\Library\Traits\TrackJobs;
-use App\Models\Subscriber\SubscriberList;
 use App\Models\Setting;
+use App\Models\Subscriber\Subscriber;
+use App\Models\Subscriber\SubscriberList;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use League\Csv\Writer;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Models\Subscriber\Subscriber;
 
 
 class CampaignMaillist extends Model

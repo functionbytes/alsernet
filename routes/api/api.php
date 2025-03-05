@@ -1,30 +1,35 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Models\Ticket;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\SubscribersController;
+use App\Http\Controllers\Api\TicketsController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-// http://localhost:8000/api/
-// univseral resource locator
-// tickets
-// users
-
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::group(['prefix' => 'subscribers'], function () {
+    Route::post('/', [SubscribersController::class, 'process']);
+    Route::put('/replace', [SubscribersController::class, 'replace']);
+    Route::patch('patch', [SubscribersController::class, 'update']);
+    Route::post('process', [SubscribersController::class, 'process']);
+    Route::post('campaigns', [SubscribersController::class, 'campaigns']);
 });
+
+
+Route::group(['prefix' => 'subscribers'], function () {
+    Route::post('/', [SubscribersController::class, 'process']);
+    Route::put('/replace', [SubscribersController::class, 'replace']);
+    Route::patch('patch', [SubscribersController::class, 'update']);
+    Route::post('process', [SubscribersController::class, 'process']);
+    Route::post('campaigns', [SubscribersController::class, 'campaigns']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function() {
+
+    Route::apiResource('tickets', TicketsController::class)->except(['update']);
+    Route::put('tickets/{ticket}', [TicketsController::class, 'replace']);
+    Route::patch('tickets/{ticket}', [TicketsController::class, 'update']);
+
+});
+
+
+

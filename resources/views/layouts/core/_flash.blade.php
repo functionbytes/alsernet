@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Facades\Session;
+@endphp
+
 <script>
     @foreach (['success'] as $msg)
         @if(Session::has('alert-' . $msg))
@@ -9,7 +13,6 @@
                     dismissible: true,
                 });
             });
-
         @endif
     @endforeach
 

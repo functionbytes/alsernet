@@ -15,9 +15,7 @@ Route::group(['prefix' => 'shop', 'middleware' => ['auth', 'roles:shops']], func
         Route::post('/update', [SettingsController::class, 'update'])->name('shop.settings.update');
     });
 
-
     Route::group(['prefix' => 'subscribers'], function () {
-
         Route::get('/', [SubscribersController::class, 'index'])->name('shop.subscribers');
         Route::get('/create', [SubscribersController::class, 'create'])->name('shop.subscribers.create');
         Route::get('/lists', [SubscribersController::class, 'lists'])->name('shop.subscribers.lists');
@@ -27,10 +25,6 @@ Route::group(['prefix' => 'shop', 'middleware' => ['auth', 'roles:shops']], func
         Route::get('/destroy/{uid}', [SubscribersController::class, 'destroy'])->name('shop.subscribers.destroy');
         Route::get('/list/{uid}', [SubscribersController::class, 'list'])->name('shop.subscribers.list');
         Route::get('/logs/{slack}', [SubscribersController::class, 'logs'])->name('shop.subscribers.logs');
-
     });
-
-
-
 
 });

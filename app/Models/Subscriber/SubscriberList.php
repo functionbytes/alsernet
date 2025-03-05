@@ -35,12 +35,10 @@ class SubscriberList extends Model
         return $query->where('default', 1);
     }
 
-
     public function scopeLang($query,$lang)
     {
         return $query->where('lang_id', $lang);
     }
-
 
     public function scopeId($query ,$id)
     {
@@ -62,6 +60,12 @@ class SubscriberList extends Model
         return $this->belongsTo('App\Models\Lang','lang_id','id');
     }
 
+    public static function getBlacklistByLang($langId)
+    {
+        return self::where('code', 'BLACKLIST')->where('lang_id', $langId)->first();
+    }
+
+
     public function lists(): BelongsToMany
     {
         return $this->belongsToMany('App\Models\Subscriber\SubscriberList','subscriber_list_categories','categorie_id','list_id');
@@ -72,13 +76,10 @@ class SubscriberList extends Model
         return $this->belongsTo('App\Models\Subscriber\Subscriber', 'subscriber_id', 'id');
     }
 
-
-
     public function categorie(): HasMany
     {
         return $this->hasMany('App\Models\Subscriber\SubscriberListCategorie','list_id','id');
     }
-
 
     public function categories(): BelongsToMany
     {
@@ -104,9 +105,6 @@ class SubscriberList extends Model
             'subscriber_id'
         );
     }
-
-
-
 
 }
 
