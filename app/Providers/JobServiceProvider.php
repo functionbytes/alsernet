@@ -12,15 +12,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class JobServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     */
     public function boot(): void
     {
-        // Initialize the MailLog which writes logs to mail.log
         $this->initMailLog();
 
-        // 'before' event for both standalone and batch jobs
         Queue::before(function (JobProcessing $event) {
             $job = $this->getJobObject($event);
             if ($job && property_exists($job, 'monitor')) {
@@ -45,23 +40,15 @@ class JobServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Register the application services.
-     */
     public function register(): void
     {
-        //
     }
 
-    /**
-     * Extract the job object safely.
-     */
     private function getJobObject($event): ?object
     {
         try {
             $data = $event->job->payload();
             $command = unserialize($data['data']['command']);
-
             return $command instanceof ShouldQueue ? $command : null;
         } catch (\Throwable $e) {
             \Log::error('Failed to unserialize job command: ' . $e->getMessage());
@@ -69,9 +56,6 @@ class JobServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Init the MailLog.
-     */
     private function initMailLog(): void
     {
         $logPath = storage_path('logs/' . php_sapi_name() . '/mail.log');
@@ -82,4 +66,5 @@ class JobServiceProvider extends ServiceProvider
 
         MailLog::configure($logPath);
     }
+
 }

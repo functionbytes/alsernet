@@ -11,19 +11,16 @@ use Illuminate\Http\Request;
 class RouteServiceProvider extends ServiceProvider
 {
     public const HOME = '/home';
-
     public function boot(): void
     {
         $this->configureRateLimiting();
 
         $this->routes(function () {
 
-            // Rutas API
             Route::prefix('api')
                 ->middleware('api')
                 ->group(base_path('routes/api/api.php'));
 
-            // Rutas Web
             Route::middleware('web')
                 ->group(function () {
                     Route::group([], base_path('routes/web.php'));
@@ -31,7 +28,8 @@ class RouteServiceProvider extends ServiceProvider
                     Route::group([], base_path('routes/inventaries.php'));
                     Route::group([], base_path('routes/callcenters.php'));
                     Route::group([], base_path('routes/shops.php'));
-                });
+            });
+
         });
     }
 
@@ -41,4 +39,5 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
     }
+
 }

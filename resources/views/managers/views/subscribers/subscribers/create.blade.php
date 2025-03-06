@@ -35,22 +35,10 @@
                                     <input type="text" class="form-control" id="lastname"  name="lastname" value="" placeholder="Ingresar apellidos" autocomplete="new-password">
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-6">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Correo electronico</label>
                                     <input type="text" class="form-control" id="email"  name="email" value="" placeholder="Ingresar el correo electronico" autocomplete="new-password">
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="users" class="control-label col-form-label">Categorias</label>
-                                    <select class="form-control select2" id="categories" name="categories[]" multiple="multiple">
-                                        @foreach($categories as $id => $name)
-                                            <option value="{{ $id }}" >{{ $name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <label id="categories-error" class="error d-none" for="users"></label>
                                 </div>
                             </div>
 
@@ -65,76 +53,37 @@
                                 </div>
                             </div>
 
-
                             <div class="col-6">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir erp</label>
-                                    <select class="form-control select2" id="erp" name="erp">
-                                        <option value="1" >Si</option>
-                                        <option value="0" >No</option>
+                                    <label class="control-label col-form-label">Recibir notificacion comercial</label>
+                                    <select class="form-control select2" id="commercial" >
+                                        <option value="1">Si</option>
+                                        <option value="0">No</option>
                                     </select>
                                 </div>
                             </div>
-
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir lopd</label>
-                                    <select class="form-control select2" id="lopd" name="lopd">
-                                        <option value="1" >Si</option>
-                                        <option value="0" >No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir none</label>
-                                    <select class="form-control select2" id="none" name="none">
-                                        <option value="1" >Si</option>
-                                        <option value="0" >No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir sports</label>
-                                    <select class="form-control select2" id="sports" name="sports">
-                                        <option value="1" >Si</option>
-                                        <option value="0" >No</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
 
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Recibir parties</label>
-                                    <select class="form-control select2" id="parties" name="parties">
+                                    <select class="form-control select2" id="parties" >
                                         <option value="1">Si</option>
-                                        <option value="0" >No</option>
+                                        <option value="0">No</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="col-6">
+                            <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Recibir suscribe</label>
-                                    <select class="form-control select2" id="suscribe" name="suscribe">
-                                        <option value="1" >Si</option>
-                                        <option value="0" >No</option>
+                                    <label for="users" class="control-label col-form-label">Categorias</label>
+                                    <select class="form-control select2" id="categories" name="categories[]" multiple="multiple">
+                                        @foreach($categories as $id => $name)
+                                            <option value="{{ $id }}" >{{ $name }}</option>
+                                        @endforeach
                                     </select>
+                                    <label id="categories-error" class="error d-none" for="users"></label>
                                 </div>
                             </div>
-
 
                             <div class="col-12">
                                 <div class="errors d-none">

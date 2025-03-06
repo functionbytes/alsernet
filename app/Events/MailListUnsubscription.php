@@ -2,14 +2,14 @@
 
 namespace App\Events;
 
-use App\Models\Subscriber\Subscriber;
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Subscriber\Subscriber;
+use Illuminate\Broadcasting\Channel;
 
 class MailListUnsubscription
 {
@@ -28,4 +28,5 @@ class MailListUnsubscription
     {
         return new PrivateChannel('channel-name');
     }
+
 }

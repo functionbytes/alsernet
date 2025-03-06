@@ -2,30 +2,24 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Validators\Failure;
-use Hash;
-use Throwable;
-use App\Models\Customer;
+use Maatwebsite\Excel\Concerns\ToModel;
 use App\Models\CustomerSetting;
+use App\Models\Customer;
+use Throwable;
 use Exception;
+use Hash;
 
 class CustomerImport implements  ToModel, WithHeadingRow,SkipsOnError, WithValidation
 {
     use Importable, SkipsErrors;
-
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
     public function model(array $row)
     {
         if(isset($row['role']) || isset($row['empid'])){
@@ -66,7 +60,6 @@ class CustomerImport implements  ToModel, WithHeadingRow,SkipsOnError, WithValid
             return $customer;
         }
     }
-
 
     public function rules(): array
     {

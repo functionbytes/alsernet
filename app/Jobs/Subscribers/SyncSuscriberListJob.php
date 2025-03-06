@@ -2,13 +2,13 @@
 
 namespace App\Jobs\Subscribers;
 
-use App\Models\Subscriber\Subscriber;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Subscriber\Subscriber;
+use Illuminate\Bus\Queueable;
 
 class SyncSuscriberListJob implements ShouldQueue
 {
@@ -19,9 +19,6 @@ class SyncSuscriberListJob implements ShouldQueue
     protected $removedCategories;
     protected $categoriesIds;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($subscriberId, $addedCategories, $removedCategories, $categoriesIds)
     {
         $this->subscriberId = $subscriberId;

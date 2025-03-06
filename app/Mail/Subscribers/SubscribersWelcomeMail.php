@@ -2,11 +2,11 @@
 
 namespace App\Mail\Subscribers;
 
-use App\Models\Layout\Layout;
+use Illuminate\Queue\SerializesModels;
 use App\Models\Subscriber\Subscriber;
+use App\Models\Layout\Layout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class SubscribersWelcomeMail extends Mailable
 {
@@ -14,21 +14,11 @@ class SubscribersWelcomeMail extends Mailable
 
     public $newsletter;
 
-    /**
-     * Crea una nueva instancia de la clase de correo.
-     *
-     * @param Subscriber $newsletter
-     */
     public function __construct(Subscriber $newsletter)
     {
         $this->newsletter = $newsletter;
     }
 
-    /**
-     * Construir el mensaje del correo.
-     *
-     * @return $this
-     */
     public function build()
     {
 
@@ -44,7 +34,6 @@ class SubscribersWelcomeMail extends Mailable
         $htmlContent = str_replace('{USER_EMAIL}', $this->email, $htmlContent);
         $htmlContent = str_replace('{VERIFICATION_LINK}', $this->generateVerificationUrl(), $htmlContent);
 
-        // build the message
         $message = new ExtendedSwiftMessage();
         $message->setEncoder(new \Swift_Mime_ContentEncoder_PlainContentEncoder('8bit'));
         $message->setContentType('text/html; charset=utf-8');
@@ -61,9 +50,8 @@ class SubscribersWelcomeMail extends Mailable
             throw new \Exception($result['error']);
         }
 
-
         return $this->subject('Newsletter - ' . $this->newsletter->title)
-            ->view('emails.newsletters.actions')  // Asegúrate de tener la vista de correo configurada
+            ->view('emails.newsletters.actions')
             ->with([
                 'newsletter' => $this->newsletter,
             ]);

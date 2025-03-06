@@ -10,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 class SubscriberCheckatJob
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
     public $subscriber;
 
     public function __construct(Subscriber $subscriber)

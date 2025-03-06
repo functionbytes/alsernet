@@ -9,14 +9,13 @@ use App\Jobs\UpdateUserJob;
 
 class UserUpdatedListener
 {
-
     public function __construct()
     {
-        //
     }
 
     public function handle(UserUpdated $event)
     {
         dispatch(new UpdateUserJob($event->customer));
     }
+
 }

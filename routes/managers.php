@@ -44,16 +44,13 @@ use App\Http\Controllers\Managers\PulseController;
 
 use Illuminate\Support\Facades\Route;
 
-
 Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']], function () {
 
     Route::get('/', [DashboardController::class, 'dashboard'])->name('manager.dashboard');
 
 
     Route::group(['prefix' => 'pulse'], function () {
-
         Route::get('/', [PulseController::class, 'dashboard'])->name('manager.pulse');
-
     });
 
     Route::group(['prefix' => 'shops'], function () {
@@ -76,7 +73,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/locations/all/barcode', [LocationsBarcodesController::class, 'index'])->name('manager.shops.locations.barcodes.all');
         Route::get('/locations/single/barcode/{uid}', [LocationsBarcodesController::class, 'destroy'])->name('manager.shops.locations.barcodes.single');
         Route::get('/locations/historys/{uid}', [ShopsLocationsController::class, 'history'])->name('manager.shops.locations.history');
-
         Route::post('/locations/exists/validate', [ShopsLocationsController::class, 'validate'])->name('manager.shops.locations.exists.validate');
 
     });
@@ -135,7 +131,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/', [SettingsController::class, 'index'])->name('manager.settings');
         Route::post('/update', [SettingsController::class, 'update'])->name('manager.settings.update');
-
     });
 
     Route::group(['prefix' => 'users'], function () {
@@ -194,6 +189,13 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/destroy/{uid}', [SubscribersController::class, 'destroy'])->name('manager.subscribers.destroy');
         Route::get('/logs/{slack}', [SubscribersController::class, 'logs'])->name('manager.subscribers.logs');
 
+        Route::get('/imports/create', [SubscribersController::class, 'createImport'])->name('manager.subscribers.create');
+        Route::get('/imports/{import_uid}', [SubscribersController::class, 'createImports'])->name('manager.subscribers.import');
+        Route::post('/imports/{import_uid}/dispatch', [SubscribersController::class, 'dispatchImportListsJobs'])->name('manager.subscribers.import.dispatch');
+        Route::get('/imports/{job_uid}/progress', [SubscribersController::class, 'importListsProgress'])->name('manager.subscribers.import.progress');
+        Route::get('/imports/{job_uid}/log/download', [SubscribersController::class, 'downloadImportListsLog'])->name('manager.subscribers.import.log.download');
+        Route::post('/imports/{job_uid}/cancel', [SubscribersController::class, 'cancelImportLists'])->name('manager.subscribers.import.cancel');
+
         Route::get('/lists', [SubscribersListsController::class, 'index'])->name('manager.subscribers.lists');
         Route::get('/list/{uid}', [SubscribersListsController::class, 'list'])->name('manager.subscribers.list');
         Route::get('/lists/report', [SubscribersListsController::class, 'report'])->name('manager.subscribers.lists.reports');
@@ -220,7 +222,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/conditions/view/{uid}', [SubscribersConditionsController::class, 'view'])->name('manager.subscribers.conditions.view');
         Route::get('/conditions/destroy/{uid}', [SubscribersConditionsController::class, 'destroy'])->name('manager.subscribers.conditions.destroy');
 
-        Route::get('/lists/destroy/subscribers/{uid}', [SubscribersListsUserController::class, 'destroy'])->name('manager.subscribers.lists.user.destroy');
 
     });
 
@@ -254,7 +255,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::post('/hours/update', [HoursSettingsController::class, 'update'])->name('manager.settings.hours.update');
 
     });
-
 
     Route::group(['prefix' => 'faqs'], function () {
 
@@ -330,7 +330,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
 
     });
-
 
     Route::group(['prefix' => 'tickets'], function () {
 
@@ -455,7 +454,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/{uid}/builder/change-template/{change_uid}', [TemplatesController::class, 'builderChangeTemplate'])->name('manager.templates.builder.change.template');
 
     });
-
 
     Route::group(['prefix' => 'campaigns'], function () {
 

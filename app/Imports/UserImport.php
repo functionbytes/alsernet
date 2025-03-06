@@ -2,26 +2,23 @@
 
 namespace App\Imports;
 
-use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Validators\Failure;
-use Hash;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use App\Models\User;
 use Throwable;
+use Hash;
 
 class UserImport implements ToModel, WithHeadingRow, WithValidation
 {
     use Importable;
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+
     public function model(array $row)
     {
         $user = User::where('empid', $row['empid'])->first();

@@ -5,7 +5,6 @@ use App\Http\Controllers\Shops\Settings\SettingsController;
 use App\Http\Controllers\Shops\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::group(['prefix' => 'shop', 'middleware' => ['auth', 'roles:shops']], function () {
 
     Route::get('/', [DashboardController::class, 'dashboard'])->name('shop.dashboard');

@@ -38,7 +38,6 @@
                                 </div>
                             </div>
 
-
                             <div class="col-6">
                                 <div class="mb-3">
                                     <label for="lang" class="control-label col-form-label">Pais</label>

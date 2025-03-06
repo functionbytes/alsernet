@@ -132,6 +132,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
 
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
         //Laravel\Horizon\HorizonServiceProvider::class,
 
         App\Providers\AppServiceProvider::class,
@@ -150,6 +151,9 @@ return [
         'Str' => Illuminate\Support\Str::class,
         'Auth' => Illuminate\Support\Facades\Auth::class,
         'Redis' => Illuminate\Support\Facades\Redis::class,
+        'Route' => Illuminate\Support\Facades\Route::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+
     ],
 
     /*

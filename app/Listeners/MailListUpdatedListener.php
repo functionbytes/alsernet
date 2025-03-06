@@ -2,17 +2,16 @@
 
 namespace App\Listeners;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use App\Events\MailListUpdated;
 use App\Jobs\UpdateMailListJob;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class MailListUpdatedListener
 {
 
     public function __construct()
     {
-        //
     }
 
     public function handle(MailListUpdated $event)

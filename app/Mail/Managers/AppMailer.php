@@ -14,10 +14,6 @@ class AppMailer
     protected $view;
     protected $data = [];
 
-    /**
-     * AppMailer constructor.
-     * @param $mailer
-     */
     public function __construct(Mailer $mailer)
     {
         $this->mailer = $mailer;
@@ -45,13 +41,7 @@ class AppMailer
 
         return $this->deliver();
     }
-   /**
-	 * Send ticket status notification
-	 *
-	 * @param  User   $ticketOwner
-	 * @param  Ticket  $ticket
-	 * @return method deliver()
-	 */
+
 	public function sendTicketStatusNotification($ticketOwner, Ticket $ticket)
 	{
 		$this->to = $ticketOwner->email;

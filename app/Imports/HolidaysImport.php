@@ -2,35 +2,30 @@
 
 namespace App\Imports;
 
-use App\Models\Holiday;
-use Maatwebsite\Excel\Concerns\ToModel;
 
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Maatwebsite\Excel\Validators\Failure;
-use Hash;
-use Throwable;
-use App\Models\Customer;
-use App\Models\CustomerSetting;
-use App\Mail\mailmailablesend;
-use Mail;
-use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Validators\Failure;
+use Maatwebsite\Excel\Concerns\ToModel;
+use App\Mail\mailmailablesend;
+use Illuminate\Validation\Rule;
+use App\Models\CustomerSetting;
+use App\Models\Holiday;
+use App\Models\Customer;
 use Carbon\Carbon;
+use Throwable;
+use Hash;
+use Mail;
 
 class HolidaysImport implements ToModel, WithHeadingRow,SkipsOnError, WithValidation
 {
     use Importable, SkipsErrors;
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
     public function model(array $row)
     {
         if($row['primaray_color']){
@@ -66,8 +61,6 @@ class HolidaysImport implements ToModel, WithHeadingRow,SkipsOnError, WithValida
             '*.enddate' => ['required','date', 'after_or_equal:' . now()->format('Y-m-d')],
             '*.holidaydescription' => ['required'],
         ];
-
-
     }
 
 }

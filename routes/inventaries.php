@@ -1,20 +1,16 @@
 <?php
 
-use App\Http\Controllers\Inventaries\DashboardController;
-use App\Http\Controllers\Inventaries\Inventaries\ReportsController;
-use App\Http\Controllers\Inventaries\Inventaries\ResumenController;
 use App\Http\Controllers\Inventaries\Products\BarcodeController as ProductsBarcodesController;
 use App\Http\Controllers\Inventaries\Locations\BarcodeController as LocationsBarcodesController;
 use App\Http\Controllers\Inventaries\Shops\Locations\LocationsController as ShopsLocationsController;
+use App\Http\Controllers\Inventaries\Inventaries\InventariesController;
+use App\Http\Controllers\Inventaries\Inventaries\ReportsController;
+use App\Http\Controllers\Inventaries\Inventaries\ResumenController;
 use App\Http\Controllers\Inventaries\Shops\Shops\ShopsController;
+use App\Http\Controllers\Inventaries\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-
-
-use App\Http\Controllers\Inventaries\Inventaries\InventariesController;
-
 use App\Http\Controllers\Inventaries\Inventaries\LocationsController as InventariesLocationsController;
-
 
 Route::group(['prefix' => 'inventarie', 'middleware' => ['auth', 'roles:inventaries']], function () {
 

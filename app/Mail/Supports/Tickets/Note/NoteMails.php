@@ -6,6 +6,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailable;
+
 class NoteMails extends Mailable
 {
     use Dispatchable,  InteractsWithQueue, SerializesModels;
@@ -16,7 +17,6 @@ class NoteMails extends Mailable
     {
         $this->note = $note->ticket;
     }
-
    public function build()
    {
         return $this->subject("INOQUALABPAGO APROBADO")
@@ -31,7 +31,6 @@ class NoteMails extends Mailable
                         'method' => $this->method,
                         'total' => $this->total,
         ]);
-
     }
 
 }

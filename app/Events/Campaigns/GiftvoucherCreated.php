@@ -2,9 +2,9 @@
 
 namespace App\Events\Campaigns;
 
-use App\Models\Subscriber\Subscriber;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
+use App\Models\Subscriber\Subscriber;
 use Illuminate\Queue\SerializesModels;
 
 class GiftvoucherCreated

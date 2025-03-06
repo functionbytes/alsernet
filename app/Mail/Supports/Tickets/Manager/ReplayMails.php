@@ -13,16 +13,16 @@ class ReplayMails extends Mailable
 
     public $ticket;
 
-    public function __construct($ticket)
+    public function __construct($tickets)
     {
-        $this->ticket = $order->ticket;
-        $this->uid = $order->uid;
-        $this->email = $order->user->email;
-        $this->firstname = $order->user->firstname;
-        $this->lastname = $order->user->lastname;
-        $this->payment = humanize_date($order->payment_at);
-        $this->method = $order->method->title;
-        $this->total = $order->total;
+        $this->ticket = $tickets->ticket;
+        $this->uid = $tickets->uid;
+        $this->email = $tickets->user->email;
+        $this->firstname = $tickets->user->firstname;
+        $this->lastname = $tickets->user->lastname;
+        $this->payment = humanize_date($tickets->payment_at);
+        $this->method = $tickets->method->title;
+        $this->total = $tickets->total;
     }
 
    public function build()

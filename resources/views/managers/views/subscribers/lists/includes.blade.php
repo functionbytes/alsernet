@@ -29,11 +29,12 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Suscripciones</label>
-                                    <div class="input-group">
-                                        {!! Form::select('newsletters[]', $newsletters, null , ['class' => 'select2 form-control','id' => 'newsletters','multiple' => 'multiple']) !!}
-                                    </div>
-                                    <label id="newsletters-error" class="error d-none" for="newsletters"></label>
+                                    <select class="form-control select2" id="subscribers" name="subscribers[]" multiple="multiple">
+                                        @foreach($subscribers as $id => $name)
+                                            <option value="{{ $id }}" >{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label id="subscribers-error" class="error d-none" for="users"></label>
                                 </div>
                             </div>
 

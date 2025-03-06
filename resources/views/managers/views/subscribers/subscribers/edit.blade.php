@@ -42,24 +42,13 @@
                                     <input type="text" class="form-control" id="lastname"   value="{{ $subscriber->lastname }}" placeholder="Ingresar apellidos" autocomplete="new-password">
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-6">
                                 <div class="mb-3">
                                     <label  class="control-label col-form-label">Correo electronico</label>
                                     <input type="text" class="form-control" id="email"  value="{{ $subscriber->email }}" placeholder="Ingresar el correo electronico" autocomplete="new-password">
                                 </div>
                             </div>
 
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="categories" class="control-label col-form-label">Categorias</label>
-                                    <select class="form-control select2" id="categories" multiple="multiple">
-                                        @foreach($categories as $id => $name)
-                                            <option value="{{ $id }}" {{ in_array($id, $subscriber->categories->pluck('id')->toArray()) ? 'selected' : '' }}>{{ $name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <label id="categories-error" class="error d-none" for="categories"></label>
-                                </div>
-                            </div>
 
                             <div class="col-6">
                                 <div class="mb-3">
@@ -89,6 +78,18 @@
                                         <option value="1" {{ $subscriber->parties == 1 ? 'selected' : '' }}>Si</option>
                                         <option value="0" {{ $subscriber->parties == 0 ? 'selected' : '' }}>No</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="categories" class="control-label col-form-label">Categorias</label>
+                                    <select class="form-control select2" id="categories" multiple="multiple">
+                                        @foreach($categories as $id => $name)
+                                            <option value="{{ $id }}" {{ in_array($id, $subscriber->categories->pluck('id')->toArray()) ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label id="categories-error" class="error d-none" for="categories"></label>
                                 </div>
                             </div>
 

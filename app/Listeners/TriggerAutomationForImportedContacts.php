@@ -2,31 +2,19 @@
 
 namespace App\Listeners;
 
-use App\Events\MailListImported;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-
 use App\Models\Automation\Automation;
+use App\Events\MailListImported;
 use App\Models\Setting;
 
 class TriggerAutomationForImportedContacts
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
+
     public function __construct()
     {
-        //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  MailListImported  $event
-     * @return void
-     */
     public function handle(MailListImported $event)
     {
         $trigger = Setting::isYes('automation.trigger_imported_contacts');
@@ -50,4 +38,5 @@ class TriggerAutomationForImportedContacts
             $auto->triggerImportedContacts($event->importBatchId);
         };
     }
+
 }

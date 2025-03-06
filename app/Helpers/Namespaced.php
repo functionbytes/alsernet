@@ -13,16 +13,12 @@ use Mika56\SPFCheck\DNSRecordGetter;
 
 function generatePublicPath($absPath, $withHost = false)
 {
-    // Notice: $relativePath must be relative to storage/ folder
-    // For example, with a real path of /home/deploy/acellemail/storage/app/sub/example.png
-    // then $relativePath should be "app/sub/example.png"
-
     if (empty(trim($absPath))) {
         throw new Exception('Empty path');
     }
 
     $excludeBase = storage_path();
-    $pos = strpos($absPath, $excludeBase); // Expect pos to be exactly 0
+    $pos = strpos($absPath, $excludeBase);
 
     if ($pos === false) {
         throw new Exception(sprintf("File '%s' cannot be made public, only files under storage/ folder can", $absPath));
@@ -32,8 +28,6 @@ function generatePublicPath($absPath, $withHost = false)
         throw new Exception(sprintf("Invalid path '%s', cannot make it public", $absPath));
     }
 
-    // Do not use string replace, as path parts may occur more than once
-    // For example: abc/xyz/abc/xyz...
     $relativePath = substr($absPath, strlen($excludeBase) + 1);
 
     if ($relativePath === false) {
@@ -44,16 +38,11 @@ function generatePublicPath($absPath, $withHost = false)
     $basename = basename($relativePath);
     $encodedDirname = StringHelper::base64UrlEncode($dirname);
 
-    // If Laravel is under a subdirectory
     $subdirectory = getAppSubdirectory();
 
     if (empty($subdirectory) || $withHost) {
-        // Return something like
-        //     "http://localhost/{subdirectory if any}/p/assets/ef99238abc92f43e038efb"   # withHost = true, OR
-        //     "/p/assets/ef99238abc92f43e038efb"                   # withHost = false
         $url = route('public_assets', [ 'dirname' => $encodedDirname, 'basename' => rawurlencode($basename) ], $withHost);
     } else {
-        // Make sure the $subdirectory has a leading slash ('/')
         $subdirectory = join_paths('/', $subdirectory);
         $url = join_paths($subdirectory, route('public_assets', [ 'dirname' => $encodedDirname, 'basename' => $basename ], $withHost));
     }
@@ -63,9 +52,6 @@ function generatePublicPath($absPath, $withHost = false)
 
 function getAppSubdirectory()
 {
-    // IMPORTANT: do not use url('/') as it will not work correctly
-    // when calling from another file (like filemanager/config/config.php for example)
-    // Otherwise, it will always return 'http://localhost' --> without subdirectory
     $path = parse_url(config('app.url'), PHP_URL_PATH);
 
     if (is_null($path)) {
@@ -76,7 +62,6 @@ function getAppSubdirectory()
     return empty($path) ? null : $path;
 }
 
-// Get application host with {scheme}://{host}:{port} (without subdirectory)
 function getAppHost()
 {
     $fullUrl = config('app.url');
@@ -109,7 +94,6 @@ function updateTranslationFile($targetFile, $sourceFile, $overwriteTargetPhrases
     }
 
     if ($deleteTargetKeys) {
-        // Find keys in $target that are that not available in $source
         $diff = array_diff_key($target, $source);
 
         // Delete those keys in the final result
@@ -124,9 +108,6 @@ function updateTranslationFile($targetFile, $sourceFile, $overwriteTargetPhrases
     \Illuminate\Support\Facades\File::put($targetFile, $out);
 }
 
-// Copy and:
-// + Remove the destination first
-// + Create parent folders if not exist
 function pcopy($src, $dst)
 {
     if (!\Illuminate\Support\Facades\File::exists($src)) {

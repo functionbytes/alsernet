@@ -2,11 +2,11 @@
 
 namespace App\Mail\Subscribers;
 
-use App\Models\Layout\Layout;
+use Illuminate\Queue\SerializesModels;
 use App\Models\Subscriber\Subscriber;
+use App\Models\Layout\Layout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class SubscriberCheckMails extends Mailable
 {

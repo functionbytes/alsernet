@@ -19,15 +19,11 @@ class ProductExport implements FromQuery, Responsable, WithMapping, WithHeadings
     private $modalitie;
 
     public function __construct(){
-        
+
     }
-
     public function query() {
-
         $products = DB::table('products')->where('count', '=', 0)->orderByDesc('count');
-
         return $products;
-
     }
 
     public function headingss(): array
@@ -41,8 +37,6 @@ class ProductExport implements FromQuery, Responsable, WithMapping, WithHeadings
             'INVENTARIO',
         ];
     }
-
-
 
     public function queryss() {
 
@@ -90,14 +84,12 @@ class ProductExport implements FromQuery, Responsable, WithMapping, WithHeadings
 
     public function map($row): array
     {
-
         return [
             $row->title == null ?  '' : $row->title,
             $row->reference == null ?  '' : $row->reference,
             $row->barcode == null ?  '' : $row->barcode,
             $row->count == null ?  '' : $row->count,
         ];
-
     }
     public function headings(): array
     {

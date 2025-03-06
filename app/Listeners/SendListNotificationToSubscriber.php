@@ -2,11 +2,11 @@
 
 namespace App\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use App\Events\MailListUnsubscription;
 use Illuminate\Support\Facades\Mail;
 use App\Events\MailListSubscription;
-use App\Events\MailListUnsubscription;
 use App\Models\Setting;
 
 class SendListNotificationToSubscriber
@@ -14,7 +14,6 @@ class SendListNotificationToSubscriber
 
     public function __construct()
     {
-        //
     }
 
     public function handleMailListSubscription(MailListSubscription $event)

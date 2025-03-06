@@ -35,32 +35,16 @@
 
                                     <div class="col-12">
                                         <div class="mb-3">
-                                            <label for="lists" class="control-label col-form-label">Listas</label>
-                                            <select class="form-control select2" id="lists" name="lists[]" multiple="multiple" required>
-                                                @foreach($listssubscribers as $id => $item)
-                                                    <option value="{{ $id }}">{{ $item }}</option>
-                                                @endforeach
-                                            </select>
-                                            <label id="lists-error" class="error d-none" for="lists"></label>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <div class="mb-3">
                                             <label for="lists" class="control-label col-form-label">Listado a importar</label>
                                             @include('helpers.form_control', ['type' => 'file', 'label' => '', 'name' => 'file', 'value' => $list->title])
                                         </div>
                                     </div>
-
                                 </div>
-
                                 <div class="border-top pt-1 mt-3">
                                     <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                                         Importar
                                     </button>
                                 </div>
-                                </div>
-
 
                             </div>
 
@@ -104,10 +88,10 @@
 
                             <div class="form-group finish hide">
                                 <div class="text-left">
-                                    <a  href="{{ route('manager.campaigns.maillists.subscribers.index', $list->uid) }}"  class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
+                                    <a  href="{{ route('manager.subscribers', $list->uid) }}"  class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                                        Listado
                                     </a>
-                                    <a href="{{ route('manager.campaigns.maillists.subscribers.import.lists', $list->uid) }}" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100 ">
+                                    <a href="{{ route('manager.subscribers.create', $list->uid) }}" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100 ">
                                         Importar listas
                                     </a>
                                 </div>

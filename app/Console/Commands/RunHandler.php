@@ -30,38 +30,19 @@ use Acelle\Library\Lockable;
 
 class RunHandler extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+
     protected $signature = 'handler:run';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Command description';
 
-    /**
-     * Create a new command instance.
-     */
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
     public function handle()
     {
         $timeoutCallback = function () {
-            // just do nothing, wait for the current process to finish
-            // passing a closure to avoid an exception
         };
 
         $lock = new Lockable(storage_path('locks/bounce-feedback-handler'));
@@ -74,18 +55,10 @@ class RunHandler extends Command
         return 0;
     }
 
-    /**
-     * Actually run the handler.
-     *
-     * @return mixed
-     */
     private function execRunHandler()
     {
-        // guarantee that only one process can be run at one time
-        // use socket as lock
         Log::info('Try to start handling process...');
 
-        // bounce
         $handlers = BounceHandler::get();
         Log::info(sizeof($handlers).' bounce handlers found');
         $count = 1;
@@ -96,7 +69,6 @@ class RunHandler extends Command
             $count += 1;
         }
 
-        // abuse
         $handlers = FeedbackLoopHandler::get();
         Log::info(sizeof($handlers).' feedback loop handlers found');
         $count = 1;

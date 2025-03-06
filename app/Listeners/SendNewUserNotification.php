@@ -10,12 +10,10 @@ class SendNewUserNotification
 {
     public function __construct()
     {
-        //
     }
 
     public function handle($event)
     {
-        //
     }
 
 }

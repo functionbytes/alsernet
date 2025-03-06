@@ -504,8 +504,6 @@ class SubscriberController extends Controller
         }
     }
 
-
-
     public function cancelExportLists(Request $request)
     {
         $job = JobMonitor::findByUid($request->job_uid);
@@ -522,7 +520,6 @@ class SubscriberController extends Controller
     public function downloadImportListsLog(Request $request)
     {
         $job = JobMonitor::findByUid($request->job_uid);
-
         return response()->download($job->getJsonData()['logfile']);
     }
 

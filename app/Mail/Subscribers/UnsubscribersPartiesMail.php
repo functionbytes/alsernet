@@ -2,12 +2,12 @@
 
 namespace App\Mail\Subscribers;
 
-use App\Models\Layout\Layout;
-use App\Models\Subscriber\Subscriber;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Crypt;
+use App\Models\Subscriber\Subscriber;
+use App\Models\Layout\Layout;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
 
 class UnsubscribersPartiesMail extends Mailable
 {
@@ -19,7 +19,6 @@ class UnsubscribersPartiesMail extends Mailable
     {
         $this->subscriber = $subscriber;
     }
-
     public function build()
     {
 
@@ -40,7 +39,7 @@ class UnsubscribersPartiesMail extends Mailable
             ->view('emails.newsletters.actions')
             ->with([
                 'htmlContent' => $htmlContent,
-            ]);
+        ]);
     }
 
     public function generateVerificationUrl()

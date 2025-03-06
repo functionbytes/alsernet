@@ -4,28 +4,23 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MailConfigServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     */
     public function register(): void
     {
         try {
-            // Verifica si la conexión a la base de datos está disponible
+
             if (!DB::connection()->getPdo()) {
                 return;
             }
 
-            // Verifica si la tabla `settings` existe
             if (!DB::getSchemaBuilder()->hasTable('settings')) {
                 return;
             }
 
-            // Usa caché para mejorar el rendimiento
             $settings = Cache::remember('mail_settings', now()->addMinutes(10), function () {
                 return DB::table('settings')
                     ->whereIn('key', [
@@ -35,7 +30,6 @@ class MailConfigServiceProvider extends ServiceProvider
                     ->pluck('value', 'key');
             });
 
-            // Configurar mail en Laravel
             Config::set('mail', [
                 'driver'     => 'smtp',
                 'host'       => $settings['mail_host'] ?? 'smtp.example.com',
@@ -50,16 +44,16 @@ class MailConfigServiceProvider extends ServiceProvider
                 'sendmail'   => '/usr/sbin/sendmail -bs',
                 'pretend'    => false,
             ]);
+
         } catch (\Exception $e) {
             \Log::error('MailConfigServiceProvider Error: ' . $e->getMessage());
         }
+
     }
 
-    /**
-     * Bootstrap services.
-     */
     public function boot(): void
     {
-        //
+
     }
+
 }

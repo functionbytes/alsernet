@@ -14,21 +14,11 @@ class UnsubscribersSportsMail extends Mailable
 
     public $newsletter;
 
-    /**
-     * Crea una nueva instancia de la clase de correo.
-     *
-     * @param Subscriber $newsletter
-     */
     public function __construct(Subscriber $newsletter)
     {
         $this->newsletter = $newsletter;
     }
 
-    /**
-     * Construir el mensaje del correo.
-     *
-     * @return $this
-     */
     public function build()
     {
 
@@ -44,7 +34,6 @@ class UnsubscribersSportsMail extends Mailable
         $htmlContent = str_replace('{USER_EMAIL}', $this->email, $htmlContent);
         $htmlContent = str_replace('{VERIFICATION_LINK}', $this->generateVerificationUrl(), $htmlContent);
 
-        // build the message
         $message = new ExtendedSwiftMessage();
         $message->setEncoder(new \Swift_Mime_ContentEncoder_PlainContentEncoder('8bit'));
         $message->setContentType('text/html; charset=utf-8');
@@ -61,11 +50,11 @@ class UnsubscribersSportsMail extends Mailable
             throw new \Exception($result['error']);
         }
 
-
         return $this->subject('Newsletter - ' . $this->newsletter->title)
             ->view('emails.newsletters.actions')  // Asegúrate de tener la vista de correo configurada
             ->with([
                 'newsletter' => $this->newsletter,
-            ]);
+        ]);
+
     }
 }

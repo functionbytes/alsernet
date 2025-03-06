@@ -38,6 +38,11 @@
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
+                            <div class="col-auto">
+                                <a href=" {{ route('manager.subscribers.create') }}" class="btn btn-primary">
+                                    <i class="fa-duotone fa-plus"></i>
+                                </a>
+                            </div>
                         </div>
                     </form>
                 </div>

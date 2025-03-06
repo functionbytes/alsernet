@@ -17,17 +17,12 @@ class ProductKardexExport implements FromQuery, Responsable, WithMapping, WithHe
     private $course;
     private $enterprise;
     private $modalitie;
-
     public function __construct(){
-        
+
     }
-
     public function query() {
-
         $products = DB::table('products')->where('count', '=', 0)->orderByDesc('count');
-
         return $products;
-
     }
 
     public function headingss(): array
@@ -41,9 +36,6 @@ class ProductKardexExport implements FromQuery, Responsable, WithMapping, WithHe
             'INVENTARIO',
         ];
     }
-
-
-
 
     public function queryss() {
 
@@ -77,7 +69,6 @@ class ProductKardexExport implements FromQuery, Responsable, WithMapping, WithHe
     }
     public function maps($row): array
     {
-
         return [
             $row->title == null ?  '' : $row->title,
             $row->reference == null ?  '' : $row->reference,
@@ -86,12 +77,10 @@ class ProductKardexExport implements FromQuery, Responsable, WithMapping, WithHe
             $row->original_id == null ?  '' : Location::id($row->original_id)->title,
             $row->inventory_count == null ?  '' : $row->inventory_count,
         ];
-
     }
 
     public function map($row): array
     {
-
         return [
             $row->title == null ?  '' : $row->title,
             $row->reference == null ?  '' : $row->reference,

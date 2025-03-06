@@ -1,39 +1,28 @@
 <?php
 
 use App\Models\Setting\Setting;
-use Carbon\Carbon;
 use App\Models\User;
+use Carbon\Carbon;
 
 if (!function_exists('setCoupon')) {
-    // set coupon code in cookie
-    function setCoupon($coupon)
-    {
+    function setCoupon($coupon){
         $theTime = time() + 86400 * 7;
-        setcookie('coupon_code', $coupon->code, $theTime, '/'); // 86400 = 1 day
+        setcookie('coupon_code', $coupon->code, $theTime, '/');
     }
 }
 
-
 if (!function_exists('updateSettings')) {
-    function updateSettings($data)
-    {
-
+    function updateSettings($data){
         foreach($data as $key => $val){
             $setting = Setting::where('key', $key);
-
             if( $setting->exists() ){
                 $setting->first()->update(['value' => $val]);
             }
         }
-
     }
-
 }
 
-
 if (!function_exists('setting')) {
-    // remove coupon code from  cookie
-
     function setting($key){
         return  Setting::where('key','=',$key)->first()->value ?? '' ;
     }
@@ -243,7 +232,6 @@ if (!function_exists('formatPrice')) {
     function formatPrice($price, $truncate = false, $forceTruncate = false, $addSymbol = true, $numberFormat = true)
 
     {
-        // convert amount equal to local currency
         if (request()->hasHeader('Currency-Code')) {
             $price = floatval($price) / (floatval(env('DEFAULT_CURRENCY_RATE')) || 1);
             $price = floatval($price) * floatval(ApiCurrencyMiddleWare::currencyData()->rate);
@@ -253,22 +241,17 @@ if (!function_exists('formatPrice')) {
         }
 
         if ($numberFormat) {
-            // truncate price
             if ($truncate) {
                 if (getSetting('truncate_price') == 1 || $forceTruncate == true) {
                     if ($price < 1000000) {
-                        // less than a million
                         $price = number_format($price, getSetting('no_of_decimals'));
                     } else if ($price < 1000000000) {
-                        // less than a billion
                         $price = number_format($price / 1000000, getSetting('no_of_decimals')) . 'M';
                     } else {
-                        // at least a billion
                         $price = number_format($price / 1000000000, getSetting('no_of_decimals')) . 'B';
                     }
                 }
             } else {
-                // decimals
                 if (getSetting('no_of_decimals') > 0) {
                     $price = number_format($price, getSetting('no_of_decimals'));
                 } else {
@@ -281,7 +264,7 @@ if (!function_exists('formatPrice')) {
             // currency symbol
             if (request()->hasHeader('Currency-Code')) {
                 $symbol             =   ApiCurrencyMiddleWare::currencyData()->symbol;
-                $symbolAlignment    =    ApiCurrencyMiddleWare::currencyData()->alignment;
+                $symbolAlignment    =   ApiCurrencyMiddleWare::currencyData()->alignment;
             } else {
                 $symbol             = Session::has('currency_symbol')           ? Session::get('currency_symbol')           : env('DEFAULT_CURRENCY_SYMBOL');
                 $symbolAlignment    = Session::has('currency_symbol_alignment') ? Session::get('currency_symbol_alignment') : env('DEFAULT_CURRENCY_SYMBOL_ALIGNMENT');
@@ -332,13 +315,9 @@ if (!function_exists('getSubTotal')) {
     function getSubTotal($price, $couponDiscount = true, $couponCode = '', $addTax = true)
     {
         $amount = 0;
-
-        # calculate coupon discount
         if ($couponDiscount) {
             $amount = getCouponDiscount($price, $couponCode);
         }
-
-
         return $price - $amount;
     }
 }
@@ -381,57 +360,46 @@ if (!function_exists('getMeta')) {
 
 if (!function_exists('getUrl')) {
     function getUrl(){
-
         return URL::to('/');
-
     }
 }
 
 if (!function_exists('getLogo')) {
     function getLogo(){
-
         $setting = Setting::where('key', '=', "page_logo")->first();
-
         return count($setting->getMedia('logo'))>0 ? $setting->getfirstMedia('logo')->getfullUrl()  : asset('/pages/images/logo.png');
     }
 }
 
 if (!function_exists('getSetting')) {
     function getSetting(){
-
         return Setting::first();
     }
 }
 
 if (!function_exists('getMeta')) {
     function getMeta(){
-
         $setting = Setting::where('key', '=', "meta_image")->first();
-
         return count($setting->getMedia('metas'))>0 ? $setting->getfirstMedia('metas')->getfullUrl()  : asset('/pages/metas/logo.png');
     }
 }
 
 if (!function_exists('clearSessionExceptCurrent')) {
     function clearSessionExceptCurrent(User $user){
-
         if(config('session.driver') == 'database'){
             $user->sessions()->where('id', '<>', session()->getId())->delete();
         }else{
             $user->sessions()->where('id', '<>', session()->getId())->delete();
         }
-
-
     }
 }
 
 if (!function_exists('paginationNumber')) {
-    # return number of data per page
-    function paginationNumber($value = null)
-    {
+    function paginationNumber($value = null){
         return $value != null ? $value : env('DEFAULT_PAGINATION');
     }
 }
+
 function certificate_date($dates): string {
     $date = Carbon::parse($dates);
     return ucwords($date->format('d-m-Y'));
@@ -470,7 +438,7 @@ function input_date($dates): string{
 }
 
 
-
+use Illuminate\Support\Facades\DB;
 use function App\Helpers\xml_to_array;
 
 function table($name)
@@ -478,41 +446,16 @@ function table($name)
     return \DB::getTablePrefix() . $name;
 }
 
-/**
- * Quote a value with astrophe to inject to an SQL statement.
- *
- * @param string original value
- *
- * @return string quoted value
- * @todo: use MySQL escape function to correctly escape string with astrophe
- */
 function quote($value)
 {
     return "'$value'";
 }
 
-/**
- * Quote a value with astrophe to inject to an SQL statement.
- *
- * @param string original value
- *
- * @return string quoted value
- * @todo: use MySQL escape function to correctly escape string with astrophe
- */
 function db_quote($value)
 {
     return \DB::connection()->getPdo()->quote($value);
 }
 
-/**
- * Break an array into smaller batches (arrays).
- *
- * @param array original array
- * @param int batch size
- * @param bool whether or not to skip the first header line
- * @param callback function
- *
- */
 function each_batch($array, $batchSize, $skipHeader, $callback)
 {
     $batch = [];
@@ -535,13 +478,6 @@ function each_batch($array, $batchSize, $skipHeader, $callback)
     }
 }
 
-/**
- * Join filesystem path strings.
- *
- * @param * parts of the path
- *
- * @return string a full path
- */
 function join_paths()
 {
     $paths = array();
@@ -549,7 +485,6 @@ function join_paths()
         if (is_null($arg)) {
             continue;
         }
-
         if (preg_match('/http:\/\//i', $arg)) {
             throw new \Exception('Path contains http://! Use `join_url` instead. Error for ' . implode('/', func_get_args()));
         }
@@ -562,13 +497,6 @@ function join_paths()
     return preg_replace('#/+#', '/', implode('/', $paths));
 }
 
-/**
- * Join URL parts.
- *
- * @param * parts of the URL. Note that the first part should be something like http:// or http://host.name
- *
- * @return string a full URL
- */
 function join_url()
 {
     $paths = array();
@@ -581,13 +509,6 @@ function join_url()
     return preg_replace('#(?<=[^:])/+#', '/', implode('/', $paths));
 }
 
-/**
- * Get unique array based on user defined condition.
- *
- * @param array original array
- *
- * @return array unique array
- */
 function array_unique_by($array, $callback)
 {
     $result = [];
@@ -614,6 +535,7 @@ function get_localization_config($name, $locale)
     } else {
         throw new \Exception('Localization config for "' . $name . '" does not exist');
     }
+
 }
 
 function get_datetime_format($name, $locale)
@@ -631,6 +553,7 @@ function get_datetime_format($name, $locale)
     } else {
         throw new \Exception('AC: Invalid datetime format type: ' . $name . ' => make sure the type is available in BOTH local and default (*) settings');
     }
+
 }
 
 function format_datetime(?\Carbon\Carbon $datetime, $name, $locale)
@@ -641,52 +564,29 @@ function format_datetime(?\Carbon\Carbon $datetime, $name, $locale)
     return $datetime->format(get_datetime_format($name, $locale));
 }
 
-/**
- * Check if exec() function is available.
- *
- * @return bool
- */
 function exec_enabled()
 {
     try {
-        // make a small test
         exec('ls');
-
         return function_exists('exec') && !in_array('exec', array_map('trim', explode(', ', ini_get('disable_functions'))));
     } catch (\Throwable $ex) {
         return false;
     }
 }
 
-/**
- * Run artisan migrate.
- *
- * @return bool
- */
 function artisan_migrate()
 {
     \Artisan::call('migrate', ['--force' => true]);
 }
 
-/**
- * Check if site is in demo mod.
- *
- * @return bool
- */
 function isSiteDemo()
 {
     return config('app.demo');
 }
 
-/**
- * Get language code.
- *
- * @return string
- */
 function language_code()
 {
-    // Get default language code from setting
-    $default_language = \App\Models\Language::find(\App\Models\Setting::get('default_language'));
+    $default_language = Language::find(Setting::get('default_language'));
 
     if (isset($_COOKIE['last_language_code'])) {
         $language_code = $_COOKIE['last_language_code'];
@@ -701,11 +601,6 @@ function language_code()
     return $language_code;
 }
 
-/**
- * Format a number as percentage.
- *
- * @return string
- */
 function number_to_percentage($number, $precision = 2)
 {
     if (!is_numeric($number)) {
@@ -715,11 +610,6 @@ function number_to_percentage($number, $precision = 2)
     return sprintf("%.{$precision}f%%", $number * 100);
 }
 
-/**
- * Format a number with delimiter.
- *
- * @return string
- */
 function number_with_delimiter($number, $precision = null, $seperator = null, $locale = null)
 {
     if (!is_numeric($number)) {
@@ -730,7 +620,6 @@ function number_with_delimiter($number, $precision = null, $seperator = null, $l
         $locale = 'es';
     }
 
-    // Trick!
     if (floor($number) == $number && is_null($precision)) {
         $precision = 0;
     }
@@ -748,16 +637,6 @@ function number_with_delimiter($number, $precision = null, $seperator = null, $l
     return number_format($number, $precision, $decimal, $seperator);
 }
 
-/**
- * Overwrite the Laravel's Builder#paginate, accept a $total parameter specifying the total number of records.
- *
- * @param int      $perPage
- * @param array    $columns
- * @param string   $pageName
- * @param int|null $page
- *
- * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
- */
 function optimized_paginate($builder, $perPage = 15, $columns = null, $pageName = null, $page = null, $total = null)
 {
     $pageName = $pageName ?: 'page';
@@ -773,42 +652,24 @@ function optimized_paginate($builder, $perPage = 15, $columns = null, $pageName 
     ]);
 }
 
-/**
- * Distinct count helper for performance.
- *
- * @return int
- */
 function distinctCount($builder, $column = null, $method = 'group')
 {
     $q = clone $builder;
-    /*
-     * There are 2 options to COUNT DISTINCT
-     *   1. Use DISTINCT
-     *   2. Use GROUP BY
-     * Normally GROUP BY yields better performance (for example: 500,000 records, DISTINCT -> 7 seconds, GROUP BY -> 1.9 seconds)
-     **/
 
     if (is_null($column)) {
-        // just count it
     } elseif ($method == 'group') {
         $q->groupBy($column)->select($column);
     } elseif ($method == 'distinct') {
         $q->select($column)->distinct();
     }
 
-    // Result
-    $count = \DB::table(\DB::raw("({$q->toSql()}) as sub"))
-        ->addBinding($q->getBindings()) // you need to get underlying Query Builder
+    $count = DB::table(DB::raw("({$q->toSql()}) as sub"))
+        ->addBinding($q->getBindings())
         ->count();
 
     return $count;
 }
 
-/**
- * Check if function is enabled.
- *
- * @return bool
- */
 function func_enabled($name)
 {
     try {
@@ -820,22 +681,11 @@ function func_enabled($name)
     }
 }
 
-/**
- * Get the current application version.
- *
- * @return string version
- */
 function app_version()
 {
     return trim(file_get_contents(base_path('VERSION')));
 }
 
-/**
- * Extract email from a string
- * For example: get abc@mail.com from "My Name <abc@mail.com>".
- *
- * @return string version
- */
 function extract_email($str)
 {
     preg_match("/(?<email>[-0-9a-zA-Z\.+_]+@[-0-9a-zA-Z\.+_]+\.[a-zA-Z]+)/", $str, $matched);
@@ -846,12 +696,6 @@ function extract_email($str)
     }
 }
 
-/**
- * Extract name from a string
- * For example: get abc@mail.com from "My Name <abc@mail.com>".
- *
- * @return string version
- */
 function extract_name($str)
 {
     $parts = explode('<', $str);
@@ -863,37 +707,18 @@ function extract_name($str)
     return $parts[0];
 }
 
-/**
- * Extract domain from an email
- * For example: get mail.com from "My Name <abc@mail.com>".
- *
- * @return string version
- */
 function extract_domain($email)
 {
     $email = extract_email($email);
     $domain = substr(strrchr($email, '@'), 1);
-
     return $domain;
 }
 
-/**
- * Doublequote a string.
- *
- * @return string
- */
 function doublequote($str)
 {
     return sprintf('"%s"', preg_replace('/^"+|"+$/', '', $str));
 }
 
-/**
- * Format price.
- *
- * @param string
- *
- * @return string
- */
 function format_price($price, $format = '{PRICE}', $html = false)
 {
     if ($html) {
@@ -905,11 +730,6 @@ function format_price($price, $format = '{PRICE}', $html = false)
     }
 }
 
-/**
- * Check if the app is initiated.
- *
- * @return bool
- */
 function isInitiated()
 {
     return file_exists(storage_path('app/installed'));
@@ -934,21 +754,11 @@ function formatSizeUnits($bytes)
     return $bytes;
 }
 
-/**
- * Get random item from array.
- *
- * @return object
- */
 function rand_item($arr)
 {
     return $arr[array_rand($arr)];
 }
 
-/**
- * Check if string is email.
- *
- * @return object
- */
 function checkEmail($email)
 {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
@@ -956,7 +766,7 @@ function checkEmail($email)
 
 function demo_auth()
 {
-    $auth = \App\Models\User::getAuthenticateFromFile();
+    $auth = User::getAuthenticateFromFile();
 
     return [
         'email' => isset($auth['email']) ? $auth['email'] : '',
@@ -992,18 +802,6 @@ function generateRandomString($length = 10)
     return $randomString;
 }
 
-/**
- * Strip Tags Only
- *
- * Just like strip_tags, but only removes the HTML tags specified and not all of
- * them.
- *
- * @param String $text The text to strip the tags from.
- * @param String|Array $allowedTags This can either be one tag (eg. 'p') or an
- *     array, (eg. ['p','br','h1']).
- * @return String The text with the mentioned tags stripped.
- * @author Aalaap Ghag <aalaap@gmail.com>
- */
 function strip_tags_only($text, $allowedTags = [])
 {
     if (!is_array($allowedTags)) {
@@ -1023,10 +821,6 @@ function strip_tags_only($text, $allowedTags = [])
     return $text;
 }
 
-/*
- *  Iterate through a Eloquent $query using cursor paginate
- *  The $orderBy parameter is critically required for a cursor pagination
- */
 function cursorIterate($query, $orderBy, $size, $callback)
 {
     $cursor = null;
@@ -1041,20 +835,13 @@ function cursorIterate($query, $orderBy, $size, $callback)
     } while ($list->hasMorePages());
 }
 
-/**
- * Convert html to inline.
- *
- * @todo not very OOP here, consider moving this to a Helper instead
- */
 function makeInlineCss($html, array $cssFiles)
 {
-    // disable warning when parsing html content
     libxml_use_internal_errors(true);
 
     $htmldoc = new \App\Library\InlineStyleWrapper($html);
 
     foreach ($cssFiles as $file) {
-        // For safety, in case template is uploaded by user
         if (file_exists($file)) {
             $styles = file_get_contents($file);
             $htmldoc->applyStylesheet($styles);
@@ -1064,7 +851,6 @@ function makeInlineCss($html, array $cssFiles)
     return $htmldoc->getHTML();
 }
 
-//resize and crop image by center
 function resize_crop_image($max_width, $max_height, $source_file, $dst_dir, $quality = 80)
 {
     $imgsize = getimagesize($source_file);
@@ -1100,14 +886,11 @@ function resize_crop_image($max_width, $max_height, $source_file, $dst_dir, $qua
 
     $width_new = $height * $max_width / $max_height;
     $height_new = $width * $max_height / $max_width;
-    //if the new width is greater than the actual width of the image, then the height is too large and the rest cut off, or vice versa
+
     if ($width_new > $width) {
-        //cut point by height
         $h_point = (($height - $height_new) / 2);
-        //copy image
         imagecopyresampled($dst_img, $src_img, 0, 0, 0, $h_point, $max_width, $max_height, $width, $height_new);
     } else {
-        //cut point by width
         $w_point = (($width - $width_new) / 2);
         imagecopyresampled($dst_img, $src_img, 0, 0, $w_point, 0, $max_width, $max_height, $width_new, $height);
     }
@@ -1143,7 +926,6 @@ function filterSearchArray($items, $keyword)
                 foreach ($keywords as $keyword) {
                     $exist = false;
 
-                    // search by names
                     foreach ($item['names'] as $name) {
                         $name = trim(strtolower($name));
                         if (strpos($name, $keyword) !== false) {
@@ -1152,7 +934,6 @@ function filterSearchArray($items, $keyword)
                         }
                     }
 
-                    // search by keywords
                     if (isset($item['keywords'])) {
                         foreach ($item['keywords'] as $k) {
                             $k = trim(strtolower($k));
@@ -1179,7 +960,6 @@ function filterSearchArray($items, $keyword)
         }
     }
 
-    // sort
     usort($results, function ($a, $b) {
         if ($a['rate'] != $b['rate']) {
             return $a['rate'] <=> $b['rate'];
@@ -1235,13 +1015,11 @@ function getThemeColor($theme = false)
 function getThemeMode($mode, $auto = 'light')
 {
     $themeMode = $mode;
-
     if ($mode == 'auto') {
         if ($auto) {
             $themeMode = $auto;
         }
     }
-
     return $themeMode;
 }
 
@@ -1266,14 +1044,11 @@ function parseRss($config)
 {
     $rss = [];
 
-    // Parse RSS content
     $rssArray = xml_to_array(simplexml_load_string(\App\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA));
     $rssFeed = simplexml_load_string(\App\Helpers\url_get_contents_ssl_safe($config['url']), 'SimpleXMLElement', LIBXML_NOCDATA);
 
-    // Take 10 records only
     $records = array_slice($rssArray['rss']['channel']['item'], 0, $config['size']);
 
-    // feed data
     $feedData = [];
     $feedData['feed_title'] = (string) $rssFeed->channel->title;
     $feedData['feed_description'] = $rssFeed->channel->description->__toString();
@@ -1281,16 +1056,14 @@ function parseRss($config)
     $feedData['feed_pubdate'] = $rssFeed->channel->pubDate->__toString();
     $feedData['feed_build_date'] = $rssFeed->channel->lastBuildDate->__toString();
 
-    // feed parse template
     $rss['FeedTitle'] = parseRssTemplate($config['templates']['FeedTitle']['template'], $feedData);
     $rss['FeedSubtitle'] = parseRssTemplate($config['templates']['FeedSubtitle']['template'], $feedData);
     $rss['FeedTagdLine'] = parseRssTemplate($config['templates']['FeedTagdLine']['template'], $feedData);
 
-    // records
     $rss['items'] = [];
     $count = 0;
+
     foreach ($rssFeed->channel->item as $item) {
-        // item data
         $itemData['item_title'] = $item->title;
         $itemData['item_pubdate'] = $item->pubDate;
         $itemData['item_description'] = $item->description;
@@ -1298,15 +1071,12 @@ function parseRss($config)
         $itemData['item_enclosure_url'] = $item->enclosure['url'];
         $itemData['item_enclosure_type'] = $item->enclosure['type'];
 
-        // item parse template
         $item = [];
         $item['ItemTitle'] = parseRssTemplate($config['templates']['ItemTitle']['template'], $itemData);
         $item['ItemDescription'] = parseRssTemplate($config['templates']['ItemDescription']['template'], $itemData);
         $item['ItemMeta'] = parseRssTemplate($config['templates']['ItemMeta']['template'], $itemData);
         $item['ItemEnclosure'] = parseRssTemplate($config['templates']['ItemEnclosure']['template'], $itemData);
         $item['ItemStats'] = parseRssTemplate($config['templates']['ItemStats']['template'], $itemData);
-
-        // add item to rss items
         $rss['items'][] = $item;
 
         $count += 1;
@@ -1315,8 +1085,6 @@ function parseRss($config)
         }
     }
 
-
-    // Return HTML
     return view('helpers.rss.template', [
         'rss' => $rss,
         'templates' => $config['templates'],
@@ -1596,6 +1364,7 @@ function getFullCodeByLanguageCode($languageCode)
     }
 
     return null;
+
 }
 
 function getDefaultLogoUrl($type)
@@ -1619,9 +1388,8 @@ function getSiteLogoUrl($type)
         throw new \Exception('Logo type must be either "light" or "dark"');
     }
 
-    $logo = \App\Models\Setting::get("site_logo_$type");
+    $logo = Setting::get("site_logo_$type");
 
-    // check if user logo setting exists
     if ($logo) {
         return action('SettingController@file', $logo);
     } else {
@@ -1646,7 +1414,7 @@ function app_profile($key)
 
 function get_app_name()
 {
-    $name = \App\Models\Setting::get('site_name') ?: config('app.name');
+    $name = Setting::get('site_name') ?: config('app.name');
     return $name;
 }
 
@@ -1656,8 +1424,8 @@ function get_tmp_primary_server()
         throw new \Exception('Use in non-SAAS mode only');
     }
 
-    if (\App\Models\SendingServer::active()->count()) {
-        return \App\Models\SendingServer::active()->first()->mapType();
+    if (SendingServer::active()->count()) {
+        return SendingServer::active()->first()->mapType();
     } else {
         return null;
     }
@@ -1665,7 +1433,6 @@ function get_tmp_primary_server()
 
 function get_tmp_quota($customer, $name)
 {
-    // PART 1: PLAN & MISC SETTINGS
     $settings = [
         "email_max" => "-1",
         "list_max" => "-1",
@@ -1691,16 +1458,13 @@ function get_tmp_quota($customer, $name)
         "html_footer" => "",
     ];
 
-    // PART 2: Other settings related to sending server
-    // + allow unverified email address, allowed email verificaiton, allow remote email verification, etc.
-
     if (config('app.saas')) {
         return $customer->getNewOrActiveGeneralSubscription()->planGeneral->getOption($name);
     } else {
         if (!array_key_exists($name, $settings)) {
             throw new \Exception("Key '{$name}' not listed");
         }
-
         return $settings[$name];
     }
+
 }

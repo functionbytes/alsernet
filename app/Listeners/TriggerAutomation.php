@@ -2,31 +2,21 @@
 
 namespace App\Listeners;
 
-use App\Events\MailListSubscription;
-use App\Events\MailListUnsubscription;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Events\MailListUnsubscription;
+use App\Events\MailListSubscription;
 
 use App\Models\Automation\Automation;
 
 class TriggerAutomation
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
+
     public function __construct()
     {
-        //
+
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  MailListSubscription  $event
-     * @return void
-     */
     public function handleMailListSubscription(MailListSubscription $event)
     {
         $automations = $event->subscriber->mailList->automations;
@@ -40,7 +30,6 @@ class TriggerAutomation
             if (is_null($auto->getAutoTriggerFor($event->subscriber))) {
                 $segments = $auto->getSegments();
 
-                // If there is no segment condition, trigger the contact
                 if ($segments->isEmpty()) {
                     $auto->initTrigger($event->subscriber);
                     return;
@@ -61,12 +50,6 @@ class TriggerAutomation
         }
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  MailListSubscription  $event
-     * @return void
-     */
     public function handleMailListUnsubscription(MailListUnsubscription $event)
     {
         $automations = $event->subscriber->mailList->automations;
@@ -84,7 +67,6 @@ class TriggerAutomation
         }
     }
 
-    // Subscribe to many events
     public function subscribe($events)
     {
         $events->listen(
@@ -97,4 +79,5 @@ class TriggerAutomation
             [TriggerAutomation::class, 'handleMailListUnsubscription']
         );
     }
+
 }

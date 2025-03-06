@@ -42,7 +42,6 @@ Route::group(['middleware' => ['web']], function () {
     });
 
     Route::get('/files/{uid}/{name?}', [ function ($uid, $name) {
-        // Do not use $user->getAssetsPath($name), avoid one SQL query!
         $path = storage_path('app/users/' . $uid . '/home/files/' . $name);
         $mime_type = \App\Library\File::getFileType($path);
         if (\Illuminate\Support\Facades\File::exists($path)) {
@@ -99,7 +98,6 @@ Route::group(['middleware' => ['web']], function () {
 
     Route::get('/datatable_locale', 'Controller@datatable_locale');
     Route::get('/jquery_validate_locale', 'Controller@jquery_validate_locale');
-
 
 });
 

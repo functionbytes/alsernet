@@ -35,7 +35,7 @@ class DataCollectionConversation extends Conversation
 
     public function sendDataToEndpoint()
     {
-        $endpoint = 'https://example.com/api/receive-data'; // Reemplaza con tu endpoint real
+        $endpoint = 'https://example.com/api/receive-data';
 
         $response = Http::post($endpoint, [
             'name' => $this->name,

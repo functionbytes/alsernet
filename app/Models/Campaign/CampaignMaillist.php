@@ -79,7 +79,6 @@ class CampaignMaillist extends Model
     protected $sendingSevers = null;
 
 
-
     public function fields()
     {
         return $this->hasMany('App\Models\Campaign\CampaignField');
@@ -146,11 +145,6 @@ class CampaignMaillist extends Model
         });
     }
 
-    /**
-     * Get all items.
-     *
-     * @return collect
-     */
     public static function getAll()
     {
         return self::select('*');
@@ -241,11 +235,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Get all fields.
-     *
-     * @return object
-     */
     public function getFields()
     {
         return $this->fields();
@@ -256,9 +245,6 @@ class CampaignMaillist extends Model
         return $this->getFields()->whereIn('type', ['datetime', 'date']);
     }
 
-    /**
-     * Create default fields for list.
-     */
     public function createDefaultFieds()
     {
         $this->fields()->create([
@@ -290,32 +276,17 @@ class CampaignMaillist extends Model
         ]);
     }
 
-    /**
-     * Get email field.
-     *
-     * @return object
-     */
     public function getEmailField()
     {
         return $this->fields()->where('is_email', true)->first();
     }
 
-    /**
-     * Get field by tag.
-     *
-     * @return object
-     */
     public function getFieldByTag($tag)
     {
         // Case insensitive search
         return $this->fields()->where(DB::raw('LOWER(tag)'), '=', strtolower($tag))->first();
     }
 
-    /**
-     * Get field rules.
-     *
-     * @return object
-     */
     public function getFieldRules()
     {
         $rules = [];
@@ -330,23 +301,11 @@ class CampaignMaillist extends Model
         return $rules;
     }
 
-    /**
-     * Reset the sending server pool.
-     *
-     * @return mixed
-     */
     public static function resetServerPools()
     {
         self::$serverPools = array();
     }
 
-    /**
-     * Check if a email is exsit.
-     *
-     * @param string the email
-     *
-     * @return bool
-     */
     public function checkExsitEmail($email)
     {
         $valid = !filter_var($email, FILTER_VALIDATE_EMAIL) === false &&
@@ -356,11 +315,6 @@ class CampaignMaillist extends Model
         return $valid;
     }
 
-    /**
-     * Get segments select options.
-     *
-     * @return array
-     */
     public function getSegmentSelectOptions($cache = false)
     {
         $options = $this->segments->map(function ($item) use ($cache) {
@@ -370,22 +324,12 @@ class CampaignMaillist extends Model
         return $options;
     }
 
-    /**
-     * Count unsubscribe.
-     *
-     * @return array
-     */
     public function unsubscribeCount()
     {
         // return distinctCount($this->subscribers()->unsubscribed(), 'subscribers.email');
         return $this->subscribers()->unsubscribed()->count();
     }
 
-    /**
-     * Unsubscribe rate.
-     *
-     * @return array
-     */
     public function unsubscribeRate($cache = false)
     {
         $count = $this->subscribersCount($cache);
@@ -396,22 +340,12 @@ class CampaignMaillist extends Model
         return round($this->unsubscribeCount() / $count, 2);
     }
 
-    /**
-     * Count unsubscribe.
-     *
-     * @return array
-     */
     public function subscribeCount()
     {
         // return distinctCount($this->subscribers()->where('status', '=', 'subscribed'), 'subscribers.email');
         return $this->subscribers()->where('status', '=', 'subscribed')->count();
     }
 
-    /**
-     * Unsubscribe rate.
-     *
-     * @return array
-     */
     public function subscribeRate($cache = false)
     {
         $count = $this->subscribersCount($cache);
@@ -422,42 +356,24 @@ class CampaignMaillist extends Model
         return round($this->subscribeCount() / $count, 2);
     }
 
-    /**
-     * Count unsubscribe.
-     *
-     * @return array
-     */
     public function unconfirmedCount()
     {
         // return distinctCount($this->subscribers()->where('status', '=', 'unconfirmed'), 'subscribers.email');
         return $this->subscribers()->where('status', '=', 'unconfirmed')->count();
     }
 
-    /**
-     * Count blacklisted.
-     *
-     * @return array
-     */
     public function blacklistedCount()
     {
         // return distinctCount($this->subscribers()->where('status', '=', 'blacklisted'), 'subscribers.email');
         return $this->subscribers()->where('status', '=', 'blacklisted')->count();
     }
 
-    /**
-     * Count blacklisted.
-     *
-     * @return array
-     */
     public function spamReportedCount()
     {
         // return distinctCount($this->subscribers()->where('status', '=', 'spam-reported'), 'subscribers.email');
         return $this->subscribers()->where('status', '=', 'spam-reported')->count();
     }
 
-    /**
-     * Add customer action log.
-     */
     public function log($name, $customer, $add_datas = [])
     {
         $data = [
@@ -475,9 +391,6 @@ class CampaignMaillist extends Model
         ]);
     }
 
-    /**
-     * Open count.
-     */
     public function openCount()
     {
         $query = CampaignOpenLog::join('tracking_logs', 'tracking_logs.message_id', '=', 'campaign_open_logs.message_id')
@@ -490,11 +403,6 @@ class CampaignMaillist extends Model
         return $query->count();
     }
 
-    /**
-     * Get list click logs.
-     *
-     * @return mixed
-     */
     public function clickLogs()
     {
         $query = CampaignClickLog::join('tracking_logs', 'tracking_logs.message_id', '=', 'click_logs.message_id')
@@ -507,9 +415,6 @@ class CampaignMaillist extends Model
         return $query;
     }
 
-    /**
-     * Open count.
-     */
     public function clickCount()
     {
         $query = $this->clickLogs();
@@ -517,9 +422,6 @@ class CampaignMaillist extends Model
         return $query->distinct('url')->count('url');
     }
 
-    /**
-     * Open count.
-     */
     public function openUniqCount()
     {
         $query = CampaignOpenLog::join('tracking_logs', 'tracking_logs.message_id', '=', 'campaign_open_logs.message_id')
@@ -531,10 +433,6 @@ class CampaignMaillist extends Model
 
         return $query->distinct('subscriber_id')->count('subscriber_id');
     }
-
-    /**
-     * Tracking count.
-     */
     public function trackingCount()
     {
         $query = TrackingLog::whereIn('tracking_logs.subscriber_id', function ($query) {
@@ -649,9 +547,6 @@ class CampaignMaillist extends Model
         return $this->dispatchWithMonitor(new ExportSubscribersJob($this, $segment));
     }
 
-    /**
-     * Export subscribers.
-     */
     public function export($progressCallback = null, $segment = null)
     {
         $processed = 0;
@@ -733,17 +628,9 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Export Segments.
-     */
-    public static function exportSegments($list, $customer, $job)
-    {
-        // todo
+    public static function exportSegments($list, $customer, $job){
     }
 
-    /**
-     * Send subscription confirmation email to subscriber.
-     */
     public function sendSubscriptionConfirmationEmail($subscriber)
     {
         if ($subscriber->isListedInBlacklist()) {
@@ -769,9 +656,6 @@ class CampaignMaillist extends Model
         $this->sendMail($subscriber, $send_page, $send_page->getTransformedSubject($subscriber));
     }
 
-    /**
-     * Send list related email.
-     */
     public function send($message, $params = [])
     {
         $server = $this->pickSendingServer();
@@ -780,9 +664,6 @@ class CampaignMaillist extends Model
         return $server->send($message, $params);
     }
 
-    /**
-     * Send subscription confirmation email to subscriber.
-     */
     public function sendSubscriptionWelcomeEmail($subscriber)
     {
         $list = $this;
@@ -792,9 +673,6 @@ class CampaignMaillist extends Model
         $this->sendMail($subscriber, $send_page, $send_page->getTransformedSubject($subscriber));
     }
 
-    /**
-     * Send unsubscription goodbye email to subscriber.
-     */
     public function sendUnsubscriptionNotificationEmail($subscriber)
     {
         $list = $this;
@@ -826,9 +704,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Send unsubscription goodbye email to list owner.
-     */
     public function sendUnsubscriptionNotificationEmailToListOwner($subscriber)
     {
         // Create a message
@@ -855,9 +730,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Send unsubscription goodbye email to subscriber.
-     */
     public function sendProfileUpdateEmail($subscriber)
     {
         $list = $this;
@@ -867,21 +739,11 @@ class CampaignMaillist extends Model
         $this->sendMail($subscriber, $send_page, $send_page->getTransformedSubject($subscriber));
     }
 
-    /**
-     * Get date | datetime fields.
-     *
-     * @return array
-     */
     public function getDateFields()
     {
         return $this->getFields()->whereIn('type', ['date', 'datetime'])->get();
     }
 
-    /**
-     * Get subscriber's fields select options.
-     *
-     * @return array
-     */
     public function getSubscriberFieldSelectOptions()
     {
         $options = [];
@@ -893,11 +755,6 @@ class CampaignMaillist extends Model
         return $options;
     }
 
-    /**
-     * Get subscriber's fields select options.
-     *
-     * @return array
-     */
     public function getFieldSelectOptions()
     {
         $options = [];
@@ -908,13 +765,6 @@ class CampaignMaillist extends Model
         return $options;
     }
 
-    /**
-     * Read a CSV file, returning the meta information.
-     *
-     * @param string file path
-     *
-     * @return array [$headers, $availableFields, $total, $results]
-     */
     public function getRemainingAddSubscribersQuota()
     {
         $max = get_tmp_quota($this->customer, 'subscriber_max');
@@ -934,13 +784,6 @@ class CampaignMaillist extends Model
         return ($remainingForList > $remaining) ? $remaining : $remainingForList;
     }
 
-    /**
-     * Read a CSV file, returning the meta information.
-     *
-     * @param string file path
-     *
-     * @return array [$headers, $availableFields, $total, $results]
-     */
     public function readCsv($file)
     {
         try {
@@ -1021,13 +864,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Validate imported file's headers.
-     *
-     * @param headers
-     *
-     * @return true or throw an exception
-     */
     private function validateCsvHeader($headers)
     {
         // @todo: validation rules required here, currently hard-coded
@@ -1040,13 +876,6 @@ class CampaignMaillist extends Model
         return true;
     }
 
-    /**
-     * Validate imported record.
-     *
-     * @param headers
-     *
-     * @return bool whether or not the record is valid
-     */
     private function validateCsvRecord($record, $emailFieldName = 'email')
     {
         //@todo: failed validate should affect the count showing up on the UI (currently, failed is also counted as success)
@@ -1097,6 +926,7 @@ class CampaignMaillist extends Model
             }
 
             try {
+
                 $subscribersCollection = collect();
 
                 foreach ($lists as $listId) {
@@ -1329,10 +1159,8 @@ class CampaignMaillist extends Model
         }
     }
 
-
     public function import($file, $mapArray = null, $progressCallback = null, $invalidRecordCallback = null)
     {
-        /* START trick: auto generate map if there is no map passed to the function */
 
         if (is_null($mapArray)) {
             list($headers, $total, $results) = $this->readCsv($file);
@@ -1580,9 +1408,6 @@ class CampaignMaillist extends Model
         }
     }
 
-
-
-    // Call by the LoadImportJobs JOB
     public function parseCsvFile($file, $callback)
     {
         $processed = 0;
@@ -1645,9 +1470,6 @@ class CampaignMaillist extends Model
         return $subscriber;
     }
 
-    /**
-     * Update List related cache.
-     */
     public function updateCachedInfo()
     {
         // Update list's cached information
@@ -1674,11 +1496,6 @@ class CampaignMaillist extends Model
             ->where('sending_servers.status', '=', SendingServer::STATUS_ACTIVE);
     }
 
-    /**
-     * Update sending servers.
-     *
-     * @return array
-     */
     public function updateSendingServers($servers)
     {
         $this->mailListsSendingServers()->delete();
@@ -1694,9 +1511,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Update Campaign cached data.
-     */
     public function getCacheIndex()
     {
         return [
@@ -1747,15 +1561,6 @@ class CampaignMaillist extends Model
         ];
     }
 
-    /**
-     * Send mails of list.
-     *
-     * @param CampaignMailListsSubscriber $subscriber
-     * @param Page       $page
-     * @param string     $title
-     *
-     * @var void
-     */
     public function sendMail($subscriber, $page, $title)
     {
         $page->renderContent(null, $subscriber);
@@ -1783,11 +1588,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Pick one sending server associated to the Mail List.
-     *
-     * @return object SendingServer
-     */
     public function pickSendingServer()
     {
         $selection = $this->getSendingServers();
@@ -1812,11 +1612,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Check if list can send through it's sending servers.
-     *
-     * @var bool
-     */
     public function getSendingServers()
     {
         if (!is_null($this->sendingSevers)) {
@@ -1869,17 +1664,11 @@ class CampaignMaillist extends Model
         return $this->sendingSevers;
     }
 
-    /**
-     * Reset verification data for list.
-     */
     public function resetVerification()
     {
         DB::statement(sprintf('UPDATE %s s SET verification_status = NULL, last_verification_by = NULL, last_verification_at = NULL, last_verification_result = NULL WHERE s.maillist_id = %s', table('subscribers'), $this->id));
     }
 
-    /**
-     * get verified subscribers percentage.
-     */
     public function getVerifiedSubscribersPercentage($cache = false)
     {
         $count = $this->subscribersCount($cache);
@@ -1890,9 +1679,6 @@ class CampaignMaillist extends Model
         }
     }
 
-    /**
-     * Subscribers count.
-     */
     public function subscribersCount($cache = false)
     {
         if ($cache) {
@@ -1902,17 +1688,11 @@ class CampaignMaillist extends Model
         return $this->subscribers()->count();
     }
 
-    /**
-     * Segments count.
-     */
     public function segmentsCount()
     {
         return $this->segments()->count();
     }
 
-    /**
-     * Copy new list.
-     */
     public function copyAll($name, $customer = null)
     {
         $copy = $this->replicate(['cache']);
@@ -1961,9 +1741,6 @@ class CampaignMaillist extends Model
         $copy->updateCache();
     }
 
-    /**
-     * Segments count.
-     */
     public function cloneForCustomers($customers)
     {
         foreach ($customers as $customer) {
@@ -2137,7 +1914,6 @@ class CampaignMaillist extends Model
         return $this->jobMonitors()->orderBy('job_monitors.id', 'DESC')->where('job_type', ExportSubscribersJob::class);
     }
 
-    // Strategy pattern here
     public function getProgress($job)
     {
         if ($job->hasBatch()) {

@@ -12,39 +12,19 @@ use Acelle\Library\Lockable;
 
 class GeoIpCheck extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+
     protected $signature = 'geoip:check';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Check the current GeoIp service';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
     public function handle()
     {
         $timeoutCallback = function () {
-            // do nothing, tell Lockable not to throw an exception
         };
 
         $lock = new Lockable(storage_path('locks/geoip-setup'));
@@ -55,11 +35,6 @@ class GeoIpCheck extends Command
         return 0;
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
     public function check()
     {
         $geoip = App::make('Acelle\Library\Contracts\GeoIpInterface');
@@ -96,4 +71,5 @@ class GeoIpCheck extends Command
             throw $ex;
         }
     }
+
 }

@@ -14,10 +14,6 @@ class AppMailer
     protected $view;
     protected $data = [];
 
-    /**
-     * AppMailer constructor.
-     * @param $mailer
-     */
     public function __construct(Mailer $mailer)
     {
         $this->mailer = $mailer;
@@ -42,16 +38,10 @@ class AppMailer
         $this->subject = "RE: $ticket->title (Ticket ID: $ticket->ticket_id)";
         $this->view = 'user.ticket.emailticket.ticket_comments';
         $this->data = compact('ticketOwner', 'user', 'ticket', 'comment');
-    
+
         return $this->deliver();
     }
-   /**
-	 * Send ticket status notification
-	 * 
-	 * @param  User   $ticketOwner
-	 * @param  Ticket  $ticket
-	 * @return method deliver()
-	 */
+
 	public function sendTicketStatusNotification($ticketOwner, Ticket $ticket)
 	{
 		$this->to = $ticketOwner->email;
@@ -61,6 +51,7 @@ class AppMailer
 
 		return $this->deliver();
 	}
+
     public function deliver()
     {
         $this->mailer->send($this->view, $this->data, function($message){
@@ -70,4 +61,6 @@ class AppMailer
 
         });
     }
+
+
 }

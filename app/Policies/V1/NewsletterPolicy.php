@@ -2,21 +2,18 @@
 
 namespace App\Policies\V1;
 
-use App\Models\Ticket;
-use App\Models\User;
 use App\Permissions\V1\Abilities;
+use App\Models\Ticket\Ticket;
+use App\Models\User;
 
 class NewsletterPolicy
 {
-    /**
-     * Create a new policy instance.
-     */
     public function __construct()
     {
-        //
     }
 
     public function delete(User $user, Ticket $ticket) {
+
         if ($user->tokenCan(Abilities::DeleteTicket)) {
             return true;
         } else if ($user->tokenCan(Abilities::DeleteOwnTicket)) {
@@ -31,8 +28,7 @@ class NewsletterPolicy
     }
 
     public function store(User $user) {
-        return $user->tokenCan(Abilities::CreateTicket) ||
-               $user->tokenCan(Abilities::CreateOwnTicket);
+        return $user->tokenCan(Abilities::CreateTicket) ||  $user->tokenCan(Abilities::CreateOwnTicket);
     }
 
     public function update(User $user, Ticket $ticket) {
@@ -41,7 +37,8 @@ class NewsletterPolicy
         } else if ($user->tokenCan(Abilities::UpdateOwnTicket)) {
             return $user->id === $ticket->user_id;
         }
-
         return false;
     }
+
+
  }

@@ -70,7 +70,7 @@ class GiftvoucherMail extends Mailable
 
     public function attachments(): array
     {
-        return [];  // Puedes agregar archivos adjuntos aquí si es necesario
+        return [];
     }
 
 }

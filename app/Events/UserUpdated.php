@@ -2,9 +2,9 @@
 
 namespace App\Events;
 
-use App\Events\Event;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Queue\SerializesModels;
+use App\Events\Event;
 
 class UserUpdated extends Event
 {
@@ -12,7 +12,6 @@ class UserUpdated extends Event
 
     public $customer;
     public $delayed;
-
     public function __construct($customer, $delayed = true)
     {
         $this->customer = $customer;

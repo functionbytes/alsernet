@@ -2,11 +2,11 @@
 
 namespace App\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use App\Events\MailListUnsubscription;
 use Illuminate\Support\Facades\Mail;
 use App\Events\MailListSubscription;
-use App\Events\MailListUnsubscription;
 use App\Models\Setting;
 
 class SendListNotificationToOwner
@@ -14,7 +14,6 @@ class SendListNotificationToOwner
 
     public function __construct()
     {
-        //
     }
 
     public function handleMailListSubscription(MailListSubscription $event)
@@ -24,7 +23,6 @@ class SendListNotificationToOwner
         $user = $list->customer->user;
 
         if (Setting::isYes('send_notification_email_for_list_subscription')) {
-            // Send notification
             $list->sendSubscriptionNotificationEmailToListOwner($subscriber);
         }
     }
@@ -51,4 +49,5 @@ class SendListNotificationToOwner
             [SendListNotificationToOwner::class, 'handleMailListUnsubscription']
         );
     }
+
 }
