@@ -1388,13 +1388,7 @@ function getSiteLogoUrl($type)
         throw new \Exception('Logo type must be either "light" or "dark"');
     }
 
-    $logo = Setting::get("site_logo_$type");
-
-    if ($logo) {
-        return action('SettingController@file', $logo);
-    } else {
-        return getDefaultLogoUrl($type);
-    }
+    return getDefaultLogoUrl($type);
 }
 
 function app_profile($key)

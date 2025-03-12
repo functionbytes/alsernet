@@ -190,21 +190,27 @@ class SubscribersController extends Controller
 
     public function createImport(Request $request)
     {
-        $import =  new SubscriberImport();
+        $import = new SubscriberImport();
         $import->save();
 
-        return route('manager.subscribers.import', [ 'import_uid' => $import->uid]);
+        return redirect()->route('manager.subscribers.import', $import->uid);
     }
 
 
-    public function createImports(Request $request)
+
+    public function createImports($uid)
     {
-        $import = SubscriberImport::findByUid($request->import_uid);
-        $currentJob = $import->importListsJobs()->first();
+        $import = SubscriberImport::findByUid($uid);
+
+        if (!$import) {
+            return abort(404, 'Import not found');
+        }
+
+        $currentJob = $import->importListsJobs()?->first();
 
         $importNotifications = Hook::execute('list_import_notifications');
 
-        if ($currentJob) {
+        if ($currentJob!=null) {
             return view('managers.views.subscribers.subscribers.imports', [
                 'import' => $import,
                 'currentJobUid' => $currentJob->uid,
@@ -220,6 +226,7 @@ class SubscribersController extends Controller
             ]);
         }
     }
+
 
 
     public function dispatchImportListsJobs(Request $request)
@@ -276,5 +283,10 @@ class SubscribersController extends Controller
     }
 
 }
+
+
+
+
+
 
 

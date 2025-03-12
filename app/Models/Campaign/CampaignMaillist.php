@@ -500,9 +500,6 @@ class CampaignMaillist extends Model
 
         $copy->save();
 
-        // @todo: trigger MailListSubscription event here?
-
-        // Contact
         if ($this->contact) {
             $new_contact = $this->contact->replicate();
             $new_contact->uid = uniqid();
@@ -690,7 +687,6 @@ class CampaignMaillist extends Model
             $html = str_replace('{LIST_NAME}', $this->name, $html);
             $html = str_replace('{EMAIL}', $subscriber->email, $html);
             $html = str_replace('{FULL_NAME}', $subscriber->getFullName(), $html);
-
             return $html;
         });
 

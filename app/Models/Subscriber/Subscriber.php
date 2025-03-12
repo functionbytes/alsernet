@@ -659,4 +659,26 @@ class Subscriber extends Model
         }
     }
 
+    public function getFullName($default = null)
+    {
+        $full = trim($this->firstname.' '.$this->lastname);
+
+        if (empty($full)) {
+            return $default;
+        } else {
+            return $full;
+        }
+    }
+
+    public function getFullNameOrEmail()
+    {
+        $full = $this->getFullName();
+        if (empty($full)) {
+            return $this->email;
+        } else {
+            return $full;
+        }
+    }
+
+
 }

@@ -30,6 +30,7 @@
         "maatwebsite/excel": "^3.1",
         "milon/barcode": "^11.0",
         "nesbot/carbon": "^2.72",
+        "phpmailer/phpmailer": "^6.9",
         "propaganistas/laravel-disposable-email": "^2.2",
         "pusher/pusher-php-server": "^7.2",
         "soundasleep/html2text": "~1.1",

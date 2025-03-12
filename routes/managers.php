@@ -101,7 +101,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/single/barcode/{uid}', [ProductsBarcodesController::class, 'destroy'])->name('manager.products.barcodes.single');
     });
 
-
     Route::group(['prefix' => 'inventaries'], function () {
 
         Route::get('/', [InventariesController::class, 'index'])->name('manager.inventaries');
@@ -125,7 +124,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
 
         Route::get('/history/locations/destroy/items/{uid}', [InventariesLocationsController::class, 'destroyItem'])->name('manager.historys.items.destroy');
         Route::get('/historys/locationss/{uid}', [InventariessLocationsController::class, 'index'])->name('manager.inventaries.locationss');
-
     });
 
     Route::group(['prefix' => 'settings'], function () {
@@ -152,7 +150,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/edit/{uid}', [EventsController::class, 'edit'])->name('manager.events.edit');
         Route::get('/view/{uid}', [EventsController::class, 'view'])->name('manager.events.view');
         Route::get('/destroy/{uid}', [EventsController::class, 'destroy'])->name('manager.events.destroy');
-
     });
 
     Route::group(['prefix' => 'categories'], function () {
@@ -164,7 +161,6 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/edit/{uid}', [CategoriesController::class, 'edit'])->name('manager.categories.edit');
         Route::get('/view/{uid}', [CategoriesController::class, 'view'])->name('manager.categories.view');
         Route::get('/destroy/{uid}', [CategoriesController::class, 'destroy'])->name('manager.categories.destroy');
-
     });
 
     Route::group(['prefix' => 'langs'], function () {

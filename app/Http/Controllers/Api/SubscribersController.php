@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Events\Subscribers\SubscriberCheckatEvent;
+use App\Jobs\Members\Meeting\MeetingNotificationJob;
 use App\Jobs\Subscribers\SubscriberCategoriesJob;
 use App\Jobs\Subscribers\SubscriberCheckatJob;
 use App\Models\Lang;
@@ -10,6 +12,8 @@ use App\Models\Subscriber\SubscriberLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SubscribersController extends ApiController
@@ -132,6 +136,7 @@ class SubscribersController extends ApiController
 
             if ($subscriber->isPendingVerification()){
                 SubscriberCheckatJob::dispatch($subscriber);
+                Log::info('Llamando a SubscriberCheckatJob para: ' . $subscriber->email);
             }
 
             return response()->json([
@@ -170,7 +175,8 @@ class SubscribersController extends ApiController
                 $subscriber->categories()->sync($categoriesIds);
             }
 
-            SubscriberCheckatJob::dispatch($subscriber);
+            // SubscriberCheckatJob::dispatch($subscriber);
+            Log::info('Llamando a SubscriberCheckatJob paras: ' . $subscriber->email);
 
             return response()->json([
                 'status' => 'success',

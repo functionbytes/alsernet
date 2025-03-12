@@ -9,15 +9,17 @@ class Customer extends Model
 {
     use HasUid;
 
-    protected $table = "subscribers";
+    protected $table = "customers";
 
     protected $fillable = [
         'uid',
         'firstname',
         'lastname',
         'email',
-        'network',
+        'available',
         'customer',
+        'management',
+        'subscriber_id',
         'birthday_at',
         'created_at',
         'updated_at',

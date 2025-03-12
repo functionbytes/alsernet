@@ -64,39 +64,34 @@ class SubscriberImport extends Model
     {
         $processed = 0;
         $failed = 0;
-        $total = 0;
-        $message = 'Importación iniciada...';
-
-        // Callback inicial de progreso
-        if (!is_null($progressCallback)) {
-            $progressCallback($processed, $total, $failed, $message);
-            $progressCallback($processed, $total, $failed, 'Validando cabeceras de suscriptores...');
-        }
 
         try {
-            $totalRows = count(Excel::toArray(new SubscribersImport(), $file)[0]);
 
-            if ($totalRows === 0) {
-                throw new Exception('El archivo no contiene datos válidos.');
+            $message = 'Importación iniciada...';
+
+            if (!is_null($progressCallback)) {
+                $progressCallback($processed, null, $failed, $message);
             }
 
-            Excel::import(new SubscribersImport($progressCallback, $totalRows, $invalidRecordCallback), $file);
+            Excel::import(new SubscribersImport(
+                $progressCallback,
+                null,
+                $invalidRecordCallback
+            ), $file);
 
-            $message = "Importación completada con éxito. Procesado: {$processed}/{$total} registros, omitidos: {$failed}.";
+
         } catch (\Throwable $e) {
             DB::rollBack();
-
             $message = 'Error durante la importación: ' . $e->getMessage();
 
             if (!is_null($progressCallback)) {
-                $progressCallback($processed, $total, $failed, $message);
+                $progressCallback($processed, null, $failed, $message);
             }
             throw new Exception(substr($e->getMessage(), 0, 512));
         } finally {
-            // Callback final de progreso
-            if (!is_null($progressCallback)) {
-                $progressCallback($processed, $total, $failed, $message);
-            }
+            //if (!is_null($progressCallback)) {
+              //  $progressCallback($processed, null, $failed, $message);
+            //}
         }
     }
 

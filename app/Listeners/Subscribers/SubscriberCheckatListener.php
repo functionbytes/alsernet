@@ -2,23 +2,15 @@
 
 namespace App\Listeners\Subscribers;
 
+use App\Events\Subscribers\SubscriberCheckatEvent;
 use App\Jobs\Subscribers\SubscriberCheckatJob;
-use App\Mail\Subscribers\SubscriberCheckMail;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class SubscriberCheckatListener
 {
-    public function handle(SubscriberCheckatJob $event): void
+    public function handle(SubscriberCheckatEvent $event): void
     {
-        $this->handleMailSubscriberCheckat($event);
+        Log::info("Ejecutando SubscriberCheckatListener para {$event->subscriber->email}");
+        SubscriberCheckatJob::dispatch($event->subscriber);
     }
-
-    public function handleMailSubscriberCheckat(SubscriberCheckatJob $event)
-    {
-        $subscriber = $event->subscriber;
-        $email = $subscriber->email;
-        $mail = new SubscriberCheckMail($subscriber);
-        Mail::to($email)->queue($mail);
-    }
-
 }

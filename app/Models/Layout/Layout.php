@@ -23,6 +23,20 @@ class Layout extends Model
         return $this->hasMany('Acelle\Model\Page');
     }
 
+    public function scopeAlias($query, $alias)
+    {
+        return $query->where('alias', $alias);
+    }
+
+    public function scopeCode($query, $code)
+    {
+        return $query->where('code', $code);
+    }
+
+    public function scopeLang($query, $lang)
+    {
+        return $query->where('lang_id', $lang);
+    }
     public function tags()
     {
         switch ($this->alias) {
@@ -95,10 +109,10 @@ class Layout extends Model
         $tags = array_merge($tags, [
             ['name' => '{UNSUBSCRIBE_URL}', 'required' => false],
             ['name' => '{UNSUBSCRIBE_CODE}', 'required' => false],
-            ['name' => '{SUBSCRIBER_UID}', 'required' => false],
-            ['name' => '{SUBSCRIBER_EMAIL}', 'required' => false],
-            ['name' => '{SUBSCRIBER_FIRSTNAME}', 'required' => false],
-            ['name' => '{SUBSCRIBER_LASTNAME}', 'required' => false],
+            ['name' => '{UID}', 'required' => false],
+            ['name' => '{EMAIL}', 'required' => false],
+            ['name' => '{FIRSTNAME}', 'required' => false],
+            ['name' => '{LASTNAME}', 'required' => false],
             ['name' => '{LIST_NAME}', 'required' => false],
             ['name' => '{CONTACT_NAME}', 'required' => false],
             ['name' => '{CONTACT_STATE}', 'required' => false],

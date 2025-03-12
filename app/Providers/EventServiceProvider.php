@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Events\Subscribers\SubscriberCheckatEvent;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use App\Listeners\Subscribers\SubscriberCheckatListener;
@@ -25,9 +26,9 @@ class EventServiceProvider extends ServiceProvider
             GiftvoucherListener::class,
         ],
 
-        SubscriberCheckatJob::class => [
-            SubscriberCheckatListener::class,
-        ],
+       // SubscriberCheckatEvent::class => [
+         // SubscriberCheckatListener::class,
+       // ],
 
     ];
 

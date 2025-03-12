@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\MailHelper;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Auth\RedirectsUsers;
@@ -23,6 +24,9 @@ class LoginController extends Controller
     protected $redirectTo = '/login';
 
     public function showLoginForm(){
+
+
+        MailHelper::sendMail('revoxservices@gmail.com', 'Correo de Prueba', 'Hola, este es un correo enviado sin SMTP.');
 
         if($this->guard()->check()){
             return $this->guard()->user()->redirect();
