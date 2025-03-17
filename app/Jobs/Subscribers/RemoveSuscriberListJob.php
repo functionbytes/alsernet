@@ -16,7 +16,7 @@ class RemoveSuscriberListJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected ?Subscriber $subscriber;
-    protected array $listIds;
+    protected  $listIds;
     protected bool $removeAll;
 
 
@@ -29,10 +29,6 @@ class RemoveSuscriberListJob implements ShouldQueue
 
     public function handle(): void
     {
-        if (!optional($this->subscriber)->exists) {
-            Log::error("RemoveSuscriberListJob: No se encontró el suscriptor.");
-            return;
-        }
 
         if ($this->removeAll) {
             if (method_exists($this->subscriber, 'removeAllSubscriptions')) {

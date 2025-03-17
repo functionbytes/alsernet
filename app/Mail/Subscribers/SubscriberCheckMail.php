@@ -8,6 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Crypt;
 
 class SubscriberCheckMail extends Mailable
 {
@@ -15,9 +16,11 @@ class SubscriberCheckMail extends Mailable
 
     public $subscriber;
     public $layout;
+    public $url;
 
     public function __construct($subscriber, $layout)
     {
+        $this->url = 'https://preproduccion.a-alvarez.com/';
         $this->subscriber = $subscriber;
         $this->layout = $layout;
     }
@@ -32,7 +35,9 @@ class SubscriberCheckMail extends Mailable
 
     public function content(): Content
     {
+
         $content = $this->replaceTags($this->layout->content);
+
         return new Content(
             markdown: 'mailers.subscribers.check',
             with: [
@@ -44,11 +49,11 @@ class SubscriberCheckMail extends Mailable
 
     protected function replaceTags(string $content): string
     {
+        $baseUrl = rtrim($this->url, '/');
+        $token = Crypt::encryptString($this->subscriber->email);
+
         $replacements = [
-            '{FIRSTNAME}' => $this->subscriber->firstname,
-            '{LASTNAME}' => $this->subscriber->lastname,
-            '{EMAIL}' => $this->subscriber->email,
-            '{FULLNAME}' => $this->subscriber->getFullName(),
+            '{URLCHECK}' => "{$baseUrl}/module/alsernetforms/verification?token={$token}"
         ];
 
         foreach ($replacements as $tag => $value) {
@@ -63,3 +68,4 @@ class SubscriberCheckMail extends Mailable
         return [];
     }
 }
+

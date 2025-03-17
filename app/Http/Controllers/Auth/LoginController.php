@@ -25,9 +25,6 @@ class LoginController extends Controller
 
     public function showLoginForm(){
 
-
-        MailHelper::sendMail('revoxservices@gmail.com', 'Correo de Prueba', 'Hola, este es un correo enviado sin SMTP.');
-
         if($this->guard()->check()){
             return $this->guard()->user()->redirect();
         }else{

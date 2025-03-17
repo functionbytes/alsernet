@@ -37,6 +37,6 @@ class SubscriberCheckatJob implements ShouldQueue
             return;
         }
 
-        Mail::send(new SubscriberCheckMail($this->subscriber, $this->layout));
+        //Mail::send(new SubscriberCheckMail($this->subscriber, $this->layout));
     }
 }

@@ -2,22 +2,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\Subscribers\SubscriberCheckatEvent;
-use App\Jobs\Members\Meeting\MeetingNotificationJob;
+use App\Jobs\Erp\SynchronizationSubscription;
+use App\Jobs\Subscribers\SubscriberCategoriesCheackatJob;
 use App\Jobs\Subscribers\SubscriberCategoriesJob;
 use App\Jobs\Subscribers\SubscriberCheckatJob;
 use App\Models\Lang;
 use App\Models\Subscriber\Subscriber;
 use App\Models\Subscriber\SubscriberList;
 use App\Models\Subscriber\SubscriberLog;
+use App\Services\ErpService;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SubscribersController extends ApiController
 {
+
 
     public function campaigns(Request $request)
     {
@@ -46,6 +51,8 @@ class SubscribersController extends ApiController
                 return $this->suscriberRollback($data);
             case 'checkat':
                 return $this->suscriberCheckat($data);
+            case 'campaign':
+                return $this->suscriberCampaigns($data);
             case 'subscribe':
                 return $this->suscriberSubscribe($data);
             case 'unsubscribe_none':
@@ -62,48 +69,72 @@ class SubscribersController extends ApiController
         }
     }
 
+
     public function suscriberCampaigns($data)
     {
 
-        $item = Subscriber::checkWithBTree($data['email']);
+        $lang = Lang::locate($data['lang']);
 
-        if ($item["exists"]) {
-            if (!$item["data"]->send) {
-                $suscriber = $item["data"];
-                $suscriber->firstname = Str::upper($data['firstname']);
-                $suscriber->lastname  =  Str::upper($data['lastname']);
-                $suscriber->commercial = 1;
-                $suscriber->parties = 1;
-                $suscriber->check_at = Carbon::now()->setTimezone('Europe/Madrid');
-                $suscriber->update();
+        $validation = Subscriber::checkWithPartition($data['email']);
 
-                if ($data['categories']) {
-                    $categoriesIds = array_filter(explode(',', $data['categories']));
-                    $suscriber->categories()->sync($categoriesIds);
-                } else {
-                    $suscriber->categories()->detach();
-                }
+        if ($validation["exists"]) {
 
-                //GiftvoucherCreated::dispatch($suscriber);
+            $subscriber = $validation["data"];
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Subscription successful'
-                ], 200);
-            }else{
-                return response()->json([
-                    'status' => 'warning',
-                    'type' => 'send',
-                    'message' => 'Subscription warning'
-                ], 200);
+            $datas = [
+                'email' => $data['email'],
+                'firstname' => Str::upper($data['firstname']),
+                'lastname' => Str::upper($data['lastname']),
+                'commercial' => $data['commercial'] == true ? 0 : 1,
+                'parties' => $data['parties'] == true ? 0 : 1,
+                'commercial'  => 0,
+                'parties'     => 0,
+                'check_at'     => null,
+                'unsubscriber_at'  => null,
+            ];
+
+            $subscriber->updateWithLog($datas);
+
+            if ($subscriber->isPendingVerification() && isset($data['sports'])) {
+                $blacklist = SubscriberList::getBlacklistByLang($lang->id);
+                $subscriber->addToList($blacklist->id);
+                $categoriesIds = array_filter(explode(',', $data['sports']));
+                $subscriber->categories()->sync($categoriesIds);
+                SubscriberCheckatJob::dispatch($subscriber);
+                Log::info('Llamando a SubscriberCheckatJob para: ' . $subscriber->email);
             }
+
+            if (!$subscriber->isPendingVerification() && isset($data['sports'])) {
+                $categoriesIds = array_filter(explode(',', $data['sports']));
+                SubscriberCategoriesJob::dispatch(
+                    $subscriber,
+                    $categoriesIds,
+                );
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Subscription successful',
+                'data' => [
+                    'subscriber' => [
+                        'commercial' => $subscriber['commercial'],
+                        'parties' => $subscriber['parties'],
+                        'check' => $subscriber['check_at']!=null ? true : false,
+                    ],
+                    'type' => 'exist',
+                ],
+            ], 200);
+
         }else{
+
             return response()->json([
                 'status' => 'warning',
-                'type' => 'exist',
-                'message' => 'Subscription warning'
+                'message' => 'Subscription warning',
+                'data' => [],
             ], 200);
+
         }
+
 
     }
 
@@ -135,6 +166,8 @@ class SubscribersController extends ApiController
             }
 
             if ($subscriber->isPendingVerification()){
+                $blacklist = SubscriberList::getBlacklistByLang($lang->id);
+                $subscriber->addToList($blacklist->id);
                 SubscriberCheckatJob::dispatch($subscriber);
                 Log::info('Llamando a SubscriberCheckatJob para: ' . $subscriber->email);
             }
@@ -165,17 +198,15 @@ class SubscribersController extends ApiController
             ]);
 
             $blacklist = SubscriberList::getBlacklistByLang($lang->id);
+            $subscriber->addToList($blacklist->id);
 
-            if ($blacklist) {
-                $subscriber->addToList($blacklist->id);
-            }
 
             if ($subscriber->isPendingVerification() && isset($data['sports'])) {
                 $categoriesIds = array_filter(explode(',', $data['sports']));
                 $subscriber->categories()->sync($categoriesIds);
             }
 
-            // SubscriberCheckatJob::dispatch($subscriber);
+            SubscriberCheckatJob::dispatch($subscriber);
             Log::info('Llamando a SubscriberCheckatJob paras: ' . $subscriber->email);
 
             return response()->json([
@@ -211,6 +242,7 @@ class SubscribersController extends ApiController
             'commercial'  => 1,
             'parties'     => 1,
             'check_at'     => null,
+            'unsubscriber_at'  => Carbon::now()->setTimezone('Europe/Madrid'),
         ];
 
         $subscriber->updateWithLog($data);
@@ -218,6 +250,7 @@ class SubscribersController extends ApiController
         SubscriberCategoriesJob::dispatch(
             $subscriber,
             [],
+            'none'
         );
 
         return response()->json([
@@ -234,9 +267,13 @@ class SubscribersController extends ApiController
         if($data['exists']){
 
             $subscriber = $data["data"];
+
             $data = [
                 'parties'=> 1,
+                'check_at'     => null,
+                'unsubscriber_at'     => null,
             ];
+
             $subscriber->updateWithLog($data);
 
             return response()->json([
@@ -264,26 +301,25 @@ class SubscribersController extends ApiController
 
             if (isset($datas['sports'])) {
 
-                $categoryIds = [];
-                $categoriesIds = array_filter(explode(',', $datas['sports']));
+                $removeCategoryIds = array_map('intval', array_filter(explode(',', $datas['sports'])));
                 $currentCategoryIds = $subscriber->categories()->pluck('categories.id')->toArray();
 
-                if (empty($currentCategoryIds)) {
-                    $categoryIds  = $categoriesIds;
-                } else {
-                    $categoryIds = array_diff($currentCategoryIds,$categoriesIds);
+                sort($removeCategoryIds);
+                sort($currentCategoryIds);
+
+                if ($removeCategoryIds !== $currentCategoryIds) {
+                    SubscriberCategoriesJob::dispatch(
+                        $subscriber,
+                        $removeCategoryIds,
+                        'sports'
+                    );
                 }
-
-                SubscriberCategoriesJob::dispatch(
-                    $subscriber,
-                    $categoryIds,
-                );
-
             }
+
 
             return response()->json([
                 'status' => 'success',
-                'data' => $subscriber->categories,
+                'data' => [],
                 'message' => 'You have confirmed your emails.'
             ], 200);
 
@@ -341,25 +377,27 @@ class SubscribersController extends ApiController
     public function suscriberCheckat($data)
     {
 
-        $data = Subscriber::checkWithBTree($data['email']);
+        $data = Subscriber::checkWithBTree(Crypt::decryptString($data['token']));
 
         if($data['exists']){
 
             $subscriber = $data["data"];
             $subscriber->check_at = Carbon::now()->setTimezone('Europe/Madrid');
-            $subscriber->update();
 
-            if (!$subscriber->isPendingVerification() && $subscriber->categories()->exists()) {
+            if ($subscriber->categories()->exists()) {
 
                 $subscriber->removeFromBlacklist();
                 $categoriesIds = $subscriber->categories()->pluck('categories.id')->implode(',');
-
-                SubscriberCheckatJob::dispatch(
+                SubscriberCategoriesCheackatJob::dispatch(
                     $subscriber,
                     $categoriesIds,
                 );
 
+                SynchronizationSubscription::dispatch($subscriber->id)->onQueue('erp');
             }
+
+            $subscriber->unsubscriber_at = null;
+            $subscriber->update();
 
             return response()->json([
                 'status' => 'success',
@@ -376,6 +414,9 @@ class SubscribersController extends ApiController
 
     }
 }
+
+
+
 
 
 

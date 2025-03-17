@@ -16,16 +16,19 @@ class SubscriberCategoriesJob implements ShouldQueue
 
     protected $subscriber;
     protected $categories;
+    protected $type;
 
-    public function __construct(Subscriber $subscriber,  $categories)
+    public function __construct(Subscriber $subscriber,  $categories,$type)
     {
         $this->subscriber = $subscriber;
         $this->categories = $categories;
+        $this->type = $type;
     }
     public function handle()
     {
         $this->subscriber->suscriberCategoriesWithLog(
             $this->categories,
+            $this->type,
         );
     }
 }
