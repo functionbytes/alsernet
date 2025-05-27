@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ErpController;
+use App\Http\Controllers\Api\Return\PublicReturnController;
+use App\Http\Controllers\Api\Return\ReturnController;
 use App\Http\Controllers\Api\SubscribersController;
 use App\Http\Controllers\Api\TicketsController;
 use App\Http\Controllers\Api\DocumentsController;
@@ -67,4 +69,34 @@ Route::group(['prefix' => 'erp'], function () {
     Route::post('isMobilePhone', [ErpController::class, 'isMobilePhone']);
     Route::post('mandarpedido', [ErpController::class, 'mandarpedido']);
     Route::post('forma_pago', [ErpController::class, 'forma_pago']);
+});
+
+
+
+// Rutas públicas - sin autenticación
+Route::prefix('returns')->group(function () {
+    Route::get('/status', [PublicReturnController::class, 'getStatus']);
+    Route::post('/guest', [PublicReturnController::class, 'createGuestReturn']);
+    Route::get('/form-data', [ReturnController::class, 'getFormData']);
+});
+
+// Rutas autenticadas para clientes
+Route::middleware('auth:sanctum')->prefix('returns')->group(function () {
+    Route::get('/', [ReturnController::class, 'index']);
+    Route::get('/{id}', [ReturnController::class, 'show']);
+    Route::post('/', [ReturnController::class, 'store']);
+    Route::get('/{id}/pdf', [ReturnController::class, 'downloadPDF']);
+});
+
+// Rutas administrativas
+Route::prefix('admin/returns')->middleware('auth:admin')->group(function () {
+    Route::get('/', [AdminReturnController::class, 'index']);
+    Route::get('/statistics', [AdminReturnController::class, 'getStatistics']);
+    Route::get('/{id}', [AdminReturnController::class, 'show']);
+    Route::post('/', [AdminReturnController::class, 'store']);
+    Route::put('/{id}', [AdminReturnController::class, 'update']);
+    Route::delete('/{id}', [AdminReturnController::class, 'destroy']);
+    Route::post('/{id}/status', [AdminReturnController::class, 'updateStatus']);
+    Route::post('/{id}/discussion', [AdminReturnController::class, 'addDiscussion']);
+    Route::get('/{id}/pdf', [AdminReturnController::class, 'downloadPDF']);
 });
