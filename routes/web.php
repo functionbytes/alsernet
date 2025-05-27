@@ -7,39 +7,13 @@ use App\Http\Controllers\Auth\ValidationController;
 use App\Http\Controllers\Pages\ChatbotController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Pages\PagesController;
-use Illuminate\Support\Facades\Route;
+
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-
-
 use App\Models\Subscriber\Subscriber;
 use App\Jobs\Erp\SynchronizationSubscription;
 
 
-Route::get('/testprestashop', function () {
-    $activeCustomers = DB::connection('prestashop')
-        ->table('aalv_customer')
-        ->where('active', 1)
-        ->get();
-
-    return $activeCustomers;
-    //$customers = Customer::all();
-});
-Route::get('/testsend', function () {
-    try {
-        Mail::raw('Este es un correo de prueba enviado desde Laravel sin usar Mailable.', function ($message) {
-            $message->to('revoxservices@gmail.com')
-                    ->subject('Correo de Prueba');
-        });
-
-        return '✅ Correo de prueba enviado correctamente.';
-    } catch (\Exception $e) {
-        return '❌ Error al enviar el correo: ' . $e->getMessage();
-    }
-});
-
 Route::group(['middleware' => ['web']], function () {
-
 
 
     Route::get('/chatbot', [ChatbotController::class, 'show'])->name('chatbot.show');

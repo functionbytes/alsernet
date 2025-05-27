@@ -93,7 +93,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
         ];
     }
 
@@ -118,40 +117,29 @@ class User extends Authenticatable
         return $query->where('users.available', 1);
     }
 
-
     public function redirect()
     {
-        $user = auth()->user();
-
-        if (!$user) {
-            return redirect()->route('login');
-        }
-        if ($user->hasRole('managers')) {
-            return redirect()->route('manager.dashboard');
-        }
-
-        if ($user->hasRole('inventaries')) {
-            return redirect()->route('inventarie.dashboard');
-        }
-
-        if ($user->hasRole('shops')) {
-            return redirect()->route('shop.dashboard');
-        }
-
-
-        if ($user->hasRole('callcenters')) {
-            return redirect()->route('callcenter.dashboard');
-        }
-
-
-        if ($user->hasRole('supports')) {
-            return redirect()->route('support.dashboard');
-        }
-
-
-        return redirect()->route('login');
+        return redirect()->route($this->redirectRouteName());
     }
 
+    public function route()
+    {
+        return route($this->redirectRouteName());
+    }
+
+
+    public function redirectRouteName()
+    {
+        return match (true) {
+            $this->hasRole('manager') => 'manager.dashboard',
+            $this->hasRole('inventaries') => 'inventarie.dashboard',
+            $this->hasRole('shops') => 'shop.dashboard',
+            $this->hasRole('callcenters') => 'callcenter.dashboard',
+            $this->hasRole('supports') => 'support.dashboard',
+            $this->hasRole('administratives') => 'administrative.dashboard',
+            default => 'login',
+        };
+    }
 
 
     public function passwordHistories(): HasMany
@@ -218,7 +206,11 @@ class User extends Authenticatable
 
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = bcrypt($password);
+        if (strlen($password) !== 60 || !preg_match('/^\$2y\$/', $password)) {
+            $this->attributes['password'] = bcrypt($password);
+        } else {
+            $this->attributes['password'] = $password;
+        }
     }
 
 

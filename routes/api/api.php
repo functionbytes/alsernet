@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ErpController;
 use App\Http\Controllers\Api\SubscribersController;
 use App\Http\Controllers\Api\TicketsController;
+use App\Http\Controllers\Api\DocumentsController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'subscribers'], function () {
@@ -22,6 +23,10 @@ Route::group(['prefix' => 'subscribers'], function () {
     Route::post('process', [SubscribersController::class, 'process']);
     Route::post('campaigns', [SubscribersController::class, 'campaigns']);
     Route::get('synchronization', [SubscribersController::class, 'synchronization']);
+});
+
+Route::group(['prefix' => 'documents'], function () {
+    Route::post('/', [DocumentsController::class, 'process']);
 });
 
 Route::middleware('auth:sanctum')->group(function() {

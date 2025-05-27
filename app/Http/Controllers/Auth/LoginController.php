@@ -69,7 +69,7 @@ class LoginController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Inicio de sesión exitoso.',
-                'redirect' => route($this->guard()->user()->redirect())
+                'redirect' => $this->guard()->user()->route()
             ]);
 
         } else {
