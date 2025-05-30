@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ReturnStatus extends Model
 {
     protected $table = 'return_status';
-    protected $primaryKey = 'id_return_status';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id_return_state', 'color', 'send_email', 'is_pickup', 'is_received',
+        'state_id', 'color', 'send_email', 'is_pickup', 'is_received',
         'is_refunded', 'shown_to_customer', 'active'
     ];
 
@@ -27,7 +27,7 @@ class ReturnStatus extends Model
 
     public function state(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnState', 'id_return_state', 'id_return_state');
+        return $this->belongsTo('App\Models\Return\ReturnState', 'state_id', 'state_id');
     }
 
     public function translations(): HasMany

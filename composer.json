@@ -37,7 +37,7 @@
         "spatie/laravel-activitylog": "^4.9",
         "spatie/laravel-cookie-consent": "^3.2",
         "spatie/laravel-medialibrary": "^11.12",
-        "spatie/laravel-permission": "^6.10",
+        "spatie/laravel-permission": "^6.18",
         "spatie/ssl-certificate": "^2.6",
         "symfony/finder": "^7.2",
         "symfony/mime": "^7.2",

@@ -16,7 +16,7 @@ class CreateReturnDiscussionsTable extends Migration
             $table->string('file_name')->nullable();
             $table->boolean('private')->default(false);
             $table->timestamps();
-            $table->foreign('request_id')->references('request_id')->on('return_requests')->onDelete('cascade');
+            $table->foreign('request_id')->references('id')->on('return_requests')->onDelete('cascade');
             $table->index(['request_id']);
             $table->index(['employee_id']);
             $table->index(['private']);

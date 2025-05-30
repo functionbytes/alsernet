@@ -37,27 +37,27 @@
 
                             <div class="col-6">
                                 <div class="mb-3">
-                                        <label  class="control-label col-form-label">Nombres</label>
+                                        <label  class="form-label">Nombres</label>
                                         <input type="text" class="form-control" id="firstname"  name="firstname" value="{{ $user->firstname }}" placeholder="Ingresar nombres">
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="mb-3">
-                                        <label  class="control-label col-form-label">Apellidos</label>
+                                        <label  class="form-label">Apellidos</label>
                                         <input type="text" class="form-control" id="lastname"  name="lastname" value="{{ $user->lastname }}" placeholder="Ingresar apellido">
                                 </div>
                             </div>
 
                             <div class="col-6">
                                 <div class="mb-3">
-                                        <label  class="control-label col-form-label">Correo electronico</label>
+                                        <label  class="form-label">Correo electronico</label>
                                         <input type="text" class="form-control" id="email"  name="email" value="{{ $user->email }}" placeholder="Ingresar correo electronico">
                                 </div>
                             </div>
 
                             <div class="col-6">
                                 <div class="mb-3">
-                                        <label  class="control-label col-form-label">Contraseña</label>
+                                        <label  class="form-label">Contraseña</label>
                                         <input type="password" class="form-control" id="password"  name="password" value="" placeholder="Ingresar contraseña">
                                 </div>
                             </div>
@@ -65,32 +65,39 @@
                             <div class="col-6 divEnterprise {{ $user->hasAnyRole(['inventaries', 'shop']) ? '' : 'd-none' }}">
 
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Tienda</label>
+                                    <label class="form-label">Tienda</label>
                                     <select class="form-control select2" id="lang" name="lang">
                                         @foreach($shops as $id => $name)
                                             <option value="{{ $id }}" {{  $user->shop_id == $id ? 'selected' : '' }}>{{ $name }}</option>
                                         @endforeach
                                     </select>
-                                    <label id="shops-error" class="error d-none" for="shops"></label>
+                                    <label id="lang-error" class="error d-none" for="lang"></label>
                                 </div>
                             </div>
 
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Estado</label>
+                            <div class="col-6 mb-3">
+                                    <label class="form-label">Estado</label>
                                     <select class="form-control select2" id="available" name="available">
                                         <option value="1" {{ $user->available == 1 ? 'selected' : '' }}>Público</option>
                                         <option value="0" {{ $user->available == 0 ? 'selected' : '' }}>Oculto</option>
                                     </select>
-                                </div>
                             </div>
 
-                            <select name="role" required>
-                                <option value="">Seleccione un rol</option>
-                                @foreach($roles as $id => $name)
-                                    <option value="{{ $id }}" {{ $user->roles->first()->id == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                @endforeach
-                            </select>
+                            @php
+                                $userRoleId = optional($user->roles->first())->id;
+                            @endphp
+
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Rol</label>
+                                <select class="select2" name="role" required>
+                                    <option value="">Seleccione un rol</option>
+                                    @foreach($roles as $id => $name)
+                                        <option value="{{ $id }}" {{ $userRoleId == $id ? 'selected' : '' }}>
+                                            {{ $name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
                             <div class="col-12">
                                 <div class="errors d-none">
@@ -98,12 +105,12 @@
                             </div>
 
                             <div class="col-12">
-                            <div class="border-top pt-1 mt-4">
-                                <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                        Guardar
-                                </button>
+                                <div class="border-top pt-1 mt-4">
+                                    <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
+                                            Guardar
+                                    </button>
+                                </div>
                             </div>
-                        </div>
                         </div>
                     </div>
                 </form>
@@ -207,23 +214,6 @@
 
                     var $form = $('#formUsers');
                     var formData = new FormData($form[0]);
-                    var uid = $("#uid").val();
-                    var firstname = $("#firstname").val();
-                    var lastname = $("#lastname").val();
-                    var email = $("#email").val();
-                    var password = $("#password").val();
-                    var available = $("#available").val();
-                    var role = $("#roles").val();
-                    var shop = $("#shops").val();
-
-                    formData.append('uid', uid);
-                    formData.append('firstname', firstname);
-                    formData.append('lastname', lastname);
-                    formData.append('email', email);
-                    formData.append('password', password);
-                    formData.append('available', available);
-                    formData.append('role', role);
-                    formData.append('shop', shop);
 
                     var $submitButton = $('button[type="submit"]');
                     $submitButton.prop('disabled', true);

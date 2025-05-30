@@ -19,8 +19,8 @@ class CreateReturnHistoryTable extends Migration
             $table->boolean('shown_to_customer')->default(true);
             $table->timestamps();
 
-            $table->foreign('request_id')->references('request_id')->on('return_requests')->onDelete('cascade');
-            $table->foreign('status_id')->references('status_id')->on('return_status');
+            $table->foreign('request_id')->references('id')->on('return_requests')->onDelete('cascade');
+            $table->foreign('status_id')->references('id')->on('return_status');
 
             $table->index(['request_id']);
             $table->index(['status_id']);

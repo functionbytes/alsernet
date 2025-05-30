@@ -10,7 +10,7 @@ class CreateReturnStatusTable extends Migration
     {
         Schema::create('return_status', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('id_return_state');
+            $table->unsignedBigInteger('state_id');
             $table->string('color', 32)->nullable();
             $table->boolean('send_email')->default(false);
             $table->boolean('is_pickup')->nullable()->default(false);
@@ -20,7 +20,7 @@ class CreateReturnStatusTable extends Migration
             $table->boolean('active')->default(false);
             $table->timestamps();
 
-            $table->foreign('id_return_state')->references('id_return_state')->on('return_states');
+            $table->foreign('state_id')->references('id')->on('return_states')->onDelete('cascade');
             $table->index(['active']);
             $table->index(['shown_to_customer']);
         });
@@ -31,4 +31,3 @@ class CreateReturnStatusTable extends Migration
         Schema::dropIfExists('return_status');
     }
 }
-

@@ -6,22 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateReturnStatesTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::create('return_states', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('name', 100);
             $table->timestamps();
+
+            $table->unique('name');
+            $table->index(['name']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('return_states');
     }
-};
+}

@@ -29,6 +29,11 @@ return [
     'terms_and_conditions_required' => env('RETURN_TERMS_AND_CONDITIONS', true),
     'terms_and_conditions_cms_page' => env('RETURN_TERMS_AND_CONDITIONS_CMS_PAGE', 1),
 
+    'allowed_erp_statuses' => env('RETURN_ALLOWED_ERP_STATUSES', '4,5,6'),
+    'min_return_amount' => env('RETURN_MIN_AMOUNT', 0),
+    'high_value_product_threshold' => env('RETURN_HIGH_VALUE_THRESHOLD', 500),
+    'restricted_catalogs' => explode(',', env('RETURN_RESTRICTED_CATALOGS', '')),
+
     // Configuraciones de validación
     'validation' => [
         'min_description_length' => 10,

@@ -21,12 +21,6 @@ class RoleMiddleware
             return redirect('login');
         }
 
-        if ($request->user()) {
-            $request->attributes->set($role, $request->user());
-            $request->session()->put($role,  $request->user());
-            app()->instance($role, $request->user());
-        }
-
         return $next($request);
     }
 }

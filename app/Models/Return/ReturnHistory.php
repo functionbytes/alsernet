@@ -23,12 +23,12 @@ class ReturnHistory extends Model
 
     public function request(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnRequest', 'id_return_request', 'id_return_request');
+        return $this->belongsTo('App\Models\Return\ReturnRequest', 'request_id', 'id');
     }
 
     public function status(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnStatus', 'id_return_status', 'id_return_status');
+        return $this->belongsTo('App\Models\Return\ReturnStatus', 'status_id', 'id');
     }
 
     public function scopeVisibleToCustomer($query)

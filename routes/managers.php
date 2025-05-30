@@ -17,6 +17,8 @@ use App\Http\Controllers\Managers\NotificationController;
 use App\Http\Controllers\Managers\Products\BarcodeController as ProductsBarcodesController;
 use App\Http\Controllers\Managers\Products\ProductsController;
 use App\Http\Controllers\Managers\Products\ReportController;
+use App\Http\Controllers\Managers\Roles\PermissionController;
+use App\Http\Controllers\Managers\Roles\RoleController;
 use App\Http\Controllers\Managers\Settings\CategoriesController;
 use App\Http\Controllers\Managers\Settings\EmailsSettingsController;
 use App\Http\Controllers\Managers\Settings\HoursSettingsController;
@@ -44,7 +46,7 @@ use App\Http\Controllers\Managers\PulseController;
 
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']], function () {
+Route::prefix('manager')->middleware(['auth', 'check.roles.permissions:manager'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'dashboard'])->name('manager.dashboard');
 
@@ -76,6 +78,9 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::post('/locations/exists/validate', [ShopsLocationsController::class, 'validate'])->name('manager.shops.locations.exists.validate');
 
     });
+
+
+
 
     Route::group(['prefix' => 'products'], function () {
 
@@ -162,6 +167,32 @@ Route::group(['prefix' => 'manager', 'middleware' => ['auth', 'roles:managers']]
         Route::get('/view/{uid}', [CategoriesController::class, 'view'])->name('manager.categories.view');
         Route::get('/destroy/{uid}', [CategoriesController::class, 'destroy'])->name('manager.categories.destroy');
     });
+
+
+    Route::prefix('roles')->group(function () {
+
+        // CRUD de roles
+        Route::get('/', [RoleController::class, 'index'])->name('manager.roles');
+        Route::get('/create', [RoleController::class, 'create'])->name('manager.roles.create');
+        Route::post('/store', [RoleController::class, 'store'])->name('manager.roles.store');
+        Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('manager.roles.edit');
+        Route::post('/update', [RoleController::class, 'update'])->name('manager.roles.update');
+        Route::get('/destroy/{id}', [RoleController::class, 'destroy'])->name('manager.roles.destroy');
+
+        Route::get('/permissions/{id}', [RoleController::class, 'permissions'])->name('manager.roles.assign.permissions');
+        Route::post('/permissions/update', [RoleController::class, 'updatePermissions'])->name('manager.roles.assign.permissions.update');
+
+    });
+
+    Route::prefix('permissions')->group(function () {
+        Route::get('/', [PermissionController::class, 'index'])->name('manager.permissions');
+        Route::get('/create', [PermissionController::class, 'create'])->name('manager.permissions.create');
+        Route::post('/store', [PermissionController::class, 'store'])->name('manager.permissions.store');
+        Route::get('/edit/{id}', [PermissionController::class, 'edit'])->name('manager.permissions.edit');
+        Route::post('/update', [PermissionController::class, 'update'])->name('manager.permissions.update');
+        Route::get('/destroy/{id}', [PermissionController::class, 'destroy'])->name('manager.permissions.destroy');
+    });
+
 
     Route::group(['prefix' => 'langs'], function () {
         Route::get('/', [LangsController::class, 'index'])->name('manager.langs');

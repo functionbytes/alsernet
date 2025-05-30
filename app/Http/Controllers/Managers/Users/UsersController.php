@@ -130,38 +130,49 @@ class UsersController extends Controller
     }
     public function update(Request $request)
     {
-        $user = User::uid($request->uid);
+        // Obtener usuario por UID o fallar con mensaje claro
+        $user = User::where('uid', $request->uid)->first();
 
-        // Validar si el email ya está registrado en otro usuario
-        if ($user->email !== $request->email && User::where('email', $request->email)->exists()) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'El correo electrónico ya está registrado en nuestro sistema',
+                'message' => 'Usuario no encontrado.',
+            ], 404);
+        }
+
+        // Validar si el nuevo email ya está en uso por otro usuario
+        if ($user->email !== $request->email && User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El correo electrónico ya está registrado en otro usuario.',
             ]);
         }
 
-        // Actualizar los datos del usuario
+        // Actualizar datos básicos
         $user->firstname = Str::upper($request->firstname);
         $user->lastname  = Str::upper($request->lastname);
-        $user->email = $request->email;
+        $user->email     = $request->email;
 
         if (!empty($request->password)) {
             $user->password = bcrypt($request->password);
         }
 
-        $user->available = $request->available;
-        $user->shop_id = ($request->role == 2) ? $request->shop : null;
-        $user->update();
+        $user->available = (bool)$request->available;
+        $user->shop_id   = ($request->role == 2 && $request->filled('shop')) ? $request->shop : null;
 
+        $user->save();
+
+        // Asignar nuevo rol si es válido
         if (!empty($request->role) && is_numeric($request->role)) {
             $user->roles()->sync([$request->role]);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Usuario actualizado correctamente',
+            'message' => 'Usuario actualizado correctamente.',
         ]);
     }
+
 
     public function destroy($uid)
     {

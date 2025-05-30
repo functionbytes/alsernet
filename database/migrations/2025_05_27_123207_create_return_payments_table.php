@@ -20,7 +20,7 @@ class CreateReturnPaymentsTable extends Migration
             $table->unsignedBigInteger('employee_id')->default(1);
             $table->timestamps();
 
-            $table->foreign('request_id')->references('request_id')->on('return_requests')->onDelete('cascade');
+            $table->foreign('request_id')->references('id')->on('return_requests')->onDelete('cascade');
 
             $table->index(['request_id']);
             $table->index(['payment_status']);

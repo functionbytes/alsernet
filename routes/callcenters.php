@@ -1,133 +1,98 @@
 <?php
 
-
 use App\Http\Controllers\Callcenters\DashboardController;
 use App\Http\Controllers\Callcenters\Faqs\FaqsController;
 use App\Http\Controllers\Callcenters\Faqs\CategoriesController as FaqsCategoriesController;
+use App\Http\Controllers\Callcenters\Returns\ReturnController;
 use App\Http\Controllers\Callcenters\Settings\SettingsController;
 use App\Http\Controllers\Callcenters\Tickets\CommentsController;
 use App\Http\Controllers\Callcenters\Tickets\TicketsController;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('callcenter')
+    ->middleware(['auth',  'check.roles.permissions:callcenter'])
+    ->name('callcenter.')
+    ->group(function () {
 
-Route::group(['prefix' => 'callcenter', 'middleware' => ['auth', 'roles:callcenters']], function () {
+        Route::get('/', [DashboardController::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/', [DashboardController::class, 'dashboard'])->name('callcenter.dashboard');
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationsController::class, 'index'])->name('notifications');
+            Route::get('/mark-as-read', [NotificationsController::class, 'markasread'])->name('notifications.markasread');
+            Route::get('/all', [NotificationsController::class, 'show'])->name('notifications.markallnotify');
+        });
 
-    Route::group(['prefix' => 'notifications'], function () {
+        Route::prefix('returns')->name('returns.')->group(function () {
+            Route::get('/', [ReturnController::class, 'index'])->name('index');
+            Route::get('/validate', [ReturnController::class, 'validate'])->name('validate');
+            Route::get('/generate/{uid}', [ReturnController::class, 'generate'])->name('generate');
+            Route::get('/create', [ReturnController::class, 'create'])->name('create');
+            Route::post('/store', [ReturnController::class, 'store'])->name('store');
+            Route::post('/update/{id}', [ReturnController::class, 'update'])->name('update');
+            Route::get('/edit/{uid}', [ReturnController::class, 'edit'])->name('edit');
+            // Ver detalle de devolución
+            Route::get('/show/{id}', [ReturnController::class, 'show'])->name('show');
+            Route::get('/destroy/{uid}', [ReturnController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/status', [ReturnController::class, 'updateStatus'])->name('status.update');
+            Route::post('/{id}/approve', [ReturnController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [ReturnController::class, 'reject'])->name('reject');
+            Route::post('/{id}/assign', [ReturnController::class, 'assign'])->name('assign');
+            Route::post('/{id}/discussion', [ReturnController::class, 'addDiscussion'])->name('discussion.add');
+            Route::post('/{id}/attachment', [ReturnController::class, 'uploadAttachment'])->name('attachment.upload');
+            Route::get('/{id}/payments', [ReturnController::class, 'getPayments'])->name('payments');
+            Route::post('/{id}/payment', [ReturnController::class, 'addPayment'])->name('payment.add');
+            Route::get('/export', [ReturnController::class, 'export'])->name('export');
+            Route::get('/{id}/pdf', [ReturnController::class, 'downloadPDF'])->name('pdf');
+            Route::post('/bulk-update', [ReturnController::class, 'bulkUpdate'])->name('bulk.update');
 
-        Route::get('/', [NotificationsController::class, 'index'])->name('callcenter.notifications');
-        Route::get('/mark-as-read', [NotificationsController::class, 'markasread'])->name('callcenter.notifications.markasread');
-        Route::get('/all', [NotificationsController::class, 'show'])->name('callcenter.notifications.markallnotify');
+            Route::post('/validate-products', [ReturnController::class, 'validateProducts'])->name('validate-products');
 
+            // Cancelar devolución
+            Route::post('/{id}/cancel', [ReturnController::class, 'cancel'])->name('cancel');
+
+            // Obtener productos de una orden (AJAX)
+            Route::get('/order/{orderId}/products', [ReturnController::class, 'getOrderProducts'])->name('order-products');
+
+        });
+
+        Route::prefix('settings')->group(function () {
+            Route::get('/profile', [SettingsController::class, 'profile'])->name('settings.profile');
+            Route::get('/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
+            Route::post('/profile/update', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+            Route::post('/notifications/update', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
+        });
+
+        Route::prefix('faqs')->group(function () {
+            Route::get('/', [FaqsController::class, 'index'])->name('faqs');
+            Route::get('/create', [FaqsController::class, 'create'])->name('faqs.create');
+            Route::post('/store', [FaqsController::class, 'store'])->name('faqs.store');
+            Route::post('/update', [FaqsController::class, 'update'])->name('faqs.update');
+            Route::get('/edit/{uid}', [FaqsController::class, 'edit'])->name('faqs.edit');
+            Route::get('/destroy/{uid}', [FaqsController::class, 'destroy'])->name('faqs.destroy');
+
+            Route::get('/categories', [FaqsCategoriesController::class, 'index'])->name('faqs.categories');
+            Route::get('/categories/create', [FaqsCategoriesController::class, 'create'])->name('faqs.categories.create');
+            Route::post('/categories/store', [FaqsCategoriesController::class, 'store'])->name('faqs.categories.store');
+            Route::post('/categories/update', [FaqsCategoriesController::class, 'update'])->name('faqs.categories.update');
+            Route::get('/categories/edit/{uid}', [FaqsCategoriesController::class, 'edit'])->name('faqs.categories.edit');
+            Route::get('/categories/destroy/{uid}', [FaqsCategoriesController::class, 'destroy'])->name('faqs.categories.destroy');
+        });
+
+        Route::prefix('tickets')->group(function () {
+            Route::get('/', [TicketsController::class, 'index'])->name('tickets');
+            Route::get('/create', [TicketsController::class, 'create'])->name('tickets.create');
+            Route::post('/store', [TicketsController::class, 'store'])->name('tickets.store');
+            Route::post('/update', [TicketsController::class, 'update'])->name('tickets.update');
+            Route::get('/edit/{uid}', [TicketsController::class, 'edit'])->name('tickets.edit');
+            Route::get('/view/{uid}', [TicketsController::class, 'view'])->name('tickets.view');
+            Route::delete('/destroy/{uid}', [TicketsController::class, 'destroy'])->name('tickets.destroy');
+
+            Route::post('/note/create', [TicketsController::class, 'note'])->name('tickets.note.create');
+            Route::delete('/note/{uid}', [TicketsController::class, 'notedestroy'])->name('tickets.note.destroy');
+
+            Route::get('/comment/{uid}', [CommentsController::class, 'view'])->name('tickets.comments');
+            Route::post('/comment/post/{uid}', [CommentsController::class, 'postComment'])->name('tickets.comments.post');
+            Route::post('/comment/edit/{uid}', [CommentsController::class, 'updateedit'])->name('tickets.comments.edit');
+            Route::get('/comment/delete/{uid}', [CommentsController::class, 'deletecomment'])->name('tickets.comments.delete');
+        });
     });
-
-    Route::group(['prefix' => 'assigneds'], function () {
-        Route::get('/assigned', [AssignedsController::class, 'markNotification'])->name('callcenter.tickets.allactiveinprogresstickets');
-        Route::get('/reopen', [AssignedsController::class, 'allactivereopentickets'])->name('callcenter.tickets.allactivereopentickets');
-        Route::get('/onhold', [AssignedsController::class, 'allactiveonholdtickets'])->name('callcenter.tickets.allactiveonholdtickets');
-        Route::get('/assigned', [AssignedsController::class, 'allactiveassignedtickets'])->name('callcenter.tickets.allactiveassignedtickets');
-    });
-
-    Route::group(['prefix' => 'settings'], function () {
-        Route::get('/profile', [SettingsController::class, 'profile'])->name('callcenter.settings.profile');
-        Route::get('/notifications', [SettingsController::class, 'notifications'])->name('callcenter.settings.notifications');
-        Route::post('/profile/update', [SettingsController::class, 'updateProfile'])->name('callcenter.settings.profile.update');
-        Route::post('/notifications/update', [SettingsController::class, 'updateNotifications'])->name('callcenter.settings.notifications.update');
-    });
-
-
-    Route::group(['prefix' => 'faqs'], function () {
-
-        Route::get('/', [FaqsController::class, 'index'])->name('callcenter.faqs');
-        Route::get('/create', [FaqsController::class, 'create'])->name('callcenter.faqs.create');
-        Route::post('/store', [FaqsController::class, 'store'])->name('callcenter.faqs.store');
-        Route::post('/update', [FaqsController::class, 'update'])->name('callcenter.faqs.update');
-        Route::get('/edit/{uid}', [FaqsController::class, 'edit'])->name('callcenter.faqs.edit');
-        Route::get('/destroy/{uid}', [FaqsController::class, 'destroy'])->name('callcenter.faqs.destroy');
-
-        Route::get('/categories', [FaqsCategoriesController::class, 'index'])->name('callcenter.faqs.categories');
-        Route::get('/categories/create', [FaqsCategoriesController::class, 'create'])->name('callcenter.faqs.categories.create');
-        Route::post('/categories/store', [FaqsCategoriesController::class, 'store'])->name('callcenter.faqs.categories.store');
-        Route::post('/categories/update', [FaqsCategoriesController::class, 'update'])->name('callcenter.faqs.categories.update');
-        Route::get('/categories/edit/{uid}', [FaqsCategoriesController::class, 'edit'])->name('callcenter.faqs.categories.edit');
-        Route::get('/categories/destroy/{uid}', [FaqsCategoriesController::class, 'destroy'])->name('callcenter.faqs.categories.destroy');
-
-    });
-
-    Route::group(['prefix' => 'tickets'], function () {
-
-        Route::get('/', [TicketsController::class, 'index'])->name('callcenter.tickets');
-        Route::get('/create', [TicketsController::class, 'create'])->name('callcenter.tickets.create');
-        Route::post('/store', [TicketsController::class, 'store'])->name('callcenter.tickets.store');
-        Route::post('/update', [TicketsController::class, 'update'])->name('callcenter.tickets.update');
-        Route::get('/edit/{uid}', [TicketsController::class, 'edit'])->name('callcenter.tickets.edit');
-        Route::get('/view/{uid}', [TicketsController::class, 'view'])->name('callcenter.tickets.view');
-
-        Route::delete('/destroy/{uid}', [TicketsController::class, 'destroy'])->name('callcenter.tickets.destroy');
-        Route::post('/reopen/{uid}', [CommentsController::class, 'reopenticket'])->name('callcenter.tickets.reopen');
-        Route::get('/previous/{uid}', [TicketsController::class, 'previous'])->name('callcenter.tickets.previous');
-
-        Route::post('/image/upload/{uid}', [TicketsController::class, 'storeMedia'])->name('callcenter.tickets.image.store');
-        Route::post('/image/upload', [TicketsController::class, 'guestmedia'])->name('callcenter.tickets.image.upload');
-
-        Route::post('/priority/change', [TicketsController::class, 'changepriority'])->name('callcenter.tickets.change.priority');
-
-        Route::post('/note/create', [TicketsController::class, 'note'])->name('callcenter.tickets.note.create');
-        Route::delete('/note/{uid}', [TicketsController::class, 'notedestroy'])->name('callcenter.tickets.note.destroy');
-
-        Route::get('/comment/{uid}', [CommentsController::class, 'view'])->name('callcenter.tickets.comments');
-        Route::post('/comment/post/{uid}', [CommentsController::class, 'postComment'])->name('callcenter.tickets.comments.post');
-        Route::post('/comment/edit/{uid}', [CommentsController::class, 'updateedit'])->name('callcenter.tickets.comments.edit');
-        Route::get('/comment/delete/{uid}', [CommentsController::class, 'deletecomment'])->name('callcenter.tickets.comments.delete');
-        Route::delete('/comment/image/upload/{uid}', [CommentsController::class, 'imagedestroy'])->name('callcenter.tickets.image.destroy');
-
-        Route::post('/selfassign', [TicketsController::class, 'selfassign'])->name('callcenter.tickets.selfassign');
-        Route::post('/ticketassigneds', [TicketsController::class, 'ticketassigneds'])->name('callcenter.tickets.ticketassigneds');
-        Route::post('/ticketunassigns', [TicketsController::class, 'ticketunassigns'])->name('callcenter.tickets.ticketunassigns');
-
-        Route::post('/assigned', [TicketsController::class, 'create'])->name('callcenter.tickets.assigned');
-        Route::get('/assigned/{uid}', [TicketsController::class, 'edit'])->name('callcenter.tickets.assigned.view');
-        Route::get('/assigned/edit/{uid}', [TicketsController::class, 'view'])->name('callcenter.tickets.assigned.edit');
-
-        Route::post('/notes/store', [TicketsController::class, 'notestore'])->name('callcenter.tickets.notes.store');
-        Route::get('/notes/show/{uid}', [TicketsController::class, 'noteshow'])->name('callcenter.tickets.notes.show');
-        Route::get('/notes/delete/{uid}', [TicketsController::class, 'notedelete'])->name('callcenter.tickets.notes.delete');
-
-        Route::post('/employeesreplyingremove', 'AdminTicketController@employeesreplyingremove')->name('employeesreplyingremove');
-        Route::post('/employeesreplyingstore', 'AdminTicketController@employeesreplyingstore')->name('employeesreplyingstore');
-        Route::get('/getemployeesreplying/{id}', 'AdminTicketController@getemployeesreplying')->name('getemployeesreplying');
-        Route::get('/ticket/{ticket_id}', 'AdminTicketController@destroy');
-        Route::post('/priority/change/', 'AdminTicketController@changepriority');
-        Route::get('/ticket/delete/tickets', 'AdminTicketController@ticketmassdestroy')->name('admin.ticket.sremove');
-        Route::get('/ticket-view/{ticket_id}', 'AdminTicketController@show')->name('admin.ticketshow');
-        Route::post('/ticket-comment/{ticket_id}', 'AdminTicketController@commentshow')->name('admin.ticketcomment');
-
-        Route::post('/closed/{ticket_id}', 'AdminTicketController@close');
-        Route::get('/delete-ticket/{id}', 'AdminTicketController@destroy');
-
-        Route::get('/createticket', 'AdminTicketController@createticket');
-        Route::post('/createticket', 'AdminTicketController@gueststore');
-        Route::post('/imageupload', 'AdminTicketController@guestmedia')->name('imageuploadadmin');
-        Route::get('/alltickets', 'AdminTicketController@alltickets')->name('admin.alltickets');
-
-        Route::get('/inprogress', [NotificationsController::class, 'allactiveinprogresstickets'])->name('callcenter.notifications.markallnotify');
-
-        Route::get('/selfassigneds', [TrashedsController::class, 'selfassignticketview'])->name('callcenter.tickets.selfassigned');
-        Route::get('/assigneds', [TrashedsController::class, 'myassignedTickets'])->name('callcenter.tickets.assigneds');
-        Route::get('/closeds', [TrashedsController::class, 'myclosedtickets'])->name('callcenter.tickets.closeds');
-        Route::get('/suspends', [TrashedsController::class, 'mysuspendtickets'])->name('callcenter.tickets.history.suspendss');
-
-        Route::get('/trasheds', [TrashedsController::class, 'tickettrashed'])->name('callcenter.tickets.trasheds');
-        Route::get('/trasheds/view/{uid}', [TrashedsController::class, 'tickettrashedview'])->name('callcenter.tickets.trasheds.view');
-        Route::post('/trasheds/restore/{uid}', [TrashedsController::class, 'tickettrashedrestore'])->name('callcenter.tickets.trasheds.restore');
-        Route::delete('/trasheds/destroy/{uid}', [TrashedsController::class, 'tickettrasheddestroy'])->name('callcenter.tickets.trasheds.destroy');
-        Route::post('/trasheds/restore/all', [TrashedsController::class, 'alltrashedticketrestore'])->name('callcenter.tickets.trasheds.restore.all');
-        Route::post('/trasheds/destroy/all', [TrashedsController::class, 'alltrashedticketdelete'])->name('callcenter.tickets.trasheds.destroy.all');
-
-        Route::get('/history/{uid}', [TrashedsController::class, 'tickethistory'])->name('callcenter.tickets.history');
-        Route::get('/history/users/{uid}', [TrashedsController::class, 'customerprevioustickets'])->name('callcenter.tickets.history.users');
-
-    });
-
-});

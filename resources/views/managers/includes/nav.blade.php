@@ -66,6 +66,31 @@
                 </li>
 
 
+                <li class="sidebar-item">
+                    <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
+                          <span class="d-flex">
+                            <i class="fa-duotone fa-note"></i>
+                          </span>
+                        <span class="hide-menu">Roles</span>
+                    </a>
+
+
+                    <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                            <a href="{{ route('manager.roles') }}" class="sidebar-link">
+                                <span class="hide-menu">Roles </span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ route('manager.permissions') }}" class="sidebar-link">
+                                <span class="hide-menu">Permisos</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                </li>
+
+
 
                 <li class="sidebar-item">
                     <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
