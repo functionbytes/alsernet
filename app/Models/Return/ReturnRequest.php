@@ -5,6 +5,7 @@ namespace App\Models\Return;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class ReturnRequest extends Model
 {
@@ -36,6 +37,8 @@ class ReturnRequest extends Model
         'approved_amount',
         'refunded_amount'
     ];
+
+    protected $with = ['status', 'returnType', 'returnReason'];
 
     protected $casts = [
         'received_date' => 'datetime',
@@ -178,6 +181,24 @@ class ReturnRequest extends Model
     {
         return in_array($this->status->state->name, ['New', 'Verification']);
     }
+
+    public function scopeWithFullDetails($query)
+    {
+        return $query->with([
+            'order.products',
+            'customer',
+            'products.orderProduct',
+            'products.returnReason',
+            'status.state',
+            'status.translations',
+            'returnType.translations',
+            'returnReason.translations',
+            'payments',
+            'attachments',
+            'history'
+        ]);
+    }
+
 
     public function getLogisticsModeLabel()
     {
@@ -821,4 +842,35 @@ class ReturnRequest extends Model
             'next_suggested_status' => $this->getNextSuggestedStatus()
         ];
     }
+
+
+    public static function getTotalReturnedQuantity($orderId, $productId)
+    {
+        return DB::table('return_request_products AS rrp')
+            ->join('return_requests AS rr', 'rrp.request_id', '=', 'rr.id') // Cambiar return_id por request_id
+            ->join('return_status AS rs', 'rr.status_id', '=', 'rs.id')
+            ->where('rr.order_id', $orderId)
+            ->where('rrp.product_id', $productId)
+            ->where('rs.active', true)
+            ->whereNotIn('rs.state_id', [4, 5]) // Excluir estados cerrados
+            ->sum('rrp.quantity');
+    }
+
+// PROBLEMA 2: getReturnableByOrder() usa consulta SQL cruda incorrecta
+    public static function getReturnableByOrder(int $orderId): Collection
+    {
+        return self::where('order_id', $orderId)
+            ->where('is_returnable', true)
+            ->whereRaw('quantity > (
+            SELECT COALESCE(SUM(rrp.quantity), 0)
+            FROM return_request_products rrp
+            INNER JOIN return_requests rr ON rrp.request_id = rr.id
+            INNER JOIN return_status rs ON rr.status_id = rs.id
+            WHERE rrp.product_id = return_order_products.id
+              AND rs.active = 1
+              AND rs.state_id NOT IN (4, 5)
+        )')
+            ->get();
+    }
+
 }

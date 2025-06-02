@@ -53,6 +53,18 @@ Route::prefix('callcenter')
             // Obtener productos de una orden (AJAX)
             Route::get('/order/{orderId}/products', [ReturnController::class, 'getOrderProducts'])->name('order-products');
 
+                // AJAX endpoints
+                Route::post('/carrier-time-slots', [ReturnController::class, 'getCarrierTimeSlots']);
+                Route::post('/inpost-lockers', [ReturnController::class, 'getNearbyInPostLockers']);
+                Route::post('/inpost-locker-details', [ReturnController::class, 'getInPostLockerDetails']);
+                Route::post('/available-stores', [ReturnController::class, 'getAvailableStores']);
+                Route::get('/{id}/tracking', [ReturnController::class, 'getTrackingStatus']);
+                Route::post('/{id}/cancel-pickup', [ReturnController::class, 'cancelPickup']);
+                Route::get('/document/{id}/download', [ReturnController::class, 'downloadDocument'])
+                    ->name('returns.documents.download');
+                Route::post('/scan-barcode', [ReturnController::class, 'scanBarcode']);
+
+
         });
 
         Route::prefix('settings')->group(function () {
