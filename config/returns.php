@@ -16,6 +16,18 @@ return [
         'website' => env('COMPANY_WEBSITE', 'www.empresa.com')
     ],
 
+    'notifications' => [
+        'enabled' => env('RETURNS_NOTIFICATIONS_ENABLED', true),
+        'queue' => env('RETURNS_NOTIFICATIONS_QUEUE', 'emails'),
+        'from' => [
+            'address' => env('RETURNS_FROM_ADDRESS', 'noreply@example.com'),
+            'name' => env('RETURNS_FROM_NAME', 'Devoluciones')
+        ],
+        'admin_email' => env('RETURNS_ADMIN_EMAIL', 'admin@example.com'),
+        'reminder_days' => 7, // Días para enviar recordatorio
+        'tracking_enabled' => true,
+    ],
+
     'logistics_modes' => [
         'customer_transport' => 'Agencia de transporte (cuenta del cliente)',
         'home_pickup' => 'Recogida a domicilio',

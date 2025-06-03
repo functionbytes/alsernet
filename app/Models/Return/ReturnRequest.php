@@ -49,6 +49,26 @@ class ReturnRequest extends Model
         'refunded_amount' => 'decimal:2'
     ];
 
+    public function communications()
+    {
+        return $this->hasMany(ReturnCommunication::class);
+    }
+
+// Agregar este observer o usar eventos
+    protected static function booted()
+    {
+        static::updated(function ($return) {
+            if ($return->isDirty('status')) {
+                // Disparar notificación cuando cambia el estado
+                app(ReturnNotificationService::class)->notifyStatusChange(
+                    $return,
+                    $return->getOriginal('status')
+                );
+            }
+        });
+    }
+
+
     // Relaciones actualizadas
     public function order(): BelongsTo
     {

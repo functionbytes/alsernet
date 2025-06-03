@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Return\ReturnRequest;
+use App\Observers\ReturnObserver;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        ReturnRequest::observe(ReturnObserver::class);
+
         Schema::defaultStringLength(191);
 
         $this->changeDefaultSettings();

@@ -1951,5 +1951,51 @@ class User extends Authenticatable
     }
 
 
+    /**
+     * Configuraciones de notificaciones
+     */
+    public function notificationSettings()
+    {
+        return $this->hasMany(NotificationSetting::class);
+    }
+
+    /**
+     * Tokens de notificaciones push
+     */
+    public function pushTokens()
+    {
+        return $this->hasMany(PushNotificationToken::class);
+    }
+
+    /**
+     * Verificar si puede recibir notificaciones por un canal
+     */
+    public function canReceiveNotification(string $channel, string $type): bool
+    {
+        return NotificationSetting::isEnabled($this->id, $channel, $type);
+    }
+
+    /**
+     * Obtener tokens activos para push notifications
+     */
+    public function getActivePushTokens()
+    {
+        return $this->pushTokens()->where('active', true)->get();
+    }
+
+    /**
+     * Rutear notificaciones basado en configuraciones del usuario
+     */
+    public function routeNotificationFor($driver, $notification = null)
+    {
+        if ($driver === 'vonage') {
+            return $this->phone;
+        }
+
+        return parent::routeNotificationFor($driver, $notification);
+    }
+
+
+
 }
 

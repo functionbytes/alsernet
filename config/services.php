@@ -28,6 +28,19 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+    ],
+
+    'fcm' => [
+        'server_key' => env('FCM_SERVER_KEY'),
+        'sender_id' => env('FCM_SENDER_ID'),
+    ],
+
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -85,6 +85,32 @@ class Kernel extends ConsoleKernel
         $schedule->command('optimize:clear')->everyThirtyMinutes();
         $schedule->command('view:clear')->everyThirtyMinutes();
         //$schedule->command('Dataseed:updating')->everyMinute();
+
+
+
+
+        // Enviar recordatorios diariamente a las 10 AM
+        $schedule->command('returns:send-reminders')
+            ->dailyAt('10:00')
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/return-reminders.log'));
+
+        // Limpiar comunicaciones antiguas semanalmente
+        $schedule->command('returns:cleanup-communications --days=90')
+            ->weekly()
+            ->sundays()
+            ->at('02:00')
+            ->withoutOverlapping();
+
+        // Procesar notificaciones pendientes cada 5 minutos
+        $schedule->job(new ProcessPendingNotifications)
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
+
+
+
+
     }
 
     /**

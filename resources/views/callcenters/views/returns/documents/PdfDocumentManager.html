@@ -1,0 +1,136 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Documentos PDF</h1>
+        <a href="{{ route('pdf-documents.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Documento
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('pdf-documents.index') }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <select name="status" class="form-control">
+                            <option value="">Todos los estados</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pendiente</option>
+                            <option value="generating" {{ request('status') === 'generating' ? 'selected' : '' }}>Generando</option>
+                            <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completado</option>
+                            <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Fallido</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="template" class="form-control">
+                            <option value="">Todas las plantillas</option>
+                            <option value="invoice" {{ request('template') === 'invoice' ? 'selected' : '' }}>Factura</option>
+                            <option value="report" {{ request('template') === 'report' ? 'selected' : '' }}>Reporte</option>
+                            <option value="certificate" {{ request('template') === 'certificate' ? 'selected' : '' }}>Certificado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                        <a href="{{ route('pdf-documents.index') }}" class="btn btn-outline-secondary">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de documentos -->
+    <div class="card">
+        <div class="card-body">
+            @if($documents->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Plantilla</th>
+                                <th>Estado</th>
+                                <th>Tamaño</th>
+                                <th>Creado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($documents as $document)
+                            <tr>
+                                <td>
+                                    <strong>{{ $document->title }}</strong>
+                                    @if($document->description)
+                                        <br><small class="text-muted">{{ $document->description }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">{{ ucfirst($document->template) }}</span>
+                                </td>
+                                <td>
+                                    @switch($document->status)
+                                        @case('pending')
+                                            <span class="badge badge-warning">Pendiente</span>
+                                            @break
+                                        @case('generating')
+                                            <span class="badge badge-info">Generando</span>
+                                            @break
+                                        @case('completed')
+                                            <span class="badge badge-success">Completado</span>
+                                            @break
+                                        @case('failed')
+                                            <span class="badge badge-danger">Fallido</span>
+                                            @break
+                                    @endswitch
+                                </td>
+                                <td>{{ $document->formatted_file_size }}</td>
+                                <td>{{ $document->created_at->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('pdf-documents.show', $document) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        @if($document->status === 'completed')
+                                            <a href="{{ route('pdf-documents.preview', $document) }}" 
+                                               class="btn btn-sm btn-outline-info" title="Vista previa" target="_blank">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                            
+                                            <a href="{{ route('pdf-documents.download', $document) }}" 
+                                               class="btn btn-sm btn-outline-success" title="Descargar">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        @endif
+                                        
+                                        <form method="POST" action="{{ route('pdf-documents.destroy', $document) }}" 
+                                              style="display: inline;" 
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este documento?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                {{ $documents->links() }}
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                    <h5>No hay documentos PDF</h5>
+                    <p class="text-muted">Crea tu primer documento PDF usando el botón "Nuevo Documento".</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection

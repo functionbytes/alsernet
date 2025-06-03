@@ -43,7 +43,7 @@ class ReturnCost extends Model
     // Relaciones
     public function return()
     {
-        return $this->belongsTo(\App\Models\Return\ReturnRequest::class);
+        return $this->belongsTo('App\Models\Return\ReturnRequest');
     }
 
     // Scopes

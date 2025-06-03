@@ -19,6 +19,7 @@ class ReturnBarcode extends Model
         'barcode_number',
         'barcode_type',
         'barcode_image_path',
+
         'status',
         'generated_at',
         'printed_at',
