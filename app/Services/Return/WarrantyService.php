@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Return;
 
 use App\Models\Warranty;
 use App\Models\WarrantyClaim;
@@ -447,4 +447,4 @@ class WarrantyService
 
         return $results;
     }
-}s
+}

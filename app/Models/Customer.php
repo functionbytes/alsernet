@@ -96,50 +96,28 @@ class Customer extends Model
             collect($this->catalogs)->where('estado', '1')->isNotEmpty();
     }
 
-    /**
-     * Crear cliente desde datos ERP
-     */
-    public static function createFromErpData(array $erpData, array $orderClientData = []): self
+    public static function createFromErpData(array $data, array $orderClientData = []): self
     {
-        // Usar datos del pedido si están disponibles, sino usar datos completos del ERP
-        $clientData = !empty($orderClientData) ? $orderClientData : $erpData;
+        $clientData = !empty($orderClientData) ? $orderClientData : $data;
 
         return self::create([
             'erp_client_id' => $erpData['idcliente'] ?? $clientData['idcliente'],
-            'name' => $erpData['nombre'] ?? $clientData['nombre'],
-            'last_name' => $erpData['apellidos'] ?? $clientData['apellidos'],
+            'fullname' => $erpData['nombre'] ." ".$erpData['apellidos'] ?? $clientData['nombre'] ." ".$clientData['apellidos'],
+            'firstname' => $erpData['nombre'] ?? $clientData['nombre'],
+            'lastname' => $erpData['apellidos'] ?? $clientData['apellidos'],
             'email' => $erpData['email'] ?? $clientData['email'],
-            'cif' => $erpData['cif'] ?? $clientData['cif'],
-            'card_id' => $erpData['idtarjeta'] ?? null,
-            'category_id' => $erpData['idcategoria_cliente'] ?? null,
-            'language_id' => $erpData['ididioma'] ?? 1,
-            'creation_date' => $erpData['fcreacion'] ?? now(),
-            'status' => 'active',
-            'accept_commercial_info' => !($erpData['no_informacion_comercial_lopd'] ?? false),
-            'accept_data_sharing' => !($erpData['no_datos_a_terceros_lopd'] ?? false),
-            'accept_legitimate_interest' => $erpData['tiene_interes_legitimo_lopd'] ?? false,
-            'lopd_acceptance_date' => $erpData['faceptacion_lopd'] ?? null,
-            'catalogs' => $erpData['cliente_catalogo']['resource'] ?? null,
-            'erp_data' => $erpData
+            'subscriber_id' => null,
         ]);
     }
 
-    /**
-     * Actualizar desde datos ERP
-     */
-    public function updateFromErpData(array $erpData): bool
+    public function updateFromErpData(array $data): bool
     {
         return $this->update([
-            'name' => $erpData['nombre'] ?? $this->name,
-            'last_name' => $erpData['apellidos'] ?? $this->last_name,
-            'email' => $erpData['email'] ?? $this->email,
-            'cif' => $erpData['cif'] ?? $this->cif,
-            'accept_commercial_info' => !($erpData['no_informacion_comercial_lopd'] ?? false),
-            'accept_data_sharing' => !($erpData['no_datos_a_terceros_lopd'] ?? false),
-            'accept_legitimate_interest' => $erpData['tiene_interes_legitimo_lopd'] ?? false,
-            'catalogs' => $erpData['cliente_catalogo']['resource'] ?? $this->catalogs,
-            'erp_data' => $erpData,
-            'updated_at' => now()
+            'erp_client_id' => $data['idcliente'],
+            'fullname' => $data['nombre'] ." ".$data['apellidos'],
+            'firstname' => $data['nombre'],
+            'lastname' => $data['apellidos'] ,
+            'email' => $data['email'],
         ]);
     }
 

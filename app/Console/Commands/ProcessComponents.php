@@ -1,19 +1,18 @@
-
 <?php
 
 namespace App\Console\Commands;
 
-use App\Services\ComponentService;
+use App\Services\Return\ComponentService;
 use App\Models\ProductComponent;
 use Illuminate\Console\Command;
 
 class ProcessComponents extends Command
 {
-    protected $signature = 'components:process 
+    protected $signature = 'components:process
                            {--check-stock : Verificar niveles de stock}
                            {--optimize : Optimizar asignaciones}
                            {--reorder : Generar órdenes de reposición}';
-                           
+
     protected $description = 'Procesar componentes: stock, optimizaciones, reorden';
 
     protected $componentService;

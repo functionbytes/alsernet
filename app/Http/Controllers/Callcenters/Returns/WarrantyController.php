@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Warranty;
 use App\Models\WarrantyClaim;
 use App\Models\WarrantyType;
-use App\Services\WarrantyService;
+use App\Services\Return\WarrantyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

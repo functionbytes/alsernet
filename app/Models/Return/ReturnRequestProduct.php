@@ -2,6 +2,7 @@
 
 namespace App\Models\Return;
 
+use App\Models\Return\Order\ReturnOrderProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -45,7 +46,7 @@ class ReturnRequestProduct extends Model
 
     public function orderProduct(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnOrderProduct', 'product_id', 'id');
+        return $this->belongsTo('App\Models\Return\Order\ReturnOrderProduct', 'product_id', 'id');
     }
 
     public function returnReason(): BelongsTo

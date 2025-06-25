@@ -1,11 +1,11 @@
 <?php
 
-// 1. MAILABLE: app/Mail/ReturnStatusMail.php
-namespace App\Mail;
+namespace App\Mail\Return;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;

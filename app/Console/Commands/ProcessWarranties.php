@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\WarrantyService;
+use App\Services\Return\WarrantyService;
 use Illuminate\Console\Command;
 
 class ProcessWarranties extends Command

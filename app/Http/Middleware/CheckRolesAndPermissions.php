@@ -16,7 +16,6 @@ class CheckRolesAndPermissions
     {
         $user = Auth::user();
 
-
         if (!$user) {
             return redirect()->route('login');
         }

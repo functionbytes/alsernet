@@ -5,9 +5,9 @@ namespace App\Services\Return;
 use App\Models\Order;
 use App\Models\OrderComponent;
 use App\Models\ProductComponent;
-use App\Models\ComponentShipment;
-use App\Models\ComponentShipmentItem;
-use App\Models\ComponentSubstitution;
+use App\Models\Return\ComponentShipment;
+use App\Models\Return\ComponentShipmentItem;
+use App\Models\Return\ComponentSubstitution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

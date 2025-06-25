@@ -42,10 +42,7 @@ class ReturnStatus extends Model
 
     public function getTranslation($langId = 1, $shopId = 1)
     {
-        return $this->translations()
-            ->where('id_lang', $langId)
-            ->where('id_shop', $shopId)
-            ->first();
+        return $this->translations()->where('id_lang', $langId)->where('id_shop', $shopId)->first();
     }
 
     public function scopeActive($query)

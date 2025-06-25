@@ -4,11 +4,8 @@
 
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
-
             <div class="card w-100">
-
-                <form id="formDistributors" enctype="multipart/form-data" role="form" onSubmit="return false">
-
+                <form id="formValidate" enctype="multipart/form-data" role="form" onSubmit="return false">
                     {{ csrf_field() }}
 
                     <div class="card-body border-top">
@@ -16,178 +13,75 @@
                             <h5 class="mb-0">Validar orden</h5>
                         </div>
                         <p class="card-subtitle mb-3 mt-3">
-                            Este espacio está diseñado para permitirte  <mark><code>introducir</code></mark> nueva información de manera sencilla y estructurada. A continuación, se presentan varios campos que deberás completar con los datos requeridos.
+                            Este espacio está diseñado para permitirte <mark><code>introducir</code></mark> nueva información de manera sencilla y estructurada. A continuación, se presentan varios campos que deberás completar con los datos requeridos.
                         </p>
+
                         <div class="row">
+                            <div class="col-12 mb-3">
+                                    <input type="text" class="form-control"  id="order_number"  name="order_number"  placeholder="Ej: ORD-12345 o 12345" autocomplete="new-password">
+                            </div>
 
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label  class="control-label col-form-label">Titulo</label>
-                                    <input type="text" class="form-control" id="title"  name="title"  placeholder="Ingresa titulo" autocomplete="new-password" >
+                            <div class="col-12">
+                                <div class="errors d-none alert alert-danger">
                                 </div>
                             </div>
 
                             <div class="col-12">
-                                <div class="errors d-none">
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="action-form border-top mt-4">
-                                    <div class="text-center">
-                                        <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                            Guardar
-                                        </button>
-                                    </div>
+                                <div class="border-top pt-1 mt-4">
+                                    <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100" id="searchBtn">
+                                        <span class="btn-text">Buscar</span>
+                                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                                    </button>
                                 </div>
                             </div>
 
                         </div>
                     </div>
-
-
-
                 </form>
             </div>
-
         </div>
-
     </div>
-
 
 @endsection
 
-
-
 @push('scripts')
-
     <script type="text/javascript">
-
         $(document).ready(function() {
-
-            jQuery.validator.addMethod(
-                'emailExt',
-                function (value, element, param) {
-                    return value.match(
-                        /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
-                    )
-                },
-                'Porfavor ingrese email valido',
-            );
-
-
-            $("#formDistributors").validate({
+            $("#formValidate").validate({
                 submit: false,
                 ignore: ".ignore",
                 rules: {
-                    title: {
+                    order_number: {
                         required: true,
                         minlength: 3,
                         maxlength: 100,
                     },
-                    leading: {
-                        required: true,
-                        minlength: 3,
-                        maxlength: 100,
-                    },
-                    supporting: {
-                        required: true,
-                        minlength: 3,
-                        maxlength: 100,
-                    },
-                    address: {
-                        required: true,
-                        minlength: 3,
-                        maxlength: 100,
-                    },
-                    nit: {
-                        required: true,
-                        minlength: 6,
-                        maxlength: 100,
-                    },
-                    cellphone: {
-                        required: false,
-                        number: true,
-                        minlength: 6,
-                        maxlength: 10,
-                    },
-                    email: {
-                        required: true,
-                        email: true,
-                        emailExt: true,
-                    },
-                    available: {
-                        required: true,
-                    },
-
                 },
                 messages: {
-                    title: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 3 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                    },
-                    leading: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 3 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                    },
-                    supporting: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 3 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                    },
-                    address: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 0 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                    },
-                    nit: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 6 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                    },
-                    cellphone: {
-                        required: "El parametro es necesario.",
-                        number: 'Solo se puede ingresar números.',
-                        minlength: "Debe contener al menos 6 caracter",
-                        maxlength: "Debe contener al menos 10 caracter",
-                    },
-                    email: {
-                        required: 'Tu email ingresar correo electrónico es necesario.',
-                        email: 'Por favor, introduce una dirección de correo electrónico válida.',
-                    },
-                    available: {
-                        required: "Es necesario un estado.",
+                    order_number: {
+                        required: "El número de orden es necesario.",
+                        minlength: "Debe contener al menos 3 caracteres",
+                        maxlength: "Debe contener máximo 100 caracteres",
                     },
                 },
                 submitHandler: function(form) {
-
-                    var $form = $('#formDistributors');
+                    var $form = $('#formValidate');
                     var formData = new FormData($form[0]);
-                    var title = $("#title").val();
-                    var cellphone = $("#cellphone").val();
-                    var email = $("#email").val();
-                    var address = $("#address").val();
-                    var nit = $("#nit").val();
-                    var available = $("#available").val();
-                    var supporting = $("#supporting").val();
-                    var leading = $("#leading").val();
 
-                    formData.append('title', title);
-                    formData.append('cellphone', cellphone);
-                    formData.append('email', email);
-                    formData.append('address', address);
-                    formData.append('nit', nit);
-                    formData.append('available', available);
-                    formData.append('supporting', supporting);
-                    formData.append('leading', leading);
+                    var $submitButton = $('#searchBtn');
+                    var $btnText = $submitButton.find('.btn-text');
+                    var $spinner = $submitButton.find('.spinner-border');
 
-                    var $submitButton = $('button[type="submit"]');
+                    // Mostrar loading
                     $submitButton.prop('disabled', true);
+                    $btnText.text('Buscando...');
+                    $spinner.removeClass('d-none');
+
+                    // Limpiar errores previos
+                    $('.errors').addClass('d-none').html('');
 
                     $.ajax({
-                        url: "{{ route('callcenter.distributors.store') }}",
+                        url: "{{ route('callcenter.returns.validate.order') }}",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -197,44 +91,79 @@
                         data: formData,
                         success: function(response) {
 
-                            if(response.success == true){
-
-                                message = response.message;
-
-                                toastr.success(message, "Operación exitosa", {
+                            if (response.success == true) {
+                                // Mostrar mensaje de éxito
+                                toastr.success(response.message, "Operación exitosa", {
                                     closeButton: true,
                                     progressBar: true,
                                     positionClass: "toast-bottom-right"
                                 });
 
+                                // Redireccionar después de un breve delay
                                 setTimeout(function() {
-                                    window.location.href = "{{ route('callcenter.distributors') }}";
-                                }, 2000);
+                                    if (response.redirect_url) {
+                                        window.location.href = response.redirect_url;
+                                    } else {
+                                        // Fallback si no hay URL específica
+                                        window.location.href = "{{ route('callcenter.returns.generate', ':orderNumber') }}".replace(':orderNumber', $('#order_number').val());
+                                    }
+                                }, 1500);
 
-                            }else{
-
+                            } else {
+                                // Mostrar error
                                 let error = response.message;
-                                $('.errors').removeClass('d-none');
-                                $('.errors').html(error);
+                                $('.errors').removeClass('d-none').html('<i class="fas fa-exclamation-triangle me-2"></i>' + error);
 
+                                toastr.error(error, "Error", {
+                                    closeButton: true,
+                                    progressBar: true,
+                                    positionClass: "toast-bottom-right"
+                                });
+
+                                // Ocultar error después de 5 segundos
                                 setTimeout(function() {
-                                    $('.errors').addClass('d-none');
-                                    $('.errors').html();
-                                }, 2000);
+                                    //$('.errors').addClass('d-none').html('');
+                                }, 5000);
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'Error de conexión. Por favor intente nuevamente.';
+
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
                             }
 
+                            $('.errors').removeClass('d-none').html('<i class="fas fa-exclamation-circle me-2"></i>' + errorMessage);
 
+                            toastr.error(errorMessage, "Error de conexión", {
+                                closeButton: true,
+                                progressBar: true,
+                                positionClass: "toast-bottom-right"
+                            });
 
+                            setTimeout(function() {
+                                $('.errors').addClass('d-none').html('');
+                            }, 5000);
+                        },
+                        complete: function() {
+                            // Restaurar botón
+                            $submitButton.prop('disabled', false);
+                            $btnText.text('Buscar');
+                            $spinner.addClass('d-none');
                         }
                     });
-
                 }
-
             });
 
+            // Focus automático en el input
+            $('#order_number').focus();
+
+            // Permitir envío con Enter
+            $('#order_number').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#formValidate').submit();
+                }
+            });
         });
-
     </script>
-
-
 @endpush

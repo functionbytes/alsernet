@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Callcenters\Returns;
 
-use App\Models\Return\Return;
-use App\Models\Return\ReturnCost;
-use App\Services\Return\ReturnCostService;
 use App\Http\Requests\StoreReturnCostRequest;
-use Illuminate\Http\Request;
+use App\Services\Return\ReturnCostService;
+use App\Http\Controllers\Controller;
+use App\Models\Return\ReturnRequest;
 use Illuminate\Http\JsonResponse;
+use App\Models\Return\ReturnCost;
+use Illuminate\Http\Request;
 
 class ReturnCostController extends Controller
 {
@@ -21,27 +22,27 @@ class ReturnCostController extends Controller
     /**
      * Mostrar lista de costos de una devolución
      */
-    public function index(Return $return)
+    public function index(ReturnRequest $return)
     {
-        $this->authorize('view', $return);
+            $this->authorize('view', $return);
 
-        $costsBreakdown = $this->costService->getCostsBreakdown($return);
-        $refundCalculation = $this->costService->calculateFinalRefund($return);
+            $costsBreakdown = $this->costService->getCostsBreakdown($return);
+            $refundCalculation = $this->costService->calculateFinalRefund($return);
 
-        if (request()->wantsJson()) {
-            return response()->json([
-                'costs' => $costsBreakdown,
-                'refund' => $refundCalculation
-            ]);
-        }
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'costs' => $costsBreakdown,
+                    'refund' => $refundCalculation
+                ]);
+            }
 
-return view('returns.costs.index', compact('return', 'costsBreakdown', 'refundCalculation'));
-}
+        return view('returns.costs.index', compact('return', 'costsBreakdown', 'refundCalculation'));
+    }
 
-/**
- * Agregar un costo manual
- */
-public function store(StoreReturnCostRequest $request, Return $return)
+    /**
+     * Agregar un costo manual
+     */
+    public function store(StoreReturnCostRequest $request, ReturnRequest $return)
     {
         $this->authorize('manageCosts', $return);
 
@@ -72,7 +73,7 @@ public function store(StoreReturnCostRequest $request, Return $return)
     /**
      * Aplicar deducciones automáticas
      */
-    public function applyAutomatic(Return $return)
+    public function applyAutomatic(ReturnRequest $return)
     {
         $this->authorize('manageCosts', $return);
 
@@ -103,7 +104,7 @@ public function store(StoreReturnCostRequest $request, Return $return)
     /**
      * Eliminar un costo manual
      */
-    public function destroy(Return $return, ReturnCost $cost)
+    public function destroy(ReturnRequest $return, ReturnCost $cost)
     {
         $this->authorize('manageCosts', $return);
 
@@ -138,7 +139,7 @@ public function store(StoreReturnCostRequest $request, Return $return)
     /**
      * Obtener resumen de reembolso
      */
-    public function summary(Return $return): JsonResponse
+    public function summary(ReturnRequest $return): JsonResponse
     {
         $this->authorize('view', $return);
 
@@ -146,4 +147,5 @@ public function store(StoreReturnCostRequest $request, Return $return)
 
         return response()->json($summary);
     }
+
 }

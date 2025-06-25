@@ -1,11 +1,11 @@
 <?php
 
-// 1. CONTROLLER: app/Http/Controllers/ReturnCommunicationController.php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Callcenters\Returns;
 
-use App\Models\Return;
-use App\Models\ReturnCommunication;
-use App\Services\ReturnNotificationService;
+use App\Http\Controllers\Controller;
+use App\Models\Return\ReturnCommunication;
+use App\Models\Return\ReturnRequest;
+use App\Services\Return\ReturnNotificationService;
 use App\Http\Requests\SendCustomEmailRequest;
 use App\Http\Requests\ResendCommunicationRequest;
 use Illuminate\Http\Request;
@@ -24,7 +24,7 @@ class ReturnCommunicationController extends Controller
     /**
      * Listar todas las comunicaciones de una devolución
      */
-    public function index(Return $return)
+    public function index(ReturnRequest $return)
     {
         $this->authorize('view', $return);
 
@@ -47,13 +47,13 @@ class ReturnCommunicationController extends Controller
             ]);
         }
 
-return view('returns.communications.index', compact('return', 'communications', 'stats'));
-}
+    return view('returns.communications.index', compact('return', 'communications', 'stats'));
+    }
 
 /**
  * Mostrar formulario para enviar email personalizado
  */
-public function create(Return $return)
+public function create(ReturnRequest $return)
     {
         $this->authorize('manageCommunications', $return);
 
@@ -70,7 +70,7 @@ public function create(Return $return)
     /**
      * Enviar email personalizado
      */
-    public function store(SendCustomEmailRequest $request, Return $return)
+    public function store(SendCustomEmailRequest $request, ReturnRequest $return)
     {
         $this->authorize('manageCommunications', $return);
 
@@ -119,7 +119,7 @@ public function create(Return $return)
     /**
      * Ver detalles de una comunicación
      */
-    public function show(Return $return, ReturnCommunication $communication)
+    public function show(ReturnRequest $return, ReturnCommunication $communication)
     {
         $this->authorize('view', $return);
 
@@ -137,7 +137,7 @@ public function create(Return $return)
     /**
      * Reenviar una comunicación fallida
      */
-    public function resend(ResendCommunicationRequest $request, Return $return, ReturnCommunication $communication)
+    public function resend(ResendCommunicationRequest $request, ReturnRequest $return, ReturnCommunication $communication)
     {
         $this->authorize('manageCommunications', $return);
 
@@ -193,7 +193,7 @@ public function create(Return $return)
     /**
      * Previsualizar plantilla de email
      */
-    public function preview(Request $request, Return $return)
+    public function preview(Request $request, ReturnRequest $return)
     {
         $this->authorize('view', $return);
 
@@ -238,7 +238,7 @@ public function create(Return $return)
     /**
      * Obtener estadísticas de comunicaciones
      */
-    public function stats(Return $return): JsonResponse
+    public function stats(ReturnRequest $return): JsonResponse
     {
         $this->authorize('view', $return);
 

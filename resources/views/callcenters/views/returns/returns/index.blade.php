@@ -54,7 +54,7 @@
                     <tr>
                         <th>Titulo</th>
                         <th>Estado</th>
-                        <th>Fecha</th>
+                        <th>Fecha solicitud</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
@@ -62,19 +62,18 @@
 
                     @foreach ($returns as $key => $return)
                         <tr class="search-items">
-
                             <td>
-                                <span class="usr-email-addr" data-email="{{ Str::words( Str::upper(Str::lower($return->firstname . ' ' . $return->lastname)), 12, '...')  }}">{{ Str::words( Str::upper(Str::lower($return->firstname . ' ' . $return->lastname)), 12, '...')  }}</span>
-                            </td>
-
-                            <td>
-                  <span class="badge {{ $return->reviewed == 1 ? 'bg-light-primary' : 'bg-light-secondary' }} rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">
-
-                     {{ $return->reviewed == 1 ? 'Gestionado' : 'Pendiente' }}
-                  </span>
+                                <span>{{ Str::words( $return->reference)  }}</span>
                             </td>
                             <td>
-                                <span class="usr-ph-no" data-phone="{{ date('Y-m-d', strtotime($return->updated_at)) }}">{{ date('Y-m-d', strtotime($return->updated_at)) }}</span>
+                              <span class="badge {{ $return->status->id == 1 ? 'bg-light-primary' : 'bg-light-secondary' }} rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">
+                                 {{ $return->status->title }}
+                              </span>
+                            </td>
+                            <td>
+                                <span>
+                                   <span>{{ $return->request_at ? formatCarbonDate($return->updated_at) : 'Pendiente' }}</span>
+                                </span>
                             </td>
                             <td class="text-left">
                                 <div class="dropdown dropstart">
@@ -82,17 +81,16 @@
                                         <i class="ti ti-dots fs-5"></i>
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        @can('contacts.update')
+                                        @can('returns.update')
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.contacts.edit', $return->uid) }}">
+                                                <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('callcenter.returns.edit', $return->uid) }}">
                                                     Editar
                                                 </a>
                                             </li>
                                         @endcan
-
-                                        @can('contacts.delete')
+                                        @can('returns.delete')
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.contacts.destroy', $return->uid) }}">
+                                                <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('callcenter.returns.destroy', $return->uid) }}">
                                                     Eliminar
                                                 </a>
                                             </li>

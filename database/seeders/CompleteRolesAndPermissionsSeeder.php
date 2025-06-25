@@ -19,7 +19,7 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         $permissions = $this->getAllPermissions();
 
         foreach ($permissions as $permission => $description) {
-            Permission::findOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            Permission::findOrCreate($permission, 'web');
         }
 
         // Crear roles y asignar permisos
@@ -85,22 +85,21 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'tickets.groups.manage' => 'Gestionar grupos',
             'tickets.canneds.manage' => 'Gestionar respuestas predefinidas',
 
-            'manager.permissions',
-            'manager.permissions.create',
-            'manager.permissions.store',
-            'manager.permissions.edit',
-            'manager.permissions.update',
-            'manager.permissions.destroy',
+            'manager.permissions' => 'Gestionar permisos del manager', // Added description
+            'manager.permissions.create' => 'Crear permisos del manager', // Added description
+            'manager.permissions.store' => 'Almacenar permisos del manager', // Added description
+            'manager.permissions.edit' => 'Editar permisos del manager', // Added description
+            'manager.permissions.update' => 'Actualizar permisos del manager', // Added description
+            'manager.permissions.destroy' => 'Eliminar permisos del manager', // Added description
 
-            'manager.langs',
-            'manager.langs.create',
-            'manager.langs.store',
-            'manager.langs.update',
-            'manager.langs.edit',
-            'manager.langs.view',
-            'manager.langs.destroy',
-            'manager.langs.categories',
-
+            'manager.langs' => 'Gestionar idiomas del manager', // Added description
+            'manager.langs.create' => 'Crear idiomas del manager', // Added description
+            'manager.langs.store' => 'Almacenar idiomas del manager', // Added description
+            'manager.langs.update' => 'Actualizar idiomas del manager', // Added description
+            'manager.langs.edit' => 'Editar idiomas del manager', // Added description
+            'manager.langs.view' => 'Ver idiomas del manager', // Added description
+            'manager.langs.destroy' => 'Eliminar idiomas del manager', // Added description
+            'manager.langs.categories' => 'Gestionar categorías de idiomas del manager', // Added description
 
             // FAQs
             'faqs.view' => 'Ver FAQs',
@@ -152,36 +151,61 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'documents.files.manage' => 'Gestionar archivos',
 
             // Devoluciones (Returns)
+            // Devoluciones (Returns)
             'returns.view.own' => 'Ver sus propias devoluciones',
             'returns.view.assigned' => 'Ver devoluciones asignadas',
             'returns.view.all' => 'Ver todas las devoluciones',
             'returns.create' => 'Crear devoluciones',
             'returns.update' => 'Actualizar devoluciones',
             'returns.delete' => 'Eliminar devoluciones',
-            'returns.status.update' => 'Cambiar estado',
-            'returns.status.approve' => 'Aprobar devoluciones',
-            'returns.status.reject' => 'Rechazar devoluciones',
+            'returns.status.update' => 'Actualizar el estado de las devoluciones',
+            'returns.approve' => 'Aprobar devoluciones',
+            'returns.reject' => 'Rechazar devoluciones',
             'returns.assign' => 'Asignar devoluciones',
             'returns.export' => 'Exportar devoluciones',
+            'returns.validate' => 'Validar devoluciones',
+            'returns.generate' => 'Generar devoluciones',
+            'returns.show' => 'Ver detalle de devolución',
+            'returns.edit' => 'Editar devolución',
+            'returns.payments.view' => 'Ver pagos de devoluciones',
+            'returns.payments.add' => 'Añadir pagos a devoluciones',
+            'returns.pdf.download' => 'Descargar PDF de devolución',
+            'returns.bulk.update' => 'Actualización masiva de devoluciones',
+            'returns.products.validate' => 'Validar productos de devolución',
+            'returns.cancel' => 'Cancelar devolución',
+            'returns.order.products' => 'Obtener productos de una orden (para devolución)',
+            'returns.carrier.timeslots.view' => 'Ver franjas horarias de transportistas',
+            'returns.inpost.lockers.view' => 'Ver taquillas InPost cercanas',
+            'returns.inpost.locker.details.view' => 'Ver detalles de taquilla InPost',
+            'returns.available.stores.view' => 'Ver tiendas disponibles para devolución',
+            'returns.tracking.status.view' => 'Ver estado de seguimiento de devolución',
+            'returns.pickup.cancel' => 'Cancelar recogida de devolución',
+            'returns.documents.download' => 'Descargar documento de devolución',
+            'returns.barcode.scan' => 'Escanear código de barras de devolución',
+            'returns.discussion.add' => 'Añadir discusión a devolución',
+            'returns.attachment.upload' => 'Subir adjunto a devolución',
+            'returns.review' => 'Revisar devolución',
+            'returns.confirm' => 'Confirmar devolución',
+            'returns.success' => 'Ver confirmación de devolución',
 
             // Configuración del sistema
-            'system.settings.manage' => 'Gestionar configuración',
-            'system.maintenance' => 'Modo mantenimiento',
+            'system.settings.manage' => 'Gestionar configuración del sistema',
+            'system.maintenance' => 'Modo mantenimiento del sistema',
             'system.logs.view' => 'Ver logs del sistema',
-            'system.api.manage' => 'Gestionar API tokens',
-            'system.emails.manage' => 'Configurar emails',
-            'system.hours.manage' => 'Configurar horarios',
+            'system.api.manage' => 'Gestionar API tokens del sistema',
+            'system.emails.manage' => 'Configurar emails del sistema',
+            'system.hours.manage' => 'Configurar horarios del sistema',
         ];
     }
 
     private function createRoles()
     {
         // 1. Super Admin - Acceso total
-        $superAdminRole = Role::create(['name' => 'super-admin']);
+        $superAdminRole = Role::findOrCreate('super-admin', 'web'); // Use findOrCreate
         $superAdminRole->givePermissionTo(Permission::all());
 
         // 2. Admin - Casi todo excepto configuración crítica
-        $adminRole = Role::create(['name' => 'admin']);
+        $adminRole = Role::findOrCreate('admin', 'web'); // Use findOrCreate
         $adminRole->givePermissionTo(Permission::all()->reject(function ($permission) {
             return in_array($permission->name, [
                 'system.maintenance',
@@ -190,7 +214,7 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         }));
 
         // 3. Manager - Gestión general sin configuración
-        $managerRole = Role::create(['name' => 'manager']);
+        $managerRole = Role::findOrCreate('manager', 'web'); // Use findOrCreate
         $managerRole->givePermissionTo([
             'dashboard.view',
             'dashboard.statistics',
@@ -224,10 +248,35 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'returns.view.all',
             'returns.update',
             'returns.status.update',
+            'returns.approve',
+            'returns.reject',
+            'returns.assign',
+            'returns.export',
+            'returns.pdf.download',
+            'returns.bulk.update',
+            'returns.validate',
+            'returns.generate',
+            'returns.show',
+            'returns.edit',
+            'returns.payments.view',
+            'returns.payments.add',
+            'returns.products.validate',
+            'returns.cancel',
+            'returns.order.products',
+            'returns.carrier.timeslots.view',
+            'returns.inpost.lockers.view',
+            'returns.inpost.locker.details.view',
+            'returns.available.stores.view',
+            'returns.tracking.status.view',
+            'returns.pickup.cancel',
+            'returns.documents.download',
+            'returns.barcode.scan',
+            'returns.discussion.add',
+            'returns.attachment.upload',
         ]);
 
         // 4. Call Center Manager
-        $callCenterManagerRole = Role::create(['name' => 'callcenter-manager']);
+        $callCenterManagerRole = Role::findOrCreate('callcenter-manager', 'web'); // Use findOrCreate
         $callCenterManagerRole->givePermissionTo([
             'dashboard.view',
             'tickets.view.all',
@@ -253,10 +302,27 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'livechat.engage',
             'livechat.settings',
             'livechat.operators.manage',
+            'returns.view.all',
+            'returns.create',
+            'returns.update',
+            'returns.status.update',
+            'returns.approve',
+            'returns.reject',
+            'returns.assign',
+            'returns.cancel',
+            'returns.order.products',
+            'returns.carrier.timeslots.view',
+            'returns.inpost.lockers.view',
+            'returns.inpost.locker.details.view',
+            'returns.available.stores.view',
+            'returns.tracking.status.view',
+            'returns.pickup.cancel',
+            'returns.discussion.add',
+            'returns.attachment.upload',
         ]);
 
         // 5. Call Center Agent
-        $callCenterAgentRole = Role::create(['name' => 'callcenter-agent']);
+        $callCenterAgentRole = Role::findOrCreate('callcenter-agent', 'web'); // Use findOrCreate
         $callCenterAgentRole->givePermissionTo([
             'dashboard.view',
             'tickets.view.assigned',
@@ -267,10 +333,27 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'faqs.view',
             'livechat.view',
             'livechat.engage',
+            'returns.view.assigned',
+            'returns.create',
+            'returns.update',
+            'returns.status.update',
+            'returns.cancel',
+            'returns.order.products',
+            'returns.carrier.timeslots.view',
+            'returns.inpost.lockers.view',
+            'returns.inpost.locker.details.view',
+            'returns.available.stores.view',
+            'returns.generate',
+            'returns.validate',
+
+            'returns.tracking.status.view',
+            'returns.pickup.cancel',
+            'returns.discussion.add',
+            'returns.attachment.upload',
         ]);
 
         // 6. Inventory Manager
-        $inventoryManagerRole = Role::create(['name' => 'inventory-manager']);
+        $inventoryManagerRole = Role::findOrCreate('inventory-manager', 'web'); // Use findOrCreate
         $inventoryManagerRole->givePermissionTo([
             'dashboard.view',
             'shops.view',
@@ -285,10 +368,15 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'inventory.update',
             'inventory.close',
             'inventory.reports',
+            'returns.view.all',
+            'returns.update',
+            'returns.status.update',
+            'returns.barcode.scan',
+            'returns.products.validate',
         ]);
 
         // 7. Inventory Staff
-        $inventoryStaffRole = Role::create(['name' => 'inventory-staff']);
+        $inventoryStaffRole = Role::findOrCreate('inventory-staff', 'web'); // Use findOrCreate
         $inventoryStaffRole->givePermissionTo([
             'dashboard.view',
             'shops.view',
@@ -296,10 +384,13 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'products.barcode',
             'inventory.view',
             'inventory.update',
+            'returns.view.all',
+            'returns.barcode.scan',
+            'returns.products.validate',
         ]);
 
         // 8. Shop Manager
-        $shopManagerRole = Role::create(['name' => 'shop-manager']);
+        $shopManagerRole = Role::findOrCreate('shop-manager', 'web'); // Use findOrCreate
         $shopManagerRole->givePermissionTo([
             'dashboard.view',
             'shops.view',
@@ -308,18 +399,29 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'subscribers.create',
             'subscribers.update',
             'subscribers.lists.manage',
+            'returns.view.all',
+            'returns.create',
+            'returns.update',
+            'returns.status.update',
+            'returns.cancel',
+            'returns.available.stores.view',
+            'returns.barcode.scan',
         ]);
 
         // 9. Shop Staff
-        $shopStaffRole = Role::create(['name' => 'shop-staff']);
+        $shopStaffRole = Role::findOrCreate('shop-staff', 'web'); // Use findOrCreate
         $shopStaffRole->givePermissionTo([
             'dashboard.view',
             'subscribers.view',
             'subscribers.create',
+            'returns.view.all',
+            'returns.create',
+            'returns.update',
+            'returns.barcode.scan',
         ]);
 
         // 10. Administrative
-        $administrativeRole = Role::create(['name' => 'administrative']);
+        $administrativeRole = Role::findOrCreate('administrative', 'web'); // Use findOrCreate
         $administrativeRole->givePermissionTo([
             'dashboard.view',
             'documents.view',
@@ -329,15 +431,30 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'returns.view.all',
             'returns.create',
             'returns.update',
+            'returns.status.update',
+            'returns.approve',
+            'returns.reject',
+            'returns.export',
+            'returns.pdf.download',
+            'returns.bulk.update',
+            'returns.payments.view',
+            'returns.payments.add',
+            'returns.discussion.add',
+            'returns.attachment.upload',
         ]);
 
         // 11. Customer
-        $customerRole = Role::create(['name' => 'customer']);
+        $customerRole = Role::findOrCreate('customer', 'web'); // Use findOrCreate
         $customerRole->givePermissionTo([
             'returns.view.own',
             'returns.create',
             'tickets.view.own',
             'tickets.create',
+            'returns.cancel',
+            'returns.tracking.status.view',
+            'returns.pdf.download',
+            'returns.discussion.add',
+            'returns.attachment.upload',
         ]);
     }
 

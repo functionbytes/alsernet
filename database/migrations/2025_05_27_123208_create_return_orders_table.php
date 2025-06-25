@@ -47,7 +47,6 @@ class CreateReturnOrdersTable extends Migration
 
             // Información adicional
             $table->string('series_description')->nullable();
-            $table->boolean('created_by_erp')->default(false);
 
             // Datos completos del ERP en JSON
             $table->json('erp_data')->nullable();

@@ -2,6 +2,8 @@
 
 namespace App\Models\Return;
 
+use App\Library\Traits\HasUid;
+use App\Models\Return\Order\ReturnOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,10 +11,14 @@ use Illuminate\Support\Collection;
 
 class ReturnRequest extends Model
 {
+    use HasUid;
+
     protected $table = 'return_requests';
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'number', // Cambiado: ahora referencia a orders.id
+        'reference', // Cambiado: ahora referencia a orders.id
         'order_id', // Cambiado: ahora referencia a orders.id
         'customer_id',
         'shop_id',
@@ -35,7 +41,8 @@ class ReturnRequest extends Model
         'created_by',
         'total_amount',
         'approved_amount',
-        'refunded_amount'
+        'refunded_amount',
+        'request_at'
     ];
 
     protected $with = ['status', 'returnType', 'returnReason'];
@@ -46,7 +53,8 @@ class ReturnRequest extends Model
         'is_refunded' => 'boolean',
         'total_amount' => 'decimal:2',
         'approved_amount' => 'decimal:2',
-        'refunded_amount' => 'decimal:2'
+        'refunded_amount' => 'decimal:2',
+        'request_at' => 'datetime',
     ];
 
     public function communications()
@@ -60,10 +68,10 @@ class ReturnRequest extends Model
         static::updated(function ($return) {
             if ($return->isDirty('status')) {
                 // Disparar notificación cuando cambia el estado
-                app(ReturnNotificationService::class)->notifyStatusChange(
-                    $return,
-                    $return->getOriginal('status')
-                );
+                //app(ReturnNotificationService::class)->notifyStatusChange(
+               //     $return,
+                //    $return->getOriginal('status')
+                //);
             }
         });
     }
@@ -72,7 +80,7 @@ class ReturnRequest extends Model
     // Relaciones actualizadas
     public function order(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnOrder', 'order_id', 'id');
+        return $this->belongsTo('App\Models\Return\Order\ReturnOrder', 'order_id', 'id');
     }
 
     public function customer(): BelongsTo
@@ -178,6 +186,16 @@ class ReturnRequest extends Model
         return $query->where('is_refunded', true);
     }
 
+    public function scopeNumber($query, $number)
+    {
+        return $query->where('number', $number);
+    }
+
+    public function scopeReference($query, $reference)
+    {
+        return $query->where('reference', $reference);
+    }
+
     // Métodos auxiliares actualizados
     public function getStatusName($langId = 1, $shopId = 1)
     {
@@ -280,6 +298,10 @@ class ReturnRequest extends Model
      */
     public static function createFromOrder(ReturnOrder $order, array $additionalData = []): self
     {
+        $lastNumber = self::max('number') ?? 0;
+        $nextNumber = $lastNumber + 1;
+
+        $reference = config('returns.return_reference', 'DEV') . '-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
         $defaultData = [
             'order_id' => $order->id,
@@ -307,6 +329,8 @@ class ReturnRequest extends Model
     {
         return [
             'id' => $this->id,
+            'number' => $this->number,
+            'reference' => $this->reference,
             'order_id' => $this->order_id,
             'order_number' => $this->order?->order_number,
             'customer_name' => $this->customer_name,

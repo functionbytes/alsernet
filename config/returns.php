@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'return_reference' => env('RETURN_REFERENCE', 'DEV'),
     'return_days_limit' => env('RETURN_DAYS_LIMIT', 30),
     'default_status_id' => env('RETURN_DEFAULT_STATUS_ID', 1),
     'approved_status_id' => env('RETURN_APPROVED_STATUS_ID', 2),
@@ -15,14 +16,17 @@ return [
         'email' => env('COMPANY_EMAIL', 'info@empresa.com'),
         'website' => env('COMPANY_WEBSITE', 'www.empresa.com')
     ],
-
     'notifications' => [
-        'enabled' => env('RETURNS_NOTIFICATIONS_ENABLED', true),
-        'queue' => env('RETURNS_NOTIFICATIONS_QUEUE', 'emails'),
+        'enabled' => true,
+        'queue' => 'emails',
+        'reminder_cooldown_hours' => 24,
+        'support_email' => 'soporte@ejemplo.com',
+        'support_phone' => '900 123 456',
         'from' => [
             'address' => env('RETURNS_FROM_ADDRESS', 'noreply@example.com'),
             'name' => env('RETURNS_FROM_NAME', 'Devoluciones')
         ],
+        'expiration_days' => 30,
         'admin_email' => env('RETURNS_ADMIN_EMAIL', 'admin@example.com'),
         'reminder_days' => 7, // Días para enviar recordatorio
         'tracking_enabled' => true,

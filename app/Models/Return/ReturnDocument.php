@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Models\Return;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;

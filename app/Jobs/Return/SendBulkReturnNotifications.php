@@ -9,7 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use App\Models\Return;
-use App\Services\ReturnNotificationService;
+use App\Services\Return\ReturnNotificationService;
 
 class SendBulkReturnNotifications implements ShouldQueue
 {

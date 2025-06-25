@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Models\Return;
+namespace App\Models\Return\Order;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Return\ReturnRequestProduct;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class ReturnOrderProduct extends Model
@@ -41,7 +42,7 @@ class ReturnOrderProduct extends Model
     // Relaciones
     public function order(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Return\ReturnOrder', 'order_id', 'id');
+        return $this->belongsTo('App\Models\Return\Order\ReturnOrder', 'order_id', 'id');
     }
 
     public function returnRequest()
@@ -51,7 +52,7 @@ class ReturnOrderProduct extends Model
 
     public function returnItems(): HasMany
     {
-        return $this->hasMany('App\Models\Return\ReturnOrderProduct', 'product_id', 'id');
+        return $this->hasMany('App\Models\Return\Order\ReturnOrderProduct', 'product_id', 'id');
     }
 
     public function requestItems()
@@ -117,31 +118,31 @@ class ReturnOrderProduct extends Model
     /**
      * Crear productos desde líneas ERP
      */
-    public static function createFromErpLines(int $orderId, array $erpLines): void
+    public static function createFromErp(int $orderId, array $erpLines): void
     {
 
         foreach ($erpLines as $line) {
-            // Verificar si es un producto retornable (excluir promociones gratuitas)
+
             $isReturnable = !empty($line['articulo']['codigo']) &&
                 $line['total_con_impuestos'] > 0 &&
                 !str_contains(strtoupper($line['articulo']['descripcion'] ?? ''), 'PORTES') &&
                 !str_contains(strtoupper($line['articulo']['descripcion'] ?? ''), 'PROMOCION');
 
-            self::create([
-                'order_id' => $orderId,
-                'erp_product_id' => $line['articulo']['idarticulo'] ?? null,
-                'product_code' => $line['articulo']['codigo'] ?? null,
-                'product_name' => $line['articulo']['descripcion'] ?? null,
-                'product_description' => $line['articulo']['descripcion'] ?? null,
-                'quantity' => floatval($line['unidades'] ?? 0),
-                'unit_price' => $line['unidades'] > 0 ?
-                    floatval($line['total_con_impuestos']) / floatval($line['unidades']) : 0,
-                'total_price' => floatval($line['total_con_impuestos'] ?? 0),
-                'catalog_id' => is_array($line['idcatalogo']) ? null : $line['idcatalogo'],
-                'is_returnable' => $isReturnable,
-                'is_gift' => floatval($line['total_con_impuestos']) == 0,
-                'erp_line_data' => $line
-            ]);
+                self::create([
+                    'order_id' => $orderId,
+                    'erp_product_id' => $line['articulo']['idarticulo'] ?? null,
+                    'product_code' => $line['articulo']['codigo'] ?? null,
+                    'product_name' => $line['articulo']['descripcion'] ?? null,
+                    'product_description' => $line['articulo']['descripcion'] ?? null,
+                    'quantity' => floatval($line['unidades'] ?? 0),
+                    'unit_price' => $line['unidades'] > 0 ?
+                        floatval($line['total_con_impuestos']) / floatval($line['unidades']) : 0,
+                    'total_price' => floatval($line['total_con_impuestos'] ?? 0),
+                    'catalog_id' => is_array($line['idcatalogo']) ? null : $line['idcatalogo'],
+                    'is_returnable' => $isReturnable,
+                    'is_gift' => floatval($line['total_con_impuestos']) == 0,
+                    'erp_line_data' => $line
+                ]);
         }
     }
 

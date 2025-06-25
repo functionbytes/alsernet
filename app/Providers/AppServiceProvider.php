@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Return\ReturnRequest;
-use App\Observers\ReturnObserver;
+use App\Observers\Return\ReturnObserver;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\ServiceProvider;

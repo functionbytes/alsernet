@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Return;
-use App\Services\ReturnNotificationService;
+use App\Services\Return\ReturnNotificationService;
 use Illuminate\Support\Facades\Log;
 
 class ProcessReturnReminders implements ShouldQueue
