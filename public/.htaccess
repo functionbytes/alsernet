@@ -5,6 +5,17 @@
 
     RewriteEngine On
 
+    <IfModule mod_headers.c>
+        Header always set Access-Control-Allow-Origin "https://www.a-alvarez.com"
+        Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+        Header always set Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization, X-Requested-With"
+        Header always set Access-Control-Max-Age "86400"
+    </IfModule>
+
+    <Limit OPTIONS>
+        Require all granted
+    </Limit>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

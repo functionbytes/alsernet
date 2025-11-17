@@ -51,6 +51,6 @@ class SubscriberCheckMails extends Mailable
 
     public function generateVerificationToken()
     {
-        return urlencode(encrypt($this->subscriber->email));
+        return urlencode(Crypt::encryptString($this->subscriber->email));
     }
 }

@@ -5,7 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Services\ErpService;
 
-class AlvarezERPServiceProvider extends ServiceProvider
+class ErpServiceProvider extends ServiceProvider
 {
 
     public function register()

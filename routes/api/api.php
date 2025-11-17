@@ -4,7 +4,77 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ErpController;
 use App\Http\Controllers\Api\SubscribersController;
 use App\Http\Controllers\Api\TicketsController;
+use App\Http\Controllers\Api\ComparatorController;
+use App\Http\Controllers\Api\DocumentsController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+
+
+Route::group(['prefix' => 'comparators'], function () {
+    Route::get('/get/{comparator}/{iso}', [ComparatorController::class, 'get']);
+    Route::get('/process', [ComparatorController::class, 'process']);
+
+    Route::get('/test-mongo', function () {
+        DB::connection('mongodb')->collection('test')->insert([
+            'mensaje' => 'Funciona Mongo desde Laravel!'
+        ]);
+
+        return 'OK';
+    });
+
+    Route::get('/test-mongo-insert', function () {
+        DB::connection('mongodb')
+            ->collection('comparador_es')
+            ->insert([
+                'product_code' => 'demo-test-' . now()->timestamp,
+                'competitors' => [
+                    [
+                        'marketplace' => 'amazon.es',
+                        'seller' => 'Prueba Seller',
+                        'price' => 123.45,
+                        'quantity' => 10,
+                        'url' => 'https://amazon.es/producto',
+                        'shipping' => 4.99,
+                        'date' => now()->toDateTimeString(),
+                    ]
+                ]
+            ]);
+
+        return 'Insert MongoDB OK';
+    });
+
+    Route::get('/mongo-test', function () {
+        $entry = [
+            'product_code' => Str::random(10),
+            'competitors' => [
+                [
+                    'marketplace' => 'test.com',
+                    'seller' => 'Seller A',
+                    'price' => 12.34,
+                    'quantity' => 5,
+                    'url' => 'https://test.com/product',
+                    'shipping' => 3.50,
+                    'date' => now()->toDateTimeString(),
+                ]
+            ]
+        ];
+
+        //dd($entry);
+        DB::connection('mongodb')
+            ->collection('comparador_es')
+            ->updateOne(
+                ['product_code' => $entry['product_code']],
+                ['$set' => $entry],
+                ['upsert' => true]
+            );
+
+        return 'Test insert done.';
+    });
+
+});
+
+
 
 Route::group(['prefix' => 'subscribers'], function () {
     Route::post('/', [SubscribersController::class, 'process']);
@@ -22,6 +92,10 @@ Route::group(['prefix' => 'subscribers'], function () {
     Route::post('process', [SubscribersController::class, 'process']);
     Route::post('campaigns', [SubscribersController::class, 'campaigns']);
     Route::get('synchronization', [SubscribersController::class, 'synchronization']);
+});
+
+Route::group(['prefix' => 'documents'], function () {
+    Route::post('/', [DocumentsController::class, 'process']);
 });
 
 Route::middleware('auth:sanctum')->group(function() {

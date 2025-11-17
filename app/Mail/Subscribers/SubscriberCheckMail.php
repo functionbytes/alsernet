@@ -20,7 +20,7 @@ class SubscriberCheckMail extends Mailable
 
     public function __construct($subscriber, $layout)
     {
-        $this->url = 'https://preproduccion.a-alvarez.com/';
+        $this->url = 'https://a-alvarez.com/';
         $this->subscriber = $subscriber;
         $this->layout = $layout;
     }
@@ -50,7 +50,7 @@ class SubscriberCheckMail extends Mailable
     protected function replaceTags(string $content): string
     {
         $baseUrl = rtrim($this->url, '/');
-        $token = Crypt::encryptString($this->subscriber->email);
+        $token = $this->generateVerificationToken();
 
         $replacements = [
             '{URLCHECK}' => "{$baseUrl}/module/alsernetforms/verification?token={$token}"
@@ -61,6 +61,12 @@ class SubscriberCheckMail extends Mailable
         }
 
         return $content;
+    }
+
+    public function generateVerificationToken()
+    {
+        $token = Crypt::encryptString($this->subscriber->email);
+        return rtrim($token, '=');
     }
 
     public function attachments(): array

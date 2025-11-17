@@ -4,116 +4,101 @@
 
 <head>
 
-    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-    <meta charset="utf-8" />
-    <title>INOQUALAB - E-Learning</title>
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
-    <link rel="apple-touch-icon" href="pages/ico/60.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="pages/ico/76.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="pages/ico/120.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="pages/ico/152.png">
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-touch-fullscreen" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta content="Meet pages - The simplest and fastest way to build web UI for your dashboard or app." name="description" />
-    <meta content="Ace" name="author" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="DSAThemes">
+    <meta name="description" content="">
 
-   
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- FAVICON AND TOUCH ICONS -->
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="images/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="images/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 
 
-    <link rel="stylesheet" href="{{ url('managers/libs/taginput/bootstrap-tagsinput.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/owl.carousel/dist/assets/owl.carousel.min.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/select2/dist/css/select2.min.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/quill/dist/quill.snow.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/toastr/toastr.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/fontawesome/fontawesome.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/dropzone/dist/min/dropzone.min.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/libs/daterangepicker/daterangepicker.css') }}">
-    <link rel="stylesheet" href="{{ url('managers/css/auth.css') }}">
+    <!-- GOOGLE FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
+    <!-- Twitter Card data -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@publisher_handle">
 
 
+    @yield('head')
+
+    <!-- BOOTSTRAP pages/css/ -->
+    <link href="/pages/css//bootstrap.min.css" rel="stylesheet">
+
+    <!-- FONT ICONS -->
+    <link href="/pages/css//flaticon.css" rel="stylesheet">
+
+    <!-- PLUGINS STYLESHEET -->
+    <link href="/pages/css//menu.css" rel="stylesheet">
+    <link id="effect" href="/pages/css//dropdown-effects/fade-down.css" media="all" rel="stylesheet">
+    <link href="/pages/css//magnific-popup.css" rel="stylesheet">
+    <link href="/pages/css//owl.carousel.min.css" rel="stylesheet">
+    <link href="/pages/css//owl.theme.default.min.css" rel="stylesheet">
+    <link href="/pages/css//lunar.css" rel="stylesheet">
+
+    <!-- ON SCROLL ANIMATION -->
+    <link href="/pages/css//animate.css" rel="stylesheet">
+
+    <!-- TEMPLATE pages/css/ -->
+    <link href="/pages/css//blue-theme.css" rel="stylesheet">
+
+    <!-- Style Switcher pages/css/ -->
+    <link href="/pages/css//crocus-theme.css" rel="alternate stylesheet" title="crocus-theme">
+    <link href="/pages/css//green-theme.css" rel="alternate stylesheet" title="green-theme">
+    <link href="/pages/css//magenta-theme.css" rel="alternate stylesheet" title="magenta-theme">
+    <link href="/pages/css//pink-theme.css" rel="alternate stylesheet" title="pink-theme">
+    <link href="/pages/css//purple-theme.css" rel="alternate stylesheet" title="purple-theme">
+    <link href="/pages/css//skyblue-theme.css" rel="alternate stylesheet" title="skyblue-theme">
+    <link href="/pages/css//red-theme.css" rel="alternate stylesheet" title="red-theme">
+    <link href="/pages/css//violet-theme.css" rel="alternate stylesheet" title="violet-theme">
+
+    <!-- RESPONSIVE pages/css/ -->
+    <link href="/pages/css//responsive.css" rel="stylesheet">
 
     @stack('css')
 
+
 </head>
 
-<body class="">
-
-<div
-    class="page-wrapper"
-    id="main-wrapper"
-    data-layout="vertical"
-    data-navbarbg="skin6"
-    data-sidebartype="full"
-    data-sidebar-position="fixed"
-    data-header-position="fixed"
->
-
-    <!-- Main wrapper -->
-
-    <div class="body-wrapper">
+<body>
 
 
-        <div class="container-fluid">
-            @yield('content')
-        </div>
+<div id="page" class="page font--jakarta">
 
+    @yield('content')
 
-    </div>
 </div>
 
-<script src="{{ url('managers/libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/simplebar/dist/simplebar.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}" type="text/javascript"></script>
+<!-- EXTERNAL SCRIPTS
+============================================= -->
+<script src="/pages/js/jquery-3.7.0.min.js"></script>
+<script src="/pages/js/bootstrap.min.js"></script>
+<script src="/pages/js/modernizr.custom.js"></script>
+<script src="/pages/js/jquery.easing.js"></script>
+<script src="/pages/js/jquery.appear.js"></script>
+<script src="/pages/js/menu.js"></script>
+<script src="/pages/js/owl.carousel.min.js"></script>
+<script src="/pages/js/pricing-toggle.js"></script>
+<script src="/pages/js/jquery.magnific-popup.min.js"></script>
+<script src="/pages/js/request-form.js"></script>
+<script src="/pages/js/jquery.validate.min.js"></script>
+<script src="/pages/js/jquery.ajaxchimp.min.js"></script>
+<script src="/pages/js/popper.min.js"></script>
+<script src="/pages/js/lunar.js"></script>
+<script src="/pages/js/wow.js"></script>
 
-<!-- core files -->
+<!-- Custom Script -->
+<script src="/pages/js/custom.js"></script>
 
-s
-<script src="{{ url('managers/libs/taginput/bootstrap-tagsinput.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/select2/dist/js/select2.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/jquery-validation/dist/jquery.validate.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/dropzone/dist/dropzone.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/toastr/toastr.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/libs/quill/dist/quill.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/forms/select2.init.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/app.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/app.minisidebar.init.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/app-style-switcher.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/sidebarmenu.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/flatpickr.min.js') }}" type="text/javascript"></script>
-<script src="{{ url('managers/js/auth.js') }}" type="text/javascript"></script>
-
-
-<script>
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-</script>
-
-<script>
-    "use strict"
-    $(function () {
-
-        deleteConfirmation();
-
-        // delete confirmation
-        function deleteConfirmation() {
-            $(".confirm-delete").click(function (e) {
-                e.preventDefault();
-                var url = $(this).data("href");
-                $("#delete-modal").modal("show");
-                $("#delete-link").attr("href", url);
-            });
-        }
-    });
-
-</script>
+<script src="/pages/js/changer.js"></script>
 
 @stack('scripts')
 

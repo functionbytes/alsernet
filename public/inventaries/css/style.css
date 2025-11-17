@@ -11094,7 +11094,7 @@ textarea.form-control-lg {
 
 .bg-success {
     --bs-bg-opacity: 1;
-    background-color: rgba(var(--bs-success-rgb), var(--bs-bg-opacity)) !important;
+    background-color: #90bb13 !important;
 }
 
 .bg-info {
@@ -31845,7 +31845,7 @@ ul {
 
 label.error {
     margin-top: 10px;
-    color: #008bcd;
+    color: #ff0000;
     font-weight: 600;
     font-size: 13px;
 }
@@ -33036,3 +33036,86 @@ h3.main_question {
 .dropdown-menu {
     z-index: 1050 !important;
 }
+
+
+.list-products-container {
+}
+
+.list-products-container .bundle-block{
+    background-color: #f3f3f3;
+    border-radius: 4px;
+}
+
+.list-products-container .bundle-block .bundle-head {
+    background: #90bb13 !important;
+    padding: 10px;
+    border-radius: 4px 0px 0px 4px;
+}
+
+
+.list-products-container .bundle-block .bundle-head strong{
+    color:#fff;
+    font-weight: 500;
+}
+
+.list-products-container .bundle-block .bundle-head button{
+    border-color: #fff;
+    color: #90bb13 !important;
+    background: #fff;
+    border-radius: 43%;
+}
+
+.list-products-container .bundle-block .bundle-head button i{
+    margin: 0px !important;
+    font-size: 11px;
+    padding: 3px;
+}
+
+.list-products-container .bundle-block .bundle-head .btn-clear-bundle{
+
+}
+
+.list-products-container .bundle-block .list-group-flush {
+    background-color: #f3f3f3;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.list-products-container .bundle-block .list-group-flush .list-group-item {color: #000;background-color: #f3f3f3;}
+
+
+
+.documents-status  {
+}
+@media (min-width: 992px) {
+    .documents-status  .col-md-3 {
+        flex: 0 0 auto;
+        width: 24%;
+    }
+}
+.documents-status .item-status  {cursor: pointer;}
+.documents-status .item-status:hover,
+.documents-status .item-status:focus,
+.documents-status .item-status:active{
+    background: #90bb13 !important;
+}
+
+.documents-status .item-status:hover i,
+.documents-status .item-status:focus i,
+.documents-status .item-status:active i{
+    color: #fff !important;
+}
+
+.documents-status .item-status:hover h4,
+.documents-status .item-status:focus h4,
+.documents-status .item-status:active h4{
+    color: #fff !important;
+}
+
+.documents-status .item-status i {
+    font-size: 35px;
+}
+
+.documents-status .item-status h4 {
+    font-size: 16px;
+}
+

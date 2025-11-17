@@ -14,7 +14,6 @@ class ImportSubscribersListsJob extends Base
 
     public $timeout = 7200;
 
-    protected $list;
     protected $lists;
     protected $file;
 

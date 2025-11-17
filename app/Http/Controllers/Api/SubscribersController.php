@@ -23,6 +23,10 @@ use Illuminate\Support\Str;
 class SubscribersController extends ApiController
 {
 
+    public function gets()
+    {
+        return true;
+    }
 
     public function campaigns(Request $request)
     {
@@ -83,6 +87,7 @@ class SubscribersController extends ApiController
 
             $datas = [
                 'email' => $data['email'],
+                'lang_id' => $lang->id,
                 'firstname' => Str::upper($data['firstname']),
                 'lastname' => Str::upper($data['lastname']),
                 'commercial' => $data['commercial'] == true ? 0 : 1,
@@ -94,6 +99,7 @@ class SubscribersController extends ApiController
             ];
 
             $subscriber->updateWithLog($datas);
+
 
             if ($subscriber->isPendingVerification() && isset($data['sports'])) {
                 $blacklist = SubscriberList::getBlacklistByLang($lang->id);
@@ -243,6 +249,7 @@ class SubscribersController extends ApiController
             'parties'     => 1,
             'check_at'     => null,
             'unsubscriber_at'  => Carbon::now()->setTimezone('Europe/Madrid'),
+            'condition'     => Subscriber::CONDITION_UNSUBSCRIBED,
         ];
 
         $subscriber->updateWithLog($data);
@@ -272,6 +279,7 @@ class SubscribersController extends ApiController
                 'parties'=> 1,
                 'check_at'     => null,
                 'unsubscriber_at'     => null,
+                'condition'     => Subscriber::CONDITION_SUBSCRIBED,
             ];
 
             $subscriber->updateWithLog($data);
@@ -376,13 +384,17 @@ class SubscribersController extends ApiController
 
     public function suscriberCheckat($data)
     {
+        $token = $data['token'];
 
-        $data = Subscriber::checkWithBTree(Crypt::decryptString($data['token']));
+        $datas = Subscriber::checkWithBTree(Crypt::decryptString($token));
 
-        if($data['exists']){
+        if($datas['exists']){
 
-            $subscriber = $data["data"];
+            $subscriber = $datas["data"];
             $subscriber->check_at = Carbon::now()->setTimezone('Europe/Madrid');
+            $subscriber->condition = Subscriber::CONDITION_SUBSCRIBED;
+            $subscriber->unsubscriber_at = null;
+            $subscriber->update();
 
             if ($subscriber->categories()->exists()) {
 
@@ -396,8 +408,6 @@ class SubscribersController extends ApiController
                 SynchronizationSubscription::dispatch($subscriber->id)->onQueue('erp');
             }
 
-            $subscriber->unsubscriber_at = null;
-            $subscriber->update();
 
             return response()->json([
                 'status' => 'success',

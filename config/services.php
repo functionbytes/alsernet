@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'minderest' => [
+        'url' => env('MINDEREST_URL'),
+        'timeout' => 30,
+        'connect_timeout' => 30,
+        'es' => 3127521780550337046,
+        'fr' => 3127521780550337046,
+        'pt' => 3127521780550337046,
+    ],
+
+
 ];

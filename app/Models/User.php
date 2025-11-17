@@ -14,6 +14,11 @@ use App\Models\Subscriber\Subscriber;
 use App\Models\Subscription\Subscription;
 use App\Models\Subscription\SubscriptionLog;
 use App\Models\Template\Template;
+use App\Models\Automation2;
+use App\Models\Campaign\Campaign;
+use App\Models\EmailVerificationServer;
+use App\Models\Source;
+use App\Models\Setting as Setting;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -29,9 +35,15 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens , LogsActivity , HasRoles , HasCache ,HasUid , TrackJobs;
+    use HasFactory, Notifiable, HasApiTokens, LogsActivity, HasRoles, HasCache, HasUid, TrackJobs;
 
     protected $table = 'users';
+
+    /**
+     * Spatie Permission: fuerza el guard correcto para este modelo.
+     * Ajusta a 'api' u otro si lo necesitas.
+     */
+    protected $guard_name = 'web';
 
     protected $quotaTracker;
 
@@ -44,7 +56,7 @@ class User extends Authenticatable
     public const PRODUCT_DIR = 'home/products';
     public const LOGS_DIR = 'home/logs/';
 
-    protected static $recordEvents = ['deleted','updated','created'];
+    protected static $recordEvents = ['deleted', 'updated', 'created'];
 
     protected $fillable = [
         'uid',
@@ -83,144 +95,135 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
     protected $dates = [
         'last_login_at',
         'deleted_at'
     ];
 
     protected $appends = ['full_name', 'image'];
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
 
+    /**
+     * Unificamos casts aquí (evita duplicar método casts())
+     */
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'active' => 'boolean',
         'confirmed' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
-
         return LogOptions::defaults()
             ->logOnlyDirty()
             ->logFillable()
-            ->setDescriptionForEvent(fn(string $eventName) => "This model has been {$eventName}");
-
+            ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
     }
-
 
     public function scopeAvailable($query)
     {
         return $query->where('users.available', 1);
     }
 
-
     public function redirect()
     {
-        $user = auth()->user();
-
-        if (!$user) {
-            return redirect()->route('login');
-        }
-        if ($user->hasRole('managers')) {
-            return redirect()->route('manager.dashboard');
-        }
-
-        if ($user->hasRole('inventaries')) {
-            return redirect()->route('inventarie.dashboard');
-        }
-
-        if ($user->hasRole('shops')) {
-            return redirect()->route('shop.dashboard');
-        }
-
-
-        if ($user->hasRole('callcenters')) {
-            return redirect()->route('callcenter.dashboard');
-        }
-
-
-        if ($user->hasRole('supports')) {
-            return redirect()->route('support.dashboard');
-        }
-
-
-        return redirect()->route('login');
+        return redirect()->route($this->redirectRouteName());
     }
 
+    public function route()
+    {
+        return route($this->redirectRouteName());
+    }
+
+    public function redirectRouteName()
+    {
+        $map = [
+            'managers'         => 'manager.dashboard',
+            'inventaries'      => 'inventarie.dashboard',
+            'shops'            => 'shop.dashboard',
+            'callcenters'      => 'callcenter.dashboard',
+            'supports'         => 'support.dashboard',
+            'administratives'  => 'administrative.dashboard',
+        ];
+
+        $roles = $this->getRoleNames()->toArray(); // ['managers', ...]
+        foreach ($map as $role => $route) {
+            if (in_array($role, $roles, true)) {
+                return $route;
+            }
+        }
+        return 'login';
+    }
 
 
     public function passwordHistories(): HasMany
     {
-        return $this->hasMany('App\Models\Setting\PasswordHistory','user_id');
+        return $this->hasMany('App\Models\Setting\PasswordHistory', 'user_id');
     }
 
     public function sessions(): HasMany
     {
-        return $this->hasMany('App\Models\Setting\Session','user_id');
+        return $this->hasMany('App\Models\Setting\Session', 'user_id');
     }
-
 
     public function orders(): HasMany
     {
-        return $this->hasMany('App\Models\Order\Order','user_id');
+        return $this->hasMany('App\Models\Order\Order', 'user_id');
     }
 
-
-    public static function auth(){
-
+    public static function auth()
+    {
         return Auth::user();
     }
 
-
-    public function session() : HasOne
+    public function session(): HasOne
     {
         return $this->hasOne('App\Models\Setting\Session');
     }
 
-    public function scopeValidationsEmail($query,$email)
+    public function scopeValidationsEmail($query, $email)
     {
         return $query->where('email', $email)->get();
     }
 
-    public function scopeValidationEmail($query,$email)
+    public function scopeValidationEmail($query, $email)
     {
         return $query->where('email', $email)->first();
     }
 
-    public function scopeValidations($query )
+    public function scopeValidations($query)
     {
         return $query->where('uid', null)->get();
     }
 
-    public function scopeId($query ,$id)
+    public function scopeId($query, $id)
     {
         return $query->where('id', $id)->first();
     }
 
-    public function scopeUid($query ,$uid)
+    public function scopeUid($query, $uid)
     {
         return $query->where('uid', $uid)->first();
     }
 
-    public function scopeEmail($query ,$email)
+    public function scopeEmail($query, $email)
     {
         return $query->where('email', $email)->first();
     }
 
-    public static function existence($uid){
+    public static function existence($uid)
+    {
         return User::where("uid", '=', $uid)->first();
     }
 
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = bcrypt($password);
+        if (strlen($password) !== 60 || !preg_match('/^\$2y\$/', $password)) {
+            $this->attributes['password'] = bcrypt($password);
+        } else {
+            $this->attributes['password'] = $password;
+        }
     }
-
 
     public function getLanguageCode()
     {
@@ -230,10 +233,8 @@ class User extends Authenticatable
     public function getLanguageCodeFull()
     {
         $region_code = $this->language->region_code ? strtoupper($this->language->region_code) : strtoupper($this->language->code);
-        return $this->language ? ($this->language->code.'-'.$region_code) : null;
+        return $this->language ? ($this->language->code . '-' . $region_code) : null;
     }
-
-
 
     public function language()
     {
@@ -242,7 +243,7 @@ class User extends Authenticatable
 
     public function shop(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Shop','shop_id','id');
+        return $this->belongsTo('App\Models\Shop', 'shop_id', 'id');
     }
 
     public static function scopeFilter($query, $request)
@@ -250,11 +251,12 @@ class User extends Authenticatable
         // filters
         $filters = $request->all();
         if (!empty($filters)) {
+            // definir filtros si aplica
         }
-
     }
 
-    public function tickets() : HasMany {
+    public function tickets(): HasMany
+    {
         return $this->hasMany('App\Models\Ticket\Ticket');
     }
 
@@ -267,8 +269,6 @@ class User extends Authenticatable
     {
         return asset('images/default-user.png');
     }
-
-
 
     public function subscriptions()
     {
@@ -286,7 +286,7 @@ class User extends Authenticatable
         $subscriptions = $this->generalSubscriptions()->new();
 
         if ($subscriptions->count() > 1) {
-            throw new Exception('There are 2 subscriptions of [new] status. Please clean up the DB');
+            throw new \Exception('There are 2 subscriptions of [new] status. Please clean up the DB');
         }
 
         return $subscriptions->first();
@@ -327,7 +327,6 @@ class User extends Authenticatable
     {
         return $this->hasMany('App\Models\Template');
     }
-
 
     public function campaigns()
     {
@@ -501,9 +500,9 @@ class User extends Authenticatable
         if (!empty(trim($keyword))) {
             foreach (explode(' ', trim($keyword)) as $keyword) {
                 $query = $query->where(function ($q) use ($keyword) {
-                    $q->orwhere('users.first_name', 'like', '%'.$keyword.'%')
-                        ->orWhere('users.last_name', 'like', '%'.$keyword.'%')
-                        ->orWhere('users.email', 'like', '%'.$keyword.'%');
+                    $q->orwhere('users.first_name', 'like', '%' . $keyword . '%')
+                        ->orWhere('users.last_name', 'like', '%' . $keyword . '%')
+                        ->orWhere('users.email', 'like', '%' . $keyword . '%');
                 });
             }
         }
@@ -561,11 +560,10 @@ class User extends Authenticatable
         return $this->campaigns()->count();
     }
 
-
     /**
      * Get subscriber quota.
      *
-     * @return number
+     * @return number|string
      */
     public function maxSubscribers()
     {
@@ -588,7 +586,6 @@ class User extends Authenticatable
             return $this->readCache('SubscriberCount');
         }
 
-        // return distinctCount($this->subscribers(), 'subscribers.email', 'distinct');
         return $this->subscribers()->count();
     }
 
@@ -618,7 +615,7 @@ class User extends Authenticatable
     /**
      * Calculate subscibers usage.
      *
-     * @return number
+     * @return string
      */
     public function displaySubscribersUsage()
     {
@@ -626,13 +623,13 @@ class User extends Authenticatable
             return trans('messages.unlimited');
         }
 
-        return $this->readCache('SubscriberUsage', 0).'%';
+        return $this->readCache('SubscriberUsage', 0) . '%';
     }
 
     /**
      * Get customer's quota.
      *
-     * @return string
+     * @return string|int
      */
     public function maxQuota()
     {
@@ -708,18 +705,17 @@ class User extends Authenticatable
     /**
      * Get customer timezone.
      *
-     * @return string
+     * @return string|null
      */
     public function getTimezone()
     {
         return $this->timezone;
     }
 
-
     /**
      * Get customer select2 select options.
      *
-     * @return array
+     * @return string (json)
      */
     public static function select2($request)
     {
@@ -729,9 +725,9 @@ class User extends Authenticatable
         if (isset($request->q)) {
             $keyword = $request->q;
             $query = $query->where(function ($q) use ($keyword) {
-                $q->orwhere('users.first_name', 'like', '%'.$keyword.'%')
-                    ->orWhere('users.last_name', 'like', '%'.$keyword.'%')
-                    ->orWhere('users.email', 'like', '%'.$keyword.'%');
+                $q->orwhere('users.first_name', 'like', '%' . $keyword . '%')
+                    ->orWhere('users.last_name', 'like', '%' . $keyword . '%')
+                    ->orWhere('users.email', 'like', '%' . $keyword . '%');
             });
         }
 
@@ -861,6 +857,7 @@ class User extends Authenticatable
         $feedback = DB::table('feedback_logs')->leftJoin('tracking_logs', 'tracking_logs.message_id', '=', 'feedback_logs.message_id')->count();
 
         $percentage = ($feedback + $bounce) / $delivery;
+        return $percentage;
     }
 
     /**
@@ -886,7 +883,7 @@ class User extends Authenticatable
     /**
      * Get max sending server count.
      *
-     * @var int
+     * @var int|string
      */
     public function maxSendingServers()
     {
@@ -901,7 +898,7 @@ class User extends Authenticatable
     /**
      * Get max email verification server count.
      *
-     * @var int
+     * @var int|string
      */
     public function maxEmailVerificationServers()
     {
@@ -939,7 +936,7 @@ class User extends Authenticatable
     /**
      * Calculate email verigfication servers usage.
      *
-     * @return number
+     * @return string
      */
     public function displayEmailVerificationServersUsage()
     {
@@ -947,7 +944,7 @@ class User extends Authenticatable
             return trans('messages.unlimited');
         }
 
-        return $this->emailVerificationServersUsage().'%';
+        return $this->emailVerificationServersUsage() . '%';
     }
 
     /**
@@ -976,7 +973,7 @@ class User extends Authenticatable
     /**
      * Calculate sending servers usage.
      *
-     * @return number
+     * @return string
      */
     public function displaySendingServersUsage()
     {
@@ -984,13 +981,13 @@ class User extends Authenticatable
             return trans('messages.unlimited');
         }
 
-        return $this->sendingServersUsage().'%';
+        return $this->sendingServersUsage() . '%';
     }
 
     /**
      * Get max sending server count.
      *
-     * @var int
+     * @var int|string
      */
     public function maxSendingDomains()
     {
@@ -1048,7 +1045,7 @@ class User extends Authenticatable
     /**
      * Get all customer active sending servers.
      *
-     * @return collect
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function activeSendingServers()
     {
@@ -1072,13 +1069,13 @@ class User extends Authenticatable
      */
     public function totalUploadSize()
     {
-        return \Acelle\Library\Tool::getDirectorySize(base_path('public/source/'.$this->user->uid)) / 1048576;
+        return \Acelle\Library\Tool::getDirectorySize(base_path('public/source/' . $this->user->uid)) / 1048576;
     }
 
     /**
      * Get max upload size quota.
      *
-     * @return number
+     * @return number|string
      */
     public function maxTotalUploadSize()
     {
@@ -1107,7 +1104,6 @@ class User extends Authenticatable
         return round((($this->totalUploadSize() / $this->maxTotalUploadSize()) * 100), 2);
     }
 
-
     /**
      * Get customer contact.
      *
@@ -1135,7 +1131,7 @@ class User extends Authenticatable
      */
     public function displayNameEmailOption()
     {
-        return $this->displayName().'|||'.$this->user->email;
+        return $this->displayName() . '|||' . $this->user->email;
     }
 
     /**
@@ -1166,7 +1162,7 @@ class User extends Authenticatable
             // If customer dont have permission creating sending servers
         } else {
             // Get server from the plan
-            return  $this->getCurrentActiveGeneralSubscription()->planGeneral->getEmailVerificationServers();
+            return $this->getCurrentActiveGeneralSubscription()->planGeneral->getEmailVerificationServers();
         }
     }
 
@@ -1178,7 +1174,6 @@ class User extends Authenticatable
     public function getMailListSelectOptions($options = [], $cache = false)
     {
         $query = $this->mailLists();
-       // $query = $this->mailLists();
 
         # Other list
         if (isset($options['other_list_of'])) {
@@ -1186,7 +1181,7 @@ class User extends Authenticatable
         }
 
         $result = $query->orderBy('name')->get()->map(function ($item) use ($cache) {
-            return ['id' => $item->id, 'value' => $item->uid, 'text' => $item->name.' ('.$item->subscribersCount($cache).' '.strtolower(trans('messages.subscribers')).')'];
+            return ['id' => $item->id, 'value' => $item->uid, 'text' => $item->name . ' (' . $item->subscribersCount($cache) . ' ' . strtolower(trans('messages.subscribers')) . ')'];
         });
 
         return $result;
@@ -1303,7 +1298,7 @@ class User extends Authenticatable
                     $topList[] = [
                         'text' => extract_name($item),
                         'value' => $email,
-                        'desc' => str_replace($keyword, '<span class="text-semibold text-primary"><strong>'.$keyword.'</strong></span>', $email),
+                        'desc' => str_replace($keyword, '<span class="text-semibold text-primary"><strong>' . $keyword . '</strong></span>', $email),
                     ];
                 } else {
                     $bottomList[] = [
@@ -1316,16 +1311,14 @@ class User extends Authenticatable
                 $dKey = explode('@', $keyword);
                 $eKey = $dKey[0];
                 $dKey = isset($dKey[1]) ? $dKey[1] : null;
-                // if ( (!isset($dKey) || $dKey == '') || ($dKey && strpos(strtolower($item), $dKey) === 0 )) {
                 if ($keyword == '###') {
                     $eKey = '****';
                 }
                 $topList[] = [
-                    'text' => $eKey.'@'.str_replace($dKey, '<span class="text-semibold text-primary"><strong>'.$dKey.'</strong></span>', $item),
+                    'text' => $eKey . '@' . str_replace($dKey, '<span class="text-semibold text-primary"><strong>' . $dKey . '</strong></span>', $item),
                     'subfix' => $item,
                     'desc' => null,
                 ];
-                // }
             }
         }
 
@@ -1485,7 +1478,7 @@ class User extends Authenticatable
         $meta = json_decode($this['payment_method'], true);
 
         if (!array_key_exists('method', $meta)) {
-            throw new Exception("The 'method' key is required for 'preferred payment' data");
+            throw new \Exception("The 'method' key is required for 'preferred payment' data");
         }
 
         $type = $meta['method'];
@@ -1505,13 +1498,6 @@ class User extends Authenticatable
      */
     public function updatePaymentMethod($data = [])
     {
-        // $paymentMethod = $this->getPaymentMethod();
-
-        // if (!isset($paymentMethod)) {
-        //     $paymentMethod = [];
-        // }
-
-        // $data = (object) array_merge((array) $paymentMethod, $data);
         $this['payment_method'] = json_encode($data);
 
         $this->save();
@@ -1525,7 +1511,7 @@ class User extends Authenticatable
     public function removePaymentMethod()
     {
         $this->payment_method = null;
-        $this->save();
+        this->save();
     }
 
     /**
@@ -1607,7 +1593,7 @@ class User extends Authenticatable
     /**
      * Get auto billing data.
      *
-     * @var object
+     * @var object|null
      */
     public function getAutoBillingData()
     {
@@ -1797,9 +1783,9 @@ class User extends Authenticatable
         $lastNameFirst = get_localization_config('show_last_name_first', $this->getLanguageCode());
 
         if ($lastNameFirst) {
-            return htmlspecialchars(trim($this->user->last_name.' '.$this->user->first_name));
+            return htmlspecialchars(trim($this->user->last_name . ' ' . $this->user->first_name));
         } else {
-            return htmlspecialchars(trim($this->user->first_name.' '.$this->user->last_name));
+            return htmlspecialchars(trim($this->user->first_name . ' ' . $this->user->last_name));
         }
     }
 
@@ -1811,7 +1797,6 @@ class User extends Authenticatable
         return $campaign;
     }
 
-
     /*
      *
      * FUNCTIONS THAT ARE DEPENDENT ON PLAN/SUBSCRIPTIONS
@@ -1821,14 +1806,14 @@ class User extends Authenticatable
     public function getCurrentActiveGeneralSubscription()
     {
         if (!config('app.saas')) {
-            throw new Exception('Operation not allowed in NON-SAAS mode');
+            throw new \Exception('Operation not allowed in NON-SAAS mode');
         }
 
         // only ONE
         $subscriptions = $this->generalSubscriptions()->active();
 
         if ($subscriptions->count() > 1) {
-            throw new Exception('There are 2 subscriptions of [active] status. Please clean up the DB');
+            throw new \Exception('There are 2 subscriptions of [active] status. Please clean up the DB');
         }
 
         return $subscriptions->first();
@@ -1855,7 +1840,7 @@ class User extends Authenticatable
         $subscriptions = $this->generalSubscriptions()->newOrActive();
 
         if ($subscriptions->count() > 1) {
-            throw new Exception('There are 2 subscriptions of [active, new] status. Please clean up the DB');
+            throw new \Exception('There are 2 subscriptions of [active, new] status. Please clean up the DB');
         }
 
         return $subscriptions->first();
@@ -1870,7 +1855,7 @@ class User extends Authenticatable
         if (!config('app.saas') || $this->getCurrentActiveGeneralSubscription()->planGeneral->allowSenderVerification()) {
             $senders = $this->senders()->verified()->get();
             foreach ($senders as $sender) {
-                $list[] = $sender->name.' <'.$sender->email.'>';
+                $list[] = $sender->name . ' <' . $sender->email . '>';
             }
         }
 
@@ -1950,14 +1935,10 @@ class User extends Authenticatable
             return false;
         }
 
-
         if ($subscription->getUnpaidInvoice()) {
             return true;
         }
 
         return false;
     }
-
-
 }
-

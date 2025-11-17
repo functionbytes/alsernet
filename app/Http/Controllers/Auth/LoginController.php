@@ -26,7 +26,7 @@ class LoginController extends Controller
     public function showLoginForm(){
 
         if($this->guard()->check()){
-            return $this->guard()->user()->redirect();
+            return redirect($this->guard()->user()->route());
         }else{
             return view('auth.login');
         }
@@ -69,7 +69,7 @@ class LoginController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Inicio de sesión exitoso.',
-                'redirect' => route($this->guard()->user()->redirect())
+                'redirect' => $this->guard()->user()->route()
             ]);
 
         } else {

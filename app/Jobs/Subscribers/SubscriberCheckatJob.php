@@ -27,6 +27,7 @@ class SubscriberCheckatJob implements ShouldQueue
 
     public function handle(): void
     {
+
         $this->layout = Layout::alias('suscription_check_email')->lang($this->subscriber->lang_id)->first();
 
         if (!$this->layout) {
@@ -37,6 +38,6 @@ class SubscriberCheckatJob implements ShouldQueue
             return;
         }
 
-        //Mail::send(new SubscriberCheckMail($this->subscriber, $this->layout));
+        Mail::send(new SubscriberCheckMail($this->subscriber, $this->layout));
     }
 }

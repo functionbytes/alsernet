@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Comparator\ComparatorLang;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -113,6 +114,11 @@ class Lang extends Model
     public function categories()
     {
         return $this->belongsToMany('App\Models\Categorie', 'lang_categorie', 'lang_id', 'categorie_id');
+    }
+
+    public function comparatorLangs()
+    {
+        return $this->hasMany(ComparatorLang::class, 'lang_id');
     }
 
 
