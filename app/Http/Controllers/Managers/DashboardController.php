@@ -12,8 +12,6 @@ use App\Structure\Elements;
 class DashboardController extends Controller
 {
     public function dashboard(){
-
-
         return view('managers.views.dashboard.index')->with([
         ]);
 

@@ -1,0 +1,255 @@
+# ANALISIS DE PATRONES Y CONVENCIONES - WEBADMIN LARAVEL
+
+## 1. ESTRUCTURA DE DIRECTORIOS
+
+Los modelos están organizados por dominio:
+- Return/ (25+ modelos - devoluciones)
+- Carrier/ (transportistas)
+- Campaign/ (marketing)
+- Automation/ (automatizaciones)
+- Chat/ (sistema chat)
+- Livechat/ (livechat)
+- Faq/ (FAQ)
+- Inventarie/ (inventario)
+- Product/ (productos)
+- Order/ (órdenes)
+- Prestashop/ (integración)
+- Group/ (grupos)
+- Setting/ (configuraciones)
+- Notification/ (notificaciones)
+- Template/ (plantillas)
+- Storage/ (almacenamiento)
+- Layout/ (layouts)
+- Raíz (modelos generales)
+
+## 2. CONVENCIONES DE NOMENCLATURA
+
+### Modelos (Clase PHP)
+- PascalCase, Singular
+- Ejemplos: User, Customer, ReturnRequest, Carrier
+- Inconsistencias: Categorie, Countrie (legado español)
+
+### Tablas (BD)
+- snake_case, Plural
+- Ejemplos: users, customers, return_requests, carriers
+
+### Columnas
+- snake_case
+- Prefijos:
+  - id_* (antiguo): id_return_type
+  - *_id (moderno): customer_id, order_id
+  - is_* (boolean): is_active, is_refunded
+  - *_at (timestamp): created_at, received_at
+
+## 3. ESTRUCTURA ESTÁNDAR DE MODELOS
+
+ELEMENTOS OBLIGATORIOS:
+1. protected $table = "nombre_tabla";
+2. protected $fillable = ['field1', 'field2'];
+3. protected $casts = [...]  (si aplica)
+4. Constantes para estados
+5. Relaciones con type hints
+6. Scopes personalizados
+
+## 4. TRAITS UTILIZADOS
+
+- HasFactory (testing)
+- LogsActivity (auditoría - Spatie)
+- HasUid (UUID único)
+- HasRoles (RBAC - Spatie)
+- Notifiable (notificaciones)
+- HasApiTokens (API tokens)
+
+NOTA: NO se usa SoftDeletes como estándar
+
+## 5. TYPE CASTING
+
+Booleanos: is_active, active
+Fechas: created_at, pickup_at
+Números: total_amount (decimal:2), weight (decimal:3)
+Arrays/JSON: api_config, erp_data
+
+## 6. CONSTANTES Y ENUMERABLES
+
+Se usan ampliamente:
+- ReturnReason: TYPE_REFUND, TYPE_REPLACEMENT, TYPE_REPAIR, TYPE_ALL
+- Carrier: TYPE_AGENCY, TYPE_PICKUP, TYPE_STORE, TYPE_INPOST
+- Se definen como constantes de clase
+
+## 7. RELACIONES
+
+BelongsTo: Relación inversa a otros modelos
+HasMany: Relación directa con múltiples registros
+BelongsToMany: Relación N:N con tabla pivot
+
+Todas usan type hints en la firma:
+- public function customer(): BelongsTo
+- public function products(): HasMany
+- public function users(): BelongsToMany
+
+## 8. SCOPES PERSONALIZADOS
+
+Estándares:
+- scopeActive() where active = 1
+- scopeAvailable() where available = 1
+- scopeDescending() orderBy created_at desc
+- scopeAscending() orderBy created_at asc
+
+Específicos del dominio:
+- scopeByCustomer() where customer_id
+- scopeForPickup() whereIn type
+- scopeVisibleToCustomer() where shown_to_customer
+
+NOTA: Algunos scopes rompen patrón (retornan .first() en lugar de query)
+
+## 9. PATRÓN MULTIIDIOMA (i18n)
+
+Tabla base: return_reasons
+Tabla traducción: return_reason_lang
+
+Estructura traducción:
+- reason_id (FK)
+- lang_id (idioma)
+- name (texto traducido)
+- shop_id (tienda)
+- primary key: [reason_id, lang_id, shop_id]
+
+Modelo base tiene relación hasMany con tabla lang
+Método getTranslation($langId, $shopId)
+
+## 10. ESTRUCTURA DE MIGRACIONES
+
+Patrón:
+class CreateNombreTablaTable extends Migration {
+    public function up(): void {
+        Schema::create('nombre_tabla', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            // Datos
+            // Relaciones
+            // JSON
+            // Timestamps
+            // Índices
+            // Foreign keys
+        });
+    }
+}
+
+Tipos de datos:
+- bigIncrements('id') para ID
+- string(length) para textos cortos
+- text() para textos largos
+- boolean() para flags
+- date() para solo fecha
+- datetime() para fecha+hora
+- decimal(10,2) para dinero
+- json() para datos estructurados
+- enum() para valores fijos
+- timestamps() para created_at+updated_at
+
+Índices:
+- index() simples
+- index() compuestos
+- unique() para códigos
+- primary() para claves compuestas
+
+Columnas estándar:
+- bigIncrements('id') SIEMPRE
+- timestamps() SIEMPRE
+- uid string nullable (frecuente)
+- active boolean default(1) (frecuente)
+- shop_id unsignedBigInteger (multi-tienda)
+
+## 11. MIGRACIONES RECIENTES (Mayo-Junio 2025)
+
+Return system (11 migraciones):
+- create_return_status_lang_table
+- create_return_reasons_table
+- create_return_reason_lang_table
+- create_return_discussions_table
+- create_return_history_table
+- create_return_orders_table
+- create_return_order_products_table
+- create_return_request_products_table
+- create_return_request_documents_table
+
+Carriers (2 migraciones):
+- create_carriers_table
+- create_carrier_pickup_requests_table
+
+## 12. ANTI-PATRONES A EVITAR
+
+1. Scopes que retornan registros (scopeId con .first())
+2. Falta de type hints en relaciones
+3. Sin timestamps en tablas
+4. Sin índices en foreign keys
+5. Magic strings en lugar de constantes
+6. Nombres mixtos español/inglés
+
+## 13. EJEMPLO COMPLETO
+
+Modelo:
+namespace App\Models\Return;
+
+class ReturnReason extends Model
+{
+    protected $table = 'return_reasons';
+    protected $fillable = ['return_type', 'active'];
+    protected $casts = ['active' => 'boolean'];
+    
+    const TYPE_REFUND = 'refund';
+    const TYPE_ALL = 'all';
+    
+    public function translations(): HasMany {
+        return $this->hasMany(ReturnReasonLang::class, 'reason_id');
+    }
+    
+    public function scopeActive($query) {
+        return $query->where('active', true);
+    }
+    
+    public function getTranslation($langId = 1, $shopId = 1) {
+        return $this->translations()
+            ->where('lang_id', $langId)
+            ->where('shop_id', $shopId)
+            ->first();
+    }
+}
+
+Migración:
+class CreateReturnReasonsTable extends Migration
+{
+    public function up(): void {
+        Schema::create('return_reasons', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('return_type', 20);
+            $table->boolean('active')->default(false);
+            $table->timestamps();
+            $table->index('active');
+        });
+    }
+}
+
+## RESUMEN
+
+Fortalezas:
+✅ Estructura modular por dominio
+✅ Relaciones bien tipadas
+✅ Scopes personalizados
+✅ Type casting completo
+✅ Constantes para estados
+✅ Multiidioma integrado
+✅ Auditoría en modelos clave
+
+Inconsistencias:
+⚠️ Nombres españoles (Categorie, Countrie)
+⚠️ Algunos scopes rompen convención
+⚠️ Mezcla de prefijos antiguos/nuevos en IDs
+
+Para seguir:
+1. Usar exactamente estos patrones
+2. Respetar estructura de directorios
+3. Type hints en relaciones
+4. Constantes para valores fijos
+5. Índices en campos críticos
+6. Auditoría si es importante
+

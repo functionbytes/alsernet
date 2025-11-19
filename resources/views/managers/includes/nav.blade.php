@@ -235,6 +235,60 @@
 
 
 
+                <!-- =================== -->
+                <!-- Bodega / Warehouse -->
+                <!-- =================== -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
+                          <span class="d-flex">
+                           <i class="fa-duotone fa-warehouse"></i>
+                          </span>
+                        <span class="hide-menu">Bodega</span>
+                    </a>
+                    <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.warehouse.floors') }}" aria-expanded="false">
+                                <span>
+                                  <i class="ti ti-circle"></i>
+                                </span>
+                                <span class="hide-menu">Pisos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ route('manager.warehouse.styles') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Estilos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ route('manager.warehouse.stands') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Estanterías</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ route('manager.warehouse.slots') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Posiciones</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.warehouse.map') }}" aria-expanded="false">
+                                  <span>
+                                    <i class="ti ti-circle"></i>
+                                  </span>
+                                <span class="hide-menu">Mapa</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 <li class="sidebar-item">
                     <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
                           <span class="d-flex">
