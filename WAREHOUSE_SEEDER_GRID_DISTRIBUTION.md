@@ -351,14 +351,14 @@ php artisan tinker
 ```
 
 ```php
->>> use App\Models\Warehouse\Stand;
+>>> use App\Models\Warehouse\WarehouseLocation;
 
 // Verificar distribución
->>> Stand::all()->groupBy('code')->count()
+>>> WarehouseLocation::all()->groupBy('code')->count()
 => 40  // Debería ser 40 stands únicos
 
 // Ver posiciones
->>> Stand::first()->toArray()
+>>> WarehouseLocation::first()->toArray()
 => [
     'code' => 'P1-PASILLO13A-1',
     'position_x' => 0.5,   // ✅ Posición en grilla
@@ -372,7 +372,7 @@ php artisan tinker
 => 720  // ~720 inventory slots
 
 // Ver distribución por pasillo
->>> Stand::groupBy('code')->selectRaw('LEFT(code, 15) as pasillo, COUNT(*) as count')->get()
+>>> WarehouseLocation::groupBy('code')->selectRaw('LEFT(code, 15) as pasillo, COUNT(*) as count')->get()
 ```
 
 ---

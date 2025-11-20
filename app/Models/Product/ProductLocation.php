@@ -81,7 +81,7 @@ class ProductLocation extends Model
     public function items()
     {
 
-        return $this->belongsTo('App\Models\Inventarie\InventarieLocationItem','location_id','id');
+        return $this->belongsTo('App\Models\Warehouse\InventarieLocationItem','location_id','id');
     }
 
     public function shop(): BelongsTo

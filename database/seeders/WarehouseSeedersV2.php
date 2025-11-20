@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Warehouse\Floor;
-use App\Models\Warehouse\StandStyle;
-use App\Models\Warehouse\Stand;
-use App\Models\Warehouse\InventorySlot;
+use App\Models\Warehouse\WarehouseFloor;
+use App\Models\Warehouse\WarehouseLocationStyle;
+use App\Models\Warehouse\WarehouseLocation;
+use App\Models\Warehouse\WarehouseInventorySlot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -26,10 +26,10 @@ class WarehouseSeedersV2 extends Seeder
         // Truncar en orden correcto (dependientes primero)
         try {
             // Eliminar todos los registros (más seguro que truncate)
-            InventorySlot::query()->delete();
-            Stand::query()->delete();
-            StandStyle::query()->delete();
-            Floor::query()->delete();
+            WarehouseInventorySlot::query()->delete();
+            WarehouseLocation::query()->delete();
+            WarehouseLocationStyle::query()->delete();
+            WarehouseFloor::query()->delete();
 
             // Resetear auto-increment
             DB::statement('ALTER TABLE warehouse_inventory_slots AUTO_INCREMENT = 1;');
@@ -49,7 +49,7 @@ class WarehouseSeedersV2 extends Seeder
         echo "✅ Creando pisos...\n";
         $floors = [];
         foreach ([1, 2, 3] as $floorNum) {
-            $floors[$floorNum] = Floor::create([
+            $floors[$floorNum] = WarehouseFloor::create([
                 'uid' => Str::uuid(),
                 'code' => "P{$floorNum}",
                 'name' => "Piso {$floorNum}",
@@ -65,7 +65,7 @@ class WarehouseSeedersV2 extends Seeder
         $stylesByKind = [];
 
         // Estilo ROW
-        $stylesByKind['row'] = StandStyle::create([
+        $stylesByKind['row'] = WarehouseLocationStyle::create([
             'uid' => Str::uuid(),
             'code' => 'SHELF-ROW',
             'name' => 'Estantería Horizontal',
@@ -77,7 +77,7 @@ class WarehouseSeedersV2 extends Seeder
         ]);
 
         // Estilo COLUMNS
-        $stylesByKind['columns'] = StandStyle::create([
+        $stylesByKind['columns'] = WarehouseLocationStyle::create([
             'uid' => Str::uuid(),
             'code' => 'SHELF-COLUMNS',
             'name' => 'Estantería Vertical',
@@ -157,7 +157,7 @@ class WarehouseSeedersV2 extends Seeder
                     $position_x = min($position_x, $warehouseWidth - $margin);
                     $position_y = min($position_y, $warehouseHeight - $margin);
 
-                    $stand = Stand::create([
+                    $stand = WarehouseLocation::create([
                         'uid' => Str::uuid(),
                         'floor_id' => $floor->id,
                         'stand_style_id' => $style->id,
@@ -181,7 +181,7 @@ class WarehouseSeedersV2 extends Seeder
                                 // Generar barcode único: FLOOR-PASILLO-STAND-FACE-LEVEL-SECTION
                                 $barcode = "F{$floorNum}-{$pasillo}-{$i}-{$face}-{$indexOrRow}-{$itemIdx}";
 
-                                $slot = InventorySlot::create([
+                                $slot = WarehouseInventorySlot::create([
                                     'uid' => Str::uuid(),
                                     'stand_id' => $stand->id,
                                     'product_id' => null,

@@ -2,10 +2,9 @@
 
 namespace App\Models\Product;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Kardex;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
@@ -73,7 +72,7 @@ class Product extends Model
 
     public function items()
     {
-        return $this->hasMany('App\Models\Inventarie\InventarieLocationItem');
+        return $this->hasMany('App\Models\Warehouse\InventarieLocationItem');
     }
 
     public function scopeKardex($query, $product)
@@ -86,6 +85,57 @@ class Product extends Model
             $product->kardex = $response[0]->KAR_CANTIDAD;
             $product->save();
         }
+    }
+
+    /**
+     * Validar que el código de barras sea válido
+     *
+     * @param string $barcode
+     * @return bool
+     */
+    public function isValidBarcode(string $barcode): bool
+    {
+        // Validar que sea numérico y tenga longitud razonable
+        if (!is_numeric($barcode)) {
+            return false;
+        }
+
+        $length = strlen($barcode);
+        return $length >= 8 && $length <= 13;
+    }
+
+    /**
+     * Obtener el total de stock del producto en todas las ubicaciones
+     *
+     * @return int
+     */
+    public function getTotalStock(): int
+    {
+        return $this->locations()->sum('count') ?? 0;
+    }
+
+    /**
+     * Obtener el stock por ubicación
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function stock()
+    {
+        return $this->hasMany('App\Models\Product\ProductLocation');
+    }
+
+    /**
+     * Buscar productos por criterio (barcode, referencia o título)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSearchByCriteria($query, string $search)
+    {
+        return $query->where('barcode', $search)
+            ->orWhere('reference', $search)
+            ->orWhere('title', 'like', "%$search%");
     }
 
 }

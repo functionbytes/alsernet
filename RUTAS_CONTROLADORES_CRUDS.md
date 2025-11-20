@@ -207,7 +207,7 @@ El módulo Returns es el más complejo con flujos de 14+ pasos:
 
 ### Perfil 3: INVENTORIES (Gestión de Inventario)
 
-**Archivo de Rutas:** `routes/inventaries.php`
+**Archivo de Rutas:** `routes/warehouses.php`
 **Prefijo:** `/inventarie`
 **Middleware:** `auth` + `roles:inventaries`
 **Controladores:** 9 (en `app/Http/Controllers/Inventaries/`)

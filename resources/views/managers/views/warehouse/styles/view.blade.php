@@ -57,7 +57,7 @@
                             <div class="card bg-light-info border-0">
                                 <div class="card-body">
                                     <div class="text-center">
-                                        <h2 class="text-info">{{ $style->stands()->count() }}</h2>
+                                        <h2 class="text-info">{{ $style->locations()->count() }}</h2>
                                         <p class="text-muted mb-0">Estanterías</p>
                                     </div>
                                 </div>
@@ -136,7 +136,7 @@
                         </div>
                     @endif
 
-                    @if($style->stands()->count() > 0)
+                    @if($style->locations()->count() > 0)
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h6 class="mb-3">Estanterías Usando Este Estilo</h6>
@@ -152,10 +152,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($style->stands as $stand)
+                                            @foreach($style->locations as $stand)
                                                 <tr>
                                                     <td>
-                                                        <a href="{{ route('manager.warehouse.stands.view', $stand->uid) }}">
+                                                        <a href="{{ route('manager.warehouse.locations.view', $stand->uid) }}">
                                                             {{ $stand->code }}
                                                         </a>
                                                     </td>

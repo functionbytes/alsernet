@@ -318,9 +318,7 @@ class InventorySlot extends Model
 
 namespace App\Http\Controllers\Managers\Warehouse;
 
-use App\Models\Warehouse\Warehouse;
-use App\Models\Location;
-use App\Models\Inventarie\Inventarie;
+use App\Models\Location;use App\Models\Warehouse\Warehouse;
 
 class WarehouseMultiBranchController extends Controller
 {

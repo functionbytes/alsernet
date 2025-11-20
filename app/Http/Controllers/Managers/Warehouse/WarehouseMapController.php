@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Managers\Warehouse;
 
 use App\Http\Controllers\Controller;
-use App\Models\Warehouse\Floor;
-use App\Models\Warehouse\Stand;
-use App\Models\Warehouse\StandStyle;
-use App\Models\Warehouse\InventorySlot;
+use App\Models\Warehouse\WarehouseFloor;
+use App\Models\Warehouse\WarehouseLocation;
+use App\Models\Warehouse\WarehouseLocationStyle;
+use App\Models\Warehouse\WarehouseInventorySlot;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,8 +17,8 @@ class WarehouseMapController extends Controller
      */
     public function map()
     {
-        $floors = Floor::available()->ordered()->with('stands')->get();
-        $standStyles = StandStyle::available()->with('stands')->get();
+        $floors = WarehouseFloor::available()->ordered()->with('stands')->get();
+        $standStyles = WarehouseLocationStyle::available()->with('stands')->get();
 
         return view('managers.views.warehouse.map.index', [
             'floors' => $floors,
@@ -35,7 +35,7 @@ class WarehouseMapController extends Controller
         $floorId = $request->query('floor_id');
 
         // Load all stands with their relationships
-        $query = Stand::with(['floor', 'style', 'slots.product']);
+        $query = WarehouseLocation::with(['floor', 'style', 'slots.product']);
 
         if ($floorId) {
             $query->where('floor_id', $floorId);
@@ -53,7 +53,7 @@ class WarehouseMapController extends Controller
             'layoutSpec' => $layoutSpec,
             'metadata' => [
                 'totalStands' => count($stands),
-                'totalFloors' => Floor::count(),
+                'totalFloors' => WarehouseFloor::count(),
             ],
         ]);
     }
@@ -110,7 +110,7 @@ class WarehouseMapController extends Controller
     /**
      * Build item locations (inventory slots grouped by face)
      *
-     * @param Stand $stand
+     * @param WarehouseLocation $stand
      * @return array
      */
     private function buildItemLocations($stand): array
@@ -147,7 +147,7 @@ class WarehouseMapController extends Controller
     /**
      * Determine shelf color class based on stand status/occupancy
      *
-     * @param Stand $stand
+     * @param WarehouseLocation $stand
      * @return string
      */
     private function getStandColorClass($stand): string
@@ -172,7 +172,7 @@ class WarehouseMapController extends Controller
     /**
      * Determine slot color based on occupancy status
      *
-     * @param InventorySlot $slot
+     * @param WarehouseInventorySlot $slot
      * @return string
      */
     private function getSlotColorByOccupancy($slot): string
@@ -213,7 +213,7 @@ class WarehouseMapController extends Controller
                 'height_m' => 30.26,
             ],
             'scale' => 30,
-            'floors' => Floor::available()
+            'floors' => WarehouseFloor::available()
                 ->ordered()
                 ->select('id', 'code', 'name')
                 ->get()
@@ -232,7 +232,7 @@ class WarehouseMapController extends Controller
      */
     public function getSlotDetails($uid): JsonResponse
     {
-        $slot = InventorySlot::where('uid', $uid)
+        $slot = WarehouseInventorySlot::where('uid', $uid)
             ->with(['stand.floor', 'stand.style', 'product'])
             ->firstOrFail();
 

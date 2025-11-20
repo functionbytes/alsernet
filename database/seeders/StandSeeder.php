@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Warehouse\Floor;
-use App\Models\Warehouse\Stand;
-use App\Models\Warehouse\StandStyle;
+use App\Models\Warehouse\WarehouseFloor;
+use App\Models\Warehouse\WarehouseLocation;
+use App\Models\Warehouse\WarehouseLocationStyle;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -17,8 +17,8 @@ class StandSeeder extends Seeder
      */
     public function run(): void
     {
-        $floors = Floor::all();
-        $styles = StandStyle::all();
+        $floors = WarehouseFloor::all();
+        $styles = WarehouseLocationStyle::all();
 
         $rowStyle = $styles->where('code', 'ROW')->first();
         $islandStyle = $styles->where('code', 'ISLAND')->first();
@@ -30,7 +30,7 @@ class StandSeeder extends Seeder
         $floor1 = $floors->where('code', 'P1')->first();
         if ($floor1 && $rowStyle) {
             for ($i = 1; $i <= 5; $i++) {
-                Stand::create([
+                WarehouseLocation::create([
                     'uid' => Str::uuid(),
                     'floor_id' => $floor1->id,
                     'stand_style_id' => $rowStyle->id,
@@ -49,7 +49,7 @@ class StandSeeder extends Seeder
 
             // Isla central en planta 1
             if ($islandStyle) {
-                Stand::create([
+                WarehouseLocation::create([
                     'uid' => Str::uuid(),
                     'floor_id' => $floor1->id,
                     'stand_style_id' => $islandStyle->id,
@@ -72,7 +72,7 @@ class StandSeeder extends Seeder
         $floor2 = $floors->where('code', 'P2')->first();
         if ($floor2 && $rowStyle) {
             for ($i = 1; $i <= 4; $i++) {
-                Stand::create([
+                WarehouseLocation::create([
                     'uid' => Str::uuid(),
                     'floor_id' => $floor2->id,
                     'stand_style_id' => $rowStyle->id,
@@ -91,7 +91,7 @@ class StandSeeder extends Seeder
 
             // Pared lateral en planta 2
             if ($wallStyle) {
-                Stand::create([
+                WarehouseLocation::create([
                     'uid' => Str::uuid(),
                     'floor_id' => $floor2->id,
                     'stand_style_id' => $wallStyle->id,
@@ -114,7 +114,7 @@ class StandSeeder extends Seeder
         $floor3 = $floors->where('code', 'P3')->first();
         if ($floor3 && $rowStyle) {
             for ($i = 1; $i <= 3; $i++) {
-                Stand::create([
+                WarehouseLocation::create([
                     'uid' => Str::uuid(),
                     'floor_id' => $floor3->id,
                     'stand_style_id' => $rowStyle->id,
@@ -136,7 +136,7 @@ class StandSeeder extends Seeder
         // SÓTANO: Estanterías especializadas
         $floorsotano = $floors->where('code', 'S0')->first();
         if ($floorsotano && $islandStyle) {
-            Stand::create([
+            WarehouseLocation::create([
                 'uid' => Str::uuid(),
                 'floor_id' => $floorsotano->id,
                 'stand_style_id' => $islandStyle->id,

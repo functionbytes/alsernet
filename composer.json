@@ -46,11 +46,13 @@
         "symfony/mime": "^7.2",
         "torann/geoip": "^3.0",
         "twig/twig": "^3.19",
-        "webklex/laravel-imap": "*"
+        "webklex/laravel-imap": "*",
+        "setasign/fpdi": "^2.6",
+        "setasign/fpdi-tcpdf": "^2.3",
+        "setasign/fpdf": "^1.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
-        "laravel/boost": "*",
         "laravel/pint": "^1.20",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",

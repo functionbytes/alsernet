@@ -1210,10 +1210,10 @@ audeclau
             SPACING: 0.3,
             MARGIN: 20, // pixels
 
-            calculateOptimalPositions(standsData, scale) {
+            calculateOptimalPositions(locationsData, scale) {
                 const positions = [];
 
-                standsData.forEach(stand => {
+                locationsData.forEach(stand => {
                     const gridX = Math.floor(stand.position_x / (this.STAND_WIDTH + this.SPACING));
                     const gridY = Math.floor(stand.position_y / (this.STAND_HEIGHT + this.SPACING));
 

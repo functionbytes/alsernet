@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Warehouse\InventorySlot;
-use App\Models\Warehouse\Stand;
+use App\Models\Warehouse\WarehouseInventorySlot;
+use App\Models\Warehouse\WarehouseLocation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -17,7 +17,7 @@ class InventorySlotSeeder extends Seeder
      */
     public function run(): void
     {
-        $stands = Stand::all();
+        $stands = WarehouseLocation::all();
         $slotCount = 0;
         $barcodeCounter = 1000;
 
@@ -27,7 +27,7 @@ class InventorySlotSeeder extends Seeder
             foreach ($stand->style?->faces ?? [] as $face) {
                 for ($level = 1; $level <= $stand->total_levels; $level++) {
                     for ($section = 1; $section <= $stand->total_sections; $section++) {
-                        InventorySlot::create([
+                        WarehouseInventorySlot::create([
                             'uid' => Str::uuid(),
                             'stand_id' => $stand->id,
                             'product_id' => null, // Sin producto inicialmente

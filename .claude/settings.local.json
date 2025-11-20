@@ -1,9 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /s /b)",
-      "Bash(dir:*)",
-      "Bash(php artisan:*)"
+      "Bash(composer require:*)",
+      "Bash(php:*)"
     ],
     "deny": [],
     "ask": []

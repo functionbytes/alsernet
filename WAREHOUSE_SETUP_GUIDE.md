@@ -114,20 +114,20 @@ php artisan tinker
 
 ```php
 // Contar registros
->>> App\Models\Warehouse\Floor::count();
+>>> App\Models\Warehouse\WarehouseFloor::count();
 4
 
->>> App\Models\Warehouse\StandStyle::count();
+>>> App\Models\Warehouse\WarehouseLocationStyle::count();
 3
 
->>> App\Models\Warehouse\Stand::count();
+>>> App\Models\Warehouse\WarehouseLocation::count();
 15
 
->>> App\Models\Warehouse\InventorySlot::count();
+>>> App\Models\Warehouse\WarehouseInventorySlot::count();
 1100  // Aproximadamente
 
 // Ver datos
->>> App\Models\Warehouse\Floor::first()->getSummary();
+>>> App\Models\Warehouse\WarehouseFloor::first()->getSummary();
 [
   "id" => 1,
   "uid" => "...",

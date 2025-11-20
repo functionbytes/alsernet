@@ -3406,19 +3406,19 @@ textarea.form-control-lg {
 
 .btn-secondary {
     --bs-btn-color: #fff;
-    --bs-btn-bg: #4784d9;
-    --bs-btn-border-color: #4784d9;
+    --bs-btn-bg: #90bb13;
+    --bs-btn-border-color: #90bb13;
     --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #3ea2d9;
-    --bs-btn-hover-border-color: #3a98cc;
+    --bs-btn-hover-bg: #90bb13;
+    --bs-btn-hover-border-color: #90bb13;
     --bs-btn-focus-shadow-rgb: 100, 200, 255;
     --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #3a98cc;
-    --bs-btn-active-border-color: #378fbf;
+    --bs-btn-active-bg: #90bb13;
+    --bs-btn-active-border-color: #90bb13;
     --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
     --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #4784d9;
-    --bs-btn-disabled-border-color: #4784d9;
+    --bs-btn-disabled-bg: #90bb13;
+    --bs-btn-disabled-border-color: #90bb13;
 }
 
 .btn-success {
@@ -31705,7 +31705,7 @@ a {
 }
 
 a:hover {
-    color: #008bce;
+    color: #90bb13;
 }
 
 ul {
@@ -32914,7 +32914,7 @@ h3.main_question {
 }
 
 .inventaries-content .card .card-body:hover h5 {
-    color: #008bce;
+    color: #90bb13;
 }
 
 .toast-warning:has(.custom-toastr) {

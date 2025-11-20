@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Warehouse\Floor;
+use App\Models\Warehouse\WarehouseFloor;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -43,7 +43,7 @@ class FloorSeeder extends Seeder
         ];
 
         foreach ($floors as $floor) {
-            Floor::create([
+            WarehouseFloor::create([
                 'uid' => Str::uuid(),
                 'code' => $floor['code'],
                 'name' => $floor['name'],

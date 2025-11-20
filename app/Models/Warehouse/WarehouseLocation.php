@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Str;
 
 class WarehouseLocation extends Model
 {
@@ -24,15 +26,11 @@ class WarehouseLocation extends Model
         'uid',
         'warehouse_id',
         'floor_id',
-        'style_id',
         'code',
-        'barcode',
+        'style_id',
         'position_x',
         'position_y',
-        'position_z',
         'total_levels',
-        'total_sections',
-        'capacity',
         'available',
         'notes',
     ];
@@ -41,17 +39,29 @@ class WarehouseLocation extends Model
      * Casteo de tipos
      */
     protected $casts = [
-        'capacity' => 'decimal:2',
         'available' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
+    public function scopeId($query ,$id)
+    {
+        return $query->where('id', $id)->first();
+    }
+
+    public function scopeUid($query ,$uid)
+    {
+        return $query->where('uid', $uid)->first();
+    }
+
+
     /**
-     * ===============================================
-     * RELACIONES
-     * ===============================================
+     * Una estantería pertenece a un warehouse
      */
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo('App\Models\Warehouse\Warehouse', 'warehouse_id', 'id');
+    }
 
     /**
      * Una estantería pertenece a un piso
@@ -70,11 +80,24 @@ class WarehouseLocation extends Model
     }
 
     /**
-     * Una estantería tiene muchas posiciones
+     * Una estantería tiene muchas secciones
      */
-    public function slots(): HasMany
+    public function sections(): HasMany
     {
-        return $this->hasMany('App\Models\Warehouse\WarehouseInventorySlot', 'location_id', 'id');
+        return $this->hasMany('App\Models\Warehouse\WarehouseLocationSection', 'location_id', 'id');
+    }
+
+    /**
+     * Una estantería tiene muchas posiciones (a través de secciones)
+     */
+    public function slots()
+    {
+        return $this->hasManyThrough(
+            'App\Models\Warehouse\WarehouseInventorySlot',
+            'App\Models\Warehouse\WarehouseLocationSection',
+            'location_id',
+            'section_id'
+        );
     }
 
     /**
@@ -99,28 +122,13 @@ class WarehouseLocation extends Model
         return $query->where('floor_id', $floorId);
     }
 
-    /**
-     * Scope: Buscar por código
-     */
-    public function scopeByCode($query, $code)
-    {
-        return $query->where('code', $code);
-    }
-
-    /**
-     * Scope: Buscar por código de barras
-     */
-    public function scopeByBarcode($query, $barcode)
-    {
-        return $query->where('barcode', $barcode);
-    }
 
     /**
      * Scope: Buscar por estilo
      */
     public function scopeByStyle($query, $styleId)
     {
-        return $query->where('stand_style_id', $styleId);
+        return $query->where('style_id', $styleId);
     }
 
     /**
@@ -128,8 +136,7 @@ class WarehouseLocation extends Model
      */
     public function scopeSearch($query, $search)
     {
-        return $query->where('code', 'like', "%{$search}%")
-            ->orWhere('barcode', 'like', "%{$search}%");
+        return $query->where('uid', 'like', "%{$search}%");
     }
 
     /**
@@ -170,7 +177,7 @@ class WarehouseLocation extends Model
      */
     public function getOccupiedSlots(): int
     {
-        return $this->slots()->where('is_occupied', true)->count();
+        return $this->slots()->where('quantity', '>', 0)->count();
     }
 
     /**
@@ -195,58 +202,29 @@ class WarehouseLocation extends Model
         return ($occupied / $total) * 100;
     }
 
-    /**
-     * Obtener la capacidad total de peso en la estantería
-     */
-    public function getTotalCapacity(): float
-    {
-        return $this->capacity ?? 0;
-    }
 
     /**
-     * Obtener el peso actual
+     * Obtener una posición específica por sección code
      */
-    public function getCurrentWeight(): float
-    {
-        return $this->slots()->sum('weight_current');
-    }
-
-    /**
-     * Verificar si está cerca del límite de capacidad
-     */
-    public function isNearCapacity(int $threshold = 90): bool
-    {
-        if (!$this->capacity) {
-            return false;
-        }
-
-        $currentWeight = $this->getCurrentWeight();
-        $percentageUsed = ($currentWeight / $this->capacity) * 100;
-
-        return $percentageUsed >= $threshold;
-    }
-
-    /**
-     * Obtener una posición específica por cara, nivel y sección
-     */
-    public function getSlot(string $face, int $level, int $section): ?WarehouseInventorySlot
+    public function getSlot(string $sectionCode): ?WarehouseInventorySlot
     {
         return $this->slots()
-            ->where('face', $face)
-            ->where('level', $level)
-            ->where('section', $section)
+            ->whereHas('section', function ($query) use ($sectionCode) {
+                $query->where('code', $sectionCode);
+            })
             ->first();
     }
 
     /**
-     * Obtener todas las posiciones de una cara
+     * Obtener todas las posiciones de una cara (sección)
      */
     public function getSlotsByFace(string $face)
     {
         return $this->slots()
-            ->where('face', $face)
-            ->orderBy('level', 'asc')
-            ->orderBy('section', 'asc')
+            ->whereHas('section', function ($query) use ($face) {
+                $query->where('face', $face);
+            })
+            ->orderBy('section_id', 'asc')
             ->get();
     }
 
@@ -256,9 +234,10 @@ class WarehouseLocation extends Model
     public function getSlotsByLevel(int $level)
     {
         return $this->slots()
-            ->where('level', $level)
-            ->orderBy('face', 'asc')
-            ->orderBy('section', 'asc')
+            ->whereHas('section', function ($query) use ($level) {
+                $query->where('level', $level);
+            })
+            ->orderBy('section_id', 'asc')
             ->get();
     }
 
@@ -277,45 +256,31 @@ class WarehouseLocation extends Model
             'position' => [
                 'x' => $this->position_x,
                 'y' => $this->position_y,
-                'z' => $this->position_z,
             ],
             'dimensions' => [
                 'levels' => $this->total_levels,
                 'sections' => $this->total_sections,
             ],
             'available' => $this->available,
-            'capacity' => $this->capacity,
-            'current_weight' => $this->getCurrentWeight(),
             'total_slots' => $this->getTotalSlots(),
             'occupied_slots' => $this->getOccupiedSlots(),
             'available_slots' => $this->getAvailableSlots(),
             'occupancy_percentage' => round($this->getOccupancyPercentage(), 2),
-            'near_capacity' => $this->isNearCapacity(),
         ];
     }
 
     /**
-     * Crear todas las posiciones (slots) para esta estantería
-     * Útil al crear una estantería nueva
+     * Crear posiciones (slots) basadas en secciones
+     * Las secciones ya contienen el nivel y la cara
+     * Los slots se crean a través de las secciones
      */
-    public function createSlots(): int
+    public function createSlotsBySections(): int
     {
-        $facesCount = count($this->style?->faces ?? []);
         $created = 0;
 
-        foreach ($this->style?->faces ?? [] as $face) {
-            for ($level = 1; $level <= $this->total_levels; $level++) {
-                for ($section = 1; $section <= $this->total_sections; $section++) {
-                    WarehouseInventorySlot::create([
-                        'location_id' => $this->id,
-                        'face' => $face,
-                        'level' => $level,
-                        'section' => $section,
-                    ]);
-                    $created++;
-                }
-            }
-        }
+        // For each section in this location, we don't need to create slots manually
+        // Slots are created through product assignments to sections
+        // This method is kept for backwards compatibility but may not be needed
 
         return $created;
     }

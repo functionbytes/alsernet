@@ -41,27 +41,27 @@ class DocumentsController extends ApiController
 
     public function documentRequests($data)
     {
-            $document = new Document;
-            $document->order_id = $data['order'];
-            $document->customer_id  =  $data['customer'];
-            $document->cart_id  =  $data['cart'];
-            $document->type =   $data['type'];
-            $document->save();
+        $document = new Document;
+        $document->order_id = $data['order'];
+        $document->customer_id  =  $data['customer'];
+        $document->cart_id  =  $data['cart'];
+        $document->type =   $data['type'];
+        $document->save();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Subscription successful',
-                'data' => [
-                    'uid' => $document->uid,
-                ],
-            ], 200);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Subscription successful',
+            'data' => [
+                'uid' => $document->uid,
+            ],
+        ], 200);
     }
 
 
     public function documentVerification($data)
     {
 
-        $document = Document::order($data['order']);
+        $document =  Document::orders($data['order']);
 
         return response()->json([
             'status' => 'success',
@@ -97,26 +97,36 @@ class DocumentsController extends ApiController
     public function documentUpload(Request $request)
     {
 
+        $document = Document::uid($request->input('uid'));
 
-            $document = Document::uid($request->input('uid'));
-
-            if (!$document) {
-                return response()->json([
-                    'status' => 'failed',
-                    'message' => 'No document found with this UID.'
-                ], 404);
-            }
-
-            $document->clearMediaCollection('documents');
-            $document->addMediaFromRequest('file')->toMediaCollection('documents');
-
-            $document->upload_at = Carbon::now()->setTimezone('Europe/Madrid');
-            $document->save();
-
+        if (!$document) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'Document uploaded successfully.'
-            ], 200);
+                'status' => 'failed',
+                'message' => 'No document found with this UID.'
+            ], 404);
+        }
+
+        $document->clearMediaCollection('documents');
+
+        if ($request->hasFile('file')) {
+            $files = $request->file('file');
+
+            if (is_array($files)) {
+                foreach ($files as $file) {
+                    $document->addMedia($file)->toMediaCollection('documents');
+                }
+            } else {
+                $document->addMedia($files)->toMediaCollection('documents');
+            }
+        }
+
+        $document->upload_at = Carbon::now()->setTimezone('Europe/Madrid');
+        $document->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Document uploaded successfully.'
+        ], 200);
 
 
     }

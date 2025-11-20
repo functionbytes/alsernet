@@ -3,49 +3,80 @@
 namespace App\Http\Controllers\Managers\Warehouse;
 
 use App\Http\Controllers\Controller;
+use App\Models\Warehouse\Warehouse;
 use App\Models\Warehouse\WarehouseFloor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class FloorsController extends Controller
+class WarehouseFloorsController extends Controller
 {
     /**
-     * Display a listing of floors
+     * Display a listing of floors for a specific warehouse
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors
      */
-    public function index()
+    public function index($warehouse_uid = null)
     {
-        $floors = WarehouseFloor::ordered()->paginate(15);
+        // Si se proporciona warehouse_uid, filtrar pisos de ese warehouse
+        $query = WarehouseFloor::ordered();
+        $warehouse = null;
+
+        if ($warehouse_uid) {
+            $warehouse = Warehouse::uid($warehouse_uid);
+            if ($warehouse) {
+                $query = $query->byWarehouse($warehouse->id);
+            }
+        }
+
+        $floors = $query->paginate(15);
 
         return view('managers.views.warehouse.floors.index', [
             'floors' => $floors,
+            'warehouse_uid' => $warehouse_uid,
+            'warehouse' => $warehouse,
         ]);
     }
 
     /**
      * Show the form for creating a new floor
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/create
      */
-    public function create()
+    public function create($warehouse_uid)
     {
-        return view('managers.views.warehouse.floors.create')->with([
-        ]);
+        $warehouse = Warehouse::uid($warehouse_uid);
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
 
+        return view('managers.views.warehouse.floors.create')->with([
+            'warehouse' => $warehouse,
+            'warehouse_uid' => $warehouse_uid,
+        ]);
     }
 
     /**
      * Store a newly created floor in storage
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/store
      */
     public function store(Request $request)
     {
+        $warehouse = Warehouse::uid($request->warehouse_uid);
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
+
         $validated = $request->validate([
+            'warehouse_uid' => 'required|exists:warehouses,uid',
             'code' => 'required|string|max:50|unique:warehouse_floors,code',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
+            'level' => 'nullable|integer|min:1',
             'available' => 'boolean',
-            'order' => 'nullable|integer|min:0',
         ]);
 
         $validated['uid'] = Str::uuid();
         $validated['available'] = $validated['available'] ?? true;
+        $validated['level'] = $validated['level'] ?? 1;
+        $validated['warehouse_id'] = $warehouse->id;
 
         $floor = WarehouseFloor::create($validated);
 
@@ -56,50 +87,87 @@ class FloorsController extends Controller
             ->event('created')
             ->log('Piso creado: ' . $floor->name);
 
-        return redirect()->route('manager.warehouse.floors')->with('success', 'Piso creado exitosamente');
+        return redirect()->route('manager.warehouse.floors', ['warehouse_uid' => $warehouse->uid])->with('success', 'Piso creado exitosamente');
     }
 
     /**
      * Display the specified floor
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}
      */
-    public function view($uid)
+    public function view($warehouse_uid, $floor_uid)
     {
-        $floor = WarehouseFloor::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
+
+        $floor = WarehouseFloor::where('uid', $floor_uid)
+            ->where('warehouse_id', $warehouse->id)
+            ->first();
+        if (!$floor) {
+            abort(404, 'Piso no encontrado');
+        }
 
         return view('managers.views.warehouse.floors.view', [
+            'warehouse' => $warehouse,
             'floor' => $floor,
         ]);
     }
 
     /**
      * Show the form for editing the specified floor
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/edit
      */
-    public function edit($uid)
+    public function edit($warehouse_uid, $floor_uid)
     {
-        $floor = WarehouseFloor::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
+
+        $floor = WarehouseFloor::where('uid', $floor_uid)
+            ->where('warehouse_id', $warehouse->id)
+            ->first();
+        if (!$floor) {
+            abort(404, 'Piso no encontrado');
+        }
 
         return view('managers.views.warehouse.floors.edit', [
+            'warehouse' => $warehouse,
             'floor' => $floor,
         ]);
     }
 
     /**
      * Update the specified floor in storage
+     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/floors/update
      */
     public function update(Request $request)
     {
-        $floor = WarehouseFloor::where('uid', $request->uid)->firstOrFail();
+        $warehouse = Warehouse::uid($request->warehouse_uid);
+
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
+
+        $floor = WarehouseFloor::where('uid', $request->uid)
+            ->where('warehouse_id', $warehouse->id)
+            ->first();
+        if (!$floor) {
+            abort(404, 'Piso no encontrado');
+        }
 
         $validated = $request->validate([
-            'uid' => 'required|exists:warehouse_floors,uid',
+            'warehouse_uid' => 'required|exists:warehouses,uid',
             'code' => 'required|string|max:50|unique:warehouse_floors,code,' . $floor->id,
+            'uid' => 'required|exists:warehouse_floors,uid',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
+            'level' => 'nullable|integer|min:1',
             'available' => 'boolean',
-            'order' => 'nullable|integer|min:0',
         ]);
 
-        $oldData = $floor->only(['code', 'name', 'description', 'available', 'order']);
+        $oldData = $floor->only(['name', 'description', 'level', 'available']);
 
         $floor->update($validated);
 
@@ -111,19 +179,36 @@ class FloorsController extends Controller
             ->withProperties(['old' => $oldData, 'attributes' => $floor->getChanges()])
             ->log('Piso actualizado: ' . $floor->name);
 
-        return redirect()->route('manager.warehouse.floors')->with('success', 'Piso actualizado exitosamente');
+        return redirect()->route('manager.warehouse.floors', ['warehouse_uid' => $warehouse->uid])->with('success', 'Piso actualizado exitosamente');
     }
 
     /**
      * Remove the specified floor from storage
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/destroy
+     * Jerarquía: Floor -> Locations -> Inventory Slots
      */
-    public function destroy($uid)
+    public function destroy($warehouse_uid, $floor_uid)
     {
-        $floor = WarehouseFloor::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
+        if (!$warehouse) {
+            abort(404, 'Almacén no encontrado');
+        }
 
-        // Check if floor has associated locations
-        if ($floor->locations()->count() > 0) {
-            return redirect()->route('manager.warehouse.floors')->with('error', 'No se puede eliminar un piso que contiene ubicaciones');
+        // Buscar floor por uid y validar que pertenece a este warehouse
+        $floor = WarehouseFloor::uid($floor_uid);
+        if (!$floor || $floor->warehouse_id !== $warehouse->id) {
+            abort(404, 'Piso no encontrado');
+        }
+
+        // Validar que no hay inventory slots usando la relación
+        $totalSlots = $floor->locations()
+            ->withCount('slots')
+            ->get()
+            ->sum('slots_count');
+
+        if ($totalSlots > 0) {
+            return redirect()->route('manager.warehouse.floors', ['warehouse_uid' => $warehouse->uid])
+                ->with('error', 'No se puede eliminar un piso que contiene espacios de inventario. Primero debe vaciar o eliminar todos los espacios.');
         }
 
         // Registrar en activity log
@@ -133,8 +218,10 @@ class FloorsController extends Controller
             ->event('deleted')
             ->log('Piso eliminado: ' . $floor->name);
 
+        // Eliminar cascada: locations y sus slots
+        $floor->locations()->delete();
         $floor->delete();
 
-        return redirect()->route('manager.warehouse.floors')->with('success', 'Piso eliminado exitosamente');
+        return redirect()->route('manager.warehouse.floors', ['warehouse_uid' => $warehouse->uid])->with('success', 'Piso eliminado exitosamente');
     }
 }

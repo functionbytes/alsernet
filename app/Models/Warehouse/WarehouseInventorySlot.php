@@ -6,31 +6,9 @@ use App\Library\Traits\HasUid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * InventorySlot Model
- *
- * Representa una POSICIÓN CONCRETA dentro de una estantería.
- * Ubicación: [Stand] → [Cara] → [Nivel] → [Sección]
- *
- * @property int $id
- * @property string $uid UUID universal
- * @property int $stand_id ID de la estantería
- * @property int|null $product_id ID del producto
- * @property string $face Cara (left, right, front, back)
- * @property int $level Nivel (1=arriba)
- * @property int $section Sección (1=izquierda)
- * @property string|null $barcode Código de barras
- * @property int $quantity Cantidad actual
- * @property int|null $max_quantity Máximo permitido
- * @property float $weight_current Peso actual
- * @property float|null $weight_max Peso máximo
- * @property bool $is_occupied Cache: ocupada?
- * @property \Illuminate\Support\Carbon|null $last_movement Última operación
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- */
-class InventorySlot extends Model
+class WarehouseInventorySlot extends Model
 {
     use HasFactory, HasUid;
 
@@ -44,19 +22,13 @@ class InventorySlot extends Model
      */
     protected $fillable = [
         'uid',
-        'location_id',
+        'section_id',
         'product_id',
-        'face',
-        'level',
-        'section',
-        'barcode',
         'quantity',
-        'max_quantity',
-        'weight_current',
-        'weight_max',
+        'kardex',
         'is_occupied',
         'last_movement',
-        'last_inventarie_id',
+        'last_section_id',
     ];
 
     /**
@@ -64,9 +36,7 @@ class InventorySlot extends Model
      */
     protected $casts = [
         'quantity' => 'integer',
-        'max_quantity' => 'integer',
-        'weight_current' => 'decimal:2',
-        'weight_max' => 'decimal:2',
+        'kardex' => 'integer',
         'is_occupied' => 'boolean',
         'last_movement' => 'datetime',
         'created_at' => 'datetime',
@@ -75,32 +45,35 @@ class InventorySlot extends Model
 
     /**
      * ===============================================
-     * CONSTANTES
-     * ===============================================
-     */
-
-    // Caras válidas
-    const FACE_LEFT = 'left';
-    const FACE_RIGHT = 'right';
-    const FACE_FRONT = 'front';
-    const FACE_BACK = 'back';
-
-    /**
-     * ===============================================
      * RELACIONES
      * ===============================================
      */
 
     /**
-     * Una posición pertenece a una Ubicación (Location/Stand)
+     * El slot pertenece a una Sección de Ubicación
      */
-    public function location(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Location', 'location_id', 'id');
+        return $this->belongsTo('App\Models\Warehouse\WarehouseLocationSection', 'section_id', 'id');
     }
 
     /**
-     * Una posición puede contener un producto
+     * El slot pertenece a una Ubicación (a través de Sección)
+     */
+    public function location(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            'App\Models\Warehouse\WarehouseLocation',
+            'App\Models\Warehouse\WarehouseLocationSection',
+            'id',           // Foreign key on WarehouseLocationSection table
+            'id',           // Foreign key on WarehouseLocation table
+            'section_id',   // Local key on WarehouseInventorySlot table
+            'location_id'   // Foreign key on WarehouseLocationSection table
+        );
+    }
+
+    /**
+     * El slot puede contener un producto
      */
     public function product(): BelongsTo
     {
@@ -108,19 +81,19 @@ class InventorySlot extends Model
     }
 
     /**
-     * Último inventario que afectó esta posición
+     * Sección anterior donde estaba el producto
      */
-    public function lastInventarie(): BelongsTo
+    public function lastSection(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Warehouse\Warehouse', 'last_inventarie_id', 'id');
+        return $this->belongsTo('App\Models\Warehouse\WarehouseLocationSection', 'last_section_id', 'id');
     }
 
     /**
-     * Movimientos de este slot
+     * Historial de movimientos del slot
      */
-    public function movements()
+    public function movements(): HasMany
     {
-        return $this->hasMany(InventoryMovement::class, 'slot_id');
+        return $this->hasMany('App\Models\Warehouse\WarehouseInventoryMovement', 'slot_id');
     }
 
     /**
@@ -130,27 +103,27 @@ class InventorySlot extends Model
      */
 
     /**
-     * Scope: Solo posiciones ocupadas
+     * Scope: Solo slots ocupados
      */
     public function scopeOccupied($query)
     {
-        return $query->where('is_occupied', true);
+        return $query->where('quantity', '>', 0);
     }
 
     /**
-     * Scope: Solo posiciones libres
+     * Scope: Solo slots libres
      */
     public function scopeAvailable($query)
     {
-        return $query->where('is_occupied', false);
+        return $query->where('quantity', '=', 0);
     }
 
     /**
-     * Scope: Buscar por location
+     * Scope: Buscar por sección
      */
-    public function scopeByLocation($query, $locationId)
+    public function scopeBySection($query, $sectionId)
     {
-        return $query->where('location_id', $locationId);
+        return $query->where('section_id', $sectionId);
     }
 
     /**
@@ -162,63 +135,23 @@ class InventorySlot extends Model
     }
 
     /**
-     * Scope: Buscar por cara
-     */
-    public function scopeByFace($query, $face)
-    {
-        return $query->where('face', $face);
-    }
-
-    /**
-     * Scope: Buscar por nivel
-     */
-    public function scopeByLevel($query, $level)
-    {
-        return $query->where('level', $level);
-    }
-
-    /**
-     * Scope: Buscar por código de barras
-     */
-    public function scopeByBarcode($query, $barcode)
-    {
-        return $query->where('barcode', $barcode);
-    }
-
-    /**
-     * Scope: Buscar por código de barras
+     * Scope: Búsqueda general
      */
     public function scopeSearch($query, $search)
     {
-        return $query->where('barcode', 'like', "%{$search}%")
-            ->orWhere('uid', 'like', "%{$search}%");
+        return $query->where('uid', 'like', "%{$search}%")
+            ->orWhereHas('product', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
     }
 
     /**
-     * Scope: Posiciones cerca del límite de peso
+     * Scope: Slots con bajo stock
      */
-    public function scopeNearWeightCapacity($query, $threshold = 90)
+    public function scopeLowStock($query, $threshold = 10)
     {
-        return $query->where('weight_max', '>', 0)
-            ->whereRaw('(weight_current / weight_max * 100) >= ?', [$threshold]);
-    }
-
-    /**
-     * Scope: Posiciones que exceden capacidad
-     */
-    public function scopeOverCapacity($query)
-    {
-        return $query->where('weight_max', '>', 0)
-            ->whereRaw('weight_current > weight_max');
-    }
-
-    /**
-     * Scope: Posiciones que exceden cantidad máxima
-     */
-    public function scopeOverQuantity($query)
-    {
-        return $query->where('max_quantity', '>', 0)
-            ->whereRaw('quantity > max_quantity');
+        return $query->where('quantity', '>', 0)
+            ->where('quantity', '<=', $threshold);
     }
 
     /**
@@ -228,413 +161,219 @@ class InventorySlot extends Model
      */
 
     /**
-     * Obtener la dirección de la posición en formato legible
-     * Ejemplo: "Almacén Central / Piso 1 / PASILLO1A / Izquierda / Nivel 2 / Sección 3"
+     * Obtener la dirección del slot en formato legible
      */
     public function getAddress(): string
     {
-        $faceLabel = $this->getFaceLabel();
-        $inv = $this->location?->inventarie?->name ?? 'N/A';
-        $floor = $this->location?->floor?->name ?? 'N/A';
-        $loc = $this->location?->code ?? 'N/A';
-        return "{$inv} / {$floor} / {$loc} / {$faceLabel} / N{$this->level} / S{$this->section}";
+        $location = $this->section?->location;
+        $floor = $location?->floor;
+        $warehouse = $floor?->warehouse;
+
+        return implode(' / ', array_filter([
+            $warehouse?->name ?? 'N/A',
+            $floor?->name ?? 'N/A',
+            $location?->code ?? 'N/A',
+            $this->section?->code ?? 'N/A',
+            'L' . $this->section?->level ?? 'N/A',
+        ]));
     }
 
     /**
-     * Obtener etiqueta amigable de la cara
-     */
-    public function getFaceLabel(): string
-    {
-        return match ($this->face) {
-            self::FACE_LEFT => 'Izquierda',
-            self::FACE_RIGHT => 'Derecha',
-            self::FACE_FRONT => 'Frente',
-            self::FACE_BACK => 'Atrás',
-            default => $this->face,
-        };
-    }
-
-    /**
-     * Verificar si la posición está ocupada
+     * Verificar si el slot está ocupado
      */
     public function isOccupied(): bool
     {
-        return $this->is_occupied || ($this->product_id !== null && $this->quantity > 0);
+        return $this->quantity > 0;
     }
 
     /**
-     * Verificar si la posición está disponible
+     * Verificar si el slot está disponible
      */
     public function isAvailable(): bool
     {
-        return !$this->isOccupied();
+        return $this->quantity === 0;
     }
 
     /**
-     * Obtener capacidad de cantidad disponible
+     * Obtener información de la ubicación
      */
-    public function getAvailableQuantity(): int
+    public function getLocation()
     {
-        if (!$this->max_quantity) {
-            return PHP_INT_MAX; // Sin límite
-        }
-
-        return max(0, $this->max_quantity - $this->quantity);
+        return $this->section?->location;
     }
 
     /**
-     * Obtener capacidad de peso disponible (en kg)
+     * Agregar cantidad al slot
      */
-    public function getAvailableWeight(): float
+    public function addQuantity(int $amount, ?string $reason = null, ?int $userId = null): bool
     {
-        if (!$this->weight_max) {
-            return PHP_FLOAT_MAX; // Sin límite
-        }
-
-        return max(0, $this->weight_max - $this->weight_current);
-    }
-
-    /**
-     * Obtener porcentaje de ocupación de peso
-     */
-    public function getWeightPercentage(): float
-    {
-        if (!$this->weight_max || $this->weight_max === 0) {
-            return 0;
-        }
-
-        return ($this->weight_current / $this->weight_max) * 100;
-    }
-
-    /**
-     * Obtener porcentaje de ocupación de cantidad
-     */
-    public function getQuantityPercentage(): float
-    {
-        if (!$this->max_quantity || $this->max_quantity === 0) {
-            return 0;
-        }
-
-        return ($this->quantity / $this->max_quantity) * 100;
-    }
-
-    /**
-     * Verificar si se puede agregar cantidad
-     */
-    public function canAddQuantity(int $amount): bool
-    {
-        if (!$this->max_quantity) {
-            return true; // Sin límite
-        }
-
-        return ($this->quantity + $amount) <= $this->max_quantity;
-    }
-
-    /**
-     * Verificar si se puede agregar peso
-     */
-    public function canAddWeight(float $weight): bool
-    {
-        if (!$this->weight_max) {
-            return true; // Sin límite
-        }
-
-        return ($this->weight_current + $weight) <= $this->weight_max;
-    }
-
-    /**
-     * Verificar si está cerca del límite de cantidad
-     */
-    public function isNearQuantityCapacity(int $threshold = 90): bool
-    {
-        return $this->getQuantityPercentage() >= $threshold;
-    }
-
-    /**
-     * Verificar si está cerca del límite de peso
-     */
-    public function isNearWeightCapacity(int $threshold = 90): bool
-    {
-        return $this->getWeightPercentage() >= $threshold;
-    }
-
-    /**
-     * Verificar si excede cantidad máxima
-     */
-    public function isOverQuantity(): bool
-    {
-        return $this->max_quantity && $this->quantity > $this->max_quantity;
-    }
-
-    /**
-     * Verificar si excede peso máximo
-     */
-    public function isOverWeight(): bool
-    {
-        return $this->weight_max && $this->weight_current > $this->weight_max;
-    }
-
-    /**
-     * Agregar cantidad (con auditoría)
-     */
-    public function addQuantity(
-        int $amount,
-        ?string $reason = null,
-        ?int $userId = null,
-        ?int $inventarieId = null
-    ): bool {
-        if (!$this->canAddQuantity($amount)) {
-            return false;
-        }
-
-        $fromQty = $this->quantity;
-        $toQty = $this->quantity + $amount;
-
-        $this->update([
-            'quantity' => $toQty,
-            'is_occupied' => true,
-            'last_movement' => now(),
-            'last_inventarie_id' => $inventarieId,
-        ]);
-
-        // Crear movimiento en auditoría
-        InventoryMovement::create([
-            'slot_id' => $this->id,
-            'product_id' => $this->product_id,
-            'movement_type' => InventoryMovement::TYPE_ADD,
-            'from_quantity' => $fromQty,
-            'to_quantity' => $toQty,
-            'quantity_delta' => $amount,
-            'from_weight' => $this->weight_current,
-            'to_weight' => $this->weight_current,
-            'weight_delta' => 0,
-            'reason' => $reason ?? 'Manual',
-            'inventarie_id' => $inventarieId,
-            'user_id' => $userId ?? auth()->id(),
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Restar cantidad (con auditoría)
-     */
-    public function subtractQuantity(
-        int $amount,
-        ?string $reason = null,
-        ?int $userId = null,
-        ?int $inventarieId = null
-    ): bool {
-        $newQuantity = $this->quantity - $amount;
-
-        if ($newQuantity < 0) {
-            return false;
-        }
-
-        $fromQty = $this->quantity;
+        $oldQuantity = $this->quantity;
+        $newQuantity = $oldQuantity + $amount;
 
         $this->update([
             'quantity' => $newQuantity,
-            'is_occupied' => $newQuantity > 0,
             'last_movement' => now(),
-            'last_inventarie_id' => $inventarieId,
         ]);
 
-        // Crear movimiento en auditoría
-        InventoryMovement::create([
-            'slot_id' => $this->id,
-            'product_id' => $this->product_id,
-            'movement_type' => InventoryMovement::TYPE_SUBTRACT,
-            'from_quantity' => $fromQty,
-            'to_quantity' => $newQuantity,
-            'quantity_delta' => -$amount,
-            'from_weight' => $this->weight_current,
-            'to_weight' => $this->weight_current,
-            'weight_delta' => 0,
-            'reason' => $reason ?? 'Manual',
-            'inventarie_id' => $inventarieId,
-            'user_id' => $userId ?? auth()->id(),
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Agregar peso (con auditoría)
-     */
-    public function addWeight(
-        float $weight,
-        ?string $reason = null,
-        ?int $userId = null,
-        ?int $inventarieId = null
-    ): bool {
-        if (!$this->canAddWeight($weight)) {
-            return false;
+        // Registrar movimiento en auditoría si existe el modelo
+        if (class_exists('App\Models\Warehouse\WarehouseInventoryMovement')) {
+            WarehouseInventoryMovement::create([
+                'slot_id' => $this->id,
+                'product_id' => $this->product_id,
+                'movement_type' => 'add',
+                'from_quantity' => $oldQuantity,
+                'to_quantity' => $newQuantity,
+                'quantity_delta' => $amount,
+                'reason' => $reason ?? 'Manual',
+                'user_id' => $userId ?? auth()->id(),
+                'recorded_at' => now(),
+            ]);
         }
 
-        $fromWeight = $this->weight_current;
-        $toWeight = $this->weight_current + $weight;
-
-        $this->update([
-            'weight_current' => $toWeight,
-            'is_occupied' => true,
-            'last_movement' => now(),
-            'last_inventarie_id' => $inventarieId,
-        ]);
-
-        // Crear movimiento en auditoría
-        InventoryMovement::create([
-            'slot_id' => $this->id,
-            'product_id' => $this->product_id,
-            'movement_type' => InventoryMovement::TYPE_ADD,
-            'from_quantity' => $this->quantity,
-            'to_quantity' => $this->quantity,
-            'quantity_delta' => 0,
-            'from_weight' => $fromWeight,
-            'to_weight' => $toWeight,
-            'weight_delta' => $weight,
-            'reason' => $reason ?? 'Manual',
-            'inventarie_id' => $inventarieId,
-            'user_id' => $userId ?? auth()->id(),
-        ]);
-
         return true;
     }
 
     /**
-     * Restar peso (con auditoría)
+     * Restar cantidad del slot
      */
-    public function subtractWeight(
-        float $weight,
-        ?string $reason = null,
-        ?int $userId = null,
-        ?int $inventarieId = null
-    ): bool {
-        $newWeight = $this->weight_current - $weight;
+    public function subtractQuantity(int $amount, ?string $reason = null, ?int $userId = null): bool
+    {
+        $oldQuantity = $this->quantity;
+        $newQuantity = max(0, $oldQuantity - $amount);
 
-        if ($newWeight < 0) {
-            return false;
+        $this->update([
+            'quantity' => $newQuantity,
+            'last_movement' => now(),
+        ]);
+
+        // Registrar movimiento en auditoría
+        if (class_exists('App\Models\Warehouse\WarehouseInventoryMovement')) {
+            WarehouseInventoryMovement::create([
+                'slot_id' => $this->id,
+                'product_id' => $this->product_id,
+                'movement_type' => 'subtract',
+                'from_quantity' => $oldQuantity,
+                'to_quantity' => $newQuantity,
+                'quantity_delta' => -$amount,
+                'reason' => $reason ?? 'Manual',
+                'user_id' => $userId ?? auth()->id(),
+                'recorded_at' => now(),
+            ]);
         }
 
-        $fromWeight = $this->weight_current;
-
-        $this->update([
-            'weight_current' => $newWeight,
-            'is_occupied' => $newWeight > 0,
-            'last_movement' => now(),
-            'last_inventarie_id' => $inventarieId,
-        ]);
-
-        // Crear movimiento en auditoría
-        InventoryMovement::create([
-            'slot_id' => $this->id,
-            'product_id' => $this->product_id,
-            'movement_type' => InventoryMovement::TYPE_SUBTRACT,
-            'from_quantity' => $this->quantity,
-            'to_quantity' => $this->quantity,
-            'quantity_delta' => 0,
-            'from_weight' => $fromWeight,
-            'to_weight' => $newWeight,
-            'weight_delta' => -$weight,
-            'reason' => $reason ?? 'Manual',
-            'inventarie_id' => $inventarieId,
-            'user_id' => $userId ?? auth()->id(),
-        ]);
-
         return true;
     }
 
     /**
-     * Vaciar la posición completamente (con auditoría)
+     * Vaciar el slot
      */
-    public function clear(
-        ?string $reason = null,
-        ?int $userId = null,
-        ?int $inventarieId = null
-    ): void {
-        $fromQty = $this->quantity;
-        $fromWeight = $this->weight_current;
+    public function clear(?string $reason = null, ?int $userId = null): bool
+    {
+        $oldQuantity = $this->quantity;
 
         $this->update([
-            'product_id' => null,
             'quantity' => 0,
-            'weight_current' => 0,
-            'is_occupied' => false,
             'last_movement' => now(),
-            'last_inventarie_id' => $inventarieId,
         ]);
 
-        // Crear movimiento en auditoría
-        InventoryMovement::create([
-            'slot_id' => $this->id,
-            'product_id' => null,
-            'movement_type' => InventoryMovement::TYPE_CLEAR,
-            'from_quantity' => $fromQty,
-            'to_quantity' => 0,
-            'quantity_delta' => -$fromQty,
-            'from_weight' => $fromWeight,
-            'to_weight' => 0,
-            'weight_delta' => -$fromWeight,
-            'reason' => $reason ?? 'Manual',
-            'inventarie_id' => $inventarieId,
-            'user_id' => $userId ?? auth()->id(),
-        ]);
+        if (class_exists('App\Models\Warehouse\WarehouseInventoryMovement')) {
+            WarehouseInventoryMovement::create([
+                'slot_id' => $this->id,
+                'product_id' => $this->product_id,
+                'movement_type' => 'clear',
+                'from_quantity' => $oldQuantity,
+                'to_quantity' => 0,
+                'quantity_delta' => -$oldQuantity,
+                'reason' => $reason ?? 'Manual',
+                'user_id' => $userId ?? auth()->id(),
+                'recorded_at' => now(),
+            ]);
+        }
+
+        return true;
     }
 
     /**
-     * Obtener información completa de la posición
+     * Mover producto a otra sección
+     */
+    public function moveTo(WarehouseLocationSection $newSection, int $quantity = null, ?string $reason = null, ?int $userId = null): bool
+    {
+        $moveQuantity = $quantity ?? $this->quantity;
+
+        if ($moveQuantity > $this->quantity) {
+            return false; // No hay suficiente cantidad
+        }
+
+        // Encontrar o crear slot en la nueva sección
+        $newSlot = WarehouseInventorySlot::firstOrCreate(
+            [
+                'section_id' => $newSection->id,
+                'product_id' => $this->product_id,
+            ],
+            [
+                'quantity' => 0,
+            ]
+        );
+
+        // Restar de la sección actual
+        $this->subtractQuantity($moveQuantity, $reason ?? 'Moved to ' . $newSection->code, $userId);
+
+        // Agregar a la nueva sección
+        $newSlot->addQuantity($moveQuantity, $reason ?? 'Moved from ' . $this->section->code, $userId);
+
+        // Actualizar last_section_id
+        $newSlot->update(['last_section_id' => $this->section_id]);
+
+        return true;
+    }
+
+    /**
+     * Obtener resumen de información del slot
+     */
+    public function getSummary(): array
+    {
+        return [
+            'id' => $this->id,
+            'uid' => $this->uid,
+            'section' => [
+                'id' => $this->section?->id,
+                'code' => $this->section?->code,
+                'level' => $this->section?->level,
+            ],
+            'product' => [
+                'id' => $this->product?->id,
+                'name' => $this->product?->name,
+            ],
+            'quantity' => $this->quantity,
+            'kardex' => $this->kardex,
+            'is_occupied' => $this->isOccupied(),
+            'last_movement' => $this->last_movement,
+            'address' => $this->getAddress(),
+        ];
+    }
+
+    /**
+     * Obtener información completa del slot
      */
     public function getFullInfo(): array
     {
         return [
             'id' => $this->id,
             'uid' => $this->uid,
-            'address' => $this->getAddress(),
-            'stand' => [
-                'id' => $this->stand?->id,
-                'code' => $this->stand?->code,
-                'name' => $this->stand?->name,
-            ],
-            'position' => [
-                'face' => $this->face,
-                'face_label' => $this->getFaceLabel(),
-                'level' => $this->level,
-                'section' => $this->section,
-            ],
+            'section' => $this->section?->getFullInfo(),
             'product' => [
-                'id' => $this->product_id,
+                'id' => $this->product?->id,
                 'name' => $this->product?->name,
+                'sku' => $this->product?->sku ?? null,
             ],
-            'quantity' => [
-                'current' => $this->quantity,
-                'max' => $this->max_quantity,
-                'available' => $this->getAvailableQuantity(),
-                'percentage' => round($this->getQuantityPercentage(), 2),
-            ],
-            'weight' => [
-                'current' => $this->weight_current,
-                'max' => $this->weight_max,
-                'available' => $this->getAvailableWeight(),
-                'percentage' => round($this->getWeightPercentage(), 2),
-            ],
-            'is_occupied' => $this->is_occupied,
-            'is_available' => $this->isAvailable(),
-            'last_movement' => $this->last_movement,
-            'created_at' => $this->created_at,
-        ];
-    }
-
-    /**
-     * Obtener resumensimplificado
-     */
-    public function getSummary(): array
-    {
-        return [
-            'address' => $this->getAddress(),
-            'is_occupied' => $this->is_occupied,
-            'product' => $this->product?->name ?? 'N/A',
             'quantity' => $this->quantity,
-            'weight' => round($this->weight_current, 2),
+            'kardex' => $this->kardex,
+            'is_occupied' => $this->isOccupied(),
+            'last_section' => $this->lastSection?->getSummary(),
+            'last_movement' => $this->last_movement,
+            'address' => $this->getAddress(),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

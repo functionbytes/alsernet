@@ -72,7 +72,7 @@
                                 <tr>
                                     <th width="40%">Estantería</th>
                                     <td>
-                                        <a href="{{ route('manager.warehouse.stands.view', $slot->stand->uid) }}">
+                                        <a href="{{ route('manager.warehouse.locations.view', $slot->stand->uid) }}">
                                             <strong>{{ $slot->stand->code }}</strong>
                                         </a>
                                     </td>

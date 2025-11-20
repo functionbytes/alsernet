@@ -6,8 +6,6 @@ use App\Http\Controllers\Managers\DashboardController;
 use App\Http\Controllers\Managers\Events\EventsController;
 use App\Http\Controllers\Managers\Faqs\CategoriesController as FaqsCategoriesController;
 use App\Http\Controllers\Managers\Faqs\FaqsController;
-use App\Http\Controllers\Managers\Inventaries\InventariesController;
-use App\Http\Controllers\Managers\Inventaries\LocationssController as InventariessLocationsController;
 use App\Http\Controllers\Managers\Layouts\LayoutController;
 use App\Http\Controllers\Managers\Livechat\LivechatController;
 use App\Http\Controllers\Managers\Maillists\MaillistController;
@@ -43,10 +41,15 @@ use App\Http\Controllers\Managers\Tickets\StatusController as StatusTicketsContr
 use App\Http\Controllers\Managers\Tickets\TicketsController;
 use App\Http\Controllers\Managers\Users\UsersController;
 use App\Http\Controllers\Managers\PulseController;
-use App\Http\Controllers\Managers\Warehouse\FloorsController;
-use App\Http\Controllers\Managers\Warehouse\StandStylesController;
-use App\Http\Controllers\Managers\Warehouse\StandsController;
-use App\Http\Controllers\Managers\Warehouse\InventorySlotsController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseHistoryController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseReportsController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseDashboardController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseFloorsController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseLocationStylesController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseLocationsController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseLocationSectionsController;
+use App\Http\Controllers\Managers\Warehouse\WarehouseInventorySlotsController;
 use App\Http\Controllers\Managers\Warehouse\WarehouseMapController;
 
 use Illuminate\Support\Facades\Route;
@@ -110,29 +113,31 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
         Route::get('/single/barcode/{uid}', [ProductsBarcodesController::class, 'destroy'])->name('manager.products.barcodes.single');
     });
 
+    // Mantener rutas legacy de inventaries que apunten a warehouse (para compatibilidad)
     Route::group(['prefix' => 'inventaries'], function () {
+        // Redirigir a warehouse
+        Route::get('/', [WarehouseController::class, 'index'])->name('manager.inventaries');
+        Route::get('/create', [WarehouseController::class, 'create'])->name('manager.warehouses.create');
+        Route::post('/update', [WarehouseController::class, 'update'])->name('manager.warehouses.update');
+        Route::get('/edit/{uid}', [WarehouseController::class, 'edit'])->name('manager.warehouses.edit');
+        Route::get('/view/{uid}', [WarehouseController::class, 'view'])->name('manager.warehouses.view');
+        Route::get('/destroy/{uid}', [WarehouseController::class, 'destroy'])->name('manager.warehouses.destroy');
 
-        Route::get('/', [InventariesController::class, 'index'])->name('manager.inventaries');
-        Route::get('/create', [InventariesController::class, 'create'])->name('manager.inventaries.create');
-        Route::post('/update', [InventariesController::class, 'update'])->name('manager.inventaries.update');
-        Route::get('/edit/{uid}', [InventariesController::class, 'edit'])->name('manager.inventaries.edit');
-        Route::get('/view/{uid}', [InventariesController::class, 'view'])->name('manager.inventaries.view');
-        Route::get('/destroy/{uid}', [InventariesController::class, 'destroy'])->name('manager.inventaries.destroy');
-        Route::get('/report/{uid}', [InventariesController::class, 'report'])->name('manager.inventaries.report');
+        // Rutas de ubicaciones (consolidadas)
+        Route::get('/locations/{uid}', [WarehouseLocationsController::class, 'index'])->name('manager.warehouses.locations');
+        Route::get('/locations/view/{uid}', [WarehouseLocationsController::class, 'view'])->name('manager.warehouses.locations.details');
+        Route::get('/locations/edit/{uid}', [WarehouseLocationsController::class, 'edit'])->name('manager.warehouses.locations.edit');
+        Route::get('/locations/destroy/{uid}', [WarehouseLocationsController::class, 'destroy'])->name('manager.warehouses.locations.destroy');
+        Route::post('/locations/update', [WarehouseLocationsController::class, 'update'])->name('manager.warehouses.locations.update');
 
-        Route::get('/historys/{uid}', [TemplatesController::class, 'index'])->name('manager.inventaries.historys');
-        Route::get('/history/edit/{uid}', [TemplatesController::class, 'edit'])->name('manager.historys.edit');
-        Route::get('/history/destroy/{uid}', [TemplatesController::class, 'destroy'])->name('manager.historys.destroy');
-        Route::get('/history/update', [TemplatesController::class, 'update'])->name('manager.historys.update');
+        // Rutas de histórico (consolidadas)
+        Route::get('/history', [WarehouseHistoryController::class, 'index'])->name('manager.warehouses.history');
+        Route::get('/history/{uid}', [WarehouseHistoryController::class, 'view'])->name('manager.warehouses.history.view');
+        Route::get('/history/edit/{uid}', [WarehouseHistoryController::class, 'edit'])->name('manager.warehouses.history.edit');
+        Route::post('/history/update', [WarehouseHistoryController::class, 'update'])->name('manager.warehouses.history.update');
 
-        Route::get('/historys/locations/{uid}', [InventariesLocationsController::class, 'index'])->name('manager.inventaries.locations');
-        Route::get('/history/locations/details/{uid}', [InventariesLocationsController::class, 'details'])->name('manager.inventaries.locations.details');
-        Route::get('/history/locations/edit/{uid}', [InventariesLocationsController::class, 'edit'])->name('manager.inventaries.locations.edit');
-        Route::get('/history/locations/destroy/{uid}', [InventariesLocationsController::class, 'destroy'])->name('manager.inventaries.locations.destroy');
-        Route::post('/history/locations/update', [InventariesLocationsController::class, 'update'])->name('manager.inventaries.locations.update');
-
-        Route::get('/history/locations/destroy/items/{uid}', [InventariesLocationsController::class, 'destroyItem'])->name('manager.historys.items.destroy');
-        Route::get('/historys/locationss/{uid}', [InventariessLocationsController::class, 'index'])->name('manager.inventaries.locationss');
+        // Rutas de reportes
+        Route::get('/report', [WarehouseReportsController::class, 'report'])->name('manager.warehouses.report');
     });
 
     Route::group(['prefix' => 'settings'], function () {
@@ -148,6 +153,17 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
         Route::get('/edit/{uid}', [UsersController::class, 'edit'])->name('manager.users.edit');
         Route::get('/view/{uid}', [UsersController::class, 'view'])->name('manager.users.view');
         Route::get('/destroy/{uid}', [UsersController::class, 'destroy'])->name('manager.users.destroy');
+    });
+
+    // Rutas de asignación de almacenes a usuarios
+    Route::group(['prefix' => 'warehouse-assignment'], function () {
+        Route::get('/', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'index'])->name('admin.warehouse-assignment.index');
+        Route::get('/edit/{userId}', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'edit'])->name('admin.warehouse-assignment.edit');
+        Route::post('/update/{userId}', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'update'])->name('admin.warehouse-assignment.update');
+        Route::post('/assign/{userId}', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'assign'])->name('admin.warehouse-assignment.assign');
+        Route::post('/unassign/{userId}', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'unassign'])->name('admin.warehouse-assignment.unassign');
+        Route::get('/user/{userId}/warehouses', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'getUserWarehouses'])->name('admin.warehouse-assignment.user-warehouses');
+        Route::get('/warehouse/{warehouseId}/users', [\App\Http\Controllers\Admin\UserWarehouseAssignmentController::class, 'getWarehouseUsers'])->name('admin.warehouse-assignment.warehouse-users');
     });
 
     Route::group(['prefix' => 'events'], function () {
@@ -869,64 +885,128 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
         Route::get('/sort', [LayoutController::class, 'sort'])->name('manager.layouts.sort');
     });
 
-    // Warehouse Management Routes
+    // ====== WAREHOUSE MANAGEMENT ROUTES (HIERARCHICAL STRUCTURE) ======
     Route::group(['prefix' => 'warehouse'], function () {
 
-        // Warehouse Map (Visual Floor Plan)
-        Route::get('/map', [WarehouseMapController::class, 'map'])->name('manager.warehouse.map');
-        Route::get('/api/layout-spec', [WarehouseMapController::class, 'getLayoutSpec'])->name('manager.warehouse.api.layout');
-        Route::get('/api/config', [WarehouseMapController::class, 'getWarehouseConfig'])->name('manager.warehouse.api.config');
-        Route::get('/api/slot/{uid}', [WarehouseMapController::class, 'getSlotDetails'])->name('manager.warehouse.api.slot');
+        // ===== WAREHOUSE CRUD =====
+        Route::group(['prefix' => 'warehouses'], function () {
 
-        // Floors Routes
-        Route::group(['prefix' => 'floors'], function () {
-            Route::get('/', [FloorsController::class, 'index'])->name('manager.warehouse.floors');
-            Route::get('/create', [FloorsController::class, 'create'])->name('manager.warehouse.floors.create');
-            Route::post('/store', [FloorsController::class, 'store'])->name('manager.warehouse.floors.store');
-            Route::post('/update', [FloorsController::class, 'update'])->name('manager.warehouse.floors.update');
-            Route::get('/edit/{uid}', [FloorsController::class, 'edit'])->name('manager.warehouse.floors.edit');
-            Route::get('/view/{uid}', [FloorsController::class, 'view'])->name('manager.warehouse.floors.view');
-            Route::get('/destroy/{uid}', [FloorsController::class, 'destroy'])->name('manager.warehouse.floors.destroy');
+            Route::get('/', [WarehouseController::class, 'index'])->name('manager.warehouse.index');
+            Route::get('/create', [WarehouseController::class, 'create'])->name('manager.warehouse.create');
+            Route::post('/store', [WarehouseController::class, 'store'])->name('manager.warehouse.store');
+            Route::get('/{uid}', [WarehouseController::class, 'view'])->name('manager.warehouse.view');
+            Route::get('/{uid}/edit', [WarehouseController::class, 'edit'])->name('manager.warehouse.edit');
+            Route::post('/{uid}/update', [WarehouseController::class, 'update'])->name('manager.warehouse.update');
+            Route::get('/{uid}/destroy', [WarehouseController::class, 'destroy'])->name('manager.warehouse.destroy');
+            Route::get('/{uid}/summary', [WarehouseController::class, 'getSummary'])->name('manager.warehouse.summary');
+
+            // ===== WAREHOUSE RESOURCES (scoped to warehouse) =====
+            Route::group(['prefix' => '{warehouse_uid}'], function () {
+
+                // Dashboard del warehouse
+                Route::get('/dashboard', [WarehouseDashboardController::class, 'dashboard'])->name('manager.warehouse.dashboard.index');
+                Route::get('/api/floors', [WarehouseDashboardController::class, 'getFloors'])->name('manager.warehouse.api.floors');
+
+                // Mapa del warehouse
+                Route::get('/map', [WarehouseMapController::class, 'map'])->name('manager.warehouse.map');
+                Route::get('/api/layout-spec', [WarehouseMapController::class, 'getLayoutSpec'])->name('manager.warehouse.api.layout');
+                Route::get('/api/config', [WarehouseMapController::class, 'getWarehouseConfig'])->name('manager.warehouse.api.config');
+                Route::get('/api/slot/{slot_uid}', [WarehouseMapController::class, 'getSlotDetails'])->name('manager.warehouse.api.slot');
+
+                // Historial del warehouse
+                Route::group(['prefix' => 'history'], function () {
+                    Route::get('/', [WarehouseHistoryController::class, 'index'])->name('manager.warehouse.history');
+                    Route::get('/{uid}', [WarehouseHistoryController::class, 'view'])->name('manager.warehouse.history.view');
+                    Route::get('/{uid}/edit', [WarehouseHistoryController::class, 'edit'])->name('manager.warehouse.history.edit');
+                    Route::post('/update', [WarehouseHistoryController::class, 'update'])->name('manager.warehouse.history.update');
+                    Route::get('/api/slot/{slot_uid}', [WarehouseHistoryController::class, 'getSlotHistory'])->name('manager.warehouse.history.api.slot');
+                    Route::post('/api/filter', [WarehouseHistoryController::class, 'filterByDateRange'])->name('manager.warehouse.history.api.filter');
+                    Route::get('/api/statistics', [WarehouseHistoryController::class, 'getStatistics'])->name('manager.warehouse.history.api.statistics');
+                });
+
+                // Reportes del warehouse
+                Route::group(['prefix' => 'reports'], function () {
+                    Route::get('/', [WarehouseReportsController::class, 'report'])->name('manager.warehouse.reports');
+                    Route::post('/inventory', [WarehouseReportsController::class, 'generateInventory'])->name('manager.warehouse.reports.inventory');
+                    Route::post('/movements', [WarehouseReportsController::class, 'generateMovements'])->name('manager.warehouse.reports.movements');
+                    Route::post('/occupancy', [WarehouseReportsController::class, 'generateOccupancy'])->name('manager.warehouse.reports.occupancy');
+                    Route::post('/capacity', [WarehouseReportsController::class, 'generateCapacity'])->name('manager.warehouse.reports.capacity');
+                });
+
+                // Estilos del warehouse (específicos)
+                Route::group(['prefix' => 'styles'], function () {
+                    Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('manager.warehouse.styles');
+                    Route::get('/create', [WarehouseLocationStylesController::class, 'create'])->name('manager.warehouse.styles.create');
+                    Route::post('/store', [WarehouseLocationStylesController::class, 'store'])->name('manager.warehouse.styles.store');
+                    Route::get('/{style_uid}', [WarehouseLocationStylesController::class, 'view'])->name('manager.warehouse.styles.view');
+                    Route::get('/{style_uid}/edit', [WarehouseLocationStylesController::class, 'edit'])->name('manager.warehouse.styles.edit');
+                    Route::post('/update', [WarehouseLocationStylesController::class, 'update'])->name('manager.warehouse.styles.update');
+                    Route::get('/{style_uid}/destroy', [WarehouseLocationStylesController::class, 'destroy'])->name('manager.warehouse.styles.destroy');
+                });
+
+                // Pisos del warehouse
+                Route::group(['prefix' => 'floors'], function () {
+
+                    Route::get('/', [WarehouseFloorsController::class, 'index'])->name('manager.warehouse.floors');
+                    Route::get('/create', [WarehouseFloorsController::class, 'create'])->name('manager.warehouse.floors.create');
+                    Route::post('/store', [WarehouseFloorsController::class, 'store'])->name('manager.warehouse.floors.store');
+                    Route::get('/{floor_uid}', [WarehouseFloorsController::class, 'view'])->name('manager.warehouse.floors.view');
+                    Route::get('/{floor_uid}/edit', [WarehouseFloorsController::class, 'edit'])->name('manager.warehouse.floors.edit');
+                    Route::post('/update', [WarehouseFloorsController::class, 'update'])->name('manager.warehouse.floors.update');
+                    Route::get('/{floor_uid}/destroy', [WarehouseFloorsController::class, 'destroy'])->name('manager.warehouse.floors.destroy');
+
+                    // Locaciones dentro del piso
+                    Route::group(['prefix' => '{floor_uid}/locations'], function () {
+                        Route::get('/', [WarehouseLocationsController::class, 'index'])->name('manager.warehouse.locations');
+                        Route::get('/create', [WarehouseLocationsController::class, 'create'])->name('manager.warehouse.locations.create');
+                        Route::post('/store', [WarehouseLocationsController::class, 'store'])->name('manager.warehouse.locations.store');
+                        Route::get('/{location_uid}', [WarehouseLocationsController::class, 'view'])->name('manager.warehouse.locations.view');
+                        Route::get('/{location_uid}/edit', [WarehouseLocationsController::class, 'edit'])->name('manager.warehouse.locations.edit');
+                        Route::post('/update', [WarehouseLocationsController::class, 'update'])->name('manager.warehouse.locations.update');
+                        Route::get('/{location_uid}/destroy', [WarehouseLocationsController::class, 'destroy'])->name('manager.warehouse.locations.destroy');
+                        Route::get('/api/warehouse', [WarehouseLocationsController::class, 'getByWarehouse'])->name('manager.warehouse.locations.api.warehouse');
+                        Route::get('/api/barcode/{barcode}', [WarehouseLocationsController::class, 'getByBarcode'])->name('manager.warehouse.locations.api.barcode');
+
+                        // Print barcodes routes
+                        Route::get('/print-all-barcodes', [WarehouseLocationsController::class, 'printAllBarcodes'])->name('manager.warehouse.locations.print-all');
+                        Route::get('/{location_uid}/print-barcodes', [WarehouseLocationsController::class, 'printBarcodes'])->name('manager.warehouse.locations.print');
+
+                        // Secciones dentro de la locación
+                        Route::group(['prefix' => '{location_uid}/sections'], function () {
+                            Route::get('/', [WarehouseLocationSectionsController::class, 'index'])->name('manager.warehouse.sections');
+                            Route::get('/create', [WarehouseLocationSectionsController::class, 'create'])->name('manager.warehouse.sections.create');
+                            Route::post('/store', [WarehouseLocationSectionsController::class, 'store'])->name('manager.warehouse.sections.store');
+                            Route::get('/{section_uid}', [WarehouseLocationSectionsController::class, 'view'])->name('manager.warehouse.section.view');
+                            Route::get('/{section_uid}/edit', [WarehouseLocationSectionsController::class, 'edit'])->name('manager.warehouse.section.edit');
+                            Route::post('/update', [WarehouseLocationSectionsController::class, 'update'])->name('manager.warehouse.section.update');
+                            Route::get('/{section_uid}/destroy', [WarehouseLocationSectionsController::class, 'destroy'])->name('manager.warehouse.section.destroy');
+                            Route::get('/api/list/{location_id}', [WarehouseLocationSectionsController::class, 'getSectionsList'])->name('manager.warehouse.sections.api.list');
+                            Route::post('/quick-create', [WarehouseLocationSectionsController::class, 'quickCreate'])->name('manager.warehouse.sections.quick-create');
+
+                            // Inventory Slots dentro de la sección
+                            Route::group(['prefix' => '{section_uid}/slots'], function () {
+                                Route::get('/', [WarehouseInventorySlotsController::class, 'index'])->name('manager.warehouse.section.slots');
+                                Route::get('/create', [WarehouseInventorySlotsController::class, 'create'])->name('manager.warehouse.section.slots.create');
+                                Route::post('/store', [WarehouseInventorySlotsController::class, 'store'])->name('manager.warehouse.section.slots.store');
+                                Route::get('/{slot_uid}', [WarehouseInventorySlotsController::class, 'view'])->name('manager.warehouse.section.slots.view');
+                                Route::get('/{slot_uid}/edit', [WarehouseInventorySlotsController::class, 'edit'])->name('manager.warehouse.section.slots.edit');
+                                Route::post('/update', [WarehouseInventorySlotsController::class, 'update'])->name('manager.warehouse.section.slots.update');
+                                Route::get('/{slot_uid}/destroy', [WarehouseInventorySlotsController::class, 'destroy'])->name('manager.warehouse.section.slots.destroy');
+
+                                // Inventory operations
+                                Route::post('/{slot_uid}/add-quantity', [WarehouseInventorySlotsController::class, 'addQuantity'])->name('manager.warehouse.section.slots.add-quantity');
+                                Route::post('/{slot_uid}/subtract-quantity', [WarehouseInventorySlotsController::class, 'subtractQuantity'])->name('manager.warehouse.section.slots.subtract-quantity');
+                                Route::post('/{slot_uid}/clear', [WarehouseInventorySlotsController::class, 'clear'])->name('manager.warehouse.section.slots.clear');
+                                Route::post('/{slot_uid}/move-to', [WarehouseInventorySlotsController::class, 'moveTo'])->name('manager.warehouse.section.slots.move-to');
+                            });
+                        });
+                    });
+                });
+            });
         });
 
-        // Stand Styles Routes
-        Route::group(['prefix' => 'styles'], function () {
-            Route::get('/', [StandStylesController::class, 'index'])->name('manager.warehouse.styles');
-            Route::get('/create', [StandStylesController::class, 'create'])->name('manager.warehouse.styles.create');
-            Route::post('/store', [StandStylesController::class, 'store'])->name('manager.warehouse.styles.store');
-            Route::post('/update', [StandStylesController::class, 'update'])->name('manager.warehouse.styles.update');
-            Route::get('/edit/{uid}', [StandStylesController::class, 'edit'])->name('manager.warehouse.styles.edit');
-            Route::get('/view/{uid}', [StandStylesController::class, 'view'])->name('manager.warehouse.styles.view');
-            Route::get('/destroy/{uid}', [StandStylesController::class, 'destroy'])->name('manager.warehouse.styles.destroy');
-        });
-
-        // Stands Routes
-        Route::group(['prefix' => 'stands'], function () {
-            Route::get('/', [StandsController::class, 'index'])->name('manager.warehouse.stands');
-            Route::get('/create', [StandsController::class, 'create'])->name('manager.warehouse.stands.create');
-            Route::post('/store', [StandsController::class, 'store'])->name('manager.warehouse.stands.store');
-            Route::post('/update', [StandsController::class, 'update'])->name('manager.warehouse.stands.update');
-            Route::get('/edit/{uid}', [StandsController::class, 'edit'])->name('manager.warehouse.stands.edit');
-            Route::get('/view/{uid}', [StandsController::class, 'view'])->name('manager.warehouse.stands.view');
-            Route::get('/destroy/{uid}', [StandsController::class, 'destroy'])->name('manager.warehouse.stands.destroy');
-        });
-
-        // Inventory Slots Routes
-        Route::group(['prefix' => 'slots'], function () {
-            Route::get('/', [InventorySlotsController::class, 'index'])->name('manager.warehouse.slots');
-            Route::get('/create', [InventorySlotsController::class, 'create'])->name('manager.warehouse.slots.create');
-            Route::post('/store', [InventorySlotsController::class, 'store'])->name('manager.warehouse.slots.store');
-            Route::post('/update', [InventorySlotsController::class, 'update'])->name('manager.warehouse.slots.update');
-            Route::get('/edit/{uid}', [InventorySlotsController::class, 'edit'])->name('manager.warehouse.slots.edit');
-            Route::get('/view/{uid}', [InventorySlotsController::class, 'view'])->name('manager.warehouse.slots.view');
-            Route::get('/destroy/{uid}', [InventorySlotsController::class, 'destroy'])->name('manager.warehouse.slots.destroy');
-
-            // Inventory operations
-            Route::post('/{uid}/add-quantity', [InventorySlotsController::class, 'addQuantity'])->name('manager.warehouse.slots.add-quantity');
-            Route::post('/{uid}/subtract-quantity', [InventorySlotsController::class, 'subtractQuantity'])->name('manager.warehouse.slots.subtract-quantity');
-            Route::post('/{uid}/add-weight', [InventorySlotsController::class, 'addWeight'])->name('manager.warehouse.slots.add-weight');
-            Route::post('/{uid}/clear', [InventorySlotsController::class, 'clear'])->name('manager.warehouse.slots.clear');
-        });
+        // ===== WAREHOUSE API ROUTES =====
+        Route::get('/api/styles/{style_id}', [WarehouseLocationsController::class, 'getStyleDetails'])->name('manager.warehouse.api.style.details');
 
     });
 
@@ -943,52 +1023,52 @@ Route::prefix('warehouse')->group(function () {
 
     // Floors Routes
     Route::group(['prefix' => 'floors'], function () {
-        Route::get('/', [FloorsController::class, 'index'])->name('floors');
-        Route::get('/create', [FloorsController::class, 'create'])->name('warehouse.floors.create');
-        Route::post('/store', [FloorsController::class, 'store'])->name('warehouse.floors.store');
-        Route::post('/update', [FloorsController::class, 'update'])->name('warehouse.floors.update');
-        Route::get('/edit/{uid}', [FloorsController::class, 'edit'])->name('warehouse.floors.edit');
-        Route::get('/view/{uid}', [FloorsController::class, 'view'])->name('warehouse.floors.view');
-        Route::get('/destroy/{uid}', [FloorsController::class, 'destroy'])->name('warehouse.floors.destroy');
+        Route::get('/', [WarehouseFloorsController::class, 'index'])->name('floors');
+        Route::get('/create', [WarehouseFloorsController::class, 'create'])->name('warehouse.floors.create');
+        Route::post('/store', [WarehouseFloorsController::class, 'store'])->name('warehouse.floors.store');
+        Route::post('/update', [WarehouseFloorsController::class, 'update'])->name('warehouse.floors.update');
+        Route::get('/edit/{uid}', [WarehouseFloorsController::class, 'edit'])->name('warehouse.floors.edit');
+        Route::get('/view/{uid}', [WarehouseFloorsController::class, 'view'])->name('warehouse.floors.view');
+        Route::get('/destroy/{uid}', [WarehouseFloorsController::class, 'destroy'])->name('warehouse.floors.destroy');
     });
 
     // Stand Styles Routes
     Route::group(['prefix' => 'styles'], function () {
-        Route::get('/', [StandStylesController::class, 'index'])->name('styles');
-        Route::get('/create', [StandStylesController::class, 'create'])->name('warehouse.styles.create');
-        Route::post('/store', [StandStylesController::class, 'store'])->name('warehouse.styles.store');
-        Route::post('/update', [StandStylesController::class, 'update'])->name('warehouse.styles.update');
-        Route::get('/edit/{uid}', [StandStylesController::class, 'edit'])->name('warehouse.styles.edit');
-        Route::get('/view/{uid}', [StandStylesController::class, 'view'])->name('warehouse.styles.view');
-        Route::get('/destroy/{uid}', [StandStylesController::class, 'destroy'])->name('warehouse.styles.destroy');
+        Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('styles');
+        Route::get('/create', [WarehouseLocationStylesController::class, 'create'])->name('warehouse.styles.create');
+        Route::post('/store', [WarehouseLocationStylesController::class, 'store'])->name('warehouse.styles.store');
+        Route::post('/update', [WarehouseLocationStylesController::class, 'update'])->name('warehouse.styles.update');
+        Route::get('/edit/{uid}', [WarehouseLocationStylesController::class, 'edit'])->name('warehouse.styles.edit');
+        Route::get('/view/{uid}', [WarehouseLocationStylesController::class, 'view'])->name('warehouse.styles.view');
+        Route::get('/destroy/{uid}', [WarehouseLocationStylesController::class, 'destroy'])->name('warehouse.styles.destroy');
     });
 
-    // Stands Routes
+    // Stands Routes (Consolidated with Locations)
     Route::group(['prefix' => 'stands'], function () {
-        Route::get('/', [StandsController::class, 'index'])->name('stands');
-        Route::get('/create', [StandsController::class, 'create'])->name('warehouse.stands.create');
-        Route::post('/store', [StandsController::class, 'store'])->name('warehouse.stands.store');
-        Route::post('/update', [StandsController::class, 'update'])->name('warehouse.stands.update');
-        Route::get('/edit/{uid}', [StandsController::class, 'edit'])->name('warehouse.stands.edit');
-        Route::get('/view/{uid}', [StandsController::class, 'view'])->name('warehouse.stands.view');
-        Route::get('/destroy/{uid}', [StandsController::class, 'destroy'])->name('warehouse.stands.destroy');
+        Route::get('/', [WarehouseLocationsController::class, 'index'])->name('stands');
+        Route::get('/create', [WarehouseLocationsController::class, 'create'])->name('warehouse.stands.create');
+        Route::post('/store', [WarehouseLocationsController::class, 'store'])->name('warehouse.stands.store');
+        Route::post('/update', [WarehouseLocationsController::class, 'update'])->name('warehouse.stands.update');
+        Route::get('/edit/{uid}', [WarehouseLocationsController::class, 'edit'])->name('warehouse.stands.edit');
+        Route::get('/view/{uid}', [WarehouseLocationsController::class, 'view'])->name('warehouse.stands.view');
+        Route::get('/destroy/{uid}', [WarehouseLocationsController::class, 'destroy'])->name('warehouse.stands.destroy');
     });
 
     // Inventory Slots Routes
     Route::group(['prefix' => 'slots'], function () {
-        Route::get('/', [InventorySlotsController::class, 'index'])->name('slots');
-        Route::get('/create', [InventorySlotsController::class, 'create'])->name('warehouse.slots.create');
-        Route::post('/store', [InventorySlotsController::class, 'store'])->name('warehouse.slots.store');
-        Route::post('/update', [InventorySlotsController::class, 'update'])->name('warehouse.slots.update');
-        Route::get('/edit/{uid}', [InventorySlotsController::class, 'edit'])->name('warehouse.slots.edit');
-        Route::get('/view/{uid}', [InventorySlotsController::class, 'view'])->name('warehouse.slots.view');
-        Route::get('/destroy/{uid}', [InventorySlotsController::class, 'destroy'])->name('warehouse.slots.destroy');
+        Route::get('/', [WarehouseInventorySlotsController::class, 'index'])->name('slots');
+        Route::get('/create', [WarehouseInventorySlotsController::class, 'create'])->name('warehouse.slots.create');
+        Route::post('/store', [WarehouseInventorySlotsController::class, 'store'])->name('warehouse.slots.store');
+        Route::post('/update', [WarehouseInventorySlotsController::class, 'update'])->name('warehouse.slots.update');
+        Route::get('/edit/{uid}', [WarehouseInventorySlotsController::class, 'edit'])->name('warehouse.slots.edit');
+        Route::get('/view/{uid}', [WarehouseInventorySlotsController::class, 'view'])->name('warehouse.slots.view');
+        Route::get('/destroy/{uid}', [WarehouseInventorySlotsController::class, 'destroy'])->name('warehouse.slots.destroy');
 
         // Inventory operations
-        Route::post('/{uid}/add-quantity', [InventorySlotsController::class, 'addQuantity'])->name('warehouse.slots.add-quantity');
-        Route::post('/{uid}/subtract-quantity', [InventorySlotsController::class, 'subtractQuantity'])->name('warehouse.slots.subtract-quantity');
-        Route::post('/{uid}/add-weight', [InventorySlotsController::class, 'addWeight'])->name('warehouse.slots.add-weight');
-        Route::post('/{uid}/clear', [InventorySlotsController::class, 'clear'])->name('warehouse.slots.clear');
+        Route::post('/{uid}/add-quantity', [WarehouseInventorySlotsController::class, 'addQuantity'])->name('warehouse.slots.add-quantity');
+        Route::post('/{uid}/subtract-quantity', [WarehouseInventorySlotsController::class, 'subtractQuantity'])->name('warehouse.slots.subtract-quantity');
+        Route::post('/{uid}/add-weight', [WarehouseInventorySlotsController::class, 'addWeight'])->name('warehouse.slots.add-weight');
+        Route::post('/{uid}/clear', [WarehouseInventorySlotsController::class, 'clear'])->name('warehouse.slots.clear');
     });
 
 });

@@ -171,9 +171,9 @@ Root Documentation Files (4):
 - [ ] Verify routes: `php artisan route:list | grep warehouse`
 - [ ] Check database: `php artisan tinker`
   ```php
-  >>> App\Models\Warehouse\Floor::count(); // Should be 4
-  >>> App\Models\Warehouse\Stand::count(); // Should be 15+
-  >>> App\Models\Warehouse\InventorySlot::count(); // Should be 1100+
+  >>> App\Models\Warehouse\WarehouseFloor::count(); // Should be 4
+  >>> App\Models\Warehouse\WarehouseLocation::count(); // Should be 15+
+  >>> App\Models\Warehouse\WarehouseInventorySlot::count(); // Should be 1100+
   ```
 - [ ] Access map: `http://your-site/manager/warehouse/map`
 - [ ] Test CRUD: Create/Edit/Delete at `/manager/warehouse/floors`

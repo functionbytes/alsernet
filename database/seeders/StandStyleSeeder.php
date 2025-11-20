@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Warehouse\StandStyle;
+use App\Models\Warehouse\WarehouseLocationStyle;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -43,7 +43,7 @@ class StandStyleSeeder extends Seeder
         ];
 
         foreach ($styles as $style) {
-            StandStyle::create([
+            WarehouseLocationStyle::create([
                 'uid' => Str::uuid(),
                 'code' => $style['code'],
                 'name' => $style['name'],

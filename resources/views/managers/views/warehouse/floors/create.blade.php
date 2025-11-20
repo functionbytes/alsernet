@@ -7,13 +7,15 @@
 
             <div class="card w-100">
 
-                <form id="formFloors" action="{{ route('manager.warehouse.floors.store') }}" method="POST" role="form">
+                <form id="formFloors" action="{{ route('manager.warehouse.floors.store', $warehouse->uid) }}" method="POST" role="form">
+
+                    <input type="hidden" name="warehouse uid" value="{{ $warehouse->uid }}">
 
                     {{ csrf_field() }}
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
-                            <h5 class="mb-0">Crear nuevo pPiso</h5>
+                            <h5 class="mb-0">Crear nuevo piso</h5>
                         </div>
                         <p class="card-subtitle mb-3 mt-3">
                             Complete los datos del piso que desea registrar en el sistema de almacén.

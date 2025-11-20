@@ -324,10 +324,10 @@ $product = $slot->product;         // Product instance (puede ser null)
 ### Crear un Piso
 
 ```php
-use App\Models\Warehouse\Floor;
+use App\Models\Warehouse\WarehouseFloor;
 use Illuminate\Support\Str;
 
-$floor = Floor::create([
+$floor = WarehouseFloor::create([
     'uid' => Str::uuid(),
     'code' => 'P4',
     'name' => 'Planta 4',
@@ -340,10 +340,10 @@ $floor = Floor::create([
 ### Crear un Estilo de Estantería
 
 ```php
-use App\Models\Warehouse\StandStyle;
+use App\Models\Warehouse\WarehouseLocationStyle;
 use Illuminate\Support\Str;
 
-$style = StandStyle::create([
+$style = WarehouseLocationStyle::create([
     'uid' => Str::uuid(),
     'code' => 'COMPACT',
     'name' => 'Almacenamiento Compacto',
@@ -358,10 +358,10 @@ $style = StandStyle::create([
 ### Crear una Estantería
 
 ```php
-use App\Models\Warehouse\Stand;
+use App\Models\Warehouse\WarehouseLocation;
 use Illuminate\Support\Str;
 
-$stand = Stand::create([
+$stand = WarehouseLocation::create([
     'uid' => Str::uuid(),
     'floor_id' => 1,
     'stand_style_id' => 1,
@@ -384,10 +384,10 @@ $createdSlots = $stand->createSlots();  // Returns: 48 (2 caras × 4 niveles × 
 ### Crear una Posición Manualmente
 
 ```php
-use App\Models\Warehouse\InventorySlot;
+use App\Models\Warehouse\WarehouseInventorySlot;
 use Illuminate\Support\Str;
 
-$slot = InventorySlot::create([
+$slot = WarehouseInventorySlot::create([
     'uid' => Str::uuid(),
     'stand_id' => 1,
     'face' => 'left',
@@ -677,14 +677,14 @@ php artisan db:seed --class=InventorySlotSeeder
 php artisan tinker
 
 // Contar registros
->>> App\Models\Warehouse\Floor::count();           // 4
->>> App\Models\Warehouse\StandStyle::count();      // 3
->>> App\Models\Warehouse\Stand::count();           // ~15
->>> App\Models\Warehouse\InventorySlot::count();   // ~1000+
+>>> App\Models\Warehouse\WarehouseFloor::count();           // 4
+>>> App\Models\Warehouse\WarehouseLocationStyle::count();      // 3
+>>> App\Models\Warehouse\WarehouseLocation::count();           // ~15
+>>> App\Models\Warehouse\WarehouseInventorySlot::count();   // ~1000+
 
 // Ver datos
->>> App\Models\Warehouse\Floor::first()->getSummary();
->>> App\Models\Warehouse\Stand::first()->getSummary();
+>>> App\Models\Warehouse\WarehouseFloor::first()->getSummary();
+>>> App\Models\Warehouse\WarehouseLocation::first()->getSummary();
 ```
 
 ---

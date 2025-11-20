@@ -134,7 +134,7 @@ C:\Users\functionbytes\Herd\webadmin\
 │   ├── administratives.php
 │   ├── managers.php
 │   ├── callcenters.php
-│   ├── inventaries.php
+│   ├── warehouses.php
 │   ├── returns.php
 │   ├── shops.php
 │   └── channels.php
@@ -311,7 +311,7 @@ GET     /files/{path}      → FileController         (servir archivos)
 | **Administratives** | routes/administratives.php | Panel administrativo |
 | **Managers** | routes/managers.php | Gestión centralizada |
 | **Callcenters** | routes/callcenters.php | Centro de contacto |
-| **Inventaries** | routes/inventaries.php | Gestión de inventarios |
+| **Inventaries** | routes/warehouses.php | Gestión de inventarios |
 | **Returns** | routes/returns.php | Sistema de devoluciones |
 | **Shops** | routes/shops.php | Tiendas e-commerce |
 | **API** | routes/api/api.php | REST API Sanctum |

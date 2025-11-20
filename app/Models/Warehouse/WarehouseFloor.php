@@ -5,24 +5,12 @@ namespace App\Models\Warehouse;
 use App\Library\Traits\HasUid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Warehouse\WarehouseInventorySlot;
 
-/**
- * Floor Model
- *
- * Representa un PISO/PLANTA del almacén.
- *
- * @property int $id
- * @property string $uid UUID universal
- * @property string $code Código único (P1, P2, S0)
- * @property string $name Nombre legible
- * @property string|null $description Descripción
- * @property bool $available Disponibilidad
- * @property int $order Orden visual
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- */
-class Floor extends Model
+
+class WarehouseFloor extends Model
 {
     use HasFactory, HasUid;
 
@@ -36,11 +24,12 @@ class Floor extends Model
      */
     protected $fillable = [
         'uid',
+        'warehouse_id',
         'code',
         'name',
         'description',
+        'level',
         'available',
-        'order',
     ];
 
     /**
@@ -53,17 +42,19 @@ class Floor extends Model
     ];
 
     /**
-     * ===============================================
-     * RELACIONES
-     * ===============================================
+     * Relación con Warehouse
      */
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo('App\Models\Warehouse\Warehouse', 'warehouse_id', 'id');
+    }
 
     /**
-     * Un piso tiene muchas estanterías
+     * Relación con Ubicaciones
      */
-    public function stands(): HasMany
+    public function locations(): HasMany
     {
-        return $this->hasMany(Stand::class, 'floor_id', 'id');
+        return $this->hasMany('App\Models\Warehouse\WarehouseLocation', 'floor_id', 'id');
     }
 
     /**
@@ -71,6 +62,22 @@ class Floor extends Model
      * SCOPES
      * ===============================================
      */
+
+    /**
+     * Scope: Filtrar por warehouse
+     */
+    public function scopeByWarehouse($query, $warehouse_id)
+    {
+        return $query->where('warehouse_id', $warehouse_id);
+    }
+
+    /**
+     * Scope: Buscar por uid
+     */
+    public function scopeUid($query, $uid)
+    {
+        return $query->where('uid', $uid)->first();
+    }
 
     /**
      * Scope: Solo pisos disponibles
@@ -81,19 +88,11 @@ class Floor extends Model
     }
 
     /**
-     * Scope: Ordenado por orden y nombre
+     * Scope: Ordenado por nivel y nombre
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('order', 'asc')->orderBy('name', 'asc');
-    }
-
-    /**
-     * Scope: Buscar por código
-     */
-    public function scopeByCode($query, $code)
-    {
-        return $query->where('code', $code);
+        return $query->orderBy('level', 'asc')->orderBy('name', 'asc');
     }
 
     /**
@@ -101,55 +100,34 @@ class Floor extends Model
      */
     public function scopeSearch($query, $search)
     {
-        return $query->where('name', 'like', "%{$search}%")
-            ->orWhere('code', 'like', "%{$search}%");
+        return $query->where('name', 'like', "%{$search}%");
     }
 
-    /**
-     * ===============================================
-     * MÉTODOS HELPERS
-     * ===============================================
-     */
-
-    /**
-     * Obtener el número total de estanterías
-     */
-    public function getStandCount(): int
+    public function getlocationCount(): int
     {
-        return $this->stands()->count();
+        return $this->locations()->count();
     }
 
-    /**
-     * Obtener el número de estanterías disponibles
-     */
-    public function getAvailableStandCount(): int
+    public function getAvailablelocationCount(): int
     {
-        return $this->stands()->where('available', true)->count();
+        return $this->locations()->where('available', true)->count();
     }
 
-    /**
-     * Obtener el número total de posiciones en este piso
-     */
     public function getTotalSlotsCount(): int
     {
-        return InventorySlot::whereHas('stand', function ($query) {
+        return WarehouseInventorySlot::whereHas('location', function ($query) {
             $query->where('floor_id', $this->id);
         })->count();
     }
 
-    /**
-     * Obtener el número de posiciones ocupadas
-     */
+
     public function getOccupiedSlotsCount(): int
     {
-        return InventorySlot::whereHas('stand', function ($query) {
+        return WarehouseInventorySlot::whereHas('location', function ($query) {
             $query->where('floor_id', $this->id);
-        })->where('is_occupied', true)->count();
+        })->where('quantity', '>', 0)->count();
     }
 
-    /**
-     * Obtener el porcentaje de ocupación
-     */
     public function getOccupancyPercentage(): float
     {
         $total = $this->getTotalSlotsCount();
@@ -169,11 +147,12 @@ class Floor extends Model
         return [
             'id' => $this->id,
             'uid' => $this->uid,
-            'code' => $this->code,
+            'warehouse_id' => $this->warehouse_id,
             'name' => $this->name,
+            'level' => $this->level,
             'available' => $this->available,
-            'stands_count' => $this->getStandCount(),
-            'available_stands_count' => $this->getAvailableStandCount(),
+            'locations_count' => $this->getlocationCount(),
+            'available_locations_count' => $this->getAvailablelocationCount(),
             'total_slots' => $this->getTotalSlotsCount(),
             'occupied_slots' => $this->getOccupiedSlotsCount(),
             'occupancy_percentage' => round($this->getOccupancyPercentage(), 2),

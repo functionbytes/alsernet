@@ -247,43 +247,11 @@
                     </a>
                     <ul aria-expanded="false" class="collapse first-level">
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="{{ route('manager.warehouse.floors') }}" aria-expanded="false">
+                            <a class="sidebar-link"  href="{{ route('manager.warehouse.index') }}" aria-expanded="false">
                                 <span>
                                   <i class="ti ti-circle"></i>
                                 </span>
                                 <span class="hide-menu">Pisos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="{{ route('manager.warehouse.styles') }}" aria-expanded="false">
-                                  <span>
-                                    <i class="ti ti-circle"></i>
-                                  </span>
-                                <span class="hide-menu">Estilos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="{{ route('manager.warehouse.stands') }}" aria-expanded="false">
-                                  <span>
-                                    <i class="ti ti-circle"></i>
-                                  </span>
-                                <span class="hide-menu">Estanterías</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="{{ route('manager.warehouse.slots') }}" aria-expanded="false">
-                                  <span>
-                                    <i class="ti ti-circle"></i>
-                                  </span>
-                                <span class="hide-menu">Posiciones</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link"  href="{{ route('manager.warehouse.map') }}" aria-expanded="false">
-                                  <span>
-                                    <i class="ti ti-circle"></i>
-                                  </span>
-                                <span class="hide-menu">Mapa</span>
                             </a>
                         </li>
                     </ul>

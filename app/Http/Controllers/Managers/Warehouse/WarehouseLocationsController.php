@@ -9,7 +9,9 @@ use App\Models\Warehouse\WarehouseLocation;
 use App\Models\Warehouse\WarehouseInventorySlot;
 use App\Models\Warehouse\WarehouseLocationStyle;
 use App\Models\Product\Product;
+use App\Services\BarcodeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class WarehouseLocationsController extends Controller
@@ -35,7 +37,7 @@ class WarehouseLocationsController extends Controller
             });
         }
 
-        $locations = $locations->with(['floor', 'style', 'slots'])->paginate(paginationNumber());
+        $locations = $locations->with(['floor', 'style', 'sections'])->paginate(paginationNumber());
 
         return view('managers.views.warehouse.locations.index')->with([
             'warehouse' => $warehouse,
@@ -51,7 +53,7 @@ class WarehouseLocationsController extends Controller
      */
     public function view($warehouse_uid, $floor_uid, $location_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
         $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
 
@@ -62,8 +64,6 @@ class WarehouseLocationsController extends Controller
             'occupied_slots' => $location->getOccupiedSlots(),
             'available_slots' => $location->getAvailableSlots(),
             'occupancy_percentage' => $location->getOccupancyPercentage(),
-            'current_weight' => $location->getCurrentWeight(),
-            'capacity' => $location->capacity,
         ];
 
         return view('managers.views.warehouse.locations.view')->with([
@@ -99,24 +99,38 @@ class WarehouseLocationsController extends Controller
      */
     public function store(Request $request)
     {
-        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
-        $floor = WarehouseFloor::where('uid', $request->floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $warehouse = Warehouse::uid($request->warehouse_uid);
+        $floor = WarehouseFloor::uid($request->floor_uid);
 
         $validated = $request->validate([
             'warehouse_uid' => 'required|exists:warehouses,uid',
             'floor_uid' => 'required|exists:warehouse_floors,uid',
+            'code' => 'required|string|max:50|unique:warehouse_locations,code,NULL,id,floor_id,' . $floor->id,
             'style_id' => 'required|exists:warehouse_location_styles,id',
-            'code' => 'required|string|unique:warehouse_locations',
-            'barcode' => 'nullable|string|unique:warehouse_locations',
-            'position_x' => 'required|integer',
-            'position_y' => 'required|integer',
-            'position_z' => 'nullable|integer',
-            'total_levels' => 'required|integer|min:1',
-            'total_sections' => 'required|integer|min:1',
-            'capacity' => 'nullable|numeric',
+            'position_x' => 'required|numeric|min:0',
+            'position_y' => 'required|numeric|min:0',
             'available' => 'nullable|boolean',
             'notes' => 'nullable|string|max:500',
+            'sections' => 'required|array|min:1',
+            'sections.*.code' => 'required|string|max:50',
+            'sections.*.barcode' => 'nullable|string|max:100',
+            'sections.*.face' => 'nullable|in:front,back',
+            'sections.*.level' => 'required|integer|min:1',
         ]);
+
+        // Get style to determine face requirements
+        $style = WarehouseLocationStyle::findOrFail($validated['style_id']);
+        $facesCount = count($style->faces ?? []);
+
+        // Validate face field based on style
+        foreach ($validated['sections'] as $index => $section) {
+            if ($facesCount == 2 && empty($section['face'])) {
+                throw new \Illuminate\Validation\ValidationException(
+                    \Illuminate\Validation\Validator::make([], [])
+                        ->addFailure("sections.$index.face", 'Face is required for 2-cara styles')
+                );
+            }
+        }
 
         $location = WarehouseLocation::create([
             'uid' => Str::uuid(),
@@ -124,19 +138,33 @@ class WarehouseLocationsController extends Controller
             'floor_id' => $floor->id,
             'style_id' => $validated['style_id'],
             'code' => $validated['code'],
-            'barcode' => $validated['barcode'],
             'position_x' => $validated['position_x'],
             'position_y' => $validated['position_y'],
-            'position_z' => $validated['position_z'] ?? 0,
-            'total_levels' => $validated['total_levels'],
-            'total_sections' => $validated['total_sections'],
-            'capacity' => $validated['capacity'],
             'available' => $validated['available'] ?? true,
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        // Crear los slots automáticamente según el estilo
-        $location->createSlots();
+        // Create sections from the validated sections array
+        foreach ($validated['sections'] as $sectionData) {
+            // Generate barcode if not provided
+            $barcode = $sectionData['barcode'] ?? BarcodeService::generateFromLocationAndSection(
+                $location->code,
+                $sectionData['code'],
+                $sectionData['level']
+            );
+
+            $sectionCreate = [
+                'code' => $sectionData['code'],
+                'barcode' => $barcode,
+                'level' => $sectionData['level'],
+                'face' => $sectionData['face'] ?? null,
+                'available' => true,
+            ];
+
+            $sectionCreate['uid'] = Str::uuid();
+
+            $location->sections()->create($sectionCreate);
+        }
 
         activity()
             ->causedBy(auth()->user())
@@ -153,7 +181,7 @@ class WarehouseLocationsController extends Controller
      */
     public function edit($warehouse_uid, $floor_uid, $location_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
         $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
 
@@ -173,7 +201,7 @@ class WarehouseLocationsController extends Controller
      */
     public function update(Request $request)
     {
-        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($request->warehouse_uid);
         $floor = WarehouseFloor::where('uid', $request->floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
         $location = WarehouseLocation::where('uid', $request->location_uid)->where('floor_id', $floor->id)->firstOrFail();
 
@@ -181,22 +209,85 @@ class WarehouseLocationsController extends Controller
             'warehouse_uid' => 'required|exists:warehouses,uid',
             'floor_uid' => 'required|exists:warehouse_floors,uid',
             'location_uid' => 'required|exists:warehouse_locations,uid',
-            'code' => 'required|string|unique:warehouse_locations,code,' . $location->id,
-            'barcode' => 'nullable|string|unique:warehouse_locations,barcode,' . $location->id,
-            'total_levels' => 'required|integer|min:1',
-            'total_sections' => 'required|integer|min:1',
-            'capacity' => 'nullable|numeric',
+            'code' => 'required|string|max:50|unique:warehouse_locations,code,' . $location->id . ',id,floor_id,' . $floor->id,
+            'available' => 'nullable|boolean',
+            'notes' => 'nullable|string|max:500',
+            'sections' => 'required|array|min:1',
+            'sections.*.uid' => 'nullable|string',
+            'sections.*.code' => 'required|string|max:50',
+            'sections.*.barcode' => 'nullable|string|max:100',
+            'sections.*.face' => 'nullable|in:front,back',
+            'sections.*.level' => 'required|integer|min:1',
         ]);
 
-        $oldData = $location->only(['code', 'barcode', 'total_levels', 'total_sections', 'capacity']);
+        // Get style to determine face requirements
+        $style = $location->style;
+        $facesCount = count($style->faces ?? []);
 
+        // Validate face field based on style
+        foreach ($validated['sections'] as $index => $section) {
+            if ($facesCount == 2 && empty($section['face'])) {
+                throw new \Illuminate\Validation\ValidationException(
+                    \Illuminate\Validation\Validator::make([], [])
+                        ->addFailure("sections.$index.face", 'Face is required for 2-cara styles')
+                );
+            }
+        }
+
+        $oldData = $location->only(['code', 'available', 'notes']);
+
+        // Update location basic info
         $location->update([
             'code' => $validated['code'],
-            'barcode' => $validated['barcode'],
-            'total_levels' => $validated['total_levels'],
-            'total_sections' => $validated['total_sections'],
-            'capacity' => $validated['capacity'],
+            'available' => $validated['available'] ?? $location->available,
+            'notes' => $validated['notes'] ?? $location->notes,
         ]);
+
+        // Get existing section UIDs from the request
+        $existingUids = collect($validated['sections'])
+            ->pluck('uid')
+            ->filter()
+            ->toArray();
+
+        // Delete sections that are no longer in the list
+        $location->sections()
+            ->whereNotIn('uid', $existingUids)
+            ->delete();
+
+        // Update or create sections
+        foreach ($validated['sections'] as $sectionData) {
+            // Generate barcode if not provided
+            $barcode = $sectionData['barcode'] ?? BarcodeService::generateFromLocationAndSection(
+                $location->code,
+                $sectionData['code'],
+                $sectionData['level']
+            );
+
+            if (!empty($sectionData['uid'])) {
+                // Update existing section
+                $section = $location->sections()->where('uid', $sectionData['uid'])->first();
+                if ($section) {
+                    $section->update([
+                        'code' => $sectionData['code'],
+                        'barcode' => $barcode,
+                        'level' => $sectionData['level'],
+                        'face' => $sectionData['face'] ?? null,
+                    ]);
+                }
+            } else {
+                // Create new section
+                $sectionCreate = [
+                    'code' => $sectionData['code'],
+                    'barcode' => $barcode,
+                    'level' => $sectionData['level'],
+                    'face' => $sectionData['face'] ?? null,
+                    'available' => true,
+                ];
+
+                $sectionCreate['uid'] = Str::uuid();
+                $location->sections()->create($sectionCreate);
+            }
+        }
 
         activity()
             ->causedBy(auth()->user())
@@ -214,7 +305,7 @@ class WarehouseLocationsController extends Controller
      */
     public function destroy($warehouse_uid, $floor_uid, $location_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
         $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
 
@@ -238,7 +329,7 @@ class WarehouseLocationsController extends Controller
      */
     public function destroySlot($warehouse_uid, $floor_uid, $location_uid, $slot_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
         $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
         $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('location_id', $location->id)->firstOrFail();
@@ -265,7 +356,7 @@ class WarehouseLocationsController extends Controller
      */
     public function getByWarehouse($warehouse_uid, $floor_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
 
         $locations = WarehouseLocation::where('floor_id', $floor->id)
@@ -289,7 +380,7 @@ class WarehouseLocationsController extends Controller
      */
     public function getByBarcode($warehouse_uid, $floor_uid, $barcode)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
 
         $location = WarehouseLocation::byBarcode($barcode)
@@ -307,6 +398,65 @@ class WarehouseLocationsController extends Controller
             'code' => $location->code,
             'full_name' => $location->getFullName(),
             'summary' => $location->getSummary(),
+        ]);
+    }
+
+    /**
+     * Print barcodes for all sections of a location
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/print-barcodes
+     */
+    public function printBarcodes($warehouse_uid, $floor_uid, $location_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+
+        // Get all sections for this location
+        $sections = $location->sections()->get();
+
+        return view('managers.views.warehouse.locations.print-barcodes')->with([
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'sections' => $sections,
+        ]);
+    }
+
+    /**
+     * Print barcodes for all locations in a floor
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/print-all-barcodes
+     */
+    public function printAllBarcodes($warehouse_uid, $floor_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+
+        // Get all sections for all locations in this floor
+        $locations = $floor->locations()->with('sections')->get();
+
+        return view('managers.views.warehouse.locations.print-all-barcodes')->with([
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'locations' => $locations,
+        ]);
+    }
+
+    /**
+     * API: Obtener detalles del estilo
+     * Ruta: /manager/warehouse/locations/api/style/{style_id}
+     */
+    public function getStyleDetails($style_id)
+    {
+        $style = WarehouseLocationStyle::findOrFail($style_id);
+
+        return response()->json([
+            'id' => $style->id,
+            'name' => $style->name,
+            'faces' => $style->faces,
+            'faces_count' => count($style->faces ?? []),
+            'faces_label' => $style->getFacesLabel(),
+            'default_levels' => $style->default_levels,
+            'default_sections' => $style->default_sections,
         ]);
     }
 }

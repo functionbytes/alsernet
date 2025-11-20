@@ -37,7 +37,7 @@
                                     <label class="control-label col-form-label">Estantería <span class="text-danger">*</span></label>
                                     <select name="stand_id" id="stand_id" class="select2 form-control @error('stand_id') is-invalid @enderror" required>
                                         <option value="">Seleccionar estantería</option>
-                                        @foreach($stands as $stand)
+                                        @foreach($locations as $stand)
                                             <option value="{{ $stand->id }}" {{ old('stand_id', $slot->stand_id) == $stand->id ? 'selected' : '' }}>
                                                 {{ $stand->code }} ({{ $stand->floor->name }})
                                             </option>

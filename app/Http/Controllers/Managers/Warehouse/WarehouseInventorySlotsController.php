@@ -3,27 +3,30 @@
 namespace App\Http\Controllers\Managers\Warehouse;
 
 use App\Http\Controllers\Controller;
+use App\Models\Warehouse\Warehouse;
+use App\Models\Warehouse\WarehouseFloor;
+use App\Models\Warehouse\WarehouseLocation;
+use App\Models\Warehouse\WarehouseLocationSection;
 use App\Models\Warehouse\WarehouseInventorySlot;
-use App\Models\Warehouse\WarehouseInventoryMovement;
-use App\Models\Location;
 use App\Models\Product\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
-class InventorySlotsController extends Controller
+class WarehouseInventorySlotsController extends Controller
 {
     /**
-     * Display a listing of inventory slots
+     * Display a listing of inventory slots for a specific section
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/sections/{section_uid}/slots
      */
-    public function index(Request $request)
+    public function index(Request $request, $warehouse_uid, $floor_uid, $location_uid, $section_uid)
     {
-        $query = WarehouseInventorySlot::with(['location.inventarie', 'location.floor', 'location.style', 'product']);
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
 
-        // Filter by location if provided
-        if ($request->filled('location_id')) {
-            $query->byLocation($request->location_id);
-        }
+        $query = WarehouseInventorySlot::where('section_id', $section->id)
+            ->with(['section.location.floor', 'product', 'lastSection']);
 
         // Filter by occupied status
         if ($request->filled('status')) {
@@ -34,9 +37,9 @@ class InventorySlotsController extends Controller
             }
         }
 
-        // Filter by face if provided
-        if ($request->filled('face')) {
-            $query->byFace($request->face);
+        // Filter by product if provided
+        if ($request->filled('product_id')) {
+            $query->byProduct($request->product_id);
         }
 
         // Search if provided
@@ -45,66 +48,100 @@ class InventorySlotsController extends Controller
         }
 
         $slots = $query->orderBy('created_at', 'desc')->paginate(20);
-        $locations = Location::available()->byInventarie(auth()->user()->current_warehouse_id ?? 1)->get();
-        $faces = ['left', 'right', 'front', 'back'];
+        $products = Product::available()->get();
 
         return view('managers.views.warehouse.inventory-slots.index', [
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'section' => $section,
             'slots' => $slots,
-            'locations' => $locations,
-            'faces' => $faces,
+            'products' => $products,
         ]);
     }
 
     /**
      * Show the form for creating a new inventory slot
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/sections/{section_uid}/slots/create
      */
-    public function create()
+    public function create($warehouse_uid, $floor_uid, $location_uid, $section_uid)
     {
-        $locations = Location::available()->byInventarie(auth()->user()->current_warehouse_id ?? 1)->get();
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+
         $products = Product::available()->get();
 
         return view('managers.views.warehouse.inventory-slots.create', [
-            'locations' => $locations,
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'section' => $section,
             'products' => $products,
         ]);
     }
 
     /**
      * Store a newly created inventory slot in storage
+     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/sections/{section_uid}/slots/store
      */
     public function store(Request $request)
     {
-        $location = Location::findOrFail($request->location_id);
+        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $request->floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $request->location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $request->section_uid)->where('location_id', $location->id)->firstOrFail();
 
         $validated = $request->validate([
-            'location_id' => 'required|exists:locations,id',
-            'product_id' => 'nullable|exists:products,id',
-            'face' => 'required|in:left,right,front,back',
-            'level' => 'required|integer|min:1',
-            'section' => 'required|integer|min:1',
+            'warehouse_uid' => 'required|exists:warehouses,uid',
+            'floor_uid' => 'required|exists:warehouse_floors,uid',
+            'location_uid' => 'required|exists:warehouse_locations,uid',
+            'section_uid' => 'required|exists:warehouse_location_sections,uid',
+            'product_id' => 'required|exists:products,id',
             'quantity' => 'nullable|integer|min:0',
-            'max_quantity' => 'nullable|integer|min:1',
-            'weight_current' => 'nullable|numeric|min:0',
-            'weight_max' => 'nullable|numeric|min:0',
+            'kardex' => 'nullable|integer|min:0',
         ]);
 
+        // Check if slot already exists for this product in this section
+        $existingSlot = WarehouseInventorySlot::where('section_id', $section->id)
+            ->where('product_id', $validated['product_id'])
+            ->first();
+
+        if ($existingSlot) {
+            return redirect()->back()->with('error', 'Este producto ya tiene un slot en esta sección');
+        }
+
+        $validated['section_id'] = $section->id;
         $validated['uid'] = Str::uuid();
-        $validated['barcode'] = 'SLOT-' . strtoupper(Str::random(8));
-        $validated['is_occupied'] = $request->filled('product_id');
 
         WarehouseInventorySlot::create($validated);
 
-        return redirect()->route('managers.views.warehouse.slots')->with('success', 'Posición de inventario creada exitosamente');
+        return redirect()->route('manager.warehouse.section.slots', [
+            'warehouse_uid' => $warehouse->uid,
+            'floor_uid' => $floor->uid,
+            'location_uid' => $location->uid,
+            'section_uid' => $section->uid,
+        ])->with('success', 'Slot de inventario creado exitosamente');
     }
 
     /**
      * Display the specified inventory slot
      */
-    public function view($uid)
+    public function view($warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
     {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->with(['location.floor', 'location.style', 'product', 'movements'])->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)
+            ->with(['section.location.floor', 'product', 'lastSection', 'movements'])->firstOrFail();
 
         return view('managers.views.warehouse.inventory-slots.view', [
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'section' => $section,
             'slot' => $slot,
         ]);
     }
@@ -112,12 +149,21 @@ class InventorySlotsController extends Controller
     /**
      * Show the form for editing the specified inventory slot
      */
-    public function edit($uid)
+    public function edit($warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
     {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
+
         $products = Product::available()->get();
 
         return view('managers.views.warehouse.inventory-slots.edit', [
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'section' => $section,
             'slot' => $slot,
             'products' => $products,
         ]);
@@ -128,154 +174,172 @@ class InventorySlotsController extends Controller
      */
     public function update(Request $request)
     {
-        $slot = WarehouseInventorySlot::where('uid', $request->uid)->firstOrFail();
+        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $request->floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $request->location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $request->section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $request->uid)->where('section_id', $section->id)->firstOrFail();
 
         $validated = $request->validate([
             'uid' => 'required|exists:warehouse_inventory_slots,uid',
             'product_id' => 'nullable|exists:products,id',
             'quantity' => 'nullable|integer|min:0',
-            'max_quantity' => 'nullable|integer|min:1',
-            'weight_current' => 'nullable|numeric|min:0',
-            'weight_max' => 'nullable|numeric|min:0',
+            'kardex' => 'nullable|integer|min:0',
         ]);
-
-        $validated['is_occupied'] = $request->filled('product_id');
 
         $slot->update($validated);
 
-        return redirect()->route('managers.views.warehouse.slots')->with('success', 'Posición actualizada exitosamente');
+        return redirect()->route('manager.warehouse.section.slots', [
+            'warehouse_uid' => $warehouse->uid,
+            'floor_uid' => $floor->uid,
+            'location_uid' => $location->uid,
+            'section_uid' => $section->uid,
+        ])->with('success', 'Slot actualizado exitosamente');
     }
 
     /**
      * Remove the specified inventory slot from storage
      */
-    public function destroy($uid)
+    public function destroy($warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
     {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
+
         $slot->delete();
 
-        return redirect()->route('managers.views.warehouse.slots')->with('success', 'Posición eliminada exitosamente');
+        return redirect()->route('manager.warehouse.section.slots', [
+            'warehouse_uid' => $warehouse->uid,
+            'floor_uid' => $floor->uid,
+            'location_uid' => $location->uid,
+            'section_uid' => $section->uid,
+        ])->with('success', 'Slot eliminado exitosamente');
     }
 
     /**
      * Add quantity to an inventory slot
+     * Ruta: POST /manager/warehouse/.../slots/{slot_uid}/add-quantity
      */
-    public function addQuantity(Request $request, $uid)
+    public function addQuantity(Request $request, $warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
     {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
 
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1',
             'reason' => 'nullable|string|max:255',
-            'inventarie_id' => 'nullable|integer|exists:inventaries,id',
         ]);
 
-        if ($slot->canAddQuantity($validated['quantity'])) {
-            $slot->addQuantity(
-                $validated['quantity'],
-                $validated['reason'] ?? 'Manual addition',
-                auth()->id(),
-                $validated['inventarie_id']
-            );
-            return response()->json([
-                'success' => true,
-                'message' => 'Cantidad agregada exitosamente',
-                'data' => $slot->fresh()->getSummary(),
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No hay suficiente espacio para esta cantidad',
-        ], 400);
-    }
-
-    /**
-     * Subtract quantity from an inventory slot
-     */
-    public function subtractQuantity(Request $request, $uid)
-    {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
-
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'nullable|string|max:255',
-            'inventarie_id' => 'nullable|integer|exists:inventaries,id',
-        ]);
-
-        if ($slot->subtractQuantity(
+        $slot->addQuantity(
             $validated['quantity'],
-            $validated['reason'] ?? 'Manual subtraction',
-            auth()->id(),
-            $validated['inventarie_id']
-        )) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Cantidad restada exitosamente',
-                'data' => $slot->fresh()->getSummary(),
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No se puede restar más cantidad de la que existe',
-        ], 400);
-    }
-
-    /**
-     * Add weight to an inventory slot
-     */
-    public function addWeight(Request $request, $uid)
-    {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
-
-        $validated = $request->validate([
-            'weight' => 'required|numeric|min:0',
-            'reason' => 'nullable|string|max:255',
-            'inventarie_id' => 'nullable|integer|exists:inventaries,id',
-        ]);
-
-        if ($slot->canAddWeight($validated['weight'])) {
-            $slot->addWeight(
-                $validated['weight'],
-                $validated['reason'] ?? 'Manual weight addition',
-                auth()->id(),
-                $validated['inventarie_id']
-            );
-            return response()->json([
-                'success' => true,
-                'message' => 'Peso agregado exitosamente',
-                'data' => $slot->fresh()->getSummary(),
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No hay suficiente capacidad de peso',
-        ], 400);
-    }
-
-    /**
-     * Clear an inventory slot completely
-     */
-    public function clear(Request $request, $uid)
-    {
-        $slot = WarehouseInventorySlot::where('uid', $uid)->firstOrFail();
-
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:255',
-            'inventarie_id' => 'nullable|integer|exists:inventaries,id',
-        ]);
-
-        $slot->clear(
-            $validated['reason'] ?? 'Manual clearing',
-            auth()->id(),
-            $validated['inventarie_id']
+            $validated['reason'] ?? 'Manual addition',
+            auth()->id()
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Posición vaciada exitosamente',
+            'message' => 'Cantidad agregada exitosamente',
+            'data' => $slot->fresh()->getSummary(),
+        ]);
+    }
+
+    /**
+     * Subtract quantity from an inventory slot
+     * Ruta: POST /manager/warehouse/.../slots/{slot_uid}/subtract-quantity
+     */
+    public function subtractQuantity(Request $request, $warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
+
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $slot->subtractQuantity(
+            $validated['quantity'],
+            $validated['reason'] ?? 'Manual subtraction',
+            auth()->id()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cantidad restada exitosamente',
+            'data' => $slot->fresh()->getSummary(),
+        ]);
+    }
+
+    /**
+     * Clear an inventory slot completely
+     * Ruta: POST /manager/warehouse/.../slots/{slot_uid}/clear
+     */
+    public function clear(Request $request, $warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
+
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $slot->clear(
+            $validated['reason'] ?? 'Manual clearing',
+            auth()->id()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Slot vaciado exitosamente',
+            'data' => $slot->fresh()->getSummary(),
+        ]);
+    }
+
+    /**
+     * Move product to another section
+     */
+    public function moveTo(Request $request, $warehouse_uid, $floor_uid, $location_uid, $section_uid, $slot_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
+        $floor = WarehouseFloor::where('uid', $floor_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+        $section = WarehouseLocationSection::where('uid', $section_uid)->where('location_id', $location->id)->firstOrFail();
+        $slot = WarehouseInventorySlot::where('uid', $slot_uid)->where('section_id', $section->id)->firstOrFail();
+
+        $validated = $request->validate([
+            'new_section_id' => 'required|exists:warehouse_location_sections,id',
+            'quantity' => 'nullable|integer|min:1',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $newSection = WarehouseLocationSection::findOrFail($validated['new_section_id']);
+
+        if (!$slot->moveTo(
+            $newSection,
+            $validated['quantity'] ?? null,
+            $validated['reason'] ?? 'Transfer between sections',
+            auth()->id()
+        )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay suficiente cantidad para mover',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Producto movido exitosamente',
             'data' => $slot->fresh()->getSummary(),
         ]);
     }

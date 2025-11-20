@@ -73,7 +73,7 @@
                                 <span class="badge badge-light-warning">{{ $style->default_sections }}</span>
                             </td>
                             <td>
-                                <span class="badge badge-light-success">{{ $style->stands()->count() }}</span>
+                                <span class="badge badge-light-success">{{ $style->locations()->count() }}</span>
                             </td>
                             <td>
                                 @if($style->available)

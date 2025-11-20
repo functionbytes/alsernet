@@ -12,7 +12,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Run warehouse seeders with new layout
-        $this->call(WarehouseSeedersV2::class);
+        // Run warehouse seeders
+        $this->call([
+            WarehouseLocationStyleSeeder::class,
+            WarehouseLocationConditionSeeder::class,
+            WarehouseExampleSeeder::class,
+            WarehouseSeedersV2::class,
+            Coruna1LocationsSeeder::class,
+        ]);
     }
 }

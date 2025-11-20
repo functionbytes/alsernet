@@ -452,8 +452,7 @@ UNIQUE (stand_id, face, level, section)
 ```php
 namespace App\Models\Inventarie;
 
-use App\Models\Warehouse\Floor;
-use App\Models\Warehouse\InventoryMovement;
+use App\Models\Warehouse\WarehouseFloor;use App\Models\Warehouse\WarehouseInventoryOperation;use App\Models\Warehouse\WarehouseInventoryMovement;
 
 class Inventarie extends Model
 {
@@ -469,19 +468,19 @@ class Inventarie extends Model
     // ⭐ NUEVA RELACIÓN: Una sede tiene múltiples pisos
     public function floors()
     {
-        return $this->hasMany(Floor::class, 'inventarie_id');
+        return $this->hasMany(WarehouseFloor::class, 'inventarie_id');
     }
 
     // ⭐ NUEVA: Todas las operaciones de inventario en esta sede
     public function inventarieOperations()
     {
-        return $this->hasMany(InventarieOperation::class);
+        return $this->hasMany(WarehouseInventoryOperation::class);
     }
 
     // ⭐ NUEVA: Todos los movimientos registrados en esta sede
     public function inventoryMovements()
     {
-        return $this->hasMany(InventoryMovement::class);
+        return $this->hasMany(WarehouseInventoryMovement::class);
     }
 
     // ⭐ NUEVA: Buscar por código
@@ -513,8 +512,6 @@ class Inventarie extends Model
 ```php
 namespace App\Models\Warehouse;
 
-use App\Models\Inventarie\Inventarie;
-
 class Floor extends Model
 {
     use HasFactory, HasUid;
@@ -530,13 +527,13 @@ class Floor extends Model
     // ⭐ NUEVA RELACIÓN: Un piso pertenece a una sede
     public function inventarie()
     {
-        return $this->belongsTo(Inventarie::class, 'inventarie_id');
+        return $this->belongsTo(Warehouse::class, 'inventarie_id');
     }
 
     // Relación existente
     public function stands()
     {
-        return $this->hasMany(Stand::class, 'floor_id');
+        return $this->hasMany(WarehouseLocation::class, 'floor_id');
     }
 
     // ⭐ NUEVA: Scope por sede
@@ -577,8 +574,6 @@ class Floor extends Model
 ```php
 namespace App\Models\Warehouse;
 
-use App\Models\Inventarie\Inventarie;
-
 class InventorySlot extends Model
 {
     use HasFactory, HasUid;
@@ -595,13 +590,13 @@ class InventorySlot extends Model
     // ⭐ NUEVA RELACIÓN: Último inventario que afectó este slot
     public function lastInventarie()
     {
-        return $this->belongsTo(Inventarie::class, 'last_inventarie_id');
+        return $this->belongsTo(Warehouse::class, 'last_inventarie_id');
     }
 
     // Relaciones existentes
     public function stand()
     {
-        return $this->belongsTo(Stand::class, 'stand_id');
+        return $this->belongsTo(WarehouseLocation::class, 'stand_id');
     }
 
     public function product()
@@ -612,7 +607,7 @@ class InventorySlot extends Model
     // ⭐ NUEVA: Obtener movimientos de este slot
     public function movements()
     {
-        return $this->hasMany(InventoryMovement::class, 'slot_id');
+        return $this->hasMany(WarehouseInventoryMovement::class, 'slot_id');
     }
 
     // ⭐ MODIFICADO: addQuantity con auditoría
@@ -639,7 +634,7 @@ class InventorySlot extends Model
         ]);
 
         // ⭐ NUEVA: Registrar movimiento
-        InventoryMovement::create([
+        WarehouseInventoryMovement::create([
             'slot_id' => $this->id,
             'product_id' => $this->product_id,
             'movement_type' => 'add',
@@ -667,8 +662,6 @@ class InventorySlot extends Model
 ```php
 namespace App\Models\Warehouse;
 
-use App\Models\Inventarie\Inventarie;
-use App\Models\Inventarie\InventarieLocationItem;
 use App\Library\Traits\HasUid;
 
 class InventoryMovement extends Model
@@ -705,7 +698,7 @@ class InventoryMovement extends Model
     // Relaciones
     public function slot()
     {
-        return $this->belongsTo(InventorySlot::class, 'slot_id');
+        return $this->belongsTo(WarehouseInventorySlot::class, 'slot_id');
     }
 
     public function product()
@@ -715,7 +708,7 @@ class InventoryMovement extends Model
 
     public function inventarie()
     {
-        return $this->belongsTo(Inventarie::class, 'inventarie_id');
+        return $this->belongsTo(Warehouse::class, 'inventarie_id');
     }
 
     // ⭐ NUEVA: Link a producto contado durante inventario
@@ -760,7 +753,7 @@ class InventoryMovement extends Model
 ```php
 namespace App\Models\Inventarie;
 
-use App\Models\Warehouse\InventoryMovement;
+use App\Models\Warehouse\WarehouseInventoryMovement;
 
 class InventarieLocationItem extends Model
 {
@@ -784,7 +777,7 @@ class InventarieLocationItem extends Model
     // ⭐ NUEVA: Link a movimiento de warehouse
     public function inventoryMovement()
     {
-        return $this->belongsTo(InventoryMovement::class, 'inventory_movement_id');
+        return $this->belongsTo(WarehouseInventoryMovement::class, 'inventory_movement_id');
     }
 
     // ⭐ NUEVA: Método para sincronizar con warehouse
@@ -806,7 +799,7 @@ class InventarieLocationItem extends Model
             ->first();
 
         if ($slot && $slot->quantity != $this->count) {
-            $movement = InventoryMovement::create([
+            $movement = WarehouseInventoryMovement::create([
                 'slot_id' => $slot->id,
                 'product_id' => $this->product_id,
                 'movement_type' => 'count',
@@ -1064,16 +1057,14 @@ $stats = [
 ```php
 namespace App\Http\Controllers\Managers\Warehouse;
 
-use App\Models\Inventarie\Inventarie;
-use App\Models\Inventarie\InventarieOperation;
-use App\Models\Warehouse\InventoryMovement;
+use App\Models\Warehouse\Warehouse;use App\Models\Warehouse\WarehouseInventoryOperation;use App\Models\Warehouse\WarehouseInventoryMovement;
 
 class WarehouseIntegrationController extends Controller
 {
     // Sincronizar operación de inventario completa
     public function syncInventarieOperation(
-        Inventarie $inventarie,
-        InventarieOperation $operation
+        Warehouse $inventarie,
+        WarehouseInventoryOperation $operation
     ) {
         $synced = 0;
         $errors = [];
@@ -1120,14 +1111,14 @@ class WarehouseIntegrationController extends Controller
     }
 
     // Movimientos por sede
-    public function inventarieMovements(Inventarie $inventarie)
+    public function inventarieMovements(Warehouse $inventarie)
     {
         return response()->json([
             'inventarie' => [
                 'id' => $inventarie->id,
                 'name' => $inventarie->name,
             ],
-            'movements' => InventoryMovement::byInventarie($inventarie->id)
+            'movements' => WarehouseInventoryMovement::byInventarie($inventarie->id)
                 ->recent(30)
                 ->with(['slot.stand.floor', 'user'])
                 ->get()
@@ -1179,9 +1170,9 @@ public function addQuantity(Request $request, $uid)
 Route::group(['prefix' => 'managers/inventaries'], function () {
     // CRUD de Sedes
     Route::get('/', 'InventariesController@index')->name('manager.inventaries');
-    Route::post('store', 'InventariesController@store')->name('manager.inventaries.store');
-    Route::get('{uid}/edit', 'InventariesController@edit')->name('manager.inventaries.edit');
-    Route::post('{uid}/update', 'InventariesController@update')->name('manager.inventaries.update');
+    Route::post('store', 'InventariesController@store')->name('manager.warehouses.store');
+    Route::get('{uid}/edit', 'InventariesController@edit')->name('manager.warehouses.edit');
+    Route::post('{uid}/update', 'InventariesController@update')->name('manager.warehouses.update');
 
     // Estructura de Warehouse dentro de Inventarie
     Route::group(['prefix' => '{inventarie}/warehouse'], function () {

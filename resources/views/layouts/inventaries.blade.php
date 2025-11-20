@@ -19,7 +19,7 @@
     <meta content="Meet pages - The simplest and fastest way to build web UI for your dashboard or app." name="description" />
     <meta content="Ace" name="author" />
 
-    
+
 
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -43,19 +43,19 @@
 <div class="page-wrapper" id="main-wrapper" data-navbarbg="skin6" data-sidebartype="full" data-sidebar-position="fixed"
      data-header-position="fixed" data-layout="horizontal">
 
-    @include ('inventaries.includes.nav')
+    @include ('warehouses.includes.nav')
 
     <!-- Main wrapper -->
 
     <div class="body-wrapper">
 
-        @include ('inventaries.includes.header')
+        @include ('warehouses.includes.header')
 
         <div class="container-fluid">
             @yield('content')
         </div>
 
-        @include ('inventaries.includes.delete')
+        @include ('warehouses.includes.delete')
 
     </div>
 

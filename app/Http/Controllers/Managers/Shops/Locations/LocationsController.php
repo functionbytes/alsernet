@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Managers\Shops\Locations;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventarie\InventarieLocationItem;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use App\Models\Location;
 use App\Models\Shop;
-
-use App\Models\Inventarie\InventarieLocation;
+use App\Models\Warehouse\InventarieLocation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class LocationsController extends Controller
 {
@@ -200,7 +198,7 @@ class LocationsController extends Controller
 
         $items = $items->paginate(paginationNumber());
 
-        return view('managers.views.inventaries.historys.index')->with([
+        return view('managers.views.warehouses.historys.index')->with([
             'items' => $items,
             'searchKey' => $searchKey,
         ]);

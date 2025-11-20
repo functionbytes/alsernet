@@ -4,10 +4,9 @@
 
     <div class="documents-status">
         <div class="row">
-
-            @if($document->upload_at!=null)
+            @if($document->upload_at!=null && $document->media->count()>0)
                 <div class="col-md-12 mb-3">
-                    <a href="{{$document->getDocumentUrl()}}" target="_blank" class="card item-status h-100">
+                    <a href="{{ route('administrative.documents.summary', $document->uid) }}" target="_blank" class="card item-status h-100">
                         <div class="card-body text-center">
                             <div class="my-4">
                                 <i class="fa-solid fa-wallet font-navegation fs-3x"></i>
@@ -25,6 +24,8 @@
         <div class="col-lg-12 d-flex align-items-stretch">
 
             <div class="card w-100">
+
+
 
                 <form id="formDocuments" enctype="multipart/form-data" role="form" onSubmit="return false">
 
@@ -44,26 +45,26 @@
                                 Listado de productos relacionados con la orden.
                             </p>
 
-                        <div class="list-products-container">
+                            <div class="list-products-container">
 
                                 @foreach($products as $item)
 
                                     <div class="bundle-block mb-3" >
                                         <ul class="list-group list-group-flush">
 
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    {{ $item->product->name }}
-                                                    <span class="badge bg-success">{{ $item->quantity}} ud</span>
-                                                </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                {{ $item->product->name }}
+                                                <span class="badge bg-success">{{ $item->quantity}} ud</span>
+                                            </li>
                                         </ul>
                                     </div>
                                 @endforeach
-                        </div>
+                            </div>
 
                         @endif
 
 
-                            <hr class="mt-2 mb-4">
+                        <hr class="mt-2 mb-4">
 
                         <div class="d-flex no-block align-items-center">
                             <h5 class="mb-0">Detalle orden </h5>
@@ -87,15 +88,14 @@
 
                         <hr class="mt-2 mb-4">
 
-                            <div class="d-flex no-block align-items-center">
-                                <h5 class="mb-0">Informacion cliente </h5>
+                        <div class="d-flex no-block align-items-center">
+                            <h5 class="mb-0">Informacion cliente </h5>
 
-                            </div>
-                            <p class="card-subtitle mb-3 mt-3">
-                                Listado de productos relacionados con la orden.
-                            </p>
-
-                            <div class="row">
+                        </div>
+                        <p class="card-subtitle mb-3 mt-3">
+                            Listado de productos relacionados con la orden.
+                        </p>
+                        <div class="row">
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Nombres</label>
                                 <input type="text" class="form-control"  name="firstname" value="{{$customer->firstname}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
@@ -106,7 +106,7 @@
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">DNI/NIE/CIF</label>
-                                <input type="text" class="form-control" name="identification" value="{{$invoice->dni}}" placeholder="Ingresar la identificacion" autocomplete="new-password" disabled>
+                                <input type="text" class="form-control" name="identification" value="{{$invoice?->dni}}" placeholder="Ingresar la identificacion" autocomplete="new-password" disabled>
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Correo electronico</label>
@@ -125,7 +125,7 @@
                             <div class="col-12">
                                 <div class="border-top pt-1 mt-4">
                                     <button type="submit" class="btn btn-info  px-4 waves-effect waves-light mt-2 w-100">
-                                            Guardar
+                                        Guardar
                                     </button>
                                 </div>
                             </div>

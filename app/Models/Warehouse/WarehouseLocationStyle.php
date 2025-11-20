@@ -7,29 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * StandStyle Model
- *
- * Define los TIPOS/ESTILOS de estanterías disponibles en el almacén.
- * Ejemplos: ROW (pasillo lineal), ISLAND (isla), WALL (pared)
- *
- * @property int $id
- * @property string $uid UUID universal
- * @property string $code Código único (ROW, ISLAND, WALL)
- * @property string $name Nombre legible
- * @property string|null $description Descripción
- * @property array $faces Array de caras disponibles
- * @property int $default_levels Niveles por defecto
- * @property int $default_sections Secciones por defecto
- * @property bool $available Estado
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- */
-class StandStyle extends Model
+class WarehouseLocationStyle extends Model
 {
     use HasFactory, HasUid;
 
-    protected $table = 'warehouse_stand_styles';
+    protected $table = 'warehouse_location_styles';
     protected $primaryKey = 'id';
     protected $keyType = 'int';
     public $incrementing = true;
@@ -103,9 +85,9 @@ class StandStyle extends Model
     /**
      * Un estilo tiene muchas estanterías
      */
-    public function stands(): HasMany
+    public function locations(): HasMany
     {
-        return $this->hasMany(WarehouseLocations::class, 'stand_style_id', 'id');
+        return $this->hasMany('App\Models\Warehouse\WarehouseLocation', 'location_style_id', 'id');
     }
 
     /**
@@ -200,7 +182,7 @@ class StandStyle extends Model
      */
     public function getStandCount(): int
     {
-        return $this->stands()->count();
+        return $this->locations()->count();
     }
 
     /**
@@ -208,7 +190,7 @@ class StandStyle extends Model
      */
     public function getActiveStandCount(): int
     {
-        return $this->stands()->where('available', true)->count();
+        return $this->locations()->where('available', true)->count();
     }
 
     /**
@@ -227,8 +209,8 @@ class StandStyle extends Model
             'default_levels' => $this->default_levels,
             'default_sections' => $this->default_sections,
             'available' => $this->available,
-            'stands_count' => $this->getStandCount(),
-            'active_stands_count' => $this->getActiveStandCount(),
+            'locations_count' => $this->getStandCount(),
+            'active_locations_count' => $this->getActiveStandCount(),
         ];
     }
 }

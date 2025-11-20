@@ -7,10 +7,11 @@
 
             <div class="card w-100">
 
-                <form id="formFloorsEdit" action="{{ route('manager.warehouse.floors.update') }}" method="POST" role="form">
+                <form id="formFloorsEdit" action="{{ route('manager.warehouse.floors.update',[$warehouse->uid, $floor->uid]) }}" method="POST" role="form">
 
                     {{ csrf_field() }}
                     <input type="hidden" name="uid" value="{{ $floor->uid }}">
+                    <input type="hidden" name="warehouse_uid" value="{{ $warehouse->uid }}">
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">

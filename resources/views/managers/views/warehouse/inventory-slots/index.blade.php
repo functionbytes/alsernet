@@ -63,7 +63,7 @@
                                 <span class="text-muted font-weight-bold">{{ $slot->barcode ?? 'N/A' }}</span>
                             </td>
                             <td>
-                                <a href="{{ route('manager.warehouse.stands.view', $slot->stand->uid) }}">
+                                <a href="{{ route('manager.warehouse.locations.view', $slot->stand->uid) }}">
                                     {{ $slot->stand->code }}
                                 </a>
                             </td>

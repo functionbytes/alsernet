@@ -1,8 +1,7 @@
 @extends('layouts.managers')
 
 @section('content')
-
-    @include('managers.includes.card', ['title' => 'Estanterías (locations)'])
+    @include('managers.includes.card', ['title' => "Estanterías piso - {$floor->name}"])
 
     <div class="widget-content searchable-container list">
 
@@ -19,33 +18,19 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <select class="form-select select2" name="floor_id" data-minimum-results-for-search="Infinity">
-                                    <option value="">Filtrar por piso</option>
-                                    @foreach($floors as $floor)
-                                        <option value="{{ $floor->id }}" @if(request('floor_id') == $floor->id) selected @endif>
-                                            {{ $floor->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select class="form-select select2" name="stand_style_id" data-minimum-results-for-search="Infinity">
-                                    <option value="">Filtrar por estilo</option>
-                                    @foreach($styles as $style)
-                                        <option value="{{ $style->id }}" @if(request('stand_style_id') == $style->id) selected @endif>
-                                            {{ $style->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+
                             <div class="col-auto">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fa-duotone fa-magnifying-glass"></i>
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('manager.warehouse.locations.create') }}" class="btn btn-primary">
+                                <a href="{{ route('manager.warehouse.locations.print-all', [$warehouse->uid, $floor->uid]) }}" class="btn btn-info" title="Imprimir todos los códigos de barras del piso">
+                                    <i class="fa-duotone fa-barcode"></i>
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{{ route('manager.warehouse.locations.create', [$warehouse->uid, $floor->uid]) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -63,50 +48,38 @@
                         <th>Código</th>
                         <th>Piso</th>
                         <th>Estilo</th>
-                        <th>Posición</th>
-                        <th>Posiciones/Ocupación</th>
-                        <th>Capacidad</th>
+                        <th>Posición x</th>
+                        <th>Posición y</th>
+                        <th>Secciones</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
 
-                    @forelse ($locations as $stand)
+                    @forelse ($locations as $location)
                         <tr class="search-items">
                             <td>
-                                <span class="usr-email-addr"><strong>{{ $stand->code }}</strong></span>
+                                <span class="usr-email-addr"><strong>{{ $location->code }}</strong></span>
                             </td>
                             <td>
-                                <span class="badge bg-light-primary">{{ $stand->floor?->code }}</span>
+                                <span class="usr-email-addr">{{ $location->floor?->code }}</span>
                             </td>
                             <td>
-                                <span class="text-muted">{{ $stand->style?->name }}</span>
+                                <span class="text-muted">{{ $location->style?->name }}</span>
                             </td>
                             <td>
-                                <small class="text-muted">X: {{ $stand->position_x }}, Y: {{ $stand->position_y }}</small>
+                                <small class="text-muted">{{ $location->position_x }}</small>
                             </td>
                             <td>
-                                <span class="badge bg-light-warning">{{ $stand->getOccupiedSlots() }}/{{ $stand->getTotalSlots() }}</span>
-                                <div class="progress mt-2" style="height: 15px; width: 100px;">
-                                    <div class="progress-bar bg-success" style="width: {{ $stand->getOccupancyPercentage() }}%"></div>
-                                </div>
+                                <small class="text-muted">{{ $location->position_y }}</small>
                             </td>
                             <td>
-                                @if($stand->capacity)
-                                    <div class="progress mt-2" style="height: 15px; width: 100px;">
-                                        <div class="progress-bar {{ $stand->isNearCapacity(80) ? 'bg-warning' : 'bg-success' }}"
-                                             style="width: {{ min(($stand->getCurrentWeight() / $stand->capacity) * 100, 100) }}%">
-                                        </div>
-                                    </div>
-                                    <small>{{ round($stand->getCurrentWeight(), 1) }}/{{ round($stand->capacity, 1) }} kg</small>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
+                                <span class="badge bg-light-primary text-primary">{{ $location->total_levels }}</span>
                             </td>
                             <td>
-                                <span class="badge {{ $stand->available ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }} rounded-3 py-2">
-                                    {{ $stand->available ? 'Activa' : 'Inactiva' }}
+                                <span class="badge {{ $location->available ? 'bg-light-success text-success' : 'bg-light-primary text-primary' }} rounded-3 py-2">
+                                    {{ $location->available ? 'Activa' : 'Inactiva' }}
                                 </span>
                             </td>
                             <td class="text-left">
@@ -116,18 +89,26 @@
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.view', $stand->uid) }}">
-                                                <i class="ti ti-eye"></i> Ver
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.view', [$warehouse->uid, $floor->uid, $location->uid]) }}">
+                                                Ver
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.edit', $stand->uid) }}">
-                                                <i class="ti ti-pencil"></i> Editar
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.edit', [$warehouse->uid, $floor->uid, $location->uid] ) }}">
+                                                Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.warehouse.locations.destroy', $stand->uid) }}">
-                                                <i class="ti ti-trash"></i> Eliminar
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.print', [$warehouse->uid, $floor->uid, $location->uid]) }}" target="_blank">
+                                                Imprimir códigos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.warehouse.locations.destroy', [$warehouse->uid, $floor->uid, $location->uid]) }}">
+                                                Eliminar
                                             </a>
                                         </li>
                                     </ul>

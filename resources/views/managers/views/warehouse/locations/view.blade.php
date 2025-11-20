@@ -9,15 +9,15 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
-                            <h5 class="card-title mb-1">{{ $stand->code }}</h5>
-                            <p class="text-muted mb-0">Estantería en: <strong>{{ $stand->floor->name }}</strong></p>
+                            <h5 class="card-title mb-1">{{ $location->code }}</h5>
+                            <p class="text-muted mb-0">Estantería en: <strong>{{ $location->floor->name }}</strong></p>
                         </div>
-                        <div>
-                            <a href="{{ route('manager.warehouse.locations.edit', $stand->uid) }}" class="btn btn-sm btn-primary">
-                                <i class="ti ti-pencil"></i> Editar
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ route('manager.warehouse.locations.edit', [$location->floor->warehouse->uid,$location->floor->uid, $location->uid]) }}" class="btn btn-md btn-primary me-2">
+                                <i class="ti ti-pencil"></i>
                             </a>
-                            <a href="{{ route('manager.warehouse.locations') }}" class="btn btn-sm btn-secondary">
-                                <i class="ti ti-arrow-left"></i> Volver
+                            <a href="{{ route('manager.warehouse.locations',[$location->floor->warehouse->uid,$location->floor->uid]) }}" class="btn btn-md btn-secondary">
+                                <i class="ti ti-arrow-left"></i>
                             </a>
                         </div>
                     </div>
@@ -26,38 +26,38 @@
                         <div class="col-md-3">
                             <div class="card bg-light-primary border-0">
                                 <div class="card-body">
-                                    <div class="text-center">
-                                        <h2 class="text-primary">{{ $stand->getTotalSlots() }}</h2>
+                                    <div class="">
+                                        <h2 class="text-primary">{{ $location->getTotalSlots() }}</h2>
                                         <p class="text-muted mb-0">Total de Posiciones</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-light-warning border-0">
+                            <div class="card bg-light-primary border-0">
                                 <div class="card-body">
-                                    <div class="text-center">
-                                        <h2 class="text-warning">{{ $stand->getOccupiedSlots() }}</h2>
+                                    <div class="">
+                                        <h2 class="text-primary">{{ $location->getOccupiedSlots() }}</h2>
                                         <p class="text-muted mb-0">Posiciones Ocupadas</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-light-success border-0">
+                            <div class="card bg-light-primary border-0">
                                 <div class="card-body">
-                                    <div class="text-center">
-                                        <h2 class="text-success">{{ $stand->getTotalSlots() - $stand->getOccupiedSlots() }}</h2>
+                                    <div class="">
+                                        <h2 class="text-primary">{{ $location->getTotalSlots() - $location->getOccupiedSlots() }}</h2>
                                         <p class="text-muted mb-0">Posiciones Disponibles</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-light-info border-0">
+                            <div class="card bg-light-primary border-0">
                                 <div class="card-body">
-                                    <div class="text-center">
-                                        <h2 class="text-info">{{ round($stand->getOccupancyPercentage(), 1) }}%</h2>
+                                    <div class="">
+                                        <h2 class="text-primary">{{ round($location->getOccupancyPercentage(), 1) }}%</h2>
                                         <p class="text-muted mb-0">Ocupación</p>
                                     </div>
                                 </div>
@@ -65,185 +65,290 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- Información General -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <h6 class="mb-3">Información General</h6>
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th width="40%">Código</th>
-                                    <td><strong>{{ $stand->code }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Código de Barras</th>
-                                    <td>{{ $stand->barcode ?? '—' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Piso</th>
-                                    <td>
-                                        <a href="{{ route('manager.warehouse.floors.view', $stand->floor->uid) }}">
-                                            {{ $stand->floor->name }}
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Estilo</th>
-                                    <td>
-                                        <a href="{{ route('manager.warehouse.styles.view', $stand->style->uid) }}">
-                                            {{ $stand->style->name }}
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Estado</th>
-                                    <td>
-                                        @if($stand->available)
-                                            <span class="badge badge-light-success">Disponible</span>
-                                        @else
-                                            <span class="badge badge-light-danger">No disponible</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Creado</th>
-                                    <td>{{ $stand->created_at->format('d/m/Y H:i') }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Actualizado</th>
-                                    <td>{{ $stand->updated_at->format('d/m/Y H:i') }}</td>
-                                </tr>
-                            </table>
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-light-primary border-bottom">
+                                    <p class="mb-0">
+                                        <i class="ti ti-info-circle me-2"></i>Información General
+                                    </p>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small mb-1">Código</label>
+                                        <p class="mb-0"><strong class="text-dark">{{ $location->code }}</strong></p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small mb-1">Piso</label>
+                                        <p class="mb-0">
+                                            <a href="{{ route('manager.warehouse.floors.view',[$location->floor->warehouse->uid, $location->floor->uid]) }}" class="text-primary">
+                                                {{ $location->floor->name }}
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small mb-1">Estilo</label>
+                                        <p class="mb-0">
+                                             {{ $location->style->name }}
+                                        </p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small mb-1">Estado</label>
+                                        <p class="mb-0">
+                                            @if($location->available)
+                                                   Disponible
+                                            @else
+                                               No disponible
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <hr class="my-3">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small mb-1">Creado</label>
+                                            <p class="d-block">{{ $location->created_at->format('d/m/Y H:i') }}</p>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small mb-1">Actualizado</label>
+                                            <p class="d-block">{{ $location->updated_at->format('d/m/Y H:i') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- Configuración Física -->
                         <div class="col-md-6">
-                            <h6 class="mb-3">Configuración Física</h6>
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th width="40%">Posición X</th>
-                                    <td><strong>{{ $stand->position_x }}m</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Posición Y</th>
-                                    <td><strong>{{ $stand->position_y }}m</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Posición Z (Altura)</th>
-                                    <td><strong>{{ $stand->position_z ?? '—' }}m</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Niveles Totales</th>
-                                    <td><strong>{{ $stand->total_levels }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Secciones Totales</th>
-                                    <td><strong>{{ $stand->total_sections }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Caras</th>
-                                    <td>
-                                        @foreach($stand->style->faces as $face)
-                                            <span class="badge badge-light-info">{{ ucfirst($face) }}</span>
-                                        @endforeach
-                                    </td>
-                                </tr>
-                            </table>
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-light-primary border-bottom">
+                                    <p class="mb-0">
+                                        <i class="ti ti-box me-2"></i>Configuración Física
+                                    </p>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small mb-1">Posición X</label>
+                                            <p class="mb-0"><strong>{{ $location->position_x }} m</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small mb-1">Posición Y</label>
+                                            <p class="mb-0"><strong>{{ $location->position_y }} m</strong></p>
+                                        </div>
+                                    </div>
+                                    <hr class="my-3">
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <label class="form-label text-muted small mb-1">Niveles</label>
+                                            <p class="mb-0"><strong>{{ $location->total_levels }}</strong></p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <h6 class="mb-3">Capacidad y Contenido</h6>
-                            <table class="table table-sm">
-                                <thead class="header-item">
-                                    <tr>
-                                        <th>Parámetro</th>
-                                        <th>Actual</th>
-                                        <th>Máximo</th>
-                                        <th>Disponible</th>
-                                        <th>Ocupación %</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if($stand->capacity)
-                                        <tr>
-                                            <td><strong>Peso (kg)</strong></td>
-                                            <td>{{ round($stand->getCurrentWeight(), 2) }}</td>
-                                            <td>{{ round($stand->capacity, 2) }}</td>
-                                            <td>{{ round($stand->capacity - $stand->getCurrentWeight(), 2) }}</td>
-                                            <td>
-                                                <div class="progress" style="height: 20px;">
-                                                    <div class="progress-bar {{ ($stand->getCurrentWeight() / $stand->capacity) * 100 > 75 ? 'bg-danger' : (($stand->getCurrentWeight() / $stand->capacity) * 100 > 50 ? 'bg-warning' : 'bg-success') }}"
-                                                         role="progressbar"
-                                                         style="width: {{ min(($stand->getCurrentWeight() / $stand->capacity) * 100, 100) }}%"
-                                                         aria-valuenow="{{ ($stand->getCurrentWeight() / $stand->capacity) * 100 }}" aria-valuemin="0" aria-valuemax="100">
-                                                        {{ round(($stand->getCurrentWeight() / $stand->capacity) * 100, 1) }}%
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @else
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">
-                                                No hay límite de capacidad configurado para esta estantería
-                                            </td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
 
-                    @if($stand->notes)
+                    @if($location->notes)
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h6 class="mb-3">Notas</h6>
                                 <div class="alert alert-light-info border">
-                                    {{ $stand->notes }}
+                                    {{ $location->notes }}
                                 </div>
                             </div>
                         </div>
                     @endif
 
+                    <!-- Secciones -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <h6 class="mb-3">Posiciones de Inventario</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover">
-                                    <thead class="header-item">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light-primary border-bottom d-flex justify-content-between align-items-center">
+                                    <p class="mb-0">
+                                       Secciones
+                                    </p>
+                                </div>
+                                <div class="card-body p-0">
+
+                            @if($location->sections && count($location->sections) > 0)
+                                <div class="table-responsive border rounded-2 bg-white">
+                                    <table class="table table-sm table-hover table-striped mb-0">
+                                        <thead class="table-light sticky-top" style="top: 0; z-index: 10;">
+                                            <tr>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Código
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Nivel
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Total Slots
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Ocupados
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                   Disponibles
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Ocupación
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Estado
+                                                </th>
+                                                <th class="fw-bold text-dark py-3">
+                                                    Acciones
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($location->sections as $section)
+                                                <tr>
+                                                    <td>
+                                                        {{ $section->code }}
+                                                    </td>
+                                                    <td>
+                                                         {{ $section->level }}
+                                                    </td>
+                                                    <td class="">
+                                                        {{ $section->getTotalSlots() }}
+                                                    </td>
+                                                    <td class="">
+                                                        {{ $section->getOccupiedSlots() }}
+                                                    </td>
+                                                    <td class="">
+                                                       {{ $section->getAvailableSlots() }}
+                                                    </td>
+                                                    <td class="">
+                                                            @php
+                                                                $occupancy = $section->getOccupancyPercentage();
+                                                                $color = $occupancy < 50 ? 'success' : ($occupancy < 85 ? 'warning' : 'danger');
+                                                            @endphp
+                                                           {{ round($occupancy, 1) }}%
+                                                    </td>
+                                                    <td>
+                                                        @if($section->available)
+                                                            Activa
+                                                        @else
+                                                            Inactiva
+                                                        @endif
+                                                    </td>
+
+                                                    <td class="text-left">
+                                                        <div class="dropdown dropstart">
+                                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ti ti-dots fs-5"></i>
+                                                            </a>
+                                                            <ul class="dropdown-menu">
+                                                                <li>
+                                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.section.view', [$location->floor->warehouse->uid, $location->floor->uid, $location->uid, $section->uid]) }}" >
+                                                                        Ver
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.section.edit', [$location->floor->warehouse->uid, $location->floor->uid, $location->uid, $section->uid]) }}">
+                                                                        Editar
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <div class="alert alert-light-warning border">
+                                    <i class="ti ti-alert-triangle me-2"></i>No hay secciones registradas para esta ubicación
+                                </div>
+                            @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light-primary border-bottom">
+                                    <p class="mb-0">
+                                        Posiciones de Inventario
+                                    </p>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive border rounded-2 bg-white">
+                                        <table class="table table-sm table-hover table-striped mb-0">
+                                    <thead class="table-light sticky-top" style="top: 0; z-index: 10;">
                                         <tr>
-                                            <th>Código de Barras</th>
-                                            <th>Ubicación</th>
-                                            <th>Producto</th>
-                                            <th>Cantidad</th>
-                                            <th>Peso</th>
-                                            <th>Estado</th>
-                                            <th>Acciones</th>
+                                            <th class="fw-bold text-dark py-3">
+                                               Código de Barras
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                                Ubicación
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                               Producto
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                                Cantidad
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                                Peso
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                                Estado
+                                            </th>
+                                            <th class="fw-bold text-dark py-3">
+                                                Acciones
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($stand->slots as $slot)
-                                            <tr>
-                                                <td>{{ $slot->barcode ?? '—' }}</td>
+                                        @forelse($location->slots as $slot)
+                                            <tr class="align-middle">
                                                 <td>
-                                                    <small>
-                                                        <strong>{{ ucfirst($slot->face) }}</strong> /
-                                                        Nivel {{ $slot->level }} /
-                                                        Secc. {{ $slot->section }}
+                                                    <code class="bg-light px-2 py-1 rounded">{{ $slot->barcode ?? '—' }}</code>
+                                                </td>
+                                                <td>
+                                                    <small class="d-block">
+                                                        <strong class="text-dark">{{ ucfirst($slot->face) }}</strong>
                                                     </small>
+                                                    <small class="text-muted">Nivel {{ $slot->level }} • Secc. {{ $slot->section }}</small>
                                                 </td>
                                                 <td>
                                                     @if($slot->product)
-                                                        <a href="#">{{ $slot->product->title }}</a>
+                                                        <a href="#" class="text-decoration-none">
+                                                            <small class="text-dark fw-500">{{ $slot->product->title }}</small>
+                                                        </a>
                                                     @else
-                                                        <span class="text-muted">—</span>
+                                                        <span class="text-muted small">—</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $slot->quantity }} {{ $slot->max_quantity ? "/ {$slot->max_quantity}" : '' }}</td>
-                                                <td>{{ $slot->weight_current }} {{ $slot->weight_max ? "/ {$slot->weight_max}" : '' }} kg</td>
-                                                <td>
+                                                <td class="">
+                                                    <span class="badge badge-light-primary ">
+                                                        {{ $slot->quantity }}{{ $slot->max_quantity ? " / {$slot->max_quantity}" : '' }}
+                                                    </span>
+                                                </td>
+                                                <td class="">
+                                                    <small class="d-block fw-500">{{ $slot->weight_current }} kg</small>
+                                                    @if($slot->weight_max)
+                                                        <small class="text-muted">/ {{ $slot->weight_max }} kg</small>
+                                                    @endif
+                                                </td>
+                                                <td class="">
                                                     @if($slot->is_occupied)
-                                                        <span class="badge badge-light-success">Ocupada</span>
+                                                        <span class="badge badge-light-success">
+                                                            <i class="ti ti-check me-1"></i>Ocupada
+                                                        </span>
                                                     @else
-                                                        <span class="badge badge-light-secondary">Disponible</span>
+                                                        <span class="badge badge-light-secondary">
+                                                            <i class="ti ti-x me-1"></i>Disponible
+                                                        </span>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -261,6 +366,8 @@
                                         @endforelse
                                     </tbody>
                                 </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -37,11 +37,12 @@ php artisan tinker
 ```
 
 Dentro de tinker, ejecuta:
+
 ```php
->>> App\Models\Warehouse\Floor::count();
->>> App\Models\Warehouse\StandStyle::count();
->>> App\Models\Warehouse\Stand::count();
->>> App\Models\Warehouse\InventorySlot::count();
+>>> App\Models\Warehouse\WarehouseFloor::count();
+>>> App\Models\Warehouse\WarehouseLocationStyle::count();
+>>> App\Models\Warehouse\WarehouseLocation::count();
+>>> App\Models\Warehouse\WarehouseInventorySlot::count();
 >>> exit()
 ```
 

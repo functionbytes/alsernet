@@ -29,7 +29,7 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('manager.warehouse.floors.create') }}" class="btn btn-primary">
+                                <a href="{{ route('manager.warehouse.floors.create' , $warehouse->uid) }}" class="btn btn-primary">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -48,7 +48,6 @@
                         <th>Nombre</th>
                         <th>Estanterías</th>
                         <th>Posiciones</th>
-                        <th>Ocupación</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -64,23 +63,14 @@
                                 <span class="usr-email-addr">{{ $floor->name }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-light-info">{{ $floor->getStandCount() }}</span>
+                                <span class="badge bg-light-secondary rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">{{ $floor->getAvailableLocationCount() }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-light-warning">{{ $floor->getTotalSlotsCount() }}</span>
+                                <span class="badge bg-light-secondary rounded-3 py-2 text-primary fw-semibold fs-2 d-inline-flex align-items-center gap-1">{{ $floor->getTotalSlotsCount() }}</span>
                             </td>
+
                             <td>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-success" role="progressbar"
-                                         style="width: {{ $floor->getOccupancyPercentage() }}%"
-                                         aria-valuenow="{{ $floor->getOccupancyPercentage() }}"
-                                         aria-valuemin="0" aria-valuemax="100">
-                                        {{ round($floor->getOccupancyPercentage(), 1) }}%
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge {{ $floor->available ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }} rounded-3 py-2">
+                                <span class="badge {{ $floor->available ? 'bg-light-secondary text-primary' : 'bg-light-secondary text-primary' }} rounded-3 py-2">
                                     {{ $floor->available ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </td>
@@ -91,21 +81,30 @@
                                         <i class="ti ti-dots fs-5"></i>
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center gap-3"
-                                               href="{{ route('manager.warehouse.floors.view', $floor->uid) }}">
+                                               href="{{ route('manager.warehouse.locations', [$warehouse->uid, $floor->uid,]) }}">
+                                                Ubicaciones
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3"
+                                               href="{{ route('manager.warehouse.floors.view', [$warehouse->uid, $floor->uid]) }}">
                                                 Ver
                                             </a>
                                         </li>
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center gap-3"
-                                               href="{{ route('manager.warehouse.floors.edit', $floor->uid) }}">
+                                               href="{{ route('manager.warehouse.floors.edit' ,[$warehouse->uid, $floor->uid]) }}">
                                                 Editar
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete"
-                                               data-href="{{ route('manager.warehouse.floors.destroy', $floor->uid) }}">
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete" data-href="{{ route('manager.warehouse.floors.destroy', [$warehouse->uid, $floor->uid]) }}">
                                                 Eliminar
                                             </a>
                                         </li>
@@ -115,7 +114,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
+                            <td class="text-center py-4 text-muted">
                                 No hay pisos registrados
                             </td>
                         </tr>
@@ -142,14 +141,4 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.querySelectorAll('.confirm-delete').forEach(el => {
-            el.addEventListener('click', function (e) {
-                e.preventDefault();
-                if (confirm('¿Está seguro de que desea eliminar este piso?')) {
-                    window.location.href = this.dataset.href;
-                }
-            });
-        });
-    </script>
 @endpush

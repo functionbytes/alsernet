@@ -41,23 +41,24 @@ php artisan tinker
 ```
 
 Dentro de tinker, escribe uno por uno:
+
 ```php
->>> App\Models\Warehouse\Floor::count();
+>>> App\Models\Warehouse\WarehouseFloor::count();
 ```
 Debería mostrar: `4`
 
 ```php
->>> App\Models\Warehouse\StandStyle::count();
+>>> App\Models\Warehouse\WarehouseLocationStyle::count();
 ```
 Debería mostrar: `3`
 
 ```php
->>> App\Models\Warehouse\Stand::count();
+>>> App\Models\Warehouse\WarehouseLocation::count();
 ```
 Debería mostrar: `15` o más
 
 ```php
->>> App\Models\Warehouse\InventorySlot::count();
+>>> App\Models\Warehouse\WarehouseInventorySlot::count();
 ```
 Debería mostrar: `1000` o más
 
