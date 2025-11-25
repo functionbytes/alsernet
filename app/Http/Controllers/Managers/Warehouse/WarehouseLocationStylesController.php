@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Managers\Warehouse;
 
 use App\Http\Controllers\Controller;
-use App\Models\Warehouse\Warehouse;
 use App\Models\Warehouse\WarehouseLocationStyle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,32 +13,34 @@ class WarehouseLocationStylesController extends Controller
      * Display a listing of stand styles for a specific warehouse
      * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/styles
      */
-    public function index($warehouse_uid)
+    public function index()
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
-        $styles = WarehouseLocationStyle::where('warehouse_id', $warehouse->id)
-            ->available()
+        $styles = WarehouseLocationStyle::available()
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
         return view('managers.views.warehouse.styles.index', [
-            'warehouse' => $warehouse,
             'styles' => $styles,
         ]);
     }
 
     /**
      * Show the form for creating a new stand style
-     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/styles/create
+     * Ruta: /manager/warehouse/styles/create
      */
-    public function create($warehouse_uid)
+    public function create()
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
-        $faces = ['left', 'right', 'front', 'back'];
-        $types = ['ROW' => 'Pasillo Lineal', 'ISLAND' => 'Isla', 'WALL' => 'Pared'];
+        // Key = valor en inglés (se guarda en DB), Value = etiqueta en español (se muestra al usuario)
+        $faces = [
+            'left' => 'Izquierda',
+            'right' => 'Derecha',
+            'front' => 'Adelante',
+            'back' => 'Fondo'
+        ];
+
+        $types = ['row' => 'Pasillo', 'island' => 'Isla', 'wall' => 'Pared'];
 
         return view('managers.views.warehouse.styles.create', [
-            'warehouse' => $warehouse,
             'faces' => $faces,
             'types' => $types,
         ]);
@@ -47,26 +48,25 @@ class WarehouseLocationStylesController extends Controller
 
     /**
      * Store a newly created stand style in storage
-     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/styles/store
+     * Ruta: POST /manager/warehouse/styles/store
      */
     public function store(Request $request)
     {
-        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
-
         $validated = $request->validate([
-            'warehouse_uid' => 'required|exists:warehouses,uid',
             'code' => 'required|string|max:50|unique:warehouse_location_styles,code',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
+            'type' => 'required|in:row,island,wall',
             'faces' => 'required|array|min:1',
             'faces.*' => 'in:left,right,front,back',
+            'width' => 'required|integer|min:1|max:200',
+            'height' => 'required|integer|min:1|max:200',
             'default_levels' => 'required|integer|min:1|max:20',
             'default_sections' => 'required|integer|min:1|max:30',
             'available' => 'boolean',
         ]);
 
         $validated['uid'] = Str::uuid();
-        $validated['warehouse_id'] = $warehouse->id;
         $validated['available'] = $validated['available'] ?? true;
 
         $style = WarehouseLocationStyle::create($validated);
@@ -78,17 +78,16 @@ class WarehouseLocationStylesController extends Controller
             ->event('created')
             ->log('Estilo de ubicación creado: ' . $style->name);
 
-        return redirect()->route('manager.warehouse.styles', ['warehouse_uid' => $warehouse->uid])->with('success', 'Estilo de ubicación creado exitosamente');
+        return redirect()->route('manager.warehouse.styles')->with('success', 'Estilo de ubicación creado exitosamente');
     }
 
     /**
      * Display the specified stand style
-     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/styles/{style_uid}
+     * Ruta: /manager/warehouse/styles/{style_uid}
      */
-    public function view($warehouse_uid, $style_uid)
+    public function view($style_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
-        $style = WarehouseLocationStyle::where('uid', $style_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $style = WarehouseLocationStyle::where('uid', $style_uid)->firstOrFail();
 
         $summary = [
             'total_locations' => $style->locations()->count(),
@@ -96,7 +95,6 @@ class WarehouseLocationStylesController extends Controller
         ];
 
         return view('managers.views.warehouse.styles.view', [
-            'warehouse' => $warehouse,
             'style' => $style,
             'summary' => $summary,
         ]);
@@ -104,18 +102,22 @@ class WarehouseLocationStylesController extends Controller
 
     /**
      * Show the form for editing the specified stand style
-     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/styles/{style_uid}/edit
+     * Ruta: /manager/warehouse/styles/{style_uid}/edit
      */
-    public function edit($warehouse_uid, $style_uid)
+    public function edit($style_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
-        $style = WarehouseLocationStyle::where('uid', $style_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $style = WarehouseLocationStyle::where('uid', $style_uid)->firstOrFail();
 
-        $faces = ['left', 'right', 'front', 'back'];
-        $types = ['ROW' => 'Pasillo Lineal', 'ISLAND' => 'Isla', 'WALL' => 'Pared'];
+        // Key = valor en inglés (se guarda en DB), Value = etiqueta en español (se muestra al usuario)
+        $faces = [
+            'left' => 'Izquierda',
+            'right' => 'Derecha',
+            'front' => 'Adelante',
+            'back' => 'Fondo'
+        ];
+        $types = ['row' => 'Pasillo', 'island' => 'Isla', 'wall' => 'Pared'];
 
         return view('managers.views.warehouse.styles.edit', [
-            'warehouse' => $warehouse,
             'style' => $style,
             'faces' => $faces,
             'types' => $types,
@@ -124,27 +126,28 @@ class WarehouseLocationStylesController extends Controller
 
     /**
      * Update the specified stand style in storage
-     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/styles/update
+     * Ruta: POST /manager/warehouse/styles/update
      */
     public function update(Request $request)
     {
-        $warehouse = Warehouse::uid($request->warehouse_uid)->firstOrFail();
-        $style = WarehouseLocationStyle::where('uid', $request->uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $style = WarehouseLocationStyle::where('uid', $request->uid)->firstOrFail();
 
         $validated = $request->validate([
-            'warehouse_uid' => 'required|exists:warehouses,uid',
             'uid' => 'required|exists:warehouse_location_styles,uid',
             'code' => 'required|string|max:50|unique:warehouse_location_styles,code,' . $style->id,
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
+            'type' => 'required|in:row,island,wall',
             'faces' => 'required|array|min:1',
             'faces.*' => 'in:left,right,front,back',
+            'width' => 'required|integer|min:1|max:200',
+            'height' => 'required|integer|min:1|max:200',
             'default_levels' => 'required|integer|min:1|max:20',
             'default_sections' => 'required|integer|min:1|max:30',
             'available' => 'boolean',
         ]);
 
-        $oldData = $style->only(['code', 'name', 'description', 'faces', 'default_levels', 'default_sections', 'available']);
+        $oldData = $style->only(['code', 'name', 'description', 'type', 'faces', 'height', 'width', 'default_levels', 'default_sections', 'available']);
 
         $style->update($validated);
 
@@ -156,21 +159,20 @@ class WarehouseLocationStylesController extends Controller
             ->withProperties(['old' => $oldData, 'attributes' => $style->getChanges()])
             ->log('Estilo actualizado: ' . $style->name);
 
-        return redirect()->route('manager.warehouse.styles', ['warehouse_uid' => $warehouse->uid])->with('success', 'Estilo actualizado exitosamente');
+        return redirect()->route('manager.warehouse.styles')->with('success', 'Estilo actualizado exitosamente');
     }
 
     /**
      * Remove the specified stand style from storage
-     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/styles/{style_uid}/destroy
+     * Ruta: /manager/warehouse/styles/{style_uid}/destroy
      */
-    public function destroy($warehouse_uid, $style_uid)
+    public function destroy($style_uid)
     {
-        $warehouse = Warehouse::uid($warehouse_uid)->firstOrFail();
-        $style = WarehouseLocationStyle::where('uid', $style_uid)->where('warehouse_id', $warehouse->id)->firstOrFail();
+        $style = WarehouseLocationStyle::where('uid', $style_uid)->firstOrFail();
 
         // Check if style has associated locations
         if ($style->locations()->count() > 0) {
-            return redirect()->route('manager.warehouse.styles', ['warehouse_uid' => $warehouse->uid])->with('error', 'No se puede eliminar un estilo que contiene ubicaciones');
+            return redirect()->route('manager.warehouse.styles')->with('error', 'No se puede eliminar un estilo que contiene ubicaciones');
         }
 
         // Registrar en activity log
@@ -182,6 +184,6 @@ class WarehouseLocationStylesController extends Controller
 
         $style->delete();
 
-        return redirect()->route('manager.warehouse.styles', ['warehouse_uid' => $warehouse->uid])->with('success', 'Estilo eliminado exitosamente');
+        return redirect()->route('manager.warehouse.styles')->with('success', 'Estilo eliminado exitosamente');
     }
 }

@@ -46,10 +46,20 @@ return [
             'driver' => 'mysql',
             'host' => '192.168.1.120',
             'port' => 3306,
+            'database' => 'alvarez_ana',
+            'username' => 'alvarez_ana',
+            'password' => 'Jun.007862',
+        ],
+
+        'prestashop12' => [
+            'driver' => 'mysql',
+            'host' => '192.168.1.120',
+            'port' => 3306,
             'database' => 'alvarez_cristia',
             'username' => 'alvarez_cristia',
             'password' => 'Abr.755441',
         ],
+
 
         'prestashops' => [
             'driver' => 'mysql',

@@ -31,7 +31,7 @@
             margin: 0;
             font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
 
-            color: var(--text);
+            color: #000;
         }
 
         .warehouse-container {
@@ -41,7 +41,6 @@
 
         }
 
-        /* Header responsivo */
         .warehouse-header {
             display: flex;
             align-items: center;
@@ -78,7 +77,7 @@
 
         .floor-selector label {
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: #000;
             white-space: nowrap;
             font-weight: 500;
             margin-right: 0.25rem;
@@ -92,7 +91,7 @@
 
         .floor-btn {
             background: rgba(255, 255, 255, 0.05);
-            color: var(--text);
+            color: #000;
             border: 1px solid var(--border);
             padding: 0.35rem 0.65rem;
             border-radius: 0.4rem;
@@ -104,13 +103,13 @@
 
         .floor-btn:hover {
             background: rgba(59, 130, 246, 0.1);
-            border-color: var(--primary);
-            color: var(--primary);
+            border-color: #000000;
+            color: #000000;
         }
 
         .floor-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: #000000;
+            border-color: #000000;
             color: white;
             font-weight: 600;
         }
@@ -122,14 +121,15 @@
         }
 
         .toolbar-btn {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 0.35rem 0.6rem;
+            background: #000;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 10px 15px;
             border-radius: 0.4rem;
             cursor: pointer;
-            font-size: 0.75rem;
-            transition: all 0.2s ease;
+            font-size: 14px;
+            transition: all 0.2s
+            ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -139,8 +139,8 @@
 
         .toolbar-btn:hover {
             background: rgba(59, 130, 246, 0.15);
-            border-color: var(--primary);
-            color: var(--primary);
+            border-color: #000000;
+            color: #000000;
         }
 
         .toolbar-btn i {
@@ -159,20 +159,20 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             border-radius: 0.4rem;
-            color: var(--text);
+            color: #000;
             font-size: 0.8rem;
             transition: all 0.2s ease;
         }
 
         .search-box input:focus {
             outline: none;
-            border-color: var(--primary);
-            background: rgba(59, 130, 246, 0.05);
+            border-color: #000000;
+            background: #081A280d;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .search-box input::placeholder {
-            color: var(--text-muted);
+            color: #000;
         }
 
         /* Main content area */
@@ -199,9 +199,9 @@
             gap: 0.75rem;
             flex-wrap: wrap;
             padding: 0.75rem;
-            background: var(--dark);
-            border: 1px solid var(--border);
             border-radius: 0.75rem;
+            background: #ffffff;
+            border: 1px solid #081A280d;
         }
 
         .map-container {
@@ -235,7 +235,7 @@
 
         .warehouse {
             fill: none;
-            stroke: #475569;
+            stroke: transparent;
             stroke-width: 3;
             rx: 12;
         }
@@ -297,7 +297,7 @@
             position: absolute;
             left: 0.75rem;
             bottom: 0.65rem;
-            color: var(--text-muted);
+            color: #000;
             font-size: 0.85rem;
             text-shadow: 0 1px 2px var(--bg-dark);
             z-index: 5;
@@ -311,8 +311,8 @@
         .info-panel {
             flex: 0 0 300px;
             width: 300px;
-            background: var(--dark);
-            border: 1px solid var(--border);
+            background: #ffffff;
+            border: 1px solid #081A280d;
             border-radius: 0.75rem;
             padding: 1rem;
             overflow-y: auto;
@@ -330,7 +330,7 @@
         .info-panel-title {
             font-size: 0.875rem;
             font-weight: 700;
-            color: var(--text-muted);
+            color: #000;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 0.75rem;
@@ -346,7 +346,7 @@
             padding: 0.5rem;
             margin-bottom: 0.5rem;
             border-radius: 0.375rem;
-            background: rgba(59, 130, 246, 0.05);
+            background: #081A280d;
             font-size: 0.85rem;
         }
 
@@ -375,10 +375,10 @@
 
         /* Floor selector in panel */
         .floor-selector-panel {
-            background: rgba(59, 130, 246, 0.08);
+            background: #081A280d;
             padding: 0.75rem;
             border-radius: 0.75rem;
-            border: 1px solid var(--border);
+            border: 1px solid #081A280d;
             margin-bottom: 1.5rem !important;
         }
 
@@ -391,7 +391,7 @@
         .floor-btn-panel {
             flex: 0 0 calc(50% - 0.25rem);
             background: rgba(255, 255, 255, 0.05);
-            color: var(--text);
+            color: #000;
             border: 1px solid var(--border);
             padding: 0.45rem 0.65rem;
             border-radius: 0.5rem;
@@ -404,13 +404,13 @@
 
         .floor-btn-panel:hover {
             background: rgba(59, 130, 246, 0.15);
-            border-color: var(--primary);
-            color: var(--primary);
+            border-color: #000000;
+            color: #000000;
         }
 
         .floor-btn-panel.active {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: #000000;
+            border-color: #000000;
             color: white;
             font-weight: 600;
         }
@@ -423,6 +423,8 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
             animation: fadeIn 0.2s ease;
+            overflow-y: auto;
+            padding: 1rem;
         }
 
         .modal-shelf.show {
@@ -431,37 +433,46 @@
             justify-content: center;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .modal-content {
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+            overflow: hidden;
         }
 
         .modal-shelf.show .modal-content {
             animation: slideUp 0.3s ease;
         }
-audeclau
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: white;
+        }
+
         .modal-title {
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--text);
+            color: #000;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .modal-close-btn {
             background: transparent;
             border: none;
-            color: var(--text);
+            color: #000;
             font-size: 1.5rem;
             cursor: pointer;
             padding: 0;
@@ -480,7 +491,7 @@ audeclau
         }
 
         .modal-body {
-            padding: 1.5rem;
+            padding: 1rem;
         }
 
         .modal-footer {
@@ -489,12 +500,12 @@ audeclau
             display: flex;
             justify-content: flex-end;
             gap: 0.75rem;
-            background: var(--dark-lighter);
+            background: #081A280d;
         }
 
         /* Shelf details */
         .shelf-details {
-            background: var(--dark-lighter);
+            background: #081A280d;
             padding: 1rem;
             border-radius: 0.75rem;
             margin-bottom: 1.5rem;
@@ -514,7 +525,7 @@ audeclau
 
         .detail-label {
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: #000;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-weight: 600;
@@ -522,7 +533,7 @@ audeclau
 
         .detail-value {
             font-size: 1rem;
-            color: var(--text);
+            color: #000;
             font-weight: 500;
         }
 
@@ -534,15 +545,15 @@ audeclau
         }
 
         .face-block {
-            background: var(--dark-lighter);
+            background: #081A280d;
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             overflow: hidden;
         }
 
         .face-header {
-            padding: 0.75rem;
-            background: var(--primary);
+            background: #081A280d;
+            color: #000000;
             color: white;
             font-weight: 600;
             font-size: 0.875rem;
@@ -576,12 +587,12 @@ audeclau
 
         .slot-item:hover {
             transform: scale(1.05);
-            border-color: var(--primary);
+            border-color: #000000;
         }
 
         .slot-item.empty {
             background: rgba(156, 163, 175, 0.1);
-            color: var(--text-muted);
+            color: #000;
         }
 
         .slot-item.occupied {
@@ -613,8 +624,8 @@ audeclau
             padding: 0.55rem 1rem;
             border-radius: 0.5rem;
             border: 1px solid var(--border);
-            background: var(--dark-lighter);
-            color: var(--text);
+            background: #081A280d;
+            color: #000;
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
@@ -630,8 +641,8 @@ audeclau
         }
 
         .btn-primary {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: #000000;
+            border-color: #000000;
             color: white;
         }
 
@@ -658,7 +669,7 @@ audeclau
             justify-content: center;
             height: 100%;
             font-size: 1.1rem;
-            color: var(--text-muted);
+            color: #000;
             gap: 0.75rem;
         }
 
@@ -666,7 +677,7 @@ audeclau
             width: 1rem;
             height: 1rem;
             border: 2px solid var(--border);
-            border-top-color: var(--primary);
+            border-top-color: #000000;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
         }
@@ -767,15 +778,6 @@ audeclau
                 width: 100%;
             }
 
-            .modal-content {
-                max-width: 100vw;
-                max-height: 100vh;
-                border-radius: 0;
-            }
-
-            .modal-shelf.show {
-                align-items: flex-end;
-            }
 
             .faces-container {
                 grid-template-columns: 1fr;
@@ -856,14 +858,6 @@ audeclau
             .floor-btn-panel {
                 padding: 0.4rem 0.5rem;
                 font-size: 0.75rem;
-            }
-
-            .modal-header {
-                padding: 0.75rem;
-            }
-
-            .modal-body {
-                padding: 1rem;
             }
 
             .shelf-details-grid {
@@ -1021,7 +1015,7 @@ audeclau
                 <!-- Mapa -->
                 <div class="map-container">
                 <div class="stage">
-                    <svg id="svg" viewBox="0 0 1600 1100">
+                    <svg id="svg" type="image/svg+xml" viewBox="0 0 1600 1100" width="1600" height="1100">
                         <defs>
                             <pattern id="smallGrid" width="50" height="50" patternUnits="userSpaceOnUse">
                                 <path d="M 50 0 L 0 0 0 50" class="grid" fill="none" />
@@ -1106,7 +1100,8 @@ audeclau
     </div>
 
     <!-- Modal de Estante (Bootstrap compatible) -->
-    <div id="shelfModal" class="modal-shelf" role="dialog" aria-modal="true" aria-hidden="true">
+    <div id="shelfModal" class="modal modal-shelf" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered custom-modal-xxl">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="shelfModalTitle">
@@ -1119,13 +1114,27 @@ audeclau
             </div>
 
             <div class="modal-body">
-                <!-- Detalles del estante -->
-                <div id="shelfDetails" class="shelf-details" style="display: none;">
-                    <div class="shelf-details-grid" id="detailsGrid"></div>
+                <!-- Detalles de la ubicación -->
+                <div id="locationDetailsContainer">
+                    <div id="shelfDetails" class="shelf-details" style="display: none;">
+                        <div class="shelf-details-grid" id="detailsGrid"></div>
+                    </div>
+
+                    <!-- Contenedor de caras -->
+                    <div id="facesContainer" class="faces-container"></div>
                 </div>
 
-                <!-- Contenedor de caras -->
-                <div id="facesContainer" class="faces-container"></div>
+                <!-- Detalles de la sección seleccionada -->
+                <div id="sectionDetailsContainer" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e5e7eb;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem; color: #000;">
+                        <i class="fas fa-info-circle"></i>
+                        Detalles de la Sección
+                    </h3>
+                    <div id="sectionDetails" class="shelf-details">
+                        <div class="shelf-details-grid" id="sectionDetailsGrid"></div>
+                    </div>
+                    <div id="sectionSlotsContainer" style="margin-top: 1rem;"></div>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -1138,6 +1147,7 @@ audeclau
                     Aceptar
                 </button>
             </div>
+        </div>
         </div>
     </div>
 
@@ -1181,8 +1191,10 @@ audeclau
                 this.currentScale = newScale;
             },
 
-            setupResponsiveScaling() {
-                const initialScale = this.calculateDynamicScale();
+            setupResponsiveScaling(preferredScale = null) {
+                const initialScale = preferredScale
+                    ? Math.max(this.MIN_SCALE, Math.min(this.MAX_SCALE, preferredScale))
+                    : this.calculateDynamicScale();
                 this.applyScale(initialScale);
 
                 let resizeTimeout;
@@ -1255,16 +1267,28 @@ audeclau
 
         // ======= FUNCIONES PARA CREAR VECTORES SVG =======
         const SVG_VECTORS = {
+            // Convertir metros a píxeles SVG basado en la escala
+            metersToSVGUnits(meters, scale = SCALE) {
+                return meters * scale;
+            },
+
             // Vector de una cara (WALL, ISLAND)
             createSingleFaceVector(standId, section, x, y) {
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 g.setAttribute('class', 'svg-shelf-vector');
                 g.setAttribute('data-shelf-id', section.id);
+                g.setAttribute('data-location-uid', section.uid || section.id);
                 g.setAttribute('data-faces', '1');
                 g.style.cursor = 'pointer';
 
-                const width = 35;  // en SVG units
-                const height = 25;
+                // Agregar tooltip
+                const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                title.textContent = section.nameTemplate || section.id;
+                g.appendChild(title);
+
+                // Usar dimensiones dinámicas del estilo (en metros convertidas a SVG units)
+                const width = this.metersToSVGUnits(section.shelf?.w_m || 1.0);
+                const height = this.metersToSVGUnits(section.shelf?.h_m || 1.0);
 
                 // Cuerpo principal
                 const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -1325,11 +1349,18 @@ audeclau
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 g.setAttribute('class', 'svg-shelf-vector');
                 g.setAttribute('data-shelf-id', section.id);
+                g.setAttribute('data-location-uid', section.uid || section.id);
                 g.setAttribute('data-faces', '2');
                 g.style.cursor = 'pointer';
 
-                const width = 48;   // en SVG units
-                const height = 30;
+                // Agregar tooltip
+                const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                title.textContent = section.nameTemplate || section.id;
+                g.appendChild(title);
+
+                // Usar dimensiones dinámicas del estilo (en metros convertidas a SVG units)
+                const width = this.metersToSVGUnits(section.shelf?.w_m || 2.0);
+                const height = this.metersToSVGUnits(section.shelf?.h_m || 1.5);
                 const centerX = x + width / 2;
 
                 // Cuerpo central oscuro
@@ -1423,6 +1454,132 @@ audeclau
                 return g;
             },
 
+            // Vector de cuatro caras (ISLAND - Isla cuadrada 360°)
+            createIslandVector(standId, section, x, y) {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'svg-shelf-vector');
+                g.setAttribute('data-shelf-id', section.id);
+                g.setAttribute('data-location-uid', section.uid || section.id);
+                g.setAttribute('data-faces', '4');
+                g.style.cursor = 'pointer';
+
+                // Agregar tooltip
+                const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                title.textContent = section.nameTemplate || section.id;
+                g.appendChild(title);
+
+                // Usar dimensiones dinámicas del estilo (en metros convertidas a SVG units)
+                const width = this.metersToSVGUnits(section.shelf?.w_m || 3.0);
+                const height = this.metersToSVGUnits(section.shelf?.h_m || 3.0);
+                // Cuerpo central con color dinámico
+                const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                body.setAttribute('x', x);
+                body.setAttribute('y', y);
+                body.setAttribute('width', width);
+                body.setAttribute('height', height);
+                body.setAttribute('rx', '3');
+                body.setAttribute('fill', section.color ? this.getGradientFill(section.color, 'single') : 'url(#grad-single)');
+                body.setAttribute('stroke', '#60a5fa');
+                body.setAttribute('stroke-width', '0.5');
+                body.setAttribute('opacity', '0.9');
+
+                // Cara frontal (abajo - front) - Verde
+                const frontFace = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                frontFace.setAttribute('x', x + 1);
+                frontFace.setAttribute('y', y + height / 2 + 0.5);
+                frontFace.setAttribute('width', width - 2);
+                frontFace.setAttribute('height', height / 2 - 1.5);
+                frontFace.setAttribute('rx', '1');
+                frontFace.setAttribute('fill', 'url(#grad-front-island)');
+                frontFace.setAttribute('stroke', '#10b981');
+                frontFace.setAttribute('stroke-width', '0.3');
+                frontFace.setAttribute('opacity', '0.85');
+
+                // Cara posterior (arriba - back) - Ámbar
+                const backFace = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                backFace.setAttribute('x', x + 1);
+                backFace.setAttribute('y', y + 1);
+                backFace.setAttribute('width', width - 2);
+                backFace.setAttribute('height', height / 2 - 1.5);
+                backFace.setAttribute('rx', '1');
+                backFace.setAttribute('fill', 'url(#grad-back-island)');
+                backFace.setAttribute('stroke', '#f59e0b');
+                backFace.setAttribute('stroke-width', '0.3');
+                backFace.setAttribute('opacity', '0.85');
+
+                // Cara izquierda (left) - Púrpura
+                const leftFace = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                leftFace.setAttribute('x', x + 1);
+                leftFace.setAttribute('y', y + 1);
+                leftFace.setAttribute('width', width / 2 - 1.5);
+                leftFace.setAttribute('height', height - 2);
+                leftFace.setAttribute('rx', '1');
+                leftFace.setAttribute('fill', 'url(#grad-left)');
+                leftFace.setAttribute('stroke', '#a78bfa');
+                leftFace.setAttribute('stroke-width', '0.3');
+                leftFace.setAttribute('opacity', '0.75');
+
+                // Cara derecha (right) - Cian
+                const rightFace = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rightFace.setAttribute('x', x + width / 2 + 0.5);
+                rightFace.setAttribute('y', y + 1);
+                rightFace.setAttribute('width', width / 2 - 1.5);
+                rightFace.setAttribute('height', height - 2);
+                rightFace.setAttribute('rx', '1');
+                rightFace.setAttribute('fill', 'url(#grad-right)');
+                rightFace.setAttribute('stroke', '#06b6d4');
+                rightFace.setAttribute('stroke-width', '0.3');
+                rightFace.setAttribute('opacity', '0.75');
+
+                // Divisor horizontal
+                const dividerH = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                dividerH.setAttribute('x1', x + 1);
+                dividerH.setAttribute('y1', y + height / 2);
+                dividerH.setAttribute('x2', x + width - 1);
+                dividerH.setAttribute('y2', y + height / 2);
+                dividerH.setAttribute('stroke', '#374151');
+                dividerH.setAttribute('stroke-width', '0.4');
+                dividerH.setAttribute('opacity', '0.6');
+
+                // Divisor vertical
+                const dividerV = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                dividerV.setAttribute('x1', x + width / 2);
+                dividerV.setAttribute('y1', y + 1);
+                dividerV.setAttribute('x2', x + width / 2);
+                dividerV.setAttribute('y2', y + height - 1);
+                dividerV.setAttribute('stroke', '#374151');
+                dividerV.setAttribute('stroke-width', '0.4');
+                dividerV.setAttribute('opacity', '0.6');
+
+                // Indicador de 4 caras (cuatro puntos en las esquinas)
+                const indicators = [
+                    { cx: x + 5, cy: y + 5 },
+                    { cx: x + width - 5, cy: y + 5 },
+                    { cx: x + 5, cy: y + height - 5 },
+                    { cx: x + width - 5, cy: y + height - 5 }
+                ];
+
+                indicators.forEach(pos => {
+                    const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    indicator.setAttribute('cx', pos.cx);
+                    indicator.setAttribute('cy', pos.cy);
+                    indicator.setAttribute('r', '1');
+                    indicator.setAttribute('fill', '#60a5fa');
+                    indicator.setAttribute('opacity', '0.8');
+                    g.appendChild(indicator);
+                });
+
+                g.appendChild(body);
+                g.appendChild(leftFace);
+                g.appendChild(rightFace);
+                g.appendChild(backFace);
+                g.appendChild(frontFace);
+                g.appendChild(dividerH);
+                g.appendChild(dividerV);
+
+                return g;
+            },
+
             getGradientFill(colorClass, type) {
                 const colorMap = {
                     'shelf--rojo': { single: 'url(#grad-red)', dual: '#ef4444' },
@@ -1449,7 +1606,10 @@ audeclau
                     { id: 'grad-gray', colors: ['#9ca3af', '#6b7280'] },
                     // Gradientes para dos caras
                     { id: 'grad-left', colors: ['#8b5cf6', '#6d28d9'] },
-                    { id: 'grad-right', colors: ['#06b6d4', '#0891b2'] }
+                    { id: 'grad-right', colors: ['#06b6d4', '#0891b2'] },
+                    // Gradientes para islas (4 caras)
+                    { id: 'grad-front-island', colors: ['#10b981', '#059669'] },
+                    { id: 'grad-back-island', colors: ['#f59e0b', '#d97706'] }
                 ];
 
                 gradients.forEach(grad => {
@@ -1479,6 +1639,61 @@ audeclau
             }
         };
 
+        // ======= SISTEMA DE DETECCIÓN Y PREVENCIÓN DE SOLAPAMIENTOS =======
+        const OVERLAP_PREVENTION = {
+            // Calcular bounding box de un elemento
+            calculateBounds(x, y, width, height) {
+                return {
+                    x1: x,
+                    y1: y,
+                    x2: x + width,
+                    y2: y + height
+                };
+            },
+
+            // Detectar si dos rectángulos se solapan
+            doRectanglesOverlap(rect1, rect2, minSpacing = 2) {
+                return !(rect2.x1 >= rect1.x2 + minSpacing ||
+                         rect2.x2 + minSpacing <= rect1.x1 ||
+                         rect2.y1 >= rect1.y2 + minSpacing ||
+                         rect2.y2 + minSpacing <= rect1.y1);
+            },
+
+            // Resolver solapamientos ajustando posiciones
+            resolveOverlaps(elementData) {
+                const resolved = [...elementData];
+                const minSpacing = 3; // píxeles mínimos entre elementos
+                let hasChanges = true;
+                let iterations = 0;
+                const maxIterations = 10; // evitar bucle infinito
+
+                // Iterar hasta que no haya más solapamientos
+                while (hasChanges && iterations < maxIterations) {
+                    hasChanges = false;
+                    iterations++;
+
+                    // Verificar TODOS los pares de elementos
+                    for (let i = 0; i < resolved.length; i++) {
+                        for (let j = i + 1; j < resolved.length; j++) {
+                            const elem1 = resolved[i];
+                            const elem2 = resolved[j];
+
+                            const bounds1 = this.calculateBounds(elem1.x, elem1.y, elem1.width, elem1.height);
+                            const bounds2 = this.calculateBounds(elem2.x, elem2.y, elem2.width, elem2.height);
+
+                            // Si se solapan, desplazar elem2 a la derecha
+                            if (this.doRectanglesOverlap(bounds1, bounds2, minSpacing)) {
+                                elem2.x = bounds1.x2 + minSpacing;
+                                hasChanges = true;
+                            }
+                        }
+                    }
+                }
+
+                return resolved;
+            }
+        };
+
         // ======= Variables globales =======
         const svg = document.getElementById('svg');
         const world = document.getElementById('world');
@@ -1492,6 +1707,15 @@ audeclau
         let layoutSpec = [];
         let allShelves = [];
         const SHELF_META = Object.create(null);
+
+        // Mapeo de floor_id a floor_uid para construir URLs
+        const floorIdToUid = {
+            @foreach($floors as $floor)
+                {{ $floor->id }}: '{{ $floor->uid }}',
+            @endforeach
+        };
+
+        const warehouseUid = '{{ $warehouse_uid }}';
 
         // ======= Funciones Modal =======
         function showModal(show) {
@@ -1512,15 +1736,21 @@ audeclau
         // ======= Inicialización =======
         async function init() {
             try {
-                // Configurar escalado dinámico
-                SCALE_SYSTEM.setupResponsiveScaling();
+                // Carga configuración y ajusta dimensiones/escala base
+                const configRes = await axios.get('{{ route("manager.warehouse.api.config", ["warehouse_uid" => $warehouse_uid]) }}');
+                warehouseConfig = configRes.data;
+
+                if (warehouseConfig?.warehouse) {
+                    WAREHOUSE.width_m = warehouseConfig.warehouse.width_m ?? WAREHOUSE.width_m;
+                    WAREHOUSE.height_m = warehouseConfig.warehouse.height_m ?? WAREHOUSE.height_m;
+                }
+
+                // Configurar escalado dinámico respetando escala almacenada
+                const preferredScale = Number(warehouseConfig?.scale);
+                SCALE_SYSTEM.setupResponsiveScaling(Number.isFinite(preferredScale) ? preferredScale : null);
 
                 // Agregar definiciones de gradientes
                 SVG_VECTORS.addGradientDefinitions(svg);
-
-                // Carga configuración
-                const configRes = await axios.get('{{ route("manager.warehouse.api.config") }}');
-                warehouseConfig = configRes.data;
 
                 // Carga layout
                 await loadLayout();
@@ -1537,7 +1767,7 @@ audeclau
         }
 
         async function loadLayout() {
-            const layoutRes = await axios.get('{{ route("manager.warehouse.api.layout") }}', {
+            const layoutRes = await axios.get('{{ route("manager.warehouse.api.layout", ["warehouse_uid" => $warehouse_uid]) }}', {
                 params: { floor_id: currentFloor }
             });
             layoutSpec = layoutRes.data.layoutSpec || [];
@@ -1617,8 +1847,10 @@ audeclau
                 });
             });
 
-            // Zoom/pan
+            // Zoom/pan con soporte para mobile y desktop
             let view = { x: 0, y: 0, scale: 1 };
+            const MIN_SCALE = 0.3;
+            const MAX_SCALE = 5;
 
             function setTransform() {
                 world.setAttribute('transform', `translate(${view.x} ${view.y}) scale(${view.scale})`);
@@ -1632,19 +1864,27 @@ audeclau
                 };
             }
 
+            function constrainScale(scale) {
+                return Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+            }
+
+            // Zoom con rueda del mouse (desktop)
             svg.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const f = (e.deltaY < 0) ? 1.1 : 0.9;
                 const p = svgPointFromClient(e);
                 view.x = p.x * (1 - f) * view.scale + view.x;
                 view.y = p.y * (1 - f) * view.scale + view.y;
-                view.scale *= f;
+                view.scale = constrainScale(view.scale * f);
                 setTransform();
             }, { passive: false });
 
+            // Panning con mouse (desktop)
             let panning = false, start = {}, startView = {};
             svg.addEventListener('pointerdown', e => {
-                if (e.target.closest('.shelf')) return;
+                // 🔹 NO iniciar panning si hago clic sobre un estante vectorial
+                if (!e.target.closest('.warehouse-pan')) return;
+
                 panning = true;
                 start = { x: e.clientX, y: e.clientY };
                 startView = { ...view };
@@ -1660,6 +1900,99 @@ audeclau
                 panning = false;
                 svg.releasePointerCapture(e.pointerId);
             });
+
+            // ===== SOPORTE PARA GESTOS TÁCTILES (MOBILE) =====
+            let touches = [];
+            let lastDistance = 0;
+            let lastCenter = { x: 0, y: 0 };
+
+            function getTouchDistance(touch1, touch2) {
+                const dx = touch2.clientX - touch1.clientX;
+                const dy = touch2.clientY - touch1.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            function getTouchCenter(touch1, touch2) {
+                return {
+                    x: (touch1.clientX + touch2.clientX) / 2,
+                    y: (touch1.clientY + touch2.clientY) / 2
+                };
+            }
+
+            svg.addEventListener('touchstart', (e) => {
+                touches = Array.from(e.touches);
+
+                if (touches.length === 2) {
+                    e.preventDefault();
+                    lastDistance = getTouchDistance(touches[0], touches[1]);
+                    lastCenter = getTouchCenter(touches[0], touches[1]);
+                }
+            }, { passive: false });
+
+            svg.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const distance = getTouchDistance(touch1, touch2);
+                    const center = getTouchCenter(touch1, touch2);
+
+                    // Pinch to zoom
+                    if (lastDistance > 0) {
+                        const scaleFactor = distance / lastDistance;
+                        const rect = svg.getBoundingClientRect();
+
+                        // Punto focal relativo al SVG
+                        const focusX = (center.x - rect.left - view.x) / view.scale;
+                        const focusY = (center.y - rect.top - view.y) / view.scale;
+
+                        const oldScale = view.scale;
+                        view.scale = constrainScale(view.scale * scaleFactor);
+
+                        // Ajustar posición para zoom centrado en el punto focal
+                        const actualScaleFactor = view.scale / oldScale;
+                        view.x = focusX * (1 - actualScaleFactor) * oldScale + view.x;
+                        view.y = focusY * (1 - actualScaleFactor) * oldScale + view.y;
+                    }
+
+                    // Pan con dos dedos
+                    const dx = center.x - lastCenter.x;
+                    const dy = center.y - lastCenter.y;
+                    view.x += dx;
+                    view.y += dy;
+
+                    lastDistance = distance;
+                    lastCenter = center;
+                    setTransform();
+                } else if (e.touches.length === 1 && e.target.closest('.warehouse-pan')) {
+                    // Pan con un dedo solo sobre el fondo
+                    e.preventDefault();
+                    const touch = e.touches[0];
+
+                    if (!lastCenter.x && !lastCenter.y) {
+                        lastCenter = { x: touch.clientX, y: touch.clientY };
+                        return;
+                    }
+
+                    const dx = touch.clientX - lastCenter.x;
+                    const dy = touch.clientY - lastCenter.y;
+                    view.x += dx;
+                    view.y += dy;
+
+                    lastCenter = { x: touch.clientX, y: touch.clientY };
+                    setTransform();
+                }
+            }, { passive: false });
+
+            svg.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    lastDistance = 0;
+                }
+                if (e.touches.length === 0) {
+                    lastCenter = { x: 0, y: 0 };
+                }
+            }, { passive: false });
 
             document.getElementById('zoomIn').onclick = () => {
                 view.scale *= 1.15;
@@ -1690,38 +2023,98 @@ audeclau
             rect.setAttribute('y', wy);
             rect.setAttribute('width', ww);
             rect.setAttribute('height', wh);
-            rect.setAttribute('class', 'warehouse');
+            rect.setAttribute('class', 'warehouse warehouse-pan'); // 👈
             world.appendChild(rect);
 
             const rightInnerX = wx + (WAREHOUSE.width_m - MARGIN_M) * SCALE;
             const topInnerY = wy + MARGIN_M * SCALE;
 
-            // Dibuja estanterías con vectores mejorados
-            layoutSpec.forEach(section => {
+            // Primero, colecta todas las posiciones y dimensiones para detectar solapamientos
+            const elementData = [];
+            const elementMap = new Map(); // Para mapear índice a section
+
+            layoutSpec.forEach((section, idx) => {
                 if (!section.floors.includes(floorId)) return;
 
-                const x = rightInnerX - (section.start?.offsetRight_m || 0) * SCALE;
-                const y = topInnerY + (section.start?.offsetTop_m || 0) * SCALE;
+                const x = wx + ww - (section.start?.offsetRight_m || 0) * SCALE;
+                const y = wy + (section.start?.offsetTop_m || 0) * SCALE;
+
+                // Determinar dimensiones basadas en tipo de vector
+                const styleType = section.style_type || section.type;
+                const facesArray = section.style_faces || section.faces || [];
+                const facesCount = Array.isArray(facesArray) ? facesArray.length : 0;
+
+                let width, height;
+                if (styleType === 'wall' || facesCount === 1) {
+                    width = SVG_VECTORS.metersToSVGUnits(section.shelf?.w_m || 1.0);
+                    height = SVG_VECTORS.metersToSVGUnits(section.shelf?.h_m || 1.0);
+                } else if (styleType === 'row' || facesCount === 2) {
+                    width = SVG_VECTORS.metersToSVGUnits(section.shelf?.w_m || 2.0);
+                    height = SVG_VECTORS.metersToSVGUnits(section.shelf?.h_m || 1.5);
+                } else if (styleType === 'island' || facesCount >= 4) {
+                    width = SVG_VECTORS.metersToSVGUnits(section.shelf?.w_m || 3.0);
+                    height = SVG_VECTORS.metersToSVGUnits(section.shelf?.h_m || 3.0);
+                } else {
+                    width = SVG_VECTORS.metersToSVGUnits(section.shelf?.w_m || 2.0);
+                    height = SVG_VECTORS.metersToSVGUnits(section.shelf?.h_m || 1.5);
+                }
+
+                elementData.push({
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    index: elementData.length
+                });
+
+                elementMap.set(elementData.length - 1, { section, styleType, facesCount });
+            });
+
+            // Resolver solapamientos
+            const resolvedElements = OVERLAP_PREVENTION.resolveOverlaps(elementData);
+
+            // Ahora dibuja con posiciones ajustadas
+            resolvedElements.forEach((elem) => {
+                const mapData = elementMap.get(elem.index);
+                if (!mapData) return;
+
+                const { section, styleType, facesCount } = mapData;
+                const x = elem.x;
+                const y = elem.y;
 
                 // ID del estante
                 const shelfId = `${section.id}__${section.label?.pattern}`;
 
-                // Determinar número de caras basado en la estructura
-                const facesConfig = section.itemLocationsByIndex?.[1] || {};
-                const faceCount = Object.keys(facesConfig).length;
-                const isSingleFace = faceCount <= 1;
-
                 let vectorElement;
-                if (isSingleFace) {
-                    // Crear vector de una cara
+
+                // Determinar qué vector crear según el tipo o número de caras
+                if (styleType === 'wall' || facesCount === 1) {
+                    // Pared: 1 cara (front)
                     vectorElement = SVG_VECTORS.createSingleFaceVector(section.id, section, x, y);
-                } else {
-                    // Crear vector de dos caras
+                } else if (styleType === 'row' || facesCount === 2) {
+                    // Pasillo: 2 caras (front, back)
                     vectorElement = SVG_VECTORS.createDualFaceVector(section.id, section, x, y);
+                } else if (styleType === 'island' || facesCount >= 4) {
+                    // Isla: 4 caras (front, back, left, right) - usar vector especial de isla
+                    vectorElement = SVG_VECTORS.createIslandVector(section.id, section, x, y);
+                } else {
+                    // Fallback: detectar por itemLocationsByIndex (legacy)
+                    const facesConfig = section.itemLocationsByIndex?.[1] || {};
+                    const legacyFaceCount = Object.keys(facesConfig).length;
+
+                    if (legacyFaceCount <= 1) {
+                        vectorElement = SVG_VECTORS.createSingleFaceVector(section.id, section, x, y);
+                    } else {
+                        vectorElement = SVG_VECTORS.createDualFaceVector(section.id, section, x, y);
+                    }
                 }
 
-                // Evento click
-                vectorElement.addEventListener('click', () => openShelfModal(shelfId, section));
+                // Evento click - usar el UID directamente desde section
+                const locationUid = section.uid || section.id;
+                vectorElement.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Evitar que el evento se propague al SVG
+                    openShelfModal(locationUid);
+                });
 
                 world.appendChild(vectorElement);
 
@@ -1735,38 +2128,277 @@ audeclau
         }
 
         // ======= Modal de Estante =======
-        function openShelfModal(shelfId, section) {
-            document.getElementById('shelfName').textContent = section.nameTemplate || section.id;
-
-            // Mostrar detalles del estante
-            shelfDetailsDiv.style.display = 'block';
-            detailsGrid.innerHTML = `
-                <div class="detail-item">
-                    <div class="detail-label">Código</div>
-                    <div class="detail-value">${section.id}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Estado</div>
-                    <div class="detail-value">
-                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 3px;
-                                     background: ${getColorFromClass(section.color)}; margin-right: 0.5rem;"></span>
-                        ${getStatusLabel(section.color)}
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Piso</div>
-                    <div class="detail-value">P${section.floors[0]}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Dimensiones</div>
-                    <div class="detail-value">${section.shelf?.w_m || 0}m × ${section.shelf?.h_m || 0}m</div>
-                </div>
-            `;
-
-            // Mostrar caras/posiciones
-            renderFaces(section);
-
+        async function openShelfModal(locationUid) {
+            // Mostrar estado de carga
+            document.getElementById('shelfName').textContent = 'Cargando...';
+            facesContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner" style="margin: 0 auto;"></div></div>';
+            shelfDetailsDiv.style.display = 'none';
             showModal(true);
+
+            try {
+                // Obtener floor_uid del floor actual
+                const floorUid = floorIdToUid[currentFloor];
+
+                if (!floorUid) {
+                    throw new Error('Floor UID no encontrado');
+                }
+
+                // Construir URL del endpoint
+                const url = `/manager/warehouse/warehouses/${warehouseUid}/floors/${floorUid}/locations/${locationUid}/api/details`;
+
+                // Hacer llamada AJAX
+                const response = await axios.get(url);
+                const data = response.data;
+
+                if (!data.success) {
+                    throw new Error('Error al cargar los datos de la ubicación');
+                }
+
+                // Actualizar nombre
+                document.getElementById('shelfName').textContent = data.location.name;
+
+                // Mostrar detalles de la ubicación
+                shelfDetailsDiv.style.display = 'block';
+                detailsGrid.innerHTML = `
+                    <div class="detail-item">
+                        <div class="detail-label">Código</div>
+                        <div class="detail-value">${data.location.code}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Estilo</div>
+                        <div class="detail-value">${data.style.name}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Piso</div>
+                        <div class="detail-value">${data.floor.name}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Caras</div>
+                        <div class="detail-value">${data.style.faces_count}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Estado</div>
+                        <div class="detail-value">
+                            <span style="color: ${data.location.available ? '#10b981' : '#ef4444'};">
+                                ${data.location.available ? 'Disponible' : 'No disponible'}
+                            </span>
+                        </div>
+                    </div>
+                    ${data.location.notes ? `
+                    <div class="detail-item">
+                        <div class="detail-label">Notas</div>
+                        <div class="detail-value">${data.location.notes}</div>
+                    </div>
+                    ` : ''}
+                `;
+
+                // Renderizar secciones agrupadas por caras
+                renderFacesFromAPI(data.sections_by_face, data.style.faces);
+
+            } catch (error) {
+                console.error('Error al cargar ubicación:', error);
+                facesContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Error al cargar los datos de la ubicación</p>
+                        <p style="font-size: 0.875rem; color: #000;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ======= Cargar detalles de una sección específica =======
+        async function loadSectionDetails(sectionUid) {
+            const sectionDetailsContainer = document.getElementById('sectionDetailsContainer');
+            const sectionDetailsGrid = document.getElementById('sectionDetailsGrid');
+            const sectionSlotsContainer = document.getElementById('sectionSlotsContainer');
+
+            // Mostrar estado de carga
+            sectionDetailsContainer.style.display = 'block';
+            sectionDetailsGrid.innerHTML = '<div style="text-align: center;"><div class="spinner"></div></div>';
+            sectionSlotsContainer.innerHTML = '';
+
+            try {
+                // Obtener datos de la ubicación actual para construir la URL
+                const floorUid = floorIdToUid[currentFloor];
+                const locationUid = document.querySelector('.svg-shelf-vector')?.getAttribute('data-location-uid');
+
+                // Construir URL del endpoint
+                const url = `/manager/warehouse/warehouses/${warehouseUid}/floors/${floorUid}/locations/${locationUid}/sections/${sectionUid}/api/details`;
+
+                // Hacer llamada AJAX
+                const response = await axios.get(url);
+                const data = response.data;
+
+                if (!data.success) {
+                    throw new Error('Error al cargar los datos de la sección');
+                }
+
+                // Mostrar detalles de la sección
+                sectionDetailsGrid.innerHTML = `
+                    <div class="detail-item">
+                        <div class="detail-label">Código Sección</div>
+                        <div class="detail-value">${data.section.code}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Código de Barras</div>
+                        <div class="detail-value">${data.section.barcode || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Nivel</div>
+                        <div class="detail-value">${data.section.level}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Cara</div>
+                        <div class="detail-value">${data.section.face}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Estado</div>
+                        <div class="detail-value">
+                            <span style="color: ${data.section.available ? '#10b981' : '#ef4444'};">
+                                ${data.section.available ? 'Disponible' : 'No disponible'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Slots Totales</div>
+                        <div class="detail-value">${data.slots_count}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Slots Ocupados</div>
+                        <div class="detail-value">${data.occupied_slots} / ${data.slots_count}</div>
+                    </div>
+                    ${data.section.notes ? `
+                    <div class="detail-item">
+                        <div class="detail-label">Notas</div>
+                        <div class="detail-value">${data.section.notes}</div>
+                    </div>
+                    ` : ''}
+                `;
+
+                // Mostrar slots si existen
+                if (data.slots && data.slots.length > 0) {
+                    let slotsHTML = '<h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #000;">Slots de la Sección</h4>';
+                    slotsHTML += '<div class="slots-grid">';
+
+                    data.slots.forEach(slot => {
+                        const slotClass = slot.is_occupied ? 'occupied' : 'empty';
+                        const slotInfo = slot.product ? `${slot.product.title} (${slot.product.sku})` : 'Vacío';
+
+                        slotsHTML += `
+                            <div class="slot-item ${slotClass}" title="${slotInfo}\nCantidad: ${slot.quantity || 0}/${slot.max_quantity || 0}\nPeso: ${slot.weight_current || 0}kg/${slot.weight_max || 0}kg">
+                                ${slot.product ? slot.product.sku.substring(0, 3) : '-'}
+                            </div>
+                        `;
+                    });
+
+                    slotsHTML += '</div>';
+                    sectionSlotsContainer.innerHTML = slotsHTML;
+                } else {
+                    sectionSlotsContainer.innerHTML = '<p style="color: #000; text-align: center; padding: 1rem;">No hay slots en esta sección</p>';
+                }
+
+            } catch (error) {
+                console.error('Error al cargar sección:', error);
+                sectionDetailsGrid.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error al cargar los datos de la sección</p>
+                        <p style="font-size: 0.875rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Renderizar caras desde datos de la API
+        function renderFacesFromAPI(sectionsByFace, availableFaces) {
+            facesContainer.innerHTML = '';
+
+            if (!sectionsByFace || Object.keys(sectionsByFace).length === 0) {
+                facesContainer.innerHTML = '<p style="color: #000; text-align: center; padding: 2rem;">No hay secciones disponibles en esta ubicación</p>';
+                return;
+            }
+
+            const faceLabels = {
+                'left': '<i class="fas fa-arrow-left"></i> Izquierda',
+                'right': '<i class="fas fa-arrow-right"></i> Derecha',
+                'front': '<i class="fas fa-arrow-down"></i> Frente',
+                'back': '<i class="fas fa-arrow-up"></i> Atrás'
+            };
+
+            // Iterar sobre cada cara en el orden de availableFaces
+            availableFaces.forEach(face => {
+                const sections = sectionsByFace[face];
+
+                if (!sections || sections.length === 0) return;
+
+                const faceBlock = document.createElement('div');
+                faceBlock.className = 'face-block';
+
+                const header = document.createElement('div');
+                header.className = 'face-header';
+                header.innerHTML = faceLabels[face] || face.charAt(0).toUpperCase() + face.slice(1);
+
+                const content = document.createElement('div');
+                content.className = 'face-content';
+
+                const sectionsContainer = document.createElement('div');
+                sectionsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 1rem;';
+
+                // Agrupar secciones por nivel
+                const sectionsByLevel = sections.reduce((acc, section) => {
+                    if (!acc[section.level]) {
+                        acc[section.level] = [];
+                    }
+                    acc[section.level].push(section);
+                    return acc;
+                }, {});
+
+                // Renderizar por niveles
+                Object.entries(sectionsByLevel).sort(([a], [b]) => a - b).forEach(([level, levelSections]) => {
+                    const levelDiv = document.createElement('div');
+                    levelDiv.style.cssText = 'margin-bottom: 0.5rem;';
+
+                    const levelLabel = document.createElement('div');
+                    levelLabel.style.cssText = 'font-size: 0.75rem; color: #000; margin-bottom: 0.5rem; font-weight: 600;';
+                    levelLabel.textContent = `Nivel ${level}`;
+                    levelDiv.appendChild(levelLabel);
+
+                    const grid = document.createElement('div');
+                    grid.className = 'slots-grid';
+
+                    levelSections.forEach(section => {
+                        const sectionEl = document.createElement('div');
+                        sectionEl.className = 'slot-item';
+                        sectionEl.textContent = section.code || `${section.level}-${section.face}`;
+                        sectionEl.setAttribute('data-section-uid', section.uid);
+
+                        // Determinar estado visual según disponibilidad
+                        if (section.available) {
+                            sectionEl.classList.add('empty');
+                        } else {
+                            sectionEl.classList.add('occupied');
+                        }
+
+                        sectionEl.title = `Sección: ${section.code}\nNivel: ${section.level}\nCara: ${face}\nCódigo de barras: ${section.barcode || 'N/A'}`;
+
+                        // Agregar evento click para mostrar detalles de la sección
+                        sectionEl.addEventListener('click', async () => {
+                            await loadSectionDetails(section.uid);
+                        });
+
+                        grid.appendChild(sectionEl);
+                    });
+
+                    levelDiv.appendChild(grid);
+                    sectionsContainer.appendChild(levelDiv);
+                });
+
+                content.appendChild(sectionsContainer);
+                faceBlock.appendChild(header);
+                faceBlock.appendChild(content);
+                facesContainer.appendChild(faceBlock);
+            });
         }
 
         function renderFaces(section) {
@@ -1774,7 +2406,7 @@ audeclau
             const facesConfig = SHELF_META[`${section.id}__${section.label?.pattern}`]?.facesConfig || {};
 
             if (Object.keys(facesConfig).length === 0) {
-                facesContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No hay posiciones disponibles</p>';
+                facesContainer.innerHTML = '<p style="color: #000; text-align: center; padding: 2rem;">No hay posiciones disponibles</p>';
                 return;
             }
 

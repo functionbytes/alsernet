@@ -9,91 +9,92 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Collection;
 use App\Models\Product\Product;
 use App\Models\Order\Document;
+use App\Models\Prestashop\Order\Order as PrestashopOrder;
 use Illuminate\Http\Request;
 use setasign\Fpdi\PdfReader;
 use Illuminate\Support\Str;
 use setasign\Fpdi\Fpdi;
+use Carbon\Carbon;
 
 class DocumentsController extends Controller
 {
+    /**
+     * Sincroniza un documento con los datos de su orden e importa productos
+     * Método helper reutilizable para sincronización de datos y productos
+     *
+     * @param Document $document
+     * @param PrestashopOrder $order
+     * @return bool
+     */
+    private function syncDocumentWithOrder(Document $document, PrestashopOrder $order): bool
+    {
+        $customer = $order->customer;
+
+        if (!$customer) {
+            return false;
+        }
+
+        $document->order_reference = $order->reference ?? $document->order_reference;
+        $document->order_date = $order->date_add ?? $document->order_date;
+
+        $document->customer_id = $customer->id_customer;
+        $document->customer_firstname = $customer->firstname;
+        $document->customer_lastname = $customer->lastname;
+        $document->customer_email = $customer->email;
+        $document->customer_dni = $customer->siret ?? null;
+        $document->customer_company = $customer->company ?? null;
+
+        $document->save();
+        $document->captureProducts();
+
+        return true;
+    }
 
     public function index(Request $request)
     {
         $search = trim(strtolower($request->get('search')));
         $proccess = $request->get('proccess');
-        $documents = Document::with('customer');
-
-
-        if (!is_null($proccess)) {
-            $documents->whereRaw("EXISTS (
-            SELECT 1 FROM media
-            WHERE media.model_id = request_documents.id
-              AND media.model_type = ?
-        ) = ?", [Document::class, $proccess == 1 ? 1 : 0]);
-        }
-
-
-        $documents = $documents->get();
-
-        if (!empty($search)) {
-            $documents = $documents->filter(function ($doc) use ($search) {
-                $firstname = strtolower(optional($doc->customer)->firstname ?? '');
-                $lastname  = strtolower(optional($doc->customer)->lastname ?? '');
-                $orderId   = strtolower($doc->order_id ?? '');
-
-                return str_contains($firstname, $search)
-                    || str_contains($lastname, $search)
-                    || str_contains($orderId, $search);
-            });
-        }
-
-
-        // Ordenar por prioridad: upload_at no nulo + media asociada
-        $documents = $documents->sortBy(function ($doc) {
-            return [
-                $doc->hasMedia() ? 0 : 1, // primero los que SÍ tienen media
-                $doc->upload_at ?? now()->addYears(100), // orden por fecha, valores nulos al final
-            ];
-        });
-
-
-        // Paginar manualmente
-        $page = $request->get('page', 1);
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
         $perPage = paginationNumber();
-        $offset = ($page - 1) * $perPage;
 
-        $paginatedDocuments = new LengthAwarePaginator(
-            $documents->slice($offset, $perPage)->values(),
-            $documents->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        $query = Document::filterListing($search, $proccess);
+
+        // Filtrar por rango de fechas si se proporciona
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', Carbon::createFromFormat('Y-m-d', $dateFrom));
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', Carbon::createFromFormat('Y-m-d', $dateTo));
+        }
+
+        $documents = $query->paginate($perPage);
 
         return view('administratives.views.orders.documents.index')->with([
-            'documents' => $paginatedDocuments,
+            'documents' => $documents,
             'searchKey' => $search,
-            'proccess' => $proccess
+            'proccess' => $proccess,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
         ]);
     }
 
 
+    public function import()
+    {
+        return view('administratives.views.orders.documents.import');
+    }
+
     public function edit($uid){
 
         $document = Document::uid($uid);
-        $customer = $document->customer;
-        $order = $document->order;
-        $cart = $document->cart;
-        $invoice = $cart->addressInvoice;
-        $products  = $cart->products;
+        $products = $document->products;
+        $sources = ['email', 'api', 'whatsapp', 'wp', 'manual'];
 
         return view('administratives.views.orders.documents.edit')->with([
-            'customer' => $customer,
             'document' => $document,
-            'cart' => $cart,
-            'order' => $order,
             'products' => $products,
-            'invoice' => $invoice,
+            'sources' => $sources,
         ]);
     }
 
@@ -218,12 +219,18 @@ class DocumentsController extends Controller
     public function update(Request $request){
 
         $document = Document::uid($request->uid);
-        $document->proccess  = $request->proccess;
+        $document->proccess = $request->proccess;
+
+        // Actualizar source si se proporciona
+        if ($request->has('source')) {
+            $document->source = $request->source;
+        }
+
         $document->save();
 
         if($request->proccess == 1){
             OrderSendErp::create([
-                'id_order' => $document->order->id_order,
+                'id_order' => $document->order_id,
                 'posible_enviar' => 1,
                 'motivo_no_enviar' => '',
                 'fecha_envio' => null,
@@ -240,6 +247,56 @@ class DocumentsController extends Controller
             'message' => 'Se actualizo la clase correctamente',
         ]);
 
+    }
+
+    public function resendReminderEmail($uid)
+    {
+        $document = Document::uid($uid);
+
+        if (!$document) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Document not found.'
+            ], 404);
+        }
+
+        event(new \App\Events\Documents\DocumentReminderRequested($document));
+
+        $document->reminder_at = now();
+        $document->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email de recordatorio enviado correctamente'
+        ]);
+    }
+
+    public function confirmDocumentUpload($uid)
+    {
+        $document = Document::uid($uid);
+
+        if (!$document) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Document not found.'
+            ], 404);
+        }
+
+        if (!$document->confirmed_at || $document->media->count() === 0) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Document has not been uploaded yet.'
+            ], 400);
+        }
+
+        $document->confirmed_at = now();
+        $document->proccess = 1;
+        $document->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Carga de documento confirmada correctamente'
+        ]);
     }
 
 
@@ -302,6 +359,171 @@ class DocumentsController extends Controller
         $document = Document::uid($uid);
         $document->delete();
         return redirect()->route('administrative.documents');
+    }
+
+    /**
+     * Sincroniza todos los documentos con los datos de sus órdenes
+     * Incluye importación de productos
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function syncAllDocuments()
+    {
+        try {
+            $synced = 0;
+            $failed = 0;
+            $errors = [];
+
+            $documents = Document::get();
+
+            if ($documents->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No documents to synchronize.',
+                    'data' => [
+                        'synced' => 0,
+                        'failed' => 0,
+                        'total' => 0,
+                    ],
+                ], 200);
+            }
+
+            foreach ($documents as $document) {
+                try {
+                    $order = PrestashopOrder::find($document->order_id);
+
+                    if (!$order) {
+                        $failed++;
+                        $errors[] = [
+                            'uid' => $document->uid,
+                            'order_id' => $document->order_id,
+                            'reason' => 'Order not found in Prestashop'
+                        ];
+                        continue;
+                    }
+
+                    if (!$this->syncDocumentWithOrder($document, $order)) {
+                        $failed++;
+                        $errors[] = [
+                            'uid' => $document->uid,
+                            'order_id' => $document->order_id,
+                            'reason' => 'Customer not found'
+                        ];
+                        continue;
+                    }
+
+                    $synced++;
+
+                } catch (\Exception $e) {
+                    $failed++;
+                    $errors[] = [
+                        'uid' => $document->uid,
+                        'order_id' => $document->order_id,
+                        'reason' => $e->getMessage()
+                    ];
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Synchronization completed. {$synced} documents synced, {$failed} failed.",
+                'data' => [
+                    'synced' => $synced,
+                    'failed' => $failed,
+                    'total' => $documents->count(),
+                    'errors' => $failed > 0 ? $errors : [],
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Synchronization failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Sincroniza documentos de una orden específica
+     * Incluye importación de productos
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function syncByOrderId(Request $request)
+    {
+        $orderId = $request->input('order_id') ?? $request->query('order_id');
+
+        if (!$orderId) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Missing order_id parameter'
+            ], 400);
+        }
+
+        try {
+            $documents = Document::where('order_id', $orderId)->get();
+
+            if ($documents->isEmpty()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'No documents found for this order ID.'
+                ], 404);
+            }
+
+            $order = PrestashopOrder::find($orderId);
+
+            if (!$order) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Order not found in Prestashop.'
+                ], 404);
+            }
+
+            $synced = 0;
+            $failed = 0;
+            $errors = [];
+
+            foreach ($documents as $document) {
+                try {
+                    if (!$this->syncDocumentWithOrder($document, $order)) {
+                        $failed++;
+                        $errors[] = [
+                            'uid' => $document->uid,
+                            'reason' => 'Customer not found'
+                        ];
+                        continue;
+                    }
+                    $synced++;
+                } catch (\Exception $e) {
+                    $failed++;
+                    $errors[] = [
+                        'uid' => $document->uid,
+                        'reason' => $e->getMessage()
+                    ];
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully synced {$synced} document(s) for order {$orderId}.",
+                'data' => [
+                    'order_id' => $orderId,
+                    'synced' => $synced,
+                    'failed' => $failed,
+                    'total' => $documents->count(),
+                    'order_reference' => $order->reference,
+                    'customer_name' => $order->customer ? "{$order->customer->firstname} {$order->customer->lastname}" : null,
+                    'errors' => $failed > 0 ? $errors : [],
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Synchronization failed: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
 }

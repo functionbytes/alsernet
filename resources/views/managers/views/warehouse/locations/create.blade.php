@@ -30,9 +30,18 @@
 
                     <div class="row">
                         <!-- Header Info -->
-                        <div class="col-12">
-                            <div class="alert alert-info">
-                                <strong>Almacén:</strong> {{ $warehouse->name }} | <strong>Piso:</strong> {{ $floor->name }} ({{ $floor->code }})
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="control-label col-form-label">Almacén</label>
+                                <input type="text" class="form-control" value="{{ $warehouse->name }}" disabled>
+                            </div>
+                        </div>
+
+                        <!-- Floor Display (Read-only) -->
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="control-label col-form-label">Piso</label>
+                                <input type="text" class="form-control" value="{{ $floor->name }} ({{ $floor->code }})" disabled>
                             </div>
                         </div>
 
@@ -69,7 +78,7 @@
                         <div class="col-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Posición X (metros) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('position_x') is-invalid @enderror" id="position_x" name="position_x" value="{{ old('position_x', 0) }}" min="0" step="0.01" required>
+                                <input type="number" class="form-control @error('position_x') is-invalid @enderror" id="position_x" name="position_x" value="{{ old('position_x', 0) }}" min="0" step="1" required>
                                 @error('position_x')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -80,7 +89,7 @@
                         <div class="col-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Posición Y (metros) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('position_y') is-invalid @enderror" id="position_y" name="position_y" value="{{ old('position_y', 0) }}" min="0" step="0.01" required>
+                                <input type="number" class="form-control @error('position_y') is-invalid @enderror" id="position_y" name="position_y" value="{{ old('position_y', 0) }}" min="0" step="1" required>
                                 @error('position_y')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -160,17 +169,19 @@
                     </div>
 
                     <!-- Section Face (for 2-cara styles) -->
-                    <div class="col-12 face-group" style="display: none;">
+                    <div class="col-12 face-group d-none">
                         <label class="form-label">Cara <span class="text-danger">*</span></label>
                         <select class="form-select section-face" name="sections[0][face]">
-                            <option value="front" selected>📍 Frontal</option>
-                            <option value="back">Posterior</option>
+                            <option value="front" selected>Fondo</option>
+                            <option value="back">Adelante</option>
+                            <option value="left" >Cara 1</option>
+                            <option value="right" >Cara 2</option>
                         </select>
                     </div>
 
                     <!-- Remove Button -->
                     <div class="col-12">
-                        <button type="button" class="btn btn-md btn-danger w-100 btn-remove-section">
+                        <button type="button" class="btn btn-md btn-primary w-100 btn-remove-section">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>

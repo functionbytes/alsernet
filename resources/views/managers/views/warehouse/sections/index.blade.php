@@ -138,7 +138,7 @@
                                 <td colspan="10" class="text-center py-4">
                                     <p class="text-muted">No hay secciones creadas</p>
                                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalCreateSection">
-                                        Crear Primera Sección
+                                        Crear primera sección
                                     </button>
                                 </td>
                             </tr>

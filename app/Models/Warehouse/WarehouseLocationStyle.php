@@ -24,7 +24,10 @@ class WarehouseLocationStyle extends Model
         'code',
         'name',
         'description',
+        'type',
         'faces',
+        'width',
+        'height',
         'default_levels',
         'default_sections',
         'available',
@@ -47,9 +50,9 @@ class WarehouseLocationStyle extends Model
      */
 
     // Tipos de estilos disponibles
-    const TYPE_ROW = 'ROW';
-    const TYPE_ISLAND = 'ISLAND';
-    const TYPE_WALL = 'WALL';
+    const TYPE_ROW = 'row';
+    const TYPE_ISLAND = 'island';
+    const TYPE_WALL = 'wall';
 
     // Caras disponibles
     const FACE_LEFT = 'left';
@@ -77,6 +80,19 @@ class WarehouseLocationStyle extends Model
     ];
 
     /**
+     * Obtener las caras disponibles según el tipo de estilo
+     */
+    public static function getFacesByType(string $type): array
+    {
+        return match ($type) {
+            self::TYPE_ISLAND => [self::FACE_FRONT, self::FACE_BACK, self::FACE_LEFT, self::FACE_RIGHT], // 4 caras (isla cuadrada)
+            self::TYPE_ROW => [self::FACE_FRONT, self::FACE_BACK], // 2 caras (pasillo)
+            self::TYPE_WALL => [self::FACE_FRONT], // 1 cara (pared)
+            default => [self::FACE_FRONT],
+        };
+    }
+
+    /**
      * ===============================================
      * RELACIONES
      * ===============================================
@@ -87,7 +103,7 @@ class WarehouseLocationStyle extends Model
      */
     public function locations(): HasMany
     {
-        return $this->hasMany('App\Models\Warehouse\WarehouseLocation', 'location_style_id', 'id');
+        return $this->hasMany('App\Models\Warehouse\WarehouseLocation', 'style_id', 'id');
     }
 
     /**
@@ -132,7 +148,7 @@ class WarehouseLocationStyle extends Model
      */
     public function getTypeName(): string
     {
-        return match ($this->code) {
+        return match ($this->type) {
             self::TYPE_ROW => 'Pasillo Lineal',
             self::TYPE_ISLAND => 'Isla (360°)',
             self::TYPE_WALL => 'Pared',
@@ -203,8 +219,11 @@ class WarehouseLocationStyle extends Model
             'uid' => $this->uid,
             'code' => $this->code,
             'name' => $this->name,
+            'type' => $this->type,
             'type_name' => $this->getTypeName(),
             'faces' => $this->faces,
+            'width' => $this->width,
+            'height' => $this->height,
             'faces_label' => $this->getFacesLabel(),
             'default_levels' => $this->default_levels,
             'default_sections' => $this->default_sections,

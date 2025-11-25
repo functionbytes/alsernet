@@ -14,7 +14,7 @@
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center">
-                            <h5 class="mb-0">Editar Estilo: {{ $style->code }}</h5>
+                            <h5 class="mb-0">Editar estilo: {{ $style->code }}</h5>
                         </div>
                         <p class="card-subtitle mb-3 mt-3">
                             Actualice los datos del estilo según sea necesario.
@@ -58,46 +58,17 @@
                                 </div>
                             </div>
 
-                            <div class="col-12">
+                            <div class="col-6">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Caras Disponibles <span class="text-danger">*</span></label>
-                                    <div class="row">
-                                        @foreach(['left' => 'Izquierda', 'right' => 'Derecha', 'front' => 'Frente', 'back' => 'Atrás'] as $value => $label)
-                                            <div class="col-md-3">
-                                                <div class="form-check">
-                                                    <input class="form-check-input @error('faces') is-invalid @enderror" type="checkbox" id="face_{{ $value }}" name="faces[]" value="{{ $value }}" {{ in_array($value, old('faces', $style->faces ?? [])) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="face_{{ $value }}">
-                                                        {{ $label }}
-                                                    </label>
-                                                </div>
-                                            </div>
+                                    <label class="control-label col-form-label">Tipo de estantería <span class="text-danger">*</span></label>
+                                    <select name="type" id="type" class="select2 form-control @error('type') is-invalid @enderror" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        @foreach($types as $value => $label)
+                                            <option value="{{ $value }}" {{ old('type', $style->type ?? '') == $value ? 'selected' : '' }}>{{ $label }}</option>
                                         @endforeach
-                                    </div>
-                                    @error('faces')
-                                        <span class="text-danger small">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Niveles por Defecto <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('default_levels') is-invalid @enderror"
-                                           id="default_levels" name="default_levels" value="{{ old('default_levels', $style->default_levels) }}"
-                                           min="1" max="20" required>
-                                    @error('default_levels')
-                                        <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Secciones por Defecto <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control @error('default_sections') is-invalid @enderror"
-                                           id="default_sections" name="default_sections" value="{{ old('default_sections', $style->default_sections) }}"
-                                           min="1" max="30" required>
-                                    @error('default_sections')
+                                    </select>
+                                    <small class="text-muted d-block mt-1">Defina si es un pasillo, isla o estantería de pared</small>
+                                    @error('type')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -114,6 +85,66 @@
                                         </select>
                                     </div>
                                     @error('available')
+                                    <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Caras disponibles <span class="text-danger">*</span></label>
+                                    <select name="faces[]" id="faces" class="select2 form-control @error('faces') is-invalid @enderror" multiple="multiple" required>
+                                        @foreach($faces as $value => $label)
+                                            <option value="{{ $value }}" {{ in_array($value, old('faces', $style->faces ?? [])) ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('faces')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Niveles por defecto <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('default_levels') is-invalid @enderror"
+                                           id="default_levels" name="default_levels" value="{{ old('default_levels', $style->default_levels) }}"
+                                           min="1" max="20" required>
+                                    @error('default_levels')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Ancho mapa <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('width') is-invalid @enderror" id="width" name="width" value="{{ old('width', $style->width) }}"  min="1" max="200" required>
+                                    @error('width')
+                                    <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Alto mapa <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('height') is-invalid @enderror" id="height" name="height" value="{{ old('height', $style->height) }}"  min="1" max="200" required>
+                                    @error('height')
+                                    <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="control-label col-form-label">Secciones por defecto <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('default_sections') is-invalid @enderror"
+                                           id="default_sections" name="default_sections" value="{{ old('default_sections', $style->default_sections) }}"
+                                           min="1" max="30" required>
+                                    @error('default_sections')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -134,12 +165,9 @@
 
                             <div class="col-12">
                                 <div class="border-top pt-3 mt-4">
-                                    <button type="submit" class="btn btn-primary px-4 waves-effect waves-light mt-2">
-                                        <i class="fa-duotone fa-check"></i> Actualizar Estilo
+                                    <button type="submit" class="btn btn-primary px-4 waves-effect waves-light mt-2 w-100">
+                                       Actualizar
                                     </button>
-                                    <a href="{{ route('manager.warehouse.styles') }}" class="btn btn-secondary px-4 waves-effect waves-light mt-2">
-                                        <i class="fa-duotone fa-times"></i> Cancelar
-                                    </a>
                                 </div>
                             </div>
 

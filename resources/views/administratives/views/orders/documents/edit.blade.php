@@ -4,7 +4,7 @@
 
     <div class="documents-status">
         <div class="row">
-            @if($document->upload_at!=null && $document->media->count()>0)
+            @if($document->confirmed_at!=null && $document->media->count()>0)
                 <div class="col-md-12 mb-3">
                     <a href="{{ route('administrative.documents.summary', $document->uid) }}" target="_blank" class="card item-status h-100">
                         <div class="card-body text-center">
@@ -53,7 +53,7 @@
                                         <ul class="list-group list-group-flush">
 
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                {{ $item->product->name }}
+                                                {{ $item->product_name }}
                                                 <span class="badge bg-success">{{ $item->quantity}} ud</span>
                                             </li>
                                         </ul>
@@ -78,11 +78,11 @@
                         <div class="row">
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Orden</label>
-                                <input type="text" class="form-control"  name="firstname" value="{{$order->id_order}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
+                                <input type="text" class="form-control"  name="firstname" value="{{$document->order_id}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Referencia</label>
-                                <input type="text" class="form-control"  name="firstname" value="{{$order->reference}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
+                                <input type="text" class="form-control"  name="firstname" value="{{$document->order_reference}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
                             </div>
                         </div>
 
@@ -98,29 +98,38 @@
                         <div class="row">
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Nombres</label>
-                                <input type="text" class="form-control"  name="firstname" value="{{$customer->firstname}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
+                                <input type="text" class="form-control"  name="firstname" value="{{$document->customer_firstname}}" placeholder="Ingresar nombres"  autocomplete="new-password" disabled>
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Apellidos</label>
-                                <input type="text" class="form-control" name="lastname" value="{{$customer->lastname}}" placeholder="Ingresar apellidos" autocomplete="new-password" disabled>
+                                <input type="text" class="form-control" name="lastname" value="{{$document->customer_lastname}}" placeholder="Ingresar apellidos" autocomplete="new-password" disabled>
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">DNI/NIE/CIF</label>
-                                <input type="text" class="form-control" name="identification" value="{{$invoice?->dni}}" placeholder="Ingresar la identificacion" autocomplete="new-password" disabled>
+                                <input type="text" class="form-control" name="identification" value="{{$document->customer_dni}}" placeholder="Ingresar la identificacion" autocomplete="new-password" disabled>
                             </div>
                             <div class="col-sm-12 col-md-6 mb-3">
                                 <label  class="control-label col-form-label">Correo electronico</label>
-                                <input type="text" class="form-control" name="email" value="{{$customer->email}}" placeholder="Ingresar el correo electronico" autocomplete="new-password" disabled>
+                                <input type="text" class="form-control" name="email" value="{{$document->customer_email}}" placeholder="Ingresar el correo electronico" autocomplete="new-password" disabled>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-sm-12 col-md-12 mb-3">
+                            <div class="col-sm-12 col-md-6 mb-3">
                                 <label class="control-label col-form-label">Gestionado</label>
                                 <select class="form-control select2" id="proccess" name="proccess" >
                                     <option value="0" {{ $document->proccess == 0 ? 'selected' : '' }}>No</option>
                                     <option value="1" {{ $document->proccess == 1 ? 'selected' : '' }}>Si</option>
                                 </select>
                                 <label id="proccess-error" class="error" for="proccess" style="display: none"></label>
+                            </div>
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="control-label col-form-label">Origen del documento</label>
+                                <select class="form-control select2" id="source" name="source" disabled>
+                                    <option value="">Sin origen</option>
+                                    <option value="email" {{ $document->source == 'email' ? 'selected' : '' }}>Email</option>
+                                    <option value="api" {{ $document->source == 'api' ? 'selected' : '' }}>API</option>
+                                    <option value="whatsapp" {{ $document->source == 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
+                                </select>
                             </div>
                             <div class="col-12">
                                 <div class="border-top pt-1 mt-4">

@@ -49,10 +49,14 @@ class WarehouseLocation extends Model
         return $query->where('id', $id)->first();
     }
 
-    public function scopeUid($query ,$uid)
+    /**
+     * Scope: Buscar por uid
+     */
+    public function scopeUid($query, $uid)
     {
         return $query->where('uid', $uid)->first();
     }
+
 
 
     /**

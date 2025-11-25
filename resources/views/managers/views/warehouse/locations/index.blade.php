@@ -30,7 +30,12 @@
                                 </a>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('manager.warehouse.locations.create', [$warehouse->uid, $floor->uid]) }}" class="btn btn-primary">
+                                <a href="{{ route('manager.warehouse.locations.transfer.bulk', [$warehouse->uid, $floor->uid]) }}" class="btn btn-primary" title="Trasladar múltiples ubicaciones a otro piso">
+                                    <i class="fa-duotone fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{{ route('manager.warehouse.locations.create', [$warehouse->uid, $floor->uid]) }}" class="btn btn-info">
                                     <i class="fa-duotone fa-plus"></i>
                                 </a>
                             </div>
@@ -101,6 +106,11 @@
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.print', [$warehouse->uid, $floor->uid, $location->uid]) }}" target="_blank">
                                                 Imprimir códigos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3" href="{{ route('manager.warehouse.locations.transfer', [$warehouse->uid, $floor->uid, $location->uid]) }}">
+                                                Trasladar a otro piso
                                             </a>
                                         </li>
                                         <li>

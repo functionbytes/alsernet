@@ -933,17 +933,6 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
                     Route::post('/capacity', [WarehouseReportsController::class, 'generateCapacity'])->name('manager.warehouse.reports.capacity');
                 });
 
-                // Estilos del warehouse (específicos)
-                Route::group(['prefix' => 'styles'], function () {
-                    Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('manager.warehouse.styles');
-                    Route::get('/create', [WarehouseLocationStylesController::class, 'create'])->name('manager.warehouse.styles.create');
-                    Route::post('/store', [WarehouseLocationStylesController::class, 'store'])->name('manager.warehouse.styles.store');
-                    Route::get('/{style_uid}', [WarehouseLocationStylesController::class, 'view'])->name('manager.warehouse.styles.view');
-                    Route::get('/{style_uid}/edit', [WarehouseLocationStylesController::class, 'edit'])->name('manager.warehouse.styles.edit');
-                    Route::post('/update', [WarehouseLocationStylesController::class, 'update'])->name('manager.warehouse.styles.update');
-                    Route::get('/{style_uid}/destroy', [WarehouseLocationStylesController::class, 'destroy'])->name('manager.warehouse.styles.destroy');
-                });
-
                 // Pisos del warehouse
                 Route::group(['prefix' => 'floors'], function () {
 
@@ -966,10 +955,23 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
                         Route::get('/{location_uid}/destroy', [WarehouseLocationsController::class, 'destroy'])->name('manager.warehouse.locations.destroy');
                         Route::get('/api/warehouse', [WarehouseLocationsController::class, 'getByWarehouse'])->name('manager.warehouse.locations.api.warehouse');
                         Route::get('/api/barcode/{barcode}', [WarehouseLocationsController::class, 'getByBarcode'])->name('manager.warehouse.locations.api.barcode');
+                        Route::get('/{location_uid}/api/details', [WarehouseLocationsController::class, 'getLocationDetails'])->name('manager.warehouse.locations.api.details');
+                        Route::get('/{location_uid}/sections/{section_uid}/api/details', [WarehouseLocationsController::class, 'getSectionDetails'])->name('manager.warehouse.sections.api.details');
 
                         // Print barcodes routes
                         Route::get('/print-all-barcodes', [WarehouseLocationsController::class, 'printAllBarcodes'])->name('manager.warehouse.locations.print-all');
                         Route::get('/{location_uid}/print-barcodes', [WarehouseLocationsController::class, 'printBarcodes'])->name('manager.warehouse.locations.print');
+
+                        // Transferir múltiples ubicaciones (bulk)
+                        Route::get('/transfer/bulk', [WarehouseLocationsController::class, 'transferBulkForm'])->name('manager.warehouse.locations.transfer.bulk');
+                        Route::post('/transfer/bulk', [WarehouseLocationsController::class, 'transferBulkSubmit'])->name('manager.warehouse.locations.transfer.bulk.store');
+
+                        // Transferir ubicación individual
+                        Route::group(['prefix' => '{location_uid}/transfer'], function () {
+                            Route::get('/', [WarehouseLocationsController::class, 'transfer'])->name('manager.warehouse.locations.transfer');
+                            Route::post('/store', [WarehouseLocationsController::class, 'transferSubmit'])->name('manager.warehouse.locations.transfer.store');
+                            Route::get('/api/available-floors', [WarehouseLocationsController::class, 'getAvailableFloorsForTransfer'])->name('manager.warehouse.locations.transfer.api.available-floors');
+                        });
 
                         // Secciones dentro de la locación
                         Route::group(['prefix' => '{location_uid}/sections'], function () {
@@ -1005,6 +1007,17 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
             });
         });
 
+        // ===== WAREHOUSE LOCATION STYLES (GLOBAL, NOT WAREHOUSE-SPECIFIC) =====
+        Route::group(['prefix' => 'styles'], function () {
+            Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('manager.warehouse.styles');
+            Route::get('/create', [WarehouseLocationStylesController::class, 'create'])->name('manager.warehouse.styles.create');
+            Route::post('/store', [WarehouseLocationStylesController::class, 'store'])->name('manager.warehouse.styles.store');
+            Route::get('/{style_uid}', [WarehouseLocationStylesController::class, 'view'])->name('manager.warehouse.styles.view');
+            Route::get('/{style_uid}/edit', [WarehouseLocationStylesController::class, 'edit'])->name('manager.warehouse.styles.edit');
+            Route::post('/update', [WarehouseLocationStylesController::class, 'update'])->name('manager.warehouse.styles.update');
+            Route::get('/{style_uid}/destroy', [WarehouseLocationStylesController::class, 'destroy'])->name('manager.warehouse.styles.destroy');
+        });
+
         // ===== WAREHOUSE API ROUTES =====
         Route::get('/api/styles/{style_id}', [WarehouseLocationsController::class, 'getStyleDetails'])->name('manager.warehouse.api.style.details');
 
@@ -1034,7 +1047,7 @@ Route::prefix('warehouse')->group(function () {
 
     // Stand Styles Routes
     Route::group(['prefix' => 'styles'], function () {
-        Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('styles');
+        Route::get('/', [WarehouseLocationStylesController::class, 'index'])->name('warehouse.styles.index');
         Route::get('/create', [WarehouseLocationStylesController::class, 'create'])->name('warehouse.styles.create');
         Route::post('/store', [WarehouseLocationStylesController::class, 'store'])->name('warehouse.styles.store');
         Route::post('/update', [WarehouseLocationStylesController::class, 'update'])->name('warehouse.styles.update');

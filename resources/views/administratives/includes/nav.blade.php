@@ -46,12 +46,12 @@
               </a>
               <ul aria-expanded="false" class="collapse first-level">
                   <li class="sidebar-item">
-                      <a href="{{ route('callcenter.settings.profile') }}" class="sidebar-link">
+                      <a  class="sidebar-link">
                           <span class="hide-menu">Usuario</span>
                       </a>
                   </li>
                   <li class="sidebar-item">
-                      <a href="{{ route('callcenter.settings.notifications') }}" class="sidebar-link">
+                      <a  class="sidebar-link">
                           <span class="hide-menu">Notificaciones</span>
                       </a>
                   </li>

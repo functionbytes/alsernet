@@ -2,7 +2,7 @@
 
 @section('content')
 
-    @include('managers.includes.card', ['title' => 'Estilos de Estanterías (Stand Styles)'])
+    @include('managers.includes.card', ['title' => 'Estilos de estanterías'])
 
     <div class="widget-content searchable-container list">
 
@@ -58,51 +58,62 @@
                     @forelse($styles as $style)
                         <tr>
                             <td>
-                                <span class="text-muted font-weight-bold">{{ $style->code }}</span>
+                                <span class="text-muted font-weight-bold">{{ $style->code }}
                             </td>
                             <td>
-                                <span class="text-muted font-weight-bold">{{ $style->name }}</span>
+                                <span class="text-muted font-weight-bold">{{ $style->name }}
                             </td>
                             <td>
-                                <span class="badge badge-light-info">{{ count($style->faces) }} caras</span>
+                                {{ count($style->faces) }} caras
                             </td>
                             <td>
-                                <span class="badge badge-light-primary">{{ $style->default_levels }}</span>
+                                {{ $style->default_levels }}
                             </td>
                             <td>
-                                <span class="badge badge-light-warning">{{ $style->default_sections }}</span>
+                                {{ $style->default_sections }}
                             </td>
                             <td>
-                                <span class="badge badge-light-success">{{ $style->locations()->count() }}</span>
+                                {{ $style->locations()->count() }}
                             </td>
                             <td>
-                                @if($style->available)
-                                    <span class="badge badge-light-success">Disponible</span>
-                                @else
-                                    <span class="badge badge-light-danger">Inactivo</span>
-                                @endif
+                                <span class="badge {{ $style->available ? 'bg-light-secondary text-primary' : 'bg-light-secondary text-primary' }} rounded-3 py-2">
+                                    {{ $style->available ? 'Activo' : 'Inactivo' }}
+                                </span>
                             </td>
-                            <td>
-                                <div class="dropdown">
-                                    <a href="javascript:void(0)" class="link" id="dropdownMenuButton{{ $loop->index }}"
-                                       data-bs-toggle="dropdown"
+
+                            <td class="text-left">
+                                <div class="dropdown dropstart">
+                                    <a href="#" class="text-muted" id="dropdownMenuButton{{ $loop->index }}" data-bs-toggle="dropdown"
                                        aria-expanded="false">
-                                        <i data-feather="more-vertical"></i>
+                                        <i class="ti ti-dots fs-5"></i>
                                     </a>
-                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ $loop->index }}">
-                                        <a class="dropdown-item" href="{{ route('manager.warehouse.styles.view', $style->uid) }}">
-                                            <i class="fa-duotone fa-eye"></i> Ver
-                                        </a>
-                                        <a class="dropdown-item" href="{{ route('manager.warehouse.styles.edit', $style->uid) }}">
-                                            <i class="fa-duotone fa-pencil"></i> Editar
-                                        </a>
-                                        <a class="dropdown-item" href="{{ route('manager.warehouse.styles.destroy', $style->uid) }}"
-                                           onclick="return confirm('¿Eliminar este estilo?')">
-                                            <i class="fa-duotone fa-trash text-danger"></i> Eliminar
-                                        </a>
-                                    </div>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ $loop->index }}">
+
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3"
+                                               href="{{ route('manager.warehouse.styles.view', $style->uid) }}">
+                                                Ver
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3"
+                                               href="{{ route('manager.warehouse.styles.edit', $style->uid) }}">
+                                                Editar
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center gap-3 confirm-delete"
+                                               data-href="{{ route('manager.warehouse.styles.destroy', $style->uid) }}">
+                                                Eliminar
+                                            </a>
+                                        </li>
+
+                                    </ul>
                                 </div>
                             </td>
+
                         </tr>
                     @empty
                         <tr>

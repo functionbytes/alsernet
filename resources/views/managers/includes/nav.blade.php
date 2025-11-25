@@ -27,16 +27,6 @@
 
 
                 <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ route('manager.inventaries') }}" aria-expanded="false">
-                          <span class="d-flex">
-                           <i class="fa-duotone fa-barcode"></i>
-                          </span>
-                        <span class="hide-menu">Inventaries</span>
-                    </a>
-                </li>
-
-
-                <li class="sidebar-item">
                     <a class="sidebar-link has-arrow " href="#" aria-expanded="false">
                           <span class="d-flex">
                             <i class="fa-duotone fa-note"></i>
@@ -252,6 +242,14 @@
                                   <i class="ti ti-circle"></i>
                                 </span>
                                 <span class="hide-menu">Pisos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="{{ route('manager.warehouse.styles') }}" aria-expanded="false">
+                                <span>
+                                  <i class="ti ti-circle"></i>
+                                </span>
+                                <span class="hide-menu">Estilos de ubicaciones</span>
                             </a>
                         </li>
                     </ul>

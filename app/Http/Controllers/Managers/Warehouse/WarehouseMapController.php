@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Managers\Warehouse;
 
 use App\Http\Controllers\Controller;
+use App\Models\Warehouse\Warehouse;
 use App\Models\Warehouse\WarehouseFloor;
 use App\Models\Warehouse\WarehouseLocation;
 use App\Models\Warehouse\WarehouseLocationStyle;
@@ -15,12 +16,15 @@ class WarehouseMapController extends Controller
     /**
      * Display the warehouse interactive map
      */
-    public function map()
+    public function map($warehouse_uid)
     {
-        $floors = WarehouseFloor::available()->ordered()->with('stands')->get();
-        $standStyles = WarehouseLocationStyle::available()->with('stands')->get();
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floors = WarehouseFloor::where('warehouse_id', $warehouse->id)->available()->ordered()->with('locations')->get();
+        $standStyles = WarehouseLocationStyle::available()->with('locations')->get();
 
         return view('managers.views.warehouse.map.index', [
+            'warehouse' => $warehouse,
+            'warehouse_uid' => $warehouse_uid,
             'floors' => $floors,
             'standStyles' => $standStyles,
         ]);
@@ -74,16 +78,17 @@ class WarehouseMapController extends Controller
 
             $layoutItem = [
                 'id' => $stand->code,
+                'uid' => $stand->uid,  // Agregar UID para poder identificar la ubicación
                 'floors' => [$stand->floor_id],
                 'kind' => 'row', // Simplified - can be enhanced
                 'anchor' => 'top-right',
                 'start' => [
-                    'offsetRight_m' => 0.5,
-                    'offsetTop_m' => 0.5,
+                    'offsetRight_m' => (float)$stand->position_x ?? 0,
+                    'offsetTop_m' => (float)$stand->position_y ?? 0,
                 ],
                 'shelf' => [
-                    'w_m' => $stand->style?->faces ? 1.85 : 1.05,
-                    'h_m' => 1.0,
+                    'w_m' => (float)($stand->style?->width ?? 1.0),
+                    'h_m' => (float)($stand->style?->height ?? 1.0),
                 ],
                 'count' => 1,
                 'direction' => 'left',
@@ -95,6 +100,10 @@ class WarehouseMapController extends Controller
                 ],
                 'nameTemplate' => $stand->code,
                 'color' => $this->getStandColorClass($stand),
+                'style_type' => $stand->style?->type ?? 'row',
+                'style_faces' => $stand->style?->faces ?? ['front'],
+                'available' => $stand->available,
+                'occupancy_percentage' => round($stand->getOccupancyPercentage(), 2),
                 'exportEdges' => false,
                 'itemLocationsByIndex' => [
                     1 => $itemLocations,
@@ -117,24 +126,27 @@ class WarehouseMapController extends Controller
     {
         $locations = [];
 
-        // Get all slots for this stand
-        $slots = $stand->slots()
-            ->with('product')
-            ->orderBy('face', 'asc')
-            ->orderBy('level', 'asc')
-            ->orderBy('section', 'asc')
-            ->get();
+        // Get all slots for this location through sections
+        $slots = WarehouseInventorySlot::whereHas('section', function ($query) use ($stand) {
+            $query->where('location_id', $stand->id);
+        })
+        ->with(['product', 'section'])
+        ->orderBy('id', 'asc')
+        ->get();
 
-        // Group by face
-        $slotsByFace = $slots->groupBy('face');
+        // Group by face (from section)
+        $slotsByFace = $slots->groupBy(function ($slot) {
+            return $slot->section?->face ?? 'front';
+        });
 
         foreach (['left', 'right', 'front', 'back'] as $face) {
             $faceSlots = $slotsByFace->get($face, collect());
 
             if ($faceSlots->isNotEmpty()) {
                 $locations[$face] = $faceSlots->map(function ($slot) {
+                    $section = $slot->section;
                     return [
-                        'code' => $slot->barcode ?? sprintf('SLOT-%d-%d-%d', $slot->level, $slot->section, $slot->id),
+                        'code' => $section?->barcode ?? sprintf('SLOT-%d-%d', $slot->id, $section?->id ?? 0),
                         'color' => $this->getSlotColorByOccupancy($slot),
                     ];
                 })->values()->all();
@@ -233,7 +245,7 @@ class WarehouseMapController extends Controller
     public function getSlotDetails($uid): JsonResponse
     {
         $slot = WarehouseInventorySlot::where('uid', $uid)
-            ->with(['stand.floor', 'stand.style', 'product'])
+            ->with(['location.floor', 'location.style', 'product'])
             ->firstOrFail();
 
         return response()->json([

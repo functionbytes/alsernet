@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-lg-12 d-flex align-items-stretch">
         <div class="card w-100">
-            <form id="formLocationEdit" action="{{ route('manager.warehouse.locations.update') }}" method="POST" role="form">
+            <form id="formLocationEdit" action="{{ route('manager.warehouse.locations.update',[$warehouse->uid, $floor->uid, $location->uid]) }}" method="POST" role="form">
                 {{ csrf_field() }}
                 <input type="hidden" name="warehouse_uid" value="{{ $warehouse->uid }}">
                 <input type="hidden" name="floor_uid" value="{{ $floor->uid }}">
@@ -30,38 +30,54 @@
                     @endif
 
                     <div class="row">
-                        <!-- Header Info -->
-                        <div class="col-12">
-                            <div class="alert alert-info">
-                                <strong>Almacén:</strong> {{ $warehouse->name }} | <strong>Piso:</strong> {{ $floor->name }} ({{ $floor->code }})
+                        <!-- Warehouse Display (Read-only) -->
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="control-label col-form-label">Almacén</label>
+                                <input type="text" class="form-control" value="{{ $warehouse->name }}" disabled>
+                            </div>
+                        </div>
+
+                        <!-- Floor Display (Read-only) -->
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="control-label col-form-label">Piso</label>
+                                <input type="text" class="form-control" value="{{ $floor->name }} ({{ $floor->code }})" disabled>
                             </div>
                         </div>
 
                         <!-- Location Code -->
+
+
+                        <!-- Style Selection -->
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="control-label col-form-label">Estilo de Ubicación <span class="text-danger">*</span></label>
+                                <select name="style_id" id="style_id" class="select2 form-control @error('style_id') is-invalid @enderror" required>
+                                    @foreach($styles as $id => $name)
+                                        <option value="{{ $id }}" {{ old('style_id', $location->style_id) == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted d-block mt-1">Cambiar el estilo ajustará las secciones según la configuración del nuevo estilo</small>
+                                @error('style_id')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
                         <div class="col-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Código de Ubicación <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $location->code) }}" maxlength="50" required>
                                 @error('code')
-                                    <span class="invalid-feedback">{{ $message }}</span>
+                                <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-
-                        <!-- Style Display (Read-only) -->
-                        <div class="col-6">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label">Estilo de Ubicación</label>
-                                <input type="text" class="form-control" value="{{ $location->style->name }}" disabled>
-                                <small class="text-muted d-block mt-1">No se puede cambiar el estilo de una ubicación existente</small>
-                            </div>
-                        </div>
-
                         <!-- Position X -->
                         <div class="col-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Posición X (metros) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('position_x') is-invalid @enderror" id="position_x" name="position_x" value="{{ old('position_x', $location->position_x) }}" min="0" step="0.01" required>
+                                <input type="number" class="form-control @error('position_x') is-invalid @enderror" id="position_x" name="position_x" value="{{ old('position_x', $location->position_x) }}" min="0" step="1" required>
                                 @error('position_x')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -72,7 +88,7 @@
                         <div class="col-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Posición Y (metros) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('position_y') is-invalid @enderror" id="position_y" name="position_y" value="{{ old('position_y', $location->position_y) }}" min="0" step="0.01" required>
+                                <input type="number" class="form-control @error('position_y') is-invalid @enderror" id="position_y" name="position_y" value="{{ old('position_y', $location->position_y) }}" min="0" step="1" required>
                                 @error('position_y')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -80,7 +96,7 @@
                         </div>
 
                         <!-- Available Status -->
-                        <div class="col-6">
+                        <div class="col-12">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">Estado</label>
                                 <select name="available" id="available" class="select2 form-control @error('available') is-invalid @enderror">
@@ -107,8 +123,8 @@
                             <hr class="mt-4 mb-4">
                             <div class="d-flex align-items-center">
                                 <h6 class="mb-0">Secciones (Divisiones Verticales)</h6>
-                                <button type="button" class="btn btn-sm btn-success ms-auto" id="btnAddSection" title="Agregar Sección">
-                                    <i class="fas fa-plus"></i> Agregar Sección
+                                <button type="button" class="btn btn-md btn-primary ms-auto" id="btnAddSection" title="Agregar Sección">
+                                    <i class="fas fa-plus"></i>
                                 </button>
                             </div>
                             <small class="text-muted d-block mb-3">Configure las divisiones verticales que tendrá esta ubicación</small>
@@ -120,13 +136,10 @@
 
                         <!-- Submit -->
                         <div class="col-12">
-                            <div class="border-top pt-3 mt-4">
-                                <button type="submit" class="btn btn-primary px-4 waves-effect waves-light mt-2">
-                                    <i class="fa-duotone fa-check"></i> Actualizar Ubicación
+                            <div class="border-top pt-1 mt-4">
+                                <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
+                                    Guardar
                                 </button>
-                                <a href="{{ route('manager.warehouse.locations', [$warehouse->uid, $floor->uid]) }}" class="btn btn-secondary px-4 waves-effect waves-light mt-2">
-                                    <i class="fa-duotone fa-times"></i> Cancelar
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -151,36 +164,23 @@
                     </div>
 
                     <!-- Section Level -->
-                    <div class="col-6">
+                    <div class="col-12">
                         <label class="form-label">Nivel <span class="text-danger">*</span></label>
                         <input type="number" class="form-control section-level" name="sections[0][level]" value="1" min="1" required>
                     </div>
 
                     <!-- Section Face (for 2-cara styles) -->
-                    <div class="col-6 face-group" style="display: none;">
+                    <div class="col-12 face-group d-none">
                         <label class="form-label">Cara <span class="text-danger">*</span></label>
                         <select class="form-select section-face" name="sections[0][face]">
-                            <option value="front" selected>📍 Frontal</option>
-                            <option value="back">🔙 Posterior</option>
+                            <!-- Options will be populated dynamically -->
                         </select>
-                    </div>
-
-                    <!-- Section Barcode -->
-                    <div class="col-6">
-                        <label class="form-label">Código de Barras</label>
-                        <input type="text" class="form-control section-barcode" name="sections[0][barcode]" placeholder="Opcional" maxlength="100">
-                    </div>
-
-                    <!-- Max Quantity -->
-                    <div class="col-6">
-                        <label class="form-label">Cantidad Máxima</label>
-                        <input type="number" class="form-control section-max-qty" name="sections[0][max_quantity]" min="1" placeholder="Opcional">
                     </div>
 
                     <!-- Remove Button -->
                     <div class="col-12">
-                        <button type="button" class="btn btn-sm btn-outline-danger w-100 btn-remove-section">
-                            <i class="fas fa-trash"></i> Eliminar
+                        <button type="button" class="btn btn-md btn-primary w-100 btn-remove-section">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -207,11 +207,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionsList = document.getElementById('sectionsList');
     const btnAddSection = document.getElementById('btnAddSection');
     const sectionTemplate = document.getElementById('sectionTemplate');
-    const styleData = @json(['faces_count' => count($location->style->faces ?? [])]);
+    const styleSelect = document.getElementById('style_id');
+    let styleData = @json([
+        'faces_count' => count($location->style->faces ?? []),
+        'faces' => $location->style->faces ?? []
+    ]);
     let sectionCount = 0;
 
+    // Face labels mapping (inglés -> español)
+    const faceLabels = {
+        'left': 'Izquierda',
+        'right': 'Derecha',
+        'front': 'Adelante',
+        'back': 'Fondo'
+    };
+
     // Load existing sections
-    const existingSections = @json($location->sections()->orderBy('level')->get(['uid', 'code', 'barcode', 'level', 'face', 'max_quantity']));
+    const existingSections = {!! json_encode($location->sections()->orderBy('level')->get(['uid', 'code', 'level', 'face'])) !!};
+
+    // Function to populate face select options
+    function populateFaceOptions(selectElement, selectedValue = null) {
+        selectElement.innerHTML = ''; // Clear existing options
+
+        if (styleData.faces && styleData.faces.length > 0) {
+            styleData.faces.forEach(face => {
+                const option = document.createElement('option');
+                option.value = face;
+                option.textContent = faceLabels[face] || face;
+                if (selectedValue && selectedValue === face) {
+                    option.selected = true;
+                } else if (!selectedValue && face === 'front') {
+                    // Default to 'front' if no value selected
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+    }
 
     // Add a new section
     function addSection(data = null) {
@@ -236,21 +268,17 @@ document.addEventListener('DOMContentLoaded', function() {
         clone.querySelector('.section-level').name = `sections[${sectionCount}][level]`;
         clone.querySelector('.section-level').value = level;
 
-        clone.querySelector('.section-barcode').name = `sections[${sectionCount}][barcode]`;
-        clone.querySelector('.section-barcode').value = data?.barcode || '';
-
-        clone.querySelector('.section-max-qty').name = `sections[${sectionCount}][max_quantity]`;
-        clone.querySelector('.section-max-qty').value = data?.max_quantity || '';
-
         const faceGroup = clone.querySelector('.face-group');
         const faceSelect = clone.querySelector('.section-face');
+        faceSelect.name = `sections[${sectionCount}][face]`;
 
-        if (styleData.faces_count === 2) {
-            faceGroup.style.display = 'block';
-            faceSelect.name = `sections[${sectionCount}][face]`;
-            faceSelect.value = data?.face || 'front';
+        // Populate face options based on current style
+        populateFaceOptions(faceSelect, data?.face);
+
+        if (styleData.faces_count >= 2) {
+            faceGroup.classList.remove('d-none');
         } else {
-            faceGroup.style.display = 'none';
+            faceGroup.classList.add('d-none');
         }
 
         clone.querySelector('.section-uid').name = `sections[${sectionCount}][uid]`;
@@ -274,10 +302,65 @@ document.addEventListener('DOMContentLoaded', function() {
             section.querySelector('.section-code').name = `sections[${index}][code]`;
             section.querySelector('.section-level').name = `sections[${index}][level]`;
             section.querySelector('.section-face').name = `sections[${index}][face]`;
-            section.querySelector('.section-barcode').name = `sections[${index}][barcode]`;
-            section.querySelector('.section-max-qty').name = `sections[${index}][max_quantity]`;
         });
     }
+
+    // Update sections display based on current style (faces)
+    function updateSectionsFaceDisplay() {
+        const sections = sectionsList.querySelectorAll('.section-item');
+        sections.forEach((section, index) => {
+            const faceGroup = section.querySelector('.face-group');
+            const faceSelect = section.querySelector('.section-face');
+            const currentValue = faceSelect.value; // Store current value
+
+            // Repopulate options with new style faces
+            populateFaceOptions(faceSelect, currentValue);
+
+            if (styleData.faces_count >= 2) {
+                faceGroup.classList.remove('d-none');
+                // Update the name attribute
+                faceSelect.name = `sections[${index}][face]`;
+            } else {
+                faceGroup.classList.add('d-none');
+                faceSelect.value = ''; // Clear face value for 1-cara styles
+            }
+        });
+    }
+
+    // Handle style change
+    styleSelect.addEventListener('change', function() {
+        const styleId = this.value;
+        console.log('Style changed to ID:', styleId);
+
+        if (!styleId) return;
+
+        // Fetch style details via API
+        fetch(`/manager/warehouse/api/styles/${styleId}`)
+            .then(response => {
+                console.log('API response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Style data received:', data);
+                console.log('Faces count:', data.faces_count);
+                console.log('Faces available:', data.faces);
+
+                // Update styleData with new style information
+                styleData.faces_count = data.faces_count;
+                styleData.faces = data.faces || [];
+
+                // Update existing sections to show/hide face field
+                updateSectionsFaceDisplay();
+
+                // Show notification
+                console.log(`Estilo cambiado a: ${data.name} (${data.faces_count} cara(s))`);
+                alert(`Estilo actualizado: ${data.name} (${data.faces_count} cara(s))\nCaras disponibles: ${styleData.faces.map(f => faceLabels[f]).join(', ')}`);
+            })
+            .catch(error => {
+                console.error('Error al obtener detalles del estilo:', error);
+                alert('Error al cargar la información del estilo. Por favor, intente nuevamente.');
+            });
+    });
 
     // Event listeners
     btnAddSection.addEventListener('click', function(e) {

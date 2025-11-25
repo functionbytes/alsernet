@@ -131,7 +131,7 @@ class User extends Authenticatable
     public function redirectRouteName()
     {
         return match (true) {
-            $this->hasRole('manager') => 'manager.dashboard',
+            $this->hasRole('managers') => 'manager.dashboard',
             $this->hasRole('warehouses') => 'warehouse.dashboard',
             $this->hasRole('shops') => 'shop.dashboard',
             $this->hasRole('callcenters') => 'callcenter.dashboard',

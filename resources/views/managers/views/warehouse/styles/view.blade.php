@@ -155,7 +155,7 @@
                                             @foreach($style->locations as $stand)
                                                 <tr>
                                                     <td>
-                                                        <a href="{{ route('manager.warehouse.locations.view', $stand->uid) }}">
+                                                        <a href="{{ route('manager.warehouse.locations.view', [$stand->floor->warehouse->uid, $stand->floor->uid, $stand->uid]) }}">
                                                             {{ $stand->code }}
                                                         </a>
                                                     </td>

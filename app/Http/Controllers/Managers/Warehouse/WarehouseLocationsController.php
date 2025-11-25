@@ -114,7 +114,7 @@ class WarehouseLocationsController extends Controller
             'sections' => 'required|array|min:1',
             'sections.*.code' => 'required|string|max:50',
             'sections.*.barcode' => 'nullable|string|max:100',
-            'sections.*.face' => 'nullable|in:front,back',
+            'sections.*.face' => 'nullable|in:front,back,left,right',
             'sections.*.level' => 'required|integer|min:1',
         ]);
 
@@ -183,9 +183,8 @@ class WarehouseLocationsController extends Controller
     {
         $warehouse = Warehouse::uid($warehouse_uid);
         $floor = WarehouseFloor::uid($floor_uid);
-        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
-
-        $styles = WarehouseLocationStyle::where('warehouse_id', $warehouse->id)->available()->pluck('name', 'id');
+        $location = WarehouseLocation::uid($location_uid);
+        $styles = WarehouseLocationStyle::available()->pluck('name', 'id');
 
         return view('managers.views.warehouse.locations.edit')->with([
             'warehouse' => $warehouse,
@@ -210,18 +209,21 @@ class WarehouseLocationsController extends Controller
             'floor_uid' => 'required|exists:warehouse_floors,uid',
             'location_uid' => 'required|exists:warehouse_locations,uid',
             'code' => 'required|string|max:50|unique:warehouse_locations,code,' . $location->id . ',id,floor_id,' . $floor->id,
+            'style_id' => 'required|exists:warehouse_location_styles,id',
+            'position_x' => 'required|numeric|min:0',
+            'position_y' => 'required|numeric|min:0',
             'available' => 'nullable|boolean',
             'notes' => 'nullable|string|max:500',
             'sections' => 'required|array|min:1',
             'sections.*.uid' => 'nullable|string',
             'sections.*.code' => 'required|string|max:50',
             'sections.*.barcode' => 'nullable|string|max:100',
-            'sections.*.face' => 'nullable|in:front,back',
+            'sections.*.face' => 'nullable|in:front,back,left,right',
             'sections.*.level' => 'required|integer|min:1',
         ]);
 
-        // Get style to determine face requirements
-        $style = $location->style;
+        // Get style to determine face requirements (use new style if changed)
+        $style = WarehouseLocationStyle::findOrFail($validated['style_id']);
         $facesCount = count($style->faces ?? []);
 
         // Validate face field based on style
@@ -234,11 +236,14 @@ class WarehouseLocationsController extends Controller
             }
         }
 
-        $oldData = $location->only(['code', 'available', 'notes']);
+        $oldData = $location->only(['code', 'style_id', 'position_x', 'position_y', 'available', 'notes']);
 
         // Update location basic info
         $location->update([
             'code' => $validated['code'],
+            'style_id' => $validated['style_id'],
+            'position_x' => $validated['position_x'],
+            'position_y' => $validated['position_y'],
             'available' => $validated['available'] ?? $location->available,
             'notes' => $validated['notes'] ?? $location->notes,
         ]);
@@ -442,7 +447,325 @@ class WarehouseLocationsController extends Controller
     }
 
     /**
-     * API: Obtener detalles del estilo
+     * Mostrar formulario para trasladar ubicación a otro piso
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/transfer
+     */
+    public function transfer($warehouse_uid, $floor_uid, $location_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+        $location = WarehouseLocation::where('uid', $location_uid)->where('floor_id', $floor->id)->firstOrFail();
+
+        // Obtener todos los pisos del almacén excepto el actual
+        $availableFloors = WarehouseFloor::where('warehouse_id', $warehouse->id)
+            ->where('id', '!=', $floor->id)
+            ->available()
+            ->ordered()
+            ->get();
+
+        return view('managers.views.warehouse.locations.transfer')->with([
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'location' => $location,
+            'availableFloors' => $availableFloors,
+        ]);
+    }
+
+    /**
+     * Ejecutar el traslado de una o múltiples ubicaciones a otro piso
+     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/transfer
+     */
+    public function transferSubmit(Request $request)
+    {
+        $warehouse = Warehouse::uid($request->warehouse_uid);
+        $floor = WarehouseFloor::uid($request->floor_uid);
+        $location = WarehouseLocation::where('uid', $request->location_uid)
+            ->where('floor_id', $floor->id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'warehouse_uid' => 'required|exists:warehouses,uid',
+            'floor_uid' => 'required|exists:warehouse_floors,uid',
+            'location_uid' => 'required|string|exists:warehouse_locations,uid',
+            'target_floor_uid' => 'required|exists:warehouse_floors,uid',
+        ]);
+
+        // Obtener el piso destino
+        $targetFloor = WarehouseFloor::where('uid', $validated['target_floor_uid'])
+            ->where('warehouse_id', $warehouse->id)
+            ->firstOrFail();
+
+        // Verificar que no exista otra ubicación con el mismo código en el piso destino
+        $existingLocation = WarehouseLocation::where('code', $location->code)
+            ->where('floor_id', $targetFloor->id)
+            ->first();
+
+        if ($existingLocation) {
+            return redirect()->back()->with('error', "Ya existe una ubicación con el código '{$location->code}' en el piso destino");
+        }
+
+        // Trasladar la ubicación
+        $location->update(['floor_id' => $targetFloor->id]);
+
+        // Registrar en el activity log
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($location)
+            ->event('transferred')
+            ->withProperties([
+                'old' => ['floor_id' => $floor->id, 'floor_code' => $floor->code],
+                'attributes' => ['floor_id' => $targetFloor->id, 'floor_code' => $targetFloor->code]
+            ])
+            ->log('Ubicación trasladada: ' . $location->code . ' de ' . $floor->name . ' a ' . $targetFloor->name);
+
+        return redirect()->route('manager.warehouse.locations', [
+            'warehouse_uid' => $warehouse->uid,
+            'floor_uid' => $targetFloor->uid
+        ])->with('success', "Ubicación '{$location->code}' trasladada exitosamente a " . $targetFloor->name);
+    }
+
+    /**
+     * API: Obtener pisos disponibles para trasladar
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/api/available-floors
+     */
+    public function getAvailableFloorsForTransfer($warehouse_uid, $floor_uid, $location_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+
+        $availableFloors = WarehouseFloor::where('warehouse_id', $warehouse->id)
+            ->where('id', '!=', $floor->id)
+            ->available()
+            ->ordered()
+            ->get()
+            ->map(fn($f) => [
+                'uid' => $f->uid,
+                'id' => $f->id,
+                'code' => $f->code,
+                'name' => $f->name,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'floors' => $availableFloors,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para trasladar múltiples ubicaciones a otro piso
+     * Ruta: GET /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/transfer/bulk
+     */
+    public function transferBulkForm($warehouse_uid, $floor_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+
+        // Obtener todos los pisos del almacén excepto el actual
+        $availableFloors = WarehouseFloor::where('warehouse_id', $warehouse->id)
+            ->where('id', '!=', $floor->id)
+            ->available()
+            ->ordered()
+            ->get();
+
+        return view('managers.views.warehouse.locations.transfer-bulk')->with([
+            'warehouse' => $warehouse,
+            'floor' => $floor,
+            'availableFloors' => $availableFloors,
+        ]);
+    }
+
+    /**
+     * Ejecutar el traslado de múltiples ubicaciones a otro piso
+     * Ruta: POST /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/transfer/bulk
+     */
+    public function transferBulkSubmit(Request $request)
+    {
+        $warehouse = Warehouse::uid($request->warehouse_uid);
+        $floor = WarehouseFloor::uid($request->floor_uid);
+
+        $validated = $request->validate([
+            'warehouse_uid' => 'required|exists:warehouses,uid',
+            'floor_uid' => 'required|exists:warehouse_floors,uid',
+            'location_uids' => 'required|array|min:1',
+            'location_uids.*' => 'required|string|exists:warehouse_locations,uid',
+            'target_floor_uid' => 'required|exists:warehouse_floors,uid',
+        ]);
+
+        // Obtener el piso destino
+        $targetFloor = WarehouseFloor::where('uid', $validated['target_floor_uid'])
+            ->where('warehouse_id', $warehouse->id)
+            ->firstOrFail();
+
+        // Obtener ubicaciones a trasladar
+        $locations = WarehouseLocation::whereIn('uid', $validated['location_uids'])
+            ->where('floor_id', $floor->id)
+            ->get();
+
+        if ($locations->isEmpty()) {
+            return redirect()->back()->with('error', 'No se encontraron ubicaciones para trasladar');
+        }
+
+        $failedLocations = [];
+        $successCount = 0;
+
+        foreach ($locations as $location) {
+            // Verificar que no exista otra ubicación con el mismo código en el piso destino
+            $existingLocation = WarehouseLocation::where('code', $location->code)
+                ->where('floor_id', $targetFloor->id)
+                ->first();
+
+            if ($existingLocation) {
+                $failedLocations[] = $location->code;
+                continue;
+            }
+
+            // Trasladar la ubicación
+            $location->update(['floor_id' => $targetFloor->id]);
+
+            // Registrar en el activity log
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($location)
+                ->event('transferred')
+                ->withProperties([
+                    'old' => ['floor_id' => $floor->id, 'floor_code' => $floor->code],
+                    'attributes' => ['floor_id' => $targetFloor->id, 'floor_code' => $targetFloor->code]
+                ])
+                ->log('Ubicación trasladada: ' . $location->code . ' de ' . $floor->name . ' a ' . $targetFloor->name);
+
+            $successCount++;
+        }
+
+        $message = "Se trasladaron {$successCount} ubicación(es) exitosamente a " . $targetFloor->name;
+        $messageType = 'success';
+
+        if (!empty($failedLocations)) {
+            $message .= '. No se pudieron trasladar: ' . implode(', ', $failedLocations) . ' (códigos duplicados en destino)';
+            $messageType = $successCount > 0 ? 'warning' : 'error';
+        }
+
+        return redirect()->route('manager.warehouse.locations', [
+            'warehouse_uid' => $warehouse->uid,
+            'floor_uid' => $targetFloor->uid
+        ])->with($messageType, $message);
+    }
+
+    /**
+     * API: Obtener detalles completos de una ubicación para el modal del mapa
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/api/details
+     */
+    public function getLocationDetails($warehouse_uid, $floor_uid, $location_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+        $location = WarehouseLocation::where('uid', $location_uid)
+            ->where('floor_id', $floor->id)
+            ->with(['style', 'sections' => function($query) {
+                $query->orderBy('level')->orderBy('face');
+            }])
+            ->firstOrFail();
+
+        // Agrupar secciones por cara
+        $sectionsByFace = $location->sections->groupBy('face')->map(function($sections) {
+            return $sections->map(function($section) {
+                return [
+                    'uid' => $section->uid,
+                    'code' => $section->code,
+                    'barcode' => $section->barcode,
+                    'level' => $section->level,
+                    'face' => $section->face,
+                    'available' => $section->available,
+                ];
+            })->values();
+        });
+
+        return response()->json([
+            'success' => true,
+            'location' => [
+                'uid' => $location->uid,
+                'code' => $location->code,
+                'name' => $location->getFullName(),
+                'position_x' => $location->position_x,
+                'position_y' => $location->position_y,
+                'available' => $location->available,
+                'notes' => $location->notes,
+            ],
+            'style' => [
+                'name' => $location->style->name,
+                'code' => $location->style->code,
+                'faces' => $location->style->faces ?? [],
+                'faces_count' => count($location->style->faces ?? []),
+            ],
+            'sections_by_face' => $sectionsByFace,
+            'floor' => [
+                'name' => $floor->name,
+                'code' => $floor->code,
+            ],
+            'warehouse' => [
+                'name' => $warehouse->name,
+            ],
+        ]);
+    }
+
+    /**
+     * API: Obtener detalles de una sección específica
+     * Ruta: /manager/warehouse/warehouses/{warehouse_uid}/floors/{floor_uid}/locations/{location_uid}/sections/{section_uid}/api/details
+     */
+    public function getSectionDetails($warehouse_uid, $floor_uid, $location_uid, $section_uid)
+    {
+        $warehouse = Warehouse::uid($warehouse_uid);
+        $floor = WarehouseFloor::uid($floor_uid);
+        $location = WarehouseLocation::where('uid', $location_uid)
+            ->where('floor_id', $floor->id)
+            ->firstOrFail();
+
+        $section = $location->sections()
+            ->where('uid', $section_uid)
+            ->with(['slots.product'])
+            ->firstOrFail();
+
+        // Obtener información de los slots
+        $slotsInfo = $section->slots->map(function($slot) {
+            return [
+                'uid' => $slot->uid,
+                'barcode' => $slot->barcode,
+                'is_occupied' => $slot->is_occupied,
+                'quantity' => $slot->quantity,
+                'max_quantity' => $slot->max_quantity,
+                'weight_current' => $slot->weight_current,
+                'weight_max' => $slot->weight_max,
+                'product' => $slot->product ? [
+                    'title' => $slot->product->title,
+                    'sku' => $slot->product->sku,
+                    'barcode' => $slot->product->barcode,
+                ] : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'section' => [
+                'uid' => $section->uid,
+                'code' => $section->code,
+                'barcode' => $section->barcode,
+                'level' => $section->level,
+                'face' => $section->face,
+                'available' => $section->available,
+                'max_quantity' => $section->max_quantity,
+                'notes' => $section->notes,
+            ],
+            'location' => [
+                'code' => $location->code,
+                'name' => $location->getFullName(),
+            ],
+            'slots' => $slotsInfo,
+            'slots_count' => $slotsInfo->count(),
+            'occupied_slots' => $slotsInfo->where('is_occupied', true)->count(),
+        ]);
+    }
+
+    /**
+     * API: Obtener detalles de un estilo por ID
      * Ruta: /manager/warehouse/locations/api/style/{style_id}
      */
     public function getStyleDetails($style_id)
@@ -450,11 +773,12 @@ class WarehouseLocationsController extends Controller
         $style = WarehouseLocationStyle::findOrFail($style_id);
 
         return response()->json([
+            'success' => true,
             'id' => $style->id,
+            'code' => $style->code,
             'name' => $style->name,
-            'faces' => $style->faces,
+            'faces' => $style->faces ?? [],
             'faces_count' => count($style->faces ?? []),
-            'faces_label' => $style->getFacesLabel(),
             'default_levels' => $style->default_levels,
             'default_sections' => $style->default_sections,
         ]);

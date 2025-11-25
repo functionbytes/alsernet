@@ -89,6 +89,12 @@ class Kernel extends ConsoleKernel
 
 
 
+        $schedule->command('documents:send-reminders')
+            ->everyTenMinutes()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/document-reminders.log'));
+
         // Enviar recordatorios diariamente a las 10 AM
         $schedule->command('returns:send-reminders')
             ->dailyAt('10:00')

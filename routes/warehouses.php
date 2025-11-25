@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\warehouses\Locations\BarcodeController as LocationsBarcodesController;
-use App\Http\Controllers\warehouses\Locations\TransferController;
-use App\Http\Controllers\warehouses\Products\BarcodeController as ProductsBarcodesController;
-use App\Http\Controllers\warehouses\Shops\Locations\LocationsController as ShopsLocationsController;
-use App\Http\Controllers\warehouses\Shops\Shops\ShopsController;
-use App\Http\Controllers\warehouses\Warehouses\LocationsController as WarehousesLocationsController;
-use App\Http\Controllers\warehouses\Warehouses\ReportsController;
-use App\Http\Controllers\warehouses\Warehouses\ResumenController;
-use App\Http\Controllers\warehouses\Warehouses\WarehousesController;
+use App\Http\Controllers\Warehouses\Locations\BarcodeController as LocationsBarcodesController;
+use App\Http\Controllers\Warehouses\Locations\TransferController;
+use App\Http\Controllers\Warehouses\Products\BarcodeController as ProductsBarcodesController;
+use App\Http\Controllers\Warehouses\Shops\Locations\LocationsController as ShopsLocationsController;
+use App\Http\Controllers\Warehouses\Shops\Shops\ShopsController;
+use App\Http\Controllers\Warehouses\Warehouses\LocationsController as WarehousesLocationsController;
+use App\Http\Controllers\Warehouses\Warehouses\ReportsController;
+use App\Http\Controllers\Warehouses\Warehouses\ResumenController;
+use App\Http\Controllers\Warehouses\Warehouses\WarehousesController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'warehouse', 'middleware' => ['auth', 'roles:warehouses']], function () {

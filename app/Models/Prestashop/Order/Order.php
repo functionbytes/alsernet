@@ -3,6 +3,7 @@
 namespace App\Models\Prestashop\Order;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Prestashop\Customer;
 
 class Order extends Model
 {
@@ -65,6 +66,9 @@ class Order extends Model
         "note"
     ];
 
-
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'id_customer', 'id_customer');
+    }
 }
 
