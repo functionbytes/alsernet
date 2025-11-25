@@ -47,12 +47,12 @@
                             </div>
                             <div class="col-auto">
                                 <button type="button" class="btn btn-info" id="sync-all-btn" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Sincronizar todas las órdenes">
-                                    <i class="fa-duotone fa-sync"></i> Importar Todo
+                                    <i class="fa-duotone fa-sync"></i>
                                 </button>
                             </div>
                             <div class="col-auto">
                                 <a href="{{ route('administrative.documents.import') }}" class="btn btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Importar órdenes específicas">
-                                    <i class="fa-duotone fa-file-import"></i> Importar Orden
+                                    <i class="fa-duotone fa-file-import"></i>
                                 </a>
                             </div>
                         </div>

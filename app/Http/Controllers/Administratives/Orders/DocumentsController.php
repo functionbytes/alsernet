@@ -445,6 +445,7 @@ class DocumentsController extends Controller
 
     /**
      * Sincroniza documentos de una orden específica
+     * Crea un nuevo documento si no existe, o sincroniza los existentes
      * Incluye importación de productos
      *
      * @param Request $request
@@ -462,15 +463,6 @@ class DocumentsController extends Controller
         }
 
         try {
-            $documents = Document::where('order_id', $orderId)->get();
-
-            if ($documents->isEmpty()) {
-                return response()->json([
-                    'status' => 'failed',
-                    'message' => 'No documents found for this order ID.'
-                ], 404);
-            }
-
             $order = PrestashopOrder::find($orderId);
 
             if (!$order) {
@@ -478,6 +470,27 @@ class DocumentsController extends Controller
                     'status' => 'failed',
                     'message' => 'Order not found in Prestashop.'
                 ], 404);
+            }
+
+            $documents = Document::where('order_id', $orderId)->get();
+
+            // Si no existe documento, crear uno nuevo
+            if ($documents->isEmpty()) {
+                try {
+                    $document = new Document();
+                    $document->order_id = $orderId;
+                    $document->type = 'order';
+                    $document->source = 'manual';
+                    $document->proccess = 0;
+                    $document->save();
+
+                    $documents = collect([$document]);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'status' => 'failed',
+                        'message' => 'Failed to create document: ' . $e->getMessage()
+                    ], 500);
+                }
             }
 
             $synced = 0;
