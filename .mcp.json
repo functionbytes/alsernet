@@ -15,6 +15,7 @@
         "docker": "/websites/docs_docker_com",
         "postgresql": "/websites/postgresql",
         "prestashop16": "/websites/prestashop-project-1-6-documentation",
-        "prestashop": "/prestashop/docs"
+        "prestashop": "/prestashop/docs",
+        "elasticsearch": "/websites/elastic_co_reference"
     }
 }
