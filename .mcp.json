@@ -6,6 +6,13 @@
         }
     },
     "documentation": {
-        "laravel12": "/websites/laravel_com-docs-12.x"
+        "laravel12": "/websites/laravel_com-docs-12.x",
+        "bootstrap53": "/websites/getbootstrap_5_3",
+        "jquery": "/jquery/jquery",
+        "mongodb": "/websites/mongodb",
+        "redis": "/websites/redis_io",
+        "tailwindcss": "/websites/v3_tailwindcss",
+        "docker": "/websites/docs_docker_com",
+        "postgresql": "/websites/postgresql"
     }
 }
