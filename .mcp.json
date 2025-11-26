@@ -13,6 +13,8 @@
         "redis": "/websites/redis_io",
         "tailwindcss": "/websites/v3_tailwindcss",
         "docker": "/websites/docs_docker_com",
-        "postgresql": "/websites/postgresql"
+        "postgresql": "/websites/postgresql",
+        "prestashop16": "/websites/prestashop-project-1-6-documentation",
+        "prestashop": "/prestashop/docs"
     }
 }
