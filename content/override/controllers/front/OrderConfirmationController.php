@@ -36,9 +36,11 @@ class OrderConfirmationController extends OrderConfirmationControllerCore
         $tradedoublerpixels = $order->getTradeDoublerPixels();
 
         // Mostrar documentos solo si la orden está pagada
+        // Estado 2 = Pago recibido (PS_OS_PAYMENT)
         $document = '';
 
-        if ($order->isPaid()) {
+        $paidOrderStateId = (int)Configuration::get('PS_OS_PAYMENT');
+        if ($order->current_state == $paidOrderStateId || $order->current_state == 2) {
             $document = $order->getUrlDocuments();
         }
 

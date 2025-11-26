@@ -8,9 +8,13 @@
       "Bash(tree:*)",
       "Bash(find:*)",
       "Bash(rm:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(composer update:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
 }

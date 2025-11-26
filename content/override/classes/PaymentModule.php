@@ -1643,8 +1643,10 @@ abstract class PaymentModule extends PaymentModuleCore
                                 $multiple_product_types_message_html .= '</ul>';
                             }
                             // Solo solicitar documento si la orden está pagada
+                            // Estado 2 = Pago recibido (PS_OS_PAYMENT)
                             $document = '';
-                            if ($order->isPaid()) {
+                            $paidOrderStateId = (int)Configuration::get('PS_OS_PAYMENT');
+                            if ($order->current_state == $paidOrderStateId || $order->current_state == 2) {
                                 $document = $order->getDocumentInstructions() ?? '';
                             }
                             $lottery = $order->requesLottery();
@@ -1706,10 +1708,10 @@ abstract class PaymentModule extends PaymentModuleCore
                                 '{delivery_message}' => $order->getFirstMessage(),
                                 '{product_pickup_gc_message}' => $multiple_product_types_message_html,
                                 '{product_pickup_gc_message_txt}' => $multiple_product_types_message_txt,
-                             ];
-                                $data['{document}'] = $document;
-                                $data['{tracking}'] = $tracking;
-                                $data['{lottery}'] = $lottery;
+                            ];
+                            $data['{document}'] = $document;
+                            $data['{tracking}'] = $tracking;
+                            $data['{lottery}'] = $lottery;
                             Mail::Send(
                                 (int) $order->id_lang,
                                 'order_conf',

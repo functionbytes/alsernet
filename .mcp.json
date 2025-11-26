@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "context7": {
+            "command": "npx",
+            "args": ["-y", "@upstash/context7-mcp"]
+        }
+    },
+    "documentation": {
+        "laravel12": "/websites/laravel_com-docs-12.x"
+    }
+}

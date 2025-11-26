@@ -133,7 +133,11 @@ return [
 
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
-        //Laravel\Horizon\HorizonServiceProvider::class,
+        Laravel\Horizon\HorizonServiceProvider::class,
+        Laravel\Telescope\TelescopeServiceProvider::class,
+        Spatie\Health\HealthServiceProvider::class,
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+        Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
 
         App\Providers\AppServiceProvider::class,
         App\Providers\EventServiceProvider::class,

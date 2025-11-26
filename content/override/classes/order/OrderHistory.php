@@ -9,6 +9,9 @@ class OrderHistory extends OrderHistoryCore
 
     public function changeIdOrderState($new_order_state, $id_order, $use_existing_payment = false, $tpv = null)
     {
+
+
+
         if (!$new_order_state || !$id_order) {
             return;
         }
@@ -292,11 +295,12 @@ class OrderHistory extends OrderHistoryCore
         }
 
         // Send document request to Laravel when order status changes to paid (manual status change)
-        if ($new_os->paid == 1 && (!Validate::isLoadedObject($old_os) || $old_os->paid != 1)) {
+        if ($new_order_state == 2 && (!Validate::isLoadedObject($new_order_state) || $new_order_state != 2)) {
             // Only trigger if this is a manual status change (not from payment processor)
             // Payment processor triggers are handled in PaymentModule.php via actionPaymentConfirmation hook
             $order->sendDocumentRequest();
         }
+
 
         ShopUrl::resetMainDomainCache();
     }

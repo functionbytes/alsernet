@@ -125,12 +125,10 @@ class Order extends OrderCore
             return null;
         }
 
-        if (!empty($this->document_number)) {
-            return $this->document_number;
-        }
-
         // Validar que esté pagada antes de procesar
-        if (!$this->isPaid()) {
+        // Estado 2 = Pago recibido (PS_OS_PAYMENT)
+        $paidOrderStateId = (int)Configuration::get('PS_OS_PAYMENT');
+        if ($this->current_state != $paidOrderStateId && $this->current_state != 2) {
             return null;
         }
 
@@ -138,6 +136,19 @@ class Order extends OrderCore
         $products = $this->getProducts();
         $customer = new Customer($this->id_customer);
         $address = new Address($this->id_address_delivery);
+
+        // Mapear productos con los campos correctos de Prestashop
+        $mappedProducts = [];
+        foreach ($products as $product) {
+            $mappedProducts[] = [
+                'product_id' => $product['product_id'] ?? $product['id_product'] ?? null,
+                'product_name' => $product['product_name'] ?? $product['name'] ?? null,
+                'product_reference' => $product['product_reference'] ?? $product['reference'] ?? null,
+                'product_quantity' => $product['product_quantity'] ?? $product['quantity'] ?? 0,
+                'unit_price_tax_incl' => $product['unit_price_tax_incl'] ?? $product['price'] ?? 0,
+                'total_price_tax_incl' => $product['total_price_tax_incl'] ?? null,
+            ];
+        }
 
         $apiManager = new ApiManager();
         $response = $apiManager->sendRequest('POST', 'api/documents', [
@@ -147,22 +158,17 @@ class Order extends OrderCore
             'reference'    => $this->reference,
             'cart_id'     => $this->id_cart,
             'customer' => [
-                'id' => $customer->id,
+                'id_customer' => $customer->id,
                 'firstname' => $customer->firstname,
                 'lastname' => $customer->lastname,
                 'email' => $customer->email,
-                'siret' => $customer->siret ?? null,
+                'document_type' => $customer->document_type ?? null,
                 'company' => $address->company ?? null,
+                'phone' => $customer->phone ?? null,
+                'phone_mobile' => $customer->phone_mobile ?? null,
             ],
-            'products' => array_map(function($product) {
-                return [
-                    'id' => $product['id_product'],
-                    'name' => $product['name'],
-                    'reference' => $product['reference'],
-                    'quantity' => $product['quantity'],
-                    'price' => $product['price'],
-                ];
-            }, $products),
+            'products' => $mappedProducts,
+            'delivery_address' => $address->address1 ?? null,
             'date_add' => $this->date_add,
         ], 'documents');
 
@@ -343,86 +349,86 @@ class Order extends OrderCore
         $documents_url = $link->getCMSLink(136) . '?token=' . urlencode($this->document_number);
 
         switch ($this->document_type) {
-                case 'corta':
-                    $trans_remember = strtr(
-                        $this->l(
-                            '[b]REMEMBER:[/b] In order to ship your firearm, we need you to send us the following documentation:',
-                            'alsernetforms',
-                            $iso
-                        ),
-                        ['[b]' => '<strong>', '[/b]' => '</strong>']
-                    );
+            case 'corta':
+                $trans_remember = strtr(
+                    $this->l(
+                        '[b]REMEMBER:[/b] In order to ship your firearm, we need you to send us the following documentation:',
+                        'alsernetforms',
+                        $iso
+                    ),
+                    ['[b]' => '<strong>', '[/b]' => '</strong>']
+                );
 
-                    $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
-                        . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
-                        . '<li>' . $this->l('A photocopy of your handgun permit (type B) or Olympic shooting permit (type F)', 'alsernetforms', $iso) . '</li>'
-                        . '</ul>';
-                    break;
+                $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
+                    . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
+                    . '<li>' . $this->l('A photocopy of your handgun permit (type B) or Olympic shooting permit (type F)', 'alsernetforms', $iso) . '</li>'
+                    . '</ul>';
+                break;
 
-                case 'rifle':
-                    $trans_remember = strtr(
-                        $this->l(
-                            '[b]REMEMBER:[/b] In order to ship your firearm, we need you to send us the following documentation:',
-                            'alsernetforms',
-                            $iso
-                        ),
-                        ['[b]' => '<strong>', '[/b]' => '</strong>']
-                    );
+            case 'rifle':
+                $trans_remember = strtr(
+                    $this->l(
+                        '[b]REMEMBER:[/b] In order to ship your firearm, we need you to send us the following documentation:',
+                        'alsernetforms',
+                        $iso
+                    ),
+                    ['[b]' => '<strong>', '[/b]' => '</strong>']
+                );
 
-                    $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
-                        . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
-                        . '<li>' . $this->l('A photocopy of your rifled long-range firearm permit (type D)', 'alsernetforms', $iso) . '</li>'
-                        . '</ul>';
-                    break;
+                $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
+                    . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
+                    . '<li>' . $this->l('A photocopy of your rifled long-range firearm permit (type D)', 'alsernetforms', $iso) . '</li>'
+                    . '</ul>';
+                break;
 
-                case 'escopeta':
-                    $trans_remember = strtr(
-                        $this->l(
-                            '[b]REMEMBER:[/b] In order to ship your weapon, we need you to send us the following documentation:',
-                            'alsernetforms',
-                            $iso
-                        ),
-                        ['[b]' => '<strong>', '[/b]' => '</strong>']
-                    );
+            case 'escopeta':
+                $trans_remember = strtr(
+                    $this->l(
+                        '[b]REMEMBER:[/b] In order to ship your weapon, we need you to send us the following documentation:',
+                        'alsernetforms',
+                        $iso
+                    ),
+                    ['[b]' => '<strong>', '[/b]' => '</strong>']
+                );
 
-                    $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
-                        . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
-                        . '<li>' . $this->l('A photocopy of a shotgun license (type E)', 'alsernetforms', $iso) . '</li>'
-                        . '</ul>';
-                    break;
+                $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
+                    . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
+                    . '<li>' . $this->l('A photocopy of a shotgun license (type E)', 'alsernetforms', $iso) . '</li>'
+                    . '</ul>';
+                break;
 
-                case 'dni':
-                    $trans_remember = strtr(
-                        $this->l(
-                            '[b]REMEMBER:[/b] In order to ship your weapon, we need you to send us the following documentation:',
-                            'alsernetforms',
-                            $iso
-                        ),
-                        ['[b]' => '<strong>', '[/b]' => '</strong>']
-                    );
+            case 'dni':
+                $trans_remember = strtr(
+                    $this->l(
+                        '[b]REMEMBER:[/b] In order to ship your weapon, we need you to send us the following documentation:',
+                        'alsernetforms',
+                        $iso
+                    ),
+                    ['[b]' => '<strong>', '[/b]' => '</strong>']
+                );
 
-                    $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
-                        . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
-                        . '</ul>';
+                $trans_list = '<ul style="padding-left: 20px; margin: 8px 0;">'
+                    . '<li>' . $this->l('A photocopy of your ID (both sides)', 'alsernetforms', $iso) . '</li>'
+                    . '</ul>';
 
-                    break;
+                break;
 
-                default:
-                    $trans_remember = strtr(
-                        $this->l(
-                            '[b]REMEMBER:[/b] In order to ship your air rifle, you must provide us with a copy of your passport or driving licence (both sides if it\'s a card).',
-                            'alsernetforms',
-                            $iso
-                        ),
-                        ['[b]' => '<strong>', '[/b]' => '</strong>']
-                    );
-                    $trans_list = '';
-                    break;
-            }
+            default:
+                $trans_remember = strtr(
+                    $this->l(
+                        '[b]REMEMBER:[/b] In order to ship your air rifle, you must provide us with a copy of your passport or driving licence (both sides if it\'s a card).',
+                        'alsernetforms',
+                        $iso
+                    ),
+                    ['[b]' => '<strong>', '[/b]' => '</strong>']
+                );
+                $trans_list = '';
+                break;
+        }
 
 
-             $trans_instruction = $this->l('Please click on the following link and follow the instructions:', 'alsernetforms', $iso);
-             $trans_upload = $this->l('Upload documentation', 'alsernetforms', $iso);
+        $trans_instruction = $this->l('Please click on the following link and follow the instructions:', 'alsernetforms', $iso);
+        $trans_upload = $this->l('Upload documentation', 'alsernetforms', $iso);
 
         $template = '
 
@@ -700,4 +706,4 @@ class Order extends OrderCore
         return $ret;
     }
 
- }
+}

@@ -106,11 +106,11 @@ class DocumentsController extends ApiController
 
             // Obtener datos del cliente si vienen en el payload
             if (isset($data['customer']) && is_array($data['customer'])) {
-                $document->customer_id = $data['customer']['id'] ?? null;
+                $document->customer_id = $data['customer']['id_customer'] ?? $data['customer']['id'] ?? null;
                 $document->customer_firstname = $data['customer']['firstname'] ?? null;
                 $document->customer_lastname = $data['customer']['lastname'] ?? null;
                 $document->customer_email = $data['customer']['email'] ?? null;
-                $document->customer_dni = $data['customer']['siret'] ?? null;
+                $document->customer_dni = $data['customer']['document_type'] ?? $data['customer']['siret'] ?? null;
                 $document->customer_company = $data['customer']['company'] ?? null;
             }
 
@@ -126,15 +126,31 @@ class DocumentsController extends ApiController
             $productsCount = 0;
             if (isset($data['products']) && is_array($data['products'])) {
                 foreach ($data['products'] as $product) {
-                    $document->products()->create([
-                        'product_id' => $product['id'] ?? null,
-                        'product_name' => $product['name'] ?? null,
-                        'product_reference' => $product['reference'] ?? null,
-                        'quantity' => (int)($product['quantity'] ?? 0),
-                        'price' => (float)($product['price'] ?? 0),
-                    ]);
-                    $productsCount++;
+                    // Mapear campos de Prestashop correctamente
+                    $productId = $product['product_id'] ?? $product['id'] ?? null;
+                    $productName = $product['product_name'] ?? $product['name'] ?? null;
+                    $productReference = $product['product_reference'] ?? $product['reference'] ?? null;
+                    $quantity = (int)($product['product_quantity'] ?? $product['quantity'] ?? 0);
+                    $price = (float)($product['unit_price_tax_incl'] ?? $product['price'] ?? 0);
+
+                    if ($productId && $productName) {
+                        $document->products()->create([
+                            'product_id' => $productId,
+                            'product_name' => $productName,
+                            'product_reference' => $productReference,
+                            'quantity' => $quantity,
+                            'price' => $price,
+                        ]);
+                        $productsCount++;
+                    }
                 }
+            }
+
+            // Detectar tipo de documento basado en los productos guardados
+            if ($productsCount > 0) {
+                $detectedType = $document->detectDocumentType();
+                $document->type = $detectedType;
+                $document->save();
             }
 
             return response()->json([
