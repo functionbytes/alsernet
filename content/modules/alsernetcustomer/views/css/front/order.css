@@ -1,0 +1,361 @@
+
+/* Search Input */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-form .form-control {
+    z-index: 0;
+    border-radius: 8px 0 0 8px;
+    border: 1px solid #ececec;
+    color: #4C4C4C;
+    background-color: transparent;
+}
+
+
+/* Search Button */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-form button {
+    padding: 12px 18px;
+    font-size: 15px;
+    z-index: 0;
+    border-radius: 0 4px 4px 0;
+    background-color: #90bb13;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none;
+    width: max-content;
+    transition: background 0.3s ease;
+    margin: 0px !important;
+    transform: translateY(-50%);
+    right: 0px;
+    height: 41px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-form button:hover {
+    background-color: #7ea30d;
+}
+
+
+/* Select Filter */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .select-filter-boxs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .select-filter-box .form-select {
+    background-color: #F7F7F7;
+    width: auto;
+    border: none;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #4C4C4C;
+    border-radius: 4px;
+}
+
+/* Bootstrap Nav Pills */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f6f6f6;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills .nav-item {
+    margin-right: 5px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills .nav-link {
+    padding: 10px 16px;
+    border: 1px solid #F7F7F7;
+    color: #4C4C4C;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    background: #F7F7F7;
+    font-size: 12px;
+}
+/* Selecciona el scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills::-webkit-scrollbar {
+    height: 8px; /* Altura de la barra de desplazamiento horizontal */
+}
+
+/* Estilo de la pista (track) del scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills::-webkit-scrollbar-track {
+    background: transparent; /* Fondo transparente para la pista */
+}
+
+/* Estilo del pulgar (thumb) del scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.5); /* Color negro semi-transparente para el pulgar */
+    border-radius: 4px; /* Bordes redondeados para el pulgar */
+}
+
+/* Estilo del pulgar al pasar el cursor (hover) */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.7); /* Color más oscuro al pasar el cursor */
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills .nav-link.active {
+    background-color: #90bb13;
+    color: #fff;
+}
+
+/* Table Styles */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table {
+    margin-top: 20px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table thead {
+    background-color: #F7F7F7;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table th,
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table td {
+    padding: 11px;
+    text-align: center;
+    font-size: 12px;
+    color: #4C4C4C;
+    text-transform: uppercase;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table th {
+    font-weight: 600;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Order Actions Dropdown */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown .dropdown-toggle {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    color: #4C4C4C;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown-menu {
+    padding: 10px;
+    border-radius: 4px;
+    color: #4C4C4C;
+    border: 0px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, .1);
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown-menu li {
+    display: block;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown-menu li a {
+    padding: 5px 5px;
+    color: #4a5568;
+    gap: 0px;
+    font-size: 12px;
+    font-size: 12px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown-menu li a:hover {
+    background-color: #F7F7F7;
+    color: #333;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 768px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table thead {
+        display: none;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table, .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table tbody, .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table tr, .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #ffffff;
+        padding: 10px;
+        background: #fff;
+        border-radius: 4px;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        position: relative;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table td:last-child {
+        border-bottom: none; /* Quita el borde del último elemento */
+        justify-content: center;
+        align-items: center;
+        display: flex;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail  .orders-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table h3{
+    text-transform :uppercase;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-form button {
+        font-weight: 500;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills .nav-item {
+        margin-bottom: 5px;
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .nav-pills .nav-link {
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table th,
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .download-table table td {
+        font-size: 13px;
+        padding: 8px;
+        font-weight: 700;
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-download .download-detail .download-form button {
+    padding: calc(11px + 3*(100vw - 320px) / 1600) calc(14px + 6*(100vw - 320px) / 1600);
+    font-size: calc(14px + 2*(100vw - 320px) / 1600);
+    font-weight: 600;
+    z-index: 0;
+    border-radius: 0 calc(5px + 2*(100vw - 320px) / 1600) calc(5px + 2*(100vw - 320px) / 1600) 0;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-orders .download-detail .dropdown  .dropdown-toggle {
+    background-color: #F7F7F7;
+    width: auto;
+    display: flex;
+    border: 1px solid #F7F7F7;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 6px;
+    padding: calc(8px + 3*(100vw - 320px) / 1600) calc(12px + 6*(100vw - 320px) / 1600);
+    font-size: calc(12px + 1*(100vw - 320px) / 1600);
+    font-weight: 600;
+    box-shadow: unset;
+}
+
+
+
+.order-detail .detail-messages .comment-item .comment-message {
+    margin-top: 10px;
+    font-size: 13px;
+}
+.order-detail .detail-messages .form-message {
+    margin-top: 30px;
+    margin-buttom: 30px;
+}
+
+
+.order-detail .detail-messages .comment-item .comment-customer {
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.order-detail .detail-messages .comment-item .comment-date {
+    color: #90bb13;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.order-detail .detail-messages .comment-item .comment-line-inner {
+    position: absolute;
+    left: -28px;
+    top: 0;
+    width: 2px;
+    background-color: var(--bs-light);
+    height: 100%
+}
+
+.order-detail .detail-messages .comment-item .comment-line-inner:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20px;
+    height: 2px;
+    width: 26px;
+    background: var(--bs-light)
+}
+
+
+.order-detail .detail-messages .comment-item {
+    position: relative;
+    background-color: #F7F7F7;
+    width: 100%;
+    border-radius: 4px;
+    padding: 25px 20px;
+}
+.order-detail .detail-messages .comment-wrap {
+    overflow: hidden;
+    background: none repeat scroll 0 0 #FFF;
+    border: 1px solid transparent;
+    padding: 0px;
+    position: relative;
+    transition: all 0.3s ease-out 0s;
+    -o-transition: all 0.3s ease-out 0s;
+    -ms-transition: all 0.3s ease-out 0s;
+    -webkit-transition: all 0.3s ease-out 0s;
+    margin-top: 30px;
+}
+
+
+
+
+
+.dashboard-right-sidebar .dashboard-orders .orders-empty-container  {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    text-align: center;
+    width: 100%;
+}
+
+.dashboard-right-sidebar .dashboard-orders .orders-empty-container  i {
+    font-size: 90px;
+    color: #90bb13;
+    margin-bottom: 20px;
+}
+
+.dashboard-right-sidebar .dashboard-orders .orders-empty-container  h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-transform: none;
+}
+

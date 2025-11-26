@@ -1,0 +1,1 @@
+<input type="hidden" name="analytics" class="analytics-products" value="" data-category="{$category}" data-type="{$type}">

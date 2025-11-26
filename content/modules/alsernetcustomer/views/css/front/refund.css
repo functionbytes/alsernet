@@ -1,0 +1,1355 @@
+
+.dashboard-right-sidebar .dashboard-refund form  .form-label {
+    margin-bottom: .5rem;
+    font-weight: 600;
+    color: #4c4c4c
+}
+
+.dashboard-right-sidebar .dashboard-refund form  .form-control:disabled {
+    cursor: not-allowed;
+    background-color: #F7F7F7!important
+}
+
+.dashboard-right-sidebar .dashboard-refund form  .form-control {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #4c4c4c;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    background-clip: padding-box;
+    border: 1px solid #90bb1347;
+    border-radius: 7px;
+    box-shadow: var(--bs-box-shadow-inset);
+    transition: border-color 0.15s ease-in-out,box-shadow 0.15s ease-in-out;
+    margin-bottom: 10px
+}
+
+.dashboard-right-sidebar .dashboard-refund form  .form-control:focus {
+    color: #4c4c4c;
+    background-color: transparent;
+    border: 1px solid #90bb1347;
+    contain-intrinsic-block-size: AUTO 100px;
+    box-shadow: var(--bs-box-shadow-inset),0 0 0 .25rem rgb(0 0 0 / 25%)
+}
+
+.dashboard-right-sidebar .dashboard-refund form  .form-control:hover {
+    color: #4c4c4c;
+    background-color: transparent;
+    border: 1px solid #90bb1347;
+    contain-intrinsic-block-size: AUTO 100px;
+    box-shadow: var(--bs-box-shadow-inset),0 0 0 .25rem rgb(0 0 0 / 25%)
+}
+
+.dashboard-right-sidebar .dashboard-refund form  label.error {
+    text-align: right;
+    color: #d6021f;
+    font-weight: 600;
+    margin-top: 5px;
+    margin-bottom: 0;
+    border: none;
+    height: auto;
+    width: 100%;
+    display: flex;
+    align-items: normal;
+    justify-content: left;
+    font-size: 12px
+}
+
+.dashboard-right-sidebar .dashboard-refund form  .form-check .check {
+    position: relative;
+    display: flex;
+    align-items: center
+}
+
+.dashboard-right-sidebar .dashboard-refund form  form {
+    margin-bottom: 0;
+    margin-top: 0
+}
+
+.dashboard-right-sidebar .dashboard-refund form  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1)
+}
+
+.dashboard-right-sidebar .dashboard-refund form  input[type="date"] {
+    font-size: 13px;
+    padding: 8px 16px
+}
+
+.dashboard-right-sidebar .dashboard-refund form  input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund form  input[type="date"]:focus::-webkit-calendar-picker-indicator {
+    background: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund form  input[type="date"]::-webkit-inner-spin-button,.dashboard-right-sidebar .dashboard-refund form  input[type="date"]::-webkit-clear-button {
+    display: none
+}
+
+.dashboard-right-sidebar .dashboard-refund form .response-output.success {
+    background: #90bb1338;
+    color: #90bb13;
+    border-color: #90bb1338;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px
+}
+
+.dashboard-right-sidebar .dashboard-refund form .response-output.warning {
+    background: #be1d2e2e;
+    color: #be1d2e!important;
+    border-color: #be1d2e;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px
+}
+
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container {
+    width: 100%;
+    margin-bottom: 10px
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container label {
+    display: block;
+    margin-bottom: 5px;
+    text-align: left
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap {
+    display: flex
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap {
+    width: 100%
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap .sport-select {
+    width: 100%
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap .sport-select .sport-item {
+    width: 33%;
+    margin-bottom: 10px;
+    margin-right: 2%;
+    position: relative;
+    display: inline-block;
+    margin: 0
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap .sport-select .sport-item input {
+    z-index: 999;
+    width: 100%;
+    position: absolute;
+    opacity: 0;
+    left: 0;
+    height: 30px;
+    cursor: pointer
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap .sport-select .sport-item label {
+    position: relative;
+    text-align: center;
+    border: 1px solid #e5e5e5;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4C4C4C;
+    font-weight: 600;
+    height: 30px;
+    line-height: 30px;
+    cursor: pointer;
+    border-radius: 7px;
+    text-transform: uppercase;
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .form-check {
+    margin-bottom: 10px;
+    display: grid;
+}
+
+.dashboard-right-sidebar .dashboard-refund  form .sports-container .sports-wrap .sport-select .sport-item input:checked+label {
+    background: #90BB13;
+    color: #fff;
+    border-color: #90BB13
+}
+
+.user-dashboard-section .dashboard-left-sidebar .user-nav-pills .nav-item.logout-cls {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    margin-top: 10px;
+}
+
+.user-dashboard-section .dashboard-left-sidebar .user-nav-pills .nav-item.logout-cls .btn {
+    background-color: #90bb13;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid transparent !important;
+}
+
+
+.user-dashboard-section .dashboard-left-sidebar .user-nav-pills .nav-item.logout-cls .btn i {
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .btn-add-refund {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .btn-add-refund i{
+    margin-right: 5px;
+    font-size: 11px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .btn-add-refund:hover,
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .btn-add-refund:active,
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .btn-add-refund:focus {
+    color: #fff !important;
+    border-color: #4C4C4C !important;
+    background-color: #4C4C4C !important;
+}
+
+
+.dashboard-right-sidebar .dashboard-refund form .form-label {
+    margin-bottom: .5rem;
+    font-weight: 600;
+    color: #4c4c4c
+}
+
+.dashboard-right-sidebar .dashboard-refund form .form-control:disabled {
+    cursor: not-allowed;
+    background-color: #F7F7F7!important
+}
+
+.dashboard-right-sidebar .dashboard-refund form .form-control {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #4c4c4c;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    background-clip: padding-box;
+    border: 1px solid #90bb1347;
+    border-radius: 7px;
+    box-shadow: var(--bs-box-shadow-inset);
+    transition: border-color 0.15s ease-in-out,box-shadow 0.15s ease-in-out;
+    margin-bottom: 10px
+}
+
+.dashboard-right-sidebar .dashboard-refund form .form-control:focus {
+    color: #4c4c4c;
+    background-color: transparent;
+    border: 1px solid #90bb1347;
+    contain-intrinsic-block-size: AUTO 100px;
+    box-shadow: var(--bs-box-shadow-inset),0 0 0 .25rem rgb(0 0 0 / 25%)
+}
+
+.dashboard-right-sidebar .dashboard-refund form .form-control:hover {
+    color: #4c4c4c;
+    background-color: transparent;
+    border: 1px solid #90bb1347;
+    contain-intrinsic-block-size: AUTO 100px;
+    box-shadow: var(--bs-box-shadow-inset),0 0 0 .25rem rgb(0 0 0 / 25%)
+}
+
+.dashboard-right-sidebar .dashboard-refund form label.error {
+    text-align: right;
+    color: #d6021f;
+    font-weight: 600;
+    margin-top: 5px;
+    margin-bottom: 0;
+    border: none;
+    height: auto;
+    width: 100%;
+    display: flex;
+    align-items: normal;
+    justify-content: left;
+    font-size: 12px
+}
+
+
+.dashboard-right-sidebar .dashboard-refund form .form-check .check {
+    position: relative;
+    display: flex;
+    align-items: center
+}
+
+.dashboard-right-sidebar .dashboard-refund form form {
+    margin-bottom: 0;
+    margin-top: 0
+}
+
+.dashboard-right-sidebar .dashboard-refund form input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1)
+}
+
+.dashboard-right-sidebar .dashboard-refund form input[type="date"] {
+    font-size: 13px;
+    padding: 8px 16px
+}
+
+.dashboard-right-sidebar .dashboard-refund form input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund form input[type="date"]:focus::-webkit-calendar-picker-indicator {
+    background: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund form input[type="date"]::-webkit-inner-spin-button,.dashboard-right-sidebar .dashboard-refund form input[type="date"]::-webkit-clear-button {
+    display: none
+}
+
+.dashboard-right-sidebar .dashboard-refund .response-output.success {
+    background: #90bb1338;
+    color: #90bb13;
+    border-color: #90bb1338;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px
+}
+
+.dashboard-right-sidebar .dashboard-refund .alert-danger {
+    border-color: #90bb1324 !important;
+    background-color: #90bb1324 !important;
+    color: #90bb13 !important;
+}
+
+.dashboard-right-sidebar .dashboard-refund .response-output.warning {
+    border-color: #90bb1324;
+    background-color: #90bb1324;
+    color: #90bb13;
+    display: block;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 4px
+}
+
+
+.dashboard-right-sidebar .dashboard-refund form .form-check {
+    margin-bottom: 10px;
+    display: grid
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section {
+    width: 100%
+}
+.dashboard-right-sidebar .dashboard-refund  input.form-control {
+    border: 1px solid #e5e5e5;
+    box-shadow: none;
+    height: 40px;
+}
+.dashboard-right-sidebar .dashboard-refund  .alert-danger {
+    background-color: #f2dede;
+    border-color: #ebcccc;
+    color: #a94442;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-empty-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    text-align: center;
+    width: 100%
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-empty-container i {
+    font-size: 90px;
+    color: #90bb13;
+    margin-bottom: 20px
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-empty-container  h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-transform: none
+}
+.dashboard-right-sidebar .dashboard-refund .refund-empty-container  p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.dashboard-right-sidebar .dashboard-refund  form hr {
+    margin: 40px 10px;
+    border: 0;
+    border-top: 1px solid #efefef;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check {
+    min-height: unset;
+    padding: 0;
+    margin: 0
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td.return-qunatity {
+    justify-content: center;
+    display: flex;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td {
+
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td  input.form-control {
+    margin: 0;
+    border: 1px solid #e5e5e5;
+    box-shadow: none;
+    height: 25px;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section  .order-tab-table tbody tr td.check {
+  min-width: 30px;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section  .order-tab-table tbody tr td {
+    font-weight: 300;
+    text-align: center;
+    padding: calc(10px + 4*(100vw - 320px) / 1600) calc(12px + 8*(100vw - 320px) / 1600);
+    font-size: 14px;
+    color: #777;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    float: unset;
+    margin-left: 0;
+    background-color: unset;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, .25);
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 100%;
+    transition: all .3s ease-in-out;
+    border: 1px solid #ececec
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    width: 11px;
+    height: 11px;
+    background-color: #90bb13;
+    transition: all .1s ease-in-out;
+    border-radius: 100%
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:checked {
+    background-color: transparent;
+    border-color: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:checked:before {
+    border-color: #90bb13
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:checked:after {
+    transform: translate(-50%,-50%) scale(1)
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:checked[type=radio] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e")
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check .form-check-input:focus {
+    box-shadow: none;
+    border-color: #90bb13
+}
+
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .form-check {
+    display: flex ;
+    justify-content: center !important;
+}
+
+
+
+.cart-table table tbody tr td.quantity {
+    width: 20%
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity {
+    width: 62%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1460px) {
+    .dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity {
+        width: 80%;
+    }
+}
+
+@media (max-width: 1199px) {
+    .dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity {
+        width: 90%;
+    }
+}
+
+@media (max-width: 991px) {
+    .dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity {
+        width: 100%;
+    }
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty button.qty-left-minus {
+    border-radius: 4px 0px 4px 0px !important;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty button.qty-right-plus {
+    border-radius: 0px 4px 0px 4px !important;
+
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty button {
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: #F7F7F7;
+    border-radius: 100% !important;
+    padding: 0;
+    cursor: pointer;
+    margin-top: 0px !important;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .return-qunatity{
+    display: flex;
+    justify-content: center;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty button i {
+    font-size: 11px;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-table-section .order-tab-table tbody tr td .refund-return-qunatity .cart_qty input {
+    width: 50px;
+    padding: 5px 0;
+    border: none;
+    text-align: center;
+    background-color: transparent;
+    font-size: 14px;
+    border-top: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+
+
+
+
+
+
+
+/* Search Input */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form .form-control {
+    z-index: 0;
+    border-radius: 8px 0 0 8px;
+    border: 1px solid #ececec;
+    color: #4C4C4C;
+    background-color: transparent;
+}
+
+[dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form .form-control {
+    border-radius: 0 8px 8px 0;
+}
+
+/* Search Button */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form button {
+    padding: 12px 18px;
+    font-size: 15px;
+    z-index: 0;
+    border-radius: 0 4px 4px 0;
+    background-color: #90bb13;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none;
+    width: max-content;
+    transition: background 0.3s ease;
+    margin: 0px !important;
+    transform: translateY(-50%);
+    right: 0px;
+    height: 41px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form button:hover {
+    background-color: #7ea30d;
+}
+
+[dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form button {
+    border-radius: 8px 0 0 8px;
+}
+
+/* Select Filter */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .select-filter-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .select-filter-box .form-select {
+    background-color: #F7F7F7;
+    width: auto;
+    border: none;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #4C4C4C;
+    border-radius: 4px;
+}
+
+/* Bootstrap Nav Pills */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f6f6f6;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills .nav-item {
+    margin-right: 5px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills .nav-link {
+    padding: 10px 16px;
+    border: 1px solid #F7F7F7;
+    color: #4C4C4C;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    background: #F7F7F7;
+    font-size: 12px;
+}
+/* Selecciona el scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills::-webkit-scrollbar {
+    height: 8px; /* Altura de la barra de desplazamiento horizontal */
+}
+
+/* Estilo de la pista (track) del scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills::-webkit-scrollbar-track {
+    background: transparent; /* Fondo transparente para la pista */
+}
+
+/* Estilo del pulgar (thumb) del scrollbar */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.5); /* Color negro semi-transparente para el pulgar */
+    border-radius: 4px; /* Bordes redondeados para el pulgar */
+}
+
+/* Estilo del pulgar al pasar el cursor (hover) */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.7); /* Color más oscuro al pasar el cursor */
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills .nav-link.active {
+    background-color: #90bb13;
+    color: #fff;
+}
+
+/* Table Styles */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table {
+    margin-top: 20px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table thead {
+    background-color: #F7F7F7;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table th,
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table td {
+    padding: 11px;
+    text-align: center;
+    font-size: 12px;
+    color: #4C4C4C;
+    text-transform: uppercase;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table th {
+    font-weight: 600;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Order Actions Dropdown */
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown .dropdown-toggle {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    color: #4C4C4C;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown-menu {
+    padding: 10px;
+    border-radius: 4px;
+    color: #4C4C4C;
+    border: 0px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, .1);
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown-menu li {
+    display: block;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown-menu li a {
+    padding: 5px 5px;
+    color: #4C4C4C;
+    gap: 0px;
+    font-size: 12px;
+    font-size: 12px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown-menu li a:hover {
+    background-color: #F7F7F7;
+    color: #333;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 768px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table thead {
+        display: none; /* Oculta los encabezados de la tabla en móviles */
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table, .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table tbody, .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table tr, .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #ffffff;
+        padding: 10px;
+        background: #fff;
+        border-radius: 4px;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        position: relative;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table td:last-child {
+        border-bottom: none; /* Quita el borde del último elemento */
+        justify-content: center;
+        align-items: center;
+        display: flex;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail  .orders-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table h3{
+    text-transform :uppercase;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form button {
+        font-weight: 500;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills .nav-item {
+        margin-bottom: 5px;
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .nav-pills .nav-link {
+        width: 100%;
+    }
+
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table th,
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-table table td {
+        font-size: 13px;
+        padding: 8px;
+        font-weight: 700;
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .refund-form button {
+    padding: calc(11px + 3*(100vw - 320px) / 1600) calc(14px + 6*(100vw - 320px) / 1600);
+    font-size: calc(14px + 2*(100vw - 320px) / 1600);
+    font-weight: 600;
+    z-index: 0;
+    border-radius: 0 calc(5px + 2*(100vw - 320px) / 1600) calc(5px + 2*(100vw - 320px) / 1600) 0;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .refund-detail .dropdown  .dropdown-toggle {
+    background-color: #F7F7F7;
+    width: auto;
+    display: flex;
+    border: 1px solid #F7F7F7;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 6px;
+    padding: calc(8px + 3*(100vw - 320px) / 1600) calc(12px + 6*(100vw - 320px) / 1600);
+    font-size: calc(12px + 1*(100vw - 320px) / 1600);
+    font-weight: 600;
+    box-shadow: unset;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-guideline {
+    text-align: left;
+    font-weight: 700;
+    line-height: 1em;
+    padding: 15px;
+    cursor: pointer;
+    border-color: #90bb1324;
+    background-color: #90bb1324;
+    color: #90bb13;
+    font-size: 36px;
+    border-radius: 4px;
+    margin-bottom: 30px;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-guideline p  {
+    color: #4C4C4C;
+}
+.dashboard-right-sidebar .dashboard-refund .refund-guideline p i {
+    color: #4C4C4C !important;
+    font-size: 17px;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-guideline .refund-text {
+    font-size: 14px;
+    color: #4C4C4C;
+    line-height: 27px;
+}
+
+.dashboard-right-sidebar .dashboard-refund .refund-guideline .refund-text .refund_terms_link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+
+
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr {
+    margin-top: 20px;
+    padding: 35px 25px 10px 25px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    border-radius: 4px;
+    background-color: #F7F7F7;
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr {
+        display:inline;
+        margin: 30px 0;
+        overflow: hidden
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li {
+    display: grid;
+    text-align: center;
+    position: relative;
+    justify-content: center;
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li {
+        margin:0;
+        width: 50% !important
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li h5 {
+    margin: 0px 0px 5px 0px;
+    text-align: center;
+    width: 100%;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li h5 {
+        display:block;
+        text-align: left;
+        margin-top: 0
+    }
+
+    [dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li h5 {
+        text-align: right
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li:before {
+    position: relative;
+    top: -2px;
+    float: left;
+    left: 50% !important;
+    line-height: 1;
+    -webkit-transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%) !important
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li:before {
+        position:relative;
+        top: 10px;
+        float: left;
+        left: -2px !important;
+        line-height: 1;
+        -webkit-transform: translate(-50%, -50%) !important;
+        transform: translate(-50%, -50%) !important
+    }
+
+    [dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li:before {
+        float: right;
+        right: -32px !important;
+        left: unset !important
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo {
+    color: #4C4C4C;
+    border-top: 4px solid #959595;
+    width: 100% !important
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo {
+        position:relative;
+        text-align: left;
+        margin-left: 30px;
+        -webkit-box-align: start;
+        -ms-flex-align: start;
+        align-items: flex-start;
+        padding-bottom: calc(20px + 20*(100vw - 320px)/1600);
+        padding-left: 30px;
+        border-top: unset;
+        border-left: 4px solid #959595
+    }
+
+    [dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo {
+        border-left: none;
+        border-right: 4px solid #4C4C4C;
+        margin-left: 0;
+        margin-right: 30px;
+        -webkit-box-align: end;
+        -ms-flex-align: end;
+        align-items: flex-end;
+        padding-left: 0;
+        padding-right: 30px;
+        text-align: right
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo:before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding-top: 2px;
+    content: "";
+    color: #fff;
+    background: #959595;
+    line-height: 35px;
+    border: none;
+    border-radius: 35px;
+    font-size: 16px
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo:before {
+        position:absolute;
+        top: 10px;
+        left: -17px;
+        line-height: 1;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%)
+    }
+
+    [dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo:before {
+        left: unset;
+        right: -17px
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-todo h6 {
+    font-size: 13px;
+    margin-top: 8px
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done {
+    color: #222;
+    border-top: 4px solid #90bb13;
+    width: 100% !important
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done:first-of-type {
+        padding-top:5px
+    }
+}
+
+@media(max-width: 575px) {
+    .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done {
+        position:relative;
+        text-align: left;
+        margin-left: 30px;
+        -webkit-box-align: self-start;
+        -ms-flex-align: self-start;
+        align-items: self-start;
+        padding-bottom: calc(20px + 20*(100vw - 320px)/1600);
+        border-top: unset;
+        border-left: 4px solid #90bb13
+    }
+
+    [dir=rtl] .user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done {
+        margin-left: 0;
+        margin-right: 30px;
+        text-align: right;
+        border-left: none;
+        border-right: 4px solid #90bb13;
+        -webkit-box-align: end;
+        -ms-flex-align: end;
+        align-items: flex-end
+    }
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done:before {
+    font-family: 'Font Awesome 6 Duotone';
+    font-weight: 900;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding-top: 2px;
+    content: "";
+    color: #fff;
+    background-color: #90bb13;
+    line-height: 35px;
+    border: none;
+    border-radius: 35px;
+    font-size: 16px
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done h6 {
+
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .progtrckr li.progtrckr-done h6.state-history {
+    font-size: 10px;
+    background-color: #90bb13;
+    padding: 10px;
+    color: #fff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    border-radius: 4px;
+    width: max-content;
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item .comment-message {
+    margin-top: 10px;
+    font-size: 13px;
+}
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .form-message {
+    margin-top: 30px;
+    margin-buttom: 30px;
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item .comment-customer {
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item .comment-date {
+    color: #90bb13;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item .comment-line-inner {
+    position: absolute;
+    left: -28px;
+    top: 0;
+    width: 2px;
+    background-color: var(--bs-light);
+    height: 100%
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item .comment-line-inner:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20px;
+    height: 2px;
+    width: 26px;
+    background: var(--bs-light)
+}
+
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-item {
+    position: relative;
+    background-color: #F7F7F7;
+    width: 100%;
+    border-radius: 4px;
+    padding: 25px 20px;
+}
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .detail-messages .comment-wrap {
+    overflow: hidden;
+    background: none repeat scroll 0 0 #FFF;
+    border: 1px solid transparent;
+    padding: 0px;
+    position: relative;
+    transition: all 0.3s ease-out 0s;
+    -o-transition: all 0.3s ease-out 0s;
+    -ms-transition: all 0.3s ease-out 0s;
+    -webkit-transition: all 0.3s ease-out 0s;
+    margin-top: 30px;
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund  .summery-box .summery-header {
+    padding: calc(12px + 4*(100vw - 320px) / 1600) calc(16px + 6*(100vw - 320px) / 1600);
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-bottom: 1px solid #90bb13;
+    background: #90bb13;
+    border-radius: 4px 4px 0 0;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund  .summery-box .summery-header h3 {
+    font-weight: 600;
+    margin-bottom: 0;
+    text-transform: inherit;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund hr {
+    border: 0;
+    border-top: 1px solid #f6f6f6;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .custom-upload-container {
+    background-color: #F7F7F7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border-radius: 12px;
+    margin: 0 auto;
+    font-family: sans-serif;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .file-input {
+    display: none;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .upload-box {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    width: 100%;
+    border: 2px dashed #ccc;
+    transition: all 0.3s ease;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .upload-box:hover {
+    border-color: #90bb13;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .upload-icon {
+    font-size: 2rem;
+    color: #90bb13;
+    margin-bottom: 0.5rem;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .upload-text {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .upload-subtext {
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.user-dashboard-section .dashboard-right-sidebar .dashboard-refund .file-name {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    float: unset;
+    margin-left: 0;
+    background-color: unset;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, .25);
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 100%;
+    transition: all .3s ease-in-out;
+    border: 1px solid #ececec
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    width: 11px;
+    height: 11px;
+    background-color: #90bb13;
+    transition: all .1s ease-in-out;
+    border-radius: 100%
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check label{
+    margin: 0px 0px 0px 7px;
+}
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:checked {
+    background-color: transparent;
+    border-color: transparent
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:checked:before {
+    border-color: #90bb13
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:checked:after {
+    transform: translate(-50%,-50%) scale(1)
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:checked[type=radio] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e")
+}
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check .form-check-input:focus {
+    box-shadow: none;
+    border-color: #90bb13
+}
+
+
+.dashboard-right-sidebar .dashboard-refund .pickup  .form-check {
+    display: flex ;
+    justify-content: left !important;
+}
+

@@ -1,0 +1,371 @@
+.wrapper {
+    background: #000000 no-repeat;
+}
+
+.blackfriday {
+    justify-content: center;
+    background: #000000 no-repeat;
+    align-items: center;
+    display: flex;
+}
+
+.blackfriday .container .container-welcome {
+    margin-bottom: 15px;
+    margin-top: -20px;
+}
+
+.blackfriday .container .container-welcome img {
+    width: 100%;
+    height: auto;
+}
+
+.blackfriday .container .container-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    margin-left: 35px;
+}
+
+.blackfriday .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 30px;
+}
+
+.blackfriday .container .container-items .icono_deporte {
+    fill: #FFF735;
+    color: #FFF735;
+    width: 70px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.blackfriday .container .container-items .icono_deporte:hover {
+    fill: #FFF;
+    color: #FFF;
+    width: 70px;
+    height: auto;
+}
+
+
+.blackfriday .container .container-items .item .title {
+    font-size: 10px;
+    width: 100%;
+    color: #FFF735;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 0;
+    margin-bottom: -1px;
+}
+
+/* Para el título */
+.blackfriday .container .container-items .icono_deporte:hover .title {
+    color: #FFF; /* Cambia el color del título */
+}
+
+.blackfriday .container .container-items .item .description {
+    font-size: 16px;
+    width: 100%;
+    color: #fff;
+    font-weight: 900;
+    position: absolute;
+    top: 90px;
+}
+
+/* Para el título */
+.blackfriday .container .container-items .icono_deporte:hover .description {
+    color: #FFF735; /* Cambia el color del título */
+}
+
+
+.blackfriday .container .container-items .item img {
+    width: 100%;
+    height: auto;
+    max-width: 100px;
+}
+
+
+.blackfriday .container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.blackfriday .container .message {
+    text-align: left;
+    margin: 20px;
+}
+
+.blackfriday .container .message p {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #FFFFFF;
+    font-family: Barlow;
+}
+
+.blackfriday .container .message ul {
+    margin-top: -20px;
+    padding-left: 40px;
+    display: flow-root;
+    color: #FFF;
+    font-family: Barlow;
+}
+
+.blackfriday .container .message h1 {
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #FFFFFF;
+    font-family: Barlow;
+}
+
+.blackfriday .container .message h2 {
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #FFFFFF;
+    font-family: Barlow;
+}
+
+.blackfriday .container .container-btn {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+
+.blackfriday .container .container-btn .btn {
+    border: 1px solid #000;
+    font-size: 20px;
+    color: #000;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+    background: #FFF735;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+@media (min-width: 992px) {
+    .blackfriday .container .message {
+        text-align: left;
+        margin: 20px 10px;
+    }
+
+    .blackfriday .container .container-items {
+        margin-left: 0px;
+        margin-top: 20px;
+    }
+
+    .blackfriday .container .container-items .icono_deporte {
+        margin-bottom: unset;
+    }
+
+    .blackfriday .container .container-items .col-lg-1 {
+        max-width: 12.3333%;
+        -webkit-box-flex: 0;
+        -ms-flex: 0 0 8.3333%;
+        flex: 0 0 12.3333%;
+    }
+
+    .blackfriday .container .container-btn .btn {
+        font-size: 30px;
+        padding: 25px;
+    }
+
+
+}
+
+
+/* ------------------------ ESTILOS PAGINA ESPECÍFICA DE DEPORTES ----------------------------*/
+
+
+@media (max-width: 768px) {
+    .black-deportes-wrapper .row .col-md-6 {
+        margin: 0px 10px;
+    }
+
+    .black-deportes-wrapper .row .col-sm-12 {
+        margin: 0px 10px;
+    }
+
+}
+
+.black-deportes-wrapper .row .col-xl-4:nth-child(3n+1) {
+    padding-right: 5px
+}
+
+.black-deportes-wrapper .row .col-xl-4:nth-child(3n) {
+    padding-left: 5px
+}
+
+.black-deportes-wrapper .row .col-xl-4:nth-child(3n) {
+    padding-left: 5px
+}
+
+.black-deportes-wrapper .row .col-xl-4:nth-child(3n+2) {
+    position: relative;
+    padding-right: 5px;
+    padding-left: 5px
+}
+
+.black-deportes-wrapper .row .col-md-6 {
+    position: relative;
+    padding-right: 5px;
+    padding-left: 5px
+}
+
+.black-deportes-wrapper .row .col-md-6:nth-child(2n+1) {
+    padding-right: 5px
+}
+
+.black-deportes-wrapper .row .col-md-6:nth-child(2n) {
+    padding-left: 5px
+}
+
+.black-deportes-wrapper .title {
+    margin: 0 auto 0 0;
+    font-size: 2.4rem;
+    white-space: nowrap
+}
+
+.black-deportes-wrapper .product-wrapper {
+    padding-top: 1.7rem
+}
+
+.black-deportes-wrapper ul {
+    margin: 0 0 1.9rem 0;
+    -webkit-box-pack: end;
+    -ms-flex-pack: end;
+    justify-content: flex-end
+}
+
+.black-deportes-wrapper .product-wrap {
+    margin-bottom: 2.4rem
+}
+
+.black-deportes-wrapper .banner-media {
+    position: relative
+}
+
+.black-deportes-wrapper .banner-content {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    padding: 5px 10px;
+    z-index: 2;
+    box-sizing: border-box;
+    background: #000000B3;
+    display: flex;
+    justify-content: center;
+}
+
+.black-deportes-wrapper .banner-content .banner-title {
+    margin: 0;
+    font-size: 14px;
+    font-family: 'Barlow';
+    line-height: 1.1em;
+    color: #FFFFFF;
+    text-align: center;
+    white-space: nowrap;
+    position: relative;
+    z-index: 3;
+    text-shadow: 0px 0px 2px #000000;
+    opacity: 1;
+}
+
+
+.black-deportes-wrapper .col-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.black-deportes-wrapper .row {
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
+.black-deportes-wrapper .mobile-hidden0 {
+    display: none;
+}
+
+.black-deportes-wrapper .mobile-hidden2 {
+    display: initial;
+}
+
+
+@media (min-width: 992px) {
+    .black-deportes-wrapper .banner-content .banner-title {
+        font-size: 20px;
+    }
+
+    .black-deportes-wrapper .col-lg-4 {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+
+    .black-deportes-wrapper .row {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+
+    .black-deportes-wrapper .banner-content {
+        bottom: 20px;
+        padding: 10px 20px;
+    }
+
+    .black-deportes-wrapper .mobile-hidden0 {
+        display: initial;
+    }
+
+    .black-deportes-wrapper .mobile-hidden2 {
+        display: none;
+    }
+
+}
+
+.black-deportes-wrapper .btn {
+    padding: 1.3rem 2.5rem 1.3rem 2.6rem
+}
+
+.black-deportes-wrapper .banner-media img {
+    height: 100%;
+    border-radius: 4px
+}
+
+.black-deportes-wrapper .banner-media .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0000003d;
+    z-index: 1;
+    border: 1px solid;
+}
+
+.page-cms .page-content .blackfriday ul li::before {
+    display: none !important;
+}
+
+
+.page-cms .page-content .blackfriday ul li {
+    display: list-item;
+    font-size: 14px;
+}
+
+.page-cms .page-content .blackfriday a {
+    color: #FFF735;
+}

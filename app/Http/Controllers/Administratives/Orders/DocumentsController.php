@@ -15,6 +15,7 @@ use setasign\Fpdi\PdfReader;
 use Illuminate\Support\Str;
 use setasign\Fpdi\Fpdi;
 use Carbon\Carbon;
+use DB;
 
 class DocumentsController extends Controller
 {
@@ -37,6 +38,9 @@ class DocumentsController extends Controller
         $document->order_reference = $order->reference ?? $document->order_reference;
         $document->order_date = $order->date_add ?? $document->order_date;
 
+        // Traer cart_id de la orden
+        $document->cart_id = $order->id_cart ?? $document->cart_id;
+
         $document->customer_id = $customer->id_customer;
         $document->customer_firstname = $customer->firstname;
         $document->customer_lastname = $customer->lastname;
@@ -44,8 +48,15 @@ class DocumentsController extends Controller
         $document->customer_dni = $customer->siret ?? null;
         $document->customer_company = $customer->company ?? null;
 
+        // Guardar primero el documento
         $document->save();
+
+        // Luego capturar los productos
         $document->captureProducts();
+
+        // Finalmente detectar el tipo basándose en los productos capturados
+        $document->type = $document->detectDocumentType();
+        $document->save();
 
         return true;
     }
@@ -62,10 +73,22 @@ class DocumentsController extends Controller
 
         // Filtrar por rango de fechas si se proporciona
         if ($dateFrom) {
-            $query->whereDate('created_at', '>=', Carbon::createFromFormat('Y-m-d', $dateFrom));
+            try {
+                $startDate = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay();
+                $query->whereDate('created_at', '>=', $startDate);
+            } catch (\Exception $e) {
+                // Si la fecha es inválida, ignorar el filtro
+                $dateFrom = null;
+            }
         }
         if ($dateTo) {
-            $query->whereDate('created_at', '<=', Carbon::createFromFormat('Y-m-d', $dateTo));
+            try {
+                $endDate = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay();
+                $query->whereDate('created_at', '<=', $endDate);
+            } catch (\Exception $e) {
+                // Si la fecha es inválida, ignorar el filtro
+                $dateTo = null;
+            }
         }
 
         $documents = $query->paginate($perPage);
@@ -83,6 +106,44 @@ class DocumentsController extends Controller
     public function import()
     {
         return view('administratives.views.orders.documents.import');
+    }
+
+    /**
+     * Obtiene órdenes disponibles para el Select2 dinámico
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAvailableOrders(Request $request)
+    {
+        $search = $request->query('search', '');
+
+        try {
+            $query = PrestashopOrder::query();
+
+            if (!empty($search)) {
+                $query->where('id_order', 'LIKE', "%{$search}%")
+                    ->orWhere('reference', 'LIKE', "%{$search}%");
+            }
+
+            $orders = $query->select('id_order', 'reference')
+                ->orderBy('id_order', 'DESC')
+                ->limit(50)
+                ->get()
+                ->map(fn($order) => [
+                    'id' => $order->id_order,
+                    'text' => "#{$order->id_order} - {$order->reference}"
+                ]);
+
+            return response()->json([
+                'results' => $orders
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function edit($uid){
@@ -474,13 +535,25 @@ class DocumentsController extends Controller
 
             $documents = Document::where('order_id', $orderId)->get();
 
+            // Validar que la orden no exista
+            if (!$documents->isEmpty()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => "Orden {$orderId} ya existe.",
+                    'data' => [
+                        'order_id' => $orderId,
+                        'existing_documents' => $documents->count(),
+                    ]
+                ], 400);
+            }
+
             // Si no existe documento, crear uno nuevo
             if ($documents->isEmpty()) {
                 try {
                     $document = new Document();
                     $document->order_id = $orderId;
                     $document->type = 'order';
-                    $document->source = 'manual';
+                    $document->source = 'api';
                     $document->proccess = 0;
                     $document->save();
 
@@ -497,6 +570,8 @@ class DocumentsController extends Controller
             $failed = 0;
             $errors = [];
 
+            $productsCount = 0;
+
             foreach ($documents as $document) {
                 try {
                     if (!$this->syncDocumentWithOrder($document, $order)) {
@@ -508,6 +583,8 @@ class DocumentsController extends Controller
                         continue;
                     }
                     $synced++;
+                    // Contar productos del documento
+                    $productsCount = $document->products()->count();
                 } catch (\Exception $e) {
                     $failed++;
                     $errors[] = [
@@ -525,6 +602,7 @@ class DocumentsController extends Controller
                     'synced' => $synced,
                     'failed' => $failed,
                     'total' => $documents->count(),
+                    'products_count' => $productsCount,
                     'order_reference' => $order->reference,
                     'customer_name' => $order->customer ? "{$order->customer->firstname} {$order->customer->lastname}" : null,
                     'errors' => $failed > 0 ? $errors : [],

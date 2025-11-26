@@ -1,0 +1,247 @@
+.wrapper {
+    background: #000000 no-repeat;
+}
+
+
+.ofertas-deportes-wrapper {
+    padding-top: 20px;
+}
+
+.categories-wrapper {
+    padding-top: unset !important;
+}
+
+@media (min-width: 992px) {
+    .ofertas-deportes-wrapper {
+        padding-left: 90px;
+        padding-right: 90px;
+    }
+
+}
+
+
+.ofertas-express {
+    padding: 0px 100px;
+}
+
+.ofertas-express-message {
+    padding: 0px 100px;
+}
+
+
+.ofertas-express-message > h3 {
+    font-size: 16px !important;
+    margin-bottom: 0px !important;
+}
+
+.ofertas-express-message > p {
+    font-size: 16px !important;
+}
+
+
+.ofertas-express .swiper-banner {
+    border: 1px solid #FF662E;
+}
+
+@media (max-width: 768px) {
+    .ofertas-express {
+        padding: 10px 0px 0px 0px;
+    }
+
+    .ofertas-express-message {
+        padding: 20px 0px 0px 0px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .ofertas-deportes-wrapper .row .col-md-6 {
+        margin: 0px 10px;
+    }
+
+    .ofertas-deportes-wrapper .row .col-sm-12 {
+        margin: 0px 10px;
+    }
+
+}
+
+
+.ofertas-deportes-wrapper .row .col-xl-4:nth-child(3n+1) {
+    padding-right: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-xl-4:nth-child(3n) {
+    padding-left: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-xl-4:nth-child(3n) {
+    padding-left: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-xl-4:nth-child(3n+2) {
+    position: relative;
+    padding-right: 5px;
+    padding-left: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-md-6 {
+    position: relative;
+    padding-right: 5px;
+    padding-left: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-md-6:nth-child(2n+1) {
+    padding-right: 5px
+}
+
+.ofertas-deportes-wrapper .row .col-md-6:nth-child(2n) {
+    padding-left: 5px
+}
+
+.ofertas-deportes-wrapper .title {
+    margin: 0 auto 0 0;
+    font-size: 2.4rem;
+    white-space: nowrap
+}
+
+.ofertas-deportes-wrapper .product-wrapper {
+    padding-top: 1.7rem
+}
+
+.ofertas-deportes-wrapper ul {
+    margin: 0 0 1.9rem 0;
+    -webkit-box-pack: end;
+    -ms-flex-pack: end;
+    justify-content: flex-end
+}
+
+.ofertas-deportes-wrapper .product-wrap {
+    margin-bottom: 2.4rem
+}
+
+.ofertas-deportes-wrapper .banner-media {
+    position: relative
+}
+
+.ofertas-deportes-wrapper .banner-content {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    padding: 5px 10px;
+    z-index: 2;
+    box-sizing: border-box;
+    background: #FF662EB3;
+    display: flex;
+    justify-content: center;
+}
+
+.ofertas-deportes-wrapper .banner-content .banner-title {
+    margin: 0;
+    font-size: 14px;
+    font-family: 'Barlow';
+    line-height: 1.1em;
+    color: #FFFFFF;
+    text-align: center;
+    white-space: nowrap;
+    position: relative;
+    z-index: 3;
+    text-shadow: 0px 0px 2px #000000;
+    opacity: 1;
+    letter-spacing: -0.05em;
+}
+
+.ofertas .container .container-btn .btn {
+    color: #FFFFFF;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    background: #FF662E;
+    border-radius: 0;
+    border: 0px;
+    font-size: 20px;
+    padding: 25px 25px;
+    letter-spacing: 0px;
+}
+
+.ofertas .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 100%;
+}
+
+.ofertas-deportes-wrapper .col-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.ofertas-deportes-wrapper .row {
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
+.ofertas-deportes-wrapper .mobile-hidden0 {
+    display: none;
+}
+
+.ofertas-deportes-wrapper .mobile-hidden2 {
+    display: initial;
+}
+
+
+@media (min-width: 992px) {
+    .ofertas-deportes-wrapper .banner-content .banner-title {
+        font-size: 20px;
+        letter-spacing: normal;
+    }
+
+    .ofertas-deportes-wrapper .col-lg-4 {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+
+    .ofertas-deportes-wrapper .row {
+    }
+
+    .ofertas-deportes-wrapper .banner-content {
+        bottom: 20px;
+        padding: 10px 20px;
+    }
+
+    .ofertas .container .container-btn .btn {
+        font-size: 30px;
+        padding: 25px 50px;
+    }
+
+    .ofertas-deportes-wrapper .mobile-hidden0 {
+        display: initial;
+    }
+
+    .ofertas-deportes-wrapper .mobile-hidden2 {
+        display: none;
+    }
+
+}
+
+.ofertas-deportes-wrapper .btn {
+    padding: 1.3rem 2.5rem 1.3rem 2.6rem
+}
+
+.ofertas-deportes-wrapper .banner-media img {
+    height: 100%;
+    border-radius: 4px
+}
+
+.ofertas-deportes-wrapper .banner-media .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 1;
+    border: 1px solid #FF662E;
+}

@@ -1,0 +1,94 @@
+[
+    {
+        "title": "\u00dcBER ALVAREZ",
+        "type": "items",
+        "id": 1,
+        "position": "1",
+        "items": [
+            {
+                "title": "Wir \u00fcber uns",
+                "url": "\/de\/wir-uber-uns"
+            },
+            {
+                "title": "Club \u00c1lvarez",
+                "url": "\/de\/club-alvarez"
+            },
+            {
+                "title": "Kundenservice",
+                "url": "\/de\/kundenservice"
+            },
+            {
+                "title": "Kontact",
+                "url": "\/de\/kontakt"
+            },
+            {
+                "title": "Black Friday \u00c1lvarez",
+                "url": "\/de\/blackfriday"
+            }
+        ]
+    },
+    {
+        "title": "INFORMATION",
+        "type": "items",
+        "id": 2,
+        "position": "3",
+        "items": [
+            {
+                "title": "Kaufen sie in Alvarez",
+                "url": "\/de\/kaufen-sie-in-alvarez"
+            },
+            {
+                "title": "Zahlung und finanzierung",
+                "url": "\/de\/zahlung-und-finanzierung"
+            },
+            {
+                "title": "Versand",
+                "url": "\/de\/versand"
+            },
+            {
+                "title": "Cookies Policy",
+                "url": "\/de\/cookies-policy"
+            },
+            {
+                "title": "Formulario de Informaci\u00f3n del Sistema Interno de Informaci\u00f3n.",
+                "url": "\/de\/formulario-de-informacion-del-sistema-interno-de-informacion"
+            },
+            {
+                "title": "Bedingungen unserer Aktionen",
+                "url": "\/de\/bedingungen-unserer-aktionen"
+            },
+            {
+                "title": "Politik zum schutz pers\u00f6nlicher daten",
+                "url": "\/de\/politik-zum-schutz-personlicher-daten"
+            },
+            {
+                "title": "Anmerkung",
+                "url": "\/de\/anmerkung"
+            }
+        ]
+    },
+    {
+        "title": "SYSTEM",
+        "type": "items",
+        "id": 3,
+        "position": "2",
+        "items": [
+            {
+                "title": "Rr\u00fcckgabe & umtausch",
+                "url": "https:\/\/returns.itsrever.com\/alvarez?lang=de"
+            },
+            {
+                "title": "R\u00fcckgabe-und umtauschbedingungen",
+                "url": "\/de\/rueckgabe-und-umtauschbedingungen"
+            },
+            {
+                "title": "Ombudsmann",
+                "url": "\/de\/ombudsmann"
+            },
+            {
+                "title": "Status meiner bestellung",
+                "url": "\/de\/auftragsverfolgung-gast"
+            }
+        ]
+    }
+]

@@ -1,0 +1,94 @@
+[
+    {
+        "title": "\u00c0 PROPOS D'\u00c1LVAREZ",
+        "type": "items",
+        "id": 1,
+        "position": "1",
+        "items": [
+            {
+                "title": "Qui sommes nous",
+                "url": "\/fr\/qui-sommes-nous"
+            },
+            {
+                "title": "Club \u00c1lvarez",
+                "url": "\/fr\/club-alvarez"
+            },
+            {
+                "title": "Service client",
+                "url": "\/fr\/service-client"
+            },
+            {
+                "title": "Contact",
+                "url": "\/fr\/contactez-nous"
+            },
+            {
+                "title": "Black Friday \u00c1lvarez",
+                "url": "\/fr\/blackfriday"
+            }
+        ]
+    },
+    {
+        "title": "INFORMATION",
+        "type": "items",
+        "id": 2,
+        "position": "3",
+        "items": [
+            {
+                "title": "Acheter chez \u00c1lvarez",
+                "url": "\/fr\/acheter-chez-alvarez"
+            },
+            {
+                "title": "Paiement et financement",
+                "url": "\/fr\/paiement-et-financement"
+            },
+            {
+                "title": "Exp\u00e9ditions",
+                "url": "\/fr\/expeditions"
+            },
+            {
+                "title": "Politique de cookies",
+                "url": "\/fr\/politique-de-cookies"
+            },
+            {
+                "title": "Formulario de Informaci\u00f3n del Sistema Interno de Informaci\u00f3n.",
+                "url": "\/fr\/formulario-de-informacion-del-sistema-interno-de-informacion"
+            },
+            {
+                "title": "Conditions de nos promotions",
+                "url": "\/fr\/conditions-de-nos-promotions"
+            },
+            {
+                "title": "Politique de protection des donnees personelles",
+                "url": "\/fr\/politique-de-protection-des-donnees-personelles"
+            },
+            {
+                "title": "Conditions g\u00e9n\u00e9rales de vente",
+                "url": "\/fr\/conditions-generales-de-vente"
+            }
+        ]
+    },
+    {
+        "title": "SYST\u00c8ME",
+        "type": "items",
+        "id": 3,
+        "position": "2",
+        "items": [
+            {
+                "title": "Retour et d'\u00e9change",
+                "url": "https:\/\/returns.itsrever.com\/alvarez?lang=fr"
+            },
+            {
+                "title": "Politique de retour et \u00e9change",
+                "url": "\/fr\/politique-de-retour-et-echange"
+            },
+            {
+                "title": "Defenseur du Client",
+                "url": "\/fr\/defenseur-du-client"
+            },
+            {
+                "title": "Situation de ma commande",
+                "url": "\/fr\/suivi-de-commande-invite"
+            }
+        ]
+    }
+]

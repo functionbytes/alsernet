@@ -1,0 +1,94 @@
+[
+    {
+        "title": "ABOUT \u00c1LVAREZ",
+        "type": "items",
+        "id": 1,
+        "position": "1",
+        "items": [
+            {
+                "title": "Who we are",
+                "url": "\/en\/who-we-are"
+            },
+            {
+                "title": "Alvarez Club",
+                "url": "\/en\/alvarez-club"
+            },
+            {
+                "title": "Customer service",
+                "url": "\/en\/customer-service"
+            },
+            {
+                "title": "Contact",
+                "url": "\/en\/contact-us"
+            },
+            {
+                "title": "Black Friday \u00c1lvarez",
+                "url": "\/en\/blackfriday"
+            }
+        ]
+    },
+    {
+        "title": "INFORMATION",
+        "type": "items",
+        "id": 2,
+        "position": "3",
+        "items": [
+            {
+                "title": "Shopping at Alvarez's",
+                "url": "\/en\/shopping-at-alvarez-s"
+            },
+            {
+                "title": "Payment and financing",
+                "url": "\/en\/payment-and-financing"
+            },
+            {
+                "title": "Shipments",
+                "url": "\/en\/shipments"
+            },
+            {
+                "title": "Cookies policy",
+                "url": "\/en\/cookies-policy"
+            },
+            {
+                "title": "Formulario de Informaci\u00f3n del Sistema Interno de Informaci\u00f3n.",
+                "url": "\/en\/formulario-de-informacion-del-sistema-interno-de-informacion"
+            },
+            {
+                "title": "Conditions of our promotions",
+                "url": "\/en\/conditions-of-our-promotions"
+            },
+            {
+                "title": "Privacy policy on personal nature data",
+                "url": "\/en\/privacy-policy-on-personal-nature-data"
+            },
+            {
+                "title": "Legal notice",
+                "url": "\/en\/legal-notice"
+            }
+        ]
+    },
+    {
+        "title": "SYSTEM",
+        "type": "items",
+        "id": 3,
+        "position": "2",
+        "items": [
+            {
+                "title": "Returns and exchanges",
+                "url": "https:\/\/returns.itsrever.com\/alvarez?lang=en"
+            },
+            {
+                "title": "Return and exchange policy",
+                "url": "\/en\/return-and-exchange-policy"
+            },
+            {
+                "title": "Customers support",
+                "url": "\/en\/customers-support"
+            },
+            {
+                "title": "Status of my order",
+                "url": "\/en\/guest-tracking"
+            }
+        ]
+    }
+]

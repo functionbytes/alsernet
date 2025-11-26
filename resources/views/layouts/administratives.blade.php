@@ -69,12 +69,14 @@
 
 
 <script src="{{ url('managers/libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}" type="text/javascript"></script>
+<script src="{{ url('managers/libs/daterangepicker/daterangepicker.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/select2/dist/js/select2.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/jquery-validation/dist/jquery.validate.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/dropzone/dist/dropzone.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/quill/dist/quill.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/libs/toastr/toastr.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/js/forms/select2.init.js') }}" type="text/javascript"></script>
+<script src="{{ url('managers/js/plugins/daterangepicker.init.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/js/app.min.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/js/app.minisidebar.init.js') }}" type="text/javascript"></script>
 <script src="{{ url('managers/js/app-style-switcher.js') }}" type="text/javascript"></script>

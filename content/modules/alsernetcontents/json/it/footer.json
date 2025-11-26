@@ -1,0 +1,94 @@
+[
+    {
+        "title": "SU \u00c1LVAREZ",
+        "type": "items",
+        "id": 1,
+        "position": "1",
+        "items": [
+            {
+                "title": "Chi siamo",
+                "url": "\/it\/chi-siamo"
+            },
+            {
+                "title": "Club \u00c1lvarez",
+                "url": "\/it\/club-alvarez"
+            },
+            {
+                "title": "Servizio clienti",
+                "url": "\/it\/servizio-clienti"
+            },
+            {
+                "title": "Contatto",
+                "url": "\/it\/contacto"
+            },
+            {
+                "title": "Black Friday \u00c1lvarez",
+                "url": "\/it\/blackfriday"
+            }
+        ]
+    },
+    {
+        "title": "INFORMAZIONI",
+        "type": "items",
+        "id": 2,
+        "position": "3",
+        "items": [
+            {
+                "title": "Acquistare su \u00c1lvarez",
+                "url": "\/it\/acquistare-su-alvarez"
+            },
+            {
+                "title": "Pagamento",
+                "url": "\/it\/pagamento"
+            },
+            {
+                "title": "Spedizioni",
+                "url": "\/it\/spedizioni"
+            },
+            {
+                "title": "Politica sui cookie",
+                "url": "\/it\/politica-sui-cookie"
+            },
+            {
+                "title": "Modulo per le informazioni del sistema interno",
+                "url": "\/it\/modulo-per-le-informazioni-del-sistema-interno"
+            },
+            {
+                "title": "Condizioni delle nostre promozioni",
+                "url": "\/it\/condizioni-delle-nostre-promozioni"
+            },
+            {
+                "title": "Politica sulla privacy. LOPD-GDD",
+                "url": "\/it\/politica-sulla-privacy"
+            },
+            {
+                "title": "Avviso Legale",
+                "url": "\/it\/avviso-legale"
+            }
+        ]
+    },
+    {
+        "title": "SISTEMA",
+        "type": "items",
+        "id": 3,
+        "position": "2",
+        "items": [
+            {
+                "title": "Cambio e resi",
+                "url": "https:\/\/returns.itsrever.com\/alvarez?lang=it"
+            },
+            {
+                "title": "Politica di cambio e resi",
+                "url": "\/it\/politica-di-cambio-e-resi"
+            },
+            {
+                "title": "Assistenza Clienti",
+                "url": "\/it\/assistenza-clienti"
+            },
+            {
+                "title": "Stato del mio ordine",
+                "url": "\/it\/tracciamento-ordini-per-ospiti"
+            }
+        ]
+    }
+]

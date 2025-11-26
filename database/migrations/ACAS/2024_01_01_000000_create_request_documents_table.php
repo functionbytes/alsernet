@@ -15,9 +15,9 @@ return new class extends Migration
             $table->string('type')->nullable();
             $table->string('proccess')->nullable();
 
-            $table->enum('source', ['email', 'api', 'whatsapp'])
+            $table->enum('source', ['email', 'api', 'whatsapp', 'manual', 'wp'])
                 ->nullable()
-                ->comment('Source origin: email, api, or whatsapp');
+                ->comment('Source origin: email, api, whatsapp, manual, or wp');
 
             $table->timestamp('confirmed_at')->nullable()
                 ->comment('When the document upload was confirmed');

@@ -1,0 +1,102 @@
+[
+    {
+        "title": "SOBRE \u00c1LVAREZ",
+        "type": "items",
+        "id": 1,
+        "position": "1",
+        "items": [
+            {
+                "title": "Quienes somos",
+                "url": "\/quienes-somos"
+            },
+            {
+                "title": "Club \u00c1lvarez",
+                "url": "\/club-alvarez"
+            },
+            {
+                "title": "Trabaja con nosotros",
+                "url": "\/trabaja-con-nosotros"
+            },
+            {
+                "title": "Servicio de atenci\u00f3n al cliente",
+                "url": "\/atencion-cliente"
+            },
+            {
+                "title": "Opiniones",
+                "url": "\/opiniones"
+            },
+            {
+                "title": "Contacto",
+                "url": "\/contacto"
+            },
+            {
+                "title": "Black Friday \u00c1lvarez",
+                "url": "\/blackfriday"
+            }
+        ]
+    },
+    {
+        "title": "INFORMACI\u00d3N",
+        "type": "items",
+        "id": 2,
+        "position": "3",
+        "items": [
+            {
+                "title": "Comprar en \u00c1lvarez",
+                "url": "\/como-comprar"
+            },
+            {
+                "title": "Pago y financiaci\u00f3n",
+                "url": "\/formas-de-pago"
+            },
+            {
+                "title": "Env\u00edos",
+                "url": "\/gastos-de-envio"
+            },
+            {
+                "title": "Pol\u00edtica de cookies",
+                "url": "\/politica-cookies"
+            },
+            {
+                "title": "Formulario de Sistema Interno de Informaci\u00f3n",
+                "url": "\/formulario-de-sistema-interno-de-informacion"
+            },
+            {
+                "title": "Condiciones de nuestras promociones",
+                "url": "\/condiciones-de-nuestras-promociones"
+            },
+            {
+                "title": "Pol\u00edtica de privacidad. LOPD-GDD",
+                "url": "\/politica-de-privacidad"
+            },
+            {
+                "title": "Nota legal",
+                "url": "\/aviso-legal"
+            }
+        ]
+    },
+    {
+        "title": "SISTEMA",
+        "type": "items",
+        "id": 3,
+        "position": "2",
+        "items": [
+            {
+                "title": "Cambios y devoluciones",
+                "url": "https:\/\/returns.itsrever.com\/alvarez?lang=es"
+            },
+            {
+                "title": "Pol\u00edtica de cambios y devoluciones",
+                "url": "\/politica-de-cambios-y-devoluciones"
+            },
+            {
+                "title": "Defensor del cliente",
+                "url": "\/defensor-del-cliente"
+            },
+            {
+                "title": "Estado de mi pedido",
+                "url": "\/seguimiento-pedido-invitado"
+            }
+        ]
+    }
+]

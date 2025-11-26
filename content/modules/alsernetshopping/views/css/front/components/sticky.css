@@ -1,0 +1,93 @@
+
+.sticky-footer body .cart-dropdown {
+    position: relative;
+}
+
+.sticky-footer body .cart-dropdown .dropdown-box {
+    top: auto;
+    bottom: 100%;
+    right: 0;
+    min-width: 34rem;
+    padding: 2rem 3rem 3rem;
+    margin-bottom: 2.1rem;
+    -webkit-transform: translateY(20px);
+    transform: translateY(20px);
+    -webkit-transition: opacity 0.3s, visibility 0.3s, -webkit-transform 0.3s;
+    transition: opacity 0.3s, visibility 0.3s, -webkit-transform 0.3s;
+    transition: transform 0.3s, opacity 0.3s, visibility 0.3s;
+    transition: transform 0.3s, opacity 0.3s, visibility 0.3s, -webkit-transform 0.3s;
+}
+
+.sticky-footer .header-nav .cart-actions:hover .dropdown-box {
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.sticky-footer .products {
+    border: none;
+}
+
+.sticky-footer .product-name a {
+    padding: 0;
+}
+
+.sticky-footer .cart-total {
+    padding-top: 1rem;
+}
+
+.sticky-link {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    color: #666;
+    margin: 1.4rem 0 1.3rem;
+}
+
+.sticky-link i, body .cart-dropdown .sticky-link i {
+    font-size: 2.3rem;
+    color: #666;
+}
+
+.sticky-link p {
+    margin-top: 0.9rem;
+    margin-bottom: 0;
+    font-size: 1rem;
+    line-height: 1;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.sticky-link.search-toggle p {
+    margin-top: 1rem;
+}
+
+.sticky-link:hover {
+    color: #90bb13;
+}
+
+.sticky-link:hover i {
+    color: inherit;
+}
+
+@media (max-width: 479px) {
+
+    .sticky-footer {
+        padding: 0;
+    }
+    .sticky-footer .hs-toggle .input-wrapper {
+        right: 1rem;
+    }
+    .sticky-footer body .cart-dropdown .dropdown-box {
+        min-width: 30rem;
+        right: -5.4rem;
+    }
+}

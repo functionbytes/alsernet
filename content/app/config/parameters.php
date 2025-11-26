@@ -1,0 +1,27 @@
+<?php
+
+return array (
+  'parameters' =>
+  array (
+            'database_host' => 'localhost',
+            'database_port' => '3306',
+            'database_name' => 'alvarez_ana',
+            'database_user' => 'alvarez_ana',
+            'database_password' => 'Jun.007862',
+            'database_prefix' => 'aalv_',
+            'database_engine' => 'InnoDB',
+            'mailer_transport' => 'smtp',
+            'mailer_host' => '127.0.0.1',
+            'mailer_user' => NULL,
+            'mailer_password' => NULL,
+            'secret' => 'Okwmsbfcmjw8M9kZmRKF015PacreFeHZ1YS4mzG4Doj8EkycUAjmHIu3YFFv1ciO',
+            'ps_caching' => 'CacheMemcache',
+            'ps_cache_enable' => false,
+            'ps_creation_date' => '2022-01-11',
+            'locale' => 'es-ES',
+            'use_debug_toolbar' => true,
+            'cookie_key' => 'kLb6aqRqDNOvr6oFpOufVES1bdRecXdEdrHnWQ3MLsgYenDk9Bhk6meqRMXDHKbU',
+            'cookie_iv' => '11eBHLUoicOp8jJe1hJddpEi4XhZ1Zyz',
+            'new_cookie_key' => 'def00000e406d2e586046b8d85d3572c2d54e65e1fdb26c0e7558526e29578cfe0c98e90622e0d82b817abe99a00daa35f27d9c5a555661486bf9d7270f8915bb896c203',
+          ),
+);

@@ -6,7 +6,9 @@
       "Bash(cat:*)",
       "Bash(chmod:*)",
       "Bash(tree:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,31 @@
+<?php
+
+global $_MODULE;
+$_MODULE = array();
+$_MODULE['<{alsernetproducts}prestashop>alsernetproducts_ac71d8452c267207bcf9f1c93c6419e8'] = 'Neuen';
+$_MODULE['<{alsernetproducts}prestashop>alsernetproducts_bd7929bc6bed5d8ec99db715a980ba04'] = 'Bestseller';
+$_MODULE['<{alsernetproducts}prestashop>commentsajax_765abf48d94d963af98c72ae7ab27275'] = 'Unbefugter Zugang';
+$_MODULE['<{alsernetproducts}prestashop>mailer_ccdaac7142aa7ff73ad394945d4345b9'] = 'Es sind keine E-Mail-Vorlagen verfügbar.';
+$_MODULE['<{alsernetproducts}prestashop>comment_a435e2f445fa2bf95d010d3aa2322559'] = 'Der Kunde existiert nicht.';
+$_MODULE['<{alsernetproducts}prestashop>comment_9ad42f2d0c735e403fb9867fd26f4730'] = 'Bitte geben Sie eine Note für das Produkt ein';
+$_MODULE['<{alsernetproducts}prestashop>comment_254abeeb634d6a78b37ec124d9680e00'] = 'Bitte geben Sie einen Titel für das Produkt ein';
+$_MODULE['<{alsernetproducts}prestashop>comment_76bfdb5a539d4ea16d53612b3d5e41f9'] = 'Bitte geben Sie einen Kommentar zu dem Produkt ein';
+$_MODULE['<{alsernetproducts}prestashop>share_5a95a425f74314a96f13a2f136992178'] = 'Teilen';
+$_MODULE['<{alsernetproducts}prestashop>view-reviews_34e80a799d144cfe4af46815e103f017'] = 'Bewertungen';
+$_MODULE['<{alsernetproducts}prestashop>reviews_34e80a799d144cfe4af46815e103f017'] = 'Bewertungen';
+$_MODULE['<{alsernetproducts}prestashop>comments_b2314ae4a97cc724d6c39848334fa9f2'] = 'Durchschnittsnote';
+$_MODULE['<{alsernetproducts}prestashop>comments_34e80a799d144cfe4af46815e103f017'] = 'Bewertungen';
+$_MODULE['<{alsernetproducts}prestashop>buttons_6a860f82adeeb7d03268ef666b950353'] = 'Experten fragen';
+$_MODULE['<{alsernetproducts}prestashop>buttons_bc5f906aefcd2828be8502890d9be0cb'] = 'Bestpreisgarantie';
+$_MODULE['<{alsernetproducts}prestashop>default_12d3c7a4296542c62474856ec452c045'] = 'Ref.';
+$_MODULE['<{alsernetproducts}prestashop>default_30c7679a728cb938e26a9ed09ad4b096'] = 'Dieses Produkt kann leider nicht in Ihr Land verschickt werden.';
+$_MODULE['<{alsernetproducts}prestashop>default_dabaf1bf4419f75f918584b0dac5be44'] = 'Erhältlich über unsere email:';
+$_MODULE['<{alsernetproducts}prestashop>default_894b753eb66c84ed5cad99033a155d72'] = 'web@a-alvarez.com';
+$_MODULE['<{alsernetproducts}prestashop>default_0a75004c9e9d183c241de35aa5b099cb'] = 'Erhältlich über unsere email:';
+$_MODULE['<{alsernetproducts}prestashop>default_3986203d36d8b92a4cbfde50a3035dc0'] = 'Um dieses Produkt zu kaufen, kontaktieren Sie uns per E-Mail: web@a-alvarez.com';
+$_MODULE['<{alsernetproducts}prestashop>default_9338f1bb9882b974a6f943c8a511ee35'] = 'Entschuldigung, dieses Produkt ist nicht auf Lager';
+$_MODULE['<{alsernetproducts}prestashop>default_40faee5d36f4ab89085aa457ebf6ed83'] = 'Siehe ähnliche Produkte';
+$_MODULE['<{alsernetproducts}prestashop>default_90882b25ee7a8a13908647d038ea9420'] = 'Sichere Bezahlung';
+$_MODULE['<{alsernetproducts}prestashop>default_d8689923dce7fba4760c6a3d002e2600'] = 'Geld-Zurück-Garantie';
+$_MODULE['<{alsernetproducts}prestashop>default_5a95a425f74314a96f13a2f136992178'] = 'Teilen';
+$_MODULE['<{alsernetproducts}prestashop>default_3767d4f3efe17bd95a1bc7cf4194bb93'] = 'Könnte dich auch interessieren';

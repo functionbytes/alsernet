@@ -1,0 +1,183 @@
+.general {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.general .container .container-welcome-top {
+    height: 66px;
+    background-color: #90BB13;
+    font-size: 32px;
+    font-weight: bold;
+    color: #FFFFFF;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    margin-top: -10px;
+    display: flex;
+
+}
+
+.general .container .container-welcome {
+    margin-top: -20px;
+}
+
+.general .container .container-welcome img {
+    width: 100%;
+    height: auto;
+}
+
+.general .container .formulario-subscripcion h3{
+    display: none;
+}
+
+.general .container .formulario-subscripcion .label-texto-seleccion{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+.general .container .formulario-subscripcion .campos-entrada{
+    margin: 20px 0;
+}
+
+.general .container .container-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    margin-top: -20px;
+}
+
+.general .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 30px;
+}
+
+.general .container .container-items .item .title {
+    font-size: 13px;
+    width: 100%;
+    color: #90BB13;
+    font-weight: 900;
+    letter-spacing: 0.14px;
+    line-height: 1;
+}
+
+.general .container .container-items .item .description {
+    font-size: 16px;
+    font-family: Roboto;
+    width: 100%;
+    color: #FFFFFF;
+    font-weight: 900;
+    letter-spacing: 0.16px;
+}
+
+.general .container .container-items .item img {
+    width: 100%;
+    height: auto;
+    max-width: 100px;
+}
+
+
+.general .container p {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #FFFFFF;
+    font-family: Barlow;
+}
+
+.general .container h1 {
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #FFFFFF;
+    font-family: Barlow;
+}
+
+.general .container {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.general .container .message {
+    text-align: left;
+    margin: 20px 5px;
+
+    a {
+        color: #FFFFFF;
+    }
+}
+
+.general .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.general .container .container-btn .btn {
+    border: 1px solid #FFFFFF;
+    font-size: 14px;
+    color: #000;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+    background: #FFFFFF;
+    padding: 5px 25px;
+    border-radius: 4px;
+}
+
+
+.general .container .container-items .col-lg-1 {
+    width: 50%
+}
+
+@media (min-width: 992px) {
+    .general .container .container-items .col-lg-1 {
+        max-width: unset;
+    }
+
+    .general .container .container-items {
+        margin-top: 40px;
+    }
+
+
+    .general .container .message {
+        text-align: left;
+        margin: 20px 10px;
+    }
+}
+
+.general .container .container-btn .btn {
+    color: #FFFFFF;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    background: #90bb13;
+    border-radius: 0;
+    border: 0px;
+    font-size: 20px;
+    padding: 25px 25px;
+    letter-spacing: 0px;
+}
+
+.general .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 100%;
+}

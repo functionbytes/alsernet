@@ -73,23 +73,94 @@ class DocumentsController extends ApiController
 
     public function documentRequests($data)
     {
-        $document = new Document;
-        $document->order_id = $data['order'];
-        $document->customer_id  =  $data['customer'];
-        $document->cart_id  =  $data['cart'];
-        $document->type =   $data['type'];
-        $document->save();
+        try {
+            // Obtener order_id (compatible con múltiples formatos)
+            $orderId = $data['order_id'] ?? $data['order'] ?? null;
 
-        $document->label = $document->order?->reference;
-        $document->update();
+            // Validar que existe order_id
+            if (!$orderId) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Missing order_id parameter'
+                ], 400);
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Subscription successful',
-            'data' => [
-                'uid' => $document->uid,
-            ],
-        ], 200);
+            // Validar que no existe un documento duplicado
+            $existingDocument = Document::where('order_id', $orderId)->first();
+            if ($existingDocument) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => "Order {$orderId} already has a document request",
+                    'data' => [
+                        'uid' => $existingDocument->uid,
+                    ],
+                ], 409);  // Conflict
+            }
+
+            // Crear nuevo documento
+            $document = new Document();
+            $document->order_id = $orderId;
+            $document->type = $data['type'] ?? 'general';
+            $document->source = 'api';  // Origen: API Prestashop
+            $document->proccess = 0;    // Estado inicial: pendiente
+
+            // Obtener datos del cliente si vienen en el payload
+            if (isset($data['customer']) && is_array($data['customer'])) {
+                $document->customer_id = $data['customer']['id'] ?? null;
+                $document->customer_firstname = $data['customer']['firstname'] ?? null;
+                $document->customer_lastname = $data['customer']['lastname'] ?? null;
+                $document->customer_email = $data['customer']['email'] ?? null;
+                $document->customer_dni = $data['customer']['siret'] ?? null;
+                $document->customer_company = $data['customer']['company'] ?? null;
+            }
+
+            // Obtener datos de la orden
+            $document->cart_id = $data['cart_id'] ?? $data['cart'] ?? null;
+            $document->order_reference = $data['reference'] ?? null;
+            $document->order_date = $data['date_add'] ?? null;
+
+            // Guardar documento
+            $document->save();
+
+            // Guardar productos si vienen en el payload
+            $productsCount = 0;
+            if (isset($data['products']) && is_array($data['products'])) {
+                foreach ($data['products'] as $product) {
+                    $document->products()->create([
+                        'product_id' => $product['id'] ?? null,
+                        'product_name' => $product['name'] ?? null,
+                        'product_reference' => $product['reference'] ?? null,
+                        'quantity' => (int)($product['quantity'] ?? 0),
+                        'price' => (float)($product['price'] ?? 0),
+                    ]);
+                    $productsCount++;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Document request created successfully for order {$orderId}",
+                'data' => [
+                    'uid' => $document->uid,
+                    'order_id' => $document->order_id,
+                    'type' => $document->type,
+                    'synced' => 1,
+                    'products_count' => $productsCount,
+                    'customer_name' => trim(($document->customer_firstname ?? '') . ' ' . ($document->customer_lastname ?? '')) ?: 'N/A',
+                ],
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('Error creating document request: ' . $e->getMessage(), [
+                'exception' => $e,
+                'data' => $data
+            ]);
+
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Error creating document request: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
 

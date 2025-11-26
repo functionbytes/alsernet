@@ -1,0 +1,175 @@
+.wrapper {
+    background: #DFCA8D no-repeat;
+}
+
+
+.ideasregalo {
+    justify-content: center;
+    background: #DFCA8D no-repeat;
+    align-items: center;
+    display: flex;
+}
+
+.ideasregalo .container .container-welcome {
+    margin-top: -20px;
+}
+
+.ideasregalo .container .container-welcome img {
+    width: 100%;
+    height: auto;
+}
+
+.ideasregalo .container .container-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -20px;
+}
+
+
+.ideasregalo .container .container-items .icono_deporte {
+    fill: #1A5200;
+    color: #1A5200;
+    width: 70px;
+    height: auto;
+}
+
+.ideasregalo .container .container-items .icono_deporte:hover {
+    fill: #920029;
+    color: #920029;
+    width: 70px;
+    height: auto;
+}
+
+.ideasregalo .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+}
+
+
+.ideasregalo .container .container-items .item .title {
+    font-size: 16px;
+    width: 100%;
+    color: #1A5200;
+    font-weight: 900;
+    letter-spacing: 0.15px;
+    line-height: 1;
+    text-align: center;
+    opacity: 1;
+}
+
+.ideasregalo .container .container-items .item .title:hover {
+    font-size: 16px;
+    width: 100%;
+    color: #920029;
+    font-weight: 900;
+    letter-spacing: 0.15px;
+    line-height: 1;
+    text-align: center;
+    opacity: 1;
+}
+
+.ideasregalo .container .container-items .item .description {
+    font-size: 16px;
+    font-family: Roboto;
+    width: 100%;
+    color: #1A5200;
+    font-weight: 900;
+    letter-spacing: 0.16px;
+}
+
+
+.ideasregalo .container p {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #1A5200;
+    font-family: Barlow;
+}
+
+.ideasregalo .container h1 {
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 22px;
+    color: #1A5200;
+    font-family: Barlow;
+}
+
+.ideasregalo .container {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.ideasregalo .container .message {
+    text-align: left;
+    margin: 20px 5px;
+
+    a {
+        color: #1A5200;
+    }
+}
+
+.ideasregalo .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.ideasregalo .container .container-btn .btn {
+    border: 1px solid #1A5200;
+    font-size: 14px;
+    color: #000;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+    background: #FFFFFF;
+    padding: 5px 25px;
+    border-radius: 4px;
+}
+
+
+.ideasregalo .container .container-items .col-6 {
+   padding: 0 45px;
+}
+
+@media (min-width: 992px) {
+
+    .ideasregalo .container .container-items {
+        margin-top: 10px;
+    }
+
+    .ideasregalo .container .container-welcome img {
+        margin-top: -20px;
+    }
+
+    .ideasregalo .container .message {
+        text-align: left;
+        margin: 20px 10px;
+    }
+
+    .ideasregalo .container .container-items .item .title {
+        margin-top: 10px;
+    }
+
+    .ideasregalo .container .container-items .desktop-hidden {
+        display: none;
+    }
+
+    .ideasregalo .container .container-items .col-lg-1 {
+        max-width: 12.3333%;
+        -webkit-box-flex: 0;
+        -ms-flex: 0 0 8.3333%;
+        flex: 0 0 12.3333%;
+    }
+
+}
+
