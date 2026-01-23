@@ -1,0 +1,25 @@
+{
+    "mcpServers": {
+        "context7": {
+            "command": "npx",
+            "args": [
+                "--yes",
+                "@upstash/context7-mcp"
+            ]
+        },
+        "chrome-devtools": {
+            "command": "/tmp/chrome-devtools-wrapper.sh",
+            "args": [
+                "--browserUrl",
+                "http://127.0.0.1:9222"
+            ]
+        },
+        "laravel-boost": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}

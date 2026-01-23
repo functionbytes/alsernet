@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rebase:*)",
+      "Bash(git pull:*)",
+      "Bash(git mv:*)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "WebFetch(domain:system.test)",
+      "Bash(DB_HOST=$DB_HOST:-localhost)",
+      "Bash(DB_PORT=$DB_PORT:-3306)",
+      "Bash(DB_DATABASE=$DB_DATABASE:-managerchat)",
+      "Bash(DB_USER=$DB_USER:-root)",
+      "Bash(DB_PASSWORD=$DB_PASSWORD:-)",
+      "Bash(while read file)",
+      "Bash(do sed -i \"\" \"s/view\\(''''campaigns\\\\./view\\(''''mailrelay::campaigns./g\" \"$file\" sed -i \"\" \"s/view\\(''''subscribers\\\\./view\\(''''mailrelay::subscribers./g\" \"$file\" sed -i \"\" \"s/view\\(''''validation\\\\./view\\(''''mailrelay::validation./g\" \"$file\" sed -i \"\" \"s/view\\(''''home''''\\)/view\\(''''mailrelay::home''''\\)/g\" \"$file\" sed -i \"\" \"s/view\\(''''mailrelay\\\\./view\\(''''mailrelay::mailrelay./g\" \"$file\" done echo \"Done fixing view namespaces\")",
+      "Bash(do if ! grep -q \"@extends\\(''''layouts.theme''''\\)\" \"$file\")",
+      "Bash(then echo \"$file\")",
+      "Bash(claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest)"
+    ]
+  },
+  "disabledMcpjsonServers": [
+    "context7",
+    "chrome-devtools",
+    "laravel-boost"
+  ]
+}
