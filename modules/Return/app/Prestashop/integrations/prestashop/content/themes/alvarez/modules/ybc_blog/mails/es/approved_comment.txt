@@ -1,0 +1,4 @@
+Hola {customer_name},
+Tu comentario sobre {post_title} ha sido aprobado.
+Ver entrada de blog
+

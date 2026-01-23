@@ -1,0 +1,7 @@
+{shop_url}
+
+Hola,
+
+Gracias por suscribirse a nuestro boletín de noticias.
+
+[{shop_name}]({shop_url})

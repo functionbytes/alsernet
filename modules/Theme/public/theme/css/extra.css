@@ -1,0 +1,1749 @@
+
+.select2-container--classic .select2-selection--single,
+.select2-container--default .select2-selection--single,
+.select2-container--default
+.select2-selection--single
+.select2-selection__arrow,
+.select2-container--default
+.select2-selection--single
+.select2-selection__rendered {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 40px;
+}
+.select2-container--default .select2-selection--multiple {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 32px;
+    height: auto;
+}
+.select2-container--classic
+.select2-selection--single
+.select2-selection__arrow,
+.select2-container--classic
+.select2-selection--single
+.select2-selection__rendered {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 40px;
+}
+.select2-container--classic
+.select2-selection--multiple
+.select2-selection__choice,
+.select2-container--default
+.select2-selection--multiple
+.select2-selection__choice,
+.select2-container--default
+.select2-selection--multiple
+.select2-selection__choice__remove {
+    background-color: #081a28;
+    border-color: #081a28;
+    color: #fff;
+}
+
+
+
+.bg-light-secondary {
+    --bs-bg-opacity: 1;
+    background-color: #f5f6f8;
+    color: var(--bs-secondary-color) !important;
+}
+
+.badge {
+    --bs-badge-padding-x: 10px;
+    --bs-badge-padding-y: 5px;
+    --bs-badge-font-size: 0.875rem;
+    --bs-badge-font-weight: 400;
+    --bs-badge-color: #fff;
+    --bs-badge-border-radius: 4px;
+    display: inline-block;
+    padding: var(--bs-badge-padding-y) var(--bs-badge-padding-x);
+    font-size: var(--bs-badge-font-size);
+    font-weight: var(--bs-badge-font-weight);
+    line-height: 1;
+    color: var(--bs-badge-color);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--bs-badge-border-radius);
+}
+
+.sidebar-nav ul .sidebar-item .sidebar-link {
+    display: flex;
+    font-size: 13px;
+    white-space: nowrap;
+    align-items: center;
+    position: relative;
+    padding: 11px 16px 11px 16px;
+    border-radius: 12px;
+    gap: 10px;
+    text-decoration: none;
+    font-weight: 400;
+    margin-bottom: 4px;
+}
+
+
+
+.card-body .select2-container .select2-selection--single,
+.form-search .select2-container .select2-selection--single {
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    user-select: none;
+    -webkit-user-select: none;
+    height: 44px;
+}
+.card-body .select2-container,
+.form-search .select2-container {
+    box-sizing: border-box;
+    display: inline-block;
+    margin: 0;
+    position: relative;
+    vertical-align: middle;
+    width: 100% !important;
+    background: #fff;
+}
+.card-body
+.select2-container
+.select2-selection--single
+.select2-selection__rendered,
+.form-search
+.select2-container
+.select2-selection--single
+.select2-selection__rendered {
+    display: block;
+    padding-left: 2px;
+    padding-right: 20px;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 25px;
+    max-width: max-content;
+    position: initial;
+}
+.form-search .select2-container .select2-selection--single {
+    display: inline-block;
+}
+.form-search .select2-container {
+    width: min-content !important;
+}
+
+
+
+
+.toast {
+    --bs-toast-zindex: 1090;
+    --bs-toast-padding-x: 0.75rem;
+    --bs-toast-padding-y: 0.5rem;
+    --bs-toast-spacing: 24px;
+    --bs-toast-max-width: 350px;
+    --bs-toast-font-size: 0.875rem;
+    --bs-toast-color: ;
+    --bs-toast-bg: rgba(var(--bs-body-bg-rgb), 0.85);
+    --bs-toast-border-width: 0;
+    --bs-toast-border-color: var(--bs-border-color-translucent);
+    --bs-toast-border-radius: var(--bs-border-radius);
+    --bs-toast-box-shadow: rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px;
+    --bs-toast-header-color: var(--bs-secondary-color);
+    --bs-toast-header-bg: rgba(var(--bs-body-bg-rgb), 0.85);
+    --bs-toast-header-border-color: var(--bs-border-color-translucent);
+    width: var(--bs-toast-max-width);
+    max-width: 100%;
+    font-size: var(--bs-toast-font-size);
+    color: var(--bs-toast-color);
+    pointer-events: auto;
+    background-color: var(--bs-toast-bg);
+    background-clip: padding-box;
+    border: var(--bs-toast-border-width) solid var(--bs-toast-border-color);
+    box-shadow: var(--bs-toast-box-shadow);
+    border-radius: var(--bs-toast-border-radius);
+}
+
+.toast.showing {
+    opacity: 0;
+}
+
+.toast:not(.show) {
+    display: none;
+}
+
+.toast-container {
+    --bs-toast-zindex: 1090;
+    position: absolute;
+    z-index: var(--bs-toast-zindex);
+    width: max-content;
+    max-width: 100%;
+    pointer-events: none;
+}
+
+.toast-container > :not(:last-child) {
+    margin-bottom: var(--bs-toast-spacing);
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    padding: var(--bs-toast-padding-y) var(--bs-toast-padding-x);
+    color: var(--bs-toast-header-color);
+    background-color: var(--bs-toast-header-bg);
+    background-clip: padding-box;
+    border-bottom: var(--bs-toast-border-width) solid var(--bs-toast-header-border-color);
+    border-top-left-radius: calc(var(--bs-toast-border-radius) - var(--bs-toast-border-width));
+    border-top-right-radius: calc(var(--bs-toast-border-radius) - var(--bs-toast-border-width));
+}
+
+.toast-header .btn-close {
+    margin-right: calc(-.5 * var(--bs-toast-padding-x));
+    margin-left: var(--bs-toast-padding-x);
+}
+
+.toast-body {
+    padding: var(--bs-toast-padding-x);
+    word-wrap: break-word;
+}
+
+/* ========================================
+   CODEMIRROR EDITOR STYLES
+   Consolidated from mailers views
+   ======================================== */
+
+/* Main CodeMirror Container */
+.CodeMirror {
+    font-size: 12px;
+    line-height: 1.6;
+    height: 550px !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.CodeMirror-scroll {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-sizer {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-lines {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-gutters {
+    background-color: #f5f6f8 !important;
+    border-right: 1px solid #ddd !important;
+}
+
+.CodeMirror-linenumber {
+    color: #666 !important;
+    font-weight: 500;
+}
+
+/* Cursor with blinking animation */
+@keyframes cursorBlink {
+    0%, 49% {
+        border-left-color: #90bb13 !important;
+        box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
+    }
+    50%, 100% {
+        border-left-color: transparent !important;
+        box-shadow: none !important;
+    }
+}
+
+.CodeMirror-cursor {
+    border-left: 3px solid #90bb13 !important;
+    height: 100% !important;
+    animation: cursorBlink 1s infinite !important;
+}
+
+.CodeMirror.CodeMirror-focused .CodeMirror-cursor {
+    border-left-color: #90bb13 !important;
+    animation: cursorBlink 1s infinite !important;
+}
+
+/* ========================================
+   SYNTAX HIGHLIGHTING
+   ======================================== */
+
+.cm-tag {
+    color: #0066cc !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-attribute {
+    color: #ff6600 !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-string {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-string-2 {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-number {
+    color: #dd1111 !important;
+    background-color: transparent !important;
+}
+
+.cm-atom {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-keyword {
+    color: #0066cc !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable-2 {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable-3 {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-property {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-comment {
+    color: #999999 !important;
+    font-style: italic !important;
+    background-color: transparent !important;
+}
+
+.cm-meta {
+    color: #999999 !important;
+    background-color: transparent !important;
+}
+
+.cm-qualifier {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-builtin {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-bracket {
+    color: #666666 !important;
+    background-color: transparent !important;
+}
+
+.cm-tag-name {
+    color: #0066cc !important;
+    background-color: transparent !important;
+    font-weight: 500 !important;
+}
+
+.cm-attribute-value {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-html-tag {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-operator {
+    color: #666666 !important;
+    background-color: transparent !important;
+}
+
+.cm-error {
+    color: #dd1111 !important;
+    background-color: transparent !important;
+}
+
+/* Remove Monokai background override */
+.CodeMirror .cm-s-monokai.cm-s-monokai * {
+    background-color: transparent !important;
+}
+
+/* Editor Focus State */
+.CodeMirror-focused {
+    border-color: #90bb13;
+    box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
+}
+
+/* ========================================
+   INTERACTIVE ELEMENTS
+   ======================================== */
+
+.hover-shadow-sm:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+.variable-insert {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 8px;
+    border-left: 3px solid transparent;
+}
+
+.variable-insert:hover {
+    background: #f6f7f9 !important;
+    padding: 8px;
+}
+
+.variable-insert code {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 13px;
+}
+
+/* ========================================
+   PREVIEW PANEL
+   ======================================== */
+
+#preview-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+#previewContainer {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #f4f4f4;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px transparent;
+}
+
+#previewContainer iframe {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+#previewContainerTab {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Device preview buttons styling */
+#preview-panel .btn-group .btn {
+    border-color: #d1d5db;
+    transition: all 0.2s ease;
+}
+
+#preview-panel .btn-group .btn:hover {
+    border-color: #90bb13;
+    background-color: rgba(144, 187, 19, 0.05);
+}
+
+#preview-panel .btn-group .btn.active {
+    background-color: #90bb13;
+    border-color: #90bb13;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
+}
+
+#preview-panel .btn-group .btn.active:hover {
+    background-color: #7a9a0f;
+    border-color: #7a9a0f;
+}
+
+/* Refresh button styling */
+#btnRefreshPreviewCreate,
+#btnRefreshPreviewEdit {
+    transition: all 0.2s ease;
+}
+
+#btnRefreshPreviewCreate:hover:not(:disabled),
+#btnRefreshPreviewEdit:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(19, 198, 114, 0.3);
+    transform: translateY(-1px);
+}
+
+#btnRefreshPreviewCreate:disabled,
+#btnRefreshPreviewEdit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   CARD STYLES
+   ======================================== */
+
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ========================================
+   TOOLTIPS - Green Theme (#90bb13)
+   ======================================== */
+
+.tooltip-inner {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
+}
+
+.tooltip .tooltip-arrow::before {
+    border-top-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
+.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
+.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: #90bb13 !important;
+}
+
+/* ========================================
+   TEXT SELECTION
+   ======================================== */
+
+.CodeMirror-selected {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span > span::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span > span::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror ::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror ::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+/* ========================================
+   ACTIVE LINE
+   ======================================== */
+
+.CodeMirror-activeline {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-activeline .CodeMirror-linenumber {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+}
+
+.CodeMirror-activeline .cm-tag {
+    color: #0066cc !important;
+}
+
+.CodeMirror-activeline .cm-attribute {
+    color: #ff6600 !important;
+}
+
+.CodeMirror-activeline .cm-string {
+    color: #00aa00 !important;
+}
+
+.CodeMirror-activeline .cm-variable,
+.CodeMirror-activeline .cm-property {
+    color: #333333 !important;
+}
+
+.CodeMirror-linenumber {
+    background-color: #f5f6f8 !important;
+}
+
+.CodeMirror-line {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.CodeMirror {
+    caret-color: #90bb13 !important;
+}
+
+.CodeMirror span {
+    background-color: transparent !important;
+    color: #333333 !important;
+}
+
+.CodeMirror pre {
+    background-color: transparent !important;
+    color: #333333 !important;
+}
+
+/* Fondo + color del texto seleccionado dentro de CodeMirror */
+.CodeMirror-selected {
+    background: rgba(120, 170, 255, 0.35) !important;
+}
+
+.CodeMirror-focused .CodeMirror-selected {
+    background: rgba(120, 170, 255, 0.45) !important;
+}
+
+/* Asegura que el texto seleccionado NO cambie a blanco/transparente */
+.CodeMirror-line::selection,
+.CodeMirror-line > span::selection,
+.CodeMirror-line > span > span::selection {
+    background: rgba(120, 170, 255, 0.35) !important;
+    color: #000 !important;
+}
+
+.CodeMirror-line::-moz-selection,
+.CodeMirror-line > span::-moz-selection,
+.CodeMirror-line > span > span::-moz-selection {
+    background: rgba(120, 170, 255, 0.35) !important;
+    color: #000 !important;
+}
+
+.CodeMirror *::selection,
+.CodeMirror *::-moz-selection{
+    background: rgba(120,170,255,.35) !important;
+    color: #000 !important;
+}
+
+.cm-tab {
+    color: #999 !important;
+}
+
+/* ========================================
+   BRACKET MATCHING
+   ======================================== */
+
+
+/* Keyboard Shortcuts Card */
+kbd {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Variable Cards - Grid Layout */
+.variable-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.variable-card:hover {
+    border-color: #90bb13;
+    background: #f6faf0;
+    box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
+}
+
+.variable-card:active {
+    box-shadow: 0 2px 6px rgba(144, 187, 19, 0.2);
+}
+
+.variable-icon {
+    color: #90bb13;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.variable-card:hover .variable-icon {
+    opacity: 1;
+}
+
+.variable-code {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+    background: transparent;
+    padding: 0;
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.variable-card:hover .variable-code {
+    color: #90bb13;
+}
+
+@media (max-width: 991px) {
+    .CodeMirror {
+        height: 400px !important;
+    }
+
+    .variable-card {
+        min-height: 100%;
+        padding: 10px;
+    }
+
+    .variable-code {
+        font-size: 10px;
+    }
+}
+
+
+/* Keyboard shortcuts */
+kbd {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1;
+}
+
+
+.result-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+}
+.result-body span {
+    flex-shrink: 0;
+}
+.result-body nav {
+    display: flex;
+    align-items: center; /* ← centra su contenido */
+}
+
+.result-body nav ul{
+    margin-bottom: 0;
+}
+
+
+/* ========================================
+   SELECT2 IN MODALS FIX
+   Ensures select2 dropdowns appear above modal overlays
+   ONLY for select2 elements that are inside modals
+   ======================================== */
+
+/* Select2 container inside modal body - normal z-index */
+.modal-body .select2-container {
+    z-index: 1;
+}
+
+/* When dropdown is attached to modal (via dropdownParent) */
+.modal .select2-container--open {
+    z-index: 1056 !important;
+}
+
+/* Dropdown that is rendered inside a modal */
+.modal .select2-dropdown {
+    z-index: 1056 !important;
+}
+
+/* Select2 search input inside modal dropdowns */
+.modal .select2-search--dropdown .select2-search__field {
+    z-index: 1057 !important;
+}
+
+/* Select2 results inside modal */
+.modal .select2-results {
+    z-index: 1057 !important;
+}
+
+.select2-container--classic .select2-selection--single,
+.select2-container--default .select2-selection--single,
+.select2-container--default
+.select2-selection--single
+.select2-selection__arrow,
+.select2-container--default
+.select2-selection--single
+.select2-selection__rendered {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 40px;
+}
+.select2-container--default .select2-selection--multiple {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 32px;
+    height: auto;
+}
+.select2-container--classic
+.select2-selection--single
+.select2-selection__arrow,
+.select2-container--classic
+.select2-selection--single
+.select2-selection__rendered {
+    border-color: #ebf1f6;
+    color: #081a28;
+    line-height: 40px;
+}
+.select2-container--classic
+.select2-selection--multiple
+.select2-selection__choice,
+.select2-container--default
+.select2-selection--multiple
+.select2-selection__choice,
+.select2-container--default
+.select2-selection--multiple
+.select2-selection__choice__remove {
+    background-color: #081a28;
+    border-color: #081a28;
+    color: #fff;
+}
+
+
+
+.bg-light-secondary {
+    --bs-bg-opacity: 1;
+    background-color: #f5f6f8;
+    color: var(--bs-secondary-color) !important;
+}
+
+.badge {
+    --bs-badge-padding-x: 10px;
+    --bs-badge-padding-y: 5px;
+    --bs-badge-font-size: 0.875rem;
+    --bs-badge-font-weight: 400;
+    --bs-badge-color: #fff;
+    --bs-badge-border-radius: 4px;
+    display: inline-block;
+    padding: var(--bs-badge-padding-y) var(--bs-badge-padding-x);
+    font-size: var(--bs-badge-font-size);
+    font-weight: var(--bs-badge-font-weight);
+    line-height: 1;
+    color: var(--bs-badge-color);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--bs-badge-border-radius);
+}
+
+.sidebar-nav ul .sidebar-item .sidebar-link {
+    display: flex;
+    font-size: 13px;
+    white-space: nowrap;
+    align-items: center;
+    position: relative;
+    padding: 11px 16px 11px 16px;
+    border-radius: 12px;
+    gap: 10px;
+    text-decoration: none;
+    font-weight: 400;
+    margin-bottom: 4px;
+}
+
+
+
+.card-body .select2-container .select2-selection--single,
+.form-search .select2-container .select2-selection--single {
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    user-select: none;
+    -webkit-user-select: none;
+    height: 44px;
+}
+.card-body .select2-container,
+.form-search .select2-container {
+    box-sizing: border-box;
+    display: inline-block;
+    margin: 0;
+    position: relative;
+    vertical-align: middle;
+    width: 100% !important;
+    background: #fff;
+}
+.card-body
+.select2-container
+.select2-selection--single
+.select2-selection__rendered,
+.form-search
+.select2-container
+.select2-selection--single
+.select2-selection__rendered {
+    display: block;
+    padding-left: 2px;
+    padding-right: 20px;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 25px;
+    max-width: max-content;
+    position: initial;
+}
+.form-search .select2-container .select2-selection--single {
+    display: inline-block;
+}
+.form-search .select2-container {
+    width: min-content !important;
+}
+
+
+
+
+.toast {
+    --bs-toast-zindex: 1090;
+    --bs-toast-padding-x: 0.75rem;
+    --bs-toast-padding-y: 0.5rem;
+    --bs-toast-spacing: 24px;
+    --bs-toast-max-width: 350px;
+    --bs-toast-font-size: 0.875rem;
+    --bs-toast-color: ;
+    --bs-toast-bg: rgba(var(--bs-body-bg-rgb), 0.85);
+    --bs-toast-border-width: 0;
+    --bs-toast-border-color: var(--bs-border-color-translucent);
+    --bs-toast-border-radius: var(--bs-border-radius);
+    --bs-toast-box-shadow: rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px;
+    --bs-toast-header-color: var(--bs-secondary-color);
+    --bs-toast-header-bg: rgba(var(--bs-body-bg-rgb), 0.85);
+    --bs-toast-header-border-color: var(--bs-border-color-translucent);
+    width: var(--bs-toast-max-width);
+    max-width: 100%;
+    font-size: var(--bs-toast-font-size);
+    color: var(--bs-toast-color);
+    pointer-events: auto;
+    background-color: var(--bs-toast-bg);
+    background-clip: padding-box;
+    border: var(--bs-toast-border-width) solid var(--bs-toast-border-color);
+    box-shadow: var(--bs-toast-box-shadow);
+    border-radius: var(--bs-toast-border-radius);
+}
+
+.toast.showing {
+    opacity: 0;
+}
+
+.toast:not(.show) {
+    display: none;
+}
+
+.toast-container {
+    --bs-toast-zindex: 1090;
+    position: absolute;
+    z-index: var(--bs-toast-zindex);
+    width: max-content;
+    max-width: 100%;
+    pointer-events: none;
+}
+
+.toast-container > :not(:last-child) {
+    margin-bottom: var(--bs-toast-spacing);
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    padding: var(--bs-toast-padding-y) var(--bs-toast-padding-x);
+    color: var(--bs-toast-header-color);
+    background-color: var(--bs-toast-header-bg);
+    background-clip: padding-box;
+    border-bottom: var(--bs-toast-border-width) solid var(--bs-toast-header-border-color);
+    border-top-left-radius: calc(var(--bs-toast-border-radius) - var(--bs-toast-border-width));
+    border-top-right-radius: calc(var(--bs-toast-border-radius) - var(--bs-toast-border-width));
+}
+
+.toast-header .btn-close {
+    margin-right: calc(-.5 * var(--bs-toast-padding-x));
+    margin-left: var(--bs-toast-padding-x);
+}
+
+.toast-body {
+    padding: var(--bs-toast-padding-x);
+    word-wrap: break-word;
+}
+
+/* ========================================
+   CODEMIRROR EDITOR STYLES
+   Consolidated from mailers views
+   ======================================== */
+
+/* Main CodeMirror Container */
+.CodeMirror {
+    font-size: 12px;
+    line-height: 1.6;
+    height: 550px !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.CodeMirror-scroll {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-sizer {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-lines {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-gutters {
+    background-color: #f5f6f8 !important;
+    border-right: 1px solid #ddd !important;
+}
+
+.CodeMirror-linenumber {
+    color: #666 !important;
+    font-weight: 500;
+}
+
+/* Cursor with blinking animation */
+@keyframes cursorBlink {
+    0%, 49% {
+        border-left-color: #90bb13 !important;
+        box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
+    }
+    50%, 100% {
+        border-left-color: transparent !important;
+        box-shadow: none !important;
+    }
+}
+
+.CodeMirror-cursor {
+    border-left: 3px solid #90bb13 !important;
+    height: 100% !important;
+    animation: cursorBlink 1s infinite !important;
+}
+
+.CodeMirror.CodeMirror-focused .CodeMirror-cursor {
+    border-left-color: #90bb13 !important;
+    animation: cursorBlink 1s infinite !important;
+}
+
+/* ========================================
+   SYNTAX HIGHLIGHTING
+   ======================================== */
+
+.cm-tag {
+    color: #0066cc !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-attribute {
+    color: #ff6600 !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-string {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-string-2 {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-number {
+    color: #dd1111 !important;
+    background-color: transparent !important;
+}
+
+.cm-atom {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-keyword {
+    color: #0066cc !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable-2 {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-variable-3 {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-property {
+    color: #333333 !important;
+    background-color: transparent !important;
+}
+
+.cm-comment {
+    color: #999999 !important;
+    font-style: italic !important;
+    background-color: transparent !important;
+}
+
+.cm-meta {
+    color: #999999 !important;
+    background-color: transparent !important;
+}
+
+.cm-qualifier {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-builtin {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-bracket {
+    color: #666666 !important;
+    background-color: transparent !important;
+}
+
+.cm-tag-name {
+    color: #0066cc !important;
+    background-color: transparent !important;
+    font-weight: 500 !important;
+}
+
+.cm-attribute-value {
+    color: #00aa00 !important;
+    background-color: transparent !important;
+}
+
+.cm-html-tag {
+    color: #0066cc !important;
+    background-color: transparent !important;
+}
+
+.cm-operator {
+    color: #666666 !important;
+    background-color: transparent !important;
+}
+
+.cm-error {
+    color: #dd1111 !important;
+    background-color: transparent !important;
+}
+
+/* Remove Monokai background override */
+.CodeMirror .cm-s-monokai.cm-s-monokai * {
+    background-color: transparent !important;
+}
+
+/* Editor Focus State */
+.CodeMirror-focused {
+    border-color: #90bb13;
+    box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
+}
+
+/* ========================================
+   INTERACTIVE ELEMENTS
+   ======================================== */
+
+.hover-shadow-sm:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+.variable-insert {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 8px;
+    border-left: 3px solid transparent;
+}
+
+.variable-insert:hover {
+    background: #f6f7f9 !important;
+    padding: 8px;
+}
+
+.variable-insert code {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 13px;
+}
+
+/* ========================================
+   PREVIEW PANEL
+   ======================================== */
+
+#preview-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+#previewContainer {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #f4f4f4;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px transparent;
+}
+
+#previewContainer iframe {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+#previewContainerTab {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Device preview buttons styling */
+#preview-panel .btn-group .btn {
+    border-color: #d1d5db;
+    transition: all 0.2s ease;
+}
+
+#preview-panel .btn-group .btn:hover {
+    border-color: #90bb13;
+    background-color: rgba(144, 187, 19, 0.05);
+}
+
+#preview-panel .btn-group .btn.active {
+    background-color: #90bb13;
+    border-color: #90bb13;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
+}
+
+#preview-panel .btn-group .btn.active:hover {
+    background-color: #7a9a0f;
+    border-color: #7a9a0f;
+}
+
+/* Refresh button styling */
+#btnRefreshPreviewCreate,
+#btnRefreshPreviewEdit {
+    transition: all 0.2s ease;
+}
+
+#btnRefreshPreviewCreate:hover:not(:disabled),
+#btnRefreshPreviewEdit:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(19, 198, 114, 0.3);
+    transform: translateY(-1px);
+}
+
+#btnRefreshPreviewCreate:disabled,
+#btnRefreshPreviewEdit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   CARD STYLES
+   ======================================== */
+
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ========================================
+   TOOLTIPS - Green Theme (#90bb13)
+   ======================================== */
+
+.tooltip-inner {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
+}
+
+.tooltip .tooltip-arrow::before {
+    border-top-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
+.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #90bb13 !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
+.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: #90bb13 !important;
+}
+
+/* ========================================
+   TEXT SELECTION
+   ======================================== */
+
+.CodeMirror-selected {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span > span::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror-line > span > span::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror ::selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+.CodeMirror ::-moz-selection {
+    background-color: #90bb13 !important;
+    color: #fff !important;
+}
+
+/* ========================================
+   ACTIVE LINE
+   ======================================== */
+
+.CodeMirror-activeline {
+    background-color: #ffffff !important;
+}
+
+.CodeMirror-activeline .CodeMirror-linenumber {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+}
+
+.CodeMirror-activeline .cm-tag {
+    color: #0066cc !important;
+}
+
+.CodeMirror-activeline .cm-attribute {
+    color: #ff6600 !important;
+}
+
+.CodeMirror-activeline .cm-string {
+    color: #00aa00 !important;
+}
+
+.CodeMirror-activeline .cm-variable,
+.CodeMirror-activeline .cm-property {
+    color: #333333 !important;
+}
+
+.CodeMirror-linenumber {
+    background-color: #f5f6f8 !important;
+}
+
+.CodeMirror-line {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.CodeMirror {
+    caret-color: #90bb13 !important;
+}
+
+.CodeMirror span {
+    background-color: transparent !important;
+    color: #333333 !important;
+}
+
+.CodeMirror pre {
+    background-color: transparent !important;
+    color: #333333 !important;
+}
+
+/* Fondo + color del texto seleccionado dentro de CodeMirror */
+.CodeMirror-selected {
+    background: rgba(120, 170, 255, 0.35) !important;
+}
+
+.CodeMirror-focused .CodeMirror-selected {
+    background: rgba(120, 170, 255, 0.45) !important;
+}
+
+/* Asegura que el texto seleccionado NO cambie a blanco/transparente */
+.CodeMirror-line::selection,
+.CodeMirror-line > span::selection,
+.CodeMirror-line > span > span::selection {
+    background: rgba(120, 170, 255, 0.35) !important;
+    color: #000 !important;
+}
+
+.CodeMirror-line::-moz-selection,
+.CodeMirror-line > span::-moz-selection,
+.CodeMirror-line > span > span::-moz-selection {
+    background: rgba(120, 170, 255, 0.35) !important;
+    color: #000 !important;
+}
+
+.CodeMirror *::selection,
+.CodeMirror *::-moz-selection{
+    background: rgba(120,170,255,.35) !important;
+    color: #000 !important;
+}
+
+.cm-tab {
+    color: #999 !important;
+}
+
+/* ========================================
+   BRACKET MATCHING
+   ======================================== */
+
+
+/* Keyboard Shortcuts Card */
+kbd {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Variable Cards - Grid Layout */
+.variable-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.variable-card:hover {
+    border-color: #90bb13;
+    background: #f6faf0;
+    box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
+}
+
+.variable-card:active {
+    box-shadow: 0 2px 6px rgba(144, 187, 19, 0.2);
+}
+
+.variable-icon {
+    color: #90bb13;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.variable-card:hover .variable-icon {
+    opacity: 1;
+}
+
+.variable-code {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+    background: transparent;
+    padding: 0;
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.variable-card:hover .variable-code {
+    color: #90bb13;
+}
+
+@media (max-width: 991px) {
+    .CodeMirror {
+        height: 400px !important;
+    }
+
+    .variable-card {
+        min-height: 100%;
+        padding: 10px;
+    }
+
+    .variable-code {
+        font-size: 10px;
+    }
+}
+
+
+/* Keyboard shortcuts */
+kbd {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1;
+}
+
+
+.result-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+}
+.result-body span {
+    flex-shrink: 0;
+}
+.result-body nav {
+    display: flex;
+    align-items: center; /* ← centra su contenido */
+}
+
+.result-body nav ul{
+    margin-bottom: 0;
+}
+
+
+/* ========================================
+   SELECT2 IN MODALS FIX
+   Ensures select2 dropdowns appear above modal overlays
+   ONLY for select2 elements that are inside modals
+   ======================================== */
+
+/* Select2 container inside modal body - normal z-index */
+.modal-body .select2-container {
+    z-index: 1;
+}
+
+/* When dropdown is attached to modal (via dropdownParent) */
+.modal .select2-container--open {
+    z-index: 1056 !important;
+}
+
+/* Dropdown that is rendered inside a modal */
+.modal .select2-dropdown {
+    z-index: 1056 !important;
+}
+
+/* Select2 search input inside modal dropdowns */
+.modal .select2-search--dropdown .select2-search__field {
+    z-index: 1057 !important;
+}
+
+/* Select2 results inside modal */
+.modal .select2-results {
+    z-index: 1057 !important;
+}
+
+.rounded-profile {
+    width: 35px;
+    height: 35px;
+    background-color: #cfcfcf !important;
+    font-size: 14px;
+}
+
+.side-mini-panel .mini-nav .mini-nav-item.selected>a i {
+    color: var(--bs-white);
+}
+
+body .select2-container--classic .select2-selection--single .select2-selection__arrow, body .select2-container--default .select2-selection--single .select2-selection__arrow {
+    top: 21px;
+    right: 20px;
+    width: auto;
+}
+
+/* ========================================
+   SIDEBAR TOGGLE - ALL SCREEN SIZES
+   Fixes sidebar toggle for screens >= 1300px
+   ======================================== */
+
+/* Large screens: Hide sidebar when mini-sidebar mode is active */
+@media (min-width: 1300px) {
+    body[data-sidebartype="mini-sidebar"] .side-mini-panel {
+        left: -330px !important;
+        transition: left 0.3s ease;
+    }
+
+    body[data-sidebartype="full"] .side-mini-panel {
+        left: 0 !important;
+        transition: left 0.3s ease;
+    }
+}
+
+/* Alternative: Show sidebar when .show-sidebar class is present */
+#main-wrapper.show-sidebar .side-mini-panel {
+    left: 0 !important;
+    transition: left 0.3s ease;
+}
+
+/* ========================================
+   MINI NAV ITEM - SELECTED STATE (Font Awesome)
+   Green background (#90bb13) with white icon when selected
+   ======================================== */
+
+/* Selected mini nav item - Font Awesome icon styling */
+.side-mini-panel .mini-nav .mini-nav-item.selected > a i {
+    color: #ffffff !important;
+    position: relative;
+    z-index: 2;
+}
+
+/* Green background circle for selected item */
+.side-mini-panel .mini-nav .mini-nav-item.selected > a:before {
+    content: "";
+    background: #90bb13 !important;
+    width: 48px;
+    height: 48px;
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+    z-index: 1;
+    transition: all 0.2s ease;
+}
+
+/* Hover state for non-selected items - Font Awesome */
+.side-mini-panel .mini-nav .mini-nav-item:not(.selected) > a:hover i {
+    color: #90bb13 !important;
+    transition: color 0.2s ease;
+}
+
+/* Hover background for non-selected items */
+.side-mini-panel .mini-nav .mini-nav-item:not(.selected) > a:hover:before {
+    content: "";
+    background: rgba(144, 187, 19, 0.1);
+    width: 48px;
+    height: 48px;
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+    z-index: 1;
+    transition: all 0.2s ease;
+}
+
+body .select2-container--classic .select2-selection--single, body .select2-container--classic .select2-selection--single .select2-selection__arrow, body .select2-container--classic .select2-selection--single .select2-selection__rendered, body .select2-container--default .select2-selection--multiple, body .select2-container--default .select2-selection--single, body .select2-container--default .select2-selection--single .select2-selection__arrow, body .select2-container--default .select2-selection--single .select2-selection__rendered {
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+    height: 40px;
+    line-height: 24px;
+}
+

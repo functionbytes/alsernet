@@ -1,0 +1,14 @@
+{shop_url}
+Bonjour {firstname} {lastname},
+Merci d’avoir acheté sur {shop_name}!
+ID Commande {id_order} - En Attente de Paiement
+Votre commande avec la référence {id_order} a été correctement remplie et sera expédiée dès que nous recevrons votre paiement.
+Méthode de paiement : virement bancaire
+Vous avez choisi de payer par virement bancaire. Voici les informations dont vous avez besoin pour effectuer le virement :
+Montant : {total_paid}
+Titulaire du compte : {bankwire_owner}
+Détails du compte : {bankwire_details}
+Adresse bancaire : {bankwire_address}
+S’il vous plaît inclure le numéro de référence de votre commande dans les détails du virement bancaire.
+Cordialement;
+[{shop_name}]({shop_url})

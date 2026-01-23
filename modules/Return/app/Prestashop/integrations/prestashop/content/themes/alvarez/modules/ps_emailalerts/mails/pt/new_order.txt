@@ -1,0 +1,39 @@
+{shop_url}
+
+Parabéns!
+
+A new order was placed on {shop_name} by the following customer: {firstname} {lastname} ({email})
+
+Detalhes da encomenda
+
+Encomenda: {order_name} Realizada a {date}
+
+Pagamento: {payment}
+
+Referência	Produto	Preço unitário	Quantidade	Preço total   {items}
+Produtos	{total_products}
+Descontos	{total_discounts}
+Embrulho de presente	{total_wrapping}
+Envio	{total_shipping}
+Including total tax	{total_tax_paid}
+Total pago	{total_paid}
+
+Transportadora
+
+Transportadora: {carrier}
+
+Pagamento: {payment}
+
+Endereço de entrega
+
+{delivery_block_html}
+
+Endereço de faturação
+
+{invoice_block_html}
+
+Mensagem do cliente:
+
+{message}
+
+[{shop_name}]({shop_url})

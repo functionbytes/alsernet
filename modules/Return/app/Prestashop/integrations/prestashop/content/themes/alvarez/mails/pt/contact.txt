@@ -1,0 +1,17 @@
+{shop_url}
+
+Mensagem de um cliente da loja {shop_name}
+
+Customer Email Address: {email}
+
+N.º da Encomenda #:  {order_name}
+
+Ficheiro anexo: {attached_file}
+
+Mensagem do cliente:
+
+{message}
+
+[{shop_name}]({shop_url})
+
+

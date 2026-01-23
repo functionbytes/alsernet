@@ -1,0 +1,13 @@
+{shop_url}
+
+Cher client,
+
+Nous vous informons que nous avons bien reçu votre demande et nous vous contacterons sous peu.
+
+Merci beaucoup pour votre confiance.
+
+Nous profitons de cette occasion pour vous envoyer un salut cordial;
+
+[{shop_name}]({shop_url})
+
+

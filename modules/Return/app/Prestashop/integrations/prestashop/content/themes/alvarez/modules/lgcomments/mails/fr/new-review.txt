@@ -1,0 +1,4 @@
+Nouveaux avis reçus (commande {id_order})
+Le client {customer_firstname} {customer_lastname} vient de rédiger un avis sur votre boutique: {shop_details}
+Ainsi qu'un avis sur les produits suivants: {product_details}
+Vous pouvez vérifier, éditer et publier ces avis depuis le menu "Catalogue > Avis Boutique" et "Catalogue > Avis Produits" de votre back-office.

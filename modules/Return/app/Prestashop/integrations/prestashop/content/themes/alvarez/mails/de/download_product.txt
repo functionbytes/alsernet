@@ -1,0 +1,19 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Vielen Dank für Ihre Bestellung mit der Referenz {order_name} bei {shop_name}
+
+Product(s) to download
+
+Sie haben {nbProducts} Produkt(e), die jetzt über die folgenden Links zum Download zur Verfügung stehen:
+
+{virtualProductsTxt}
+
+Follow your order and download your invoice on our shop, go to the [Verlauf und Details Ihrer Bestellungen]({history_url}) section of your customer account.
+
+If you have a guest account, you can follow your order via the [Bestellverfolgung]({guest_tracking_url}) section on our shop.
+
+[{shop_name}]({shop_url})
+
+

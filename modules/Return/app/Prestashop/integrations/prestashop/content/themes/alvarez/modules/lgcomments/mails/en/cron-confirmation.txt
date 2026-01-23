@@ -1,0 +1,2 @@
+Emails successfully sent
+The emails have been sent for the following orders: {pedidos}

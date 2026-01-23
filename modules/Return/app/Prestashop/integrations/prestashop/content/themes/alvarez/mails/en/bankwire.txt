@@ -1,0 +1,29 @@
+{shop_url}
+
+Hi {firstname} {lastname},
+
+Thank you for shopping at {shop_name}!
+
+ID Order {id_order} - Outstanding
+
+Your order with the reference {id_order} has been successfully completed and will be shipped as soon as we receive your payment.
+
+Payment method: bank transfer
+
+You have chosen to pay by bank transfer. Here is the information you need to make the transfer:
+
+Amount:  {total_paid}
+
+Account holder:  {bankwire_owner}
+
+Account data: {bankwire_details}
+
+Bank address: {bankwire_address}
+
+Please include your order reference number in the bank transfer details.
+
+Best regards;
+
+[{shop_name}]({shop_url})
+
+

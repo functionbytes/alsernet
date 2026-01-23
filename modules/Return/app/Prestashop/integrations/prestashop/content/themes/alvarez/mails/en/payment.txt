@@ -1,0 +1,13 @@
+{shop_url}
+
+Hi {firstname} {lastname},
+
+Thank you for shopping at {shop_name}!
+
+Your payment for the order with reference {id_order} has been processed successfully.
+
+Best regards;
+
+[{shop_name}]({shop_url})
+
+

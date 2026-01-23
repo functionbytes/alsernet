@@ -1,0 +1,15 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Bestellung {id_order} - Kaufbetrag erstattet
+
+Wir haben Ihre Rückerstattung für Ihre Bestellung mit der Referenz {id_order} bei {shop_name} bearbeitet.
+
+Follow your order and download your invoice on our shop, go to the [Verlauf und Details Ihrer Bestellungen]({history_url}) section of your customer account.
+
+If you have a guest account, you can follow your order via the [Bestellverfolgung]({guest_tracking_url}) section on our shop.
+
+[{shop_name}]({shop_url})
+
+

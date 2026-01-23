@@ -1,0 +1,22 @@
+{shop_url}
+
+Lieber Herr /Frau {firstname} {lastname},
+
+Ich kann die korrekte verarbeitung der bestellung für '{demoday_name}' bestätigen.
+
+Wir nehmen diese gelegenheit folgendes zu erinnern:
+
+- Marke: {demoday_manufacturer_name},
+
+- Tag: {demoday_day},
+
+- Zeit: {demoday_hour},
+
+- Ort: {demoday_location}
+
+Vielen dank, im falle einer stornierung oder einer änderung des termins, Sie kontaktieren sie uns unter 981 17 91 00 oder nach einer E-Mail an die gleiche adresse zu senden. Wir stehen ihnen gerne für alles, was sie benötigen.
+
+Mit freundlichen Grüßen,
+
+[{shop_name}]({shop_url})
+

@@ -1,0 +1,9 @@
+{
+    "name": "Mailer",
+    "alias": "mailer",
+    "description": "Mail Configuration Module - Handles email settings, mailers, templates, and endpoints",
+    "keywords": ["mailer", "email", "settings", "mailers", "templates"],
+    "priority": 15,
+    "providers": ["Modules\\Mailer\\Providers\\MailerServiceProvider"],
+    "files": []
+}

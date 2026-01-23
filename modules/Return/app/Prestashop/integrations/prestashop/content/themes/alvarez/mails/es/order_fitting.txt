@@ -1,0 +1,26 @@
+{shop_url}
+
+Estimad@ {firstname} {lastname},
+
+Le confirmamos la correcta tramitación de cita para '{fitting_name}'.
+
+Nº de pedido: {id_order}
+
+Aprovechamos para recordarle los siguientes datos:
+
+- Día: {fitting_day},
+
+- Hora: {fitting_hour},
+
+- Lugar: {fitting_location}
+
+Para un correcto estudio, es necesario que traiga sus palos habituales.
+
+Le agradecemos que, en caso de anulación o para cualquier modificación de la cita, se ponga en 
+contacto con nosotros en el 981 17 91 00 o bien nos remita un e-mail a esta misma dirección. 
+Quedamos a su entera disposición para cualquier cosa que precise.
+
+Saludos cordiales,
+
+[{shop_name}]({shop_url})
+

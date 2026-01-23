@@ -1,0 +1,5 @@
+Hola {customer_name}
+Gracias por sus comentarios en nuestra entrada de blog: {post_title}
+Este correo electrónico es para confirmar que hemos recibido sus valiosos comentarios.
+Tu feedback: {feedback}
+Fue útil el artículo: {polls_helpful}

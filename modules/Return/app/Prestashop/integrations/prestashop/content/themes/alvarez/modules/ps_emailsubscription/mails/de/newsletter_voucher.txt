@@ -1,0 +1,9 @@
+{shop_url}
+
+Hallo,
+
+Anmeldung zum Newsletter
+
+Vielen Dank für die Anmeldung zu unserem Newsletter. Wir freuen uns, Ihnen folgenden Gutschein anbieten zu können: {discount}
+
+[{shop_name}]({shop_url})

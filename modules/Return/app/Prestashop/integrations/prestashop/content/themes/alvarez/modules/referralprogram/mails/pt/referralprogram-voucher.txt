@@ -1,0 +1,14 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Sponsorship Program
+
+Criámos para si um Vale de Desconto por ter sugerido a nossa loja a um amigo.
+Este é o código do seu Vale de Desconto: {voucher_num}, no valor de {voucher_num}
+
+Simplesmente copie e cole este código no processo de pagamento na sua próxima encomenda.
+
+[{shop_name}]({shop_url})
+
+Powered by [PrestaShop](https://www.prestashop.com/?utm_source=marchandprestashop&utm_medium=e-mail&utm_campaign=footer_1-7)

@@ -1,0 +1,23 @@
+{
+    "Document": true,
+    "Mail": true,
+    "Media": true,
+    "Prestashop": false,
+    "Returns": false,
+    "Warehouse": true,
+    "Helpdesk": false,
+    "Subscriber": false,
+    "Return": false,
+    "Campaign": false,
+    "Mailer": true,
+    "MailsSettings": true,
+    "Modules": true,
+    "User": true,
+    "Role": true,
+    "Webhook": true,
+    "Auth": true,
+    "HealthCheck": true,
+    "Database": true,
+    "System": true,
+    "Analytics": true
+}

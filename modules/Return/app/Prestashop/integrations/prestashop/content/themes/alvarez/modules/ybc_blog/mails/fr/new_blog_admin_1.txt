@@ -1,0 +1,4 @@
+Un nouvel article a été soumis à {shop_name} et a été approuvé automatiquement
+Auteur:{customer_name}
+Titre de l'article:{post_title}
+Voir l'article

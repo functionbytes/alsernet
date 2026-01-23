@@ -1,0 +1,4 @@
+Nuevos comentarios recibidos (pedido #{id_order})
+El cliente {customer_firstname} {customer_lastname} acaba de escribir un comentario sobre tu tienda: {shop_details}
+{product_details_text}
+Puedes revisar, editar y publicar estas opiniones desde el menú "Catálogo > Opiniones Tienda" y "Catálogo > Opiniones Productos" de tu back-office.

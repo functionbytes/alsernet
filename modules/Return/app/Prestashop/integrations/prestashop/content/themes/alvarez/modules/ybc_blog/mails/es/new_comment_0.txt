@@ -1,0 +1,3 @@
+Hola {atuhor_name}
+Se ha enviado un nuevo comentario en {post_title} y está esperando su aprobación.
+Ver comentario

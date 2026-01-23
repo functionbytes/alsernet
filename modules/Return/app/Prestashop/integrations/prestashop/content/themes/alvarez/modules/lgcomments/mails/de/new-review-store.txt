@@ -1,0 +1,1 @@
+Sie haben eine neue Rezension erhalten Dem Kunden {customer_firstname} {customer_lastname} Hat eine Rezension über Ihren Shop geschrieben: {score_store}/10 {title_store} {comment_store} Sie können die Bewertungen aus dem Menü "Katalog> Store Reviews" Ihres Backoffice überprüfen, bearbeiten und veröffentlichen.

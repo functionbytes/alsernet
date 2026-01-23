@@ -1,0 +1,18 @@
+{
+    "name": "Subscriber",
+    "alias": "subscriber",
+    "description": "Módulo de gestión de suscriptores, listas de correo, importaciones y reportes",
+    "keywords": [
+        "subscriber",
+        "mailing lists",
+        "import",
+        "export",
+        "email verification",
+        "categories"
+    ],
+    "priority": 0,
+    "providers": [
+        "Modules\\Subscriber\\Providers\\SubscriberServiceProvider"
+    ],
+    "files": []
+}

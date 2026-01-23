@@ -1,0 +1,4 @@
+Hi {reporter}
+You have successfully reported a comment on {post_title} as abused.
+{comment}
+Thanks for your contribution to our website

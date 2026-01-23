@@ -1,0 +1,15 @@
+{shop_url}
+
+Bonjour {firstname} {lastname},
+
+Message de {shop_name}
+
+Vous avez reçu un nouveau message depuis {shop_name} concernant la commande ayant pour référence {id_order}.
+
+Message :
+
+{message}
+
+[{shop_name}]({shop_url})
+
+

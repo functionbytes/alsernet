@@ -1,0 +1,6 @@
+You have received a new review 
+The customer {customer_firstname} {customer_lastname} has written a review about the following product: {product_details}
+{product_name}
+{lg_score}/10 {lg_title}
+{lg_comment}
+You can check, edit and publish the reviews from the menu "Catalog > Product Reviews" of your back-office.

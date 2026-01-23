@@ -1,0 +1,9 @@
+{shop_url}
+
+Hallo,
+
+Der Lagerbestand ist nun niedriger als das festgelegte Minimum von: {warning_coverage}
+
+Aktueller Lagerbestand: {current_coverage}
+
+[{shop_name}]({shop_url})

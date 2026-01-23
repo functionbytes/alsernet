@@ -1,0 +1,9 @@
+[{shop_url}] 
+
+Hi, 
+
+Your report_txt attached.
+
+{shop_name} [{shop_url}] powered by
+Advanced Reports by idnovate
+

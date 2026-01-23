@@ -1,0 +1,4 @@
+Se ha enviado un nuevo artículo a {shop_name} y está esperando su aprobación.
+Autor: {customer_name}
+Título del artículo: {post_title}
+Ver entrada de blog

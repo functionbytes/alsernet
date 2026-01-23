@@ -1,0 +1,18 @@
+{shop_url}
+
+Estimado cliente:
+
+Te informamos de que hemos recibido correctamente tu solicitud de licencia.
+
+Te recordamos que para poder tramitar dicha licencia es preciso que nos remitas la 
+documentación indicada para cada Comunidad Autónoma en concreto.
+
+Si ya has enviado esta documentación, la licencia se gestionará lo más rápidamente posible.
+
+Queremos agradecerte la confianza depositada en nuestra empresa, quedando a tu disposición 
+para cualquier cosa que precises.
+
+Saludos cordiales,
+
+[{shop_name}]({shop_url})
+

@@ -1,0 +1,2 @@
+Confirmation d'envoi des emails
+Les emails de demande d'avis ont été envoyés pour les commandes suivantes : {pedidos}

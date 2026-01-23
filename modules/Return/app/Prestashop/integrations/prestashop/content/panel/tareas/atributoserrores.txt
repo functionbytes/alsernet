@@ -1,0 +1,2 @@
+2022-07-21T14:32:33+02:00 --- error La propiedad Attribute->name está vacía.
+ --- datos 6191

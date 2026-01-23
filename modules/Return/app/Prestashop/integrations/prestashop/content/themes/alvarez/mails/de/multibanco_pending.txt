@@ -1,0 +1,16 @@
+Olá,
+
+Muito obrigado pela sua confiança.
+
+Enviamos-lhe os dados para o pagamento através de REFERÊNCIA MULTIBANCO:
+
+Entidade: {hipay_entity},
+Referência: {hipay_reference},
+Montante: {hipay_amount},
+Data limite de pagamento:{hipay_expirationDate}
+
+Para pagar a referência multibanco, não utilize o homebanking nem a caixa multibanco, selecione pagamentos e, em seguida, serviços.
+
+
+
+

@@ -1,0 +1,2 @@
+Sie haben neue Bewertungen erhalten (order #{id_order})
+Dem Kunden {customer_firstname} {customer_lastname} Hat eine Rezension über Ihren Shop geschrieben: {shop_details} Und eine Übersicht über folgende Produkte: {product_details} Sie können die Bewertungen aus dem Menü "Katalog> Store Reviews" und "Katalog> Produktbewertungen" Ihres Backoffice überprüfen, bearbeiten und veröffentlichen.

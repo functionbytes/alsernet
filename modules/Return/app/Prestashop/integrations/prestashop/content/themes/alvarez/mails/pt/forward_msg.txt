@@ -1,0 +1,15 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Customer Service - Discussion Forwarded
+
+{employee} wanted to forward this discussion to you.
+
+Histórico da discussão: {messages}
+
+{employee} added {comment}
+
+[{shop_name}]({shop_url})
+
+

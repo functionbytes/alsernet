@@ -1,0 +1,17 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Obrigado pela sua encomenda com a referência {order_name} da loja {shop_name}.
+
+Order ID {order_name} - Reabastecimento necessário
+
+Unfortunately, one or more items are currently out of stock and this may cause a slight delay for delivery. Please accept our apologies for this inconvenience and be sure we are doing our best to correct the situation.
+
+Follow your order and download your invoice on our shop, go to the [Histórico de encomendas e detalhes]({history_url}) section of your customer account.
+
+If you have a guest account, you can follow your order via the [Rastreio de Visitantes]({guest_tracking_url}) section on our shop.
+
+[{shop_name}]({shop_url})
+
+

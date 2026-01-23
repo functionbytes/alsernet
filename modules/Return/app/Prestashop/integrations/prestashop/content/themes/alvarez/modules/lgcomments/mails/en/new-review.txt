@@ -1,0 +1,4 @@
+You have received new reviews (order #{id_order})
+The customer {customer_firstname} {customer_lastname} has written a review about your shop: {shop_details}
+And a review about the following products: {product_details}
+You can check, edit and publish the reviews from the menu "Catalog > Store Reviews" and "Catalog > Product Reviews" of your back-office.

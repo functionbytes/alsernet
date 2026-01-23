@@ -1,0 +1,5 @@
+Bonjour {atuhor_name}
+Un nouveau commentaire a été publié sur {post_title} et a été approuvé automatiquement
+Voir le commentaire
+
+

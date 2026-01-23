@@ -1,0 +1,4 @@
+Bonjour admin,
+Un commentaire sur l'article {post_title} est modifié par {customer_name}.
+La version précédente: {comment_old}
+Nouvelle version: {comment}

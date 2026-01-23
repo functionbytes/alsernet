@@ -1,0 +1,13 @@
+Hola, 
+
+Tienes una solicitud del Call Center de Álvarez. 
+
+Detalles solicitud: 
+
+Nombre: {first_name} 
+
+Apellido: {last_name} 
+
+Teléfono: {phone} 
+
+Mensaje: {message}

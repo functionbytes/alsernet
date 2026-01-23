@@ -1,0 +1,4 @@
+Hi {customer_name}
+Your comment has been successfully submitted on {post_title} and was approved
+Review post
+

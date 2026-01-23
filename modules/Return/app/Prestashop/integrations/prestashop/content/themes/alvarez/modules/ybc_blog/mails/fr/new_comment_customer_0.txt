@@ -1,0 +1,3 @@
+Bonjour {customer_name}
+Votre commentaire a été soumis avec succès sur {post_title} et est en attente d'approbation
+Article de revue

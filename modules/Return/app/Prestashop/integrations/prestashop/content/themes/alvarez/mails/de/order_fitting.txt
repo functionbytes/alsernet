@@ -1,0 +1,24 @@
+{shop_url}
+
+Lieber Herr /Frau {firstname} {lastname},
+
+Ich kann die korrekte verarbeitung der bestellung für '{fitting_name}'.
+
+Kommand number: {id_order}
+
+Wir nehmen diese gelegenheit folgendes zu erinnern:
+
+- Tag: {fitting_day},
+
+- Zeit: {fitting_hour},
+
+- Ort: {fitting_location}
+
+WICHTIG: Wenn der von Ihnen angegebene Kreditkarteninhaber sich vom Inhaber des Antrags unterscheidet, benötigen wir eine Genehmigung zum Einzug
+
+Wir danken Ihnen, dass Sie sich im Falle einer Stornierung oder einer Änderung des Termins unter der Nummer 981 17 91 00 an uns wenden oder eine E-Mail an diese Adresse senden können. Wir stehen Ihnen jederzeit für alles zur Verfügung, was Sie brauchen.
+
+Beste Grüße,
+
+[{shop_name}]({shop_url})
+

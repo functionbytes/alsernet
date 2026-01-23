@@ -1,0 +1,5 @@
+Hi {author_name}
+{reporter} just reported a comment on {post_title} as abused.
+{comment}
+View comment
+

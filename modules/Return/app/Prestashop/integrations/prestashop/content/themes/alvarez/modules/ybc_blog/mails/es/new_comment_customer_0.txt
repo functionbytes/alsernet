@@ -1,0 +1,4 @@
+Hola {customer_name}
+Su comentario ha sido enviado con éxito en {post_title} y está en espera de aprobación.
+Revisar entrada de blog
+

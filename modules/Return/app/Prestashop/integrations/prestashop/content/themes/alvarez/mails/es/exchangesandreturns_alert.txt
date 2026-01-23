@@ -1,0 +1,20 @@
+FORMULARIO DE DEVOLUCIÓN
+
+Nombre del cliente: {firstname}
+Apellidos del cliente: {lastname}
+Número de pedido: {number}
+Teléfono: {phone}
+Email: {email}
+
+Motivo de la devolución: {reason}
+Comentarios: {message}
+
+INDÍCANOS LA DIRECCIÓN DE RECOGIDA
+
+Dirección: {address}
+Código postal: {code}
+Localidad: {location}
+Provencia: {province}
+País: {country}
+Horario de recogida: {preferred}
+Deportes de interés: {sports}

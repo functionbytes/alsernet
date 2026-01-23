@@ -1,0 +1,14 @@
+{shop_url}
+
+Hola,
+
+Se ha enviado una nueva consulta de un producto.
+
+ID Consulta: #{id_question}
+
+Producto: [{product_name}]({product_question_url}
+
+Atentamente;
+
+[{shop_name}]({shop_url})
+

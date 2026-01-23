@@ -1,0 +1,17 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Nachricht eines Kunden
+
+Sie haben eine neue Nachricht zur folgenden Bestellung erhalten: {order_name}.
+
+Kunde: {firstname} {lastname} ({email})
+
+Nachricht Kunde:
+
+{message}
+
+[{shop_name}]({shop_url})
+
+

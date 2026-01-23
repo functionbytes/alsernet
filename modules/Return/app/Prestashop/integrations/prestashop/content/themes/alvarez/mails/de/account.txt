@@ -1,0 +1,14 @@
+{shop_url}
+
+Lieber Kunde;
+
+Wir versenden diese, um den korrekten Empfang Ihrer Registrierungsdaten in unserem Shop zu bestätigen.
+
+Wir wissen das in uns gesetzte Vertrauen sehr zu schätzen.
+
+Wir nutzen diese Gelegenheit, um Ihnen einen herzlichen Gruß zu übermitteln.
+
+Aufrichtig;
+
+[{shop_name}]({shop_url})
+

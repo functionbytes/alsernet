@@ -1,0 +1,5 @@
+Hola {author_name},
+El administrador de {shop_name} acaba de responder a un comentario en su artículo {post_title}.
+Comentario previo del cliente: {comment}
+Aquí está la respuesta del administrador:
+{comment_reply}

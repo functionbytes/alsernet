@@ -1,0 +1,114 @@
+<?php
+
+namespace Modules\HelpdeskChat\Models\Customers;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class CustomerSession extends Model
+{
+    use HasFactory;
+
+    protected $table = 'helpdesk_customer_sessions';
+
+    protected $fillable = [
+        'customer_id',
+        'ip_address',
+        'user_agent',
+        'country',
+        'city',
+        'latitude',
+        'longitude',
+        'session_token',
+        'last_activity_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'last_activity_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+        ];
+    }
+
+    /**
+     * Get the customer that owns this session
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    /**
+     * Get page visits for this session
+     */
+    public function pageVisits(): HasMany
+    {
+        return $this->hasMany(PageVisit::class, 'session_id');
+    }
+
+    /**
+     * Get device type from user agent
+     */
+    public function getDeviceTypeAttribute(): string
+    {
+        if (! $this->user_agent) {
+            return 'Unknown';
+        }
+
+        if (stripos($this->user_agent, 'mobile') !== false || stripos($this->user_agent, 'android') !== false) {
+            return 'Mobile';
+        }
+
+        if (stripos($this->user_agent, 'tablet') !== false || stripos($this->user_agent, 'ipad') !== false) {
+            return 'Tablet';
+        }
+
+        return 'Desktop';
+    }
+
+    /**
+     * Get browser name from user agent
+     */
+    public function getBrowserAttribute(): string
+    {
+        if (! $this->user_agent) {
+            return 'Unknown';
+        }
+
+        if (stripos($this->user_agent, 'Firefox') !== false) {
+            return 'Firefox';
+        } elseif (stripos($this->user_agent, 'Chrome') !== false) {
+            return 'Chrome';
+        } elseif (stripos($this->user_agent, 'Safari') !== false) {
+            return 'Safari';
+        } elseif (stripos($this->user_agent, 'Edge') !== false) {
+            return 'Edge';
+        }
+
+        return 'Other';
+    }
+
+    /**
+     * Update last activity time
+     */
+    public function updateActivity(): self
+    {
+        $this->update(['last_activity_at' => now()]);
+
+        return $this;
+    }
+
+    /**
+     * Check if session is still active (less than 30 minutes old)
+     */
+    public function isActive(): bool
+    {
+        return $this->last_activity_at && $this->last_activity_at->diffInMinutes(now()) < 30;
+    }
+}

@@ -1,0 +1,5 @@
+Hola {atuhor_name}
+Se ha enviado un nuevo comentario en {post_title} y se ha aprobado automáticamente.
+Ver comentario
+
+

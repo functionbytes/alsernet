@@ -1,0 +1,20 @@
+{shop_url}
+
+Prezado(a) {nombre_cliente}
+
+Muito obrigado por confiar no Álvarez.
+
+Agradecemos que despenda alguns segundos a rever a sua compra.
+
+Sua opinião sobre {nombre_producto} pode ser de grande ajuda para nós e para outros usuários.
+
+Muito obrigado.
+
+[AVALIE AGORA]({link_producto})
+
+Não serão publicadas opiniões que contenham conteúdo impróprio (obscenidades, blasfêmias, detalhes de contato...),
+ conteúdo ofensivo ou que promova qualquer conduta ilegal. Para obter mais informações sobre nossa política de 
+ gerenciamento de avaliações, clique em aqui.
+
+[{shop_name}]({shop_url})
+

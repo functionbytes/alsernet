@@ -1,0 +1,15 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Kundenservice - Diskussion weitergeleitet
+
+{employee} wanted to forward this discussion to you.
+
+Bisherige Beiträge: {messages}
+
+{employee} fügte {comment} hinzu
+
+[{shop_name}]({shop_url})
+
+

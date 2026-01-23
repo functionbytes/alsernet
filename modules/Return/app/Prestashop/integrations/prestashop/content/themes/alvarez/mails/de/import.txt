@@ -1,0 +1,11 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Import abgeschlossen
+
+Datei {filename} wurde importiert
+
+[{shop_name}]({shop_url})
+
+

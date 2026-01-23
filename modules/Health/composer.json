@@ -1,0 +1,32 @@
+{
+    "name": "modules/health-check",
+    "description": "Health Check Module - Application health monitoring, status checks, diagnostics",
+    "keywords": ["health", "monitoring", "diagnostics", "status"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-health": "^1.34"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HealthCheck\\": "app/",
+            "Modules\\HealthCheck\\Database\\Factories\\": "database/factories/",
+            "Modules\\HealthCheck\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HealthCheck\\Tests\\": "tests/"
+        }
+    }
+}

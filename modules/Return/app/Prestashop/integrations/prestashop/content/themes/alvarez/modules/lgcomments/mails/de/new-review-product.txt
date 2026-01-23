@@ -1,0 +1,5 @@
+Sie haben eine neue Rezension erhalten Dem Kunden {customer_firstname} {customer_lastname} Hat eine Rezension über folgendes Produkt verfasst: {product_details}
+{product_name}
+{lg_score}/10 {lg_title}
+{lg_comment}
+Sie können die Bewertungen aus dem Menü "Katalog> Produktbewertungen" Ihres Backoffice überprüfen, bearbeiten und veröffentlichen.

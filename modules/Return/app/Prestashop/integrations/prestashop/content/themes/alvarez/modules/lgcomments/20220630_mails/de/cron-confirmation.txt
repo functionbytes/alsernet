@@ -1,0 +1,1 @@
+E-Mails erfolgreich gesendet. Die E-Mails wurden für folgende Bestellungen gesendet: {pedidos}

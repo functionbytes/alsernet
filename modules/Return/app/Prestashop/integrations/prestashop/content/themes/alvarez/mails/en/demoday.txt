@@ -1,0 +1,24 @@
+{shop_url}
+
+Dear Sir/Madam {firstname} {lastname},
+
+We confirm the correct request of the appointment for '{demoday_name}'.
+
+May we remind you the following details:
+
+- Brand: {demoday_manufacturer_name},
+
+- Day: {demoday_day},
+
+- Hour: {demoday_hour},
+
+- Place: {demoday_location}
+
+We'll be grateful if you contact us in case of cancellation or modification of the appointmet, calling 
+to 981 17 91 00 o or sending an e-mail to this same e-mail address. We Remain at your service at 
+your service concerning any clarifications you may need.
+
+Best regards,
+
+[{shop_name}]({shop_url})
+

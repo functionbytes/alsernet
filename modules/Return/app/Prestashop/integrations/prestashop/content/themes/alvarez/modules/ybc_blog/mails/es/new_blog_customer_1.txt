@@ -1,0 +1,3 @@
+Hola {customer_name},
+Su artículo {post_title} ha sido enviado con éxito a {shop_name} y se ha aprobado.
+Revisar entrada de blog

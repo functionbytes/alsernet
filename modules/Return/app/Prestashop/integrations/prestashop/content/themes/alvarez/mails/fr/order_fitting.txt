@@ -1,0 +1,26 @@
+{shop_url}
+
+Cher {firstname} {lastname},
+
+Nous te confirmons le traitement correct du rendez-vous pour '{fitting_name}'.
+
+Nº de commande: {id_order}
+
+Nous profitons de cette occasion pour rappeler ce qui suit:
+
+- Jour: {fitting_day},
+
+- Heure: {fitting_hour},
+
+- Lieu: {fitting_location}
+
+IMPORTANT: si le titulaire de la carte de crédit que vous avez indiquée est différent du titulaire de la demande, nous avons besoin d’une autorisation de collecte.
+
+Nous vous remercions de ce que, en cas d'annulation ou de modification du rendez-vous, 
+vous pouvez nous contacter au 981 17 91 00 ou nous envoyer un e-mail à cette même adresse. 
+Nous restons à votre entière disposition pour tout ce dont vous avez besoin.
+
+Avec nos meilleures salutations,
+
+[{shop_name}]({shop_url})
+

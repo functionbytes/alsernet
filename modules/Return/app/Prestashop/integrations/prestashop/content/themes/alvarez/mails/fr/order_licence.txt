@@ -1,0 +1,17 @@
+{shop_url}
+
+Cher client:
+
+Nous vous informons que nous avons réussi à la réception de votre demande de licence.
+
+Nous vous rappelons que pour traiter cette licence est nécessaire que vous nous envoyez les 
+documents requis pour chaque région en particulier.
+
+Si vous avez déjà envoyé cette documentation, la licence sera traitée le plus rapidement possible.
+Nous tenons à remercier la confiance placée dans notre société, étant à votre disposition pour tout 
+ce que vous pourriez avoir besoin.
+
+Avec nos meilleures salutations,
+
+[{shop_name}]({shop_url})
+

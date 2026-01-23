@@ -1,0 +1,11 @@
+{shop_url}
+
+Hallo,
+
+{product} ist nun verfügbar.
+
+Gute Neuigkeiten, dieser Artikel ist wieder auf Lager!
+
+Klicken Sie auf den folgenden Link, um die Produktseite zu besuchen und zu bestellen: [{product}]({product_link})
+
+[{shop_name}]({shop_url})

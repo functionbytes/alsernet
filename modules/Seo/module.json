@@ -1,0 +1,13 @@
+{
+    "name": "Seo",
+    "alias": "seo",
+    "description": "Search engine optimization, meta tags, OpenGraph, and structured data",
+    "keywords": ["seo", "meta", "opengraph", "json-ld"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Seo\\Providers\\SeoServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

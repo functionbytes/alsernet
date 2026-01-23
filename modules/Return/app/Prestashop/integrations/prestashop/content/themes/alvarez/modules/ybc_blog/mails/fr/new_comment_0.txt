@@ -1,0 +1,3 @@
+Bonjour {atuhor_name}
+Un nouveau commentaire a été publié sur {post_title} et est en attente d'approbation.
+Voir le commentaire

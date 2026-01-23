@@ -1,0 +1,16 @@
+{shop_url}
+
+Estimado cliente,
+
+Hemos recibido tu consulta.
+
+En breve nos pondremos en contacto contigo para darte respuesta.
+
+Nuestro equipo de profesionales trabaja diariamente con el objetivo de dar solución a cualquier
+
+tipo de dudas que puedan surgirte.
+
+Aprovechamos la ocasión para remitirte un cordial saludo;
+
+[{shop_name}]({shop_url})
+

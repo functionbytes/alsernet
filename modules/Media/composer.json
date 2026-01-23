@@ -1,0 +1,33 @@
+{
+    "name": "modules/media",
+    "description": "Media Manager Module - File uploads, media library management, image processing",
+    "keywords": ["media", "files", "uploads", "library", "images"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-medialibrary": "^10.0|^11.0",
+        "intervention/image": "*"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Media\\": "app/",
+            "Modules\\Media\\Database\\Factories\\": "database/factories/",
+            "Modules\\Media\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Media\\Tests\\": "tests/"
+        }
+    }
+}

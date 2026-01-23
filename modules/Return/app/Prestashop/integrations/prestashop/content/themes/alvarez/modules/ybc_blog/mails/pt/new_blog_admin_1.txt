@@ -1,0 +1,4 @@
+A new post has been submitted to {shop_name} and has been approved automatically
+Author:{customer_name}
+Post title:{post_title}
+View post

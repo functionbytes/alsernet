@@ -1,0 +1,3 @@
+You have received a new review
+The customer {customer_firstname} {customer_lastname} has written a review about your shop: {score_store}/10 {title_store} {comment_store}
+You can check, edit and publish the reviews from the menu "Catalog > Store Reviews" of your back-office.

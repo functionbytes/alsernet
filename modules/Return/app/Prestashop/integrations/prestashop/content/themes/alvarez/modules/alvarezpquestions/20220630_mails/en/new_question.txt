@@ -1,0 +1,16 @@
+{shop_url}
+
+Dear Customer,
+
+We have received your question.
+
+Soon, we'll contact you to provide an answer.
+
+Our staff of specialists work daily to solve any doubt you may have.
+
+We look forward hearing from you.
+
+Best regards;
+
+[{shop_name}]({shop_url})
+

@@ -1,0 +1,17 @@
+{shop_url}
+
+Dear customer:
+
+We have received the request for a licence.
+
+May we remind you that to proceed with the licence, you have to send the indicated documentation 
+for each Autonomus Community.
+
+If you have already sent these documents, the licence will be processed as soon as possible.
+We appreciate the confidence you have shown in our firm and we remain entirely at your service 
+for anything you need.
+
+Best regards,
+
+[{shop_name}]({shop_url})
+

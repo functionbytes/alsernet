@@ -1,0 +1,13 @@
+{shop_url}
+
+Hi {firstname} {lastname},
+
+ID Order {id_order} - Processing order
+
+We are processing your order with the reference {id_order} of {shop_name}.
+
+Best regards,
+
+[{shop_name}]({shop_url})
+
+

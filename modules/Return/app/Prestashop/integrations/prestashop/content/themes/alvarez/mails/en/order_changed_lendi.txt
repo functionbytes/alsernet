@@ -1,0 +1,11 @@
+{shop_url}
+
+Hi {firstname} {lastname},
+
+Your order with reference number {id_order} from {shop_name} has been pre-approved by the financial.
+
+Best regards;
+
+[{shop_name}]({shop_url})
+
+

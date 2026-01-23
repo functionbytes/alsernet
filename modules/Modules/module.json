@@ -1,0 +1,11 @@
+{
+    "name": "Modules",
+    "alias": "modules",
+    "description": "Module Management System - Administra, habilita, deshabilita y monitorea todos los módulos del sistema",
+    "keywords": ["modules", "management", "administration", "enable", "disable", "module-status"],
+    "priority": 10,
+    "providers": [
+        "Modules\\Modules\\Providers\\ModulesServiceProvider"
+    ],
+    "files": []
+}

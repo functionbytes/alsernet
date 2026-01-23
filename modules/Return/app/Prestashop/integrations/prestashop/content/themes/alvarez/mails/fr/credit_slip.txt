@@ -1,0 +1,13 @@
+{shop_url}
+
+Bonjour {firstname} {lastname},
+
+Identifiant de commande {order_name} - Avoir
+
+Un avoir a été généré à votre nom relatif à votre commande ayant pour référence {order_name}.
+
+Consultez cet avoir et téléchargez-le sur notre boutique, rendez-vous dans la section [Avoirs]({order_slip_url}) de votre compte client.
+
+[{shop_name}]({shop_url})
+
+

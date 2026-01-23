@@ -1,0 +1,11 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Sie haben eine neue Bestellung aufgegeben.
+
+Please go on {order_link} to complete the payment.
+
+[{shop_name}]({shop_url})
+
+

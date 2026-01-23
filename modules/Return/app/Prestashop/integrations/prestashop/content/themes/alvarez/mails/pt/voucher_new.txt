@@ -1,0 +1,13 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Foi gerado o código do vale de desconto
+
+Aqui está o novo código do vale de desconto: {voucher_num}
+
+In order to use it, just copy/paste this code during check out.
+
+[{shop_name}]({shop_url})
+
+

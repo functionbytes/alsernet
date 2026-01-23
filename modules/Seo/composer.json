@@ -1,0 +1,32 @@
+{
+    "name": "modules/seo",
+    "description": "SEO Module - Search engine optimization, meta tags, OpenGraph, JSON-LD structured data",
+    "keywords": ["seo", "meta", "opengraph", "json-ld", "search-engine"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "artesaos/seotools": "^1.3"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Seo\\": "app/",
+            "Modules\\Seo\\Database\\Factories\\": "database/factories/",
+            "Modules\\Seo\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Seo\\Tests\\": "tests/"
+        }
+    }
+}

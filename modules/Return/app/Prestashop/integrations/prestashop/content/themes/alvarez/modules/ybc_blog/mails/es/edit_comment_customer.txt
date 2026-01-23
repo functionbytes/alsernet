@@ -1,0 +1,7 @@
+El comentario del cliente ha sido actualizado:
+Cliente: {customer}
+Email: {email}
+Asunto: {subject}
+Comentario: {comment}
+Clasificación: {rating}
+Ver entrada de blog: {post_link}

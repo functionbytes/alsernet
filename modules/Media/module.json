@@ -1,0 +1,9 @@
+{
+    "name": "Media",
+    "alias": "media",
+    "description": "Media Manager Module - File and folder management with multi-disk support",
+    "keywords": ["media", "files", "folders", "upload", "storage", "gallery"],
+    "priority": 10,
+    "providers": ["Modules\\Media\\Providers\\MediaServiceProvider"],
+    "files": []
+}

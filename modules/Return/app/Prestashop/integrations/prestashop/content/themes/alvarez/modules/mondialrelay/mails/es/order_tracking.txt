@@ -1,0 +1,31 @@
+[{shop_url}]
+
+Hola {firstname} {lastname},
+
+Gracias por comprar en {shop_name} y en Mondial Relay !
+
+PEDIDO: {order_name} Realizado el {date}
+
+PAGO: {payment}
+
+TRANSPORTISTA: {carrier}
+
+{delivery_block_txt}
+
+{invoice_block_txt}
+
+Puede revisar su pedido y descargar su factura desde la sección
+"Historial de pedidos" [{history_url}]
+de su cuenta de cliente haciendo clic en "Mi cuenta"
+[{my_account_url}] en nuestra tienda.
+
+Si tiene una cuenta de invitado, puede seguir su pedido a través de la sección
+"Seguimiento de invitados"
+[{guest_tracking_url}?id_order={order_name}]
+en nuestra tienda.
+
+URL de seguimiento de su pedido con Mondial Relay :
+[/{mondialrelay_tracking_url}]
+
+{shop_name} [{shop_url}] powered
+by PrestaShop(tm) [http://www.prestashop.com/]

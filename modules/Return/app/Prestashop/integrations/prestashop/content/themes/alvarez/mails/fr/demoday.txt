@@ -1,0 +1,23 @@
+{shop_url}
+
+Cher {firstname} {lastname},
+
+Nous te confirmons le traitement correct du rendez-vous pour '{demoday_name}'.
+
+Nous profitons de cette occasion pour rappeler ce qui suit:
+
+- Marque: {demoday_manufacturer_name},
+
+- Jour: {demoday_day},
+
+- Heure: {demoday_hour},
+
+- Lieu: {demoday_location}
+
+Merci, en cas d'annulation ou de toute modification de la nomination, vous communiquez avec nous au 981 17 91 00 ou, 
+après l'envoi d'un e-mail à la même adresse. Nous restons à votre disposition pour tout ce que vous pourriez avoir besoin.
+
+Avec nos meilleures salutations,
+
+[{shop_name}]({shop_url})
+

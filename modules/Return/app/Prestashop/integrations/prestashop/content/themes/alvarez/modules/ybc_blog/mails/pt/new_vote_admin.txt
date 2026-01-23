@@ -1,0 +1,3 @@
+Blog post: {post_title}
+Feedback: {feedback}
+Post is helpful for customer: {polls_helpful}

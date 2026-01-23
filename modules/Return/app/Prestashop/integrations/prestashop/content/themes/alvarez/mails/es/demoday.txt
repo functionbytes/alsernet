@@ -1,0 +1,24 @@
+{shop_url}
+
+Estimad@ {firstname} {lastname},
+
+Le confirmamos la correcta tramitación de cita para '{demoday_name}'.
+
+Aprovechamos para recordarte los siguientes datos:
+
+- Marca: {demoday_manufacturer_name},
+
+- Día: {demoday_day},
+
+- Hora: {demoday_hour}
+
+Para un correcto estudio, es necesario que traiga sus palos habituales.
+
+Te agradecemos que, en caso de anulación o para cualquier modificación de la cita, te pongas en 
+contacto con nosotros en el 981 17 91 00 o bien nos remitas un e-mail a esta misma dirección. 
+Quedamos a tu entera disposición para cualquier cosa que precises.
+
+Saludos cordiales,
+
+[{shop_name}]({shop_url})
+

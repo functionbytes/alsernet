@@ -1,0 +1,26 @@
+{shop_url}
+
+Estimad@ {firstname} {lastname},
+
+Confirmamos a sua correcta inscrição para '{fitting_name}'.
+
+Nº de pedido: {id_order}
+
+Aproveitamos para recordar-lhe os seguintes dados:
+
+- Día: {fitting_day},
+
+- Hora: {fitting_hour},
+
+- Lugar: {fitting_location}
+
+IMPORTANTE: Se o titular do cartão de crédito que nos facultou é diferente do titular do pedido, necessitamos de autorização para a cobrança
+
+Agradecemos que, em caso de anulação ou para qualquer modificação de marcação, 
+entre em contacto connosco através do +351 253 463 989 ou através de um email para este correio eletrónico. 
+Ficamos à sua inteira disposição para o que necessite.
+
+Com os melhores cumprimentos,
+
+[{shop_name}]({shop_url})
+

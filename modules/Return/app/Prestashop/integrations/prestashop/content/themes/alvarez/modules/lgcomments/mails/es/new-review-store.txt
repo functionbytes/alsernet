@@ -1,0 +1,3 @@
+Nuevo comentario recibido
+El cliente {customer_firstname} {customer_lastname} acaba de escribir un comentario sobre tu tienda: {score_store}/10 {title_store} {comment_store}
+Puedes revisar, editar y publicar estas opiniones desde el menú "Catálogo > Opiniones Productos" de tu back-office.

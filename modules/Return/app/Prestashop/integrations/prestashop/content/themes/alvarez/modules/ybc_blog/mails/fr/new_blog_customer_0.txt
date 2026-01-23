@@ -1,0 +1,3 @@
+Bonjour {customer_name},
+Votre article {post_title} a été soumis avec succès à {shop_name} et est en attente d'approbation.
+Article de revue

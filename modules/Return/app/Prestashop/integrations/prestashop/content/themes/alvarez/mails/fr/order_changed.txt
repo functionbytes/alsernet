@@ -1,0 +1,7 @@
+{shop_url}
+Bonjour {Nom} {nom},
+ID Commande {id_order} - Commande modifiée
+Votre commande avec le numéro de référence {id_order} de {shop_name} a été modifiée.
+Cordialement;
+[{shop_name}]({shop_url})
+

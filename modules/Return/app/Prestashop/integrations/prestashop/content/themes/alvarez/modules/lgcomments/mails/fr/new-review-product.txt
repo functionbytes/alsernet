@@ -1,0 +1,6 @@
+Nouvel avis reçu
+Le client {customer_firstname} {customer_lastname} vient de rédiger un avis sur le produit suivant : {product_details}
+{product_name}
+{lg_score}/10 {lg_title}
+{lg_comment}
+Vous pouvez vérifier, éditer et publier ces avis depuis le menu "Catalogue > Avis Produits" de votre back-office.

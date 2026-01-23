@@ -1,0 +1,44 @@
+{
+  "types": {
+    "general": {
+      "label": "General documentation",
+      "required_documents": ["dni_frontal", "dni_trasera"]
+    },
+    "corta": {
+      "label": "Handgun permit",
+      "required_documents": ["dni_frontal", "dni_trasera", "licencia_armas_cortas"]
+    },
+    "rifle": {
+      "label": "Rifle permit",
+      "required_documents": ["dni_frontal", "dni_trasera", "licencia_armas_largas_rayadas"]
+    },
+    "escopeta": {
+      "label": "Shotgun license",
+      "required_documents": ["dni_frontal", "dni_trasera", "licencia_armas_escopeta"]
+    },
+    "dni": {
+      "label": "ID document",
+      "required_documents": ["dni_frontal", "dni_trasera"]
+    },
+    "licencia_armas": {
+      "label": "Weapons license",
+      "required_documents": ["dni_frontal", "dni_trasera", "licencia_armas_general"]
+    }
+  },
+  "document_labels": {
+    "dni_frontal": "ID card (front)",
+    "dni_trasera": "ID card (back)",
+    "licencia_armas_cortas": "Handgun permit (type B or F)",
+    "licencia_armas_largas_rayadas": "Rifled long-range firearm permit (type D)",
+    "licencia_armas_escopeta": "Shotgun license (type E)",
+    "licencia_armas_general": "Weapons license (any type)",
+    "pasaporte": "Passport",
+    "carnet_conducir_frontal": "Driving license (front)",
+    "carnet_conducir_trasera": "Driving license (back)"
+  },
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-01-07",
+    "notes": "This configuration is shared between Laravel and PrestaShop integrations"
+  }
+}

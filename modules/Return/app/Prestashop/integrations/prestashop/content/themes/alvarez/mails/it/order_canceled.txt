@@ -1,0 +1,11 @@
+{shop_url}
+
+Estimado Sr./Sra. {firstname} {lastname}:
+
+Su pedido {id_order} ha sido cancelado.
+
+Por favor, si desea tramitar el pedido o para cualquier duda, póngase en contacto con nosotros en el 981 17 91 00.
+
+[{shop_name}]({shop_url})
+
+

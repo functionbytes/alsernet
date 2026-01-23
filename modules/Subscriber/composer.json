@@ -1,0 +1,33 @@
+{
+    "name": "modules/subscriber",
+    "description": "Subscriber Management Module - Email lists, subscriber segmentation, email validation",
+    "keywords": ["subscriber", "email", "lists", "segmentation", "validation"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "propaganistas/laravel-disposable-email": "^2.2",
+        "egulias/email-validator": "^4.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Subscriber\\": "app/",
+            "Modules\\Subscriber\\Database\\Factories\\": "database/factories/",
+            "Modules\\Subscriber\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Subscriber\\Tests\\": "tests/"
+        }
+    }
+}

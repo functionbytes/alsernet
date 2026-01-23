@@ -1,0 +1,15 @@
+{shop_url}
+
+Hallo {firstname} {lastname},
+
+Nachricht von {shop_name}
+
+Sie haben eine neue Nachricht von {shop_name} zur Bestellung mit der Referenz {id_order} erhalten.
+
+Nachricht:
+
+{message}
+
+[{shop_name}]({shop_url})
+
+

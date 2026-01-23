@@ -1,0 +1,4 @@
+UPDATE aalv_product set id_category_default=2186 where id_product=55965;
+UPDATE aalv_product_shop set id_category_default=2186 where id_product=55965;
+UPDATE aalv_product set id_category_default=1665 where id_product=55966;
+UPDATE aalv_product_shop set id_category_default=1665 where id_product=55966;

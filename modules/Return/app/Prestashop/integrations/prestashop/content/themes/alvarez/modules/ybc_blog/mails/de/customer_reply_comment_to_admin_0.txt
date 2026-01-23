@@ -1,0 +1,4 @@
+Hi {author_name}
+{replier} has just replied to a comment on {post_title} and is waiting for your approval
+{comment_reply}
+View reply

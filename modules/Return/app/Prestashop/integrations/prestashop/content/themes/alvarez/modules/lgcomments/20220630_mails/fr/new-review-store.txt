@@ -1,0 +1,3 @@
+Nouvel avis reçu
+Le client {customer_firstname} {customer_lastname} vient de rédiger un avis sur votre boutique : {score_store}/10 {title_store} {comment_store}
+Vous pouvez vérifier, éditer et publier ces avis depuis le menu "Catalogue > Avis Boutique" de votre back-office.

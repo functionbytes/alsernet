@@ -1,0 +1,11 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Foi feita uma nova encomenda em seu nome.
+
+Por favor, vá para {order_link} para finalizar o pagamento.
+
+[{shop_name}]({shop_url})
+
+

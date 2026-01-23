@@ -1,0 +1,9 @@
+{
+    "name": "Role",
+    "alias": "role",
+    "description": "Role and Permission Management Module - Handles all user roles, permissions, and access control",
+    "keywords": ["role", "permission", "access-control", "rbac", "acl"],
+    "priority": 5,
+    "providers": ["Modules\\Role\\Providers\\RoleServiceProvider"],
+    "files": []
+}

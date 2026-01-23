@@ -1,0 +1,20 @@
+{shop_url}
+
+Estimado/a {nombre_cliente}
+
+Muchas gracias por confiar en Álvarez.
+
+Te agradecemos que nos dediques unos segundos para valorar tu compra.
+
+Tu opinión sobre {nombre_producto} puede ser de gran ayuda para nosotros y para otros usuarios.
+
+Muchas gracias.
+
+[VALORAR AHORA]({link_producto})
+
+
+
+No se publicarán opiniones con contenido inapropiado, ofensivo o que pueda promover conductas ilegales. 
+
+[{shop_name}]({shop_url})
+

@@ -1,0 +1,5 @@
+Bonjour {customer_name}
+Merci pour vos commentaires sur notre article de blog: {post_title}
+Cet e-mail confirme que nous avons bien reçu vos précieux commentaires.
+Votre commentaire: {feedback}
+L'article était-il utile: {polls_helpful}

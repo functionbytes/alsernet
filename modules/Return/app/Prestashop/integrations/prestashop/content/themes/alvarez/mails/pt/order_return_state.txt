@@ -1,0 +1,13 @@
+{shop_url}
+
+Olá {firstname} {lastname},
+
+Devolução #{id_order_return} - Atualização
+
+Foi atualizado o progresso da sua devolução nº {id_order_return}; o novo estado é o seguinte: "{state_order_return}".
+
+Follow your order and download your invoice on our shop, go to the [Histórico de encomendas e detalhes]({history_url}) section of your customer account.
+
+[{shop_name}]({shop_url})
+
+

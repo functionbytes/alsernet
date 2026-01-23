@@ -1,0 +1,4 @@
+Bonjour {author_name}
+{replier} vient de répondre à un commentaire sur {post_title} et attend votre approbation
+{comment_reply}
+Voir la réponse
