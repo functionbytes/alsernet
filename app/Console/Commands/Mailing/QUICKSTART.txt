@@ -1,0 +1,209 @@
+================================================================================
+                    MAILING AGENTS - QUICK START GUIDE
+================================================================================
+
+What are Mailing Agents?
+Mailing Agents are Artisan commands that let you manage your Acelle database
+tables directly from the command line. Think of them as interactive CLI tools
+for CRUD operations on email marketing data.
+
+================================================================================
+                              AVAILABLE AGENTS
+================================================================================
+
+10 Priority Agents (Ready to use):
+  ✓ mailing:mail-lists       - Manage mailing lists
+  ✓ mailing:subscribers      - Manage email subscribers
+  ✓ mailing:campaigns        - Manage email campaigns
+  ✓ mailing:templates        - Manage email templates
+  ✓ mailing:layouts          - Manage email layouts
+  ✓ mailing:languages        - Manage system languages
+  ✓ mailing:segments         - Manage audience segments
+  ✓ mailing:fields           - Manage custom fields
+  ✓ mailing:contacts         - Manage contacts
+  ✓ mailing:users            - Manage system users
+
+Plus 73 more! Generate them with:
+  php artisan mailing:generate-agents
+
+================================================================================
+                              QUICK COMMANDS
+================================================================================
+
+LIST RECORDS:
+  php artisan mailing:mail-lists list
+  php artisan mailing:subscribers list
+  php artisan mailing:campaigns list
+
+CREATE RECORD (Interactive):
+  php artisan mailing:mail-lists create
+  # Follow prompts for each field
+
+CREATE RECORD (With options):
+  php artisan mailing:mail-lists create \
+    --name="My List" \
+    --from_email="info@example.com" \
+    --customer_id=1
+
+VIEW RECORD:
+  php artisan mailing:mail-lists show --id=1
+
+UPDATE RECORD:
+  php artisan mailing:mail-lists update \
+    --id=1 \
+    --name="Updated Name"
+
+DELETE RECORD:
+  php artisan mailing:mail-lists delete --id=1
+  # Will ask for confirmation
+
+================================================================================
+                            COMPLETE WORKFLOW
+================================================================================
+
+1. CREATE A MAILING LIST:
+   php artisan mailing:mail-lists create \
+     --name="Monthly Newsletter" \
+     --from_email="newsletter@company.com" \
+     --customer_id=1
+
+2. CREATE SUBSCRIBERS:
+   php artisan mailing:subscribers create \
+     --mail_list_id=1 \
+     --email="john@example.com" \
+     --status="subscribed"
+
+3. CREATE A TEMPLATE:
+   php artisan mailing:templates create \
+     --name="Newsletter Template" \
+     --type="notification" \
+     --customer_id=1
+
+4. CREATE A CAMPAIGN:
+   php artisan mailing:campaigns create \
+     --name="February 2026" \
+     --customer_id=1 \
+     --type="regular" \
+     --default_mail_list_id=1
+
+5. VIEW YOUR CAMPAIGN:
+   php artisan mailing:campaigns show --id=1
+
+================================================================================
+                            COMMON OPERATIONS
+================================================================================
+
+Filter Subscribers by Status:
+  php artisan mailing:subscribers list
+  # Look for --status option in extended agents
+
+Export Data:
+  php artisan mailing:mail-lists list > export.txt
+
+Count Records:
+  php artisan mailing:subscribers list | wc -l
+
+Search/Find (in extended agents):
+  php artisan mailing:contacts list --search="john"
+
+Bulk Update (in extended agents):
+  php artisan mailing:subscribers bulk --status=pending --bulk-action=unsubscribe
+
+================================================================================
+                            DOCUMENTATION
+================================================================================
+
+Start here:
+  1. INDEX.md          - Overview and navigation guide
+  2. README.md         - Detailed usage guide
+  3. EXAMPLES.md       - Practical use cases
+  4. TABLES_REFERENCE  - Complete table catalog
+  5. CUSTOM_AGENTS.md  - How to extend agents
+
+================================================================================
+                            IMPORTANT NOTES
+================================================================================
+
+Connection: acelle (default database)
+Prefix: All tables are prefixed with "mailing_"
+Auto-Skipped: id, uid, created_at, updated_at (system fields)
+Timestamps: Automatically handled
+IDs: Required for show, update, delete operations
+
+Example: mailing:mail-lists requires:
+  - Action: list, create, show, update, delete
+  - Options: --id, --name, --from_email, etc.
+
+================================================================================
+                            GENERATE MORE AGENTS
+================================================================================
+
+For the remaining 73 tables, use:
+
+  php artisan mailing:generate-agents
+
+This will automatically create agents for:
+  - mailing_sending_servers
+  - mailing_invoices
+  - mailing_products
+  - mailing_jobs
+  - ... and 69 more!
+
+Then use them immediately:
+  php artisan mailing:sending-servers list
+  php artisan mailing:invoices show --id=1
+
+================================================================================
+                            TROUBLESHOOTING
+================================================================================
+
+"Table not found" error:
+  → Run migrations first: php artisan migrate
+
+"--id option is required":
+  → You need: php artisan mailing:mail-lists show --id=1
+
+"Record with ID X not found":
+  → List records first: php artisan mailing:mail-lists list
+  → Then use a valid ID
+
+"Field X is required":
+  → Some fields can't be empty (required fields)
+
+"Database error":
+  → Check connection 'acelle' in config/database.php
+
+================================================================================
+                            NEXT STEPS
+================================================================================
+
+1. Try a simple list command:
+   php artisan mailing:mail-lists list
+
+2. Read the full documentation:
+   cat app/Console/Commands/Mailing/README.md
+
+3. Create a test record:
+   php artisan mailing:languages create
+
+4. Generate agents for all tables:
+   php artisan mailing:generate-agents
+
+5. Explore examples:
+   cat app/Console/Commands/Mailing/EXAMPLES.md
+
+================================================================================
+                        YOU'RE ALL SET!
+================================================================================
+
+Ready to use Mailing Agents? Start with:
+
+  php artisan mailing:mail-lists list
+
+For help:
+  php artisan mailing:mail-lists --help
+  cat app/Console/Commands/Mailing/INDEX.md
+
+Happy managing! 🚀
+
+================================================================================
