@@ -1,184 +1,280 @@
 <?php
 
+/**
+ * BounceHandler class.
+ *
+ * Model class for email bounces handling
+ *
+ * LICENSE: This product includes software developed at
+ * the Acelle Co., Ltd. (http://acellemail.com/).
+ *
+ * @category   MVC Model
+ *
+ * @author     N. Pham <n.pham@acellemail.com>
+ * @author     L. Pham <l.pham@acellemail.com>
+ * @copyright  Acelle Co., Ltd
+ * @license    Acelle Co., Ltd
+ *
+ * @version    1.0
+ *
+ * @link       http://acellemail.com
+ */
+
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Mailing\Traits\HasUid;
+use Modules\Mailing\Library\Traits\HasUid;
 
-class BounceHandler extends Model
+class BounceHandler extends DeliveryHandler
 {
-    use HasFactory, HasUid, SoftDeletes;
+    use HasUid;
 
-    protected $table = 'mailing_bounce_handlers';
+    protected $table = 'bounce_handlers';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable Attributes
-    |--------------------------------------------------------------------------
-    */
+    public static $itemsPerPage = 25;
 
+    protected $logfile = 'bounce-handler';
+
+    /**
+     * Process bounce message, extract the bounce information.
+     *
+     * @return mixed
+     */
+    public function processMessage($mbox, $msgNo)
+    {
+        try {
+            $info = imap_headerinfo($mbox, $msgNo);
+            $header = imap_fetchheader($mbox, $msgNo);
+            $body = imap_body($mbox, $msgNo, FT_PEEK);
+
+            /* The following check is now deprecated
+             * and will be removed
+                 $bouncedAddress = $this->getBouncedAddress($info->toaddress);
+                 print_r($bouncedAddress . "\n");
+                 if (empty($bouncedAddress)) {
+                     throw new \Exception("not a bounce message");
+                 }
+            */
+
+            $msgId = $this->getMessageId($body);
+            if (empty($msgId)) {
+                imap_setflag_full($mbox, $msgNo, '\\Seen \\Flagged');
+                $this->logger()->info('Skipped: cannot find Message-ID in email body');
+
+                return;
+            } else {
+                $this->logger()->info('Parsed OK, Message-ID found in email body, proceeding with '.$msgId);
+            }
+
+            $trackingLog = TrackingLog::where('message_id', $msgId)->first();
+
+            if (empty($trackingLog)) {
+                $this->logger()->info('Skipped: cannot find message with such Message-Id: '.$msgId);
+
+                return;
+            }
+
+            [$code, $type] = $this->getBounceCodeAndType($header.PHP_EOL.$body);
+
+            // record a bounce log, one message may have more than one
+            $bounceLog = new BounceLog;
+            $bounceLog->message_id = $msgId;
+            $bounceLog->runtime_message_id = $msgId;
+            $bounceLog->bounce_type = $type; // soft | hard | unknown
+            $bounceLog->status_code = $code; // 511, 550, 555... (hard) or 4xx (soft)
+            $bounceLog->raw = $header.PHP_EOL.$body;
+            $bounceLog->save();
+
+            // just delete the bounce notification email
+            imap_delete($mbox, $msgNo);
+
+            $this->logger()->info('Done: bounce recorded for message '.$msgId);
+
+            if ($bounceLog->isHard()) {
+                $this->logger()->info('Adding email to blacklist...');
+                $trackingLog->subscriber->sendToBlacklist($bounceLog->raw);
+                $this->logger()->info('Added');
+            } else {
+                $this->logger()->info('Do nothing with soft bounce');
+            }
+        } catch (\Exception $ex) {
+            $this->logger()->info('Failed. '.$ex->getMessage());
+        }
+    }
+
+    /**
+     * Extract bounced email address from email.
+     *
+     * @return string emailAddress
+     */
+    public function getBouncedAddress($to)
+    {
+        preg_match('/(?<=\+)[^\+]+=[^@]+(?=@)/', $to, $matched);
+        if (count($matched) == 0) {
+            return;
+        } else {
+            return str_replace('=', '@', $matched[0]);
+        }
+    }
+
+    public function getBounceCodeAndType($content)
+    {
+        // @important:
+        // The /m modifier is important. It allows the ^ and $ to match
+        // at the start/end of lines, not just the entire string.
+        // Also, the ^ in ^Status is important, to avoid matching a "status" word in a paragraph
+        //
+        preg_match('/(?<=^Status:)\s*[^\s]*/m', $content, $matched);
+        if (count($matched) == 0) {
+            return [null, BounceLog::UNKNOWN];
+        }
+
+        // Get something like "5.1.1" or "511", then convert it to "511"
+        $code = preg_replace('/[^\d]/', '', trim($matched[0]));
+        if (empty($code)) {
+            return [null, BounceLog::UNKNOWN];
+        }
+
+        // If "5xx" then HARD, else "4xx" then SOFT
+        if ($code[0] === '5') {
+            $type = BounceLog::HARD;
+        } else {
+            $type = BounceLog::SOFT;
+        }
+
+        return [$code, $type];
+    }
+
+    /**
+     * Get all items.
+     *
+     * @return collect
+     */
+    public static function getAll()
+    {
+        return self::select('*');
+    }
+
+    /**
+     * Filter items.
+     *
+     * @return collect
+     */
+    public static function filter($request)
+    {
+        $user = $request->user();
+        $admin = $user->admin;
+        $query = self::select('bounce_handlers.*');
+
+        // Keyword
+        if (! empty(trim($request->keyword))) {
+            foreach (explode(' ', trim($request->keyword)) as $keyword) {
+                $query = $query->where(function ($q) use ($keyword) {
+                    $q->orwhere('bounce_handlers.name', 'like', '%'.$keyword.'%')
+                        ->orWhere('bounce_handlers.type', 'like', '%'.$keyword.'%')
+                        ->orWhere('bounce_handlers.host', 'like', '%'.$keyword.'%');
+                });
+            }
+        }
+
+        // filters
+        $filters = $request->all();
+        if (! empty($filters)) {
+            if (! empty($filters['type'])) {
+                $query = $query->where('bounce_handlers.type', '=', $filters['type']);
+            }
+        }
+
+        if (! empty($request->admin_id)) {
+            $query = $query->where('bounce_handlers.admin_id', '=', $request->admin_id);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Search items.
+     *
+     * @return collect
+     */
+    public static function search($request)
+    {
+        $query = self::filter($request);
+
+        if (! empty($request->sort_order)) {
+            $query = $query->orderBy($request->sort_order, $request->sort_direction);
+        }
+
+        return $query;
+    }
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'uid',
-        'user_id',
-        'name',
-        'type',
-        'status',
-        'host',
-        'port',
-        'protocol',
-        'encryption',
-        'username',
-        'password',
-        'email',
-        'webhook_token',
-        'webhook_secret',
-        'rules',
-        'auto_check',
-        'check_interval',
-        'delete_after_process',
-        'auto_unsubscribe_hard_bounce',
-        'soft_bounce_limit',
-        'bounces_processed',
-        'hard_bounces',
-        'soft_bounces',
-        'last_checked_at',
-        'last_bounce_at',
-        'last_error',
+        'name', 'host', 'port', 'username', 'password', 'protocol', 'encryption', 'email',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
-
-    protected function casts(): array
+    /**
+     * Get validation rules.
+     *
+     * @return object
+     */
+    public static function rules()
     {
         return [
-            'password' => 'encrypted',
-            'rules' => 'json',
-            'auto_check' => 'boolean',
-            'delete_after_process' => 'boolean',
-            'auto_unsubscribe_hard_bounce' => 'boolean',
-            'last_checked_at' => 'datetime',
-            'last_bounce_at' => 'datetime',
+            'name' => 'required',
+            'host' => 'required',
+            'port' => 'required',
+            'username' => 'required',
+            'password' => 'required',
+            'protocol' => 'required',
+            'encryption' => 'required',
+            'email' => 'required|email',
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
     /**
-     * Get the user that owns this bounce handler.
+     * Get select options.
+     *
+     * @return array
      */
-    public function user(): BelongsTo
+    public static function getSelectOptions()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        $query = self::getAll();
+
+        $options = $query->orderBy('name', 'asc')->get()->map(function ($item) {
+            return ['value' => $item->id, 'text' => $item->name];
+        });
+
+        return $options;
     }
 
     /**
-     * Get all bounce logs for this handler.
+     * Protocol select options.
+     *
+     * @return array
      */
-    public function bounceLogs(): HasMany
+    public static function protocolSelectOptions()
     {
-        return $this->hasMany(BounceLog::class, 'bounce_handler_id');
+        return [
+            ['value' => 'imap', 'text' => 'imap'],
+        ];
     }
 
     /**
-     * Get all sending servers using this bounce handler.
+     * Encryption select options.
+     *
+     * @return array
      */
-    public function sendingServers(): HasMany
+    public static function encryptionSelectOptions()
     {
-        return $this->hasMany(SendingServer::class, 'bounce_handler_id');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Methods
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Process bounces from the handler.
-     */
-    public function processBounces(): bool
-    {
-        if ($this->status !== 'active') {
-            return false;
-        }
-
-        try {
-            $this->update(['last_checked_at' => now()]);
-
-            return true;
-        } catch (\Exception $e) {
-            $this->update([
-                'last_error' => $e->getMessage(),
-                'status' => 'error',
-            ]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Record a bounce event.
-     */
-    public function recordBounce(string $email, string $bounceType, ?string $reason = null): BounceLog
-    {
-        return $this->bounceLogs()->create([
-            'email' => $email,
-            'bounce_type' => $bounceType,
-            'reason' => $reason,
-        ]);
-    }
-
-    /**
-     * Get the display name for the handler type.
-     */
-    public function getTypeLabel(): string
-    {
-        return match ($this->type) {
-            'imap' => 'IMAP',
-            'pop3' => 'POP3',
-            'webhook' => 'Webhook',
-            default => ucfirst($this->type),
-        };
-    }
-
-    /**
-     * Get the display name for the status.
-     */
-    public function getStatusLabel(): string
-    {
-        return match ($this->status) {
-            'active' => 'Active',
-            'inactive' => 'Inactive',
-            'error' => 'Error',
-            default => ucfirst($this->status),
-        };
-    }
-
-    /**
-     * Check if handler is due for processing based on check interval.
-     */
-    public function isDueForCheck(): bool
-    {
-        if (! $this->auto_check) {
-            return false;
-        }
-
-        if ($this->last_checked_at === null) {
-            return true;
-        }
-
-        return now()->diffInMinutes($this->last_checked_at) >= $this->check_interval;
+        return [
+            ['value' => 'tls', 'text' => 'tls'],
+            ['value' => 'starttls', 'text' => 'starttls'],
+            ['value' => 'notls', 'text' => 'notls'],
+            ['value' => 'ssl', 'text' => 'ssl'],
+        ];
     }
 }

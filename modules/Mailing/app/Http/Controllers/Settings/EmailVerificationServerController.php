@@ -2,379 +2,299 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Http;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
-use Modules\Mailing\Models\EmailVerificationServer;
 
 class EmailVerificationServerController extends Controller
 {
     /**
-     * Display a listing of email verification servers.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.view');
+        if (! $request->user()->admin->can('read', new \Modules\Mailing\Models\EmailVerificationServer)) {
+            return $this->notAuthorized();
+        }
 
-        $verificationServers = EmailVerificationServer::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->paginate(15);
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\EmailVerificationServer)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        return view('mailing::settings.email-verification-servers.index', [
-            'verificationServers' => $verificationServers,
+        // exlude customer seding servers
+        $request->merge(['no_customer' => true]);
+
+        $servers = \Modules\Mailing\Models\EmailVerificationServer::search($request);
+
+        return view('admin.email_verification_servers.index', [
+            'servers' => $servers,
         ]);
     }
 
     /**
-     * Show the form for creating a new email verification server.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function listing(Request $request)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.create');
-
-        return view('mailing::settings.email-verification-servers.create');
-    }
-
-    /**
-     * Store a newly created email verification server.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.email-verification-servers.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:zerobounce,neverbounce,kickbox,clearout,debounce,custom',
-                'status' => 'required|in:active,inactive,error',
-
-                // API configuration
-                'api_key' => 'required|string',
-                'api_url' => 'nullable|url',
-                'api_options' => 'nullable|json',
-
-                // Verification settings
-                'check_disposable' => 'boolean',
-                'check_role_based' => 'boolean',
-                'check_smtp' => 'boolean',
-                'check_catch_all' => 'boolean',
-
-                // Rate limiting
-                'requests_per_minute' => 'nullable|integer|min:1|max:10000',
-                'requests_per_day' => 'nullable|integer|min:1|max:1000000',
-
-                // Credit management
-                'credit_threshold' => 'nullable|integer|min:1|max:100',
-            ]);
-
-            $validated['user_id'] = auth()->id();
-            $validated['status'] = $validated['status'] ?? 'inactive';
-
-            EmailVerificationServer::create($validated);
-
-            return redirect()
-                ->route('settings.mailing.verification-servers.index')
-                ->with('success', 'Servidor de verificación de correo creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear el servidor de verificación: '.$e->getMessage());
+        if (! $request->user()->admin->can('read', new \Modules\Mailing\Models\EmailVerificationServer)) {
+            return $this->notAuthorized();
         }
-    }
 
-    /**
-     * Show the form for editing the specified email verification server.
-     */
-    public function edit(int $id): View
-    {
-        Gate::authorize('mailing.settings.email-verification-servers.edit');
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\EmailVerificationServer)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        $verificationServer = EmailVerificationServer::where('user_id', auth()->id())
-            ->findOrFail($id);
+        // exlude customer seding servers
+        $request->merge(['no_customer' => true]);
 
-        return view('mailing::settings.email-verification-servers.edit', [
-            'verificationServer' => $verificationServer,
+        $servers = \Modules\Mailing\Models\EmailVerificationServer::search($request)->paginate($request->per_page);
+
+        return view('admin.email_verification_servers._list', [
+            'servers' => $servers,
         ]);
     }
 
     /**
-     * Update the specified email verification server.
+     * Select sending server type.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function select(Request $request)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.edit');
-
-        try {
-            $verificationServer = EmailVerificationServer::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:zerobounce,neverbounce,kickbox,clearout,debounce,custom',
-                'status' => 'required|in:active,inactive,error',
-
-                // API configuration
-                'api_key' => 'required|string',
-                'api_url' => 'nullable|url',
-                'api_options' => 'nullable|json',
-
-                // Verification settings
-                'check_disposable' => 'boolean',
-                'check_role_based' => 'boolean',
-                'check_smtp' => 'boolean',
-                'check_catch_all' => 'boolean',
-
-                // Rate limiting
-                'requests_per_minute' => 'nullable|integer|min:1|max:10000',
-                'requests_per_day' => 'nullable|integer|min:1|max:1000000',
-
-                // Credit management
-                'credit_threshold' => 'nullable|integer|min:1|max:100',
-            ]);
-
-            $verificationServer->update($validated);
-
-            return redirect()
-                ->route('settings.mailing.verification-servers.index')
-                ->with('success', 'Servidor de verificación de correo actualizado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el servidor de verificación: '.$e->getMessage());
-        }
+        return view('admin.email_verification_servers.select');
     }
 
     /**
-     * Remove the specified email verification server.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): RedirectResponse
+    public function create(Request $request)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.delete');
+        $server = new \Modules\Mailing\Models\EmailVerificationServer;
+        $server->status = \Modules\Mailing\Models\EmailVerificationServer::STATUS_ACTIVE;
+        $server->uid = '0';
+        $server->fill($request->old());
 
-        try {
-            $verificationServer = EmailVerificationServer::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            $verificationServer->delete();
-
-            return redirect()
-                ->route('settings.mailing.verification-servers.index')
-                ->with('success', 'Servidor de verificación de correo eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar el servidor de verificación: '.$e->getMessage());
+        // authorize
+        if (! $request->user()->admin->can('create', $server)) {
+            return $this->notAuthorized();
         }
+
+        $server->fill($request->old());
+
+        $options = [];
+        if (! empty($request->old()['options'])) {
+            $options = $request->old()['options'];
+        }
+
+        return view('admin.email_verification_servers.create', [
+            'server' => $server,
+            'options' => $options,
+        ]);
     }
 
     /**
-     * Test the connection to the email verification service.
+     * Store a newly created resource in storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function testService(int $id): JsonResponse
+    public function store(Request $request)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.edit');
+        // Get current user
+        $current_user = $request->user();
+        $server = new \Modules\Mailing\Models\EmailVerificationServer;
 
-        try {
-            $verificationServer = EmailVerificationServer::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (! $request->user()->admin->can('create', $server)) {
+            return $this->notAuthorized();
+        }
 
-            // Build test request based on service type
-            $testEmail = 'test@example.com';
-            $response = $this->callVerificationApi($verificationServer, $testEmail);
+        // save posted data
+        if ($request->isMethod('post')) {
+            $server->fill($request->all());
 
-            if (! $response['success']) {
-                throw new \Exception('Error en la API de verificación: '.$response['message']);
+            $this->validate($request, $server->rules());
+
+            // Save current user info
+            $server->admin_id = $request->user()->admin->id;
+            $server->status = \Modules\Mailing\Models\EmailVerificationServer::STATUS_ACTIVE;
+            $server->options = json_encode($request->options);
+
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.email_verification_server.created'));
+
+                return redirect()->action('Settings\EmailVerificationServerController@index');
             }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Conexión establecida correctamente.',
-                'test_result' => $response['data'] ?? null,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al probar el servicio: '.$e->getMessage(),
-            ], 422);
         }
     }
 
     /**
-     * Check the remaining credits/quota for the verification service.
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function checkCredits(int $id): JsonResponse
+    public function show($id) {}
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $uid)
     {
-        Gate::authorize('mailing.settings.email-verification-servers.edit');
+        $server = \Modules\Mailing\Models\EmailVerificationServer::findByUid($uid);
 
-        try {
-            $verificationServer = EmailVerificationServer::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
 
-            $credits = $this->fetchCredits($verificationServer);
+        $server->fill($request->old());
 
-            // Update credits in database
-            $verificationServer->update([
-                'credits_available' => $credits['available'] ?? null,
-                'credits_used' => $credits['used'] ?? 0,
-                'credits_last_checked_at' => now(),
-            ]);
+        $options = $server->getOptions();
+        if (! empty($request->old()['options'])) {
+            $options = $request->old()['options'];
+        }
 
-            $warning = false;
-            $warningMessage = '';
+        return view('admin.email_verification_servers.edit', [
+            'server' => $server,
+            'options' => $options,
+        ]);
+    }
 
-            if ($credits['available'] && $verificationServer->credit_threshold) {
-                $percentageUsed = ($credits['used'] / $credits['available']) * 100;
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = \Modules\Mailing\Models\EmailVerificationServer::findByUid($id);
 
-                if ($percentageUsed >= $verificationServer->credit_threshold) {
-                    $warning = true;
-                    $warningMessage = "Has alcanzado el {$verificationServer->credit_threshold}% de tu límite de créditos.";
-                }
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // save posted data
+        if ($request->isMethod('patch')) {
+            $server->fill($request->all());
+
+            $this->validate($request, $server->rules());
+
+            // Save current user info
+            $server->options = json_encode($request->options);
+
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.email_verification_server.updated'));
+
+                return redirect()->action('Settings\EmailVerificationServerController@index');
             }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Créditos verificados correctamente.',
-                'credits' => $credits,
-                'warning' => $warning,
-                'warning_message' => $warningMessage,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al verificar créditos: '.$e->getMessage(),
-            ], 422);
         }
     }
 
     /**
-     * Call the verification API based on service type.
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    private function callVerificationApi(EmailVerificationServer $server, string $email): array
+    public function delete(Request $request)
     {
-        try {
-            $apiUrl = $server->api_url ?? $this->getDefaultApiUrl($server->type);
-            $params = $this->getApiParams($server->type, $email, $server->api_key);
+        $items = \Modules\Mailing\Models\EmailVerificationServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
 
-            $response = Http::timeout(30)->get($apiUrl, $params);
-
-            if (! $response->successful()) {
-                return [
-                    'success' => false,
-                    'message' => 'API response error: '.$response->status(),
-                ];
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('delete', $item)) {
+                $item->delete();
             }
-
-            return [
-                'success' => true,
-                'message' => 'Verification successful',
-                'data' => $response->json(),
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
         }
+
+        // Redirect to my lists page
+        echo trans('messages.email_verification_servers.deleted');
     }
 
     /**
-     * Fetch remaining credits from the verification service.
+     * Disable sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    private function fetchCredits(EmailVerificationServer $server): array
+    public function disable(Request $request)
     {
-        try {
-            $apiUrl = $server->api_url ?? $this->getDefaultApiUrl($server->type);
+        $items = \Modules\Mailing\Models\EmailVerificationServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
 
-            // Append credits endpoint based on service type
-            $creditsEndpoint = match ($server->type) {
-                'zerobounce' => $apiUrl.'/getCredits',
-                'neverbounce' => $apiUrl.'/account/credits',
-                'kickbox' => $apiUrl.'/account',
-                'clearout' => $apiUrl.'/account',
-                'debounce' => $apiUrl.'/api/user/account',
-                default => $apiUrl.'/account',
-            };
-
-            $response = Http::timeout(30)
-                ->withHeaders(['Authorization' => 'Bearer '.$server->api_key])
-                ->get($creditsEndpoint);
-
-            if (! $response->successful()) {
-                throw new \Exception('Unable to fetch credits');
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('disable', $item)) {
+                $item->disable();
             }
-
-            return $this->parseCreditsResponse($server->type, $response->json());
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to fetch credits: '.$e->getMessage());
         }
+
+        // Redirect to my lists page
+        echo trans('messages.email_verification_servers.disabled');
     }
 
     /**
-     * Parse credits response based on service type.
+     * Disable sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    private function parseCreditsResponse(string $type, array $response): array
+    public function enable(Request $request)
     {
-        return match ($type) {
-            'zerobounce' => [
-                'available' => $response['Credits'] ?? 0,
-                'used' => 0,
-            ],
-            'neverbounce' => [
-                'available' => $response['balance'] ?? 0,
-                'used' => 0,
-            ],
-            'kickbox' => [
-                'available' => $response['balance'] ?? 0,
-                'used' => 0,
-            ],
-            'clearout' => [
-                'available' => $response['credits'] ?? 0,
-                'used' => 0,
-            ],
-            'debounce' => [
-                'available' => $response['credits'] ?? 0,
-                'used' => 0,
-            ],
-            default => [
-                'available' => null,
-                'used' => 0,
-            ],
-        };
+        $items = \Modules\Mailing\Models\EmailVerificationServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
+
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('enable', $item)) {
+                $item->enable();
+            }
+        }
+
+        // Redirect to my lists page
+        echo trans('messages.email_verification_servers.enabled');
     }
 
     /**
-     * Get default API URL for verification service.
+     * Email verification server display options form.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    private function getDefaultApiUrl(string $type): string
+    public function options(Request $request, $uid = null)
     {
-        return match ($type) {
-            'zerobounce' => 'https://api.zerobounce.net/v2/validate',
-            'neverbounce' => 'https://api.neverbounce.com/v4/single/check',
-            'kickbox' => 'https://api.kickbox.io/v2/verify',
-            'clearout' => 'https://api.clearout.io/v2/email_verify/instant',
-            'debounce' => 'https://api.debounce.io/v1/validate',
-            default => '',
-        };
-    }
+        if ($uid) {
+            $server = \Modules\Mailing\Models\EmailVerificationServer::findByUid($uid);
+        } else {
+            $server = new \Modules\Mailing\Models\EmailVerificationServer($request->all());
+            $options = $server->getOptions();
+        }
 
-    /**
-     * Get API parameters based on service type.
-     */
-    private function getApiParams(string $type, string $email, string $apiKey): array
-    {
-        return match ($type) {
-            'zerobounce' => ['email' => $email, 'api_key' => $apiKey],
-            'neverbounce' => ['email' => $email, 'api_token' => $apiKey],
-            'kickbox' => ['email' => $email],
-            'clearout' => ['email' => $email],
-            'debounce' => ['email' => $email, 'api' => $apiKey],
-            default => ['email' => $email, 'api_key' => $apiKey],
-        };
+        return view('admin.email_verification_servers._options', [
+            'server' => $server,
+            'options' => $options,
+        ]);
     }
 }

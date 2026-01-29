@@ -2,292 +2,251 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
-use Modules\Mailing\Models\FeedbackLoopHandler;
 
 class FeedbackLoopHandlerController extends Controller
 {
     /**
-     * Display a listing of feedback loop handlers.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.view');
+        if (\Gate::denies('read', new \Modules\Mailing\Models\FeedbackLoopHandler)) {
+            return $this->notAuthorized();
+        }
 
-        $feedbackHandlers = FeedbackLoopHandler::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->paginate(15);
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\FeedbackLoopHandler)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        return view('mailing::settings.feedback-loop-handlers.index', [
-            'feedbackHandlers' => $feedbackHandlers,
+        $items = \Modules\Mailing\Models\FeedbackLoopHandler::search($request);
+
+        return view('admin.feedback_loop_handlers.index', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Show the form for creating a new feedback loop handler.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function listing(Request $request)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.create');
-
-        return view('mailing::settings.feedback-loop-handlers.create');
-    }
-
-    /**
-     * Store a newly created feedback loop handler.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:imap,pop3,webhook,api',
-                'status' => 'required|in:active,inactive,error',
-
-                // IMAP/POP3 configuration
-                'host' => 'required_unless:type,webhook,api|nullable|string|max:255',
-                'port' => 'required_unless:type,webhook,api|nullable|integer|min:1|max:65535',
-                'protocol' => 'required_unless:type,webhook,api|nullable|in:imap,pop3',
-                'encryption' => 'required_unless:type,webhook,api|nullable|in:ssl,tls,none',
-                'username' => 'required_unless:type,webhook,api|nullable|string|max:255',
-                'password' => 'required_unless:type,webhook,api|nullable|string',
-                'email' => 'required_unless:type,webhook,api|nullable|email|max:255',
-
-                // Webhook/API configuration
-                'webhook_token' => 'required_if:type,webhook|nullable|string',
-                'webhook_secret' => 'nullable|string',
-                'provider' => 'nullable|in:gmail,yahoo,aol,outlook,custom',
-                'feedback_type' => 'nullable|in:abuse,arf',
-
-                // Processing options
-                'auto_check' => 'boolean',
-                'check_interval' => 'nullable|integer|min:5|max:1440',
-                'delete_after_process' => 'boolean',
-                'auto_unsubscribe' => 'boolean',
-                'notify_admin' => 'boolean',
-            ]);
-
-            $validated['user_id'] = auth()->id();
-            $validated['status'] = $validated['status'] ?? 'inactive';
-
-            FeedbackLoopHandler::create($validated);
-
-            return redirect()
-                ->route('settings.mailing.feedback-handlers.index')
-                ->with('success', 'Gestor de bucle de retroalimentación creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear el gestor: '.$e->getMessage());
+        if (\Gate::denies('read', new \Modules\Mailing\Models\FeedbackLoopHandler)) {
+            return $this->notAuthorized();
         }
-    }
 
-    /**
-     * Show the form for editing the specified feedback loop handler.
-     */
-    public function edit(int $id): View
-    {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.edit');
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\FeedbackLoopHandler)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        $feedbackHandler = FeedbackLoopHandler::where('user_id', auth()->id())
-            ->findOrFail($id);
+        $items = \Modules\Mailing\Models\FeedbackLoopHandler::search($request)->paginate($request->per_page);
 
-        return view('mailing::settings.feedback-loop-handlers.edit', [
-            'feedbackHandler' => $feedbackHandler,
+        return view('admin.feedback_loop_handlers._list', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Update the specified feedback loop handler.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function create(Request $request)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.edit');
+        $server = new \Modules\Mailing\Models\FeedbackLoopHandler;
+        $server->status = 'active';
+        $server->uid = '0';
+        $server->fill($request->old());
 
-        try {
-            $feedbackHandler = FeedbackLoopHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (\Gate::denies('create', $server)) {
+            return $this->notAuthorized();
+        }
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:imap,pop3,webhook,api',
-                'status' => 'required|in:active,inactive,error',
+        return view('admin.feedback_loop_handlers.create', [
+            'server' => $server,
+        ]);
+    }
 
-                // IMAP/POP3 configuration
-                'host' => 'required_unless:type,webhook,api|nullable|string|max:255',
-                'port' => 'required_unless:type,webhook,api|nullable|integer|min:1|max:65535',
-                'protocol' => 'required_unless:type,webhook,api|nullable|in:imap,pop3',
-                'encryption' => 'required_unless:type,webhook,api|nullable|in:ssl,tls,none',
-                'username' => 'required_unless:type,webhook,api|nullable|string|max:255',
-                'password' => 'required_unless:type,webhook,api|nullable|string',
-                'email' => 'required_unless:type,webhook,api|nullable|email|max:255',
+    /**
+     * Store a newly created resource in storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = new \Modules\Mailing\Models\FeedbackLoopHandler;
 
-                // Webhook/API configuration
-                'webhook_token' => 'required_if:type,webhook|nullable|string',
-                'webhook_secret' => 'nullable|string',
-                'provider' => 'nullable|in:gmail,yahoo,aol,outlook,custom',
-                'feedback_type' => 'nullable|in:abuse,arf',
+        // authorize
+        if (\Gate::denies('create', $server)) {
+            return $this->notAuthorized();
+        }
 
-                // Processing options
-                'auto_check' => 'boolean',
-                'check_interval' => 'nullable|integer|min:5|max:1440',
-                'delete_after_process' => 'boolean',
-                'auto_unsubscribe' => 'boolean',
-                'notify_admin' => 'boolean',
-            ]);
+        // save posted data
+        if ($request->isMethod('post')) {
+            $this->validate($request, \Modules\Mailing\Models\FeedbackLoopHandler::rules());
 
-            $feedbackHandler->update($validated);
+            // Save current user info
+            $server->fill($request->all());
+            $server->admin_id = $request->user()->admin->id;
+            $server->status = 'active';
 
-            return redirect()
-                ->route('settings.mailing.feedback-handlers.index')
-                ->with('success', 'Gestor de bucle de retroalimentación actualizado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el gestor: '.$e->getMessage());
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.feedback_loop_handler.created'));
+
+                return redirect()->action('Settings\FeedbackLoopHandlerController@index');
+            }
         }
     }
 
     /**
-     * Remove the specified feedback loop handler.
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): RedirectResponse
+    public function show($id) {}
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $id)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.delete');
+        $server = \Modules\Mailing\Models\FeedbackLoopHandler::findByUid($id);
 
-        try {
-            $feedbackHandler = FeedbackLoopHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (\Gate::denies('update', $server)) {
+            return $this->notAuthorized();
+        }
 
-            $feedbackHandler->delete();
+        $server->fill($request->old());
 
-            return redirect()
-                ->route('settings.mailing.feedback-handlers.index')
-                ->with('success', 'Gestor de bucle de retroalimentación eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar el gestor: '.$e->getMessage());
+        return view('admin.feedback_loop_handlers.edit', [
+            'server' => $server,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = \Modules\Mailing\Models\FeedbackLoopHandler::findByUid($id);
+
+        // authorize
+        if (\Gate::denies('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // save posted data
+        if ($request->isMethod('patch')) {
+            $this->validate($request, \Modules\Mailing\Models\FeedbackLoopHandler::rules());
+
+            // Save current user info
+            $server->fill($request->all());
+
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.feedback_loop_handler.updated'));
+
+                return redirect()->action('Settings\FeedbackLoopHandlerController@index');
+            }
         }
     }
 
     /**
-     * Test the connection to the feedback loop handler.
+     * Custom sort items.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function testConnection(int $id): JsonResponse
+    public function sort(Request $request)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.edit');
-
-        try {
-            $feedbackHandler = FeedbackLoopHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            if (in_array($feedbackHandler->type, ['webhook', 'api'])) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Configuración del '.$feedbackHandler->type.' validada.',
-                ]);
-            }
-
-            // Test IMAP/POP3 connection
-            $this->testImapPopConnection($feedbackHandler);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Conexión establecida correctamente.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al probar la conexión: '.$e->getMessage(),
-            ], 422);
-        }
+        echo trans('messages._deleted_');
     }
 
     /**
-     * Fetch feedback/complaint reports from the handler.
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function fetchReports(int $id): JsonResponse
+    public function delete(Request $request)
     {
-        Gate::authorize('mailing.settings.feedback-loop-handlers.edit');
-
-        try {
-            $feedbackHandler = FeedbackLoopHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            if (in_array($feedbackHandler->type, ['webhook', 'api'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Este tipo de gestor no soporta obtención manual de reportes.',
-                ], 422);
-            }
-
-            // Connect and fetch complaints
-            $connection = imap_open(
-                '{'.$feedbackHandler->host.':'.$feedbackHandler->port.'/service='.$feedbackHandler->protocol.'}',
-                $feedbackHandler->username,
-                $feedbackHandler->password
-            );
-
-            if (! $connection) {
-                throw new \Exception('No se pudo conectar al servidor IMAP/POP3');
-            }
-
-            $emails = imap_search($connection, 'ALL');
-            $complaintCount = is_array($emails) ? count($emails) : 0;
-
-            if ($feedbackHandler->delete_after_process && is_array($emails)) {
-                foreach ($emails as $emailId) {
-                    imap_delete($connection, $emailId);
-                }
-                imap_expunge($connection);
-            }
-
-            imap_close($connection);
-
-            // Update statistics
-            $feedbackHandler->update([
-                'complaints_processed' => $feedbackHandler->complaints_processed + $complaintCount,
-                'last_checked_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reportes obtenidos correctamente.',
-                'complaints_found' => $complaintCount,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener reportes: '.$e->getMessage(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Test IMAP/POP3 connection.
-     */
-    private function testImapPopConnection(FeedbackLoopHandler $handler): void
-    {
-        $connection = imap_open(
-            '{'.$handler->host.':'.$handler->port.'/service='.$handler->protocol.'}',
-            $handler->username,
-            $handler->password
+        $items = \Modules\Mailing\Models\FeedbackLoopHandler::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
         );
 
-        if (! $connection) {
-            throw new \Exception('No se pudo conectar al servidor IMAP/POP3');
+        foreach ($items->get() as $item) {
+            // authorize
+            if (\Gate::denies('delete', $item)) {
+                return;
+            }
         }
 
-        imap_close($connection);
+        foreach ($items->get() as $item) {
+            $item->delete();
+        }
+
+        // Result message
+        echo trans('messages.feedback_loop_handlers.deleted');
+    }
+
+    /**
+     * Test feedback loop handler.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function test(Request $request, $uid)
+    {
+        // Get current user
+        $current_user = $request->user();
+
+        // Fill new server info
+        if ($uid) {
+            $server = \Modules\Mailing\Models\FeedbackLoopHandler::findByUid($uid);
+        } else {
+            $server = new \Modules\Mailing\Models\FeedbackLoopHandler;
+        }
+
+        $server->fill($request->all());
+
+        // authorize
+        if (\Gate::denies('test', $server)) {
+            return $this->notAuthorized();
+        }
+
+        try {
+            $server->test();
+
+            return response()->json([
+                'status' => 'success', // or success
+                'message' => trans('messages.feedback_loop_handler.test_success'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error', // or success
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

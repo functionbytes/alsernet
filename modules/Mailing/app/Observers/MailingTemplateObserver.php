@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Mailer\Observers;
+namespace Modules\Mailing\Observers;
 
-use Modules\Mailer\Models\MailingTemplate;
-use Modules\Mailer\Services\MailerTemplateRendererService;
-use Modules\Mailer\Services\MailerVariableValueService;
+use Modules\Mailing\Models\MailingTemplate;
+use Modules\Mailing\Services\MailingTemplateRendererService;
+use Modules\Mailing\Services\MailingVariableValueService;
 
-class MailerTemplateObserver
+class MailingTemplateObserver
 {
     /**
      * Handle the MailerTemplate "created" event.
@@ -37,7 +37,7 @@ class MailerTemplateObserver
      */
     private function clearAllCaches(): void
     {
-        MailerTemplateRendererService::clearCache();
-        MailerVariableValueService::clearCache();
+        MailingTemplateRendererService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 }

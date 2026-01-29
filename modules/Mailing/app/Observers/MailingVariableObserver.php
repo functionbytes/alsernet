@@ -1,49 +1,49 @@
 <?php
 
-namespace Modules\Mailer\Observers;
+namespace Modules\Mailing\Observers;
 
-use Modules\Mailer\Models\MailerVariable;
-use Modules\Mailer\Services\MailerVariableValueService;
+use Modules\Mailing\Models\Mailing\MailingVariable;
+use Modules\Mailing\Services\MailingVariableValueService;
 
-class MailerVariableObserver
+class MailingVariableObserver
 {
     /**
      * Handle the MailerVariable "created" event.
      */
-    public function created(MailerVariable $mailerVariable): void
+    public function created(MailingVariable $mailerVariable): void
     {
-        MailerVariableValueService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 
     /**
      * Handle the MailerVariable "updated" event.
      */
-    public function updated(MailerVariable $mailerVariable): void
+    public function updated(MailingVariable $mailerVariable): void
     {
-        MailerVariableValueService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 
     /**
      * Handle the MailerVariable "deleted" event.
      */
-    public function deleted(MailerVariable $mailerVariable): void
+    public function deleted(MailingVariable $mailerVariable): void
     {
-        MailerVariableValueService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 
     /**
      * Handle the MailerVariable "restored" event.
      */
-    public function restored(MailerVariable $mailerVariable): void
+    public function restored(MailingVariable $mailerVariable): void
     {
-        MailerVariableValueService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 
     /**
      * Handle the MailerVariable "force deleted" event.
      */
-    public function forceDeleted(MailerVariable $mailerVariable): void
+    public function forceDeleted(MailingVariable $mailerVariable): void
     {
-        MailerVariableValueService::clearCache();
+        MailingVariableValueService::clearCache();
     }
 }

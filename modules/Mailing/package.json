@@ -1,7 +1,7 @@
 {
-    "name": "mailrelay-module",
+    "name": "mailing-module",
     "version": "1.0.0",
-    "description": "Módulo de email marketing y automatización Mailrelay",
+    "description": "Módulo de email marketing y automatización",
     "private": true,
     "type": "module",
     "scripts": {

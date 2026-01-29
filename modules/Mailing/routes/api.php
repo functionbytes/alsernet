@@ -1,105 +1,75 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Modules\Mailrelay\Http\Controllers\Api\EmailValidationController;
-use Modules\Mailrelay\Http\Controllers\Api\ImportController;
-use Modules\Mailrelay\Http\Controllers\Api\ListController;
-use Modules\Mailrelay\Http\Controllers\Api\NewsletterController;
-use Modules\Mailrelay\Http\Controllers\Mailrelay\CampaignController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 |
-| This file defines all API endpoints for the Email Validator system.
-| Reference: FASE 10 - API Routes Configuration
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
 |
 */
 
-// Email Validation Routes
-Route::prefix('validation')->group(function () {
-    Route::post('validate', [EmailValidationController::class, 'validateEmail'])
-        ->name('validation.validate');
+Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'], function () {
+    //
+    Route::get('', function () {
+        return \Response::json(\Auth::guard('api')->user());
+    });
 
-    Route::post('validate-bulk', [EmailValidationController::class, 'validateBulk'])
-        ->name('validation.validate-bulk');
-});
+    // Simple authentication
+    Route::get('me', function () {
+        return \Response::json(\Auth::guard('api')->user());
+    });
 
-// Newsletter Subscription Routes
-Route::prefix('newsletter')->group(function () {
-    Route::post('subscribe', [NewsletterController::class, 'subscribe'])
-        ->name('newsletter.subscribe');
+    // List
+    Route::delete('lists/{uid}', 'MailListController@delete');
+    Route::post('lists/{uid}/add-field', 'MailListController@addField');
+    Route::resource('lists', 'MailListController');
 
-    Route::post('unsubscribe', [NewsletterController::class, 'unsubscribe'])
-        ->name('newsletter.unsubscribe');
+    // Campaign
+    Route::delete('campaigns/{uid}', 'CampaignController@delete');
+    Route::post('campaigns/{uid}/pause', 'CampaignController@pause');
+    Route::post('campaigns/{uid}/run', 'CampaignController@run');
+    Route::post('campaigns/{uid}/resume', 'CampaignController@resume');
+    Route::resource('campaigns', 'CampaignController');
 
-    Route::get('status', [NewsletterController::class, 'status'])
-        ->name('newsletter.status');
+    // Subscriber
+    Route::patch('lists/{list_uid}/subscribers/email/{email}/unsubscribe', 'SubscriberController@unsubscribeEmail');
+    Route::post('subscribers/{uid}/add-tag', 'SubscriberController@addTag');
+    Route::get('subscribers/email/{email}', 'SubscriberController@showByEmail');
+    Route::patch('lists/{list_uid}/subscribers/{uid}/subscribe', 'SubscriberController@subscribe');
+    Route::patch('lists/{list_uid}/subscribers/{uid}/unsubscribe', 'SubscriberController@unsubscribe');
+    Route::delete('subscribers/{uid}', 'SubscriberController@delete');
 
-    Route::get('subscribers', [NewsletterController::class, 'index'])
-        ->name('newsletter.subscribers');
-});
+    Route::resource('subscribers', 'SubscriberController');
 
-// Import Routes
-Route::prefix('imports')->group(function () {
-    Route::post('upload', [ImportController::class, 'upload'])
-        ->name('imports.upload');
+    // Automation
+    Route::post('automations/{uid}/api/call', 'AutomationController@apiCall');
 
-    Route::get('{id}/status', [ImportController::class, 'status'])
-        ->name('imports.status');
+    // Sending server
+    Route::resource('sending_servers', 'SendingServerController');
 
-    Route::get('{id}/report', [ImportController::class, 'report'])
-        ->name('imports.report');
-});
+    // Plan
+    Route::resource('plans', 'PlanController');
 
-// Lists Routes
-Route::prefix('lists')->group(function () {
-    Route::get('/', [ListController::class, 'index'])
-        ->name('lists.index');
+    // Customer
+    Route::post('customers/{uid}/change-plan/{plan_uid}', 'CustomerController@changePlan');
+    Route::match(['get', 'post'], 'login-token', 'CustomerController@loginToken');
+    Route::post('customers/{uid}/assign-plan/{plan_uid}', 'CustomerController@assignPlan');
+    Route::patch('customers/{uid}/disable', 'CustomerController@disable');
+    Route::patch('customers/{uid}/enable', 'CustomerController@enable');
+    Route::resource('customers', 'CustomerController');
 
-    Route::post('/', [ListController::class, 'store'])
-        ->name('lists.store');
+    // Subscription
+    Route::resource('subscriptions', 'SubscriptionController');
 
-    Route::get('{list}', [ListController::class, 'show'])
-        ->name('lists.show');
+    // File
+    Route::post('file/upload', 'FileController@upload');
 
-    Route::patch('{list}', [ListController::class, 'update'])
-        ->name('lists.update');
+    // File
+    Route::post('automations/{uid}/execute', 'AutomationController@execute')->name('automation_execute');
 
-    Route::delete('{list}', [ListController::class, 'destroy'])
-        ->name('lists.destroy');
-});
-
-// Campaign Routes
-Route::prefix('campaigns')->group(function () {
-    // CRUD Operations
-    Route::get('/', [CampaignController::class, 'index'])
-        ->name('campaigns.index');
-
-    Route::post('/', [CampaignController::class, 'create'])
-        ->name('campaigns.create');
-
-    Route::get('{id}', [CampaignController::class, 'get'])
-        ->name('campaigns.get');
-
-    Route::patch('{id}', [CampaignController::class, 'update'])
-        ->name('campaigns.update');
-
-    Route::delete('{id}', [CampaignController::class, 'delete'])
-        ->name('campaigns.delete');
-
-    // Campaign Actions
-    Route::post('{id}/send', [CampaignController::class, 'send'])
-        ->name('campaigns.send');
-
-    Route::post('{id}/send-all', [CampaignController::class, 'sendAll'])
-        ->name('campaigns.send-all');
-
-    Route::post('{id}/send-test', [CampaignController::class, 'sendTest'])
-        ->name('campaigns.send-test');
-
-    // Analytics
-    Route::get('{id}/analytics', [CampaignController::class, 'analytics'])
-        ->name('campaigns.analytics');
+    // Subscription
+    Route::resource('notification', 'NotificationController');
 });

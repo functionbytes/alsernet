@@ -1,269 +1,612 @@
 <?php
 
+/**
+ * Language class.
+ *
+ * Model class for languages
+ *
+ * LICENSE: This product includes software developed at
+ * the Acelle Co., Ltd. (http://acellemail.com/).
+ *
+ * @category   MVC Model
+ *
+ * @author     N. Pham <n.pham@acellemail.com>
+ * @author     L. Pham <l.pham@acellemail.com>
+ * @copyright  Acelle Co., Ltd
+ * @license    Acelle Co., Ltd
+ *
+ * @version    1.0
+ *
+ * @link       http://acellemail.com
+ */
+
 namespace Modules\Mailing\Models;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Modules\Mailing\Library\Facades\Hook;
+use Modules\Mailing\Library\Traits\HasUid;
+use DB;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Mailing\Traits\HasUid;
 
 class Language extends Model
 {
-    use HasFactory, HasUid;
+    use HasUid;
 
-    protected $table = 'mailing_languages';
+    public const STATUS_ACTIVE = 'active';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable Attributes
-    |--------------------------------------------------------------------------
-    */
+    public const STATUS_INACTIVE = 'inactive';
 
+    /**
+     * Get users.
+     *
+     * @return mixed
+     */
+    public function users()
+    {
+        return $this->hasMany('Acelle\Model\User');
+    }
+
+    /**
+     * Customer association.
+     *
+     * @return mixed
+     */
+    public function customers()
+    {
+        return $this->hasMany('Acelle\Model\Customer');
+    }
+
+    /**
+     * Admin association.
+     *
+     * @return mixed
+     */
+    public function admins()
+    {
+        return $this->hasMany('Acelle\Model\Admin');
+    }
+
+    /**
+     * Language folder path.
+     *
+     * @return string
+     */
+    public function languageDir()
+    {
+        return resource_path(join_paths('lang', $this->code));
+    }
+
+    public static function getDirWhichNewLanguageCopyFrom()
+    {
+        return base_path('resources/lang/default');
+    }
+
+    public function scopeActive($query)
+    {
+        $query->where('status', '=', self::STATUS_ACTIVE);
+    }
+
+    /**
+     * Get select options.
+     *
+     * @return array
+     */
+    public static function getSelectOptions()
+    {
+        $options = self::active()->get()->map(function ($item) {
+            return ['value' => $item->id, 'text' => $item->name];
+        });
+
+        // japan only en and ja
+        if (config('custom.japan')) {
+            $options = self::active()->get()->filter(function ($item) {
+                return in_array($item->code, ['en', 'ja']);
+            })->map(function ($item) {
+                return ['value' => $item->id, 'text' => $item->name];
+            });
+        }
+
+        return $options;
+    }
+
+    /**
+     * Search items.
+     *
+     * @return collect
+     */
+    public function scopeSearch($query, $keyword)
+    {
+        // Keyword
+        if (! empty(trim($keyword))) {
+            $keyword = trim($keyword);
+            foreach (explode(' ', $keyword) as $keyword) {
+                $query = $query->where(function ($q) use ($keyword) {
+                    $q->orwhere('languages.name', 'like', '%'.$keyword.'%')
+                        ->orwhere('languages.code', 'like', '%'.$keyword.'%')
+                        ->orwhere('languages.region_code', 'like', '%'.$keyword.'%');
+                });
+            }
+        }
+    }
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'uid',
-        'user_id',
-        'code',
-        'name',
-        'native_name',
-        'locale',
-        'translations',
-        'settings',
-        'is_default',
+        'name', 'code', 'region_code', 'status',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
-
-    protected function casts(): array
+    /**
+     * Get validation rules.
+     *
+     * @return object
+     */
+    public function rules()
     {
         return [
-            'translations' => 'json',
-            'settings' => 'json',
-            'is_default' => 'boolean',
+            'name' => 'required',
+            'code' => 'required|unique:languages,code,'.$this->id,
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Get the user that owns this language.
-     */
-    public function user(): BelongsTo
+    public function scopeDefault($query)
     {
-        return $this->belongsTo(User::class);
+        return $query->where('is_default', '=', true);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Methods
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Get is default language.
+     *
+     * @var object
+     */
+    public static function getFirstDefaultLanguage()
+    {
+        return self::default()->first();
+    }
 
     /**
-     * Get translations as an array.
+     * Get locale array from file.
+     *
+     * @var array
      */
-    public function getTranslationsArray(): array
+    public function getLocaleArrayFromFile($filename)
     {
-        if (empty($this->translations)) {
-            return [];
+        clearstatcache();
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate(join_paths($this->languageDir(), $filename.'.php'));
         }
 
-        return is_array($this->translations) ? $this->translations : json_decode($this->translations, true) ?? [];
+        $arr = self::fileToArray(join_paths($this->languageDir(), $filename.'.php'));
+
+        return $arr;
     }
 
     /**
-     * Get settings as an array.
+     * Read locale file.
+     *
+     * @var text
      */
-    public function getSettingsArray(): array
+    public function readLocaleFile($filename)
     {
-        if (empty($this->settings)) {
-            return [];
+        $text = \Illuminate\Support\Facades\File::get(join_paths($this->languageDir(), $filename.'.php'));
+
+        return $text;
+    }
+
+    /**
+     * Read locale file.
+     *
+     * @var text
+     */
+    public function localeToYaml($filename)
+    {
+        $text = $this->readLocaleFile($filename);
+
+        return yaml_parse($text);
+    }
+
+    /**
+     * Update language file from yaml.
+     *
+     * @var text
+     */
+    public function updateFromYaml($filename, $yaml)
+    {
+        self::yamlToFile(join_paths($this->languageDir(), $filename.'.php'), $yaml);
+    }
+
+    /**
+     * Update language file from yaml.
+     *
+     * @var text
+     */
+    public function getBuilderLang()
+    {
+        return include join_paths($this->languageDir(), 'builder.php');
+    }
+
+    /**
+     * all language code.
+     *
+     * @return array
+     */
+    public static function languageCodes()
+    {
+        $arr = config('languages');
+
+        if (config('custom.japan')) {
+            $arr = [
+                'en' => 'English',
+                'ja' => 'Japanese (ja)',
+            ];
         }
 
-        return is_array($this->settings) ? $this->settings : json_decode($this->settings, true) ?? [];
+        $result = [];
+        foreach ($arr as $key => $name) {
+            $result[] = [
+                'text' => strtoupper($key).' / '.$name,
+                'value' => $key,
+            ];
+        }
+
+        return $result;
     }
 
     /**
-     * Get a translation by key.
+     * Disable language.
+     *
+     * @return array
      */
-    public function getTranslation(string $key, ?string $default = null): ?string
+    public function disable()
     {
-        $translations = $this->getTranslationsArray();
+        $this->status = self::STATUS_INACTIVE;
+        $this->save();
+    }
 
-        // Support dot notation for nested translations
-        $keys = explode('.', $key);
-        $value = $translations;
+    /**
+     * Enable language.
+     *
+     * @return array
+     */
+    public function enable()
+    {
+        $this->status = self::STATUS_ACTIVE;
+        $this->save();
+    }
 
-        foreach ($keys as $k) {
-            if (is_array($value) && isset($value[$k])) {
-                $value = $value[$k];
-            } else {
-                return $default;
+    public static function fileToArray($pathToFile)
+    {
+        return \Illuminate\Support\Facades\File::getRequire($pathToFile);
+    }
+
+    public static function arrayToYaml($array)
+    {
+        return \Yaml::dump($array);
+    }
+
+    public static function fileToYaml($path)
+    {
+        return self::arrayToYaml(self::fileToArray($path));
+    }
+
+    public static function yamlToFile($pathToFile, $yaml)
+    {
+        $content = '<?php return '.var_export(\Yaml::parse($yaml), true).' ?>';
+        $bytes_written = \Illuminate\Support\Facades\File::put($pathToFile, $content);
+    }
+
+    public function getAllLanguageFiles()
+    {
+        // This function return all translation files for the current language
+        // with additional information
+        // For example:
+        //     [
+        //           [
+        //               'file_name' => 'messages.php'
+        //               'path' => '/acellemail/resources/lang/{en}/messages.php'
+        //               'type' => default | plugin
+        //               ''
+        //           ]
+        //
+        //     ]
+
+        $paths = [];
+
+        $files = Hook::execute('add_translation_file');
+        foreach ($files as $file) {
+            $path = join_paths($file['translation_folder'], $this->code, $file['file_name']);
+
+            if (in_array($file['id'], array_keys($paths))) {
+                throw new \Exception('Translation file id already exists: '.$file['id']);
+            }
+
+            if (! file_exists($path)) {
+                // Trick, should be removed soon
+                $this->createTranslationFile($file);
+            }
+
+            $paths[$file['id']] = [
+                'id' => $file['id'],
+                'type' => isset($file['type']) ? $file['type'] : 'plugin',
+                'path' => $path,
+                'file_title' => $file['file_title'],
+            ];
+        }
+
+        return $paths;
+    }
+
+    public function getLanguageFilesByType($type)
+    {
+        $langFiles = $this->getAllLanguageFiles();
+        foreach ($langFiles as $key => $langFile) {
+            if ($langFile['type'] != $type) {
+                unset($langFiles[$key]);
             }
         }
 
-        return is_string($value) ? $value : $default;
+        return $langFiles;
     }
 
-    /**
-     * Set a translation value.
-     */
-    public function setTranslation(string $key, string $value): void
+    public function getLanguageFileOptions()
     {
-        $translations = $this->getTranslationsArray();
+        $arr = [];
+        foreach ($this->getAllLanguageFiles() as $key => $langFile) {
+            $arr[] = ['value' => $langFile['id'], 'text' => $langFile['file_title']];
 
-        // Support dot notation for nested translations
-        $keys = explode('.', $key);
-        $current = &$translations;
-
-        foreach ($keys as $k) {
-            if (! isset($current[$k])) {
-                $current[$k] = [];
-            }
-            $current = &$current[$k];
         }
 
-        $current = $value;
-        $this->translations = $translations;
+        return $arr;
     }
 
-    /**
-     * Get all translations.
-     */
-    public function getAllTranslations(): array
+    public static function newDefaultLanguage()
     {
-        return $this->getTranslationsArray();
+        $language = new self;
+        $language->status = self::STATUS_ACTIVE;
+
+        return $language;
     }
 
-    /**
-     * Set multiple translations at once.
-     */
-    public function setTranslations(array $translations): void
+    // @todo 'dump' is just an alias for many tasks that may be involved
+    // + create missing translation files
+    // + update existing translation files from its original source
+    // + more
+    public static function dump()
     {
-        $this->translations = array_merge($this->getTranslationsArray(), $translations);
+        // Update or create translation files
+        foreach (self::get() as $language) {
+            $language->createOrUpdateTranslationFiles();
+        }
     }
 
-    /**
-     * Get a specific setting value.
-     */
-    public function getSetting(string $key, mixed $default = null): mixed
+    public function createTranslationFile($source)
     {
-        $settings = $this->getSettingsArray();
+        if (! array_key_exists('master_translation_file', $source)) {
+            throw new Exception('[master_translation_file] is not available for '.$source['file_name']);
+        }
 
-        return $settings[$key] ?? $default;
+        if (array_key_exists('master_translation_file_by_language', $source) && array_key_exists($this->code, $source['master_translation_file_by_language'])) {
+            // Check if a master file by language exists, like: { master_translation_file_by_language: { en: '...', ja: '...' } }
+            $originFile = $source['master_translation_file_by_language'][$this->code];
+        } else {
+            $originFile = $source['master_translation_file'];
+        }
+
+        if ($originFile == false) {
+            throw new Exception(sprintf('%s: master translation file does not exist: "%s". File path returns false! Make sure realpath() returns a valid file path.', $this->name, $source['file_title']));
+        }
+
+        // Other files
+        //     + resources / lang / ja / messages.php
+        $langFile = join_paths($source['translation_folder'], $this->code, $source['file_name']);
+
+        if (! file_exists($originFile)) {
+            throw new Exception($this->name.': Master translation file does not exist: "'.$originFile.'". Make sure it is registered correctly');
+        }
+
+        // If the originFile is also the current language's file
+        // Notice that realpath() is used to remove ../../ in file path, before comparing
+        if (! file_exists($langFile)) {
+            // Create language's file by copying from the original file
+            \Acelle\Helpers\pcopy($originFile, $langFile);
+        }
+
+        return [$originFile, $langFile];
     }
 
-    /**
-     * Set a specific setting value.
-     */
-    public function setSetting(string $key, mixed $value): void
+    public function createOrUpdateTranslationFiles()
     {
-        $settings = $this->getSettingsArray();
-        $settings[$key] = $value;
-        $this->settings = $settings;
-    }
+        foreach (Hook::execute('add_translation_file') as $source) {
+            [$originFile, $langFile] = $this->createTranslationFile($source);
 
-    /**
-     * Check if this is the default language.
-     */
-    public function isDefault(): bool
-    {
-        return $this->is_default ?? false;
-    }
-
-    /**
-     * Set this language as the default.
-     */
-    public function setAsDefault(): void
-    {
-        // Reset other default languages for this user
-        static::query()
-            ->where('user_id', $this->user_id)
-            ->where('id', '!=', $this->id)
-            ->update(['is_default' => false]);
-
-        // Set this as default
-        $this->update(['is_default' => true]);
-    }
-
-    /**
-     * Get the display name for this language.
-     */
-    public function getDisplayName(): string
-    {
-        return $this->native_name ?? $this->name ?? $this->code;
-    }
-
-    /**
-     * Get the full locale code.
-     */
-    public function getLocaleCode(): string
-    {
-        return $this->locale ?? $this->code;
-    }
-
-    /**
-     * Check if a translation key exists.
-     */
-    public function hasTranslation(string $key): bool
-    {
-        $translations = $this->getTranslationsArray();
-        $keys = explode('.', $key);
-        $value = $translations;
-
-        foreach ($keys as $k) {
-            if (is_array($value) && isset($value[$k])) {
-                $value = $value[$k];
-            } else {
-                return false;
+            if (realpath($originFile) != realpath($langFile)) {
+                \Acelle\Helpers\updateTranslationFile($langFile, $originFile, $overwrite = false, $deleteTargetKeys = true, $sort = true);
             }
         }
+    }
+
+    public static function createFromArray($attributes)
+    {
+        $language = self::newDefaultLanguage();
+
+        $language->fill($attributes);
+        $language->status = self::STATUS_INACTIVE;
+
+        // make validator
+        $validator = \Validator::make($attributes, $language->rules());
+
+        // redirect if fails
+        if ($validator->fails()) {
+            return [$language, $validator];
+        }
+
+        DB::transaction(function () use (&$language) {
+            // save
+            $language->save();
+
+            // Create translation files for this newly created language
+            $language->createOrUpdateTranslationFiles();
+        });
+
+        return [$language, true];
+    }
+
+    public function updateFromRequest($request)
+    {
+        // make validator
+        $validator = \Validator::make($request->all(), $this->rules());
+
+        // redirect if fails
+        if ($validator->fails()) {
+            return $validator;
+        }
+
+        // rename locale folder
+        if ($this->code != $request->code) {
+            rename(base_path('resources/lang/').$this->code, base_path('resources/lang/').$request->code);
+        }
+
+        $this->fill($request->all());
+
+        // save
+        $this->save();
 
         return true;
     }
 
-    /**
-     * Remove a translation by key.
-     */
-    public function removeTranslation(string $key): void
+    public function deleteAndCleanup()
     {
-        $translations = $this->getTranslationsArray();
-        $keys = explode('.', $key);
+        // Change deleting language's users to the default langauge
+        $default_language = self::getFirstDefaultLanguage();
 
-        if (empty($keys)) {
-            return;
+        if (! $default_language) {
+            throw new \Exception('Something went wrong! Can not find the default language.');
         }
 
-        $current = &$translations;
+        $this->customers()->update(['language_id' => $default_language->id]);
+        $this->admins()->update(['language_id' => $default_language->id]);
 
-        for ($i = 0; $i < count($keys) - 1; $i++) {
-            $k = $keys[$i];
-            if (isset($current[$k]) && is_array($current[$k])) {
-                $current = &$current[$k];
-            } else {
-                return;
-            }
+        // delete language folder
+        $des = $this->languageDir();
+        if (file_exists($des)) {
+            \Acelle\Library\Tool::xdelete($des);
         }
 
-        $lastKey = end($keys);
-        unset($current[$lastKey]);
-
-        $this->translations = $translations;
+        $this->delete();
     }
 
-    /**
-     * Get count of translations.
-     */
-    public function getTranslationCount(): int
+    public function translateFile($fileId, $content)
     {
-        return count($this->getTranslationsArray());
+        $file = $this->findFileById($fileId);
+
+        // make validator
+        $validator = \Validator::make(['content' => $content], [
+            'content' => 'required',
+        ]);
+
+        // test amazon api connection
+        $validator->after(function ($validator) use ($content) {
+            try {
+                var_export(\Yaml::parse($content), true);
+            } catch (\Exception $e) {
+                $validator->errors()->add('content', $e->getMessage());
+            }
+        });
+
+        // redirect if fails
+        if ($validator->fails()) {
+            return [$file, $validator];
+        }
+
+        // save
+        self::yamlToFile($file['path'], $content);
+
+        return [$file, $validator];
+    }
+
+    // Throw exception
+    public static function getFirstLanguageByCode($code)
+    {
+        $lang = self::where('code', $code)->first();
+
+        return $lang;
+    }
+
+    public function findFileById($id)
+    {
+        if (! isset($this->getAllLanguageFiles()[$id])) {
+            throw new \Exception('Can not find translation file with id: '.$id);
+        }
+
+        return $this->getAllLanguageFiles()[$id];
+    }
+
+    public function getDefaultFile()
+    {
+        $files = $this->getAllLanguageFiles();
+
+        return array_shift($files);
+    }
+
+    public function upload($request)
+    {
+        // make validator
+        $validator = \Validator::make($request->all(), [
+            'file' => 'required',
+        ]);
+
+        // test amazon api connection
+        $validator->after(function ($validator) use ($request) {
+            $zip = new \ZipArchive;
+
+            // check if file is zip achive
+            $file_ext = $request->file('file')->guessExtension();
+            if ($file_ext != 'zip') {
+                $validator->errors()->add('content', 'Upload file is not zip file');
+
+                return;
+            }
+
+            // move file to temp place
+            $tmp_path = storage_path('tmp');
+            $file_name = 'language-package';
+            $request->file('file')->move($tmp_path, $file_name);
+
+            // after moving, request['file'] will no longer be there
+            $rules = [];
+            $tmp_zip = storage_path("tmp/{$file_name}");
+            $openZip = $zip->open($tmp_zip, \ZipArchive::CREATE);
+
+            // read zip file check if zip archive invalid
+            if ($openZip !== true) {
+                $validator->errors()->add('content', 'Upload file is not valide archive file');
+
+                return;
+            }
+
+            // unzip template archive and remove zip file
+            $zip->extractTo($this->languageDir());
+            $zip->close();
+            unlink($tmp_zip);
+        });
+
+        return $validator;
+    }
+
+    public static function getJapan()
+    {
+        return self::where('code', '=', 'ja')->first();
+    }
+
+    public static function getByCode($code)
+    {
+        return self::where('code', '=', $code)->first();
+    }
+
+    public static function getDefaultLanguage()
+    {
+        return self::getByCode(config('app.locale'));
     }
 }

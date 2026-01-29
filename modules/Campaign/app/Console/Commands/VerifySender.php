@@ -2,7 +2,7 @@
 
 namespace Modules\Campaign\Console\Commands;
 
-use Acelle\Model\Sender;
+use Modules\Mailing\Models\Sender;
 use Illuminate\Console\Command;
 
 class VerifySender extends Command

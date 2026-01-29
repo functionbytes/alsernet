@@ -1,78 +1,157 @@
 <?php
 
-namespace Modules\Mailrelay\Policies;
+namespace Modules\Mailing\Policies;
 
-use App\Models\User;
+use Modules\Mailing\Models\Campaign;
+use Modules\Mailing\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Mailrelay\Entities\Campaign;
 
 class CampaignPolicy
 {
-    use HandlesAuthorization, HasSafePermissionCheck;
+    use HandlesAuthorization;
 
-    /**
-     * Determine if the user can view any campaigns.
-     */
-    public function viewAny(User $user): bool
+    public function read(User $user, Campaign $item)
     {
-        return $this->hasPermission($user, 'mailrelay.campaigns.view');
+        $can = $item->customer_id == $user->customer->id;
+
+        return $can;
     }
 
-    /**
-     * Determine if the user can view the campaign.
-     */
-    public function view(User $user, Campaign $campaign): bool
+    public function create(User $user, Campaign $item)
     {
-        return $this->hasPermission($user, 'mailrelay.campaigns.view');
-    }
+        $max = get_tmp_quota($user->customer, 'campaign_max');
 
-    /**
-     * Determine if the user can create campaigns.
-     */
-    public function create(User $user): bool
-    {
-        return $this->hasPermission($user, 'mailrelay.campaigns.create');
-    }
+        $can = $max > $user->customer->campaigns()->count() || $max == -1;
 
-    /**
-     * Determine if the user can update the campaign.
-     */
-    public function update(User $user, Campaign $campaign): bool
-    {
-        // Cannot edit sent campaigns
-        if ($campaign->isSent()) {
-            return false;
+        // config/limit.php
+        $limit = app_profile('campaign.limit');
+        if (! is_null($limit)) {
+            $campaignsCount = $user->customer->campaignsCount();
+            $can = $can && ($campaignsCount < $limit);
+        } else {
+            // ignore limit because it is null
         }
 
-        return $this->hasPermission($user, 'mailrelay.campaigns.edit');
+        return $can;
     }
 
-    /**
-     * Determine if the user can delete the campaign.
-     */
-    public function delete(User $user, Campaign $campaign): bool
+    public function overview(User $user, Campaign $item)
     {
-        // Cannot delete sent or sending campaigns
-        if ($campaign->isSent() || $campaign->status === \Modules\Mailrelay\Enums\CampaignStatus::SENDING) {
-            return false;
-        }
+        $customer = $user->customer;
 
-        return $this->hasPermission($user, 'mailrelay.campaigns.delete');
+        return $item->customer_id == $customer->id;
     }
 
-    /**
-     * Determine if the user can send the campaign.
-     */
-    public function send(User $user, Campaign $campaign): bool
+    public function update(User $user, Campaign $item)
     {
-        return $this->hasPermission($user, 'mailrelay.campaigns.send');
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id
+            && (in_array($item->status, [
+                Campaign::STATUS_NEW,
+                Campaign::STATUS_QUEUING,
+                Campaign::STATUS_QUEUED,
+                Campaign::STATUS_ERROR,
+                Campaign::STATUS_PAUSED,
+                Campaign::STATUS_SCHEDULED,
+            ]));
     }
 
-    /**
-     * Determine if the user can view campaign analytics.
-     */
-    public function viewAnalytics(User $user, Campaign $campaign): bool
+    public function delete(User $user, Campaign $item)
     {
-        return $this->hasPermission($user, 'mailrelay.campaigns.view');
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && in_array($item->status, [
+            Campaign::STATUS_NEW,
+            Campaign::STATUS_QUEUING,
+            Campaign::STATUS_QUEUED,
+            Campaign::STATUS_ERROR,
+            Campaign::STATUS_PAUSED,
+            Campaign::STATUS_DONE,
+            Campaign::STATUS_SENDING,
+            Campaign::STATUS_SCHEDULED,
+        ]);
+    }
+
+    public function pause(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && in_array($item->status, [
+            Campaign::STATUS_QUEUING,
+            Campaign::STATUS_QUEUED,
+            Campaign::STATUS_SENDING,
+            Campaign::STATUS_SCHEDULED,
+        ]);
+    }
+
+    public function run(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && in_array($item->status, [
+            Campaign::STATUS_NEW,
+        ]);
+    }
+
+    public function restart(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && in_array($item->status, [
+            Campaign::STATUS_PAUSED,
+            Campaign::STATUS_ERROR,
+            Campaign::STATUS_SCHEDULED,
+        ]);
+    }
+
+    public function sort(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id;
+    }
+
+    public function copy(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id;
+    }
+
+    public function preview(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id;
+    }
+
+    public function image(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id;
+    }
+
+    public function resend(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && ($item->isDone() || $item->isPaused());
+    }
+
+    public function send_test_email(User $user, Campaign $item)
+    {
+        $customer = $user->customer;
+
+        return $item->customer_id == $customer->id && in_array($item->status, [
+            Campaign::STATUS_QUEUING,
+            Campaign::STATUS_QUEUED,
+            Campaign::STATUS_SENDING,
+            Campaign::STATUS_ERROR,
+            Campaign::STATUS_PAUSED,
+            Campaign::STATUS_DONE,
+            Campaign::STATUS_SCHEDULED,
+        ]);
     }
 }

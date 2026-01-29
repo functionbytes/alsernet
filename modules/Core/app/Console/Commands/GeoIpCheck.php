@@ -2,9 +2,9 @@
 
 namespace Modules\Core\Console\Commands;
 
-use Acelle\Library\Lockable;
-use Acelle\Model\Notification;
-use Acelle\Model\Setting;
+use Modules\Mailing\Library\Lockable;
+use Modules\Mailing\Models\Notification;
+use Modules\Mailing\Models\Setting;
 use App;
 use Exception;
 use Illuminate\Console\Command;

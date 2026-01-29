@@ -2,289 +2,261 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
-use Modules\Mailing\Models\BounceHandler;
+
+use function Modules\Mailing\Helpers\generatePublicPath;
 
 class BounceHandlerController extends Controller
 {
     /**
-     * Display a listing of bounce handlers.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.view');
+        if (\Gate::denies('read', new \Modules\Mailing\Models\BounceHandler)) {
+            return $this->notAuthorized();
+        }
 
-        $bounceHandlers = BounceHandler::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->paginate(15);
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\BounceHandler)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        return view('mailing::settings.bounce-handlers.index', [
-            'bounceHandlers' => $bounceHandlers,
+        $items = \Modules\Mailing\Models\BounceHandler::search($request);
+
+        return view('admin.bounce_handlers.index', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Show the form for creating a new bounce handler.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function listing(Request $request)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.create');
-
-        return view('mailing::settings.bounce-handlers.create');
-    }
-
-    /**
-     * Store a newly created bounce handler.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.bounce-handlers.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:imap,pop3,webhook',
-                'status' => 'required|in:active,inactive,error',
-
-                // IMAP/POP3 configuration
-                'host' => 'required_unless:type,webhook|nullable|string|max:255',
-                'port' => 'required_unless:type,webhook|nullable|integer|min:1|max:65535',
-                'protocol' => 'required_unless:type,webhook|nullable|in:imap,pop3',
-                'encryption' => 'required_unless:type,webhook|nullable|in:ssl,tls,none',
-                'username' => 'required_unless:type,webhook|nullable|string|max:255',
-                'password' => 'required_unless:type,webhook|nullable|string',
-                'email' => 'required_unless:type,webhook|nullable|email|max:255',
-
-                // Webhook configuration
-                'webhook_token' => 'required_if:type,webhook|nullable|string',
-                'webhook_secret' => 'nullable|string',
-
-                // Processing options
-                'auto_check' => 'boolean',
-                'check_interval' => 'nullable|integer|min:5|max:1440',
-                'delete_after_process' => 'boolean',
-                'auto_unsubscribe_hard_bounce' => 'boolean',
-                'soft_bounce_limit' => 'nullable|integer|min:1|max:10',
-            ]);
-
-            $validated['user_id'] = auth()->id();
-            $validated['status'] = $validated['status'] ?? 'inactive';
-
-            BounceHandler::create($validated);
-
-            return redirect()
-                ->route('settings.mailing.bounce-handlers.index')
-                ->with('success', 'Gestor de rebotes creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear el gestor de rebotes: '.$e->getMessage());
+        if (\Gate::denies('read', new \Modules\Mailing\Models\BounceHandler)) {
+            return $this->notAuthorized();
         }
-    }
 
-    /**
-     * Show the form for editing the specified bounce handler.
-     */
-    public function edit(int $id): View
-    {
-        Gate::authorize('mailing.settings.bounce-handlers.edit');
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new \Modules\Mailing\Models\BounceHandler)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        $bounceHandler = BounceHandler::where('user_id', auth()->id())
-            ->findOrFail($id);
+        $items = \Modules\Mailing\Models\BounceHandler::search($request)->paginate($request->per_page);
 
-        return view('mailing::settings.bounce-handlers.edit', [
-            'bounceHandler' => $bounceHandler,
+        return view('admin.bounce_handlers._list', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Update the specified bounce handler.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function create(Request $request)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.edit');
+        $server = new \Modules\Mailing\Models\BounceHandler;
+        $server->status = 'active';
+        $server->uid = '0';
+        $server->fill($request->old());
 
-        try {
-            $bounceHandler = BounceHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (\Gate::denies('create', $server)) {
+            return $this->notAuthorized();
+        }
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:imap,pop3,webhook',
-                'status' => 'required|in:active,inactive,error',
+        return view('admin.bounce_handlers.create', [
+            'server' => $server,
+        ]);
+    }
 
-                // IMAP/POP3 configuration
-                'host' => 'required_unless:type,webhook|nullable|string|max:255',
-                'port' => 'required_unless:type,webhook|nullable|integer|min:1|max:65535',
-                'protocol' => 'required_unless:type,webhook|nullable|in:imap,pop3',
-                'encryption' => 'required_unless:type,webhook|nullable|in:ssl,tls,none',
-                'username' => 'required_unless:type,webhook|nullable|string|max:255',
-                'password' => 'required_unless:type,webhook|nullable|string',
-                'email' => 'required_unless:type,webhook|nullable|email|max:255',
+    /**
+     * Store a newly created resource in storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = new \Modules\Mailing\Models\BounceHandler;
 
-                // Webhook configuration
-                'webhook_token' => 'required_if:type,webhook|nullable|string',
-                'webhook_secret' => 'nullable|string',
+        // authorize
+        if (\Gate::denies('create', $server)) {
+            return $this->notAuthorized();
+        }
 
-                // Processing options
-                'auto_check' => 'boolean',
-                'check_interval' => 'nullable|integer|min:5|max:1440',
-                'delete_after_process' => 'boolean',
-                'auto_unsubscribe_hard_bounce' => 'boolean',
-                'soft_bounce_limit' => 'nullable|integer|min:1|max:10',
-            ]);
+        // save posted data
+        if ($request->isMethod('post')) {
+            $this->validate($request, \Modules\Mailing\Models\BounceHandler::rules());
 
-            $bounceHandler->update($validated);
+            // Save current user info
+            $server->fill($request->all());
+            $server->admin_id = $request->user()->admin->id;
+            $server->status = 'active';
 
-            return redirect()
-                ->route('settings.mailing.bounce-handlers.index')
-                ->with('success', 'Gestor de rebotes actualizado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el gestor de rebotes: '.$e->getMessage());
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.bounce_handler.created'));
+
+                return redirect()->action('Settings\BounceHandlerController@index');
+            }
         }
     }
 
     /**
-     * Remove the specified bounce handler.
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): RedirectResponse
+    public function show($id) {}
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $id)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.delete');
+        $server = \Modules\Mailing\Models\BounceHandler::findByUid($id);
 
-        try {
-            $bounceHandler = BounceHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // authorize
+        if (\Gate::denies('update', $server)) {
+            return $this->notAuthorized();
+        }
 
-            $bounceHandler->delete();
+        $server->fill($request->old());
 
-            return redirect()
-                ->route('settings.mailing.bounce-handlers.index')
-                ->with('success', 'Gestor de rebotes eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar el gestor de rebotes: '.$e->getMessage());
+        return view('admin.bounce_handlers.edit', [
+            'server' => $server,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = \Modules\Mailing\Models\BounceHandler::findByUid($id);
+
+        // authorize
+        if (\Gate::denies('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // save posted data
+        if ($request->isMethod('patch')) {
+            $this->validate($request, \Modules\Mailing\Models\BounceHandler::rules());
+
+            // Save current user info
+            $server->fill($request->all());
+
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.bounce_handler.updated'));
+
+                return redirect()->action('Settings\BounceHandlerController@index');
+            }
         }
     }
 
     /**
-     * Test the connection to the bounce handler.
+     * Custom sort items.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function testConnection(int $id): JsonResponse
+    public function sort(Request $request)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.edit');
-
-        try {
-            $bounceHandler = BounceHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            if ($bounceHandler->type === 'webhook') {
-                // Webhook test would be handled differently (e.g., trigger a test event)
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Configuración del webhook validada.',
-                ]);
-            }
-
-            // Test IMAP/POP3 connection
-            $this->testImapPopConnection($bounceHandler);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Conexión establecida correctamente.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al probar la conexión: '.$e->getMessage(),
-            ], 422);
-        }
+        echo trans('messages._deleted_');
     }
 
     /**
-     * Fetch bounces from the handler.
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function fetchBounces(int $id): JsonResponse
+    public function delete(Request $request)
     {
-        Gate::authorize('mailing.settings.bounce-handlers.edit');
-
-        try {
-            $bounceHandler = BounceHandler::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            if ($bounceHandler->type === 'webhook') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Los webhooks no soportan obtención manual de rebotes.',
-                ], 422);
-            }
-
-            // Connect and fetch bounces
-            $connection = imap_open(
-                '{'.$bounceHandler->host.':'.$bounceHandler->port.'/service='.$bounceHandler->protocol.'}',
-                $bounceHandler->username,
-                $bounceHandler->password
-            );
-
-            if (! $connection) {
-                throw new \Exception('No se pudo conectar al servidor IMAP/POP3');
-            }
-
-            $emails = imap_search($connection, 'ALL');
-            $bounceCount = is_array($emails) ? count($emails) : 0;
-
-            if ($bounceHandler->delete_after_process && is_array($emails)) {
-                foreach ($emails as $emailId) {
-                    imap_delete($connection, $emailId);
-                }
-                imap_expunge($connection);
-            }
-
-            imap_close($connection);
-
-            // Update statistics
-            $bounceHandler->update([
-                'bounces_processed' => $bounceHandler->bounces_processed + $bounceCount,
-                'last_checked_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Rebotes obtenidos correctamente.',
-                'bounces_found' => $bounceCount,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener rebotes: '.$e->getMessage(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Test IMAP/POP3 connection.
-     */
-    private function testImapPopConnection(BounceHandler $handler): void
-    {
-        $connection = imap_open(
-            '{'.$handler->host.':'.$handler->port.'/service='.$handler->protocol.'}',
-            $handler->username,
-            $handler->password
+        $items = \Modules\Mailing\Models\BounceHandler::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
         );
 
-        if (! $connection) {
-            throw new \Exception('No se pudo conectar al servidor IMAP/POP3');
+        foreach ($items->get() as $item) {
+            // authorize
+            if (\Gate::denies('delete', $item)) {
+                return;
+            }
         }
 
-        imap_close($connection);
+        foreach ($items->get() as $item) {
+            $item->delete();
+        }
+
+        // Redirect to my lists page
+        echo trans('messages.bounce_handlers.deleted');
+    }
+
+    /**
+     * Test Bounce handler.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function test(Request $request, $uid)
+    {
+        // Get current user
+        $current_user = $request->user();
+
+        // Fill new server info
+        if ($uid) {
+            $server = \Modules\Mailing\Models\BounceHandler::findByUid($uid);
+        } else {
+            $server = new \Modules\Mailing\Models\BounceHandler;
+        }
+
+        $server->fill($request->all());
+
+        // authorize
+        if (\Gate::denies('test', $server)) {
+            return $this->notAuthorized();
+        }
+
+        try {
+            $server->test();
+
+            return response()->json([
+                'status' => 'success', // or success
+                'message' => trans('messages.bounce_handler.test_success'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error', // or success
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function run(Request $request, $uid)
+    {
+        $handler = \Modules\Mailing\Models\BounceHandler::findByUid($uid);
+        $todayLogFile = storage_path('logs/'.php_sapi_name().'/handler-'.$handler->uid.'-'.date('Y-m-d').'.log');
+        echo url(generatePublicPath($todayLogFile));
+        $handler->start();
     }
 }

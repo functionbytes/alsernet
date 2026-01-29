@@ -22,10 +22,10 @@
 
 namespace Modules\Mailer\Console\Commands;
 
-use Acelle\Library\Lockable;
-use Acelle\Library\Log;
-use Acelle\Model\BounceHandler;
-use Acelle\Model\FeedbackLoopHandler;
+use Modules\Mailing\Library\Lockable;
+use Modules\Mailing\Library\Log;
+use Modules\Mailing\Models\BounceHandler;
+use Modules\Mailing\Models\FeedbackLoopHandler;
 use Illuminate\Console\Command;
 
 class RunHandler extends Command

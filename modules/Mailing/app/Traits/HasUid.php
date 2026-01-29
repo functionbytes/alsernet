@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailer\Traits;
+namespace Modules\Mailing\Traits;
 
 use Illuminate\Support\Str;
 

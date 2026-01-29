@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library\HtmlHandler;
 
 use bjoernffm\Spintax\Parser;
 use League\Pipeline\StageInterface;

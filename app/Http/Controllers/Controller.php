@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -101,7 +102,7 @@ class Controller extends BaseController
      */
     public function autoLogin($api_token)
     {
-        $user = \Acelle\Model\User::where('api_token', $api_token)->first();
+        $user = User::where('api_token', $api_token)->first();
 
         \Auth::login($user);
 
@@ -110,7 +111,7 @@ class Controller extends BaseController
 
     public function validateToken($api_token)
     {
-        $first = \Acelle\Model\User::where('api_token', $api_token)->first();
+        $first = User::where('api_token', $api_token)->first();
 
         if ($first) {
             return response()
@@ -132,7 +133,7 @@ class Controller extends BaseController
      */
     public function tokenLogin($token)
     {
-        $user = \Acelle\Model\User::where('one_time_api_token', $token)->first();
+        $user = User::where('one_time_api_token', $token)->first();
 
         if (! $user) {
             return view('somethingWentWrong', ['message' => trans('messages.token_expired')]);
@@ -225,7 +226,6 @@ class Controller extends BaseController
         return view('termsOfService');
     }
 
-
     /**
      * Return a successful JSON response
      */
@@ -312,5 +312,4 @@ class Controller extends BaseController
             ],
         ];
     }
-
 }

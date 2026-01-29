@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library\HtmlHandler;
 
-
+use Modules\Mailing\Library\StringHelper;
 use League\Pipeline\StageInterface;
 
 class InjectTrackingPixel implements StageInterface

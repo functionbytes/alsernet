@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Modules\Mailing\Console\Commands\SyncMailingCommand;
+// use Modules\Mailing\Console\Commands\SyncMailingCommand; // TODO: Create this command or remove reference
 use Modules\Mailing\Http\ViewComposers\NavigationComposer;
 use Modules\Mailing\Models\Campaign;
 use Modules\Mailing\Models\ImportJob;
@@ -88,6 +88,9 @@ class MailingServiceProvider extends ServiceProvider
         // Register views
         $this->loadViewsFrom(module_path($this->moduleName, 'resources/views'), $this->moduleNameLower);
 
+        // Register middleware
+        $this->registerMiddleware();
+
         // Register view composers
         $this->registerViewComposers();
 
@@ -159,8 +162,26 @@ class MailingServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            SyncMailingCommand::class,
+            // SyncMailingCommand::class, // TODO: Create this command or remove reference
         ]);
+    }
+
+    /**
+     * Register middleware aliases
+     *
+     * Middleware migrated from Acelle:
+     * - BackendAccess: Admin authorization (from Acelle Backend.php)
+     * - CustomerAccess: Customer authorization (from Acelle Frontend.php)
+     * - GuestLocale: Guest language preference (from Acelle NotLoggedIn.php)
+     */
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app['router'];
+
+        // Register middleware aliases for Mailing module
+        $router->aliasMiddleware('mailing.backend', \Modules\Mailing\Http\Middleware\BackendAccess::class);
+        $router->aliasMiddleware('mailing.customer', \Modules\Mailing\Http\Middleware\CustomerAccess::class);
+        $router->aliasMiddleware('mailing.guest.locale', \Modules\Mailing\Http\Middleware\GuestLocale::class);
     }
 
     /**

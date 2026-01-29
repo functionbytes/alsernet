@@ -2,246 +2,606 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\RedirectResponse;
+use App;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
-use Modules\Mailing\Models\Mailing\MailingLayout;
-use Modules\Mailing\Models\Mailing\MailingTemplate;
-use Modules\Mailing\Models\Mailing\MailingTemplateLang;
+use Modules\Mailing\Models\Setting;
+use Modules\Mailing\Models\Template;
 
 class TemplateController extends Controller
 {
     /**
-     * Display a listing of email templates.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.templates.view');
+        if (! $request->user()->admin->can('read', new \Modules\Mailing\Models\Template)) {
+            return $this->notAuthorized();
+        }
 
-        $templates = MailingTemplate::with('layout', 'translations')
-            ->orderBy('name')
-            ->get();
+        return view('admin.templates.index');
+    }
 
-        return view('mailing::settings.templates.index', [
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function listing(Request $request)
+    {
+        if (! $request->user()->admin->can('read', new \Modules\Mailing\Models\Template)) {
+            return $this->notAuthorized();
+        }
+
+        // view
+        $view = $request->view ? $request->view : 'grid';
+
+        $templates = Template::shared()
+            ->notPrivate()
+            ->notPreserved()
+            ->email()
+            ->categoryUid($request->category_uid)
+            ->search($request->keyword)
+            ->orderBy($request->sort_order, $request->sort_direction)
+            ->paginate($request->per_page ? $request->per_page : 12);
+
+        return view('admin.templates._list_'.$view, [
             'templates' => $templates,
         ]);
     }
 
     /**
-     * Show the form for creating a new email template.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function create(Request $request)
     {
-        Gate::authorize('mailing.settings.templates.create');
+        // Generate info
+        $user = $request->user();
+        $template = new \Modules\Mailing\Models\Template;
 
-        $layouts = MailingLayout::where('is_enabled', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('mailing::settings.templates.create', [
-            'layouts' => $layouts,
-        ]);
-    }
-
-    /**
-     * Store a newly created email template.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.templates.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'key' => 'required|string|max:255|unique:mailing_templates,key',
-                'layout_id' => 'nullable|integer|exists:mailing_layouts,id',
-                'module' => 'required|string|max:255',
-                'description' => 'nullable|string|max:500',
-                'is_enabled' => 'boolean',
-                'is_protected' => 'boolean',
-                'variables' => 'nullable|json',
-                'subject' => 'required|string',
-                'content' => 'required|string',
-            ]);
-
-            $template = MailingTemplate::create($validated);
-
-            // Store translation
-            if ($validated['subject'] && $validated['content']) {
-                MailingTemplateLang::create([
-                    'mailing_template_id' => $template->id,
-                    'lang_id' => 1,
-                    'subject' => $validated['subject'],
-                    'content' => $validated['content'],
-                ]);
-            }
-
-            return redirect()
-                ->route('settings.mailing.templates.email.index')
-                ->with('success', 'Plantilla de correo creada correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear la plantilla: '.$e->getMessage());
+        // authorize
+        if (! $request->user()->admin->can('create', Template::class)) {
+            return $this->notAuthorized();
         }
-    }
 
-    /**
-     * Show the form for editing the specified email template.
-     */
-    public function edit(int $id): View
-    {
-        Gate::authorize('mailing.settings.templates.edit');
-
-        $template = MailingTemplate::with('layout', 'translations')
-            ->findOrFail($id);
-
-        $layouts = MailingLayout::where('is_enabled', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('mailing::settings.templates.edit', [
-            'template' => $template,
-            'layouts' => $layouts,
-        ]);
-    }
-
-    /**
-     * Update the specified email template.
-     */
-    public function update(Request $request, int $id): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.templates.edit');
-
-        try {
-            $template = MailingTemplate::findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'key' => 'required|string|max:255|unique:mailing_templates,key,'.$id,
-                'layout_id' => 'nullable|integer|exists:mailing_layouts,id',
-                'module' => 'required|string|max:255',
-                'description' => 'nullable|string|max:500',
-                'is_enabled' => 'boolean',
-                'is_protected' => 'boolean',
-                'variables' => 'nullable|json',
-                'subject' => 'required|string',
-                'content' => 'required|string',
-            ]);
-
-            $template->update($validated);
-
-            // Update or create translation
-            $translation = $template->translations()->where('lang_id', 1)->first();
-
-            if ($translation) {
-                $translation->update([
-                    'subject' => $validated['subject'],
-                    'content' => $validated['content'],
-                ]);
-            } else {
-                MailingTemplateLang::create([
-                    'mailing_template_id' => $template->id,
-                    'lang_id' => 1,
-                    'subject' => $validated['subject'],
-                    'content' => $validated['content'],
-                ]);
-            }
-
-            return redirect()
-                ->route('settings.mailing.templates.email.index')
-                ->with('success', 'Plantilla de correo actualizada correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar la plantilla: '.$e->getMessage());
+        // Get old post values
+        if ($request->old() !== null) {
+            $template->fill($request->old());
         }
-    }
 
-    /**
-     * Remove the specified email template.
-     */
-    public function destroy(int $id): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.templates.delete');
-
-        try {
-            $template = MailingTemplate::findOrFail($id);
-
-            // Check if template is protected
-            if ($template->is_protected) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'No se puede eliminar una plantilla protegida.');
-            }
-
-            // Delete associated translations
-            $template->translations()->delete();
-
-            // Delete template
-            $template->delete();
-
-            return redirect()
-                ->route('settings.mailing.templates.email.index')
-                ->with('success', 'Plantilla de correo eliminada correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar la plantilla: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Preview the specified email template.
-     */
-    public function preview(int $id): View
-    {
-        Gate::authorize('mailing.settings.templates.view');
-
-        $template = MailingTemplate::with('layout')
-            ->findOrFail($id);
-
-        return view('mailing::settings.templates.preview', [
+        return view('admin.templates.create', [
             'template' => $template,
         ]);
     }
 
     /**
-     * Duplicate the specified email template.
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function duplicate(int $id): RedirectResponse
+    public function edit(Request $request, $uid)
     {
-        Gate::authorize('mailing.settings.templates.create');
+        // Generate info
+        $user = $request->user();
+        $template = Template::findByUid($uid);
 
-        try {
-            $originalTemplate = MailingTemplate::with('translations')
-                ->findOrFail($id);
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
 
-            // Create a copy
-            $newTemplate = $originalTemplate->replicate();
-            $newTemplate->key = $originalTemplate->key.'_copy_'.time();
-            $newTemplate->name = $originalTemplate->name.' (Copia)';
-            $newTemplate->is_protected = false;
-            $newTemplate->save();
+        // Get old post values
+        if ($request->old() !== null) {
+            $template->fill($request->old());
+        }
 
-            // Duplicate translations
-            foreach ($originalTemplate->translations as $translation) {
-                $newTranslation = $translation->replicate();
-                $newTranslation->mailing_template_id = $newTemplate->id;
-                $newTranslation->save();
+        return view('admin.templates.edit', [
+            'template' => $template,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // Generate info
+        $user = $request->user();
+        $template = Template::findByUid($request->uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        // validate and save posted data
+        if ($request->isMethod('patch')) {
+            // Save template
+            $template->fill($request->all());
+
+            $rules = [
+                'name' => 'required',
+                'content' => 'required',
+            ];
+
+            // make validator
+            $validator = \Validator::make($request->all(), $rules);
+
+            // redirect if fails
+            if ($validator->fails()) {
+                // faled
+                return response()->json($validator->errors(), 400);
             }
 
-            return redirect()
-                ->route('settings.mailing.templates.email.edit', $newTemplate->id)
-                ->with('success', 'Plantilla duplicada correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al duplicar la plantilla: '.$e->getMessage());
+            $template->save();
+
+            // success
+            return response()->json([
+                'status' => 'success',
+                'message' => trans('messages.template.updated'),
+            ], 201);
         }
+    }
+
+    /**
+     * Upload template.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function uploadTemplate(Request $request)
+    {
+        // authorize
+        if (! $request->user()->admin->can('create', Template::class)) {
+            return $this->notAuthorized();
+        }
+
+        // validate and save posted data
+        if ($request->isMethod('post')) {
+            $asAdmin = true;
+            $template = Template::uploadSystemTemplate($request, $asAdmin);
+
+            if (! empty(Setting::get('storage.s3'))) {
+                App::make('xstore')->store($template);
+            }
+
+            $request->session()->flash('alert-success', trans('messages.template.uploaded'));
+
+            return redirect()->action('Settings\TemplateController@index');
+        }
+
+        return view('admin.templates.upload');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function delete(Request $request)
+    {
+        if (isSiteDemo()) {
+            return response()->json([
+                'status' => 'notice',
+                'message' => trans('messages.operation_not_allowed_in_demo'),
+            ], 403);
+        }
+
+        $templates = Template::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
+        $total = $templates->count();
+        $deleted = 0;
+        foreach ($templates->get() as $template) {
+            // authorize
+            if ($request->user()->admin->can('delete', $template)) {
+                $template->deleteAndCleanup();
+                $deleted += 1;
+            }
+        }
+
+        echo trans('messages.templates.deleted', ['deleted' => $deleted, 'total' => $total]);
+    }
+
+    /**
+     * Preview template.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function preview(Request $request, $id)
+    {
+        $template = Template::findByUid($id);
+
+        // authorize
+        if (! $request->user()->admin->can('preview', $template)) {
+            return $this->notAuthorized();
+        }
+
+        return view('admin.templates.preview', [
+            'template' => $template,
+        ]);
+    }
+
+    /**
+     * Custom sort items.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function sort(Request $request)
+    {
+        echo trans('messages._deleted_');
+    }
+
+    /**
+     * Copy template.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function copy(Request $request)
+    {
+        $template = Template::findByUid($request->uid);
+
+        if ($request->isMethod('post')) {
+            // authorize
+            if (! $request->user()->admin->can('copy', $template)) {
+                return $this->notAuthorized();
+            }
+
+            $template->copy([
+                'name' => $request->name,
+            ]);
+
+            echo trans('messages.template.copied');
+
+            return;
+        }
+
+        return view('admin.templates.copy', [
+            'template' => $template,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function builderEdit(Request $request, $uid)
+    {
+        // Generate info
+        $user = $request->user();
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        // validate and save posted data
+        if ($request->isMethod('post')) {
+            $rules = [
+                'content' => 'required',
+            ];
+
+            $this->validate($request, $rules);
+
+            $template->content = $request->content;
+            $template->save();
+
+            return response()->json([
+                'status' => 'success',
+            ]);
+        }
+
+        return view('admin.templates.builder.edit', [
+            'template' => $template,
+            'templates' => $template->getBuilderAdminTemplates(),
+            'admin' => $user->admin,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function builderEditContent(Request $request, $uid)
+    {
+        // Generate info
+        $user = $request->user();
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        return view('admin.templates.builder.content', [
+            'content' => $template->content,
+        ]);
+    }
+
+    /**
+     * Upload asset to builder.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function uploadTemplateAssets(Request $request, $uid)
+    {
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->assetType == 'upload' || $request->assetType == 'audio') {
+            $assetUrl = $template->uploadAsset($request->file('file'));
+        } elseif ($request->assetType == 'url') {
+            $assetUrl = $template->uploadAssetFromUrl($request->url);
+        } elseif ($request->assetType == 'base64') {
+            $assetUrl = $template->uploadAssetFromBase64($request->url_base64);
+        }
+
+        return response()->json([
+            'url' => $assetUrl,
+        ]);
+    }
+
+    /**
+     * Create template / temlate selection.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function builderCreate(Request $request)
+    {
+        $template = new Template;
+        $template->name = trans('messages.untitled_template');
+
+        // authorize
+        if (! $request->user()->admin->can('create', Template::class)) {
+            return $this->notAuthorized();
+        }
+
+        // Gallery
+        $templates = Template::shared()->notPreserved();
+
+        // validate and save posted data
+        if ($request->isMethod('post')) {
+            $currentTemplate = Template::findByUid($request->template);
+
+            // create from template
+            $template = $currentTemplate->copy([
+                'name' => $request->name,
+            ]);
+
+            return redirect()->action('Settings\TemplateController@builderEdit', $template->uid);
+        }
+
+        return view('admin.templates.builder.create', [
+            'template' => $template,
+            'templates' => $templates,
+        ]);
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function builderTemplates(Request $request)
+    {
+        // authorize
+        if (! $request->user()->admin->can('create', Template::class)) {
+            return $this->notAuthorized();
+        }
+
+        // category
+        $category = \Modules\Mailing\Models\TemplateCategory::findByUid($request->category_uid);
+
+        // sort, pagination
+        $templates = $category->templates()->search($request->keyword)
+            ->orderBy($request->sort_order, $request->sort_direction)
+            ->paginate($request->per_page);
+
+        return view('admin.templates.builder.templates', [
+            'templates' => $templates,
+        ]);
+    }
+
+    /**
+     * Change template from exist template.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function builderChangeTemplate(Request $request, $uid, $change_uid)
+    {
+        // Generate info
+        $template = Template::findByUid($uid);
+        $changeTemplate = Template::findByUid($change_uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        $template->changeTemplate($changeTemplate);
+    }
+
+    /**
+     * Update template thumb.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateThumb(Request $request, $uid)
+    {
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->isMethod('post')) {
+            // make validator
+            $validator = \Validator::make($request->all(), [
+                'file' => 'required',
+            ]);
+
+            // redirect if fails
+            if ($validator->fails()) {
+                return response()->view('templates.updateThumb', [
+                    'template' => $template,
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            // update thumb
+            $template->uploadThumbnail($request->file);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => trans('messages.template.thumb.uploaded'),
+            ], 201);
+        }
+
+        return view('admin.templates.updateThumb', [
+            'template' => $template,
+        ]);
+    }
+
+    /**
+     * Update template thumb url.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateThumbUrl(Request $request, $uid)
+    {
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->isMethod('post')) {
+            // make validator
+            $validator = \Validator::make($request->all(), [
+                'url' => 'required|url',
+            ]);
+
+            // redirect if fails
+            if ($validator->fails()) {
+                return response()->view('templates.updateThumbUrl', [
+                    'template' => $template,
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            // update thumb
+            $template->uploadThumbnailUrl($request->url);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => trans('messages.template.thumb.uploaded'),
+            ], 201);
+        }
+
+        return view('admin.templates.updateThumbUrl', [
+            'template' => $template,
+        ]);
+    }
+
+    /**
+     * Template categories.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function categories(Request $request, $uid)
+    {
+        $template = Template::findByUid($uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->isMethod('post')) {
+            foreach ($request->categories as $key => $value) {
+                $category = \Modules\Mailing\Models\TemplateCategory::findByUid($key);
+                if ($value == 'true') {
+                    $template->addCategory($category);
+                } else {
+                    $template->removeCategory($category);
+                }
+            }
+        }
+
+        return view('admin.templates.categories', [
+            'template' => $template,
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $template = Template::findByUid($request->uid);
+
+        $zipPath = $template->createTmpZip();
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    public function changeName(Request $request)
+    {
+        $template = Template::findByUid($request->uid);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $template)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->isMethod('post')) {
+            // change name
+            $validator = $template->changeName($request->name);
+
+            if ($validator->fails()) {
+                return response()->view('admin.templates.changeName', [
+                    'template' => $template,
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => trans('messages.template.name.changed'),
+            ], 201);
+        }
+
+        return view('admin.templates.changeName', [
+            'template' => $template,
+        ]);
+    }
+
+    public function chat()
+    {
+        return view('admin.templates.chat');
     }
 }

@@ -2,207 +2,158 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
-use Modules\Mailing\Models\Mailing\MailingLayout;
-use Modules\Mailing\Models\Mailing\MailingLayoutLang;
-use Modules\Mailing\Models\Mailing\MailingTemplate;
 
 class LayoutController extends Controller
 {
     /**
-     * Display a listing of email layouts.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.layouts.view');
+        if ($request->user()->admin->getPermission('layout_read') == 'no') {
+            return $this->notAuthorized();
+        }
 
-        $layouts = MailingLayout::with('translations')
-            ->orderBy('alias')
-            ->get();
+        $items = \Modules\Mailing\Models\Layout::getAll();
 
-        return view('mailing::settings.layouts.index', [
-            'layouts' => $layouts,
+        return view('admin.layouts.index', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Show the form for creating a new email layout.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function listing(Request $request)
     {
-        Gate::authorize('mailing.settings.layouts.create');
-
-        return view('mailing::settings.layouts.create');
-    }
-
-    /**
-     * Store a newly created email layout.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.layouts.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'alias' => 'required|string|max:255|unique:mailing_layouts,alias',
-                'code' => 'nullable|string|max:255|unique:mailing_layouts,code',
-                'type' => 'required|string|in:email,form,page',
-                'group_name' => 'nullable|string|max:255',
-                'is_enabled' => 'boolean',
-                'is_protected' => 'boolean',
-                'subject' => 'nullable|string',
-                'content' => 'required|string',
-            ]);
-
-            $layout = MailingLayout::create($validated);
-
-            // Store translation
-            if ($validated['content']) {
-                MailingLayoutLang::create([
-                    'layout_id' => $layout->id,
-                    'lang_id' => 1,
-                    'subject' => $validated['subject'] ?? null,
-                    'content' => $validated['content'],
-                ]);
-            }
-
-            return redirect()
-                ->route('settings.mailing.templates.layouts.index')
-                ->with('success', 'Diseño de correo creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear el diseño: '.$e->getMessage());
+        if ($request->user()->admin->getPermission('layout_read') == 'no') {
+            return $this->notAuthorized();
         }
+
+        $items = \Modules\Mailing\Models\Layout::search($request)->paginate($request->per_page);
+
+        return view('admin.layouts._list', [
+            'items' => $items,
+        ]);
     }
 
     /**
-     * Show the form for editing the specified email layout.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function edit(int $id): View
+    public function create() {}
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request) {}
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id) {}
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $id)
     {
-        Gate::authorize('mailing.settings.layouts.edit');
+        // Generate info
+        $user = $request->user();
+        $layout = \Modules\Mailing\Models\Layout::findByUid($id);
 
-        $layout = MailingLayout::with('translations')
-            ->findOrFail($id);
+        // authorize
+        if (\Gate::denies('update', $layout)) {
+            return $this->notAuthorized();
+        }
 
-        return view('mailing::settings.layouts.edit', [
+        // Get old post values
+        if ($request->old() !== null) {
+            $layout->fill($request->old());
+        }
+
+        return view('admin.layouts.edit', [
             'layout' => $layout,
         ]);
     }
 
     /**
-     * Update the specified email layout.
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, $id)
     {
-        Gate::authorize('mailing.settings.layouts.edit');
+        // Generate info
+        $user = $request->user();
+        $layout = \Modules\Mailing\Models\Layout::findByUid($id);
 
-        try {
-            $layout = MailingLayout::findOrFail($id);
+        // Prenvent save from demo mod
+        if (config('app.demo')) {
+            return view('somethingWentWrong', ['message' => trans('messages.operation_not_allowed_in_demo')]);
+        }
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'alias' => 'required|string|max:255|unique:mailing_layouts,alias,'.$id,
-                'code' => 'nullable|string|max:255|unique:mailing_layouts,code,'.$id,
-                'type' => 'required|string|in:email,form,page',
-                'group_name' => 'nullable|string|max:255',
-                'is_enabled' => 'boolean',
-                'is_protected' => 'boolean',
-                'subject' => 'nullable|string',
-                'content' => 'required|string',
+        // authorize
+        if (\Gate::denies('update', $layout)) {
+            return $this->notAuthorized();
+        }
+
+        // validate and save posted data
+        if ($request->isMethod('patch')) {
+            $rules = [
+                'content' => 'required',
+                'subject' => 'required',
+            ];
+
+            // $this->validate($request, $rules);
+
+            // make validator
+            $validator = \Validator::make($request->all(), $rules);
+
+            // redirect if fails
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validator->errors()->all()[0],
+                ], 400);
+            }
+
+            // check ses email tags
+            if ($layout->alias == 'sender_verification_email_for_amazon_ses' && preg_match("/\<((meta)|(title)|(style))/i", $request->content)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => trans('messages.layout.amazon_ses.tag_not_permit'),
+                ], 400);
+            }
+
+            // Save template
+            $layout->fill($request->all());
+            $layout->save();
+
+            // Redirect to my lists page
+            $request->session()->flash('alert-success', trans('messages.layout.updated'));
+
+            return response()->json([
+                'status' => 'success',
+                'url' => action('Settings\LayoutController@edit', $layout->uid),
             ]);
-
-            $layout->update($validated);
-
-            // Update or create translation
-            $translation = $layout->translations()->where('lang_id', 1)->first();
-
-            if ($translation) {
-                $translation->update([
-                    'subject' => $validated['subject'] ?? null,
-                    'content' => $validated['content'],
-                ]);
-            } else {
-                MailingLayoutLang::create([
-                    'layout_id' => $layout->id,
-                    'lang_id' => 1,
-                    'subject' => $validated['subject'] ?? null,
-                    'content' => $validated['content'],
-                ]);
-            }
-
-            return redirect()
-                ->route('settings.mailing.templates.layouts.index')
-                ->with('success', 'Diseño de correo actualizado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el diseño: '.$e->getMessage());
         }
-    }
-
-    /**
-     * Remove the specified email layout.
-     */
-    public function destroy(int $id): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.layouts.delete');
-
-        try {
-            $layout = MailingLayout::findOrFail($id);
-
-            // Check if layout is protected
-            if ($layout->is_protected) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'No se puede eliminar un diseño protegido.');
-            }
-
-            // Check if layout is being used by templates
-            $templateCount = MailingTemplate::where('layout_id', $id)->count();
-
-            if ($templateCount > 0) {
-                return redirect()
-                    ->back()
-                    ->with('error', "No se puede eliminar este diseño. Está siendo utilizado por {$templateCount} plantilla(s).");
-            }
-
-            // Delete associated translations
-            $layout->translations()->delete();
-
-            // Delete layout
-            $layout->delete();
-
-            return redirect()
-                ->route('settings.mailing.templates.layouts.index')
-                ->with('success', 'Diseño de correo eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar el diseño: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Preview the specified email layout.
-     */
-    public function preview(int $id): View
-    {
-        Gate::authorize('mailing.settings.layouts.view');
-
-        $layout = MailingLayout::with('translations')
-            ->findOrFail($id);
-
-        return view('mailing::settings.layouts.preview', [
-            'layout' => $layout,
-        ]);
     }
 }

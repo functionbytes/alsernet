@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library\HtmlHandler;
 
 use League\Pipeline\StageInterface;
 use Soundasleep\Html2Text;

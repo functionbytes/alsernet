@@ -2,248 +2,484 @@
 
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Modules\Mailing\Library\Everification\Emailable;
+use Modules\Mailing\Library\RateLimit;
+use Modules\Mailing\Library\RateTracker;
+use Modules\Mailing\Library\Traits\HasUid;
+use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Mailing\Traits\HasUid;
+use JsonPath\JsonObject;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Logger;
 
 class EmailVerificationServer extends Model
 {
-    use HasFactory, HasUid, SoftDeletes;
+    use HasUid;
 
-    protected $table = 'mailing_email_verification_servers';
+    // set the table name
+    protected $table = 'email_verification_servers';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable Attributes
-    |--------------------------------------------------------------------------
-    */
+    // Logger
+    protected $logger;
 
-    protected $fillable = [
-        'uid',
-        'user_id',
-        'name',
-        'type',
-        'status',
-        'api_key',
-        'api_url',
-        'api_options',
-        'check_disposable',
-        'check_role_based',
-        'check_smtp',
-        'check_catch_all',
-        'requests_per_minute',
-        'requests_per_day',
-        'verifications_today',
-        'verifications_this_month',
-        'total_verifications',
-        'credits_available',
-        'credits_used',
-        'credit_threshold',
-        'credits_last_checked_at',
-        'valid_count',
-        'invalid_count',
-        'risky_count',
-        'unknown_count',
-        'last_verification_at',
-        'last_error',
-    ];
+    public const STATUS_ACTIVE = 'active';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
+    public const STATUS_INACTIVE = 'inactive';
 
-    protected function casts(): array
+    public const WAIT = 30;
+
+    protected $fillable = ['type', 'name'];
+
+    private const OTHERWISE = '*';
+
+    /**
+     * Associations.
+     *
+     * @var object | collect
+     */
+    public function customer()
+    {
+        return $this->belongsTo('Acelle\Model\Customer');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo('Acelle\Model\Admin');
+    }
+
+    public function initEverificationService()
+    {
+        switch ($this->type) {
+            case 'emailable.com':
+                $service = new Emailable($this->getOptions(), $this->logger());
+
+                return $service;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Verify email address.
+     *
+     * @return mixed
+     */
+    public function verify($email)
+    {
+        // Retrieve the email verification service
+        $service = $this->initEverificationService();
+
+        if ($service) {
+            return $service->verify($email);
+        }
+
+        // @deprecated enforce the verification speed limit
+        $options = $this->getOptions();
+        $limit = "[{$options['limit_value']} / {$options['limit_base']} {$options['limit_unit']}]";
+
+        // retrieve the service settings
+        $config = $this->getConfig();
+        $options = $this->getOptions();
+        $client = new Client(['verify' => false]);
+
+        // build the request URI
+        $uri = $config['uri'];
+        $uri = str_replace('{EMAIL}', $email, $uri);
+        $uri = array_key_exists('api_key', $options) ? str_replace('{API_KEY}', $options['api_key'], $uri) : $uri;
+        $uri = array_key_exists('api_secret_key', $options) ? str_replace('{API_SECRET_KEY}', $options['api_secret_key'], $uri) : $uri;
+        $uri = array_key_exists('username', $options) ? str_replace('{USERNAME}', $options['username'], $uri) : $uri;
+        $uri = array_key_exists('password', $options) ? str_replace('{PASSWORD}', $options['password'], $uri) : $uri;
+
+        // build the request URI
+        if ($config['request_type'] == 'POST') {
+            $postdata = $config['post_data'];
+            $postdata = str_replace('{EMAIL}', $email, $postdata);
+            foreach ($config['fields'] as $field) {
+                if (array_key_exists($field, $options)) {
+                    $postdata = str_replace('{'.strtoupper($field).'}', $options[$field], $postdata);
+                }
+            }
+
+            $headers = $config['post_headers'];
+            foreach ($headers as $header => $value) {
+                foreach ($config['fields'] as $field) {
+                    if (array_key_exists($field, $options)) {
+                        $value = str_replace('{'.strtoupper($field).'}', $options[$field], $value);
+                        $headers[$header] = $value;
+                    }
+                }
+            }
+
+            // make POST request
+            $response = $client->request(
+                $config['request_type'],
+                $uri,
+                ['headers' => $headers, 'body' => $postdata, 'verify' => false]
+            );
+        } else { // GET request
+            // actually request to the service
+            $response = $client->request($config['request_type'], $uri, ['verify' => false]);
+        }
+
+        // fetch the result
+        $raw = (string) $response->getBody();
+
+        if ($raw == 'error_credit') {
+            throw new Exception('No verification credits available for service '.$this->type);
+        }
+
+        // PLAIN RESPONSE
+        if (array_key_exists('response_type', $config) && $config['response_type'] == 'plain') {
+            if (! array_key_exists($raw, $config['result_map']) && array_key_exists(self::OTHERWISE, $config['result_map'])) {
+                $mapped = $config['result_map'][self::OTHERWISE];
+            } elseif (! array_key_exists($raw, $config['result_map'])) {
+                throw new \Exception('Unexpected result from verification service: '.$raw);
+            } else {
+                $mapped = $config['result_map'][$raw];
+            }
+
+            return [$mapped, $response];
+        }
+
+        // JSON RESPONSE
+        $jsonObject = new JsonObject($raw);
+
+        try {
+            $result = $jsonObject->get($config['result_xpath']);
+
+            if (empty($result)) {
+                throw new Exception('Empty response after parse XPATH');
+            }
+
+            $result = $result[0];
+        } catch (\Throwable $ex) {
+            $message = sprintf("[Verification Server #%s, %s] Cannot parse result with XPATH: `%s`\n", $this->id, $this->type, $config['result_xpath']);
+            $message .= sprintf("Raw:\n%s\n", $raw);
+            $message .= sprintf('Error: %s', $ex->getMessage());
+
+            throw new Exception($message);
+        }
+
+        // map the result value to those of Acelle Mail
+        $result = is_bool($result) ? json_encode($result) : $result;
+        if (! array_key_exists($result, $config['result_map'])) {
+            throw new \Exception('Unexpected result from verification service: '.$raw);
+        }
+        $mapped = $config['result_map'][$result];
+
+        return [$mapped, $response];
+    }
+
+    /**
+     * Find the configuration settings for a given verification service.
+     *
+     * @return mixed
+     */
+    public function getConfig()
+    {
+        $configs = \Config::get('verification.services');
+        foreach ($configs as $config) {
+            if ($config['id'] == $this->type) {
+                return $config;
+            }
+        }
+
+        throw new \Exception('Cannot find settings for verification service '.$this->type);
+    }
+
+    /**
+     * Items per page.
+     *
+     * @var array
+     */
+    public static $itemsPerPage = 25;
+
+    /**
+     * Filter items.
+     *
+     * @return collect
+     */
+    public static function filter($request)
+    {
+        $user = $request->user();
+        $query = self::select('email_verification_servers.*');
+
+        // Keyword
+        if (! empty(trim($request->keyword))) {
+            foreach (explode(' ', trim($request->keyword)) as $keyword) {
+                $query = $query->where(function ($q) use ($keyword) {
+                    $q->orwhere('email_verification_servers.name', 'like', '%'.$keyword.'%')
+                        ->orWhere('email_verification_servers.type', 'like', '%'.$keyword.'%');
+                });
+            }
+        }
+
+        // filters
+        $filters = $request->all();
+        if (! empty($filters)) {
+            if (! empty($filters['type'])) {
+                $query = $query->where('email_verification_servers.type', '=', $filters['type']);
+            }
+        }
+
+        // Other filter
+        if (! empty($request->customer_id)) {
+            $query = $query->where('email_verification_servers.customer_id', '=', $request->customer_id);
+        }
+
+        if (! empty($request->admin_id)) {
+            $query = $query->where('email_verification_servers.admin_id', '=', $request->admin_id);
+        }
+
+        // remove customer sending servers
+        if (! empty($request->no_customer)) {
+            $query = $query->whereNull('customer_id');
+        }
+
+        return $query;
+    }
+
+    /**
+     * Search items.
+     *
+     * @return collect
+     */
+    public static function search($request)
+    {
+        $query = self::filter($request);
+
+        if (! empty($request->sort_order)) {
+            $query = $query->orderBy($request->sort_order, $request->sort_direction);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get server type select options.
+     *
+     * @return array
+     */
+    public static function typeSelectOptions()
+    {
+        $services = config('verification.services');
+        $options = [];
+        foreach ($services as $service) {
+            $options[] = ['value' => $service['id'], 'text' => $service['name']];
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get campaign validation rules.
+     */
+    public function rules()
+    {
+        $rules = [
+            'name' => 'required',
+            'type' => 'required',
+            'options.limit_value' => 'required',
+            'options.limit_base' => 'required',
+            'options.limit_unit' => 'required',
+        ];
+
+        if ($this->type) {
+            foreach ($this->getConfig()['fields'] as $field) {
+                $rules['options.'.$field] = 'required';
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Frequency time unit options.
+     *
+     * @return array
+     */
+    public static function quotaTimeUnitOptions()
     {
         return [
-            'api_key' => 'encrypted',
-            'api_options' => 'json',
-            'check_disposable' => 'boolean',
-            'check_role_based' => 'boolean',
-            'check_smtp' => 'boolean',
-            'check_catch_all' => 'boolean',
-            'credits_last_checked_at' => 'datetime',
-            'last_verification_at' => 'datetime',
+            ['value' => 'minute', 'text' => trans('messages.minute')],
+            ['value' => 'hour', 'text' => trans('messages.hour')],
+            ['value' => 'day', 'text' => trans('messages.day')],
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
     /**
-     * Get the user that owns this email verification server.
+     * Server status select options.
+     *
+     * @return array
      */
-    public function user(): BelongsTo
+    public static function statusSelectOptions()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return [
+            ['value' => self::STATUS_ACTIVE, 'text' => trans('messages.email_verification_server_status_'.self::STATUS_ACTIVE)],
+            ['value' => self::STATUS_INACTIVE, 'text' => trans('messages.email_verification_server_status_'.self::STATUS_INACTIVE)],
+        ];
     }
 
     /**
-     * Get all verification results for this server.
+     * Get all items.
+     *
+     * @return collect
      */
-    public function verificationResults(): HasMany
+    public static function getAll()
     {
-        return $this->hasMany(EmailVerificationResult::class, 'server_id');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Methods
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Verify an email address.
-     */
-    public function verifyEmail(string $email): ?EmailVerificationResult
-    {
-        // Check if result already exists and is still valid
-        $cached = $this->verificationResults()
-            ->where('email', $email)
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if ($cached) {
-            return $cached;
-        }
-
-        // Implement verification logic here
-        // This would call the actual API service
-        return null;
+        return self::where('status', '=', 'active');
     }
 
     /**
-     * Check available credits.
+     * Get all options.
+     *
+     * @return object
      */
-    public function checkCredits(): bool
+    public function getOptions()
     {
-        if ($this->status !== 'active') {
-            return false;
-        }
-
-        if ($this->credits_available === null) {
-            return true; // Unlimited credits
-        }
-
-        return $this->credits_available > 0;
+        return ! isset($this->options) ? [] : json_decode($this->options, true);
     }
 
     /**
-     * Check if credit warning threshold is reached.
+     * Disable verification server.
+     *
+     * @return array
      */
-    public function isLowOnCredits(): bool
+    public function disable()
     {
-        if ($this->credits_available === null) {
-            return false; // Unlimited credits
-        }
-
-        $creditPercentage = ($this->credits_available / ($this->credits_available + $this->credits_used)) * 100;
-
-        return $creditPercentage <= $this->credit_threshold;
+        $this->status = self::STATUS_INACTIVE;
+        $this->save();
     }
 
     /**
-     * Check if daily request limit is exceeded.
+     * Enable verification server.
+     *
+     * @return array
      */
-    public function isDailyLimitExceeded(): bool
+    public function enable()
     {
-        return $this->verifications_today >= $this->requests_per_day;
+        $this->status = self::STATUS_ACTIVE;
+        $this->save();
     }
 
     /**
-     * Check if minute request limit is exceeded.
+     * Get all active items.
+     *
+     * @return collect
      */
-    public function isMinuteLimitExceeded(): bool
+    public static function getAllActive()
     {
-        $minuteAgo = now()->subMinute();
-        $recentVerifications = $this->verificationResults()
-            ->where('verified_at', '>=', $minuteAgo)
-            ->count();
-
-        return $recentVerifications >= $this->requests_per_minute;
+        return self::where('status', '=', SendingServer::STATUS_ACTIVE);
     }
 
     /**
-     * Increment verification counters.
+     * Get all active system items.
+     *
+     * @return collect
      */
-    public function incrementVerificationCount(): void
+    public static function getAllAdminActive()
     {
-        $this->increment('verifications_today');
-        $this->increment('verifications_this_month');
-        $this->increment('total_verifications');
-        $this->update(['last_verification_at' => now()]);
+        return self::getAllActive()->whereNotNull('admin_id');
     }
 
     /**
-     * Reset daily counters (should be called via scheduled task).
+     * Add customer action log.
      */
-    public function resetDailyCounters(): void
+    public function log($name, $customer, $add_datas = [])
     {
-        $this->update(['verifications_today' => 0]);
-    }
+        $data = [
+            'id' => $this->id,
+            'name' => $this->name,
+        ];
 
-    /**
-     * Update result statistics.
-     */
-    public function updateResultStatistics(): void
-    {
-        $results = $this->verificationResults()->get();
+        $data = array_merge($data, $add_datas);
 
-        $this->update([
-            'valid_count' => $results->where('result', 'valid')->count(),
-            'invalid_count' => $results->where('result', 'invalid')->count(),
-            'risky_count' => $results->where('result', 'risky')->count(),
-            'unknown_count' => $results->where('result', 'unknown')->count(),
+        Log::create([
+            'customer_id' => $customer->id,
+            'type' => 'email_verification_server',
+            'name' => $name,
+            'data' => json_encode($data),
         ]);
     }
 
-    /**
-     * Get the display name for the server type.
-     */
-    public function getTypeLabel(): string
+    public function getSpeedLimitString()
     {
-        return match ($this->type) {
-            'zerobounce' => 'ZeroBounce',
-            'neverbounce' => 'NeverBounce',
-            'kickbox' => 'Kickbox',
-            'clearout' => 'Clearout',
-            'debounce' => 'Debounce',
-            'custom' => 'Custom',
-            default => ucfirst($this->type),
-        };
+        $options = $this->getOptions();
+
+        return "{$options['limit_value']} / {$options['limit_base']} {$options['limit_unit']}";
     }
 
-    /**
-     * Get the display name for the status.
-     */
-    public function getStatusLabel(): string
+    public function getTypeName()
     {
-        return match ($this->status) {
-            'active' => 'Active',
-            'inactive' => 'Inactive',
-            'error' => 'Error',
-            default => ucfirst($this->status),
-        };
+        try {
+            $service = $this->getConfig();
+
+            return $service['name'];
+        } catch (\Exception $ex) {
+            return 'Error: Config missing!';
+        }
     }
 
-    /**
-     * Get the validity rate percentage.
-     */
-    public function getValidityRate(): float
+    // For testing, do not save!
+    public function setLimit(int $value, int $periodValue, string $periodUnit)
     {
-        $total = $this->valid_count + $this->invalid_count + $this->risky_count + $this->unknown_count;
+        $options = $this->getOptions();
+        $options['limit_base'] = $periodValue;
+        $options['limit_unit'] = $periodUnit;
+        $options['limit_value'] = $value;
+        $this->options = json_encode($options);
+    }
 
-        if ($total === 0) {
-            return 0;
+    public function getRateTracker()
+    {
+        // always 'verify'
+        $options = $this->getOptions();
+
+        $limits = [];
+        if ($options['limit_value'] != RateLimit::UNLIMITED) {
+            $limits[] = new RateLimit(
+                $options['limit_value'],
+                $options['limit_base'],
+                $options['limit_unit'],
+                "Verification credits limit of {$options['limit_value']} per {$options['limit_base']} {$options['limit_unit']}",
+            );
         }
 
-        return ($this->valid_count / $total) * 100;
+        $file = storage_path('app/quota/verification-server-verify-email-rate-tracking-log-'.$this->uid);
+        $tracker = new RateTracker($file, $limits);
+
+        return $tracker;
+    }
+
+    public function getCreditTracker()
+    {
+        $file = storage_path('app/quota/verification-server-credits-'.$this->uid);
+
+        return CreditTracker::load($file, $createFile = true);
+    }
+
+    public function logger()
+    {
+        if (is_null($this->logger)) {
+            $formatter = new LineFormatter("[%datetime%] %channel%.%level_name%: %message%\n");
+            $logfile = storage_path('logs/'.php_sapi_name()."/everification-{$this->uid}-{$this->type}.log");
+            $stream = new RotatingFileHandler($logfile, 0, 'debug');
+            $stream->setFormatter($formatter);
+            $pid = getmypid();
+            $logger = new Logger($pid);
+            $logger->pushHandler($stream);
+
+            // Set
+            $this->logger = $logger;
+        }
+
+        return $this->logger;
+    }
+
+    public function getCreditsUsed()
+    {
+        return $this->getRateTracker()->getCreditsUsed();
     }
 }

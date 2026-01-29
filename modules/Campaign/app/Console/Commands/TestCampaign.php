@@ -2,7 +2,7 @@
 
 namespace Modules\Campaign\Console\Commands;
 
-use Acelle\Library\ExtendedSwiftMessage;
+use Modules\Mailing\Library\ExtendedSwiftMessage;
 use Illuminate\Console\Command;
 
 class TestCampaign extends Command

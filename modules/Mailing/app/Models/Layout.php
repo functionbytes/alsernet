@@ -1,219 +1,200 @@
 <?php
 
+/**
+ * Layout class.
+ *
+ * Model class for layouts
+ *
+ * LICENSE: This product includes software developed at
+ * the Acelle Co., Ltd. (http://acellemail.com/).
+ *
+ * @category   MVC Model
+ *
+ * @author     N. Pham <n.pham@acellemail.com>
+ * @author     L. Pham <l.pham@acellemail.com>
+ * @copyright  Acelle Co., Ltd
+ * @license    Acelle Co., Ltd
+ *
+ * @version    1.0
+ *
+ * @link       http://acellemail.com
+ */
+
 namespace Modules\Mailing\Models;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Modules\Mailing\Library\ExtendedSwiftMessage;
+use Modules\Mailing\Library\Traits\HasUid;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Mailing\Traits\HasUid;
 
 class Layout extends Model
 {
-    use HasFactory, HasUid, SoftDeletes;
+    use HasUid;
 
-    protected $table = 'mailing_layouts';
-
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable Attributes
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'uid',
-        'user_id',
-        'alias',
-        'group_name',
-        'code',
-        'type',
-        'is_protected',
-        'is_enabled',
-        'settings',
+        'name', 'alias', 'content', 'subject',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
-
-    protected function casts(): array
-    {
-        return [
-            'settings' => 'json',
-            'is_protected' => 'boolean',
-            'is_enabled' => 'boolean',
-        ];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Items per page.
+     *
+     * @var array
+     */
+    public static $itemsPerPage = 25;
 
     /**
-     * Get the user that owns this layout.
+     * Associations.
+     *
+     * @var object | collect
      */
-    public function user(): BelongsTo
+    public function pages()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany('Acelle\Model\Page');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Methods
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Render the layout with provided variables.
-     */
-    public function render(array $variables = []): string
+    public function tags()
     {
-        $content = $this->code ?? '';
-
-        foreach ($variables as $key => $value) {
-            $content = str_replace(
-                ["{{ $key }}", "{{{ $key }}}", '[['.$key.']]'],
-                $value,
-                $content
-            );
+        switch ($this->alias) {
+            case 'sign_up_form':
+                $tags = [
+                    ['name' => '{FIELDS}', 'required' => true],
+                    ['name' => '{SUBSCRIBE_BUTTON}', 'required' => true],
+                ];
+                break;
+            case 'sign_up_thankyou_page':
+                $tags = [
+                ];
+                break;
+            case 'sign_up_confirmation_email':
+                $tags = [
+                    ['name' => '{SUBSCRIBE_CONFIRM_URL}', 'required' => true],
+                ];
+                break;
+            case 'sign_up_confirmation_thankyou':
+                $tags = [
+                ];
+                break;
+            case 'sign_up_welcome_email':
+                $tags = [
+                    ['name' => '{UNSUBSCRIBE_URL}', 'required' => true],
+                ];
+                break;
+            case 'unsubscribe_form':
+                $tags = [
+                    ['name' => '{EMAIL_FIELD}', 'required' => true],
+                    ['name' => '{UNSUBSCRIBE_BUTTON}', 'required' => true],
+                ];
+                break;
+            case 'sign_up_confirmation_thankyou':
+                $tags = [
+                ];
+                break;
+            case 'unsubscribe_success_page':
+                $tags = [
+                ];
+                break;
+            case 'unsubscribe_goodbye_email':
+                $tags = [
+                ];
+                break;
+            case 'profile_update_email_sent':
+                $tags = [
+                ];
+                break;
+            case 'profile_update_email':
+                $tags = [
+                    ['name' => '{UPDATE_PROFILE_URL}', 'required' => true],
+                ];
+                break;
+            case 'profile_update_form':
+                $tags = [
+                    ['name' => '{FIELDS}', 'required' => true],
+                    ['name' => '{UPDATE_PROFILE_BUTTON}', 'required' => true],
+                    ['name' => '{UNSUBSCRIBE_URL}', 'required' => true],
+                ];
+                break;
+            case 'profile_update_success_page':
+                $tags = [
+                ];
+                break;
+            default:
+                $tags = [];
         }
 
-        return $content;
+        $tags = array_merge($tags, [
+            ['name' => '{LIST_NAME}', 'required' => false],
+            ['name' => '{CONTACT_NAME}', 'required' => false],
+            ['name' => '{CONTACT_STATE}', 'required' => false],
+            ['name' => '{CONTACT_ADDRESS_1}', 'required' => false],
+            ['name' => '{CONTACT_ADDRESS_2}', 'required' => false],
+            ['name' => '{CONTACT_CITY}', 'required' => false],
+            ['name' => '{CONTACT_ZIP}', 'required' => false],
+            ['name' => '{CONTACT_COUNTRY}', 'required' => false],
+            ['name' => '{CONTACT_PHONE}', 'required' => false],
+            ['name' => '{CONTACT_EMAIL}', 'required' => false],
+            ['name' => '{CONTACT_URL}', 'required' => false],
+        ]);
+
+        return $tags;
     }
 
-    /**
-     * Get a preview of the layout.
-     */
-    public function preview(array $variables = []): string
+    public function getMessage(?Closure $transform = null): ExtendedSwiftMessage
     {
-        return $this->render($variables);
-    }
+        // Create a message
+        $message = new ExtendedSwiftMessage;
+        $message->setContentType('text/html; charset=utf-8');
+        $message->setEncoder(new \Swift_Mime_ContentEncoder_PlainContentEncoder('8bit'));
 
-    /**
-     * Get settings as an array.
-     */
-    public function getSettingsArray(): array
-    {
-        if (empty($this->settings)) {
-            return [];
+        if (! is_null($transform)) {
+            $htmlContent = $transform($this->content);
+        } else {
+            $htmlContent = $this->content;
         }
 
-        return is_array($this->settings) ? $this->settings : json_decode($this->settings, true) ?? [];
+        $message->addPart($htmlContent, 'text/html');
+
+        return $message;
     }
 
     /**
-     * Get a specific setting value.
+     * Get all items.
+     *
+     * @return collect
      */
-    public function getSetting(string $key, mixed $default = null): mixed
+    public static function getAll()
     {
-        $settings = $this->getSettingsArray();
-
-        return $settings[$key] ?? $default;
+        return self::select('*');
     }
 
     /**
-     * Set a specific setting value.
+     * Filter items.
+     *
+     * @return collect
      */
-    public function setSetting(string $key, mixed $value): void
+    public static function filter($request)
     {
-        $settings = $this->getSettingsArray();
-        $settings[$key] = $value;
-        $this->settings = $settings;
+        $user = $request->user();
+        $query = self::select('layouts.*');
+
+        return $query;
     }
 
     /**
-     * Check if this is the default layout.
+     * Search items.
+     *
+     * @return collect
      */
-    public function isDefault(): bool
+    public static function search($request)
     {
-        return $this->getSetting('is_default', false) === true;
-    }
+        $query = self::filter($request);
 
-    /**
-     * Set this layout as the default for its group.
-     */
-    public function setAsDefault(): void
-    {
-        // Reset other layouts in the same group
-        static::query()
-            ->where('group_name', $this->group_name)
-            ->where('id', '!=', $this->id)
-            ->get()
-            ->each(function (self $layout) {
-                $layout->setSetting('is_default', false);
-                $layout->save();
-            });
+        $query = $query->orderBy($request->sort_order, $request->sort_direction);
 
-        // Set this as default
-        $this->setSetting('is_default', true);
-    }
-
-    /**
-     * Check if layout is enabled.
-     */
-    public function isEnabled(): bool
-    {
-        return $this->is_enabled ?? true;
-    }
-
-    /**
-     * Enable the layout.
-     */
-    public function enable(): void
-    {
-        $this->update(['is_enabled' => true]);
-    }
-
-    /**
-     * Disable the layout.
-     */
-    public function disable(): void
-    {
-        $this->update(['is_enabled' => false]);
-    }
-
-    /**
-     * Check if layout is protected from modification.
-     */
-    public function isProtected(): bool
-    {
-        return $this->is_protected ?? false;
-    }
-
-    /**
-     * Protect the layout from modification.
-     */
-    public function protect(): void
-    {
-        $this->update(['is_protected' => true]);
-    }
-
-    /**
-     * Unprotect the layout.
-     */
-    public function unprotect(): void
-    {
-        $this->update(['is_protected' => false]);
-    }
-
-    /**
-     * Extract variables from the layout code.
-     */
-    public function getVariables(): array
-    {
-        $code = $this->code ?? '';
-
-        // Find all variables in format {{ variable_name }}
-        preg_match_all('/\{\{\s*(\w+)\s*\}\}|\[\[(\w+)\]\]/', $code, $matches);
-
-        $variables = array_merge($matches[1], $matches[2]);
-        $variables = array_filter($variables);
-
-        return array_unique($variables);
+        return $query;
     }
 }

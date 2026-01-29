@@ -1,52 +1,65 @@
 <?php
 
-namespace Modules\Mailrelay\Providers;
+namespace Modules\Mailing\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Modules\Mailrelay\Events\CampaignSent;
-use Modules\Mailrelay\Events\EmailValidated;
-use Modules\Mailrelay\Events\ImportCompleted;
-use Modules\Mailrelay\Events\SubscriberCreated;
-use Modules\Mailrelay\Listeners\NotifyImportCompletion;
-use Modules\Mailrelay\Listeners\SendCampaignAnalytics;
-use Modules\Mailrelay\Listeners\SyncNewSubscriber;
-use Modules\Mailrelay\Listeners\UpdateSubscriberValidationStatus;
 
 class EventServiceProvider extends ServiceProvider
 {
     /**
      * The event listener mappings for the application.
      *
-     * @var array<class-string, array<int, class-string>>
+     * @var array
      */
     protected $listen = [
-        CampaignSent::class => [
-            SendCampaignAnalytics::class,
+        'Modules\Mailing\Events\CampaignUpdated' => [
+            'Modules\Mailing\Listeners\CampaignUpdatedListener',
         ],
-        SubscriberCreated::class => [
-            SyncNewSubscriber::class,
+        'Modules\Mailing\Events\MailListUpdated' => [
+            'Modules\Mailing\Listeners\MailListUpdatedListener',
         ],
-        ImportCompleted::class => [
-            NotifyImportCompletion::class,
+        'Modules\Mailing\Events\UserUpdated' => [
+            'Modules\Mailing\Listeners\UserUpdatedListener',
         ],
-        EmailValidated::class => [
-            UpdateSubscriberValidationStatus::class,
+        'Modules\Mailing\Events\CronJobExecuted' => [
+            'Modules\Mailing\Listeners\CronJobExecutedListener',
         ],
+        'Modules\Mailing\Events\AdminLoggedIn' => [
+            'Modules\Mailing\Listeners\AdminLoggedInListener',
+        ],
+        'Modules\Mailing\Events\MailListSubscription' => [
+            /* Use subscriber instead */
+            // 'Modules\Mailing\Listeners\SendListNotificationToOwner',
+            // 'Modules\Mailing\Listeners\SendListNotificationToSubscriber',
+            // 'Modules\Mailing\Listeners\TriggerAutomation',
+        ],
+        'Modules\Mailing\Events\MailListUnsubscription' => [
+            /* Use subscriber instead */
+            // 'Modules\Mailing\Listeners\SendListNotificationToOwner',
+            // 'Modules\Mailing\Listeners\SendListNotificationToSubscriber',
+            // 'Modules\Mailing\Listeners\TriggerAutomation',
+        ],
+        'Modules\Mailing\Events\MailListImported' => [
+            'Modules\Mailing\Listeners\TriggerAutomationForImportedContacts',
+        ],
+    ];
+
+    /**
+     * The subscriber classes to register.
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        'Modules\Mailing\Listeners\TriggerAutomation',
+        'Modules\Mailing\Listeners\SendListNotificationToOwner',
+        'Modules\Mailing\Listeners\SendListNotificationToSubscriber',
     ];
 
     /**
      * Register any events for your application.
      */
-    public function boot(): void
+    public function boot()
     {
         parent::boot();
-    }
-
-    /**
-     * Determine if events and listeners should be automatically discovered.
-     */
-    public function shouldDiscoverEvents(): bool
-    {
-        return false;
     }
 }

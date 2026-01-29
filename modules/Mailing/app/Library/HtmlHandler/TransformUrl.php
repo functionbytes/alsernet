@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library\HtmlHandler;
 
-
-use App\Models\Campaign\CampaignTrackingDomain;
-use App\Models\Template\Template;
+use Modules\Mailing\Library\StringHelper;
+use Modules\Mailing\Models\Template;
+use Modules\Mailing\Models\TrackingDomain;
 use Exception;
 use League\Pipeline\StageInterface;
 
@@ -16,7 +16,7 @@ class TransformUrl implements StageInterface
 
     public $domain;
 
-    public function __construct(Template $template, $msgId, ?CampaignTrackingDomain $domain = null)
+    public function __construct(Template $template, $msgId, ?TrackingDomain $domain = null)
     {
         $this->template = $template;
         $this->msgId = $msgId;

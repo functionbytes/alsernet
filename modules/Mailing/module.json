@@ -1,21 +1,38 @@
 {
-    "name": "Mailrelay",
-    "alias": "mailrelay",
-    "description": "Módulo completo de email marketing y automatización con integración Mailrelay API, validación de emails multi-nivel, gestión de campañas y newsletters",
+    "name": "Mailing",
+    "alias": "mailing",
+    "description": "Complete email marketing system migrated from Acelle Mail with multi-level email validation, campaign management, subscriber automation, and Mailrelay API integration",
+    "version": "1.0.0",
     "keywords": [
         "email",
         "marketing",
-        "mailrelay",
+        "mailing",
         "campaigns",
         "newsletter",
         "subscribers",
         "email-validation",
-        "automation"
+        "automation",
+        "acelle",
+        "mailrelay",
+        "sms",
+        "analytics"
     ],
     "priority": 0,
     "providers": [
-        "Modules\\Mailrelay\\Providers\\MailrelayServiceProvider",
-        "Modules\\Mailrelay\\Providers\\EventServiceProvider"
+        "Modules\\Mailing\\Providers\\MailingServiceProvider",
+        "Modules\\Mailing\\Providers\\EventServiceProvider"
     ],
-    "files": []
+    "aliases": {},
+    "files": [],
+    "requires": {
+        "php": "^8.4",
+        "laravel/framework": "^12.0",
+        "guzzlehttp/guzzle": "^7.8",
+        "maatwebsite/excel": "^3.1",
+        "barryvdh/laravel-dompdf": "^3.0",
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.6",
+        "soundasleep/html2text": "^2.1",
+        "myclabs/php-enum": "^1.8"
+    }
 }

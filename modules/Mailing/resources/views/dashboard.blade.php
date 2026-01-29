@@ -1,368 +1,315 @@
-@extends('layouts.theme')
+@extends('layouts.core.frontend', [
+    'menu' => 'dashboard',
+])
 
-@section('title', 'Dashboard - Mail Relay')
+@section('title', trans('messages.dashboard'))
 
-@section('content')
-<div class="widget-content searchable-container list">
-
-    {{-- Header --}}
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1 fw-bold">Dashboard Mailrelay</h2>
-                    <p class="text-muted mb-0">Bienvenido, aquí está lo que está sucediendo con tus campañas de email</p>
-                </div>
-                <div>
-                    <a href="{{ route('mailrelay.campaigns.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i>Nueva campaña
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Statistics Cards --}}
-    <div class="card mb-3">
-        <div class="card-body border-bottom">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card bg-light-secondary stat-card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div>
-                                    <h6 class="card-title text-primary mb-2">Total suscriptores</h6>
-                                    <h4 class="mb-1 fw-bold">{{ number_format($totalSubscribers ?? 0) }}</h4>
-                                    <small class="text-muted">Registrados</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-light-secondary stat-card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div>
-                                    <h6 class="card-title text-success mb-2">Emails válidos</h6>
-                                    <h4 class="mb-1 fw-bold">{{ number_format($validEmails ?? 0) }}</h4>
-                                    <small class="text-muted">Validados</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-light-secondary stat-card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div>
-                                    <h6 class="card-title text-warning mb-2">Emails inválidos</h6>
-                                    <h4 class="mb-1 fw-bold">{{ number_format($invalidEmails ?? 0) }}</h4>
-                                    <small class="text-muted">Rechazados</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-light-secondary stat-card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div>
-                                    <h6 class="card-title text-info mb-2">Campañas activas</h6>
-                                    <h4 class="mb-1 fw-bold">{{ number_format($activeCampaigns ?? 0) }}</h4>
-                                    <small class="text-muted">En ejecución</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Charts Row --}}
-    <div class="row g-3 mb-3">
-        {{-- Validation Statistics Chart --}}
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header p-4 border-bottom border-light">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2"></i>Estadísticas de validación</h5>
-                </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="validationChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Campaign Performance Chart --}}
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header p-4 border-bottom border-light">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2"></i>Rendimiento de campañas</h5>
-                </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="campaignChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Recent Activity Row --}}
-    <div class="row g-3">
-        {{-- Recent Imports --}}
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header p-4 border-bottom border-light">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-upload me-2"></i>Importaciones recientes</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle text-nowrap mb-0">
-                            <thead class="header-item">
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Archivo</th>
-                                    <th>Registros</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($recentImports ?? [] as $import)
-                                <tr>
-                                    <td>{{ $import->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        <i class="fas fa-file-alt text-muted me-2"></i>
-                                        {{ $import->filename }}
-                                    </td>
-                                    <td>{{ number_format($import->total_records) }}</td>
-                                    <td>
-                                        @if($import->status === 'completed')
-                                            <span class="badge bg-success-subtle text-success rounded-3 py-2 fw-semibold fs-2">Completado</span>
-                                        @elseif($import->status === 'processing')
-                                            <span class="badge bg-info-subtle text-info rounded-3 py-2 fw-semibold fs-2">Procesando</span>
-                                        @else
-                                            <span class="badge bg-danger-subtle text-danger rounded-3 py-2 fw-semibold fs-2">Fallido</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-4">
-                                        <div class="text-muted">
-                                            <i class="fas fa-inbox fs-3 d-block mb-2"></i>
-                                            No hay importaciones recientes
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    @if(count($recentImports ?? []) > 0)
-                    <div class="text-center mt-3 pt-3 border-top">
-                        <a href="{{ route('mailrelay.imports.index') }}" class="btn btn-sm btn-outline-primary">
-                            Ver todas las importaciones <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Campaign Metrics --}}
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header p-4 border-bottom border-light">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-envelope-open me-2"></i>Métricas de campañas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle text-nowrap mb-0">
-                            <thead class="header-item">
-                                <tr>
-                                    <th>Campaña</th>
-                                    <th>Enviados</th>
-                                    <th>Abiertos</th>
-                                    <th>Clics</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($campaignMetrics ?? [] as $campaign)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            <span class="fw-bold">{{ $campaign->name }}</span>
-                                            <small class="text-muted">{{ $campaign->sent_at->format('M d') }}</small>
-                                        </div>
-                                    </td>
-                                    <td>{{ number_format($campaign->sent_count) }}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <small class="fw-semibold text-success">{{ $campaign->open_rate }}%</small>
-                                            <div class="progress" style="width: 60px; height: 6px;">
-                                                <div class="progress-bar bg-success" style="width: {{ $campaign->open_rate }}%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <small class="fw-semibold text-primary">{{ $campaign->click_rate }}%</small>
-                                            <div class="progress" style="width: 60px; height: 6px;">
-                                                <div class="progress-bar bg-primary" style="width: {{ $campaign->click_rate }}%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-4">
-                                        <div class="text-muted">
-                                            <i class="fas fa-bullhorn fs-3 d-block mb-2"></i>
-                                            No hay campañas enviadas todavía
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    @if(count($campaignMetrics ?? []) > 0)
-                    <div class="text-center mt-3 pt-3 border-top">
-                        <a href="{{ route('mailrelay.campaigns.index') }}" class="btn btn-sm btn-outline-primary">
-                            Ver todas las campañas <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
+@section('head')
+    <script type="text/javascript" src="{{ AppUrl::asset('core/echarts/echarts.min.js') }}"></script>
+    <script type="text/javascript" src="{{ AppUrl::asset('core/echarts/dark.js') }}"></script> 
 @endsection
 
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+@section('content')
+    @if (config('custom.japan') && !empty(trans('messages.dashboard.notice')))
+        <h1>{!! trans('messages.dashboard.notice') !!}</h1>
+    @endif
+    <h2 class="mt-4 pt-2">{!! trans('messages.frontend_dashboard_hello', ['name' => Auth::user()->customer->displayName()]) !!}</h2>
+    <p>{!! trans('messages.frontend_dashboard_welcome') !!}</p>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Validation Statistics Chart
-    const validationCtx = document.getElementById('validationChart');
-    if (validationCtx) {
-        new Chart(validationCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Válidos', 'Inválidos', 'Pendientes', 'Desechables'],
-                datasets: [{
-                    data: [
-                        {{ $validEmails ?? 850 }},
-                        {{ $invalidEmails ?? 45 }},
-                        {{ $pendingEmails ?? 30 }},
-                        {{ $disposableEmails ?? 25 }}
-                    ],
-                    backgroundColor: ['#198754', '#dc3545', '#ffc107', '#6c757d'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: { size: 12 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                let value = context.parsed || 0;
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let percentage = ((value / total) * 100).toFixed(1);
-                                return label + ': ' + value.toLocaleString() + ' (' + percentage + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
+    <h3 class="mt-5 mb-3">
+        <span class="material-symbols-rounded me-2">donut_large</span>
+        {{ trans("messages.used_quota") }}
+    </h3>
+    <p>{{ trans('messages.dashboard.credit.wording') }}</p>
+    <div class="row quota_box">
+        <div class="col-12 col-md-6">
+            <div class="content-group-sm mb-3">
+                <div class="d-flex mb-2">
+                    <label class="fw-600 me-auto">{{ trans('messages.sending_quota') }}</label>
+                    <div class="pull-right text-semibold">
+                        <span class="text-muted">{{ number_with_delimiter($sendingCreditsUsed) }}/{{ ($sendingCreditsLimit == -1) ? '∞' : number_with_delimiter($sendingCreditsLimit) }}</span>
+                        &nbsp;&nbsp;&nbsp;<span>{{ number_to_percentage($sendingCreditsUsedPercentage) }}</span>
+                    </div>
+                </div>
+                
+                <div class="progress progress-sm" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped bg-{{ ($sendingCreditsUsedPercentage >= 0.8) ? 'danger' : 'primary' }}" style="width: {{ $sendingCreditsUsedPercentage*100  }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="content-group-sm mb-3">
+                <div class="d-flex mb-2">
+                    <label class="fw-600 me-auto">{{ trans('messages.list') }}</label>
+                    <div class="pull-right  text-semibold">
+                        <span class="text-muted">{{ number_with_delimiter($listsCount) }}/{{ $maxLists == -1 ? '∞' : number_with_delimiter($maxLists) }}</span>
+                        &nbsp;&nbsp;&nbsp;<span>{{ number_to_percentage($listsUsed) }}</span>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped bg-{{ $listsUsed >= 0.8 ? 'danger' : 'primary' }}" style="width: {{ 100*$listsUsed }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="content-group-sm mb-3">
+                <div class="d-flex mb-2">
+                    <label class="fw-600 me-auto">{{ trans('messages.campaign') }}</label>
+                    <div class="pull-right  text-semibold">
+                        <span class="text-muted">{{ number_with_delimiter($campaignsCount) }}/{{ $maxCampaigns == -1 ? '∞' : number_with_delimiter($maxCampaigns) }}</span>
+                        &nbsp;&nbsp;&nbsp;<span>{{ number_to_percentage($campaignsUsed) }}</span>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped bg-{{ $campaignsUsed >= 0.8 ? 'danger' : 'primary' }}" style="width: {{ 100*$campaignsUsed }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="content-group-sm">
+                <div class="d-flex mb-2">
+                    <label class="fw-600 me-auto">{{ trans('messages.subscriber') }}</label>
+                    <div class="pull-right  text-semibold">
+                        <span class="text-muted">{{ number_with_delimiter($subscribersCount) }}/{{ ($maxSubscribers == -1) ? '∞' : number_with_delimiter($maxSubscribers) }}</span>
+                        &nbsp;&nbsp;&nbsp;<span>{{ number_to_percentage($subscribersUsed) }}</span>
+                    </div>
+                </div>
+                <div class="progress progress-sm" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped bg-{{ $subscribersUsed >= 0.8 ? 'danger' : 'primary' }}" style="width: {{ $subscribersUsed*100 }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Campaign Performance Chart
-    const campaignCtx = document.getElementById('campaignChart');
-    if (campaignCtx) {
-        new Chart(campaignCtx.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: {!! json_encode($chartLabels ?? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']) !!},
-                datasets: [{
-                    label: 'Emails enviados',
-                    data: {!! json_encode($emailsSent ?? [1200, 1900, 1500, 2100, 2400, 2800]) !!},
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Aperturas',
-                    data: {!! json_encode($emailsOpened ?? [800, 1300, 1000, 1500, 1700, 2000]) !!},
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Clics',
-                    data: {!! json_encode($emailsClicked ?? [300, 500, 400, 600, 700, 850]) !!},
-                    borderColor: '#ffc107',
-                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: { size: 12 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                let value = context.parsed.y || 0;
-                                return label + ': ' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { drawBorder: false, color: 'rgba(0,0,0,0.05)' }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-    }
-});
-</script>
-@endpush
+    @include('_dashboard_campaigns')
+
+    @include('_dashboard_list_growth')    
+
+
+    @if (isSiteDemo())
+    <h3 class="mt-5 mb-3"><span class="material-symbols-rounded me-2">star_half</span> {{ trans('messages.top_5') }}
+    </h3>
+
+    <ul class="nav nav-tabs nav-underline" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="campaign_opens-tab" data-bs-toggle="tab" data-bs-target="#campaign_opens" role="button" role="tab" aria-controls="campaign_opens" aria-selected="true">
+                {{ trans('messages.campaign_opens') }}
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="campaign_clicks-tab" data-bs-toggle="tab" data-bs-target="#campaign_clicks" role="button" role="tab" aria-controls="campaign_clicks" aria-selected="false">
+                {{ trans('messages.campaign_clicks') }}
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="clicked_links-tab" data-bs-toggle="tab" data-bs-target="#clicked_links" role="button" role="tab" aria-controls="clicked_links" aria-selected="false">
+                {{ trans('messages.clicked_links') }}
+            </a>
+        </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="campaign_opens" role="tabpanel" aria-labelledby="campaign_opens-tab">
+            <ul class="modern-listing mt-0 top-border-none">
+                @forelse (Acelle\Model\Campaign::topOpens(5, Auth::user()->customer)->get() as $num => $item)
+                    <li>
+                        <div class="row">
+                            <div class="col-sm-5 col-md-5">
+                                <div class="d-flex align-items-center">
+                                    <i class="number d-inline-block me-3">{{ $num+1 }}</i>
+                                    <div>
+                                        <h6 class="mt-0 mb-0 text-semibold">
+                                            <a href="{{ action('CampaignController@overview', $item->uid) }}">
+                                                {{ $item->name }}
+                                            </a>
+                                        </h6>
+                                        <p class="mb-0">
+                                            {!! $item->displayRecipients() !!}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ number_with_delimiter($item->aggregate) }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.opens') }}</span>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ number_with_delimiter($item->readCache('UniqOpenCount')) }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.uniq_opens') }}</span>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ (null !== $item->lastOpen()) ? Auth::user()->customer->formatDateTime($item->lastOpen()->created_at, 'datetime_full') : "" }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.last_open') }}</span>
+                            </div>
+                        </div>
+
+                    </li>
+                @empty
+                    <li class="empty-li pt-0">
+                        <div class="empty-list mt-0">
+                            <span class="material-symbols-rounded">auto_awesome</span>
+                            <span class="line-1">
+                                {{ trans('messages.empty_record_message') }}
+                            </span>
+                        </div>
+                    </li>
+                @endforelse
+            </ul>
+        </div>
+        <div class="tab-pane fade" id="campaign_clicks" role="tabpanel" aria-labelledby="campaign_clicks-tab">
+            <ul class="modern-listing mt-0 top-border-none">
+                @forelse (Acelle\Model\Campaign::topClicks(5, Auth::user()->customer)->get() as $num => $item)
+                    <li>
+                        <div class="row">
+                            <div class="col-sm-5 col-md-5">
+                                <div class="d-flex align-items-center">
+                                    <i class="number d-inline-block me-3">{{ $num+1 }}</i>
+                                    <div>
+                                        <h6 class="mt-0 mb-0 text-semibold">
+                                            <a href="{{ action('CampaignController@overview', $item->uid) }}">
+                                                {{ $item->name }}
+                                            </a>
+                                        </h6>
+                                        <p>
+                                            {!! $item->displayRecipients() !!}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ $item->aggregate }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.clicks') }}</span>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ $item->urlCount() }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.urls') }}</span>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    #
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.last_clicked') }}</span>
+                            </div>
+                        </div>
+                    </li>
+                @empty
+                    <li class="empty-li pt-0">
+                        <div class="empty-list mt-0">
+                            <span class="material-symbols-rounded">auto_awesome</span>
+                            <span class="line-1">
+                                {{ trans('messages.empty_record_message') }}
+                            </span>
+                        </div>
+                    </li>
+                @endforelse
+            </ul>
+        </div>
+        <div class="tab-pane fade" id="clicked_links" role="tabpanel" aria-labelledby="clicked_links-tab">
+            <ul class="modern-listing mt-0 top-border-none">
+                @forelse (Acelle\Model\Campaign::topLinks(5, Auth::user()->customer)->get() as $num => $item)
+                    <li>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="number d-inline-block me-3">{{ $num+1 }}</i>
+                                    <div>
+                                        <h6 class="mt-0 mb-0 text-semibold url-truncate">
+                                            <a title="{{ $item->url }}" href="{{ $item->url }}" target="_blank">
+                                                {{ $item->url }}
+                                            </a>
+                                        </h6>
+                                        <p>
+                                            {{ $item->aggregate }} {{ trans('messages.campaigns') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    {{ $item->aggregate }}
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.clicks') }}</span>
+                            </div>
+                            <div class="col-sm-2 col-md-2 text-left">
+                                <h5 class="m-0 text-bold">
+                                    #
+                                </h5>
+                                <span class="text-muted">{{ trans('messages.last_clicked') }}</span>
+                            </div>
+                        </div>
+                    </li>
+                @empty
+                    <li class="empty-li pt-0">
+                        <div class="empty-list mt-0">
+                            <span class="material-symbols-rounded">auto_awesome</span>
+                            <span class="line-1">
+                                {{ trans('messages.empty_record_message') }}
+                            </span>
+                        </div>
+                    </li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+    @endif
+
+    <h3 class="mt-5 mb-3"><span class="material-symbols-rounded me-2">web_stories</span>
+         {{ trans('messages.activity_log') }}</h3>
+
+    @if (Auth::user()->customer->logs()->count() == 0)
+        <div class="empty-list">
+            <span class="material-symbols-rounded">auto_awesome</span>
+            <span class="line-1">
+                {{ trans('messages.no_activity_logs') }}
+            </span>
+        </div>
+    @else
+        <div class="action-log-box">
+            <!-- Timeline -->
+            <div class="">
+                <div class="mt-4">
+                    @foreach (Auth::user()->customer->logs()->take(20)->get() as $log)
+                        <!-- Sales stats -->
+                        <div class="d-flex mb-3">
+                            <div class="me-3">
+                                <a href="{{ action('AccountController@profile') }}"><img width="50px" class="rounded-circle shadow-sm" src="{{ $log->customer->user->getProfileImageUrl() }}" alt=""></a>
+                            </div>
+
+                            <div class="card px-0 shadow-sm container-fluid">
+                                <div class="card-body pt-2">
+                                    <div class="d-flex align-items-center pt-1">
+                                        <label class="panel-title text-semibold my-0 fw-600">{{ $log->customer->displayName() }}</label>
+                                        <div class="d-flex align-items-center ms-auto text-muted">
+                                            <span style="font-size: 18px" class="material-symbols-rounded ms-auto me-2">history</span>
+                                            <div class="">
+                                                <span class="heading-text"><i class="icon-history position-left text-success"></i> {{ $log->created_at->timezone($currentTimezone)->diffForHumans() }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0">{!! $log->message() !!}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /sales stats -->
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <br>
+    <br>
+@endsection

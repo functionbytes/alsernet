@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library\HtmlHandler;
 
-
-use App\Models\Product;
+use Modules\Mailing\Library\StringHelper;
+use Modules\Mailing\Models\Product;
 use League\Pipeline\StageInterface;
 
 class TransformWidgets implements StageInterface

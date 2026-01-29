@@ -1,68 +1,53 @@
 <?php
 
-namespace Modules\Mailrelay\Policies;
+namespace Modules\Mailing\Policies;
 
-use App\Models\User;
+use Modules\Mailing\Models\Subscriber;
+use Modules\Mailing\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Mailrelay\Entities\Subscriber;
 
 class SubscriberPolicy
 {
-    use HandlesAuthorization, HasSafePermissionCheck;
+    use HandlesAuthorization;
 
-    /**
-     * Determine if the user can view any subscribers.
-     */
-    public function viewAny(User $user): bool
+    public function read(User $user, Subscriber $item)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.view');
+        $customer = $user->customer;
+
+        return $item->mailList->customer_id == $customer->id;
     }
 
-    /**
-     * Determine if the user can view the subscriber.
-     */
-    public function view(User $user, Subscriber $subscriber): bool
+    public function create(User $user)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.view');
+        // constraints are checked in MailListPolicy
+        return true;
     }
 
-    /**
-     * Determine if the user can create subscribers.
-     */
-    public function create(User $user): bool
+    public function update(User $user, Subscriber $item)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.create');
+        $customer = $user->customer;
+
+        return $item->mailList->customer_id == $customer->id;
     }
 
-    /**
-     * Determine if the user can update the subscriber.
-     */
-    public function update(User $user, Subscriber $subscriber): bool
+    public function delete(User $user, Subscriber $item)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.edit');
+        $customer = $user->customer;
+
+        return $item->mailList->customer_id == $customer->id;
     }
 
-    /**
-     * Determine if the user can delete the subscriber.
-     */
-    public function delete(User $user, Subscriber $subscriber): bool
+    public function subscribe(User $user, Subscriber $subscriber)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.delete');
+        $customer = $user->customer;
+
+        return $subscriber->mailList->customer_id == $customer->id;
     }
 
-    /**
-     * Determine if the user can manage subscriber groups.
-     */
-    public function manageGroups(User $user, Subscriber $subscriber): bool
+    public function unsubscribe(User $user, Subscriber $item)
     {
-        return $this->hasPermission($user, 'mailrelay.subscribers.manage');
-    }
+        $customer = $user->customer;
 
-    /**
-     * Determine if the user can sync subscribers with Mailrelay.
-     */
-    public function sync(User $user): bool
-    {
-        return $this->hasPermission($user, 'mailrelay.subscribers.sync');
+        return $item->mailList->customer_id == $customer->id;
     }
 }

@@ -1,0 +1,179 @@
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                    MAILING MODULE PERMISSIONS SYSTEM OVERVIEW                      ║
+║                              Generated: 2026-01-29                                 ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ QUICK STATS                                                                         │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  Total Permissions:  87                                                             │
+│  Total Roles:        8                                                              │
+│  Policy Files:       11                                                             │
+│  Documentation:      60+ pages                                                      │
+│  Coverage:           100% of policies                                               │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ ROLES HIERARCHY (8 ROLES)                                                           │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│    ┌─────────────────┐                                                              │
+│    │  super-admin    │  87 permissions - Complete system control                    │
+│    └────────┬────────┘                                                              │
+│             │                                                                        │
+│    ┌────────┴────────┐                                                              │
+│    │     admin       │  67 permissions - Platform management                        │
+│    └────────┬────────┘                                                              │
+│             │                                                                        │
+│    ┌────────┴────────┐                                                              │
+│    │  mailing_admin  │  39 permissions - Full mailing operations                    │
+│    └────────┬────────┘                                                              │
+│             │                                                                        │
+│    ┌────────┴────────┐                                                              │
+│    │ mailing_manager │  30 permissions - Campaign management                        │
+│    └────────┬────────┘                                                              │
+│             │                                                                        │
+│    ┌────────┴────────┐                                                              │
+│    │  mailing_user   │  13 permissions - Content creation                           │
+│    └────────┬────────┘                                                              │
+│             │                                                                        │
+│    ┌────────┴────────┐                                                              │
+│    │ mailing_viewer  │  11 permissions - Read-only access                           │
+│    └─────────────────┘                                                              │
+│                                                                                      │
+│    ┌─────────────────┐                                                              │
+│    │    manager      │  22 permissions - Legacy operational                         │
+│    └─────────────────┘                                                              │
+│                                                                                      │
+│    ┌─────────────────┐                                                              │
+│    │ administrative  │   4 permissions - Legacy viewer                              │
+│    └─────────────────┘                                                              │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ PERMISSION CATEGORIES (87 TOTAL)                                                    │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  CORE OPERATIONS (39 permissions)                                                   │
+│  ├── Campaigns............7  (view, create, edit, delete, send, pause, test)       │
+│  ├── Subscribers..........8  (view, create, edit, delete, manage, import, export,  │
+│  │                            sync)                                                 │
+│  ├── Lists................6  (view, create, edit, delete, import, export)          │
+│  ├── Templates............4  (view, create, edit, delete)                          │
+│  ├── Automations..........4  (view, create, edit, delete)                          │
+│  ├── Imports..............3  (view, create, delete)                                │
+│  ├── Validation...........2  (test, validate)                                      │
+│  └── Access...............2  (access, dashboard.view)                              │
+│                                                                                      │
+│  MAILER INFRASTRUCTURE (28 permissions)                                             │
+│  ├── Components...........5  (view, create, update, delete, preview)               │
+│  ├── Endpoints............6  (view, create, update, delete, logs, regenerate-token)│
+│  ├── Templates............6  (view, create, update, delete, preview, manage)       │
+│  ├── Variables............4  (view, create, update, delete)                        │
+│  └── Settings.............2  (configure, view)                                     │
+│                                                                                      │
+│  SYSTEM SETTINGS (30 permissions)                                                   │
+│  ├── General..............5  (general, api, webhooks, permissions, manage)         │
+│  ├── Sending Servers......5  (view, create, edit, delete, test)                    │
+│  ├── Bounce Handlers......5  (view, create, edit, delete, test)                    │
+│  ├── Feedback Handlers....5  (view, create, edit, delete, test)                    │
+│  ├── Sub-Accounts.........5  (view, create, edit, delete, test)                    │
+│  └── Verification Servers.5  (view, create, edit, delete, test)                    │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ ROLE CAPABILITIES MATRIX                                                            │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  Feature          │ super │ admin │ mail_│ mail_│ mail_│ mail_│ mgr │ adm │       │
+│                   │ admin │       │ admin│ mngr │ user │ view │     │     │       │
+│  ─────────────────┼───────┼───────┼──────┼──────┼──────┼──────┼─────┼─────┤       │
+│  Send Campaigns   │  ✓    │  ✓    │  ✓   │  ✓   │  ✗   │  ✗   │  ✓  │  ✗  │       │
+│  Create Campaigns │  ✓    │  ✓    │  ✓   │  ✓   │  ✓   │  ✗   │  ✓  │  ✗  │       │
+│  Delete Campaigns │  ✓    │  ✓    │  ✓   │  ✗   │  ✗   │  ✗   │  ✗  │  ✗  │       │
+│  Import Subs      │  ✓    │  ✓    │  ✓   │  ✓   │  ✗   │  ✗   │  ✓  │  ✗  │       │
+│  Manage Settings  │  ✓    │  ✓    │  ✗   │  ✗   │  ✗   │  ✗   │  ✗  │  ✗  │       │
+│  Mailer Infra     │  ✓    │  ✓    │ View │ View │ View │ View │  ✗  │  ✗  │       │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ DOCUMENTATION FILES                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  📖 PERMISSIONS_README.md                     - Start here (index/navigation)       │
+│  🔍 PERMISSIONS_QUICK_REFERENCE.md (5 pages)  - Fast lookup, common tasks          │
+│  📚 PERMISSIONS_SEEDER_REPORT.md (37 pages)   - Complete reference                 │
+│  📊 PERMISSIONS_ROLE_HIERARCHY.md (12 pages)  - Visual guides                      │
+│  ⚙️  PERMISSIONS_IMPLEMENTATION_SUMMARY.md    - Technical overview                 │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ QUICK START                                                                          │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  1. Run Seeder:                                                                     │
+│     php artisan db:seed --class="Modules\Mailing\Database\Seeders\                 │
+│                                   MailingPermissionsSeeder"                         │
+│                                                                                      │
+│  2. Assign Role:                                                                    │
+│     $user->assignRole('mailing_admin');                                             │
+│                                                                                      │
+│  3. Check Permission:                                                               │
+│     if ($user->can('mailing.campaigns.send')) { ... }                              │
+│                                                                                      │
+│  4. Protect Route:                                                                  │
+│     Route::middleware(['permission:mailing.campaigns.send'])                        │
+│         ->post('/campaigns/{id}/send', ...);                                        │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ SPECIAL BUSINESS RULES                                                               │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  ⚠️  Cannot edit SENT campaigns (even with edit permission)                         │
+│  ⚠️  Cannot delete SENT/SENDING campaigns (even with delete permission)             │
+│  ⚠️  Cannot delete PROCESSING imports (even with delete permission)                 │
+│  ⚠️  Automations check feature flag before permission                               │
+│  ⚠️  MailerSettings currently hardcoded to super-admin role                         │
+│  ⚠️  Copy actions require BOTH view AND create permissions                          │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ FILES CREATED/MODIFIED                                                               │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  ✅ modules/Mailing/database/seeders/MailingPermissionsSeeder.php                   │
+│  ✅ modules/Mailing/docs/PERMISSIONS_README.md                                      │
+│  ✅ modules/Mailing/docs/PERMISSIONS_QUICK_REFERENCE.md                             │
+│  ✅ modules/Mailing/docs/PERMISSIONS_SEEDER_REPORT.md                               │
+│  ✅ modules/Mailing/docs/PERMISSIONS_ROLE_HIERARCHY.md                              │
+│  ✅ modules/Mailing/docs/PERMISSIONS_IMPLEMENTATION_SUMMARY.md                      │
+│  ✅ modules/Mailing/docs/PERMISSIONS_OVERVIEW.txt (this file)                       │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING                                                                      │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  Permission Denied:  php artisan permission:cache-reset                             │
+│  Role Not Found:     php artisan db:seed --class=MailingPermissionsSeeder          │
+│  Cache Issues:       php artisan cache:clear                                        │
+│                                                                                      │
+│  See: modules/Mailing/docs/PERMISSIONS_SEEDER_REPORT.md#troubleshooting             │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║  Status: ✅ PRODUCTION READY                                                        ║
+║  Version: 1.0                                                                       ║
+║  Laravel: 12                                                                        ║
+║  Spatie Permission: 6.x                                                             ║
+║  Created: 2026-01-29                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════════╝

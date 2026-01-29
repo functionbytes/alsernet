@@ -358,4 +358,581 @@ return [
         'debug' => env('MAILING_DEBUG', false),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Acelle Mail Integration Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Acelle Mail system features
+    | These settings are migrated from Acelle's original configuration
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Feature Toggles
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable specific features globally
+    | Used by policies to control feature access
+    |
+    */
+    'features' => [
+        'automations' => [
+            'enabled' => env('MAILING_AUTOMATIONS_ENABLED', true),
+        ],
+        'segments' => [
+            'enabled' => env('MAILING_SEGMENTS_ENABLED', true),
+        ],
+        'forms' => [
+            'enabled' => env('MAILING_FORMS_ENABLED', true),
+        ],
+        'bounce_handler' => [
+            'enabled' => env('MAILING_BOUNCE_HANDLER_ENABLED', false),
+        ],
+        'feedback_loop' => [
+            'enabled' => env('MAILING_FEEDBACK_LOOP_ENABLED', false),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resource Limits
+    |--------------------------------------------------------------------------
+    |
+    | Global limits for resource creation (null = no limit)
+    | These limits apply on top of quota checks
+    |
+    */
+    'limits' => [
+        'campaigns' => env('MAILING_CAMPAIGN_LIMIT', null),
+        'lists' => env('MAILING_LIST_LIMIT', null),
+        'automations' => env('MAILING_AUTOMATION_LIMIT', null),
+        'sending_servers' => env('MAILING_SENDING_SERVER_LIMIT', null),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quota Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for resource quotas
+    |
+    */
+    'quotas' => [
+        // Value representing unlimited quota
+        'unlimited_value' => -1,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Tracking Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for tracking opens, clicks, and other email interactions
+    |
+    */
+    'tracking' => [
+        // Enable/disable open tracking
+        'track_opens' => env('MAILING_TRACK_OPENS', true),
+
+        // Enable/disable click tracking
+        'track_clicks' => env('MAILING_TRACK_CLICKS', true),
+
+        // Enable/disable unsubscribe tracking
+        'track_unsubscribes' => env('MAILING_TRACK_UNSUBSCRIBES', true),
+
+        // Tracking domain (for links and images)
+        'tracking_domain' => env('MAILING_TRACKING_DOMAIN', null),
+
+        // Use HTTPS for tracking URLs
+        'tracking_https' => env('MAILING_TRACKING_HTTPS', true),
+
+        // Click tracking queue
+        'click_tracking_queue' => env('MAILING_CLICK_TRACKING_QUEUE', 'tracking'),
+
+        // Open tracking queue
+        'open_tracking_queue' => env('MAILING_OPEN_TRACKING_QUEUE', 'tracking'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscriber Import Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for importing subscribers from CSV/Excel files
+    |
+    */
+    'import' => [
+        // Maximum file size for imports (in MB)
+        'max_file_size' => env('MAILING_IMPORT_MAX_FILE_SIZE', 50),
+
+        // Batch size for processing imports
+        'batch_size' => env('MAILING_IMPORT_BATCH_SIZE', 1000),
+
+        // Queue for import jobs
+        'queue' => env('MAILING_IMPORT_QUEUE', 'imports'),
+
+        // Allowed file types
+        'allowed_types' => ['csv', 'txt', 'xlsx', 'xls'],
+
+        // CSV delimiter
+        'csv_delimiter' => env('MAILING_IMPORT_CSV_DELIMITER', ','),
+
+        // CSV enclosure
+        'csv_enclosure' => env('MAILING_IMPORT_CSV_ENCLOSURE', '"'),
+
+        // Skip duplicate emails
+        'skip_duplicates' => env('MAILING_IMPORT_SKIP_DUPLICATES', true),
+
+        // Validate email format
+        'validate_emails' => env('MAILING_IMPORT_VALIDATE_EMAILS', true),
+
+        // Maximum import execution time (seconds)
+        'max_execution_time' => env('MAILING_IMPORT_MAX_EXECUTION_TIME', 7200),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sending Server Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for email sending servers (SMTP, SendGrid, AWS SES, etc.)
+    |
+    */
+    'sending_servers' => [
+        // Default sending server type
+        'default_type' => env('MAILING_SENDING_SERVER_DEFAULT_TYPE', 'smtp'),
+
+        // Rotation method: 'random', 'round-robin', 'percentage'
+        'rotation_method' => env('MAILING_SENDING_SERVER_ROTATION', 'round-robin'),
+
+        // Enable server health monitoring
+        'health_check_enabled' => env('MAILING_SENDING_SERVER_HEALTH_CHECK', true),
+
+        // Health check interval (minutes)
+        'health_check_interval' => env('MAILING_SENDING_SERVER_HEALTH_CHECK_INTERVAL', 15),
+
+        // Auto-disable server on consecutive failures
+        'auto_disable_threshold' => env('MAILING_SENDING_SERVER_AUTO_DISABLE_THRESHOLD', 5),
+
+        // Sending quota per server (hourly)
+        'quota_per_hour' => env('MAILING_SENDING_SERVER_QUOTA_HOUR', 10000),
+
+        // Sending quota per server (daily)
+        'quota_per_day' => env('MAILING_SENDING_SERVER_QUOTA_DAY', 100000),
+
+        // Connection timeout (seconds)
+        'connection_timeout' => env('MAILING_SENDING_SERVER_CONNECTION_TIMEOUT', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bounce Handler Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for handling bounced emails
+    |
+    */
+    'bounce_handler' => [
+        // Enable bounce handler
+        'enabled' => env('MAILING_BOUNCE_HANDLER_ENABLED', false),
+
+        // Bounce handler type: 'imap', 'pop3', 'webhook'
+        'type' => env('MAILING_BOUNCE_HANDLER_TYPE', 'imap'),
+
+        // IMAP/POP3 server settings
+        'host' => env('MAILING_BOUNCE_HANDLER_HOST'),
+        'port' => env('MAILING_BOUNCE_HANDLER_PORT', 993),
+        'username' => env('MAILING_BOUNCE_HANDLER_USERNAME'),
+        'password' => env('MAILING_BOUNCE_HANDLER_PASSWORD'),
+        'encryption' => env('MAILING_BOUNCE_HANDLER_ENCRYPTION', 'ssl'),
+
+        // Bounce processing queue
+        'queue' => env('MAILING_BOUNCE_HANDLER_QUEUE', 'bounces'),
+
+        // Bounce processing interval (minutes)
+        'processing_interval' => env('MAILING_BOUNCE_HANDLER_INTERVAL', 5),
+
+        // Maximum bounces to process per cycle
+        'max_process_per_cycle' => env('MAILING_BOUNCE_HANDLER_MAX_PROCESS', 500),
+
+        // Hard bounce action: 'unsubscribe', 'mark_inactive', 'delete'
+        'hard_bounce_action' => env('MAILING_BOUNCE_HARD_ACTION', 'unsubscribe'),
+
+        // Soft bounce threshold before converting to hard bounce
+        'soft_bounce_threshold' => env('MAILING_BOUNCE_SOFT_THRESHOLD', 5),
+
+        // Delete processed bounce emails from server
+        'delete_after_processing' => env('MAILING_BOUNCE_DELETE_AFTER_PROCESSING', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Feedback Loop Handler Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for handling spam complaints (FBL)
+    |
+    */
+    'feedback_loop' => [
+        // Enable feedback loop handler
+        'enabled' => env('MAILING_FEEDBACK_LOOP_ENABLED', false),
+
+        // FBL handler type: 'imap', 'pop3', 'webhook'
+        'type' => env('MAILING_FEEDBACK_LOOP_TYPE', 'imap'),
+
+        // IMAP/POP3 server settings
+        'host' => env('MAILING_FEEDBACK_LOOP_HOST'),
+        'port' => env('MAILING_FEEDBACK_LOOP_PORT', 993),
+        'username' => env('MAILING_FEEDBACK_LOOP_USERNAME'),
+        'password' => env('MAILING_FEEDBACK_LOOP_PASSWORD'),
+        'encryption' => env('MAILING_FEEDBACK_LOOP_ENCRYPTION', 'ssl'),
+
+        // FBL processing queue
+        'queue' => env('MAILING_FEEDBACK_LOOP_QUEUE', 'feedback'),
+
+        // FBL processing interval (minutes)
+        'processing_interval' => env('MAILING_FEEDBACK_LOOP_INTERVAL', 10),
+
+        // Action on complaint: 'unsubscribe', 'blacklist'
+        'complaint_action' => env('MAILING_FEEDBACK_LOOP_ACTION', 'unsubscribe'),
+
+        // Delete processed FBL emails from server
+        'delete_after_processing' => env('MAILING_FEEDBACK_LOOP_DELETE_AFTER_PROCESSING', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Template Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for email templates
+    |
+    */
+    'templates' => [
+        // Enable template caching
+        'cache_enabled' => env('MAILING_TEMPLATE_CACHE_ENABLED', true),
+
+        // Template cache TTL (minutes)
+        'cache_ttl' => env('MAILING_TEMPLATE_CACHE_TTL', 60),
+
+        // Default template language
+        'default_language' => env('MAILING_TEMPLATE_DEFAULT_LANGUAGE', 'en'),
+
+        // Allow custom CSS in templates
+        'allow_custom_css' => env('MAILING_TEMPLATE_ALLOW_CUSTOM_CSS', true),
+
+        // Allow custom JavaScript in templates
+        'allow_custom_js' => env('MAILING_TEMPLATE_ALLOW_CUSTOM_JS', false),
+
+        // Maximum template size (KB)
+        'max_size' => env('MAILING_TEMPLATE_MAX_SIZE', 500),
+
+        // Template storage path
+        'storage_path' => env('MAILING_TEMPLATE_STORAGE_PATH', 'mailing/templates'),
+
+        // Enable template versioning
+        'versioning_enabled' => env('MAILING_TEMPLATE_VERSIONING', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automation Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for automated email workflows
+    |
+    */
+    'automation' => [
+        // Enable automation
+        'enabled' => env('MAILING_AUTOMATION_ENABLED', true),
+
+        // Automation processing queue
+        'queue' => env('MAILING_AUTOMATION_QUEUE', 'automation'),
+
+        // Automation processing interval (minutes)
+        'processing_interval' => env('MAILING_AUTOMATION_INTERVAL', 1),
+
+        // Maximum automations to process per cycle
+        'max_process_per_cycle' => env('MAILING_AUTOMATION_MAX_PROCESS', 100),
+
+        // Enable automation triggers
+        'triggers_enabled' => env('MAILING_AUTOMATION_TRIGGERS_ENABLED', true),
+
+        // Maximum automation depth (nested automations)
+        'max_depth' => env('MAILING_AUTOMATION_MAX_DEPTH', 5),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Segmentation Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for subscriber segmentation
+    |
+    */
+    'segmentation' => [
+        // Enable segmentation
+        'enabled' => env('MAILING_SEGMENTATION_ENABLED', true),
+
+        // Segment cache TTL (minutes)
+        'cache_ttl' => env('MAILING_SEGMENTATION_CACHE_TTL', 30),
+
+        // Maximum segment size for real-time calculation
+        'realtime_threshold' => env('MAILING_SEGMENTATION_REALTIME_THRESHOLD', 10000),
+
+        // Segment recalculation queue
+        'queue' => env('MAILING_SEGMENTATION_QUEUE', 'segments'),
+
+        // Maximum conditions per segment
+        'max_conditions' => env('MAILING_SEGMENTATION_MAX_CONDITIONS', 20),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | List Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for mailing lists
+    |
+    */
+    'lists' => [
+        // Enable double opt-in by default
+        'double_optin_default' => env('MAILING_LIST_DOUBLE_OPTIN_DEFAULT', true),
+
+        // Send welcome email by default
+        'send_welcome_email_default' => env('MAILING_LIST_SEND_WELCOME_EMAIL_DEFAULT', false),
+
+        // Send unsubscribe notification
+        'send_unsubscribe_notification' => env('MAILING_LIST_SEND_UNSUBSCRIBE_NOTIFICATION', true),
+
+        // Maximum lists per user
+        'max_lists_per_user' => env('MAILING_LIST_MAX_PER_USER', 100),
+
+        // Enable list verification
+        'verification_enabled' => env('MAILING_LIST_VERIFICATION_ENABLED', true),
+
+        // List cleanup enabled (remove inactive subscribers)
+        'cleanup_enabled' => env('MAILING_LIST_CLEANUP_ENABLED', false),
+
+        // Cleanup threshold (days of inactivity)
+        'cleanup_threshold_days' => env('MAILING_LIST_CLEANUP_THRESHOLD_DAYS', 365),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for email verification services
+    |
+    */
+    'verification' => [
+        // Enable email verification (beyond basic validation)
+        'advanced_enabled' => env('MAILING_VERIFICATION_ADVANCED_ENABLED', false),
+
+        // Verification service: 'internal', 'zerobounce', 'neverbounce'
+        'service' => env('MAILING_VERIFICATION_SERVICE', 'internal'),
+
+        // API credentials for external verification services
+        'api_key' => env('MAILING_VERIFICATION_API_KEY'),
+        'api_secret' => env('MAILING_VERIFICATION_API_SECRET'),
+
+        // Verification queue
+        'queue' => env('MAILING_VERIFICATION_QUEUE', 'verification'),
+
+        // Auto-verify on import
+        'auto_verify_on_import' => env('MAILING_VERIFICATION_AUTO_IMPORT', false),
+
+        // Remove invalid emails
+        'remove_invalid' => env('MAILING_VERIFICATION_REMOVE_INVALID', true),
+
+        // Verification cache TTL (days)
+        'cache_ttl_days' => env('MAILING_VERIFICATION_CACHE_TTL_DAYS', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deliverability Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for improving email deliverability
+    |
+    */
+    'deliverability' => [
+        // Enable DKIM signing
+        'dkim_enabled' => env('MAILING_DKIM_ENABLED', false),
+
+        // DKIM selector
+        'dkim_selector' => env('MAILING_DKIM_SELECTOR', 'default'),
+
+        // DKIM private key path
+        'dkim_private_key' => env('MAILING_DKIM_PRIVATE_KEY_PATH'),
+
+        // DKIM domain
+        'dkim_domain' => env('MAILING_DKIM_DOMAIN'),
+
+        // Enable SPF checking
+        'spf_enabled' => env('MAILING_SPF_ENABLED', true),
+
+        // Enable DMARC
+        'dmarc_enabled' => env('MAILING_DMARC_ENABLED', false),
+
+        // Custom headers
+        'custom_headers' => [
+            'List-Unsubscribe' => env('MAILING_HEADER_LIST_UNSUBSCRIBE', true),
+            'Precedence' => env('MAILING_HEADER_PRECEDENCE', 'bulk'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reporting Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for reports and analytics
+    |
+    */
+    'reporting' => [
+        // Enable reporting
+        'enabled' => env('MAILING_REPORTING_ENABLED', true),
+
+        // Report generation queue
+        'queue' => env('MAILING_REPORTING_QUEUE', 'reports'),
+
+        // Report cache TTL (minutes)
+        'cache_ttl' => env('MAILING_REPORTING_CACHE_TTL', 60),
+
+        // Enable real-time statistics
+        'realtime_stats' => env('MAILING_REPORTING_REALTIME_STATS', true),
+
+        // Statistics aggregation interval (minutes)
+        'aggregation_interval' => env('MAILING_REPORTING_AGGREGATION_INTERVAL', 5),
+
+        // Export formats: 'pdf', 'csv', 'xlsx'
+        'export_formats' => ['pdf', 'csv', 'xlsx'],
+
+        // Maximum report history (days)
+        'max_history_days' => env('MAILING_REPORTING_MAX_HISTORY_DAYS', 365),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Storage Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for file storage (attachments, exports, etc.)
+    |
+    */
+    'storage' => [
+        // Default storage disk for mailing files
+        'disk' => env('MAILING_STORAGE_DISK', 'local'),
+
+        // Attachments storage path
+        'attachments_path' => env('MAILING_STORAGE_ATTACHMENTS_PATH', 'mailing/attachments'),
+
+        // Maximum attachment size (MB)
+        'max_attachment_size' => env('MAILING_STORAGE_MAX_ATTACHMENT_SIZE', 10),
+
+        // Allowed attachment types
+        'allowed_attachment_types' => [
+            'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+            'jpg', 'jpeg', 'png', 'gif', 'zip', 'txt', 'csv',
+        ],
+
+        // Export files retention (days)
+        'export_retention_days' => env('MAILING_STORAGE_EXPORT_RETENTION_DAYS', 7),
+
+        // Temporary files cleanup interval (hours)
+        'temp_cleanup_interval' => env('MAILING_STORAGE_TEMP_CLEANUP_INTERVAL', 24),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for security features
+    |
+    */
+    'security' => [
+        // Enable CAPTCHA for subscription forms
+        'captcha_enabled' => env('MAILING_SECURITY_CAPTCHA_ENABLED', false),
+
+        // CAPTCHA type: 'recaptcha', 'hcaptcha'
+        'captcha_type' => env('MAILING_SECURITY_CAPTCHA_TYPE', 'recaptcha'),
+
+        // reCAPTCHA site key
+        'recaptcha_site_key' => env('MAILING_SECURITY_RECAPTCHA_SITE_KEY'),
+
+        // reCAPTCHA secret key
+        'recaptcha_secret_key' => env('MAILING_SECURITY_RECAPTCHA_SECRET_KEY'),
+
+        // Enable honeypot for forms
+        'honeypot_enabled' => env('MAILING_SECURITY_HONEYPOT_ENABLED', true),
+
+        // IP-based rate limiting for subscriptions
+        'ip_rate_limiting_enabled' => env('MAILING_SECURITY_IP_RATE_LIMITING', true),
+
+        // Maximum subscriptions per IP per hour
+        'max_subscriptions_per_ip' => env('MAILING_SECURITY_MAX_SUBSCRIPTIONS_PER_IP', 10),
+
+        // Blacklist checking enabled
+        'blacklist_check_enabled' => env('MAILING_SECURITY_BLACKLIST_CHECK', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localization Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for multi-language support
+    |
+    */
+    'localization' => [
+        // Available languages
+        'available_languages' => ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru'],
+
+        // Default language
+        'default_language' => env('MAILING_LOCALIZATION_DEFAULT_LANGUAGE', 'es'),
+
+        // Enable timezone support
+        'timezone_enabled' => env('MAILING_LOCALIZATION_TIMEZONE_ENABLED', true),
+
+        // Default timezone
+        'default_timezone' => env('MAILING_LOCALIZATION_DEFAULT_TIMEZONE', 'Europe/Madrid'),
+
+        // Enable RTL languages
+        'rtl_enabled' => env('MAILING_LOCALIZATION_RTL_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Performance Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for performance optimization
+    |
+    */
+    'performance' => [
+        // Enable query caching
+        'query_cache_enabled' => env('MAILING_PERFORMANCE_QUERY_CACHE', true),
+
+        // Query cache TTL (minutes)
+        'query_cache_ttl' => env('MAILING_PERFORMANCE_QUERY_CACHE_TTL', 10),
+
+        // Enable lazy loading
+        'lazy_loading_enabled' => env('MAILING_PERFORMANCE_LAZY_LOADING', true),
+
+        // Chunk size for large queries
+        'chunk_size' => env('MAILING_PERFORMANCE_CHUNK_SIZE', 1000),
+
+        // Enable database connection pooling
+        'connection_pooling' => env('MAILING_PERFORMANCE_CONNECTION_POOLING', true),
+
+        // Maximum database connections
+        'max_connections' => env('MAILING_PERFORMANCE_MAX_CONNECTIONS', 100),
+    ],
+
 ];

@@ -2,276 +2,677 @@
 
 namespace Modules\Mailing\Http\Controllers\Settings;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Http;
-use Illuminate\View\View;
 use Modules\Mailing\Http\Controllers\Controller;
+use Modules\Mailing\Library\Facades\Hook;
+use Modules\Mailing\Models\SendingDomain;
 use Modules\Mailing\Models\SendingServer;
 
 class SendingServerController extends Controller
 {
     /**
-     * Display a listing of sending servers.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index(Request $request)
     {
-        Gate::authorize('mailing.settings.sending-servers.view');
+        if (! $request->user()->admin->can('read', new SendingServer)) {
+            return $this->notAuthorized();
+        }
 
-        $sendingServers = SendingServer::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->paginate(15);
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new SendingServer)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        return view('mailing::settings.sending-servers.index', [
-            'sendingServers' => $sendingServers,
+        // exlude customer seding servers
+        $request->merge(['no_customer' => true]);
+
+        $items = \Modules\Mailing\Models\SendingServer::search($request->keyword)
+            ->filter($request);
+
+        return view('admin.sending_servers.index', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Show the form for creating a new sending server.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function create(): View
+    public function listing(Request $request)
     {
-        Gate::authorize('mailing.settings.sending-servers.create');
-
-        return view('mailing::settings.sending-servers.create');
-    }
-
-    /**
-     * Store a newly created sending server.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        Gate::authorize('mailing.settings.sending-servers.create');
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:smtp,sendgrid,mailgun,ses,postmark,sparkpost,mailjet',
-                'status' => 'required|in:active,inactive,error',
-
-                // SMTP fields
-                'host' => 'required_if:type,smtp|nullable|string|max:255',
-                'port' => 'required_if:type,smtp|nullable|integer|min:1|max:65535',
-                'encryption' => 'nullable|in:tls,ssl,none',
-                'username' => 'nullable|string|max:255',
-                'password' => 'nullable|string',
-
-                // API fields
-                'api_key' => 'required_unless:type,smtp|nullable|string',
-                'api_secret' => 'nullable|string',
-                'api_region' => 'nullable|string|max:100',
-
-                // Email configuration
-                'from_email' => 'required|email|max:255',
-                'from_name' => 'nullable|string|max:255',
-                'reply_to_email' => 'nullable|email|max:255',
-
-                // Rate limiting
-                'sending_limit_per_minute' => 'nullable|integer|min:1|max:10000',
-                'sending_limit_per_hour' => 'nullable|integer|min:1|max:100000',
-
-                // Options
-                'allow_verify_domain' => 'boolean',
-                'allow_verify_email' => 'boolean',
-                'allow_custom_return_path' => 'boolean',
-            ]);
-
-            // Add user_id
-            $validated['user_id'] = auth()->id();
-            $validated['status'] = $validated['status'] ?? 'inactive';
-
-            SendingServer::create($validated);
-
-            return redirect()
-                ->route('settings.mailing.sending-servers.index')
-                ->with('success', 'Servidor de envío creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al crear el servidor: '.$e->getMessage());
+        if (! $request->user()->admin->can('read', new SendingServer)) {
+            return $this->notAuthorized();
         }
-    }
 
-    /**
-     * Show the form for editing the specified sending server.
-     */
-    public function edit(int $id): View
-    {
-        Gate::authorize('mailing.settings.sending-servers.edit');
+        // If admin can view all sending domains
+        if (! $request->user()->admin->can('readAll', new SendingServer)) {
+            $request->merge(['admin_id' => $request->user()->admin->id]);
+        }
 
-        $sendingServer = SendingServer::where('user_id', auth()->id())
-            ->findOrFail($id);
+        // exlude customer seding servers
+        $request->merge(['no_customer' => true]);
 
-        return view('mailing::settings.sending-servers.edit', [
-            'sendingServer' => $sendingServer,
+        $items = \Modules\Mailing\Models\SendingServer::system()->search($request->keyword)
+            ->filter($request)
+            ->orderBy($request->sort_order, $request->sort_direction ? $request->sort_direction : 'asc')
+            ->paginate($request->per_page);
+
+        return view('admin.sending_servers._list', [
+            'items' => $items,
         ]);
     }
 
     /**
-     * Update the specified sending server.
+     * Select sending server type.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function select(Request $request)
     {
-        Gate::authorize('mailing.settings.sending-servers.edit');
+        // Sending servers added by Plugins
+        $more = Hook::execute('register_sending_server');
 
-        try {
-            $sendingServer = SendingServer::where('user_id', auth()->id())
-                ->findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:smtp,sendgrid,mailgun,ses,postmark,sparkpost,mailjet',
-                'status' => 'required|in:active,inactive,error',
-
-                // SMTP fields
-                'host' => 'required_if:type,smtp|nullable|string|max:255',
-                'port' => 'required_if:type,smtp|nullable|integer|min:1|max:65535',
-                'encryption' => 'nullable|in:tls,ssl,none',
-                'username' => 'nullable|string|max:255',
-                'password' => 'nullable|string',
-
-                // API fields
-                'api_key' => 'required_unless:type,smtp|nullable|string',
-                'api_secret' => 'nullable|string',
-                'api_region' => 'nullable|string|max:100',
-
-                // Email configuration
-                'from_email' => 'required|email|max:255',
-                'from_name' => 'nullable|string|max:255',
-                'reply_to_email' => 'nullable|email|max:255',
-
-                // Rate limiting
-                'sending_limit_per_minute' => 'nullable|integer|min:1|max:10000',
-                'sending_limit_per_hour' => 'nullable|integer|min:1|max:100000',
-
-                // Options
-                'allow_verify_domain' => 'boolean',
-                'allow_verify_email' => 'boolean',
-                'allow_custom_return_path' => 'boolean',
-            ]);
-
-            $sendingServer->update($validated);
-
-            return redirect()
-                ->route('settings.mailing.sending-servers.index')
-                ->with('success', 'Servidor de envío actualizado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el servidor: '.$e->getMessage());
-        }
+        return view('admin.sending_servers.select', ['more' => $more]);
     }
 
     /**
-     * Remove the specified sending server.
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): RedirectResponse
+    public function create(Request $request)
     {
-        Gate::authorize('mailing.settings.sending-servers.delete');
+        $server = new SendingServer;
+        $server->type = $request->type;
+        $server = $server->mapType();
 
-        try {
-            $sendingServer = SendingServer::where('user_id', auth()->id())
-                ->findOrFail($id);
+        $server->status = 'active';
+        $server->uid = '0';
+        $server->quota_value = '1000';
+        $server->quota_base = '1';
+        $server->quota_unit = 'hour';
+        $server->fill($request->old());
 
-            $sendingServer->delete();
+        $server->name = trans('messages.sending_server.type.'.$request->type);
 
-            return redirect()
-                ->route('settings.mailing.sending-servers.index')
-                ->with('success', 'Servidor de envío eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Error al eliminar el servidor: '.$e->getMessage());
+        // authorize
+        if (! $request->user()->admin->can('create', SendingServer::class)) {
+            return $this->notAuthorized();
         }
+
+        return view('admin.sending_servers.create', [
+            'server' => $server,
+        ]);
     }
 
     /**
-     * Test the connection to the sending server.
+     * Store a newly created resource in storage.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function test(int $id): JsonResponse
+    public function store(Request $request)
     {
-        Gate::authorize('mailing.settings.sending-servers.edit');
+        // authorize
+        if (! $request->user()->admin->can('create', SendingServer::class)) {
+            return $this->notAuthorized();
+        }
 
-        try {
-            $sendingServer = SendingServer::where('user_id', auth()->id())
-                ->findOrFail($id);
+        // New sending server
+        [$validator, $server] = SendingServer::createFromArray(array_merge($request->all(), [
+            'admin_id' => $request->user()->admin->id,
+        ]));
 
-            // Test connection based on server type
-            if ($sendingServer->type === 'smtp') {
-                $this->testSmtpConnection($sendingServer);
+        // Failed
+        if ($validator->fails()) {
+            if ($server->isExtended()) {
+                // Redirect to plugin's create page
+                return redirect()->back()->withErrors($validator)->withInput();
             } else {
-                $this->testApiConnection($sendingServer);
+                return redirect()->action('Settings\SendingServerController@create', $server->type)
+                    ->withErrors($validator)->withInput();
+            }
+        }
+
+        // Success
+        $request->session()->flash('alert-success', trans('messages.sending_server.created'));
+
+        // Redirect to Edit page
+        if ($server->isExtended()) {
+            return redirect($server->getEditUrl());
+        } else {
+            return redirect()->action('Settings\SendingServerController@edit', [$server->uid, $server->type]);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id) {}
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $id)
+    {
+        $server = SendingServer::findByUid($id);
+        $server = SendingServer::mapServerType($server);
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // bounce / feedback hanlder nullable
+        if ($request->old() && empty($request->old()['bounce_handler_id'])) {
+            $server->bounce_handler_id = null;
+        }
+        if ($request->old() && empty($request->old()['feedback_loop_handler_id'])) {
+            $server->feedback_loop_handler_id = null;
+        }
+
+        $server->fill($request->old());
+
+        $notices = [];
+
+        try {
+            $server->test();
+            $server->syncIdentities();
+            $server->setDefaultFromEmailAddress();
+        } catch (\Exception $ex) {
+            $server->disable();
+
+            $notices[] = [
+                'title' => trans('messages.sending_server.connect_failed'),
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        $identities = [];
+        $allIdentities = [];
+
+        try {
+            $identities = $server->getVerifiedIdentities();
+            $allIdentities = array_key_exists('identities', $server->getOptions()) ? $server->getOptions()['identities'] : [];
+        } catch (\Exception $ex) {
+            $notices[] = [
+                'title' => trans('messages.sending_server.identities_list_failed'),
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        // options
+        if (isset($request->old()['options'])) {
+            $server->options = json_encode($request->old()['options']);
+        }
+
+        $bigNotices = Hook::execute('generate_big_notice_for_sending_server', [$server]);
+
+        return view('admin.sending_servers.edit', [
+            'server' => $server,
+            'bigNotices' => $bigNotices,
+            'notices' => $notices,
+            'identities' => $identities,
+            'allIdentities' => $allIdentities,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // Get current user
+        $current_user = $request->user();
+        $server = SendingServer::findByUid($id);
+        $server = SendingServer::mapServerType($server);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // save posted data
+        if ($request->isMethod('patch')) {
+            // Save current user info
+            $server->fill($request->all());
+
+            // validation
+            $validator = $server->validConnection($request->all());
+
+            if ($validator->fails()) {
+                if ($server->isExtended()) {
+                    return redirect($server->getEditUrl())->withErrors($validator)
+                        ->withInput();
+                } else {
+                    return redirect()->action('Settings\SendingServerController@edit', [$server->uid, $server->type])
+                        ->withErrors($validator)
+                        ->withInput();
+                }
+            }
+
+            // bounce / feedback hanlder nullable
+            if (empty($request->bounce_handler_id)) {
+                $server->bounce_handler_id = null;
+            }
+            if (empty($request->feedback_loop_handler_id)) {
+                $server->feedback_loop_handler_id = null;
+            }
+
+            if ($server->save()) {
+                $request->session()->flash('alert-success', trans('messages.sending_server.updated'));
+
+                if ($server->isExtended()) {
+                    return redirect($server->getEditUrl());
+                } else {
+                    return redirect()->action('Settings\SendingServerController@edit', [$server->uid, $server->type]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Custom sort items.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function sort(Request $request)
+    {
+        echo trans('messages._deleted_');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function delete(Request $request)
+    {
+        $items = SendingServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
+
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('delete', $item)) {
+                $item->doDelete();
+            }
+        }
+
+        // Redirect to my lists page
+        echo trans('messages.sending_servers.deleted');
+    }
+
+    /**
+     * Disable sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function disable(Request $request)
+    {
+        $items = SendingServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
+
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('disable', $item)) {
+                $item->disable();
+            }
+        }
+
+        // Redirect to my lists page
+        echo trans('messages.sending_servers.disabled');
+    }
+
+    /**
+     * Disable sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function enable(Request $request)
+    {
+        $items = SendingServer::whereIn(
+            'uid',
+            is_array($request->uids) ? $request->uids : explode(',', $request->uids)
+        );
+
+        foreach ($items->get() as $item) {
+            // authorize
+            if ($request->user()->admin->can('enable', $item)) {
+                $item->enable();
+            }
+        }
+
+        // Redirect to my lists page
+        echo trans('messages.sending_servers.enabled');
+    }
+
+    /**
+     * Test Sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function test(Request $request, $uid)
+    {
+        // Get current user
+        $current_user = $request->user();
+
+        // Fill new server info
+        if ($uid) {
+            $server = SendingServer::findByUid($uid);
+        } else {
+            $server = new SendingServer;
+            $server->uid = 0;
+        }
+
+        $server->fill($request->all());
+
+        // authorize
+        if (! $current_user->admin->can('test', $server)) {
+            return $this->notAuthorized();
+        }
+
+        if ($request->isMethod('post')) {
+            // @todo testing method and return result here. Ex: echo json_encode($server->test())
+            try {
+                $server->mapType()->sendTestEmail([
+                    'from_email' => $request->from_email,
+                    'to_email' => $request->to_email,
+                    'subject' => $request->subject,
+                    'plain' => $request->content,
+                ]);
+            } catch (\Exception $ex) {
+                return response()->json([
+                    'status' => 'error', // or success
+                    'message' => $ex->getMessage(),
+                ], 401);
+
+                return;
             }
 
             return response()->json([
-                'success' => true,
-                'message' => 'Conexión establecida correctamente.',
+                'status' => 'success', // or success
+                'message' => trans('messages.sending_server.test_email_sent'),
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al probar la conexión: '.$e->getMessage(),
-            ], 422);
+
+            return;
         }
+
+        return view('admin.sending_servers.test', [
+            'server' => $server,
+        ]);
     }
 
     /**
-     * Toggle the status of a sending server.
+     * Test Sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function testConnection(Request $request, $uid)
     {
-        Gate::authorize('mailing.settings.sending-servers.edit');
+        $server = SendingServer::findByUid($uid);
+        $server = SendingServer::mapServerType($server);
+
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
 
         try {
-            $sendingServer = SendingServer::where('user_id', auth()->id())
-                ->findOrFail($id);
+            $server->test();
 
-            $newStatus = $sendingServer->status === 'active' ? 'inactive' : 'active';
-            $sendingServer->update(['status' => $newStatus]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Estado actualizado correctamente.',
-                'status' => $newStatus,
-            ]);
+            return trans('messages.sending_server.test_success');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cambiar el estado: '.$e->getMessage(),
-            ], 422);
+            $server->disable();
+
+            return $e->getMessage();
         }
     }
 
     /**
-     * Test SMTP connection.
+     * Select2 customer.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    private function testSmtpConnection(SendingServer $server): void
+    public function select2(Request $request)
     {
-        $connection = fsockopen($server->host, $server->port, $errno, $errstr, 5);
-
-        if (! $connection) {
-            throw new \Exception("No se pudo conectar a {$server->host}:{$server->port}");
-        }
-
-        fclose($connection);
+        echo SendingServer::adminSelect2($request);
     }
 
     /**
-     * Test API connection.
+     * Sending Limit Form.
+     *
+     *
+     * @return \Illuminate\Http\Response
      */
-    private function testApiConnection(SendingServer $server): void
+    public function sendingLimit(Request $request)
     {
-        $response = Http::timeout(10)
-            ->withHeaders(['Authorization' => 'Bearer '.$server->api_key])
-            ->get($server->api_url ?? 'https://api.example.com/v1/account');
-
-        if (! $response->successful()) {
-            throw new \Exception('Error en la API: '.$response->status());
+        if (! $request->uid) {
+            $server = new SendingServer;
+        } else {
+            $server = SendingServer::findByUid($request->uid);
         }
+
+        $server->fill($request->all());
+
+        // Default quota
+        if ($server->quota_value == -1) {
+            $server->quota_value = '1000';
+            $server->quota_base = '1';
+            $server->quota_unit = 'hour';
+            $server->setOption('sending_limit', '1000_per_hour');
+        }
+
+        // save posted data
+        if ($request->isMethod('post')) {
+            $selectOptions = $server->getSendingLimitSelectOptions();
+
+            return view('admin.sending_servers.form._sending_limit', [
+                'quotaValue' => $request->quota_value,
+                'quotaBase' => $request->quota_base,
+                'quotaUnit' => $request->quota_unit,
+                'server' => $server,
+            ]);
+        }
+
+        return view('admin.sending_servers.form.sending_limit', [
+            'server' => $server,
+        ]);
+    }
+
+    /**
+     * Save sending server config settings.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function config(Request $request, $uid)
+    {
+        // find server
+        $server = SendingServer::findByUid($uid)->mapType();
+
+        // authorize
+        if (! $request->user()->admin->can('update', $server)) {
+            return $this->notAuthorized();
+        }
+
+        // Save current user info
+        $server->fill($request->all());
+
+        // default sever quota
+        if ($request->options) {
+            $server->setOptions($request->options); // options = json_encode($request->options);
+            $server->updateIdentitiesList($request->options);
+        }
+
+        // Sening limit
+        if ($request->options['sending_limit'] != 'custom' && $request->options['sending_limit'] != 'current') {
+            $limits = SendingServer::sendingLimitValues()[$request->options['sending_limit']];
+            $server->quota_value = $limits['quota_value'];
+            $server->quota_unit = $limits['quota_unit'];
+            $server->quota_base = $limits['quota_base'];
+        }
+
+        // save posted data
+        $this->validate($request, $server->getConfigRules());
+
+        // bounce / feedback hanlder nullable
+        if (empty($request->bounce_handler_id)) {
+            $server->bounce_handler_id = null;
+        }
+        if (empty($request->feedback_loop_handler_id)) {
+            $server->feedback_loop_handler_id = null;
+        }
+
+        if ($server->save()) {
+            $request->session()->flash('alert-success', trans('messages.sending_server.updated'));
+
+            if ($server->isExtended()) {
+                return redirect($server->getEditUrl());
+            } else {
+                return redirect()->action('Settings\SendingServerController@edit', [$server->uid, $server->type]);
+            }
+        }
+    }
+
+    /**
+     * Sending Limit Form.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function awsRegionHost(Request $request)
+    {
+        if ($request->uid) {
+            $server = SendingServer::findByUid($request->uid);
+        } else {
+            $server = new SendingServer;
+        }
+
+        foreach (SendingServer::awsRegionSelectOptions() as $option) {
+            if (isset($option['host']) && $option['value'] == $request->aws_region) {
+                $server->host = $option['host'];
+            }
+        }
+
+        return view('admin.sending_servers.form._aws_region_host', [
+            'server' => $server,
+        ]);
+    }
+
+    /**
+     * Add domain to sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function addDomain(Request $request, $uid)
+    {
+        $server = SendingServer::findByUid($request->uid);
+
+        // save posted data
+        if ($request->isMethod('post')) {
+            $valid = true;
+
+            if (checkEmail($request->domain)) {
+                // validation
+                $validator = \Validator::make($request->all(), [
+                    'domain' => 'required|email',
+                ]);
+
+                if (in_array(strtolower($request->domain), $server->getVerifiedIdentities())) {
+                    $validator->errors()->add('domain', trans('messages.sending_identity.exist_error'));
+                    $valid = false;
+                }
+
+                if (! $valid || $validator->fails()) {
+                    return redirect()->action('Settings\SendingServerController@addDomain', $server->uid)
+                        ->withErrors($validator)
+                        ->withInput();
+                }
+            } else {
+                // validation
+                $validator = \Validator::make($request->all(), [
+                    'domain' => 'required|regex:'.SendingDomain::VALIDATION_REGEXP,
+                ]);
+
+                if (in_array(strtolower($request->domain), $server->getVerifiedIdentities())) {
+                    $validator->errors()->add('domain', trans('messages.sending_identity.exist_error'));
+                    $valid = false;
+                }
+
+                if (! $valid || $validator->fails()) {
+                    return redirect()->action('Settings\SendingServerController@addDomain', $server->uid)
+                        ->withErrors($validator)
+                        ->withInput();
+                }
+            }
+
+            $server->addIdentity(strtolower($request->domain));
+
+            $request->session()->flash('alert-success', trans('messages.sending_server.updated'));
+
+            return;
+        }
+
+        return view('admin.sending_servers.add_domain', [
+            'server' => $server,
+        ]);
+    }
+
+    /**
+     * Remove domain from sending server.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function removeDomain(Request $request, $uid, $identity)
+    {
+        $server = SendingServer::findByUid($request->uid)->mapType();
+        $server->removeIdentity(base64_decode($identity));
+
+        $request->session()->flash('alert-success', trans('messages.sending_server.domain.removed'));
+        if ($server->isExtended()) {
+            return redirect($server->getEditUrl());
+        } else {
+            return redirect()->action('Settings\SendingServerController@edit', [$server->uid, $server->type]);
+        }
+    }
+
+    /**
+     * Dropbox list.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function fromDropbox(Request $request)
+    {
+        $server = SendingServer::findByUid($request->uid);
+
+        $droplist = $server->verifiedIdentitiesDroplist(strtolower(trim($request->keyword)));
+
+        return response()->json($droplist);
     }
 }

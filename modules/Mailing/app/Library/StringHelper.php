@@ -20,7 +20,7 @@
  * @link       http://acellemail.com
  */
 
-namespace Modules\Mailer\Library;
+namespace Modules\Mailing\Library;
 
 use Closure;
 use DOMDocument;

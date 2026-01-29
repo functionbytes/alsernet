@@ -2,7 +2,7 @@
 
 namespace Modules\Core\Console\Commands;
 
-use Acelle\Model\Log;
+use Modules\Mailing\Models\Log;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log as LaravelLog;

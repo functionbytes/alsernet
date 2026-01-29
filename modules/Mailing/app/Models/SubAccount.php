@@ -2,245 +2,99 @@
 
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Modules\Mailing\Library\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Mailing\Traits\HasUid;
 
 class SubAccount extends Model
 {
-    use HasFactory, HasUid, SoftDeletes;
-
-    protected $table = 'mailing_sub_accounts';
-
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable Attributes
-    |--------------------------------------------------------------------------
-    */
-
-    protected $fillable = [
-        'uid',
-        'sending_server_id',
-        'user_id',
-        'name',
-        'description',
-        'status',
-        'api_key',
-        'username',
-        'email',
-        'permissions',
-        'can_create_campaigns',
-        'can_manage_subscribers',
-        'can_view_reports',
-        'can_create_sending_servers',
-        'email_quota_per_day',
-        'email_quota_per_month',
-        'subscriber_quota',
-        'campaign_quota',
-        'emails_sent_today',
-        'emails_sent_this_month',
-        'total_emails_sent',
-        'allowed_sending_server_ids',
-        'allowed_list_ids',
-        'last_login_at',
-        'last_activity_at',
-    ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
-
-    protected function casts(): array
-    {
-        return [
-            'api_key' => 'encrypted',
-            'permissions' => 'json',
-            'allowed_sending_server_ids' => 'json',
-            'allowed_list_ids' => 'json',
-            'can_create_campaigns' => 'boolean',
-            'can_manage_subscribers' => 'boolean',
-            'can_view_reports' => 'boolean',
-            'can_create_sending_servers' => 'boolean',
-            'last_login_at' => 'datetime',
-            'last_activity_at' => 'datetime',
-        ];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
+    use HasUid;
 
     /**
-     * Get the user that owns this sub-account.
+     * Items per page.
+     *
+     * @var array
      */
-    public function user(): BelongsTo
+    public static $itemsPerPage = 25;
+
+    /**
+     * Associations.
+     *
+     * @var object | collect
+     */
+    public function sendingServer()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo('Acelle\Model\SendingServer');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('Acelle\Model\Customer');
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany('Acelle\Model\Subscription', 'sub_account_id', 'id');
     }
 
     /**
-     * Get the sending server this sub-account is associated with.
+     * Filter items.
+     *
+     * @return collect
      */
-    public function sendingServer(): BelongsTo
+    public static function filter($request)
     {
-        return $this->belongsTo(SendingServer::class);
-    }
+        $user = $request->user();
+        $query = self::select('sub_accounts.*');
+        $query = $query->leftJoin('sending_servers', 'sending_servers.id', '=', 'sub_accounts.sending_server_id');
+        $query = $query->leftJoin('customers', 'customers.id', '=', 'sub_accounts.customer_id');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Methods
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Check if the sub-account can send emails.
-     */
-    public function canSendEmails(): bool
-    {
-        if ($this->status !== 'active') {
-            return false;
+        // Keyword
+        if (! empty(trim($request->keyword))) {
+            foreach (explode(' ', trim($request->keyword)) as $keyword) {
+                $query = $query->where(function ($q) use ($keyword) {
+                    $q->orwhere('sub_accounts.username', 'like', '%'.$keyword.'%');
+                });
+            }
         }
 
-        // Check daily quota
-        if ($this->email_quota_per_day !== null && $this->emails_sent_today >= $this->email_quota_per_day) {
-            return false;
+        if (! empty($request->admin_id)) {
+            $query = $query->where('sending_servers.admin_id', '=', $request->admin_id);
         }
 
-        // Check monthly quota
-        if ($this->email_quota_per_month !== null && $this->emails_sent_this_month >= $this->email_quota_per_month) {
-            return false;
+        // filters
+        $filters = $request->all();
+        if (! empty($filters)) {
+            if (! empty($filters['type'])) {
+                $query = $query->where('sending_servers.type', '=', $filters['type']);
+            }
         }
 
-        return true;
+        return $query;
     }
 
     /**
-     * Check if the sub-account can access a specific sending server.
+     * Search items.
+     *
+     * @return collect
      */
-    public function canAccessSendingServer(int $serverId): bool
+    public static function search($request)
     {
-        if ($this->status !== 'active') {
-            return false;
+        $query = self::filter($request);
+
+        if (! empty($request->sort_order)) {
+            $query = $query->orderBy($request->sort_order, $request->sort_direction);
         }
 
-        // If no restrictions, can access all servers
-        if ($this->allowed_sending_server_ids === null || empty($this->allowed_sending_server_ids)) {
-            return true;
-        }
-
-        return in_array($serverId, $this->allowed_sending_server_ids);
+        return $query;
     }
 
     /**
-     * Check if the sub-account can access a specific list.
+     * Get secured api key.
+     *
+     * @return collect
      */
-    public function canAccessList(int $listId): bool
+    public function getSecuredApiKey()
     {
-        if ($this->status !== 'active') {
-            return false;
-        }
-
-        // If no restrictions, can access all lists
-        if ($this->allowed_list_ids === null || empty($this->allowed_list_ids)) {
-            return true;
-        }
-
-        return in_array($listId, $this->allowed_list_ids);
-    }
-
-    /**
-     * Check if the sub-account has a specific permission.
-     */
-    public function hasPermission(string $permission): bool
-    {
-        $permissions = $this->permissions ?? [];
-
-        return in_array($permission, $permissions);
-    }
-
-    /**
-     * Increment the sent count for this sub-account.
-     */
-    public function incrementSentCount(int $count = 1): void
-    {
-        $this->increment('emails_sent_today', $count);
-        $this->increment('emails_sent_this_month', $count);
-        $this->increment('total_emails_sent', $count);
-        $this->update(['last_activity_at' => now()]);
-    }
-
-    /**
-     * Reset daily counters (should be called via scheduled task).
-     */
-    public function resetDailyCounters(): void
-    {
-        $this->update(['emails_sent_today' => 0]);
-    }
-
-    /**
-     * Get the display name for the status.
-     */
-    public function getStatusLabel(): string
-    {
-        return match ($this->status) {
-            'active' => 'Active',
-            'suspended' => 'Suspended',
-            'inactive' => 'Inactive',
-            default => ucfirst($this->status),
-        };
-    }
-
-    /**
-     * Get remaining daily quota.
-     */
-    public function getRemainingDailyQuota(): ?int
-    {
-        if ($this->email_quota_per_day === null) {
-            return null;
-        }
-
-        return max(0, $this->email_quota_per_day - $this->emails_sent_today);
-    }
-
-    /**
-     * Get remaining monthly quota.
-     */
-    public function getRemainingMonthlyQuota(): ?int
-    {
-        if ($this->email_quota_per_month === null) {
-            return null;
-        }
-
-        return max(0, $this->email_quota_per_month - $this->emails_sent_this_month);
-    }
-
-    /**
-     * Get daily quota percentage used.
-     */
-    public function getDailyQuotaPercentage(): ?float
-    {
-        if ($this->email_quota_per_day === null) {
-            return null;
-        }
-
-        return ($this->emails_sent_today / $this->email_quota_per_day) * 100;
-    }
-
-    /**
-     * Get monthly quota percentage used.
-     */
-    public function getMonthlyQuotaPercentage(): ?float
-    {
-        if ($this->email_quota_per_month === null) {
-            return null;
-        }
-
-        return ($this->emails_sent_this_month / $this->email_quota_per_month) * 100;
+        return substr($this->api_key, 0, 4).'...'.substr($this->api_key, -4);
     }
 }
