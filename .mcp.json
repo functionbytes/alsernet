@@ -1,25 +1,35 @@
 {
-    "mcpServers": {
-        "context7": {
-            "command": "npx",
-            "args": [
-                "--yes",
-                "@upstash/context7-mcp"
-            ]
-        },
-        "chrome-devtools": {
-            "command": "/tmp/chrome-devtools-wrapper.sh",
-            "args": [
-                "--browserUrl",
-                "http://127.0.0.1:9222"
-            ]
-        },
-        "laravel-boost": {
-            "command": "php",
-            "args": [
-                "artisan",
-                "boost:mcp"
-            ]
-        }
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "php",
+      "args": [
+        "artisan",
+        "boost:mcp"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "/tmp/chrome-devtools-wrapper.sh",
+      "args": [
+        "--browserUrl",
+        "http://127.0.0.1:9222"
+      ]
+    },
+    "redis": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@anthropic/mcp-redis"
+      ],
+      "env": {
+        "REDIS_URL": "redis://localhost:6379"
+      }
     }
+  }
 }
