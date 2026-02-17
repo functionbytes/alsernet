@@ -154,6 +154,11 @@ class TemplateServiceProvider extends ServiceProvider
 
         $this->publishes([$sourcePath => $viewPath], ['views', $this->nameLower.'-module-views']);
 
+        // Publish JavaScript assets
+        $jsSourcePath = module_path($this->name, 'resources/js');
+        $jsPublicPath = public_path('modules/'.$this->nameLower.'/js');
+        $this->publishes([$jsSourcePath => $jsPublicPath], [$this->nameLower.'-assets', 'assets']);
+
         // Get active template path from filesystem
         $viewPaths = array_merge($this->getPublishableViewPaths(), [$sourcePath]);
 

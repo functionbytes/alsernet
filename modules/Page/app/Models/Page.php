@@ -374,6 +374,22 @@ class Page extends Model implements HasMedia
     }
 
     /**
+     * Check if the page has saved versions.
+     */
+    public function hasVersions(): bool
+    {
+        return $this->versions()->exists();
+    }
+
+    /**
+     * Get the total number of saved versions.
+     */
+    public function getTotalVersions(): int
+    {
+        return $this->versions()->count();
+    }
+
+    /**
      * Register media collections.
      */
     public function registerMediaCollections(): void

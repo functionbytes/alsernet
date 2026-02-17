@@ -57,11 +57,6 @@ class TemplateService
      */
     public function activate(Template $template): Template
     {
-        // No permitir activar si está eliminado
-        if ($template->trashed()) {
-            throw new \Exception('No se puede activar un template eliminado.');
-        }
-
         // Marcar como activo
         $template->update(['status' => 'active']);
 
