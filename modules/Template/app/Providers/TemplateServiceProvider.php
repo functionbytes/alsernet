@@ -28,6 +28,7 @@ class TemplateServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerMenus();
+        $this->loadMenuHelpers();
         $this->loadTemplateFunctions();
     }
 
@@ -44,6 +45,9 @@ class TemplateServiceProvider extends ServiceProvider
 
         // Register template service
         $this->app->singleton(\Modules\Template\Services\TemplateService::class);
+
+        // Register menu service
+        $this->app->singleton(\Modules\Template\Services\MenuService::class);
 
         // Register factories
         $this->registerFactories();
@@ -67,8 +71,7 @@ class TemplateServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            // Commands will be added here as needed
-            // \Modules\Template\Console\InstallTemplateCommand::class,
+            \Modules\Template\Console\ClearMenuCacheCommand::class,
         ]);
     }
 
@@ -201,12 +204,25 @@ class TemplateServiceProvider extends ServiceProvider
             'title' => 'Plantillas',
             'items' => [
                 ['label' => 'Plantillas', 'route' => 'settings.templates.index'],
+                ['label' => 'Menus', 'route' => 'settings.menus.index'],
                 ['label' => 'Bloques UI', 'route' => 'settings.ui-blocks.index'],
                 ['label' => 'CSS personalizado', 'route' => 'settings.templates.custom-css.edit'],
                 ['label' => 'JavaScript personalizado', 'route' => 'settings.theme.custom-js'],
                 ['label' => 'HTML personalizado', 'route' => 'settings.theme.custom-html'],
             ],
         ]);
+    }
+
+    /**
+     * Load menu helper functions.
+     */
+    protected function loadMenuHelpers(): void
+    {
+        $helpersPath = module_path($this->name, 'helpers/MenuHelper.php');
+
+        if (file_exists($helpersPath)) {
+            require_once $helpersPath;
+        }
     }
 
     /**

@@ -62,7 +62,7 @@
                                 <td>
                                     @if($menu->location)
                                         <span class="badge bg-info-subtle text-info">
-                                            {{ config("menu.locations.{$menu->location}", $menu->location) }}
+                                            {{ config("template.menu.locations.{$menu->location}", $menu->location) }}
                                         </span>
                                     @else
                                         <span class="text-muted fst-italic">Sin asignar</span>

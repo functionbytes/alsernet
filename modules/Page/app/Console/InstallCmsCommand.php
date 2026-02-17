@@ -202,7 +202,7 @@ class InstallCmsCommand extends Command
     protected function generateSitemap(): void
     {
         try {
-            if (class_exists('Modules\\Sitemap\\Console\\GenerateSitemapCommand')) {
+            if (class_exists('Modules\\Seo\\Console\\Commands\\GenerateSitemapCommand')) {
                 Artisan::call('sitemap:generate');
                 $this->info('  ✓ Sitemap generated successfully');
             } else {

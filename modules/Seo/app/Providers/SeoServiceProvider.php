@@ -32,6 +32,10 @@ class SeoServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerCommands();
         $this->publishResources();
+        $this->loadSitemapConfig();
+        $this->registerSitemapMiddleware();
+        $this->registerSitemapCommands();
+        $this->registerSitemapScheduler();
         $this->registerMenus();
     }
 
@@ -49,6 +53,12 @@ class SeoServiceProvider extends ServiceProvider
         $this->app->singleton(SchemaOrgService::class, function ($app) {
             return new SchemaOrgService;
         });
+
+        $this->app->singleton('sitemap', function ($app) {
+            return new \Modules\Seo\Builder\SitemapBuilder;
+        });
+
+        $this->app->alias('sitemap', \Modules\Seo\Builder\SitemapBuilder::class);
     }
 
     /**
@@ -159,8 +169,39 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Meta SEO', 'route' => 'setting.seo.metas.index'],
                 ['label' => 'Redirecciones', 'route' => 'setting.seo.redirects.index'],
                 ['label' => 'Robots.txt', 'route' => 'setting.seo.robots.edit'],
+                ['label' => 'Sitemap XML', 'route' => 'sitemap.index'],
             ],
         ]);
+    }
+
+    protected function loadSitemapConfig(): void
+    {
+        $configPath = __DIR__.'/../../config/sitemap.php';
+
+        if (file_exists($configPath)) {
+            $this->mergeConfigFrom($configPath, 'sitemap');
+        }
+    }
+
+    protected function registerSitemapMiddleware(): void
+    {
+        $router = $this->app->make(\Illuminate\Routing\Router::class);
+        $router->aliasMiddleware('sitemap.cache', \Modules\Seo\Http\Middleware\CacheSitemapResponse::class);
+    }
+
+    protected function registerSitemapCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Seo\Console\Commands\GenerateSitemapCommand::class,
+                \Modules\Seo\Console\Commands\PingSitemapCommand::class,
+            ]);
+        }
+    }
+
+    protected function registerSitemapScheduler(): void
+    {
+        // Registrar scheduler en bootstrap/app.php o aqui si es posible
     }
 
     /**

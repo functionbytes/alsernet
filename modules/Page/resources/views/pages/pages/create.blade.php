@@ -373,44 +373,35 @@
                     </div>
 
                     <div class="row" id="uiBlocksGrid">
-                        @php
-                            $uiBlocks = [
-                                ['key' => 'raw-html',        'name' => 'HTML personalizado',    'desc' => 'Insertar HTML libre',             'icon' => 'fas fa-code'],
-                                ['key' => 'alert',           'name' => 'Alerta / Aviso',         'desc' => 'Caja de alerta con mensaje',      'icon' => 'fas fa-exclamation-triangle'],
-                                ['key' => 'columns',         'name' => 'Columnas',               'desc' => 'Dividir en columnas Bootstrap',   'icon' => 'fas fa-columns'],
-                                ['key' => 'button',          'name' => 'Botón',                  'desc' => 'Botón con enlace y estilo',       'icon' => 'fas fa-hand-pointer'],
-                                ['key' => 'image-gallery',   'name' => 'Galería de imágenes',    'desc' => 'Grilla de imágenes',             'icon' => 'fas fa-images'],
-                                ['key' => 'video',           'name' => 'Video',                  'desc' => 'Insertar video (YouTube, Vimeo)','icon' => 'fas fa-video'],
-                                ['key' => 'contact-form',    'name' => 'Formulario de contacto', 'desc' => 'Formulario con campos básicos',   'icon' => 'fas fa-envelope'],
-                                ['key' => 'faq',             'name' => 'Preguntas frecuentes',   'desc' => 'Lista de preguntas y respuestas','icon' => 'fas fa-question-circle'],
-                                ['key' => 'testimonials',    'name' => 'Testimonios',            'desc' => 'Carrusel de testimonios',        'icon' => 'fas fa-quote-left'],
-                                ['key' => 'cta',             'name' => 'Llamada a la acción',    'desc' => 'Bloque CTA con título y botón',  'icon' => 'fas fa-bullhorn'],
-                                ['key' => 'map',             'name' => 'Mapa',                   'desc' => 'Mapa embebido de Google Maps',   'icon' => 'fas fa-map-marker-alt'],
-                                ['key' => 'spacer',          'name' => 'Espaciado',              'desc' => 'Espacio en blanco configurable', 'icon' => 'fas fa-arrows-alt-v'],
-                            ];
-                        @endphp
+                        @php $uiBlocks = \Modules\Template\Models\UiBlock::active()->get(); @endphp
 
-                        @foreach($uiBlocks as $block)
+                        @forelse($uiBlocks as $block)
                             <div class="col-xl-3 col-lg-4 col-sm-6 mb-3 ui-block-item"
-                                 data-name="{{ strtolower($block['name']) }}">
+                                 data-name="{{ strtolower($block->name) }}">
                                 <div class="card h-100 ui-block-card border" style="cursor:pointer;"
-                                     data-block-key="{{ $block['key'] }}"
-                                     data-block-name="{{ $block['name'] }}">
+                                     data-block-key="{{ $block->key }}"
+                                     data-block-name="{{ $block->name }}">
                                     <div class="card-body text-center py-3">
                                         <div class="mb-2" style="font-size:2rem; color:#adb5bd;">
-                                            <i class="{{ $block['icon'] }}"></i>
+                                            <i class="{{ $block->icon }}"></i>
                                         </div>
-                                        <h6 class="card-title mb-1 fw-semibold">{{ $block['name'] }}</h6>
-                                        <p class="card-text small text-muted mb-2">{{ $block['desc'] }}</p>
+                                        <h6 class="card-title mb-1 fw-semibold">{{ $block->name }}</h6>
+                                        <p class="card-text small text-muted mb-2">{{ $block->description }}</p>
                                         <button type="button" class="btn btn-sm btn-outline-primary btn-use-block"
-                                                data-block-key="{{ $block['key'] }}"
-                                                data-block-name="{{ $block['name'] }}">
+                                                data-block-key="{{ $block->key }}"
+                                                data-block-name="{{ $block->name }}">
                                             Usar
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="col-12 text-center py-4 text-muted">
+                                <i class="fas fa-puzzle-piece fa-2x mb-2 d-block"></i>
+                                No hay bloques definidos.
+                                <a href="{{ route('settings.ui-blocks.create') }}">Crear uno</a>
+                            </div>
+                        @endforelse
                     </div>
 
                 </div>
@@ -579,6 +570,7 @@
             // =========================================================
             // UI BLOCKS MODAL
             // =========================================================
+            var uiBlocksData = @json($uiBlocks->toArray());
             var selectedBlockKey = null;
             var selectedBlockName = null;
 
@@ -633,21 +625,27 @@
             }
 
             function getBlockConfigForm(key) {
-                var forms = {
-                    'raw-html': '<div class="mb-3"><label class="form-label fw-semibold">Contenido HTML</label><textarea class="form-control font-monospace" id="bc_html" rows="6" placeholder="<div>Tu HTML aquí</div>"></textarea></div>',
-                    'alert': '<div class="mb-3"><label class="form-label fw-semibold">Tipo</label><select class="form-select" id="bc_type"><option value="info">Información</option><option value="success">Éxito</option><option value="warning">Advertencia</option><option value="danger">Peligro</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Mensaje</label><input type="text" class="form-control" id="bc_message" placeholder="Texto del aviso"></div>',
-                    'columns': '<div class="mb-3"><label class="form-label fw-semibold">Número de columnas</label><select class="form-select" id="bc_cols"><option value="2">2 columnas</option><option value="3">3 columnas</option><option value="4">4 columnas</option></select></div>',
-                    'button': '<div class="mb-3"><label class="form-label fw-semibold">Texto del botón</label><input type="text" class="form-control" id="bc_text" placeholder="Haz clic aquí"></div><div class="mb-3"><label class="form-label fw-semibold">Enlace (URL)</label><input type="url" class="form-control" id="bc_url" placeholder="https://"></div><div class="mb-3"><label class="form-label fw-semibold">Estilo</label><select class="form-select" id="bc_style"><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="success">Success</option><option value="danger">Danger</option></select></div>',
-                    'video': '<div class="mb-3"><label class="form-label fw-semibold">URL del video (YouTube/Vimeo)</label><input type="url" class="form-control" id="bc_video" placeholder="https://www.youtube.com/watch?v=..."></div>',
-                    'contact-form': '<div class="mb-3"><label class="form-label fw-semibold">Título del formulario</label><input type="text" class="form-control" id="bc_title" placeholder="Contáctanos"></div><div class="mb-3"><label class="form-label fw-semibold">Correo destino</label><input type="email" class="form-control" id="bc_email" placeholder="correo@ejemplo.com"></div>',
-                    'faq': '<div class="mb-3"><label class="form-label fw-semibold">Título de la sección</label><input type="text" class="form-control" id="bc_title" placeholder="Preguntas frecuentes"></div><small class="text-muted">Se insertará un shortcode base. Edita las preguntas directamente en el editor.</small>',
-                    'testimonials': '<div class="mb-3"><label class="form-label fw-semibold">Título</label><input type="text" class="form-control" id="bc_title" placeholder="Lo que dicen nuestros clientes"></div>',
-                    'cta': '<div class="mb-3"><label class="form-label fw-semibold">Título</label><input type="text" class="form-control" id="bc_title" placeholder="¿Listo para comenzar?"></div><div class="mb-3"><label class="form-label fw-semibold">Texto del botón</label><input type="text" class="form-control" id="bc_btn" placeholder="Contáctanos"></div><div class="mb-3"><label class="form-label fw-semibold">URL del botón</label><input type="url" class="form-control" id="bc_url" placeholder="https://"></div>',
-                    'map': '<div class="mb-3"><label class="form-label fw-semibold">Dirección o URL de Google Maps embed</label><input type="text" class="form-control" id="bc_address" placeholder="Calle 123, Ciudad"></div>',
-                    'image-gallery': '<div class="mb-3"><label class="form-label fw-semibold">Columnas</label><select class="form-select" id="bc_cols"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></div>',
-                    'spacer': '<div class="mb-3"><label class="form-label fw-semibold">Altura (px)</label><input type="number" class="form-control" id="bc_height" value="40" min="10" max="300"></div>',
-                };
-                return forms[key] || '<p class="text-muted">Este bloque no requiere configuración.</p>';
+                var block = uiBlocksData.find(function (b) { return b.key === key; });
+                if (!block || !block.config_fields || !block.config_fields.length) {
+                    return '<p class="text-muted">Este bloque no requiere configuración.</p>';
+                }
+                var html = '';
+                block.config_fields.forEach(function (field) {
+                    html += '<div class="mb-3"><label class="form-label fw-semibold">' + field.label + '</label>';
+                    if (field.type === 'select' && field.options) {
+                        html += '<select class="form-select" id="' + field.id + '">';
+                        Object.entries(field.options).forEach(function (entry) {
+                            html += '<option value="' + entry[0] + '">' + entry[1] + '</option>';
+                        });
+                        html += '</select>';
+                    } else if (field.type === 'textarea') {
+                        html += '<textarea class="form-control" id="' + field.id + '" rows="' + (field.rows || 4) + '" placeholder="' + (field.placeholder || '') + '"></textarea>';
+                    } else {
+                        html += '<input type="' + (field.type || 'text') + '" class="form-control" id="' + field.id + '" placeholder="' + (field.placeholder || '') + '">';
+                    }
+                    html += '</div>';
+                });
+                return html;
             }
 
             function insertBlock(key) {
@@ -664,43 +662,16 @@
             }
 
             function buildShortcode(key) {
-                function v(id) {
-                    return ($('#' + id).val() || '').replace(/"/g, '&quot;');
+                var block = uiBlocksData.find(function (b) { return b.key === key; });
+                if (!block || !block.shortcode_template) {
+                    return '[' + key + '][/' + key + ']';
                 }
-
-                switch (key) {
-                    case 'raw-html':
-                        return v('bc_html');
-                    case 'alert':
-                        return '[alert type="' + v('bc_type') + '"]' + v('bc_message') + '[/alert]';
-                    case 'columns':
-                        var c = v('bc_cols') || '2';
-                        var cols = '';
-                        for (var i = 1; i <= parseInt(c); i++) {
-                            cols += '[column]Contenido columna ' + i + '[/column]';
-                        }
-                        return '[columns cols="' + c + '"]' + cols + '[/columns]';
-                    case 'button':
-                        return '[button url="' + v('bc_url') + '" style="' + v('bc_style') + '"]' + v('bc_text') + '[/button]';
-                    case 'video':
-                        return '[video url="' + v('bc_video') + '"][/video]';
-                    case 'contact-form':
-                        return '[contact-form title="' + v('bc_title') + '" email="' + v('bc_email') + '"][/contact-form]';
-                    case 'faq':
-                        return '[faq title="' + v('bc_title') + '"]\n[faq-item question="Pregunta 1" answer="Respuesta 1"]\n[/faq]';
-                    case 'testimonials':
-                        return '[testimonials title="' + v('bc_title') + '"][/testimonials]';
-                    case 'cta':
-                        return '[cta title="' + v('bc_title') + '" btn_text="' + v('bc_btn') + '" btn_url="' + v('bc_url') + '"][/cta]';
-                    case 'map':
-                        return '[map address="' + v('bc_address') + '"][/map]';
-                    case 'image-gallery':
-                        return '[image-gallery cols="' + (v('bc_cols') || '3') + '"][/image-gallery]';
-                    case 'spacer':
-                        return '[spacer height="' + (v('bc_height') || '40') + '"]';
-                    default:
-                        return '[' + key + '][/' + key + ']';
-                }
+                var result = block.shortcode_template;
+                (block.config_fields || []).forEach(function (field) {
+                    var val = ($('#' + field.id).val() || '').replace(/"/g, '&quot;');
+                    result = result.replace(new RegExp('\\{' + field.id + '\\}', 'g'), val);
+                });
+                return result;
             }
 
             // =========================================================

@@ -27,7 +27,7 @@
     "Page": true,
     "Menu": true,
     "Shortcode": true,
-    "Sitemap": true,
+    "Sitemap": false,
     "Seo": true,
     "Captcha": true,
     "Cookie": true,

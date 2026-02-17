@@ -91,4 +91,23 @@ return [
     |
     */
     'per_page' => 20,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Menu Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuracion de los menus de navegacion del sitio
+    |
+    */
+    'menu' => [
+        'locations' => [
+            'header' => 'Header Menu',
+            'footer' => 'Footer Menu',
+            'sidebar' => 'Sidebar Menu',
+            'mobile' => 'Mobile Menu',
+        ],
+        'max_depth' => 3,
+        'cache_duration' => 3600,
+    ],
 ];
