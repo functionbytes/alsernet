@@ -30,10 +30,10 @@ Route::prefix('settings/theme')
             ->name('custom-html.update');
 
         // Custom JS Settings
-        Route::get('/custom-js', [ThemeCustomJsController::class, 'index'])
+        Route::get('/custom/js', [ThemeCustomJsController::class, 'index'])
             ->name('custom-js');
 
-        Route::post('/custom-js', [ThemeCustomJsController::class, 'update'])
+        Route::post('/custom/js', [ThemeCustomJsController::class, 'update'])
             ->name('custom-js.update');
     });
 
