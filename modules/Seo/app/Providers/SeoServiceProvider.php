@@ -27,6 +27,7 @@ class SeoServiceProvider extends ServiceProvider
         $this->loadViews();
         $this->loadConfig();
         $this->loadRoutes();
+        $this->loadTranslations();
         $this->registerBladeComponents();
         $this->registerMiddleware();
         $this->registerCommands();
@@ -84,6 +85,18 @@ class SeoServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
+    }
+
+    /**
+     * Load translations.
+     */
+    protected function loadTranslations(): void
+    {
+        $langPath = __DIR__.'/../../resources/lang';
+
+        if (is_dir($langPath)) {
+            $this->loadTranslationsFrom($langPath, 'seo');
+        }
     }
 
     /**
@@ -145,6 +158,7 @@ class SeoServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Meta SEO', 'route' => 'setting.seo.metas.index'],
                 ['label' => 'Redirecciones', 'route' => 'setting.seo.redirects.index'],
+                ['label' => 'Robots.txt', 'route' => 'admin.theme.robots-txt'],
             ],
         ]);
     }
