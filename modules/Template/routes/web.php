@@ -43,9 +43,9 @@ Route::prefix('settings/templates')
     ->name('settings.templates.')
     ->group(function () {
         // Custom CSS Management - MUST be before /{template} routes
-        Route::get('/custom-css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'edit'])
+        Route::get('/custom/css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'edit'])
             ->name('custom-css.edit');
-        Route::post('/custom-css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'update'])
+        Route::post('/custom/css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'update'])
             ->name('custom-css.update');
 
         // Index - Grid de templates
