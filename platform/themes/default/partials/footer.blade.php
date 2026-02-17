@@ -10,13 +10,8 @@
                 <h5>{{ theme_trans('quick_links') }}</h5>
                 <ul class="list-unstyled">
                     <li><a href="{{ url('/') }}" class="text-decoration-none text-light">{{ theme_trans('home') }}</a></li>
-                    @if(Route::has('pages.show'))
-                        <li><a href="{{ route('pages.show', ['slug' => 'about']) }}" class="text-decoration-none text-light">{{ theme_trans('about') }}</a></li>
-                        <li><a href="{{ route('pages.show', ['slug' => 'contact']) }}" class="text-decoration-none text-light">{{ theme_trans('contact') }}</a></li>
-                    @else
-                        <li><a href="/pages/about" class="text-decoration-none text-light">{{ theme_trans('about') }}</a></li>
-                        <li><a href="/pages/contact" class="text-decoration-none text-light">{{ theme_trans('contact') }}</a></li>
-                    @endif
+                    <li><a href="{{ url('/about') }}" class="text-decoration-none text-light">{{ theme_trans('about') }}</a></li>
+                    <li><a href="{{ url('/contact') }}" class="text-decoration-none text-light">{{ theme_trans('contact') }}</a></li>
                 </ul>
             </div>
 
