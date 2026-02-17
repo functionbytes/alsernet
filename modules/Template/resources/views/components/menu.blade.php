@@ -1,7 +1,7 @@
 @props(['location', 'class' => ''])
 
 @php
-    use Modules\Menu\Models\Menu;
+    use Modules\Template\Models\Menu;
 
     $menu = Menu::where('location', $location)
         ->where('status', true)
