@@ -18,6 +18,12 @@
     <!-- Wowy Custom Styles -->
     <link rel="stylesheet" href="{{ theme_asset('css/style.css') }}">
 
+    <!-- Custom CSS from settings -->
+    @php $customCss = setting('theme.custom_css'); @endphp
+    @if($customCss)
+        <style id="theme-custom-css">{{ $customCss }}</style>
+    @endif
+
     @yield('css')
 </head>
 <body class="wowy-template">

@@ -74,4 +74,23 @@ return [
     'inactive' => 'Inactivo',
     'published' => 'Publicado',
     'draft' => 'Borrador',
+
+    // Custom CSS
+    'custom_css' => 'CSS personalizado',
+    'custom_css_editor' => 'Editor de CSS personalizado',
+    'custom_css_saved' => 'CSS personalizado guardado exitosamente',
+    'error_saving_custom_css' => 'Error al guardar el CSS personalizado',
+    'custom_css_help' => 'Aquí puedes agregar estilos CSS personalizados que se aplicarán al sitio web. El CSS se inyectará en el elemento &lt;head&gt; de todas las páginas públicas.',
+
+    // Custom HTML
+    'custom_html' => 'HTML personalizado',
+    'custom_html_updated' => 'HTML personalizado actualizado exitosamente',
+    'error_saving_custom_html' => 'Error al guardar el HTML personalizado',
+
+    // Custom JS
+    'custom_js' => 'JavaScript personalizado',
+    'custom_js_updated' => 'JavaScript personalizado guardado exitosamente',
+    'error_saving_custom_js' => 'Error al guardar el JavaScript personalizado',
+
+    'active_template' => 'Plantilla activa',
 ];

@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Template\Http\Controllers\TemplateController;
 use Modules\Template\Http\Controllers\TemplateWebController;
+use Modules\Template\Http\Controllers\ThemeCustomHtmlController;
+use Modules\Template\Http\Controllers\ThemeCustomJsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,11 +17,37 @@ use Modules\Template\Http\Controllers\TemplateWebController;
 |
 */
 
+// Admin Routes - Theme Settings
+Route::prefix('settings/theme')
+    ->middleware(['web', 'auth'])
+    ->name('settings.theme.')
+    ->group(function () {
+        // Custom HTML Settings
+        Route::get('/custom-html', [ThemeCustomHtmlController::class, 'index'])
+            ->name('custom-html');
+
+        Route::post('/custom-html', [ThemeCustomHtmlController::class, 'update'])
+            ->name('custom-html.update');
+
+        // Custom JS Settings
+        Route::get('/custom-js', [ThemeCustomJsController::class, 'index'])
+            ->name('custom-js');
+
+        Route::post('/custom-js', [ThemeCustomJsController::class, 'update'])
+            ->name('custom-js.update');
+    });
+
 // Admin Routes - Template Management
 Route::prefix('settings/templates')
     ->middleware(['web', 'auth'])
     ->name('settings.templates.')
     ->group(function () {
+        // Custom CSS Management - MUST be before /{template} routes
+        Route::get('/custom-css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'edit'])
+            ->name('custom-css.edit');
+        Route::post('/custom-css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'update'])
+            ->name('custom-css.update');
+
         // Index - Grid de templates
         Route::get('', [TemplateController::class, 'index'])
             ->name('index');

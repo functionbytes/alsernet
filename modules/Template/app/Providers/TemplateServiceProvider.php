@@ -90,7 +90,7 @@ class TemplateServiceProvider extends ServiceProvider
         // Load active template's translations
         try {
             $activeTemplateName = $this->getActiveTemplateName();
-            $templateLangPath = base_path('platform/themes/' . $activeTemplateName . '/lang');
+            $templateLangPath = base_path('platform/themes/'.$activeTemplateName.'/lang');
 
             if (is_dir($templateLangPath)) {
                 $this->loadJsonTranslationsFrom($templateLangPath);
@@ -165,7 +165,7 @@ class TemplateServiceProvider extends ServiceProvider
         // Add active template's path so @extends('template::layouts.default') works
         try {
             $activeTemplateName = $this->getActiveTemplateName();
-            $activeTemplatePath = base_path('platform/themes/' . $activeTemplateName);
+            $activeTemplatePath = base_path('platform/themes/'.$activeTemplateName);
 
             if (is_dir($activeTemplatePath)) {
                 array_unshift($viewPaths, $activeTemplatePath);
@@ -201,7 +201,9 @@ class TemplateServiceProvider extends ServiceProvider
             'title' => 'Plantillas',
             'items' => [
                 ['label' => 'Plantillas', 'route' => 'settings.templates.index'],
-                ['label' => 'Crear plantilla', 'route' => 'settings.templates.create'],
+                ['label' => 'CSS personalizado', 'route' => 'settings.templates.custom-css.edit'],
+                ['label' => 'JavaScript personalizado', 'route' => 'settings.theme.custom-js'],
+                ['label' => 'HTML personalizado', 'route' => 'settings.theme.custom-html'],
             ],
         ]);
     }
@@ -213,20 +215,20 @@ class TemplateServiceProvider extends ServiceProvider
     {
         try {
             $activeTemplateName = $this->getActiveTemplateName();
-            $functionsPath = base_path('platform/themes/' . $activeTemplateName . '/functions/functions.php');
+            $functionsPath = base_path('platform/themes/'.$activeTemplateName.'/functions/functions.php');
 
             if (file_exists($functionsPath)) {
                 require $functionsPath;
             }
 
             // Also load helpers
-            $helpersPath = base_path('platform/themes/' . $activeTemplateName . '/functions/helpers.php');
+            $helpersPath = base_path('platform/themes/'.$activeTemplateName.'/functions/helpers.php');
             if (file_exists($helpersPath)) {
                 require $helpersPath;
             }
         } catch (\Exception $e) {
             // Silently fail if unable to load template functions
-            \Log::debug('Could not load template functions: ' . $e->getMessage());
+            \Log::debug('Could not load template functions: '.$e->getMessage());
         }
     }
 
