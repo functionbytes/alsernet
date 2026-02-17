@@ -8,124 +8,110 @@
             @include('core::components.alerts')
 
             <div class="row g-4">
-                {{-- Columna Principal --}}
-                <div class="col-lg-9">
+                {{-- Columna principal --}}
+                <div class="col-lg-8">
                     <form action="{{ route('settings.templates.custom-css.update') }}" method="POST" id="custom-css-form">
                         @csrf
 
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-code me-2"></i>{{ __('template::template.custom_css_editor') }}
-                                </h5>
+                                <div>
+                                    <h5 class="card-title mb-1">CSS personalizado</h5>
+                                    <small class="text-muted">El CSS se aplica globalmente a la plantilla activa del sitio</small>
+                                </div>
                             </div>
 
                             <div class="card-body">
-                                {{-- Información --}}
-                                <div class="alert alert-info mb-4" role="alert">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    {!! __('template::template.custom_css_help') !!}
-                                </div>
-
-                                {{-- Editor CSS --}}
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        {{ __('template::template.custom_css') }}
-                                    </label>
+                                <div class="mb-1">
+                                    <label class="form-label">{{ __('template::template.custom_css') }}</label>
                                     <textarea
                                         name="custom_css"
                                         id="css-editor"
                                         class="form-control font-monospace @error('custom_css') is-invalid @enderror"
-                                        rows="20"
-                                        style="font-size: 13px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;">{{ old('custom_css', $customCss) }}</textarea>
+                                        rows="20">{{ old('custom_css', $customCss) }}</textarea>
                                     @error('custom_css')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
-                                {{-- Contador de caracteres --}}
-                                <div class="text-muted small mb-3">
+                                <small class="text-muted">
                                     <span id="char-count">0</span> / 65535 caracteres
-                                </div>
+                                </small>
+                            </div>
 
-                                {{-- Botones --}}
-                                <div class="btn-list">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>{{ __('core::core.save') }}
-                                    </button>
-
-                                    <a href="{{ route('settings.templates.index') }}" class="btn btn-secondary">
-                                        {{ __('core::core.cancel') }}
-                                    </a>
-                                </div>
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-2"></i>Guardar CSS
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
 
-                {{-- Columna Lateral --}}
-                <div class="col-lg-3">
-                    {{-- Información de plantilla activa --}}
+                {{-- Columna lateral --}}
+                <div class="col-lg-4">
+                    {{-- Plantilla activa --}}
                     <div class="card mb-3">
                         <div class="card-body">
-                            <h5 class="card-title">
+                            <h6 class="fw-bold mb-2 border-bottom pb-2">
                                 <i class="fas fa-check-circle text-success me-2"></i>{{ __('template::template.active_template') }}
-                            </h5>
-                            <p class="mb-0">
-                                <strong>{{ $activeTemplateName }}</strong>
-                            </p>
-                            <small class="text-muted d-block mt-2">
-                                El CSS se aplica globalmente al sitio
-                            </small>
+                            </h6>
+                            <p class="mb-1 fw-semibold">{{ $activeTemplate ?? setting('template', 'default') }}</p>
+                            <small class="text-muted">El CSS se aplica a esta plantilla</small>
                         </div>
                     </div>
 
                     {{-- Ejemplos rápidos --}}
-                    <div class="card">
+                    <div class="card mb-3">
                         <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="fas fa-lightbulb me-2"></i>Ejemplos
-                            </h5>
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-lightbulb me-2"></i>Ejemplos rápidos
+                            </h6>
 
-                            <div class="mb-3">
-                                <small class="text-muted d-block mb-2">Cambiar color primario:</small>
-                                <code style="font-size: 11px; display: block; white-space: normal; word-break: break-word;" class="bg-light p-2 rounded">
-:root {<br>
-&nbsp;&nbsp;--primary-color: #FF5733;<br>
-}
-                                </code>
-                            </div>
+                            <p class="small text-muted mb-1">Cambiar color primario:</p>
+                            <pre class="small bg-light p-2 rounded mb-3">:root {
+  --primary-color: #FF5733;
+}</pre>
 
-                            <div>
-                                <small class="text-muted d-block mb-2">Estilos personalizados:</small>
-                                <code style="font-size: 11px; display: block; white-space: normal; word-break: break-word;" class="bg-light p-2 rounded">
-.navbar {<br>
-&nbsp;&nbsp;background-color: #f8f9fa;<br>
-&nbsp;&nbsp;border-bottom: 3px solid #90bb13;<br>
-}
-                                </code>
-                            </div>
+                            <p class="small text-muted mb-1">Estilos de navegación:</p>
+                            <pre class="small bg-light p-2 rounded mb-0">.navbar {
+  background: #f8f9fa;
+  border-bottom: 3px
+    solid #90bb13;
+}</pre>
+                        </div>
+                    </div>
+
+                    {{-- Advertencias --}}
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2 text-warning">
+                                <i class="fas fa-triangle-exclamation me-2"></i>Recomendaciones
+                            </h6>
+                            <ul class="small mb-0 ps-3">
+                                <li class="mb-2">Usa variables CSS (<code>:root</code>) para cambios globales de color.</li>
+                                <li class="mb-2">Valida el CSS antes de guardar para evitar errores visuales.</li>
+                                <li class="mb-2">Los cambios se aplican a todos los usuarios del sitio.</li>
+                                <li>Mantén una copia de seguridad del CSS antes de modificar.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    @push('footer-scripts')
-        <script>
-            $(document).ready(function() {
-                // Actualizar contador de caracteres
-                const $cssEditor = $('#css-editor');
-                const $charCount = $('#char-count');
-
-                function updateCharCount() {
-                    $charCount.text($cssEditor.val().length);
-                }
-
-                $cssEditor.on('input', updateCharCount);
-                updateCharCount();
-            });
-        </script>
-    @endpush
 @endsection
+
+@push('scripts')
+    <script>
+        const $cssEditor = $('#css-editor');
+        const $charCount = $('#char-count');
+
+        function updateCharCount() {
+            $charCount.text($cssEditor.val().length);
+        }
+
+        $cssEditor.on('input', updateCharCount);
+        updateCharCount();
+    </script>
+@endpush

@@ -23,10 +23,10 @@ Route::prefix('settings/theme')
     ->name('settings.theme.')
     ->group(function () {
         // Custom HTML Settings
-        Route::get('/custom-html', [ThemeCustomHtmlController::class, 'index'])
+        Route::get('/custom/html', [ThemeCustomHtmlController::class, 'index'])
             ->name('custom-html');
 
-        Route::post('/custom-html', [ThemeCustomHtmlController::class, 'update'])
+        Route::post('/custom/html', [ThemeCustomHtmlController::class, 'update'])
             ->name('custom-html.update');
 
         // Custom JS Settings
