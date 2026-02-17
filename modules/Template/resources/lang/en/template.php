@@ -74,4 +74,14 @@ return [
     'inactive' => 'Inactive',
     'published' => 'Published',
     'draft' => 'Draft',
+
+    // Custom HTML
+    'custom_html' => 'Custom HTML',
+    'custom_html_updated' => 'Custom HTML updated successfully',
+    'error_saving_custom_html' => 'Error saving custom HTML',
+
+    // Custom JS
+    'custom_js' => 'Custom JavaScript',
+    'custom_js_updated' => 'Custom JavaScript saved successfully',
+    'error_saving_custom_js' => 'Error saving custom JavaScript',
 ];

@@ -50,6 +50,8 @@
     @stack('scripts-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    {!! \Modules\Core\Models\Setting::get('theme.custom_header_html') !!}
+    {!! \Modules\Core\Models\Setting::get('theme.custom_header_js') !!}
 
 </head>
 
@@ -217,6 +219,9 @@
 </script>
 
 @stack('scripts')
+
+{!! \Modules\Core\Models\Setting::get('theme.custom_footer_html') !!}
+{!! \Modules\Core\Models\Setting::get('theme.custom_footer_js') !!}
 
 </body>
 

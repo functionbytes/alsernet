@@ -189,7 +189,8 @@
         </div>
     </div>
 
-    @push('scripts')
-        <script src="{{ asset('modules/template/js/template.js') }}"></script>
-    @endpush
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('modules/template/js/template.js') }}"></script>
+@endpush
