@@ -12,8 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add FULLTEXT index to pages table
-        // Note: FULLTEXT indexes require InnoDB engine and are available in MySQL 5.6+
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement('ALTER TABLE pages ADD FULLTEXT fulltext_search(title, content, description)');
     }
 
@@ -22,7 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Drop FULLTEXT index
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('pages', function (Blueprint $table) {
             $table->dropIndex('fulltext_search');
         });

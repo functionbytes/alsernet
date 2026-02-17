@@ -42,6 +42,22 @@ NOT at `modules/ModuleName/Providers/`.
 because `modules/Media/vendor/` and root `vendor/` both contain the library.
 This is expected/harmless — the module vendor copy takes precedence.
 
+## Policy Pattern in Modules
+
+Policies live at `modules/ModuleName/app/Policies/NamePolicy.php`.
+Registration: add a `registerPolicies()` protected method in the module's ServiceProvider
+and call it from `boot()`. Use `Gate::policy(Model::class, Policy::class)`.
+
+Permission names follow the format `model.action` (e.g. `page.view`, `page.create`,
+`page.update`, `page.delete`, `page.publish`). Never use `'view pages'` style.
+
+Super-admin check: `$user->hasRole('super-settings') || $user->hasRole('Super Admin')`.
+Always short-circuit return `true` for super admins before checking permissions.
+
+`unpublish` controller method reuses the `publish` policy method (same gate).
+`restore`/`forceDelete` methods receive `$id` (not bound model); fetch via
+`Page::withTrashed()->findOrFail($id)` BEFORE calling `$this->authorize()`.
+
 ## Unrelated Syntax Error
 
 `modules/Mailrelay/database/migrations/2026_01_25_140000_create_mailrelay_variables_table.php`

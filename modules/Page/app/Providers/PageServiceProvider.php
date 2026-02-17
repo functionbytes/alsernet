@@ -3,7 +3,10 @@
 namespace Modules\Page\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Page\Models\Page;
+use Modules\Page\Policies\PagePolicy;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -28,6 +31,7 @@ class PageServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerPolicies();
         $this->registerMenus();
     }
 
@@ -168,6 +172,14 @@ class PageServiceProvider extends ServiceProvider
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->nameLower);
 
         Blade::componentNamespace(config('modules.namespace').'\\'.$this->name.'\\View\\Components', $this->nameLower);
+    }
+
+    /**
+     * Register the module policies.
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Page::class, PagePolicy::class);
     }
 
     /**

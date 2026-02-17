@@ -13,8 +13,8 @@
 
         <div class="row">
 
-            {{-- COLUMNA PRINCIPAL (izquierda, ancha) --}}
-            <div class="col-lg-8">
+            {{-- COLUMNA PRINCIPAL --}}
+            <div class="col-lg-8 order-lg-2">
 
                 {{-- Información principal --}}
                 <div class="card mb-3">
@@ -176,8 +176,8 @@
 
             </div>
 
-            {{-- SIDEBAR DERECHO --}}
-            <div class="col-lg-4">
+            {{-- SIDEBAR --}}
+            <div class="col-lg-4 order-lg-1">
 
                 {{-- Publicar --}}
                 <div class="card mb-3">

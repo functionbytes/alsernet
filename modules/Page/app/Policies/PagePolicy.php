@@ -11,79 +11,118 @@ class PagePolicy
     use HandlesAuthorization;
 
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view the page listing.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.view');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view a specific page.
      */
     public function view(User $user, Page $page): bool
     {
-        return $user->can('view pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.view');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create pages.
      */
     public function create(User $user): bool
     {
-        return $user->can('create pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.create');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update a page.
      */
     public function update(User $user, Page $page): bool
     {
-        // User can edit if they have permission and either:
-        // 1. They own the page
-        // 2. They have settings permissions
-        return $user->can('edit pages') &&
-               ($page->user_id === $user->id || $user->hasRole('settings'));
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.update');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete a page.
      */
     public function delete(User $user, Page $page): bool
     {
-        return $user->can('delete pages') &&
-               ($page->user_id === $user->id || $user->hasRole('settings'));
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.delete');
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Determine if the user can restore a soft-deleted page.
      */
     public function restore(User $user, Page $page): bool
     {
-        return $user->can('delete pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.delete');
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
+     * Determine if the user can permanently delete a page.
      */
     public function forceDelete(User $user, Page $page): bool
     {
-        return $user->hasRole('settings');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.delete');
     }
 
     /**
-     * Determine whether the user can publish the model.
+     * Determine if the user can publish or unpublish a page.
      */
     public function publish(User $user, Page $page): bool
     {
-        return $user->can('publish pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.publish');
     }
 
     /**
-     * Determine whether the user can unpublish the model.
+     * Determine if the user can duplicate a page.
      */
-    public function unpublish(User $user, Page $page): bool
+    public function duplicate(User $user, Page $page): bool
     {
-        return $user->can('publish pages');
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.create');
+    }
+
+    /**
+     * Check if the user is a super admin.
+     */
+    protected function isSuperAdmin(User $user): bool
+    {
+        return $user->hasRole('super-settings') || $user->hasRole('Super Admin');
     }
 }

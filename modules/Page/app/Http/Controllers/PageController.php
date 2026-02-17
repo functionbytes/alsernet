@@ -24,6 +24,8 @@ class PageController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Page::class);
+
         $filters = [
             'status' => $request->get('status'),
             'search' => $request->get('search'),
@@ -47,6 +49,8 @@ class PageController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Page::class);
+
         $page = new Page;
         $templates = config('page.templates', ['default' => 'Default']);
         $statuses = Page::getStatuses();
@@ -61,6 +65,8 @@ class PageController extends Controller
      */
     public function store(CreatePageRequest $request)
     {
+        $this->authorize('create', Page::class);
+
         try {
             $data = $request->validated();
 
@@ -84,10 +90,12 @@ class PageController extends Controller
     /**
      * Display the specified page.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function show(Page $page)
     {
+        $this->authorize('view', $page);
+
         return redirect()->route('pages.edit', $page->id);
     }
 
@@ -98,6 +106,8 @@ class PageController extends Controller
      */
     public function edit(Page $page)
     {
+        $this->authorize('update', $page);
+
         $templates = config('page.templates', ['default' => 'Default']);
         $statuses = Page::getStatuses();
 
@@ -111,6 +121,8 @@ class PageController extends Controller
      */
     public function update(UpdatePageRequest $request, Page $page)
     {
+        $this->authorize('update', $page);
+
         try {
             $data = $request->validated();
 
@@ -138,6 +150,8 @@ class PageController extends Controller
      */
     public function destroy(Page $page)
     {
+        $this->authorize('delete', $page);
+
         try {
             $this->pageService->deletePage($page);
 
@@ -157,6 +171,8 @@ class PageController extends Controller
      */
     public function publish(Page $page)
     {
+        $this->authorize('publish', $page);
+
         try {
             $this->pageService->publishPage($page);
 
@@ -173,6 +189,8 @@ class PageController extends Controller
      */
     public function unpublish(Page $page)
     {
+        $this->authorize('publish', $page);
+
         try {
             $this->pageService->unpublishPage($page);
 
@@ -189,6 +207,8 @@ class PageController extends Controller
      */
     public function duplicate(Page $page)
     {
+        $this->authorize('duplicate', $page);
+
         try {
             $newPage = $this->pageService->duplicatePage($page);
 
@@ -208,8 +228,11 @@ class PageController extends Controller
      */
     public function restore($id)
     {
+        $page = Page::withTrashed()->findOrFail($id);
+
+        $this->authorize('restore', $page);
+
         try {
-            $page = Page::withTrashed()->findOrFail($id);
             $this->pageService->restorePage($page);
 
             return redirect()
@@ -228,8 +251,11 @@ class PageController extends Controller
      */
     public function forceDelete($id)
     {
+        $page = Page::withTrashed()->findOrFail($id);
+
+        $this->authorize('forceDelete', $page);
+
         try {
-            $page = Page::withTrashed()->findOrFail($id);
             $this->pageService->forceDeletePage($page);
 
             return redirect()
