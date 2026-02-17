@@ -17,7 +17,7 @@ class TemplateDatabaseSeeder extends Seeder
         // Get first user or create one
         $user = User::first();
 
-        if (!$user) {
+        if (! $user) {
             $this->command->warn('No users found in database. Skipping template seeding.');
 
             return;
@@ -72,8 +72,8 @@ class TemplateDatabaseSeeder extends Seeder
 
         $this->command->info('Template seeds created successfully.');
 
-        // Seed UI Blocks
-        $this->call(UiBlockSeeder::class);
+        // Seed Shortcodes
+        $this->call(ShortcodeSeeder::class);
 
         // Create template directories and JSON files
         $this->createTemplateDirectories($user);
@@ -86,7 +86,7 @@ class TemplateDatabaseSeeder extends Seeder
     {
         $basePath = base_path('platform/themes');
 
-        if (!is_dir($basePath)) {
+        if (! is_dir($basePath)) {
             mkdir($basePath, 0755, true);
         }
 
@@ -124,7 +124,7 @@ class TemplateDatabaseSeeder extends Seeder
             $templatePath = $basePath.'/'.$slug;
 
             // Create template directory structure
-            if (!is_dir($templatePath)) {
+            if (! is_dir($templatePath)) {
                 mkdir($templatePath, 0755, true);
                 mkdir($templatePath.'/layouts', 0755, true);
                 mkdir($templatePath.'/partials', 0755, true);
@@ -135,28 +135,28 @@ class TemplateDatabaseSeeder extends Seeder
 
             // Create template.json
             $jsonPath = $templatePath.'/template.json';
-            if (!File::exists($jsonPath)) {
+            if (! File::exists($jsonPath)) {
                 File::put($jsonPath, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                 $this->command->line("Created: {$jsonPath}");
             }
 
             // Create config.php
             $configPath = $templatePath.'/config.php';
-            if (!File::exists($configPath)) {
+            if (! File::exists($configPath)) {
                 File::put($configPath, $this->getTemplateConfigContent($slug));
                 $this->command->line("Created: {$configPath}");
             }
 
             // Create default layout file
             $layoutPath = $templatePath.'/layouts/default.blade.php';
-            if (!File::exists($layoutPath)) {
+            if (! File::exists($layoutPath)) {
                 File::put($layoutPath, $this->getDefaultLayoutBladeContent());
                 $this->command->line("Created: {$layoutPath}");
             }
 
             // Create placeholder screenshot.png (1x1 transparent PNG)
             $screenshotPath = $templatePath.'/screenshot.png';
-            if (!File::exists($screenshotPath)) {
+            if (! File::exists($screenshotPath)) {
                 $this->createPlaceholderScreenshot($screenshotPath);
                 $this->command->line("Created: {$screenshotPath}");
             }

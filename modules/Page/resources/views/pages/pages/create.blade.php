@@ -373,7 +373,7 @@
                     </div>
 
                     <div class="row" id="uiBlocksGrid">
-                        @php $uiBlocks = \Modules\Template\Models\UiBlock::active()->get(); @endphp
+                        @php $uiBlocks = \Modules\Template\Models\Shortcode::active()->get(); @endphp
 
                         @forelse($uiBlocks as $block)
                             <div class="col-xl-3 col-lg-4 col-sm-6 mb-3 ui-block-item"
@@ -399,7 +399,7 @@
                             <div class="col-12 text-center py-4 text-muted">
                                 <i class="fas fa-puzzle-piece fa-2x mb-2 d-block"></i>
                                 No hay bloques definidos.
-                                <a href="{{ route('settings.ui-blocks.create') }}">Crear uno</a>
+                                <a href="{{ route('settings.shortcodes.create') }}">Crear uno</a>
                             </div>
                         @endforelse
                     </div>

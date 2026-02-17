@@ -15,7 +15,7 @@ class ShortcodeController extends Controller
      */
     public function index(): View
     {
-        return view('shortcode::settings.index');
+        return view('shortcode::admin.index');
     }
 
     /**
@@ -25,7 +25,7 @@ class ShortcodeController extends Controller
     {
         $shortcodes = Shortcode::all();
 
-        return view('shortcode::settings.reference', compact('shortcodes'));
+        return view('shortcode::admin.reference', compact('shortcodes'));
     }
 
     /**

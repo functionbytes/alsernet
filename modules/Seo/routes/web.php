@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Seo\Http\Controllers\RobotsTxtController;
 use Modules\Seo\Http\Controllers\SeoMetaWebController;
 use Modules\Seo\Http\Controllers\SeoRedirectController;
+use Modules\Seo\Http\Controllers\SitemapAdminController;
 use Modules\Seo\Http\Controllers\SitemapController;
 
 /*
@@ -27,6 +28,10 @@ Route::prefix('setting')->middleware(['web', 'auth'])->name('setting.')->group(f
 
         Route::get('robots', [RobotsTxtController::class, 'edit'])->name('robots.edit');
         Route::post('robots', [RobotsTxtController::class, 'update'])->name('robots.update');
+
+        Route::get('sitemap', [SitemapAdminController::class, 'index'])->name('sitemap.index');
+        Route::post('sitemap/generate', [SitemapAdminController::class, 'generate'])->name('sitemap.generate');
+        Route::post('sitemap/clear-cache', [SitemapAdminController::class, 'clearCache'])->name('sitemap.clear-cache');
     });
 });
 

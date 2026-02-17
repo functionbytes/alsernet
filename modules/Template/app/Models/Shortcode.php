@@ -25,7 +25,7 @@ class Shortcode extends Model
     {
         return [
             'config_fields' => 'array',
-            'is_active'     => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

@@ -78,7 +78,8 @@
       "mcp__jetbrains__build_project",
       "mcp__chrome-devtools__upload_file",
       "mcp__chrome-devtools__press_key",
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   },

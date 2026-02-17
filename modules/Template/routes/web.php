@@ -2,11 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Template\Http\Controllers\MenuController;
+use Modules\Template\Http\Controllers\ShortcodeController;
 use Modules\Template\Http\Controllers\TemplateController;
 use Modules\Template\Http\Controllers\TemplateWebController;
 use Modules\Template\Http\Controllers\ThemeCustomHtmlController;
 use Modules\Template\Http\Controllers\ThemeCustomJsController;
-use Modules\Template\Http\Controllers\UiBlockController;
 
 /*
 |--------------------------------------------------------------------------
@@ -108,18 +108,18 @@ Route::prefix('settings/templates')
             });
     });
 
-// Admin Routes - UI Blocks Management
-Route::prefix('settings/ui-blocks')
+// Admin Routes - Shortcodes Management
+Route::prefix('settings/shortcodes')
     ->middleware(['web', 'auth'])
-    ->name('settings.ui-blocks.')
+    ->name('settings.shortcodes.')
     ->group(function () {
-        Route::get('', [UiBlockController::class, 'index'])->name('index');
-        Route::get('/create', [UiBlockController::class, 'create'])->name('create');
-        Route::post('', [UiBlockController::class, 'store'])->name('store');
-        Route::get('/{uiBlock}/edit', [UiBlockController::class, 'edit'])->name('edit');
-        Route::put('/{uiBlock}', [UiBlockController::class, 'update'])->name('update');
-        Route::delete('/{uiBlock}', [UiBlockController::class, 'destroy'])->name('destroy');
-        Route::post('/order', [UiBlockController::class, 'updateOrder'])->name('order');
+        Route::get('', [ShortcodeController::class, 'index'])->name('index');
+        Route::get('/create', [ShortcodeController::class, 'create'])->name('create');
+        Route::post('', [ShortcodeController::class, 'store'])->name('store');
+        Route::get('/{shortcode}/edit', [ShortcodeController::class, 'edit'])->name('edit');
+        Route::put('/{shortcode}', [ShortcodeController::class, 'update'])->name('update');
+        Route::delete('/{shortcode}', [ShortcodeController::class, 'destroy'])->name('destroy');
+        Route::post('/order', [ShortcodeController::class, 'updateOrder'])->name('order');
     });
 
 // Admin Routes - Menu Management
@@ -146,10 +146,10 @@ Route::prefix('settings/menus')
         Route::delete('/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('items.destroy');
     });
 
-// API - UI Blocks para Page editor
-Route::get('/api/ui-blocks', [UiBlockController::class, 'apiIndex'])
+// API - Shortcodes para Page editor
+Route::get('/api/page-shortcodes', [ShortcodeController::class, 'apiIndex'])
     ->middleware(['web', 'auth'])
-    ->name('api.ui-blocks');
+    ->name('api.page-shortcodes');
 
 // Public Routes - Frontend Template Rendering
 Route::get('/template/{slug}', [TemplateWebController::class, 'render'])

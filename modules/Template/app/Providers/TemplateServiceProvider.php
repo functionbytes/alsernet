@@ -30,6 +30,7 @@ class TemplateServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->loadMenuHelpers();
         $this->loadTemplateFunctions();
+        $this->registerDynamicShortcodes();
     }
 
     /**
@@ -205,12 +206,40 @@ class TemplateServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Plantillas', 'route' => 'settings.templates.index'],
                 ['label' => 'Menus', 'route' => 'settings.menus.index'],
-                ['label' => 'Bloques UI', 'route' => 'settings.ui-blocks.index'],
+                ['label' => 'Shortcodes', 'route' => 'settings.shortcodes.index'],
                 ['label' => 'CSS personalizado', 'route' => 'settings.templates.custom-css.edit'],
                 ['label' => 'JavaScript personalizado', 'route' => 'settings.theme.custom-js'],
                 ['label' => 'HTML personalizado', 'route' => 'settings.theme.custom-html'],
             ],
         ]);
+    }
+
+    /**
+     * Registrar dinámicamente los shortcodes de la BD en el compiler del módulo Shortcode.
+     */
+    protected function registerDynamicShortcodes(): void
+    {
+        $this->app->booted(function () {
+            try {
+                $shortcodes = \Modules\Template\Models\Shortcode::query()
+                    ->where('is_active', true)
+                    ->whereNotNull('render_template')
+                    ->get();
+
+                foreach ($shortcodes as $sc) {
+                    app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
+                        $html = $sc->render_template;
+                        foreach ($attrs as $key => $val) {
+                            $html = str_replace('{'.$key.'}', e($val), $html);
+                        }
+
+                        return str_replace('{content}', $content, $html);
+                    });
+                }
+            } catch (\Exception) {
+                // Silently fail if the table does not exist yet (e.g. before migration)
+            }
+        });
     }
 
     /**

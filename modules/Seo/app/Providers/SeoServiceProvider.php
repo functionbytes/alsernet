@@ -169,7 +169,7 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Meta SEO', 'route' => 'setting.seo.metas.index'],
                 ['label' => 'Redirecciones', 'route' => 'setting.seo.redirects.index'],
                 ['label' => 'Robots.txt', 'route' => 'setting.seo.robots.edit'],
-                ['label' => 'Sitemap XML', 'route' => 'sitemap.index'],
+                ['label' => 'Sitemap XML', 'route' => 'setting.seo.sitemap.index'],
             ],
         ]);
     }

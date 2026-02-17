@@ -463,7 +463,7 @@
                     </div>
 
                     {{-- Grid de bloques --}}
-                    @php $uiBlocks = \Modules\Template\Models\UiBlock::active()->get(); @endphp
+                    @php $uiBlocks = \Modules\Template\Models\Shortcode::active()->get(); @endphp
                     <div class="row" id="uiBlocksGrid">
                         @forelse($uiBlocks as $block)
                             <div class="col-xl-3 col-lg-4 col-sm-6 mb-3 ui-block-item" data-name="{{ strtolower($block->name) }}">
@@ -486,7 +486,7 @@
                             </div>
                         @empty
                             <div class="col-12">
-                                <p class="text-muted text-center py-4">No hay bloques configurados. <a href="{{ route('settings.ui-blocks.create') }}">Crear uno</a>.</p>
+                                <p class="text-muted text-center py-4">No hay shortcodes configurados. <a href="{{ route('settings.shortcodes.create') }}">Crear uno</a>.</p>
                             </div>
                         @endforelse
                     </div>

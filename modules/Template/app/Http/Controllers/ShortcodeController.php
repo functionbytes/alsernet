@@ -26,15 +26,15 @@ class ShortcodeController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'key'                => ['required', 'string', 'max:100', 'unique:shortcodes,key', 'regex:/^[a-z0-9\-]+$/'],
-            'name'               => ['required', 'string', 'max:150'],
-            'description'        => ['nullable', 'string', 'max:255'],
-            'icon'               => ['nullable', 'string', 'max:100'],
+            'key' => ['required', 'string', 'max:100', 'unique:shortcodes,key', 'regex:/^[a-z0-9\-]+$/'],
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'icon' => ['nullable', 'string', 'max:100'],
             'shortcode_template' => ['nullable', 'string', 'max:500'],
-            'render_template'    => ['nullable', 'string'],
-            'sort_order'         => ['nullable', 'integer', 'min:0'],
-            'is_active'          => ['nullable', 'boolean'],
-            'config_fields'      => ['nullable', 'json'],
+            'render_template' => ['nullable', 'string'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
+            'config_fields' => ['nullable', 'json'],
         ]);
 
         $data['config_fields'] = $data['config_fields'] ? json_decode($data['config_fields'], true) : [];
@@ -54,15 +54,15 @@ class ShortcodeController extends Controller
     public function update(Request $request, Shortcode $shortcode): RedirectResponse
     {
         $data = $request->validate([
-            'key'                => ['required', 'string', 'max:100', 'regex:/^[a-z0-9\-]+$/', 'unique:shortcodes,key,'.$shortcode->id],
-            'name'               => ['required', 'string', 'max:150'],
-            'description'        => ['nullable', 'string', 'max:255'],
-            'icon'               => ['nullable', 'string', 'max:100'],
+            'key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9\-]+$/', 'unique:shortcodes,key,'.$shortcode->id],
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'icon' => ['nullable', 'string', 'max:100'],
             'shortcode_template' => ['nullable', 'string', 'max:500'],
-            'render_template'    => ['nullable', 'string'],
-            'sort_order'         => ['nullable', 'integer', 'min:0'],
-            'is_active'          => ['nullable', 'boolean'],
-            'config_fields'      => ['nullable', 'json'],
+            'render_template' => ['nullable', 'string'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable', 'boolean'],
+            'config_fields' => ['nullable', 'json'],
         ]);
 
         $data['config_fields'] = $data['config_fields'] ? json_decode($data['config_fields'], true) : [];
