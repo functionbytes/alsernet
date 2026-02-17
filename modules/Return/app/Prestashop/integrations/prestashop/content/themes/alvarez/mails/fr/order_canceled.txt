@@ -1,9 +1,0 @@
-{shop_url}
-Madame, Monsieur{firstname} {lastname}:
-
-Votre commande {id_order} a été annulée.
-
-S’il vous plaît, si vous souhaitez modifier la commande ou pour toutes autres questions, merci de nous contacter au 0034 981 17 91 00.
-[{shop_name}]({shop_url})
-
-

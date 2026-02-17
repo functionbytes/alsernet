@@ -2,85 +2,35 @@
 
 namespace Modules\Analytics;
 
+use Google\Analytics\Data\V1beta\RunReportResponse;
 use Illuminate\Support\Collection;
 
 class AnalyticsResponse
 {
-    protected Collection $table;
-    protected array $rows = [];
-    protected array $totals = [];
+    public RunReportResponse $googleResponse;
 
-    public function __construct(array $responseData = [])
+    public Collection $table;
+
+    public array $metricAggregationsTable;
+
+    public function setGoogleResponse(RunReportResponse $googleResponse): self
     {
-        $this->table = collect();
-        $this->processResponse($responseData);
+        $this->googleResponse = $googleResponse;
+
+        return $this;
     }
 
-    protected function processResponse(array $responseData): void
+    public function setTable(array $table): self
     {
-        if (empty($responseData)) {
-            return;
-        }
+        $this->table = collect($table);
 
-        // Procesar dimensiones y métricas
-        $rows = $responseData['rows'] ?? [];
-
-        foreach ($rows as $row) {
-            $rowData = [];
-
-            // Agregar dimensiones
-            if (isset($row['dimensions'])) {
-                foreach ($row['dimensions'] as $index => $dimension) {
-                    $rowData[$index] = $dimension;
-                }
-            }
-
-            // Agregar métricas
-            if (isset($row['metricValues'])) {
-                foreach ($row['metricValues'] as $index => $metric) {
-                    $rowData['metric_' . $index] = $metric['value'] ?? 0;
-                }
-            }
-
-            $this->rows[] = $rowData;
-        }
-
-        $this->table = collect($this->rows);
-
-        // Procesar totales si existen
-        if (isset($responseData['totals'])) {
-            foreach ($responseData['totals'] as $total) {
-                if (isset($total['metricValues'])) {
-                    foreach ($total['metricValues'] as $index => $metric) {
-                        $this->totals['metric_' . $index] = $metric['value'] ?? 0;
-                    }
-                }
-            }
-        }
+        return $this;
     }
 
-    public function getTable(): Collection
+    public function setMetricAggregationsTable(array $metricAggregationsTable): self
     {
-        return $this->table;
-    }
+        $this->metricAggregationsTable = $metricAggregationsTable;
 
-    public function getTotals(): array
-    {
-        return $this->totals;
-    }
-
-    public function getRows(): array
-    {
-        return $this->rows;
-    }
-
-    public function toArray(): array
-    {
-        return $this->table->toArray();
-    }
-
-    public function toJson(): string
-    {
-        return $this->table->toJson();
+        return $this;
     }
 }

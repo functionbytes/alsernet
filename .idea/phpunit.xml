@@ -3,10 +3,21 @@
   <component name="PHPUnit">
     <option name="directories">
       <list>
-        <option value="$PROJECT_DIR$/modules/Return/tests" />
+        <option value="$PROJECT_DIR$/modules/Auth/tests" />
+        <option value="$PROJECT_DIR$/modules/Menu/tests" />
+        <option value="$PROJECT_DIR$/modules/Page/tests" />
+        <option value="$PROJECT_DIR$/modules/Media/tests" />
+        <option value="$PROJECT_DIR$/modules/Pulse/tests" />
+        <option value="$PROJECT_DIR$/modules/Queue/tests" />
+        <option value="$PROJECT_DIR$/modules/Mailer/tests" />
+        <option value="$PROJECT_DIR$/modules/Modules/tests" />
+        <option value="$PROJECT_DIR$/modules/Sitemap/tests" />
+        <option value="$PROJECT_DIR$/modules/Activity/tests" />
+        <option value="$PROJECT_DIR$/modules/Database/tests" />
+        <option value="$PROJECT_DIR$/modules/Document/tests" />
+        <option value="$PROJECT_DIR$/modules/Attention/tests" />
+        <option value="$PROJECT_DIR$/modules/MailsSettings/tests" />
         <option value="$PROJECT_DIR$/tests" />
-        <option value="$PROJECT_DIR$/modules/Mailing/tests" />
-        <option value="$PROJECT_DIR$/modules/Webhook/tests" />
       </list>
     </option>
   </component>

@@ -296,7 +296,7 @@
                     }
                     const initials = user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase();
                     return $('<span>' +
-                        '<span style="display: inline-block; width: 32px; height: 32px; background-color: #90bb13; color: white; border-radius: 50%; text-align: center; line-height: 32px; margin-right: 8px; font-weight: bold; font-size: 12px;">' + initials + '</span>' +
+                        '<span style="display: inline-block; width: 32px; height: 32px; background-color: #081A28; color: white; border-radius: 50%; text-align: center; line-height: 32px; margin-right: 8px; font-weight: bold; font-size: 12px;">' + initials + '</span>' +
                         '<span>' + user.first_name + ' ' + user.last_name + ' <small class="text-muted">(' + user.email + ')</small></span>' +
                         '</span>');
                 },

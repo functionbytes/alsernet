@@ -21,7 +21,7 @@ use Modules\Mailer\Traits\HasUid;
  * @property string|null $description
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Modules\Mailer\Models\MailLayout|null $layout
+ * @property-read \Modules\Mailer\Models\MailerLayout|null $layout
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Modules\Mailer\Models\MailerTemplateLang> $translations
  * @property-read string|null $subject (magic getter - from current translation)
  * @property-read string|null $content (magic getter - from current translation)

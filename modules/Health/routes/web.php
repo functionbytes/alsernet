@@ -11,12 +11,12 @@ use Modules\Health\Http\Controllers\HealthController;
 | Health monitoring and system diagnostics routes
 | Prefix: /backups/health (applied by ServiceProvider)
 | Name: backups.health.* (applied by ServiceProvider)
-| Middleware: web, auth, role:super-admin
+| Middleware: web, auth, settings
 |
 */
 
-Route::middleware(['web', 'auth', 'role:super-admin'])
-    ->prefix('settings/health')
+Route::middleware(['web', 'auth', 'settings'])
+    ->prefix('setting/health')
     ->name('settings.health.')
     ->group(function () {
         Route::get('/', [HealthController::class, 'index'])->name('index');
@@ -38,6 +38,5 @@ Route::middleware(['web', 'auth', 'role:super-admin'])
 Route::prefix('api/health')->group(function () {
     Route::get('ping', [HealthController::class, 'ping']);           // Ping simple
     Route::get('/', [HealthController::class, 'health']);            // Health check completo
-    Route::get('documents', [HealthController::class, 'documentsHealth']); // Health específico documentos
     Route::get('detailed', [HealthController::class, 'detailed']);   // Detallado (solo debug)
 });

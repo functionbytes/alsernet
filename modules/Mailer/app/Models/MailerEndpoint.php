@@ -73,7 +73,7 @@ class MailerEndpoint extends Model
      */
     public function language(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Lang', 'lang_id');
+        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
     }
 
     /**
@@ -81,7 +81,7 @@ class MailerEndpoint extends Model
      */
     public function lang(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Lang', 'lang_id');
+        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
     }
 
     /**

@@ -62,15 +62,15 @@ class MailerLang extends Model
     public static function getSelectOptions()
     {
         $options = self::available()->get()->map(function ($item) {
-            return ['value' => $item->id, 'text' => $item->name];
+            return ['value' => $item->id, 'text' => $item->title];
         });
 
         // japan only en and ja
         if (config('custom.japan')) {
-            $options = self::active()->get()->filter(function ($item) {
-                return in_array($item->code, ['en', 'ja']);
+            $options = self::available()->get()->filter(function ($item) {
+                return in_array($item->iso_code, ['en', 'ja']);
             })->map(function ($item) {
-                return ['value' => $item->id, 'text' => $item->name];
+                return ['value' => $item->id, 'text' => $item->title];
             });
         }
 
@@ -79,14 +79,13 @@ class MailerLang extends Model
 
     public function scopeSearch($query, $keyword)
     {
-        // Keyword
         if (! empty(trim($keyword))) {
             $keyword = trim($keyword);
             foreach (explode(' ', $keyword) as $keyword) {
                 $query = $query->where(function ($q) use ($keyword) {
-                    $q->orwhere('languages.name', 'like', '%'.$keyword.'%')
-                        ->orwhere('languages.code', 'like', '%'.$keyword.'%')
-                        ->orwhere('languages.region_code', 'like', '%'.$keyword.'%');
+                    $q->orWhere('langs.title', 'like', '%'.$keyword.'%')
+                        ->orWhere('langs.iso_code', 'like', '%'.$keyword.'%')
+                        ->orWhere('langs.lenguage_code', 'like', '%'.$keyword.'%');
                 });
             }
         }

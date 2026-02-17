@@ -1,3 +1,0 @@
-Hi {customer_name},
-Your post {post_title} has been successfully submitted to {shop_name} and is waiting for approval
-Review post

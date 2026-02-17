@@ -2,20 +2,27 @@
 
 namespace Modules\Analytics\Traits;
 
+use Google\Analytics\Data\V1beta\DateRange;
 use Modules\Analytics\Period;
 
 trait DateRangeTrait
 {
-    protected array $dateRanges = [];
+    public array $dateRanges = [];
 
     public function dateRange(Period $period): self
     {
-        $this->dateRanges = [
-            [
-                'start_date' => $period->startDate->format('Y-m-d'),
-                'end_date' => $period->endDate->format('Y-m-d'),
-            ],
-        ];
+        $this->dateRanges[] = (new DateRange)
+            ->setStartDate($period->startDate->toDateString())
+            ->setEndDate($period->endDate->toDateString());
+
+        return $this;
+    }
+
+    public function dateRanges(Period ...$items): self
+    {
+        foreach ($items as $item) {
+            $this->dateRange($item);
+        }
 
         return $this;
     }

@@ -5,6 +5,7 @@ namespace Modules\Mailer\Http\Controllers;
 use App\Http\Controllers\Controller;
 use DOMDocument;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;

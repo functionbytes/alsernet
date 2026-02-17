@@ -431,7 +431,7 @@ class MailFake implements Factory, Fake, Mailer, MailQueue
     }
 
     /**
-     * Begin the process of mailing a mailable class instance.
+     * Begin the process of Mailer a mailable class instance.
      *
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail
@@ -442,7 +442,7 @@ class MailFake implements Factory, Fake, Mailer, MailQueue
     }
 
     /**
-     * Begin the process of mailing a mailable class instance.
+     * Begin the process of Mailer a mailable class instance.
      *
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail
@@ -453,7 +453,7 @@ class MailFake implements Factory, Fake, Mailer, MailQueue
     }
 
     /**
-     * Begin the process of mailing a mailable class instance.
+     * Begin the process of Mailer a mailable class instance.
      *
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail

@@ -1,13 +1,18 @@
 {
     "name": "Seo",
-    "alias": "seo",
-    "description": "Search engine optimization, meta tags, OpenGraph, and structured data",
-    "keywords": ["seo", "meta", "opengraph", "json-ld"],
+    "alias": "Seo",
+    "description": "SEO management module with meta tags, Open Graph, and Twitter Card support",
+    "keywords": [
+        "seo",
+        "meta tags",
+        "open graph",
+        "twitter card",
+        "canonical"
+    ],
     "priority": 0,
     "providers": [
         "Modules\\Seo\\Providers\\SeoServiceProvider"
     ],
-    "aliases": {},
     "files": [],
-    "requires": []
+    "version": "1.0.0"
 }

@@ -3,15 +3,7 @@
 namespace Modules\Mailer\Services;
 
 use Illuminate\Support\Facades\Log;
-use League\Pipeline\PipelineBuilder;
-use Modules\Campaign\Models\Template\Template;
 use Modules\Core\Models\Setting;
-use Modules\Mailer\Library\AddDoctype;
-use Modules\Mailer\Library\DecodeHtmlSpecialChars;
-use Modules\Mailer\Library\GenerateSpintax;
-use Modules\Mailer\Library\MakeInlineCss;
-use Modules\Mailer\Library\ParseRss;
-use Modules\Mailer\Library\TransformWidgets;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
 
@@ -32,18 +24,10 @@ class MailerTemplateRendererService
     }
 
     /**
-     * Renderizar plantilla de campaña (Template)
-     */
-    public static function renderCampaignTemplate(Template $template, array $variables = [], ?int $langId = null): string
-    {
-        return self::render($template, $variables, 'campaign', $langId);
-    }
-
-    /**
      * Renderizar plantilla genérica
      *
-     * @param  MailerTemplate|Template|MailerLayout  $template
-     * @param  string  $type  ('email', 'campaign', 'layout')
+     * @param  MailerTemplate|MailerLayout  $template
+     * @param  string  $type  ('email', 'layout')
      * @param  int|null  $langId  ID del idioma para obtener traducciones
      */
     private static function render($template, array $variables = [], string $type = 'email', ?int $langId = null): string
@@ -78,11 +62,6 @@ class MailerTemplateRendererService
             $layoutContent = self::renderLayoutTags($layoutContent, $variables, $langId);
 
             $content = $layoutContent;
-        }
-
-        // 4. Aplicar pipeline de procesamiento (para campañas)
-        if ($type === 'campaign' && $template instanceof Template) {
-            $content = self::processPipeline($template, $content);
         }
 
         return $content;
@@ -283,59 +262,17 @@ class MailerTemplateRendererService
     }
 
     /**
-     * Procesar contenido a través del pipeline (para campañas)
-     * Incluye: AddDoctype, ParseRss, MakeInlineCss, etc.
-     */
-    private static function processPipeline(Template $template, string $content): string
-    {
-        try {
-            $pipeline = new PipelineBuilder;
-
-            // Agregar procesadores en orden
-            $pipeline->add(new AddDoctype);
-            $pipeline->add(new ParseRss);
-
-            // CSS Inlining (importante para email)
-            $cssFiles = $template->findCssFiles();
-            $pipeline->add(new MakeInlineCss($cssFiles));
-
-            $pipeline->add(new TransformWidgets);
-            $pipeline->add(new DecodeHtmlSpecialChars);
-            $pipeline->add(new GenerateSpintax);
-
-            // Ejecutar pipeline
-            return $pipeline->build()->process($content);
-        } catch (\Exception $e) {
-            // Si hay error en pipeline, devolver contenido sin procesar
-            Log::warning('Error en TemplateRendererService pipeline: '.$e->getMessage());
-
-            return $content;
-        }
-    }
-
-    /**
      * Obtener HTML para preview (con variables reemplazadas por ejemplos)
-     *
-     * @param  MailerTemplate|Template  $template
      */
-    public static function getPreviewHtml($template, bool $includeLayout = true): string
+    public static function getPreviewHtml(MailerTemplate $template, bool $includeLayout = true): string
     {
-        // Obtener variables disponibles
         $variables = [];
 
-        if ($template instanceof MailerTemplate) {
-            $vars = $template->getAvailableVariables();
-            foreach ($vars as $var) {
-                $variables[$var['name']] = self::getExampleValue($var['name']);
-            }
-        } elseif ($template instanceof Template) {
-            $vars = Template::tags();
-            foreach ($vars as $var) {
-                $variables[$var['name']] = self::getExampleValue($var['name']);
-            }
+        $vars = $template->getAvailableVariables();
+        foreach ($vars as $var) {
+            $variables[$var['name']] = self::getExampleValue($var['name']);
         }
 
-        // Renderizar con variables de ejemplo
         return self::render($template, $variables);
     }
 
@@ -447,10 +384,8 @@ class MailerTemplateRendererService
 
     /**
      * Obtener estadísticas del template
-     *
-     * @param  MailerTemplate|Template  $template
      */
-    public static function getStats($template): array
+    public static function getStats(MailerTemplate $template): array
     {
         $content = $template->content ?? '';
 
@@ -479,7 +414,7 @@ class MailerTemplateRendererService
         $html = self::getPreviewHtml($template);
 
         return [
-            'to' => $recipient ?: config('app.support_email', 'admin@example.com'),
+            'to' => $recipient ?: config('app.support_email', 'settings@example.com'),
             'subject' => $template->subject ?? 'Test Email',
             'html' => $html,
             'template_name' => $template->name ?? 'Unknown',

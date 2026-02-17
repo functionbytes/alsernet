@@ -2,14 +2,14 @@
 
 namespace Modules\Mailer\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Mailer\Traits\HasUid;
-use Closure;
 
 class MailerLayout extends Model
 {
     use HasUid;
+
     protected $table = 'mailer_layouts';
 
     protected $fillable = [
@@ -157,24 +157,6 @@ class MailerLayout extends Model
         ]);
 
         return $tags;
-    }
-
-    public function getMessage(?Closure $transform = null): ExtendedSwiftMessage
-    {
-        // Create a message
-        $message = new ExtendedSwiftMessage;
-        $message->setContentType('text/html; charset=utf-8');
-        $message->setEncoder(new \Swift_Mime_ContentEncoder_PlainContentEncoder('8bit'));
-
-        if (! is_null($transform)) {
-            $htmlContent = $transform($this->content);
-        } else {
-            $htmlContent = $this->content;
-        }
-
-        $message->addPart($htmlContent, 'text/html');
-
-        return $message;
     }
 
     public static function allTags($list = null)

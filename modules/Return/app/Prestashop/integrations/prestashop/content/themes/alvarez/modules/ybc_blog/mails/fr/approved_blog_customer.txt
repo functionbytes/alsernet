@@ -1,3 +1,0 @@
-Bonjour {customer_name}
-Toutes nos félicitations! Votre article {post_title} a été approuvé.
-Voir l'article

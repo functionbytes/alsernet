@@ -26,8 +26,8 @@
 
         <!-- Dynamic Widgets based on Role -->
         @switch($userRole)
-            @case('super-admin')
-            @case('admin')
+            @case('super-settings')
+            @case('settings')
             @case('managers')
                 <!-- Admin Widgets -->
                 <div class="col-md-3 mb-4">

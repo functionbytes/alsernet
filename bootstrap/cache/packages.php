@@ -275,7 +275,7 @@
   array (
     'providers' => 
     array (
-      0 => 'Spatie\\CookieConsent\\CookieConsentServiceProvider',
+      0 => 'Spatie\\Cookie\\CookieServiceProvider',
     ),
   ),
   'spatie/laravel-health' => 

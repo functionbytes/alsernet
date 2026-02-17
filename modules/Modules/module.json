@@ -5,7 +5,7 @@
     "keywords": ["modules", "management", "administration", "enable", "disable", "module-status"],
     "priority": 10,
     "providers": [
-        "Modules\\Modules\\Providers\\ModulesServiceProvider"
+        "Modules\\Modules\\Providers\\EventServiceProvider"
     ],
     "files": []
 }

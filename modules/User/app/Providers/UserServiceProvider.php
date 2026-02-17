@@ -43,15 +43,15 @@ class UserServiceProvider extends ServiceProvider
         // Public search route FIRST (accessible to authenticated users for role assignment)
         // Must be registered before the greedy {uid} route
         Route::middleware(['web', 'auth'])
-            ->prefix('settings/users')
+            ->prefix('setting/users')
             ->name('settings.users.')
             ->group(function () {
                 Route::get('/search', [UsersController::class, 'search'])->name('search');
             });
 
         // User settings routes (GET views + POST/PUT/DELETE API)
-        Route::middleware(['web', 'auth', 'role:super-admin'])
-            ->prefix('settings/users')
+        Route::middleware(['web', 'auth', 'settings'])
+            ->prefix('setting/users')
             ->name('settings.users.')
             ->group(function () use ($modulePath) {
                 // Load view routes (GET)

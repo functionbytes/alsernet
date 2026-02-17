@@ -1,6 +1,0 @@
-Hi {customer},
-Your comment has been updated
-Subject: {subject}
-Comment: {comment}
-Rating: {rating}
-View post

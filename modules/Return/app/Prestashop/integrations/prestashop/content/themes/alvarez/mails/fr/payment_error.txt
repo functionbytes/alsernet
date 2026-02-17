@@ -1,7 +1,0 @@
-{shop_url}
-Bonjour {firstname} {lastname},
-ID Commande {id_order} - Erreur de paiement
-Nous avons trouvé une erreur de traitement lors du paiement de votre commande avec la référence {id_order} de {shop_name}. Veuillez nous contacter dès que possible.
-L’expédition sera effectuée dès que votre paiement sera effectué.
-Cordialement.
-[{shop_name}]({shop_url})

@@ -2,13 +2,12 @@
 
 namespace Modules\Mailer\Http\Controllers;
 
-use Modules\Mailer\Models\MailerLang;
-use Modules\Mailer\Traits\AuthorizesMailerActions;
-use Modules\Mailer\Models\MailerVariable;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Lang;
 use Illuminate\Validation\Rule;
+use Modules\Mailer\Models\MailerLang;
+use Modules\Mailer\Models\MailerVariable;
+use Modules\Mailer\Traits\AuthorizesMailerActions;
 
 class MailerVariableController extends Controller
 {
@@ -158,7 +157,7 @@ class MailerVariableController extends Controller
         ];
 
         // Only validate key and category for custom variables
-        if (!$variable->is_system) {
+        if (! $variable->is_system) {
             $rules['key'] = [
                 'required',
                 'string',

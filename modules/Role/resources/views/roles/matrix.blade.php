@@ -211,8 +211,8 @@
     }
 
     .form-check-input:checked {
-        background-color: #90bb13;
-        border-color: #90bb13;
+        background-color: #081A28;
+        border-color: #081A28;
     }
 
     .form-check-input:disabled {

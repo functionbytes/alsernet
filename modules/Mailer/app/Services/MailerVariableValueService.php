@@ -48,7 +48,7 @@ class MailerVariableValueService
 
             foreach ($variables as $variable) {
                 $translation = $variable->translations->first();
-                $value = $translation?->value ?? $variable->value ?? '';
+                $value = $translation?->value ?? $variable->example_value ?? '';
 
                 // Usar el valor traducido si existe, si no, usar el valor de la variable principal o vacío
                 // Retornar AMBAS versiones: minúsculas Y MAYÚSCULAS para máxima compatibilidad
@@ -104,7 +104,7 @@ class MailerVariableValueService
                 'key' => $variable->key,
                 'name' => $translation?->name ?? $variable->name,
                 'description' => $translation?->description ?? $variable->description,
-                'value' => $translation?->value ?? $variable->value ?? '',
+                'value' => $translation?->value ?? $variable->example_value ?? '',
                 'example_value' => $variable->example_value,
                 'category' => $variable->category,
                 'module' => $variable->module,
@@ -135,7 +135,7 @@ class MailerVariableValueService
 
         $translation = $variable->translations->first();
 
-        return $translation?->value ?? $variable->value ?? '';
+        return $translation?->value ?? $variable->example_value ?? '';
     }
 
     /**
@@ -157,7 +157,7 @@ class MailerVariableValueService
 
         foreach ($variables as $variable) {
             $translation = $variable->translations->first();
-            $result[$variable->key] = $translation?->value ?? $variable->value ?? '';
+            $result[$variable->key] = $translation?->value ?? $variable->example_value ?? '';
         }
 
         return $result;

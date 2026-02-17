@@ -129,11 +129,11 @@ class EventServiceProvider extends LaravelEventServiceProvider
     protected function registerGates(): void
     {
         Gate::define('view-pulse', function ($user) {
-            return $user->hasAnyRole(['super-admin', 'manager']);
+            return $user->hasAnyRole(['super-settings', 'manager']);
         });
 
         Gate::define('manage-pulse-backups', function ($user) {
-            return $user->hasRole('super-admin');
+            return $user->hasRole('super-settings');
         });
     }
 

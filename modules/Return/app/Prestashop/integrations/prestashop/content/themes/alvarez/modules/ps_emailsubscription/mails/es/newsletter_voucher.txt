@@ -1,9 +1,0 @@
-{shop_url}
-
-Hola,
-
-Suscribirse al boletín de noticias
-
-Gracias por suscribirse a nuestro boletín de noticias. Nos complace ofrecerle el siguiente cupón de descuento: {discount}
-
-[{shop_name}]({shop_url})

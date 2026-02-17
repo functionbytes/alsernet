@@ -4,13 +4,14 @@ namespace Modules\Analytics;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Modules\Analytics\Exceptions\InvalidPeriod;
 
 class Period
 {
     public function __construct(public CarbonInterface $startDate, public CarbonInterface $endDate)
     {
         if ($startDate > $endDate) {
-            throw new \InvalidArgumentException('Start date cannot be after end date');
+            throw InvalidPeriod::startDateCannotBeAfterEndDate($startDate, $endDate);
         }
     }
 

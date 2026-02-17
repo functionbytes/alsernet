@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: "Frontend development specialist for Blade templates, Bootstrap 5.3, DevExpress jQuery, and JavaScript. Use proactively when creating or modifying views, components, layouts, CSS, or client-side functionality."
+description: "Frontend development specialist for Blade templates, Bootstrap 5.3, DevExpress jQuery, and JavaScript. Use proactively when creating or modifying views, components, layouts, CSS, or client-side functionality. For backend controllers and services use the backend agent. For API endpoints use the api agent."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:

@@ -438,7 +438,7 @@ class PHPMailer
      * If this is set to true then the connection will remain open after a send,
      * and closing the connection will require an explicit call to smtpClose().
      * It's a good idea to use this if you are sending multiple messages as it reduces overhead.
-     * See the mailing list example for how to use it.
+     * See the Mailer list example for how to use it.
      *
      * @var bool
      */
@@ -451,7 +451,7 @@ class PHPMailer
      *
      * @var bool
      *
-     * @deprecated 6.0.0 PHPMailer isn't a mailing list manager!
+     * @deprecated 6.0.0 PHPMailer isn't a Mailer list manager!
      */
     public $SingleTo = false;
 

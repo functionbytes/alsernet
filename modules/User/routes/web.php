@@ -12,7 +12,7 @@ use Modules\User\Http\Controllers\UsersController;
 | SOLO GET para renderizar vistas. POST, PUT, DELETE están en routes/api.php
 | Prefix: /settings/users (aplicado por UserServiceProvider)
 | Name: settings.users.* (aplicado por UserServiceProvider)
-| Middleware: web, auth, role:super-admin
+| Middleware: web, auth, settings
 |
 */
 

@@ -66,7 +66,7 @@ class Controller extends BaseController
     }
 
     /**
-     * Go to demo admin/campaign page.
+     * Go to demo settings/campaign page.
      *
      * @return \Illuminate\Http\Response
      */

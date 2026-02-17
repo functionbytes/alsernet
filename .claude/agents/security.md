@@ -1,6 +1,6 @@
 ---
 name: security
-description: "Security audit specialist. Use proactively when reviewing authentication, authorization, input validation, or any code handling user data. Also use after major code changes."
+description: "Security audit specialist. Use proactively when reviewing authentication, authorization, input validation, or any code handling user data. Also use after major code changes. For implementing fixes, delegate to the backend or frontend agent."
 model: sonnet
 tools: Read, Grep, Glob, Bash
 mcpServers:

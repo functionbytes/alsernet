@@ -15,7 +15,7 @@
                         @php
                             $roleName = $user->getRoleNames()->first() ?? 'Sin rol';
                             $badgeClass = match($roleName) {
-                                'super-admin' => 'bg-light-danger text-danger',
+                                'super-settings' => 'bg-light-danger text-danger',
                                 'manager' => 'bg-light-success text-success',
                                 'customer' => 'bg-light-info text-info',
                                 default => 'bg-light-secondary text-dark'

@@ -32,8 +32,9 @@
                         <!-- --------------------------------------------------------------------------------------------------------- -->
                         <li class="mini-nav-item {{ $isActive ? 'selected' : '' }}"
                             id="mini-{{ $miniItem['id'] }}"
-                            data-sidebar-id="{{ $miniItem['sidebar_id'] }}">
-                            <a href="javascript:void(0)"
+                            data-sidebar-id="{{ $miniItem['sidebar_id'] }}"
+                            @if(!empty($miniItem['url'])) data-direct-url="{{ route($miniItem['url']) }}" @endif>
+                            <a href="{{ !empty($miniItem['url']) ? route($miniItem['url']) : 'javascript:void(0)' }}"
                                data-bs-toggle="tooltip"
                                data-bs-custom-class="custom-tooltip"
                                data-bs-placement="right"
@@ -230,7 +231,17 @@
 
         // Add click handlers to mini nav items
         document.querySelectorAll('.mini-nav-item').forEach(item => {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                // Check if this item has a direct URL
+                const directUrl = this.dataset.directUrl;
+                if (directUrl) {
+                    // Let the link handle navigation naturally
+                    return;
+                }
+
+                // Prevent default for sidebar toggles
+                e.preventDefault();
+
                 // Get the sidebar ID from data attribute
                 const sidebarId = this.dataset.sidebarId;
                 if (!sidebarId) {

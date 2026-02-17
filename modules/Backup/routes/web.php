@@ -5,7 +5,7 @@ use Modules\Backup\Http\Controllers\BackupController;
 use Modules\Backup\Http\Controllers\BackupScheduleController;
 
 Route::middleware(['web', 'auth'])
-    ->prefix('settings/backups')
+    ->prefix('setting/backups')
     ->group(function () {
         // Backup management
         Route::get('/', [BackupController::class, 'index'])->name('settings.backups.index');

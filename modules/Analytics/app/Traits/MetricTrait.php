@@ -2,29 +2,29 @@
 
 namespace Modules\Analytics\Traits;
 
+use Google\Analytics\Data\V1beta\Metric;
+
 trait MetricTrait
 {
-    protected array $metrics = [];
+    public array $metrics = [];
 
-    /**
-     * Add metrics to the query
-     *
-     * @param string|array $metrics
-     * @return $this
-     */
-    public function metrics(string|array $metrics): self
+    public function metric(string $name): self
     {
-        $metrics = is_string($metrics) ? [$metrics] : $metrics;
-
-        foreach ($metrics as $metric) {
-            $this->metrics[] = ['name' => $metric];
-        }
+        $this->metrics[] = (new Metric)
+            ->setName($name);
 
         return $this;
     }
 
-    public function getMetrics(): array
+    public function metrics(string|array $items): self
     {
-        return $this->metrics;
+        $this->metrics = [];
+
+        foreach ((array) $items as $item) {
+            $item = trim($item);
+            $this->metric($item);
+        }
+
+        return $this;
     }
 }

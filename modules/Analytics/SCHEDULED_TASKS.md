@@ -44,7 +44,7 @@ php artisan analytics:report --type=weekly
 php artisan analytics:report --type=monthly
 
 # Enviar a correo electrónico
-php artisan analytics:report --type=daily --email=admin@example.com
+php artisan analytics:report --type=daily --email=settings@example.com
 
 # Encolar para procesamiento en background
 php artisan analytics:report --type=daily --queue

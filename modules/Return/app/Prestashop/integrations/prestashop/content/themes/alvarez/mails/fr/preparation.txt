@@ -1,8 +1,0 @@
-{shop_url}
-Bonjour {firstname} {lastname},
-ID Commande {id_order} - Traitement de la commande
-Nous traitons votre commande avec la référence {id_order} de {shop_name}.
-Cordialement,
-[{shop_name}]({shop_url})
-
-

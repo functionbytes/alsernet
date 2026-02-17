@@ -1,6 +1,6 @@
 ---
 name: performance
-description: "Performance optimization specialist. Use when queries are slow, pages load slowly, memory usage is high, or when asked to optimize any part of the application."
+description: "Performance optimization specialist. Use proactively when queries are slow, pages load slowly, memory usage is high, or when asked to optimize. For database index changes use the database agent. For frontend performance use the frontend agent."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:

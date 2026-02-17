@@ -18,7 +18,7 @@ class ClientLibrarySettings extends \Google\Protobuf\Internal\Message
     /**
      * Version of the API to apply these settings to. This is the full protobuf
      * package for the API, ending in the version element.
-     * Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
+     * Examples: "google.cloud.speech.v1" and "google.spanner.settings.database.v1".
      *
      * Generated from protobuf field <code>string version = 1;</code>
      */
@@ -94,7 +94,7 @@ class ClientLibrarySettings extends \Google\Protobuf\Internal\Message
      *     @type string $version
      *           Version of the API to apply these settings to. This is the full protobuf
      *           package for the API, ending in the version element.
-     *           Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
+     *           Examples: "google.cloud.speech.v1" and "google.spanner.settings.database.v1".
      *     @type int $launch_stage
      *           Launch stage of this version of the API.
      *     @type bool $rest_numeric_enums
@@ -126,7 +126,7 @@ class ClientLibrarySettings extends \Google\Protobuf\Internal\Message
     /**
      * Version of the API to apply these settings to. This is the full protobuf
      * package for the API, ending in the version element.
-     * Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
+     * Examples: "google.cloud.speech.v1" and "google.spanner.settings.database.v1".
      *
      * Generated from protobuf field <code>string version = 1;</code>
      * @return string
@@ -139,7 +139,7 @@ class ClientLibrarySettings extends \Google\Protobuf\Internal\Message
     /**
      * Version of the API to apply these settings to. This is the full protobuf
      * package for the API, ending in the version element.
-     * Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
+     * Examples: "google.cloud.speech.v1" and "google.spanner.settings.database.v1".
      *
      * Generated from protobuf field <code>string version = 1;</code>
      * @param string $var

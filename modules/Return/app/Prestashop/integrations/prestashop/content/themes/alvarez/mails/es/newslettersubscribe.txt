@@ -1,5 +1,0 @@
-Deportes para suscribir: {sports}
-
-Nombre: {firstname}
-Apellidos: {$lastname}
-Email: {email} [email]

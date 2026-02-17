@@ -9,7 +9,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Enable or disable the database cleanup feature. When enabled, users
-    | with appropriate permissions can truncate tables from the admin panel.
+    | with appropriate permissions can truncate tables from the settings panel.
     |
     */
     'cleanup' => [

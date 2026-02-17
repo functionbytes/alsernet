@@ -20,7 +20,7 @@ class SetupLayoutsSeeder extends Seeder
     public function run(): void
     {
         // Get all available languages
-        $langs = \App\Models\Lang::where('available', true)->get();
+        $langs = \Modules\Core\Models\Lang::where('available', true)->get();
 
         if ($langs->isEmpty()) {
             $this->command->warn('⚠ No languages found - skipping layout translations');
@@ -137,7 +137,7 @@ class SetupLayoutsSeeder extends Seeder
                              style="text-decoration:none; border:0;">
                             <img class="m-img m-img-logo"
                                  alt="Alvarez deporte y tiempo libre"
-                                 src="https://imagenes.a-alvarez.com/mailing/Alvarez-logo-es.png"
+                                 src="https://imagenes.a-alvarez.com/Mailer/Alvarez-logo-es.png"
                                  width="400"
                                  border="0"
                                  style="display:block; width:100%; max-width:400px; height:auto; border:0; outline:none; text-decoration:none;">
@@ -156,7 +156,7 @@ class SetupLayoutsSeeder extends Seeder
                         <td class="m-mini-td-r" align="right" style="vertical-align:middle;">
                           <img class="m-img m-img-31"
                                alt="tiendas alvarez deporte y tiempo libre"
-                               src="https://imagenes.a-alvarez.com/mailing/footer/Cierre-Oferta-express-direccion-cuadrado.jpg"
+                               src="https://imagenes.a-alvarez.com/Mailer/footer/Cierre-Oferta-express-direccion-cuadrado.jpg"
                                width="31"
                                border="0"
                                style="display:block; width:31px; height:auto; border:0; outline:none;">
@@ -169,7 +169,7 @@ class SetupLayoutsSeeder extends Seeder
                         <td class="m-mini-td-l" align="left" style="vertical-align:middle;">
                           <img class="m-img m-img-31"
                                alt="tiendas alvarez deporte y tiempo libre"
-                               src="https://imagenes.a-alvarez.com/mailing/footer/Cierre-Oferta-express-direccion-cuadrado.jpg"
+                               src="https://imagenes.a-alvarez.com/Mailer/footer/Cierre-Oferta-express-direccion-cuadrado.jpg"
                                width="31"
                                border="0"
                                style="display:block; width:31px; height:auto; border:0; outline:none;">
@@ -184,7 +184,7 @@ class SetupLayoutsSeeder extends Seeder
                   <td class="m-center m-p0" align="center" style="padding:0;">
                     <img class="m-img m-img-600"
                          alt="deportes alvarez deporte y tiempo libre"
-                         src="https://imagenes.a-alvarez.com/mailing/footer/Cierre-Oferta-express-banda_deportes-1200-es.jpg"
+                         src="https://imagenes.a-alvarez.com/Mailer/footer/Cierre-Oferta-express-banda_deportes-1200-es.jpg"
                          width="600"
                          border="0"
                          style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none;">
@@ -197,7 +197,7 @@ class SetupLayoutsSeeder extends Seeder
                     <a class="m-link" href="{HOME_URL}" target="_blank" style="text-decoration:none; border:0;">
                       <img class="m-img m-img-600"
                            alt="web alvarez deporte y tiempo libre"
-                           src="https://imagenes.a-alvarez.com/mailing/footer/Cierre-Oferta-express-contacto_web-es.jpg"
+                           src="https://imagenes.a-alvarez.com/Mailer/footer/Cierre-Oferta-express-contacto_web-es.jpg"
                            width="600"
                            border="0"
                            style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none;">
@@ -211,7 +211,7 @@ class SetupLayoutsSeeder extends Seeder
                     <a class="m-link" href="{STORES_URL}" target="_blank" style="text-decoration:none; border:0;">
                       <img class="m-img m-img-600"
                            alt="tiendas alvarez deporte y tiempo libre"
-                           src="https://imagenes.a-alvarez.com/mailing/footer/Cierre-Oferta-express-direccion-es.jpg"
+                           src="https://imagenes.a-alvarez.com/Mailer/footer/Cierre-Oferta-express-direccion-es.jpg"
                            width="600"
                            border="0"
                            style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none;">
@@ -229,7 +229,7 @@ class SetupLayoutsSeeder extends Seeder
                   <td class="m-center m-p0" align="center" style="padding:0;">
                     <img class="m-img m-img-600"
                          alt=""
-                         src="https://imagenes.a-alvarez.com/mailing/linea-gris.png"
+                         src="https://imagenes.a-alvarez.com/Mailer/linea-gris.png"
                          width="600"
                          border="0"
                          style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none;">
@@ -257,7 +257,7 @@ class SetupLayoutsSeeder extends Seeder
                                  alt="alvarez deporte y tiempo libre en Play Store"
                                  height="50"
                                  border="0"
-                                 src="https://imagenes.a-alvarez.com/mailing/APP-MOVIL-google-play-badge-es.png"
+                                 src="https://imagenes.a-alvarez.com/Mailer/APP-MOVIL-google-play-badge-es.png"
                                  style="display:block; height:50px; width:auto; border:0; outline:none;">
                           </a>
                         </td>
@@ -268,7 +268,7 @@ class SetupLayoutsSeeder extends Seeder
                                  alt="alvarez deporte y tiempo libre en App Store"
                                  height="50"
                                  border="0"
-                                 src="https://imagenes.a-alvarez.com/mailing/APP-MOVIL-app-store-black-badge-es.png"
+                                 src="https://imagenes.a-alvarez.com/Mailer/APP-MOVIL-app-store-black-badge-es.png"
                                  style="display:block; height:50px; width:auto; border:0; outline:none;">
                           </a>
                         </td>

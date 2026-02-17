@@ -1,9 +1,0 @@
-{shop_url}
-
-Bonjour {firstname} {lastname},
-
-{message}
-
-[{shop_name}]({shop_url})
-
-

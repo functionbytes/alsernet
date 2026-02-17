@@ -205,16 +205,16 @@ class OutgoingEmailSettingsController extends Controller
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #90bb13 0%, #7a9f11 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <div style="background: linear-gradient(135deg, #081A28 0%, #7a9f11 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
                 <h1 style="color: white; margin: 0; font-size: 28px;">✅ Prueba Exitosa</h1>
             </div>
 
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
-                <h2 style="color: #90bb13; margin-top: 0;">¡El sistema de correo funciona correctamente!</h2>
+                <h2 style="color: #081A28; margin-top: 0;">¡El sistema de correo funciona correctamente!</h2>
 
                 <p>Este es un correo de prueba enviado desde <strong>Alsernet</strong> para verificar que la configuración SMTP está funcionando correctamente.</p>
 
-                <div style="background: white; padding: 20px; border-left: 4px solid #90bb13; margin: 20px 0;">
+                <div style="background: white; padding: 20px; border-left: 4px solid #081A28; margin: 20px 0;">
                     <h3 style="margin-top: 0; color: #555;">📋 Detalles de la Prueba</h3>
                     <ul style="list-style: none; padding: 0;">
                         <li style="padding: 5px 0;"><strong>Destinatario:</strong> {$recipient}</li>
@@ -230,7 +230,7 @@ class OutgoingEmailSettingsController extends Controller
                     No necesitas responder a este mensaje.
                 </p>
 
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #90bb13;">
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #081A28;">
                     <p style="color: #999; font-size: 12px; margin: 0;">
                         Este correo fue generado automáticamente por el sistema de configuración de Alsernet
                     </p>

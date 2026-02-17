@@ -125,7 +125,7 @@
 /* Color variants for notification icons */
 .notification-icon.bg-primary-subtle {
     background-color: #cfe2ff;
-    color: #90bb13;
+    color: #081A28;
 }
 
 .notification-icon.bg-success-subtle {
@@ -171,14 +171,14 @@
 }
 
 #notifications-dropdown .fa-bell:hover {
-    color: #90bb13;
+    color: #081A28;
 }
 
 /* Notification badge dot (unread indicator) */
 div#notification-badge {
     width: 14px !important;
     height: 14px !important;
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     border-radius: 50% !important;
     position: absolute !important;
     top: -4px !important;
@@ -238,7 +238,7 @@ div#notification-badge.badge-pulse {
 
 /* Accessibility improvements */
 .notification-item:focus-visible {
-    outline: 2px solid #90bb13;
+    outline: 2px solid #081A28;
     outline-offset: -2px;
 }
 

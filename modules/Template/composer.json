@@ -1,0 +1,28 @@
+{
+    "name": "nwidart/template",
+    "description": "Template management module for Alsernet inoqualab",
+    "authors": [
+        {
+            "name": "Alsernet",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "modules\\Template\\": "app/",
+            "modules\\Template\\Database\\Factories\\": "database/factories/",
+            "modules\\Template\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "modules\\Template\\Tests\\": "tests/"
+        }
+    }
+}

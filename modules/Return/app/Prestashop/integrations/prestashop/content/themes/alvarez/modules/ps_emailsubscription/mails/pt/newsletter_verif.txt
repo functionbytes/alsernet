@@ -1,8 +1,0 @@
-{shop_url}
-
-Olá,
-
-Thank you for subscribing to our newsletter. Please click on the following link to confirm your request:
-{verif_url}
-
-[{shop_name}]({shop_url})

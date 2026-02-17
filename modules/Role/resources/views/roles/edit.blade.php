@@ -58,7 +58,7 @@
                     </div>
                 </div>
 
-                @if(in_array($role->name, ['super-admin', 'customer']))
+                @if(in_array($role->name, ['super-settings', 'customer']))
                     <div class="alert alert-warning border-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         <strong>Rol del sistema:</strong> Este es un rol protegido del sistema. Algunas opciones están limitadas para preservar la integridad del sistema.

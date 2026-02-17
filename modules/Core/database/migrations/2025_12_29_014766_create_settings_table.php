@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('backups', function (Blueprint $table) {
+        Schema::create('core_settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique()->index();
             $table->longText('value')->nullable();
@@ -18,6 +18,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('backups');
+        Schema::dropIfExists('core_settings');
     }
 };

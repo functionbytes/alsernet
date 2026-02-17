@@ -70,12 +70,12 @@ class PermissionHelper
         }
 
         $modulePermissions = [
-            'theme' => ['super-admin', 'admin', 'manager'],
-            'callcenters' => ['super-admin', 'admin', 'callcenter-manager', 'callcenter-agent'],
-            'inventaries' => ['super-admin', 'admin', 'inventory-manager', 'inventory-staff'],
-            'shops' => ['super-admin', 'admin', 'shop-manager', 'shop-staff'],
-            'administratives' => ['super-admin', 'admin', 'administrative'],
-            'returns' => ['super-admin', 'admin', 'manager', 'administrative', 'customer'],
+            'theme' => ['super-settings', 'settings', 'manager'],
+            'callcenters' => ['super-settings', 'settings', 'callcenter-manager', 'callcenter-agent'],
+            'inventaries' => ['super-settings', 'settings', 'inventory-manager', 'inventory-staff'],
+            'shops' => ['super-settings', 'settings', 'shop-manager', 'shop-staff'],
+            'administratives' => ['super-settings', 'settings', 'administrative'],
+            'returns' => ['super-settings', 'settings', 'manager', 'administrative', 'customer'],
         ];
 
         if (! isset($modulePermissions[$module])) {
@@ -96,7 +96,7 @@ class PermissionHelper
 
         $user = Auth::user();
 
-        if ($user->hasAnyRole(['super-admin', 'admin', 'manager'])) {
+        if ($user->hasAnyRole(['super-settings', 'settings', 'manager'])) {
             return 'manager';
         }
 
@@ -130,8 +130,8 @@ class PermissionHelper
 
         $user = Auth::user();
 
-        // Super admin puede todo
-        if ($user->hasRole('super-admin')) {
+        // Super settings puede todo
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -172,8 +172,8 @@ class PermissionHelper
 
         $user = Auth::user();
 
-        // Super-admin siempre ve todos los módulos
-        if ($user->hasRole('super-admin')) {
+        // Super-settings siempre ve todos los módulos
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -196,8 +196,8 @@ class PermissionHelper
 
         $user = Auth::user();
 
-        // Si es super-admin, retornar todos los módulos
-        if ($user->hasRole('super-admin')) {
+        // Si es super-settings, retornar todos los módulos
+        if ($user->hasRole('super-settings')) {
             return [
                 'documents', 'mailers', 'media', 'users', 'events',
                 'warehouse', 'webhooks', 'roles', 'auth', 'notifications',

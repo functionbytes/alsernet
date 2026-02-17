@@ -66,7 +66,7 @@ class MailerEndpointController extends Controller
             ->orderBy('name')
             ->get();
 
-        $langs = \App\Models\Lang::all();
+        $langs = MailerLang::all();
 
         return view('mailer::endpoints.create', compact('templates', 'langs'));
     }

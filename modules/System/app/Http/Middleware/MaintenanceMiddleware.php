@@ -12,8 +12,8 @@ class MaintenanceMiddleware
     public function handle(Request $request, Closure $next)
     {
         $excludedRoutes = [
-            'admin/*',
-            'admin',
+            'settings/*',
+            'settings',
             'livechat/*',
             'image/*',
             'imagedownload/*',

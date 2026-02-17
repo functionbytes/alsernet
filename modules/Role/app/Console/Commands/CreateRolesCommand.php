@@ -17,14 +17,14 @@ class CreateRolesCommand extends Command
 
         // Define all roles with detailed descriptions
         $allRoles = [
-            'super-admin' => [
+            'super-settings' => [
                 'label' => 'Super Administrador',
                 'description' => 'Acceso completo a todas las funciones y módulos del sistema. Puede gestionar usuarios, roles, permisos, configuraciones y ver todos los datos. Uso solo para administradores supremos del sistema.',
                 'color' => '#FF0000', // Rojo
             ],
-            'admin' => [
+            'settings' => [
                 'label' => 'Administrador',
-                'description' => 'Acceso casi completo al sistema. Puede gestionar usuarios, roles, y la mayoría de funciones. No puede modificar la configuración del sistema ni roles de super-admin.',
+                'description' => 'Acceso casi completo al sistema. Puede gestionar usuarios, roles, y la mayoría de funciones. No puede modificar la configuración del sistema ni roles de super-settings.',
                 'color' => '#FF6600', // Naranja
             ],
             'manager' => [
@@ -130,12 +130,12 @@ class CreateRolesCommand extends Command
         $this->newLine();
 
         $hierarchy = [
-            'Manager Profile' => ['super-admin', 'admin', 'manager'],
-            'Call Center Profile' => ['super-admin', 'admin', 'callcenter-manager', 'callcenter-agent'],
-            'Inventory Profile' => ['super-admin', 'admin', 'inventory-manager', 'inventory-staff'],
-            'Warehouse Profile' => ['super-admin', 'admin', 'inventory-manager', 'inventory-staff'],
-            'Shop Profile' => ['super-admin', 'admin', 'shop-manager', 'shop-staff'],
-            'Administrative Profile' => ['super-admin', 'admin', 'administrative'],
+            'Manager Profile' => ['super-settings', 'settings', 'manager'],
+            'Call Center Profile' => ['super-settings', 'settings', 'callcenter-manager', 'callcenter-agent'],
+            'Inventory Profile' => ['super-settings', 'settings', 'inventory-manager', 'inventory-staff'],
+            'Warehouse Profile' => ['super-settings', 'settings', 'inventory-manager', 'inventory-staff'],
+            'Shop Profile' => ['super-settings', 'settings', 'shop-manager', 'shop-staff'],
+            'Administrative Profile' => ['super-settings', 'settings', 'administrative'],
         ];
 
         foreach ($hierarchy as $profile => $roles) {

@@ -3,7 +3,7 @@
     "alias": "analytics",
     "description": "Analytics module for tracking and displaying analytics configuration",
     "keywords": [],
-    "active": 0,
+    "active": 1,
     "order": 0,
     "providers": [
         "Modules\\Analytics\\Providers\\AnalyticsServiceProvider"

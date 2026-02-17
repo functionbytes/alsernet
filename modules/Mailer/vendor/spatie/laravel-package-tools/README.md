@@ -364,7 +364,7 @@ Should your package contain multiple route files, you can just call `hasRoute` m
 ```php
 $package
     ->name('your-package-name')
-    ->hasRoutes(['web', 'admin']);
+    ->hasRoutes(['web', 'settings']);
 ```
 
 ### Publishable Service Providers

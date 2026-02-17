@@ -1,3 +1,0 @@
-Artículo del blog: {post_title}
-Feedback: {feedback}
-Artículo del blog es útil para el cliente: {polls_helpful}

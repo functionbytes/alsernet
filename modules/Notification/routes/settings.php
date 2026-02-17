@@ -10,7 +10,7 @@ use Modules\Notification\Http\Controllers\Settings\NotificationSettingsControlle
 |
 | Prefix: /backups/notifications (applied by NotificationServiceProvider)
 | Name: backups.notifications.* (applied by NotificationServiceProvider)
-| Middleware: web, auth, role:super-admin (applied by NotificationServiceProvider)
+| Middleware: web, auth, settings (applied by NotificationServiceProvider)
 |
 */
 

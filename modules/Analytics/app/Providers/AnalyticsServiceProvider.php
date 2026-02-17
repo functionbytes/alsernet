@@ -2,10 +2,12 @@
 
 namespace Modules\Analytics\Providers;
 
-use App\Helpers\ModuleStatusHelper;
-use Illuminate\Support\Facades\Facade;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
+use Modules\Analytics\Abstracts\AnalyticsAbstract;
 use Modules\Analytics\Analytics;
+use Modules\Analytics\Exceptions\InvalidConfiguration;
+use Modules\Analytics\Facades\Analytics as AnalyticsFacade;
 use Modules\Theme\Services\NavService;
 
 class AnalyticsServiceProvider extends ServiceProvider
@@ -15,13 +17,19 @@ class AnalyticsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register Analytics singleton
-        $this->app->singleton('analytics', function ($app) {
-            $propertyId = setting('google_analytics_property_id', '');
-            $credentials = setting('google_analytics_credentials', '');
+        $this->app->bind(AnalyticsAbstract::class, function () {
+            if (! ($credentials = setting('analytics_service_account_credentials'))) {
+                throw InvalidConfiguration::credentialsIsNotValid();
+            }
+
+            if (! ($propertyId = setting('analytics_property_id')) || ! is_numeric($propertyId)) {
+                throw InvalidConfiguration::invalidPropertyId();
+            }
 
             return new Analytics($propertyId, $credentials);
         });
+
+        AliasLoader::getInstance()->alias('Analytics', AnalyticsFacade::class);
     }
 
     /**
@@ -29,34 +37,44 @@ class AnalyticsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ✅ CRITICAL: Only boot module features if Analytics module is enabled
-        if (! ModuleStatusHelper::isModuleEnabled('Analytics')) {
-            return;
-        }
-
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'analytics');
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
-        // Register facade alias - commented out as module is disabled
-        // Facade::aliasNamespace('Analytics', 'Modules\\Analytics\\Facades');
+        // Publish configuration
+        $this->publishes([
+            __DIR__.'/../../config/analytics.php' => config_path('analytics.php'),
+        ], 'analytics-config');
 
-        // Register menus
+        // Publish views
+        $this->publishes([
+            __DIR__.'/../../resources/views' => resource_path('views/vendor/analytics'),
+        ], 'analytics-views');
+
         $this->registerMenus();
     }
 
     /**
-     * Registrar menús del módulo Analytics
+     * Registrar menus del modulo Analytics
      */
     protected function registerMenus(): void
     {
-
-        // Sidebar con los items del módulo
         NavService::registerSidebar('settings', [
-            'title' => 'Analítica',
+            'title' => 'Analytics',
             'items' => [
                 ['label' => 'Dashboard', 'route' => 'analytics.dashboard'],
-                ['label' => 'Configuración', 'route' => 'settings.analytics.index'],
+                ['label' => 'Configuracion', 'route' => 'settings.analytics.index'],
             ],
         ]);
+    }
+
+    /**
+     * Get the services provided by the provider.
+     */
+    public function provides(): array
+    {
+        return [
+            AnalyticsAbstract::class,
+        ];
     }
 }

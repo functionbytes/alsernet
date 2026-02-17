@@ -149,13 +149,6 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'livechat.backups' => 'Configurar chat',
             'livechat.operators.manage' => 'Gestionar operadores',
 
-            // Documentos administrativos
-            'documents.view' => 'Ver documentos',
-            'documents.create' => 'Crear documentos',
-            'documents.update' => 'Actualizar documentos',
-            'documents.delete' => 'Eliminar documentos',
-            'documents.files.manage' => 'Gestionar archivos',
-
             // Devoluciones (Return)
             // Devoluciones (Return)
             'returns.view.own' => 'Ver sus propias devoluciones',
@@ -207,11 +200,11 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
     private function createRoles()
     {
         // 1. Super Admin - Acceso total
-        $superAdminRole = Role::findOrCreate('super-admin', 'web'); // Use findOrCreate
+        $superAdminRole = Role::findOrCreate('super-settings', 'web'); // Use findOrCreate
         $superAdminRole->givePermissionTo(Permission::all());
 
         // 2. Admin - Casi todo excepto configuración crítica
-        $adminRole = Role::findOrCreate('admin', 'web'); // Use findOrCreate
+        $adminRole = Role::findOrCreate('settings', 'web'); // Use findOrCreate
         $adminRole->givePermissionTo(Permission::all()->reject(function ($permission) {
             return in_array($permission->name, [
                 'system.maintenance',
@@ -285,10 +278,6 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         $administrativeRole = Role::findOrCreate('administrative', 'web'); // Use findOrCreate
         $administrativeRole->givePermissionTo([
             'dashboard.view',
-            'documents.view',
-            'documents.create',
-            'documents.update',
-            'documents.files.manage',
             'returns.view.all',
             'returns.create',
             'returns.update',

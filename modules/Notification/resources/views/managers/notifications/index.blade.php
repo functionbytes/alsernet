@@ -303,7 +303,7 @@
 
     .notification-item.border-primary:hover {
         background-color: rgba(144, 187, 19, 0.05);
-        border-color: #90bb13 !important;
+        border-color: #081A28 !important;
         box-shadow: 0 4px 12px rgba(144, 187, 19, 0.2);
     }
 

@@ -88,7 +88,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Auth settings routes (2FA, sessions, security)
         Route::middleware(['web', 'auth'])
-            ->prefix('settings/auth')
+            ->prefix('setting/auth')
             ->name('settings.auth.')
             ->group(function () use ($settingsPath) {
                 require $settingsPath;
@@ -125,9 +125,9 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerGates(): void
     {
-        // Super admin gate - grants all permissions to users with super-admin role
+        // Super settings gate - grants all permissions to users with super-settings role
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('super-admin') ? true : null;
+            return $user->hasRole('super-settings') ? true : null;
         });
     }
 

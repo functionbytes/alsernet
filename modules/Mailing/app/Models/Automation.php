@@ -22,6 +22,12 @@
 
 namespace Modules\Mailing\Models;
 
+use Carbon\Carbon;
+use DateTime;
+use DateTimeZone;
+use DB;
+use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Mailing\Library\Automation\Action;
 use Modules\Mailing\Library\Automation\Evaluate;
 use Modules\Mailing\Library\Automation\Operate;
@@ -31,12 +37,6 @@ use Modules\Mailing\Library\Automation\Wait;
 use Modules\Mailing\Library\Lockable;
 use Modules\Mailing\Library\Traits\HasCache;
 use Modules\Mailing\Library\Traits\HasUid;
-use Carbon\Carbon;
-use DateTime;
-use DateTimeZone;
-use DB;
-use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;

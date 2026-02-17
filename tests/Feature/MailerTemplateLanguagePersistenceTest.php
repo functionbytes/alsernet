@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Lang;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Models\MailerTemplateLang;
+use Modules\Mailer\Models\MailingTemplate;
 use Tests\TestCase;
 
 /**
@@ -41,7 +41,7 @@ class MailerTemplateLanguagePersistenceTest extends TestCase
         ]);
 
         // Create a test email template
-        $template = MailerTemplate::create([
+        $template = MailingTemplate::create([
             'key' => 'test.language.persistence',
             'name' => 'Test Language Persistence Template',
             'module' => 'core',
@@ -137,7 +137,7 @@ class MailerTemplateLanguagePersistenceTest extends TestCase
             'is_enabled' => true,
         ]);
 
-        $template = MailerTemplate::create([
+        $template = MailingTemplate::create([
             'key' => 'test.language.switch',
             'name' => 'Test Language Switch',
             'module' => 'core',

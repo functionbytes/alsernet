@@ -17,12 +17,12 @@ use Modules\System\Http\Controllers\SystemInfoController;
 | System configuration, cache management, and system information
 | Prefix: /backups/system (applied by ServiceProvider)
 | Name: backups.system.* (applied by ServiceProvider)
-| Middleware: web, auth, role:super-admin
+| Middleware: web, auth, settings
 |
 */
 
-Route::middleware(['web', 'auth', 'role:super-admin'])
-    ->prefix('settings/system')
+Route::middleware(['web', 'auth', 'settings'])
+    ->prefix('setting/system')
     ->name('settings.system.')
     ->group(function () {
         // System Settings

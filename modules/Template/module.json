@@ -1,0 +1,16 @@
+{
+    "name": "Template",
+    "alias": "template",
+    "description": "Sistema modular de gestión de plantillas web (templates/layouts)",
+    "keywords": [
+        "template",
+        "layout",
+        "web-templates",
+        "page-templates"
+    ],
+    "priority": 5,
+    "providers": [
+        "modules\\Template\\Providers\\TemplateServiceProvider"
+    ],
+    "files": []
+}

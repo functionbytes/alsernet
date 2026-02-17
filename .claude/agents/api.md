@@ -1,6 +1,6 @@
 ---
 name: api
-description: "API design specialist for RESTful endpoints, versioning, authentication, rate limiting, and API Resources. Use proactively when creating or modifying API endpoints."
+description: "API design specialist for RESTful endpoints, versioning, authentication, rate limiting, and API Resources. Use proactively when creating or modifying API endpoints. For database schema use the database agent. For backend services use the backend agent."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:

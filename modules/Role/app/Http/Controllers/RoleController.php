@@ -113,7 +113,7 @@ class RoleController extends Controller
         $data = $request->validated();
 
         // Prevent system roles from being modified
-        if (in_array($role->name, ['super-admin', 'customer'])) {
+        if (in_array($role->name, ['super-settings', 'customer'])) {
             return $this->error('Cannot modify system roles');
         }
 
@@ -147,7 +147,7 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         // Prevent system roles from being deleted
-        if (in_array($role->name, ['super-admin', 'customer'])) {
+        if (in_array($role->name, ['super-settings', 'customer'])) {
             if (request()->expectsJson()) {
                 return $this->error('Cannot delete system roles');
             }

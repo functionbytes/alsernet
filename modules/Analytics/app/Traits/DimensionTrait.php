@@ -2,29 +2,28 @@
 
 namespace Modules\Analytics\Traits;
 
+use Google\Analytics\Data\V1beta\Dimension;
+
 trait DimensionTrait
 {
-    protected array $dimensions = [];
+    public array $dimensions = [];
 
-    /**
-     * Add dimensions to the query
-     *
-     * @param string|array $dimensions
-     * @return $this
-     */
-    public function dimensions(string|array $dimensions): self
+    public function dimension(string $name): self
     {
-        $dimensions = is_string($dimensions) ? [$dimensions] : $dimensions;
-
-        foreach ($dimensions as $dimension) {
-            $this->dimensions[] = ['name' => $dimension];
-        }
+        $this->dimensions[] = (new Dimension)
+            ->setName($name);
 
         return $this;
     }
 
-    public function getDimensions(): array
+    public function dimensions(string|array $items): self
     {
-        return $this->dimensions;
+        $this->dimensions = [];
+
+        foreach ((array) $items as $item) {
+            $this->dimension($item);
+        }
+
+        return $this;
     }
 }

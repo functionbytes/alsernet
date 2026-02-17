@@ -2,19 +2,29 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Analytics\Http\Controllers\AnalyticsController;
-use Modules\Analytics\Http\Controllers\AnalyticsSettingsController;
 use Modules\Analytics\Http\Controllers\DashboardController;
+use Modules\Analytics\Http\Controllers\Settings\AnalyticsSettingController;
+use Modules\Analytics\Http\Controllers\Settings\AnalyticsSettingJsonController;
 
 Route::middleware(['web', 'module:Analytics'])->group(function () {
 
     // Settings routes
     Route::middleware(['web', 'auth'])
-        ->prefix('settings/analytics')
+        ->prefix('setting/analytics')
         ->name('settings.analytics.')
         ->group(function () {
-            Route::get('/', [AnalyticsSettingsController::class, 'index'])->name('index');
-            Route::put('/', [AnalyticsSettingsController::class, 'update'])->name('update');
-            Route::post('/validate-credentials', [AnalyticsSettingsController::class, 'validateCredentials'])->name('validate-credentials');
+            Route::get('/', [AnalyticsSettingController::class, 'index'])->name('index');
+            Route::put('/', [AnalyticsSettingController::class, 'update'])->name('update');
+            Route::post('/validate-credentials', [AnalyticsSettingController::class, 'validateCredentials'])->name('validate-credentials');
+            Route::post('/test-connection', [AnalyticsSettingController::class, 'testConnection'])->name('test-connection');
+            Route::post('/clear-cache', [AnalyticsSettingController::class, 'clearCache'])->name('clear-cache');
+
+            // JSON upload routes
+            Route::post('/upload-json', [AnalyticsSettingJsonController::class, 'upload'])->name('upload-json');
+            Route::post('/validate-json', [AnalyticsSettingJsonController::class, 'validateJson'])->name('validate-json');
+            Route::get('/download-template', [AnalyticsSettingJsonController::class, 'downloadTemplate'])->name('download-template');
+            Route::post('/format-json', [AnalyticsSettingJsonController::class, 'formatJson'])->name('format-json');
+            Route::post('/extract-info', [AnalyticsSettingJsonController::class, 'extractInfo'])->name('extract-info');
         });
 
     // Dashboard routes

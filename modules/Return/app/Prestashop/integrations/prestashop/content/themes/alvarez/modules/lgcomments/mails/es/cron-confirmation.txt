@@ -1,2 +1,0 @@
-Confirmación de envío de emails
-Se han mandado las solicitudes de opinión por email para los pedidos siguientes: {pedidos}

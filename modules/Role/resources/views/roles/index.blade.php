@@ -68,7 +68,7 @@
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
                                         <h6 class="card-title text-warning mb-2">Del sistema</h6>
-                                        <h4 class="mb-1 fw-bold">{{ \Spatie\Permission\Models\Role::whereIn('name', ['super-admin', 'customer'])->count() }}</h4>
+                                        <h4 class="mb-1 fw-bold">{{ \Spatie\Permission\Models\Role::whereIn('name', ['super-settings', 'customer'])->count() }}</h4>
                                         <small class="text-muted">Roles del sistema</small>
                                     </div>
                                 </div>
@@ -156,7 +156,7 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            @if(!in_array($role->name, ['super-admin', 'customer']))
+                                            @if(!in_array($role->name, ['super-settings', 'customer']))
                                                 <div class="dropdown">
                                                     <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="fas fa-ellipsis-vertical"></i>

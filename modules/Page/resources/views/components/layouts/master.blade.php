@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+        <title>@yield('title', config('app.name', 'Laravel'))</title>
+
+        {{-- SEO Meta Tags - Use Seo component if model has HasSeo trait --}}
+        @if(isset($page) && method_exists($page, 'seoMeta'))
+            <x-Seo::seo-tags :model="$page" />
+        @else
+            <meta name="description" content="@yield('meta_description', config('app.description', ''))">
+            <meta name="keywords" content="@yield('meta_keywords', '')">
+        @endif
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        {{-- Additional Styles --}}
+        @stack('styles')
+
+        {{-- Vite CSS --}}
+        {{-- {{ module_vite('build-page', 'resources/assets/sass/app.scss') }} --}}
+    </head>
+
+    <body>
+        @yield('content')
+        {{ $slot ?? '' }}
+
+        {{-- Vite JS --}}
+        {{-- {{ module_vite('build-page', 'resources/assets/js/app.js') }} --}}
+
+        {{-- Additional Scripts --}}
+        @stack('scripts')
+    </body>
+</html>

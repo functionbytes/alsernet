@@ -41,8 +41,8 @@ class CheckRolesAndPermissions
             return redirect()->route('auth.login');
         }
 
-        // Super-admin has access to everything
-        if ($user->hasRole('super-admin')) {
+        // Super-settings has access to everything
+        if ($user->hasRole('super-settings')) {
             return $next($request);
         }
 

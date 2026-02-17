@@ -10,11 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Traits\HasBasicRelations;
 use Modules\Auth\Traits\HasUserAttributes;
 use Modules\Auth\Traits\HasUserScopes;
-use Modules\Campaign\Traits\HasCampaignManagement;
 use Modules\Core\Traits\HasQuotaManagement;
-use Modules\Document\Traits\HasDocumentPermissions;
-use Modules\HelpdeskChat\Models\Concerns\HasHelpdeskRelations;
-use Modules\Mailer\Traits\HasSendingInfrastructure;
 use Modules\Notification\Traits\HasNotificationSystem;
 use Modules\Storage\Traits\HasFileSystemPaths;
 use Spatie\Activitylog\LogOptions;
@@ -34,12 +30,7 @@ class User extends Authenticatable
 
     // Custom User traits organized by responsibility
     use HasBasicRelations;
-    use HasCampaignManagement;
-
-    // Document permissions (from Modules)
-    use HasDocumentPermissions;
     use HasFileSystemPaths;
-    use HasHelpdeskRelations;
 
     // Notifiable and HasNotificationSystem - resolve method conflicts
     use HasNotificationSystem, Notifiable {
@@ -47,7 +38,6 @@ class User extends Authenticatable
         Notifiable::routeNotificationFor as protected routeNotificationForNotifiable;
     }
     use HasQuotaManagement;
-    use HasSendingInfrastructure;
     use HasUserAttributes;
     use HasUserScopes;
 

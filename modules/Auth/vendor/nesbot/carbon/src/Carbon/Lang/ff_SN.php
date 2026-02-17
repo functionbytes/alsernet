@@ -11,6 +11,6 @@
 
 /*
  * Authors:
- * - Pular-Fulfulde.org Ibrahima Sarr admin@pulaar-fulfulde.org
+ * - Pular-Fulfulde.org Ibrahima Sarr settings@pulaar-fulfulde.org
  */
 return require __DIR__.'/ff.php';

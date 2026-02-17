@@ -1,6 +1,6 @@
 ---
 name: database
-description: "Database specialist for schema design, migrations, query optimization, indexes, and data integrity. Use proactively when creating models, migrations, or optimizing queries."
+description: "Database specialist for schema design, migrations, query optimization, indexes, and data integrity. Use proactively when creating migrations, factories, seeders, or optimizing queries. For Eloquent model business logic use the backend agent. For API Resources use the api agent."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:

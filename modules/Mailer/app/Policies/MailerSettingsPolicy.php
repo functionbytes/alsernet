@@ -8,8 +8,8 @@ class MailerSettingsPolicy
 {
     public function configure(User $user): bool
     {
-        // Super-admin siempre puede
-        if ($user->hasRole('super-admin')) {
+        // Super-settings siempre puede
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -23,7 +23,7 @@ class MailerSettingsPolicy
 
     public function manageTemplates(User $user): bool
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -31,7 +31,7 @@ class MailerSettingsPolicy
 
     public function manageComponents(User $user): bool
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -39,7 +39,7 @@ class MailerSettingsPolicy
 
     public function manageVariables(User $user): bool
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -47,7 +47,7 @@ class MailerSettingsPolicy
 
     public function manageEndpoints(User $user): bool
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 

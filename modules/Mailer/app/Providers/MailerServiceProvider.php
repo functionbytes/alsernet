@@ -2,7 +2,6 @@
 
 namespace Modules\Mailer\Providers;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -58,9 +57,6 @@ class MailerServiceProvider extends ServiceProvider
         // Register authorization gates
         $this->registerGates();
 
-        // Register scheduled tasks
-        $this->registerSchedules();
-
         // Publish config
         $this->publishes([
             __DIR__.'/../../config/mailer.php' => config_path('mailer.php'),
@@ -98,7 +94,7 @@ class MailerServiceProvider extends ServiceProvider
      */
     protected function registerRoutes(): void
     {
-        // Load web routes (settings admin panel)
+        // Load web routes (settings settings panel)
         require module_path('Mailer', 'routes/web.php');
 
         // Public API routes (email sending endpoints)
@@ -147,21 +143,5 @@ class MailerServiceProvider extends ServiceProvider
         Gate::define('manage-mailer-components', fn ($user) => $settingsPolicy->manageComponents($user));
         Gate::define('manage-mailer-variables', fn ($user) => $settingsPolicy->manageVariables($user));
         Gate::define('manage-mailer-endpoints', fn ($user) => $settingsPolicy->manageEndpoints($user));
-    }
-
-    /**
-     * Register scheduled tasks for Mailer module
-     */
-    protected function registerSchedules(): void
-    {
-        $this->app->booted(function () {
-            $schedule = $this->app->make(Schedule::class);
-
-            // Handle bounce and feedback loop - every 30 minutes
-            $schedule->command('handler:run')->everyThirtyMinutes();
-
-            // Verify sender - every 5 minutes
-            $schedule->command('sender:verify')->everyFiveMinutes();
-        });
     }
 }

@@ -11,13 +11,13 @@ use Modules\MailsSettings\Http\Controllers\OutgoingEmailSettingsController;
 |--------------------------------------------------------------------------
 |
 | Rutas para la configuración de email del sistema
-| Middleware: web, auth, role:super-admin
+| Middleware: web, auth, settings
 |
 */
 
 // Email settings routes
-Route::middleware(['web', 'auth', 'role:super-admin'])
-    ->prefix('settings/email')
+Route::middleware(['web', 'auth', 'settings'])
+    ->prefix('setting/email')
     ->name('settings.email.')
     ->group(function () {
         Route::get('/', [EmailSettingsController::class, 'index'])->name('index');
@@ -25,8 +25,8 @@ Route::middleware(['web', 'auth', 'role:super-admin'])
     });
 
 // Incoming email settings routes
-Route::middleware(['web', 'auth', 'role:super-admin'])
-    ->prefix('settings/incoming-email')
+Route::middleware(['web', 'auth', 'settings'])
+    ->prefix('setting/incoming-email')
     ->name('settings.incoming-email.')
     ->group(function () {
         Route::get('/', [IncomingEmailSettingsController::class, 'index'])->name('index');
@@ -58,8 +58,8 @@ Route::middleware(['web', 'auth', 'role:super-admin'])
     });
 
 // Outgoing email settings routes
-Route::middleware(['web', 'auth', 'role:super-admin'])
-    ->prefix('settings/outgoing-email')
+Route::middleware(['web', 'auth', 'settings'])
+    ->prefix('setting/outgoing-email')
     ->name('settings.outgoing-email.')
     ->group(function () {
         Route::get('/', [OutgoingEmailSettingsController::class, 'index'])->name('index');

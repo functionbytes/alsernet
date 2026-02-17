@@ -257,13 +257,17 @@ class NavService
 
             $permissionName = "modules.view.{$moduleId}";
 
-            // Si el usuario es super-admin, mostrar siempre
-            if ($user->hasRole('super-admin')) {
+            // Si el usuario es super-settings, mostrar siempre
+            if ($user->hasRole('super-settings')) {
                 return true;
             }
 
             // Verificar si el usuario tiene permiso para este módulo
-            return $user->hasPermissionTo($permissionName);
+            try {
+                return $user->hasPermissionTo($permissionName);
+            } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist $e) {
+                return false;
+            }
         });
     }
 
@@ -284,16 +288,20 @@ class NavService
         foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
             $permissionName = "modules.view.{$sidebarId}";
 
-            // Si el usuario es super-admin, mostrar todos
-            if ($user->hasRole('super-admin')) {
+            // Si el usuario es super-settings, mostrar todos
+            if ($user->hasRole('super-settings')) {
                 $sidebars[$sidebarId] = $sidebar;
 
                 continue;
             }
 
             // Verificar si el usuario tiene permiso para este módulo
-            if ($user->hasPermissionTo($permissionName)) {
-                $sidebars[$sidebarId] = $sidebar;
+            try {
+                if ($user->hasPermissionTo($permissionName)) {
+                    $sidebars[$sidebarId] = $sidebar;
+                }
+            } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist $e) {
+                // Permission not seeded yet — skip this sidebar
             }
         }
 
@@ -357,8 +365,8 @@ class NavService
             return false;
         }
 
-        // Super-admin siempre tiene acceso
-        if ($user->hasRole('super-admin')) {
+        // Super-settings siempre tiene acceso
+        if ($user->hasRole('super-settings')) {
             return true;
         }
 
@@ -407,8 +415,8 @@ class NavService
      * Busca a través de todos los sidebars y sus items para determinar
      * cuál debería estar activo basándose en la ruta que se está viendo.
      *
-     * @param array $sidebars Sidebars filtrados por permisos
-     * @param \Illuminate\Foundation\Auth\User|null $user Usuario autenticado
+     * @param  array  $sidebars  Sidebars filtrados por permisos
+     * @param  \Illuminate\Foundation\Auth\User|null  $user  Usuario autenticado
      * @return string|null ID del sidebar activo, o null si no se encuentra
      */
     private static function findActiveSidebarForUser(array $sidebars, ?\Illuminate\Foundation\Auth\User $user = null): ?string
@@ -418,6 +426,12 @@ class NavService
         }
 
         foreach ($sidebars as $sidebarId => $sidebar) {
+            // Si el mini-item correspondiente tiene URL directa, no activar este sidebar
+            $miniItem = self::getMiniItem($sidebarId);
+            if ($miniItem && ! empty($miniItem['url'])) {
+                continue; // Saltar sidebars con URL directa
+            }
+
             // Soportar nueva estructura de secciones
             if (isset($sidebar['sections'])) {
                 foreach ($sidebar['sections'] as $section) {
@@ -425,7 +439,7 @@ class NavService
                         // Validar que el usuario tenga permisos para este item
                         if (self::userCanAccessItem($item, $user)) {
                             // Verificar si la ruta actual coincide
-                            if (request()->routeIs($item['route'] . '*')) {
+                            if (request()->routeIs($item['route'].'*')) {
                                 return $sidebarId;
                             }
                         }
@@ -437,7 +451,7 @@ class NavService
                     // Validar que el usuario tenga permisos para este item
                     if (self::userCanAccessItem($item, $user)) {
                         // Verificar si la ruta actual coincide
-                        if (request()->routeIs($item['route'] . '*')) {
+                        if (request()->routeIs($item['route'].'*')) {
                             return $sidebarId;
                         }
                     }
@@ -453,8 +467,8 @@ class NavService
      *
      * Maneja tanto permisos simples como múltiples (separadas por |)
      *
-     * @param array $item Item del menú con opcional campo 'permission'
-     * @param \Illuminate\Foundation\Auth\User $user Usuario autenticado
+     * @param  array  $item  Item del menú con opcional campo 'permission'
+     * @param  \Illuminate\Foundation\Auth\User  $user  Usuario autenticado
      * @return bool True si el usuario puede acceder, false en caso contrario
      */
     private static function userCanAccessItem(array $item, \Illuminate\Foundation\Auth\User $user): bool

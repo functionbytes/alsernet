@@ -13,6 +13,19 @@ class Setting extends Model implements HasMedia
     public const UPLOAD_PATH = 'app/setting/';
 
     /**
+     * Register media collections for Setting model
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('default')
+            ->useDisk('public');
+
+        $this->addMediaCollection('logos')
+            ->singleFile()
+            ->useDisk('public');
+    }
+
+    /**
      * Get all items.
      *
      * @return collect
@@ -823,13 +836,18 @@ class Setting extends Model implements HasMedia
     }
 
     /**
-     * gET uploaded file location.
+     * Get uploaded file location.
      *
      * @var bool
      */
     public static function getUploadFilePath($filename)
     {
         $uploadPath = storage_path(self::UPLOAD_PATH);
+
+        // Ensure directory exists
+        if (! file_exists($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
 
         return $uploadPath.$filename;
     }

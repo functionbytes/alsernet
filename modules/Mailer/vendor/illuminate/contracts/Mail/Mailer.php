@@ -5,7 +5,7 @@ namespace Illuminate\Contracts\Mail;
 interface Mailer
 {
     /**
-     * Begin the process of mailing a mailable class instance.
+     * Begin the process of Mailer a mailable class instance.
      *
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail
@@ -13,7 +13,7 @@ interface Mailer
     public function to($users);
 
     /**
-     * Begin the process of mailing a mailable class instance.
+     * Begin the process of Mailer a mailable class instance.
      *
      * @param  mixed  $users
      * @return \Illuminate\Mail\PendingMail

@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('layout_id')->constrained('mailer_layouts')->onDelete('cascade');
             $table->foreignId('lang_id')->constrained('langs')->onDelete('cascade');
             $table->string('subject')->nullable();
-            $table->longText('content');
+            $table->longText('content')->nullable()->change();
             $table->timestamps();
 
             $table->unique(['layout_id', 'lang_id'], 'idx_6502');

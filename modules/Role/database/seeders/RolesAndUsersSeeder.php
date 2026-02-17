@@ -13,7 +13,7 @@ class RolesAndUsersSeeder extends Seeder
      * Define los roles y usuarios necesarios
      */
     private const ROLES = [
-        'super-admin',
+        'super-settings',
         'administrative',
         'return',
         'shop',

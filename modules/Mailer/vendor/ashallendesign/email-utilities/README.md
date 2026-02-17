@@ -133,7 +133,7 @@ use AshAllenDesign\EmailUtilities\Lists\RoleAccountList;
 $roleAccountList = RoleAccountList::get();
 
 // [
-    // 'admin',
+    // 'settings',
     // 'administrator',
     // 'contact',
     // ...

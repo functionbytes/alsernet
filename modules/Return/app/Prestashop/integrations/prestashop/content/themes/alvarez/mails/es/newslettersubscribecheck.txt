@@ -1,5 +1,0 @@
-<span style="margin-top: 20px; display: inline-block; margin-right: 12px;">Confirmación de suscripción</span></p>
-<p style="text-align: center; font-size: 35px; font-weight: bold; margin-bottom: 50px;">Gracias por unirte a Álvarez!</p>
-<p style="text-align: center; font-size: 18px; margin-bottom: 50px;">Si quieres empezar a recibir novedades y ofertas de tus deportes favoritos, por favor <strong>confirma tu suscripción pulsando en el siguiente enlace</strong></p>
-<p style="text-align: center; margin-bottom: 50px;"><a href="https://www.a-alvarez.com/module/ps_emailsubscription/verification?token=[email-md5]" style="font-size: 24px; font-weight: bold; background-color: #87bc47; color: white; max-width: 400px; padding: 20px 40px; border: 1px solid #87bc47; border-radius: 5px; text-decoration: none;">CONFIRMAR SUSCRIPCIÓN</a></p>
-<p style="text-align: center; font-size: 14px; margin-bottom: 50px;">Estás a un clic de confirmar tu registro en Álvarez. Si tienes alguna duda, por favor ponte en contacto con nosotros en el 981 17 91 00</p>

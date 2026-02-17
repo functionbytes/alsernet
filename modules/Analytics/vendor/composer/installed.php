@@ -3,7 +3,7 @@
         'name' => 'modules/analytics',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '721ecdd9df79f2343dd7cc9713745acf80d61801',
+        'reference' => '4df4a778bad1c3dc26503ed9c835e0e722e2795a',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -130,7 +130,7 @@
         'modules/analytics' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '721ecdd9df79f2343dd7cc9713745acf80d61801',
+            'reference' => '4df4a778bad1c3dc26503ed9c835e0e722e2795a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

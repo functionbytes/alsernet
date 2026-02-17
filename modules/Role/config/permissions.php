@@ -12,69 +12,12 @@
  * Esta configuración es procesada por OrganizedPermissionsSeeder y SyncPermissionsCommand
  * para generar y sincronizar permisos en la base de datos.
  *
- * Estructura inspirada en document_permissions system:
  * - Permisos organizados por módulo y tipo de acción
  * - Soporte para categorías y sub-permisos
  * - Scopes para control granular de acceso (all, own, team)
  */
 
 return [
-    // ================================================================
-    // MÓDULO: DOCUMENTS (Documentos)
-    // ================================================================
-    // Estructura basada en DocumentPermissionsSeeder y document_permissions table
-    'documents' => [
-        'name' => 'Documentos',
-        'description' => 'Gestión de documentos del sistema',
-        'permissions' => [
-            'view' => [
-                'all' => 'Ver todos los documentos',
-                'own' => 'Ver solo sus documentos',
-            ],
-            'create' => [
-                'own' => 'Crear documentos',
-            ],
-            'update' => [
-                'own' => 'Editar sus documentos',
-                'all' => 'Editar cualquier documento',
-            ],
-            'delete' => [
-                'own' => 'Eliminar sus documentos',
-                'all' => 'Eliminar cualquier documento',
-            ],
-            'manage' => [
-                'all' => 'Gestionar documentos completamente',
-            ],
-            'approve' => [
-                'all' => 'Aprobar documentos',
-            ],
-            'reject' => [
-                'all' => 'Rechazar documentos',
-            ],
-            'export' => [
-                'own' => 'Exportar sus documentos',
-                'all' => 'Exportar todos los documentos',
-            ],
-            'files' => [
-                'upload' => 'Cargar archivos en documentos',
-                'download' => 'Descargar archivos de documentos',
-                'delete' => 'Eliminar archivos de documentos',
-            ],
-            'types' => [
-                'view' => 'Ver tipos de documento',
-                'create' => 'Crear tipos de documento',
-                'update' => 'Editar tipos de documento',
-                'delete' => 'Eliminar tipos de documento',
-                'manage' => 'Gestionar tipos de documento',
-            ],
-            'settings' => [
-                'view' => 'Ver configuración de documentos',
-                'update' => 'Editar configuración de documentos',
-                'manage' => 'Gestionar configuración de documentos',
-            ],
-        ],
-    ],
-
     // ================================================================
     // MÓDULO: USERS (Usuarios)
     // ================================================================
@@ -319,7 +262,6 @@ return [
                 'backups' => 'Ver módulo de Copias de Seguridad',
                 'campaigns' => 'Ver módulo de Campañas',
                 'dashboard' => 'Ver módulo de Dashboard',
-                'documents' => 'Ver módulo de Documentos',
                 'events' => 'Ver módulo de Eventos',
                 'helpdesk' => 'Ver módulo de Helpdesk',
                 'mailers' => 'Ver módulo de Correos',

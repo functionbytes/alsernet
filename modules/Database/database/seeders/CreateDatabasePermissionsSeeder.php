@@ -13,7 +13,7 @@ class CreateDatabasePermissionsSeeder extends Seeder
      *
      * Seeds database-related permissions for Spatie Laravel Permission.
      * Creates granular permissions for database configuration and cleanup features
-     * and assigns them to predefined roles (super-admin, manager).
+     * and assigns them to predefined roles (super-settings, manager).
      *
      * Permissions are organized by feature area for easy maintenance and scalability.
      */
@@ -75,13 +75,13 @@ class CreateDatabasePermissionsSeeder extends Seeder
      * Assign permissions to database-related roles.
      *
      * Defines role levels:
-     * - super-admin: All permissions (via wildcard)
+     * - super-settings: All permissions (via wildcard)
      * - manager: View permissions only
      */
     private function assignPermissionsToRoles(): void
     {
         // Super Admin - All permissions
-        $this->assignToRole('super-admin', [
+        $this->assignToRole('super-settings', [
             'database.*',
         ]);
 

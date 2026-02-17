@@ -5,7 +5,7 @@
     @include('core::components.card', ['title' => 'Información del Sistema'])
 
     <div class="widget-content searchable-container list">
-        <!-- System Information Card - Alsernet Green (#90bb13) -->
+        <!-- System Information Card - Alsernet Green (#081A28) -->
         <div class="card">
             <!-- Header Section - Modernize Card Header -->
             <div class="card-header p-4 border-bottom ">

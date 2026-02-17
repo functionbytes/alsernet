@@ -245,7 +245,7 @@
 /* Cursor with blinking animation */
 @keyframes cursorBlink {
     0%, 49% {
-        border-left-color: #90bb13 !important;
+        border-left-color: #081A28 !important;
         box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
     }
     50%, 100% {
@@ -255,13 +255,13 @@
 }
 
 .CodeMirror-cursor {
-    border-left: 3px solid #90bb13 !important;
+    border-left: 3px solid #081A28 !important;
     height: 100% !important;
     animation: cursorBlink 1s infinite !important;
 }
 
 .CodeMirror.CodeMirror-focused .CodeMirror-cursor {
-    border-left-color: #90bb13 !important;
+    border-left-color: #081A28 !important;
     animation: cursorBlink 1s infinite !important;
 }
 
@@ -386,7 +386,7 @@
 
 /* Editor Focus State */
 .CodeMirror-focused {
-    border-color: #90bb13;
+    border-color: #081A28;
     box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
 }
 
@@ -453,13 +453,13 @@
 }
 
 #preview-panel .btn-group .btn:hover {
-    border-color: #90bb13;
+    border-color: #081A28;
     background-color: rgba(144, 187, 19, 0.05);
 }
 
 #preview-panel .btn-group .btn.active {
-    background-color: #90bb13;
-    border-color: #90bb13;
+    background-color: #081A28;
+    border-color: #081A28;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
 }
@@ -500,11 +500,11 @@
 }
 
 /* ========================================
-   TOOLTIPS - Green Theme (#90bb13)
+   TOOLTIPS - Green Theme (#081A28)
    ======================================== */
 
 .tooltip-inner {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
     font-size: 12px;
     padding: 6px 10px;
@@ -513,27 +513,27 @@
 }
 
 .tooltip .tooltip-arrow::before {
-    border-top-color: #90bb13 !important;
+    border-top-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
 .bs-tooltip-top .tooltip-arrow::before {
-    border-top-color: #90bb13 !important;
+    border-top-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
 .bs-tooltip-end .tooltip-arrow::before {
-    border-right-color: #90bb13 !important;
+    border-right-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
 .bs-tooltip-bottom .tooltip-arrow::before {
-    border-bottom-color: #90bb13 !important;
+    border-bottom-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
 .bs-tooltip-start .tooltip-arrow::before {
-    border-left-color: #90bb13 !important;
+    border-left-color: #081A28 !important;
 }
 
 /* ========================================
@@ -541,47 +541,47 @@
    ======================================== */
 
 .CodeMirror-selected {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
@@ -625,7 +625,7 @@
 }
 
 .CodeMirror {
-    caret-color: #90bb13 !important;
+    caret-color: #081A28 !important;
 }
 
 .CodeMirror span {
@@ -708,7 +708,7 @@ kbd {
 }
 
 .variable-card:hover {
-    border-color: #90bb13;
+    border-color: #081A28;
     background: #f6faf0;
     box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
 }
@@ -718,7 +718,7 @@ kbd {
 }
 
 .variable-icon {
-    color: #90bb13;
+    color: #081A28;
     font-size: 16px;
     opacity: 0.7;
     transition: all 0.2s ease;
@@ -741,7 +741,7 @@ kbd {
 }
 
 .variable-card:hover .variable-code {
-    color: #90bb13;
+    color: #081A28;
 }
 
 @media (max-width: 991px) {
@@ -1070,7 +1070,7 @@ kbd {
 /* Cursor with blinking animation */
 @keyframes cursorBlink {
     0%, 49% {
-        border-left-color: #90bb13 !important;
+        border-left-color: #081A28 !important;
         box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
     }
     50%, 100% {
@@ -1080,13 +1080,13 @@ kbd {
 }
 
 .CodeMirror-cursor {
-    border-left: 3px solid #90bb13 !important;
+    border-left: 3px solid #081A28 !important;
     height: 100% !important;
     animation: cursorBlink 1s infinite !important;
 }
 
 .CodeMirror.CodeMirror-focused .CodeMirror-cursor {
-    border-left-color: #90bb13 !important;
+    border-left-color: #081A28 !important;
     animation: cursorBlink 1s infinite !important;
 }
 
@@ -1211,7 +1211,7 @@ kbd {
 
 /* Editor Focus State */
 .CodeMirror-focused {
-    border-color: #90bb13;
+    border-color: #081A28;
     box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
 }
 
@@ -1278,13 +1278,13 @@ kbd {
 }
 
 #preview-panel .btn-group .btn:hover {
-    border-color: #90bb13;
+    border-color: #081A28;
     background-color: rgba(144, 187, 19, 0.05);
 }
 
 #preview-panel .btn-group .btn.active {
-    background-color: #90bb13;
-    border-color: #90bb13;
+    background-color: #081A28;
+    border-color: #081A28;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
 }
@@ -1325,11 +1325,11 @@ kbd {
 }
 
 /* ========================================
-   TOOLTIPS - Green Theme (#90bb13)
+   TOOLTIPS - Green Theme (#081A28)
    ======================================== */
 
 .tooltip-inner {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
     font-size: 12px;
     padding: 6px 10px;
@@ -1338,27 +1338,27 @@ kbd {
 }
 
 .tooltip .tooltip-arrow::before {
-    border-top-color: #90bb13 !important;
+    border-top-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
 .bs-tooltip-top .tooltip-arrow::before {
-    border-top-color: #90bb13 !important;
+    border-top-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
 .bs-tooltip-end .tooltip-arrow::before {
-    border-right-color: #90bb13 !important;
+    border-right-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
 .bs-tooltip-bottom .tooltip-arrow::before {
-    border-bottom-color: #90bb13 !important;
+    border-bottom-color: #081A28 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
 .bs-tooltip-start .tooltip-arrow::before {
-    border-left-color: #90bb13 !important;
+    border-left-color: #081A28 !important;
 }
 
 /* ========================================
@@ -1366,47 +1366,47 @@ kbd {
    ======================================== */
 
 .CodeMirror-selected {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::-moz-selection {
-    background-color: #90bb13 !important;
+    background-color: #081A28 !important;
     color: #fff !important;
 }
 
@@ -1450,7 +1450,7 @@ kbd {
 }
 
 .CodeMirror {
-    caret-color: #90bb13 !important;
+    caret-color: #081A28 !important;
 }
 
 .CodeMirror span {
@@ -1533,7 +1533,7 @@ kbd {
 }
 
 .variable-card:hover {
-    border-color: #90bb13;
+    border-color: #081A28;
     background: #f6faf0;
     box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
 }
@@ -1543,7 +1543,7 @@ kbd {
 }
 
 .variable-icon {
-    color: #90bb13;
+    color: #081A28;
     font-size: 16px;
     opacity: 0.7;
     transition: all 0.2s ease;
@@ -1566,7 +1566,7 @@ kbd {
 }
 
 .variable-card:hover .variable-code {
-    color: #90bb13;
+    color: #081A28;
 }
 
 @media (max-width: 991px) {
@@ -1692,7 +1692,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 
 /* ========================================
    MINI NAV ITEM - SELECTED STATE (Font Awesome)
-   Green background (#90bb13) with white icon when selected
+   Green background (#081A28) with white icon when selected
    ======================================== */
 
 /* Selected mini nav item - Font Awesome icon styling */
@@ -1705,7 +1705,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 /* Green background circle for selected item */
 .side-mini-panel .mini-nav .mini-nav-item.selected > a:before {
     content: "";
-    background: #90bb13 !important;
+    background: #081A28 !important;
     width: 48px;
     height: 48px;
     display: block;
@@ -1720,7 +1720,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 
 /* Hover state for non-selected items - Font Awesome */
 .side-mini-panel .mini-nav .mini-nav-item:not(.selected) > a:hover i {
-    color: #90bb13 !important;
+    color: #081A28 !important;
     transition: color 0.2s ease;
 }
 
@@ -1747,3 +1747,10 @@ body .select2-container--classic .select2-selection--single, body .select2-conta
     line-height: 24px;
 }
 
+
+.email-history-list .email-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--bs-border-color);
+}

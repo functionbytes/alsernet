@@ -2,9 +2,9 @@
 
 namespace Modules\Mailer\Models;
 
-use Modules\Mailer\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Mailer\Traits\HasUid;
 
 class MailerLayoutLang extends Model
 {

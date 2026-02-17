@@ -1,3 +1,0 @@
-Hay un cliente con email {email} y teléfono {phone} que se ha quedado sin cita para el fitting personalizado de Golf.
-
-

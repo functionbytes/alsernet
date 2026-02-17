@@ -32,7 +32,7 @@ class MailerVariableLang extends Model
      */
     public function language(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Lang::class, 'lang_id');
+        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
     }
 
     /**

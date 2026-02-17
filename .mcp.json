@@ -15,8 +15,10 @@
       ]
     },
     "chrome-devtools": {
-      "command": "/tmp/chrome-devtools-wrapper.sh",
+      "command": "npx",
       "args": [
+        "--yes",
+        "chrome-devtools-mcp",
         "--browserUrl",
         "http://127.0.0.1:9222"
       ]

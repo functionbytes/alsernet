@@ -1,0 +1,16 @@
+{
+    "name": "Widget",
+    "alias": "widget",
+    "description": "Widget management module for dynamic content rendering",
+    "keywords": [
+        "widget",
+        "content",
+        "rendering"
+    ],
+    "priority": 10,
+    "providers": [
+        "Modules\\Widget\\Providers\\WidgetServiceProvider"
+    ],
+    "files": [],
+    "active": 1
+}

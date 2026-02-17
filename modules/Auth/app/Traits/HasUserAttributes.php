@@ -156,7 +156,7 @@ trait HasUserAttributes
     }
 
     /**
-     * Check if user has admin account
+     * Check if user has settings account
      */
     public function hasAdminAccount(): bool
     {

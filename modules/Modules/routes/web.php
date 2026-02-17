@@ -10,7 +10,7 @@ use Modules\Modules\Http\Controllers\ModulesController;
 |
 | Rutas para la gestión de vistas y operaciones de módulos
 | URL: /settings/modules (aplicado por RouteServiceProvider)
-| Middleware: web, auth, role:super-admin (aplicado por RouteServiceProvider)
+| Middleware: web, auth, settings (aplicado por RouteServiceProvider)
 | GET para renderizar vistas, POST/PUT para operaciones de módulos
 |
 */

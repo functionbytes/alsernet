@@ -1,8 +1,0 @@
-{shop_url}
-Bonjour {firstname} {lastname},
-Merci d’avoir acheté sur {shop_name}!
-Votre paiement pour la commande numéro {id_order} a été traité correctement.
-Cordialement;
-[{shop_name}]({shop_url})
-
-

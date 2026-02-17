@@ -501,7 +501,7 @@ $data = [
 
 $normalized = $processor->process($schema, $data);
 // $normalized instanceof Config
-// $normalized = {'name' => 'jeff', 'password' => null, 'admin' => false}
+// $normalized = {'name' => 'jeff', 'password' => null, 'settings' => false}
 ```
 
 If you are using PHP 7.4 or higher, you can use native types:

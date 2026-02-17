@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #90bb13 0%, #6d8f0f 100%);">
+                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #081A28 0%, #6d8f0f 100%);">
                             <i class="fas fa-user-shield fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
@@ -34,7 +34,7 @@
                                     </span>
                                 @endif
 
-                                @if(in_array($role->name, ['super-admin', 'customer']))
+                                @if(in_array($role->name, ['super-settings', 'customer']))
                                     <span class="badge bg-warning text-dark">
                                         <i class="fas fa-lock me-1"></i> Sistema
                                     </span>
@@ -208,7 +208,7 @@
                                 <div class="list-group-item border-0 px-0">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                             style="width: 40px; height: 40px; background-color: #90bb13; color: white; font-weight: bold;">
+                                             style="width: 40px; height: 40px; background-color: #081A28; color: white; font-weight: bold;">
                                             {{ strtoupper(substr($user->firstname ?? $user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->lastname ?? $user->last_name ?? 'S', 0, 1)) }}
                                         </div>
                                         <div class="flex-grow-1">
@@ -331,7 +331,7 @@
                             <i class="fas fa-table me-2"></i> Ver matriz de permisos
                         </a>
 
-                        @if(!in_array($role->name, ['super-admin', 'customer']))
+                        @if(!in_array($role->name, ['super-settings', 'customer']))
                             <button type="button" class="btn btn-outline-warning" onclick="alert('Función duplicar en desarrollo')">
                                 <i class="fas fa-copy me-2"></i> Duplicar rol
                             </button>
@@ -381,7 +381,7 @@
     }
 
     .permission-list::-webkit-scrollbar-thumb {
-        background: #90bb13;
+        background: #081A28;
         border-radius: 10px;
     }
 </style>

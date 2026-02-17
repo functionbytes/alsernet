@@ -1,3 +1,0 @@
-Hola {customer_name}
-¡Felicidades! Tu entrada de blog {post_title} ha sido aprobada.
-Ver entrada de blog

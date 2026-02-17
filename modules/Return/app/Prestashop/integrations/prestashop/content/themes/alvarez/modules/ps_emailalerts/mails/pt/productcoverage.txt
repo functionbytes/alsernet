@@ -1,9 +1,0 @@
-{shop_url}
-
-Olá,
-
-Your stock cover is now less than the specified minimum of: {warning_coverage}
-
-Em stock: {current_coverage}
-
-[{shop_name}]({shop_url})

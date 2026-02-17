@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Code review specialist. Use proactively after code changes, before commits, or when asked to review pull requests. Identifies bugs, security issues, and anti-patterns."
+description: "Code review specialist. Use proactively after code changes, before commits, or when asked to review pull requests. Identifies bugs, security issues, and anti-patterns. For implementing suggested fixes, delegate to the appropriate specialist agent."
 model: sonnet
 tools: Read, Grep, Glob, Bash
 mcpServers:

@@ -1,6 +1,6 @@
 ---
 name: backend
-description: "Backend development specialist for Laravel. Use proactively when creating controllers, services, models, queue jobs, events, middleware, policies, or any server-side PHP code. For migrations use the database agent. For API endpoints use the api agent."
+description: "Backend development specialist for Laravel. Use proactively when creating controllers, services, models, queue jobs, events, middleware, policies, or any server-side PHP code. For migrations use the database agent. For API endpoints use the api agent. For Blade views and JavaScript use the frontend agent."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:
@@ -69,7 +69,7 @@ class ExampleController extends Controller
 ### Service
 ```php
 class ExampleService
-{
+{[testing.md](testing.md)
     public function list(array $filters): LengthAwarePaginator
     {
         return Example::query()

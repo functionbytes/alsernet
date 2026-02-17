@@ -1,0 +1,26 @@
+{
+    "name": "nwidart/attention",
+    "description": "Sistema PQRSF simplificado para gestión de peticiones ciudadanas",
+    "authors": [
+        {
+            "name": "INOQUALAB",
+            "email": "admin@inoqualab.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Attention\\": "app/",
+            "Modules\\Attention\\Database\\Factories\\": "database/factories/",
+            "Modules\\Attention\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "require": {
+        "spatie/laravel-medialibrary": "^11.0"
+    }
+}

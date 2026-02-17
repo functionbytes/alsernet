@@ -36,11 +36,11 @@ config('role.guards')               // Guard configuration
 use Spatie\Permission\Models\Role;
 
 $user = User::find(1);
-$role = Role::findByName('admin');
+$role = Role::findByName('settings');
 
 $user->assignRole($role);
 // or
-$user->assignRole('admin');
+$user->assignRole('settings');
 ```
 
 ### Assigning Permissions to Roles
@@ -49,7 +49,7 @@ $user->assignRole('admin');
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-$role = Role::findByName('admin');
+$role = Role::findByName('settings');
 $permission = Permission::findByName('edit-users');
 
 $role->givePermissionTo($permission);
@@ -64,7 +64,7 @@ if ($user->hasPermissionTo('edit-users')) {
 }
 
 // Check if user has role
-if ($user->hasRole('admin')) {
+if ($user->hasRole('settings')) {
     // ...
 }
 ```
@@ -239,8 +239,8 @@ Test role assignment and permissions:
 php artisan tinker
 
 $user = User::find(1);
-$user->assignRole('admin');
-$user->hasRole('admin'); // true
+$user->assignRole('settings');
+$user->hasRole('settings'); // true
 $user->hasPermissionTo('edit-users'); // true/false based on permissions
 ```
 

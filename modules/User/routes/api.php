@@ -12,7 +12,7 @@ use Modules\User\Http\Controllers\UsersController;
 | Las vistas GET están en web.php
 | Prefix: /settings/users (aplicado por UserServiceProvider)
 | Name: settings.users.* (aplicado por UserServiceProvider)
-| Middleware: web, auth, role:super-admin
+| Middleware: web, auth, settings
 |
 */
 

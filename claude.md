@@ -18,7 +18,7 @@
 #   docs(haiku)      security(sonnet) database(sonnet)
 #   devops(sonnet)   review(sonnet)   performance(sonnet)
 #   api(sonnet)
-#
+#[ATENCION-MODULO-SIMPLIFICADO.md](ATENCION-MODULO-SIMPLIFICADO.md)
 # SLASH COMMANDS (.claude/commands/) - manual invocation with /name:
 #   Role commands:  /backend /frontend /testing /docs
 #                   /database /devops /api
@@ -89,36 +89,85 @@
 
 ## [UNIVERSAL] Agent Orchestration
 
-When handling tasks, follow these agent chains. Delegate to subagents using the Task tool.
+When handling tasks, delegate to subagents using the Task tool. Use this section to pick the right agent(s).
 
-### Feature Implementation
-1. **Plan**: analyze task, identify files, design approach
-2. **backend/frontend/api**: implement code (choose based on task)
-3. **database**: if migrations or schema changes needed
-4. **testing**: write + run tests for the new code
-5. **review**: review all changes before marking done
+### Agent Selection Quick Reference
 
-### Bug Fix
-1. **Read logs**: use Boost `last-error` / `read-log-entries`
+| Request involves... | Primary Agent | May also need |
+|---|---|---|
+| Controller, service, model, middleware, policy, job, event | **backend** | database, testing |
+| View, Blade, button, form, page, CSS, JavaScript | **frontend** | backend (if logic) |
+| API endpoint, Resource, rate limit, /api/ routes | **api** | database, testing |
+| Migration, table, column, index, factory, seeder | **database** | backend (model updates) |
+| Test, coverage, assertion, E2E | **testing** | - |
+| Vulnerability, auth, XSS, injection, permissions audit | **security** | backend (fixes) |
+| Code quality, anti-patterns, PR review | **review** | - |
+| Slow queries, N+1, cache, memory, optimize | **performance** | database, frontend |
+| Deploy, Docker, CI/CD, Supervisor, server | **devops** | - |
+| Documentation, README, API docs | **docs** | - |
+| CRUD, new feature, new module, 3+ files, unclear scope | **plan** first | then specialists |
+
+### Disambiguation Rules
+- **Web controller** (returns View) → **backend**. **API controller** (returns JSON) → **api**.
+- **Model relationships/scopes/logic** → **backend**. **Migrations/indexes/schema** → **database**.
+- **Profiling/caching** → **performance**. **Adding indexes** → **database**.
+- **Vulnerability scanning** → **security**. **Code quality review** → **review**.
+- **When in doubt or 3+ files involved** → start with **plan**.
+
+### Task Flows
+
+#### Feature (multi-file)
+1. **plan**: analyze, identify files, design approach
+2. **backend/frontend/api**: implement (choose by domain)
+3. **database**: if schema changes needed
+4. **testing**: write + run tests
+5. **review**: final quality check
+
+#### CRUD / New Entity
+1. **plan**: design schema + endpoints + views
+2. **database**: migration + factory + seeder
+3. **backend**: model, service, controller, routes
+4. **frontend**: Blade views, forms, DataGrid
+5. **api** (optional): API endpoints + Resources
+6. **testing**: feature tests for all endpoints
+
+#### New Page / View
+1. **frontend**: Blade view, layout, CSS, JS
+2. **backend**: controller + route (if new)
+3. **testing**: HTTP test for the route
+
+#### Bug Fix
+1. Read logs: use Boost `last-error` / `read-log-entries`
 2. **backend/frontend**: fix the bug
 3. **testing**: write regression test
-4. **review**: verify fix doesn't introduce new issues
+4. **review**: verify fix doesn't break anything
 
-### Refactoring
+#### Refactoring
 1. **review**: analyze current code, identify issues
 2. **backend/frontend**: apply refactoring
-3. **testing**: verify existing tests still pass
-4. **performance**: if optimization was the goal, profile before/after
+3. **testing**: verify existing tests pass
+4. **performance**: profile before/after if optimization goal
 
-### Database Changes
-1. **database**: design schema, create migration + factory
+#### Database Changes
+1. **database**: schema design, migration + factory
 2. **backend**: update models, relationships, services
-3. **testing**: write tests with new factories
+3. **testing**: tests with new factories
 
-### Security Audit
+#### Permissions / Roles
+1. **backend**: Spatie Permission seeders, policies, gates
+2. **database**: if new permission tables needed
+3. **testing**: authorization tests
+4. **security**: verify no privilege escalation
+
+#### Security Audit
 1. **security**: full audit of scope
-2. **review**: verify fixes applied correctly
+2. **backend/frontend**: implement fixes
 3. **testing**: write security-focused tests
+
+#### Email / Notification
+1. **backend**: Mailable/Notification class, event, listener
+2. **frontend**: email Blade template
+3. **testing**: Mail::fake() / Notification::fake() tests
 
 ### Always After Writing Code
 - Run `vendor/bin/pint --dirty` (auto-format)

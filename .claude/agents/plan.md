@@ -1,6 +1,6 @@
 ---
 name: plan
-description: "Planning and orchestration specialist. Use FIRST for any non-trivial task to analyze requirements, explore code, design the approach, and decide which agents to use in what order. Always plan before implementing."
+description: "Planning and orchestration specialist. Use FIRST for any task involving 3+ files, multiple agents, unclear scope, or architectural decisions. Analyzes requirements, explores code, designs the approach, and decides which agents to use. Always plan before implementing."
 model: sonnet
 tools: Read, Grep, Glob, Bash
 mcpServers:
@@ -84,6 +84,31 @@ When planning, ALWAYS specify the target module path, e.g.: `modules/Analytics/a
 | **performance** | Query profiling, caching, lazy loading, memory optimization |
 | **devops** | Deployment, Docker, Supervisor, CI/CD, monitoring |
 | **docs** | Technical documentation, API docs, READMEs |
+
+## Agent Disambiguation
+
+When the request is ambiguous, use these rules to pick the right agent:
+
+| Request mentions... | Use | NOT |
+|---|---|---|
+| "controller", "service", "model logic", "middleware", "policy" | **backend** | api (unless /api/ route) |
+| "view", "blade", "button", "form", "page layout", "CSS", "JS" | **frontend** | backend |
+| "API endpoint", "/api/", "Resource", "rate limit" | **api** | backend |
+| "migration", "table", "column", "index", "factory", "seeder" | **database** | backend |
+| "test", "coverage", "assertion", "E2E" | **testing** | - |
+| "slow", "N+1", "cache", "memory", "optimize" | **performance** | database (unless index-specific) |
+| "deploy", "Docker", "CI/CD", "Supervisor", "server" | **devops** | - |
+| "audit", "vulnerability", "XSS", "injection", "permissions" | **security** | review |
+| "review", "code quality", "anti-pattern", "PR review" | **review** | security |
+| "docs", "README", "documentation" | **docs** | - |
+| "CRUD", "new feature", "new module", mixed concerns | **plan** first | skip to single agent |
+
+### Overlap Resolution
+- **backend vs api**: If it's a web controller (returns View) → backend. If it returns JSON for /api/ routes → api.
+- **backend vs database**: If it's model relationships/scopes/logic → backend. If it's migrations/indexes/schema → database.
+- **performance vs database**: If profiling/caching → performance. If adding indexes → database.
+- **security vs review**: If vulnerability-focused → security. If code quality → review.
+- **Multiple agents needed**: Always use **plan** first to design the sequence.
 
 ## Plan Output Format
 ```

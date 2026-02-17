@@ -1,0 +1,34 @@
+{
+    "name": "inoqualab/widget",
+    "description": "Widget management module for Laravel applications",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "InoQua Lab",
+            "email": "dev@inoqualab.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Widget\\": "app/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Widget\\Providers\\WidgetServiceProvider"
+            ],
+            "aliases": {
+                "Widget": "Modules\\Widget\\Facades\\Widget",
+                "WidgetGroup": "Modules\\Widget\\Facades\\WidgetGroup"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

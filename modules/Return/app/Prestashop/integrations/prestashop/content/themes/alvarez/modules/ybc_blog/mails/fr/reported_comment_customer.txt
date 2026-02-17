@@ -1,4 +1,0 @@
-Bonjour {reporter}
-Vous avez signalé avec succès un commentaire sur {post_title} comme abusé.
-{comment}
-Merci pour votre contribution à notre site web

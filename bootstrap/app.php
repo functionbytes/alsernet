@@ -21,12 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('tickets:check-sla-breaches')->everyFiveMinutes();
         $schedule->command('tickets:sla-warnings')->everyFifteenMinutes();
 
-        // Document reminders - run daily at 09:00
-        $schedule->job(\App\Jobs\Documents\SendDocumentReminderJob::class)->daily()->at('09:00');
-
-        // Check SLA breaches for documents - run every hour
-        $schedule->job(\App\Jobs\Documents\CheckSlaBreachesJob::class)->hourly();
-
         // Cleanup commands
         $schedule->command('notifications:clean')->daily();
     })
@@ -50,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Modules\Core\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Modules\Core\Http\Middleware\EnsureModuleIsActive::class,
+            \Modules\Template\Http\Middleware\RegisterTemplateViewPath::class,
         ]);
 
         $middleware->group('api', [
@@ -77,11 +72,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
 
-            // Document permission middleware
-            'document.permission' => \Modules\Document\Http\Middleware\DocumentPermissionMiddleware::class,
-
             // Module status middleware
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
+
+            // Admin roles group - all internal staff roles
+            'settings' => \Spatie\Permission\Middleware\RoleMiddleware::class.':super-settings|administrative|manager|callcenter|license|accounting|warehouse|shop|documentation|return',
 
         ]);
     })->withProviders([

@@ -9628,13 +9628,13 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Spatie\\CookieConsent\\CookieConsentServiceProvider"
+                        "Spatie\\Cookie\\CookieServiceProvider"
                     ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "Spatie\\CookieConsent\\": "src"
+                    "Spatie\\Cookie\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",

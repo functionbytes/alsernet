@@ -1,3 +1,0 @@
-Bonjour {customer_name},
-Votre commentaire sur {post_title} a été approuvé.
-Voir l'article

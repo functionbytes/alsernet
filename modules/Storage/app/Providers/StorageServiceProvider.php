@@ -52,7 +52,7 @@ class StorageServiceProvider extends ServiceProvider
         $webPath = module_path($this->name, 'routes/web.php');
 
         // Storage manager routes
-        Route::middleware(['web', 'auth', 'role:super-admin'])
+        Route::middleware(['web', 'auth', 'settings'])
             ->prefix('settings')
             ->name('settings.')
             ->group(function () use ($webPath) {

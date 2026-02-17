@@ -1,0 +1,16 @@
+{
+    "name": "Attention",
+    "alias": "attention",
+    "description": "Sistema PQRSF (Peticiones, Quejas, Reclamos, Sugerencias, Felicitaciones) simplificado",
+    "keywords": [
+        "pqrsf",
+        "peticiones",
+        "atencion",
+        "ciudadanos"
+    ],
+    "priority": 100,
+    "providers": [
+        "Modules\\Attention\\Providers\\AttentionServiceProvider"
+    ],
+    "files": []
+}

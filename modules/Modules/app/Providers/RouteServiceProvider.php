@@ -31,12 +31,12 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Define the manager backups routes (web + API).
      *
-     * These routes are protected with manager/super-admin role requirement.
+     * These routes are protected with manager/super-settings role requirement.
      */
     protected function mapManagerSettingsRoutes(): void
     {
-        Route::middleware(['web', 'auth', 'role:super-admin'])
-            ->prefix('settings/modules')
+        Route::middleware(['web', 'auth', 'settings'])
+            ->prefix('setting/modules')
             ->name('settings.modules.')
             ->group(function (): void {
                 // Load view routes (GET)

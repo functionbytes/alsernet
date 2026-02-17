@@ -1,7 +1,0 @@
-{shop_url}
-
-Olá,
-
-Obrigado por subscrever a nossa newsletter.
-
-[{shop_name}]({shop_url})

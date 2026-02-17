@@ -64,14 +64,6 @@ trait HasBasicRelations
     }
 
     /**
-     * Get admin relationship
-     */
-    public function admin(): BelongsTo
-    {
-        return $this->belongsTo('App\Models\Admin');
-    }
-
-    /**
      * Get authenticated user statically
      */
     public static function auth()

@@ -177,60 +177,6 @@ class HealthController extends Controller
     }
 
     /**
-     * Document module specific health checks
-     * Validates document system integrity
-     */
-    public function documentsHealth()
-    {
-        try {
-            $checks = [
-                'database_connection' => [
-                    'status' => 'ok',
-                    'message' => 'Database connected',
-                ],
-                'documents_table' => [
-                    'status' => 'ok',
-                    'message' => 'Documents table exists',
-                ],
-                'storage_accessible' => [
-                    'status' => 'ok',
-                    'message' => 'Storage directory accessible',
-                ],
-            ];
-
-            // Check if documents table exists
-            try {
-                \Illuminate\Support\Facades\DB::table('documents')->limit(1)->get();
-            } catch (\Exception $e) {
-                $checks['documents_table']['status'] = 'failed';
-                $checks['documents_table']['message'] = 'Documents table not found';
-            }
-
-            // Check storage
-            if (! is_writable(storage_path())) {
-                $checks['storage_accessible']['status'] = 'failed';
-                $checks['storage_accessible']['message'] = 'Storage directory not writable';
-            }
-
-            $overallStatus = collect($checks)->every(fn ($check) => $check['status'] === 'ok') ? 'ok' : 'failed';
-
-            return response()->json([
-                'status' => $overallStatus,
-                'module' => 'documents',
-                'timestamp' => now()->toIso8601String(),
-                'checks' => $checks,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'failed',
-                'module' => 'documents',
-                'message' => $e->getMessage(),
-                'timestamp' => now()->toIso8601String(),
-            ], 503);
-        }
-    }
-
-    /**
      * Detailed health check with system information
      * Only in debug mode for security
      */

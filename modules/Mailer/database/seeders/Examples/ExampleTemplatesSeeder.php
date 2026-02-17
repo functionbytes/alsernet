@@ -21,7 +21,7 @@ class ExampleTemplatesSeeder extends Seeder
     public function run(): void
     {
         // Get all available languages
-        $langs = \App\Models\Lang::where('available', true)->get();
+        $langs = \Modules\Core\Models\Lang::where('available', true)->get();
 
         if ($langs->isEmpty()) {
             $this->command->warn('⚠ No languages found - skipping template translations');

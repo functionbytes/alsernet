@@ -1,32 +1,33 @@
 {
-    "name": "modules/seo",
-    "description": "SEO Module - Search engine optimization, meta tags, OpenGraph, JSON-LD structured data",
-    "keywords": ["seo", "meta", "opengraph", "json-ld", "search-engine"],
+    "name": "inoqua/Seo",
+    "description": "SEO Helper module for Laravel",
+    "type": "laravel-module",
+    "license": "MIT",
     "authors": [
         {
-            "name": "Alsernet Development",
-            "email": "dev@alsernet.com"
+            "name": "Inoqua Lab",
+            "email": "info@inoqualab.com"
         }
     ],
     "require": {
-        "artesaos/seotools": "^1.3"
-    },
-    "extra": {
-        "laravel": {
-            "providers": [],
-            "aliases": {}
-        }
+        "php": "^8.2",
+        "illuminate/support": "^11.0"
     },
     "autoload": {
         "psr-4": {
             "Modules\\Seo\\": "app/",
             "Modules\\Seo\\Database\\Factories\\": "database/factories/",
             "Modules\\Seo\\Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
-    "autoload-dev": {
-        "psr-4": {
-            "Modules\\Seo\\Tests\\": "tests/"
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Seo\\Providers\\SeoServiceProvider"
+            ]
         }
     }
 }

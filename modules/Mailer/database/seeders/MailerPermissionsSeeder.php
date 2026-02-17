@@ -77,11 +77,11 @@ class MailerPermissionsSeeder extends Seeder
     private function assignPermissionsToRoles(): void
     {
         // Super Admin - Full access
-        $superAdminRole = Role::findOrCreate('super-admin', 'web');
+        $superAdminRole = Role::findOrCreate('super-settings', 'web');
         $superAdminRole->givePermissionTo(Permission::where('name', 'like', 'mailer.%')->get());
 
         // Admin - Full access
-        $adminRole = Role::findOrCreate('admin', 'web');
+        $adminRole = Role::findOrCreate('settings', 'web');
         $adminRole->givePermissionTo(Permission::where('name', 'like', 'mailer.%')->get());
 
         // Manager - Can view and create, but not delete

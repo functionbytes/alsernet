@@ -78,7 +78,7 @@ class MailerVariableService
     /**
      * Get variable by key
      */
-    public static function getVariable(string $key): ?MailVariable
+    public static function getVariable(string $key): ?MailerVariable
     {
         return MailerVariable::where('key', $key)
             ->where('is_enabled', true)

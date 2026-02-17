@@ -1,6 +1,6 @@
 ---
 name: devops
-description: "DevOps specialist for deployment, CI/CD, Docker, Supervisor, monitoring, and infrastructure configuration. Use when setting up environments or deployment pipelines."
+description: "DevOps specialist for deployment, CI/CD, Docker, Supervisor, monitoring, and infrastructure. Use proactively when setting up environments, deployment pipelines, or server configuration."
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:
