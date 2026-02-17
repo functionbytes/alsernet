@@ -85,6 +85,15 @@ class CreatePageRequest extends FormRequest
                 'string',
                 'max:500',
             ],
+            'header_style' => [
+                'nullable',
+                'string',
+                Rule::in(['header-style-1', 'header-style-2', 'header-style-3', 'header-style-4']),
+            ],
+            'seo_noindex' => [
+                'nullable',
+                'boolean',
+            ],
             'featured_image' => [
                 'nullable',
                 'image',
@@ -112,6 +121,8 @@ class CreatePageRequest extends FormRequest
             'seo_title' => 'título SEO',
             'seo_description' => 'descripción SEO',
             'seo_keywords' => 'palabras clave SEO',
+            'header_style' => 'estilo de encabezado',
+            'seo_noindex' => 'noindex',
             'featured_image' => 'imagen destacada',
         ];
     }

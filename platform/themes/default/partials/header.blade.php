@@ -21,8 +21,17 @@
                         <a class="nav-link" href="{{ url('/contact') }}">{{ theme_trans('contact') }}</a>
                     </li>
                     @auth
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ auth()->user()->name }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" href="/logout">{{ theme_trans('logout') }}</a></li>
+                            </ul>
+                        </li>
+                    @else
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('logout') }}">{{ theme_trans('logout') }}</a>
+                            <a class="nav-link" href="/login">{{ theme_trans('login') }}</a>
                         </li>
                     @endauth
                 </ul>

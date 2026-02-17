@@ -41,6 +41,8 @@ class Page extends Model implements HasMedia
         'seo_title',
         'seo_description',
         'seo_keywords',
+        'seo_noindex',
+        'header_style',
         'published_at',
         'publish_at',
         'unpublish_at',
@@ -53,6 +55,7 @@ class Page extends Model implements HasMedia
      */
     protected $casts = [
         'status' => 'string',
+        'seo_noindex' => 'boolean',
         'published_at' => 'datetime',
         'publish_at' => 'datetime',
         'unpublish_at' => 'datetime',
