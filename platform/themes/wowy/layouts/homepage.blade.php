@@ -1,7 +1,7 @@
-{!! Theme::partial('header') !!}
+@include('template::partials.header')
 
 <main class="main" id="main-section">
-    {!! Theme::content() !!}
+    @yield('content')
 </main>
 
-{!! Theme::partial('footer') !!}
+@include('template::partials.footer')

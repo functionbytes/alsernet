@@ -1,11 +1,7 @@
-{!! Theme::partial('header') !!}
+@include('template::partials.header')
 
 <main class="main" id="main-section">
-    @if (Theme::get('hasBreadcrumb', true))
-        {!! Theme::partial('breadcrumb') !!}
-    @endif
-
-    {!! Theme::content() !!}
+    @yield('content')
 </main>
 
-{!! Theme::partial('footer') !!}
+@include('template::partials.footer')
