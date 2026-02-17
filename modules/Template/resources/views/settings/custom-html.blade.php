@@ -22,7 +22,7 @@
                         {{-- HTML del encabezado --}}
                         <div class="mb-4">
                             <label for="header_html" class="form-label fw-semibold">
-                                <i class="fas fa-code me-2 text-primary"></i>HTML del encabezado
+                                HTML del encabezado
                             </label>
                             <p class="small text-muted mb-2">
                                 Se inyecta dentro de <code>&lt;head&gt;</code>. Ideal para estilos CSS, meta tags y scripts de carga temprana.
@@ -38,7 +38,7 @@
                         {{-- HTML del pie de página --}}
                         <div class="mb-4">
                             <label for="footer_html" class="form-label fw-semibold">
-                                <i class="fas fa-code me-2 text-primary"></i>HTML del pie de página
+                                HTML del pie de página
                             </label>
                             <p class="small text-muted mb-2">
                                 Se inyecta antes de <code>&lt;/body&gt;</code>. Ideal para scripts de analytics, widgets y código de carga tardía.

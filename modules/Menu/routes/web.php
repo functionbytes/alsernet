@@ -10,6 +10,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('menus/{menu}/structure', [MenuController::class, 'updateStructure'])
         ->name('menu.structure.update');
 
+    // Resolve node URL and render HTML partial
+    Route::get('menus/{menu}/node', [MenuController::class, 'getNode'])
+        ->name('menu.get-node');
+
     // Menu items
     Route::post('menus/{menu}/items', [MenuController::class, 'storeItem'])
         ->name('menu.items.store');

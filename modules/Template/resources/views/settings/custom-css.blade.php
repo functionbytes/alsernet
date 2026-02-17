@@ -21,7 +21,7 @@
 
                         <div class="mb-4">
                             <label for="css-editor" class="form-label fw-semibold">
-                                <i class="fas fa-code me-2 text-primary"></i>CSS personalizado
+                                Estilo personalizado
                             </label>
                             <p class="small text-muted mb-2">
                                 Escribe reglas CSS que se aplicarán globalmente. Úsalo para personalizar colores, tipografía, espacios y más.
@@ -37,7 +37,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-save me-2"></i>Guardar CSS
+                            Guardar
                         </button>
                     </form>
                 </div>

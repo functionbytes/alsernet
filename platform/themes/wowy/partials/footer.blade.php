@@ -70,6 +70,12 @@
         {!! $customFooterHtml !!}
     @endif
 
+    <!-- Custom Footer JS from settings -->
+    @php $customFooterJs = setting('theme.custom_footer_js'); @endphp
+    @if($customFooterJs)
+        <script>{!! $customFooterJs !!}</script>
+    @endif
+
     <div id="scrollUp">
         <i class="fas fa-arrow-up"></i>
     </div>

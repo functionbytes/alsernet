@@ -3,36 +3,47 @@
 namespace Modules\Role\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
+/**
+ * Feature tests for RoleController.
+ *
+ * Uses DatabaseTransactions to wrap each test in a transaction that rolls back,
+ * avoiding the need to re-run migrations on the live database.
+ */
 class RoleControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected User $admin;
 
-    protected Role $managerRole;
+    protected Role $settingsRole;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create a role the 'settings' middleware accepts
-        $this->managerRole = Role::create(['name' => 'manager', 'guard_name' => 'web']);
+        // Reuse the existing 'manager' role (already in DB) or create it
+        $this->settingsRole = Role::firstOrCreate(
+            ['name' => 'manager', 'guard_name' => 'web']
+        );
 
-        // Create an admin user with the manager role
+        // Create a test pages user for this test run
         $this->admin = User::create([
             'firstname' => 'Test',
-            'lastname'  => 'Admin',
-            'email'     => 'admin@test.local',
-            'password'  => Hash::make('password'),
+            'lastname' => 'Admin',
+            'email' => 'pages-test-'.uniqid().'@test.local',
+            'password' => Hash::make('password'),
         ]);
 
-        $this->admin->assignRole($this->managerRole);
+        $this->admin->assignRole($this->settingsRole);
+
+        // Clear Spatie permission cache to prevent stale data between tests
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     // -----------------------------------------------------------------------
@@ -41,8 +52,6 @@ class RoleControllerTest extends TestCase
 
     public function test_admin_can_view_roles_index(): void
     {
-        Role::create(['name' => 'editor', 'guard_name' => 'web']);
-
         $response = $this->actingAs($this->admin)
             ->get(route('settings.roles.index'));
 
@@ -53,16 +62,17 @@ class RoleControllerTest extends TestCase
 
     public function test_index_filters_by_search_keyword(): void
     {
-        Role::create(['name' => 'editor-unique', 'guard_name' => 'web']);
-        Role::create(['name' => 'viewer-unique', 'guard_name' => 'web']);
+        $unique = uniqid('test-');
+        Role::create(['name' => 'editor-'.$unique, 'guard_name' => 'web']);
+        Role::create(['name' => 'viewer-'.$unique, 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('settings.roles.index', ['search' => 'editor']));
+            ->get(route('settings.roles.index', ['search' => 'editor-'.$unique]));
 
         $response->assertOk();
         $roles = $response->viewData('roles');
-        $this->assertTrue($roles->contains('name', 'editor-unique'));
-        $this->assertFalse($roles->contains('name', 'viewer-unique'));
+        $this->assertTrue($roles->contains('name', 'editor-'.$unique));
+        $this->assertFalse($roles->contains('name', 'viewer-'.$unique));
     }
 
     // -----------------------------------------------------------------------
@@ -84,31 +94,35 @@ class RoleControllerTest extends TestCase
 
     public function test_admin_can_create_a_role(): void
     {
+        $roleName = 'test-new-'.uniqid();
+
         $response = $this->actingAs($this->admin)
             ->post(route('settings.roles.store'), [
-                'name'        => 'new-role',
-                'guard_name'  => 'web',
+                'name' => $roleName,
+                'guard_name' => 'web',
                 'description' => 'A test role',
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('roles', ['name' => 'new-role', 'guard_name' => 'web']);
+        $this->assertDatabaseHas('roles', ['name' => $roleName, 'guard_name' => 'web']);
     }
 
     public function test_store_assigns_permissions_to_new_role(): void
     {
-        $permission = Permission::create(['name' => 'roles.view', 'guard_name' => 'web']);
+        $permName = 'test.perm.'.uniqid();
+        $permission = Permission::create(['name' => $permName, 'guard_name' => 'web']);
 
+        $roleName = 'test-role-'.uniqid();
         $this->actingAs($this->admin)
             ->post(route('settings.roles.store'), [
-                'name'        => 'role-with-perm',
-                'guard_name'  => 'web',
+                'name' => $roleName,
+                'guard_name' => 'web',
                 'permissions' => [$permission->id],
             ]);
 
-        $role = Role::where('name', 'role-with-perm')->first();
+        $role = Role::where('name', $roleName)->first();
         $this->assertNotNull($role);
-        $this->assertTrue($role->hasPermissionTo('roles.view'));
+        $this->assertTrue($role->hasPermissionTo($permName));
     }
 
     public function test_store_fails_validation_when_name_is_missing(): void
@@ -125,7 +139,7 @@ class RoleControllerTest extends TestCase
     {
         $response = $this->actingAs($this->admin)
             ->post(route('settings.roles.store'), [
-                'name'       => 'ab',
+                'name' => 'ab',
                 'guard_name' => 'web',
             ]);
 
@@ -134,11 +148,12 @@ class RoleControllerTest extends TestCase
 
     public function test_store_fails_validation_when_name_is_duplicate(): void
     {
-        Role::create(['name' => 'existing-role', 'guard_name' => 'web']);
+        $existingName = 'test-existing-'.uniqid();
+        Role::create(['name' => $existingName, 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->post(route('settings.roles.store'), [
-                'name'       => 'existing-role',
+                'name' => $existingName,
                 'guard_name' => 'web',
             ]);
 
@@ -149,7 +164,7 @@ class RoleControllerTest extends TestCase
     {
         $response = $this->actingAs($this->admin)
             ->post(route('settings.roles.store'), [
-                'name'       => 'valid-role',
+                'name' => 'test-valid-'.uniqid(),
                 'guard_name' => 'invalid-guard',
             ]);
 
@@ -162,7 +177,7 @@ class RoleControllerTest extends TestCase
 
     public function test_admin_can_view_edit_form(): void
     {
-        $role = Role::create(['name' => 'editable-role', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-edit-'.uniqid(), 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->get(route('settings.roles.edit', $role));
@@ -178,51 +193,53 @@ class RoleControllerTest extends TestCase
 
     public function test_admin_can_update_a_role(): void
     {
-        $role = Role::create(['name' => 'old-name', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-old-'.uniqid(), 'guard_name' => 'web']);
+        $newName = 'test-updated-'.uniqid();
 
         $response = $this->actingAs($this->admin)
             ->put(route('settings.roles.update', $role), [
-                'name'       => 'updated-name',
+                'name' => $newName,
                 'guard_name' => 'web',
             ]);
 
         $response->assertRedirect(route('settings.roles.edit', $role->id));
-        $this->assertDatabaseHas('roles', ['id' => $role->id, 'name' => 'updated-name']);
+        $this->assertDatabaseHas('roles', ['id' => $role->id, 'name' => $newName]);
     }
 
     public function test_update_syncs_permissions(): void
     {
-        $role = Role::create(['name' => 'role-to-update', 'guard_name' => 'web']);
-        $permission = Permission::create(['name' => 'roles.edit', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-perm-update-'.uniqid(), 'guard_name' => 'web']);
+        $permName = 'test.roles.edit.'.uniqid();
+        $permission = Permission::create(['name' => $permName, 'guard_name' => 'web']);
 
         $this->actingAs($this->admin)
             ->put(route('settings.roles.update', $role), [
-                'name'        => 'role-to-update',
-                'guard_name'  => 'web',
+                'name' => $role->name,
+                'guard_name' => 'web',
                 'permissions' => [$permission->id],
             ]);
 
-        $this->assertTrue($role->fresh()->hasPermissionTo('roles.edit'));
+        $this->assertTrue($role->fresh()->hasPermissionTo($permName));
     }
 
     public function test_cannot_update_super_settings_role(): void
     {
-        $systemRole = Role::create(['name' => 'super-settings', 'guard_name' => 'web']);
+        $systemRole = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->put(route('settings.roles.update', $systemRole), [
-                'name'       => 'super-settings',
+                'name' => 'super-settings',
                 'guard_name' => 'web',
             ]);
 
-        // The controller returns error() which is a JSON 400 response
+        // Controller returns error() — a 400 JSON response
         $response->assertStatus(400)
             ->assertJson(['success' => false, 'message' => 'Cannot modify system roles']);
     }
 
     public function test_update_fails_validation_when_name_is_missing(): void
     {
-        $role = Role::create(['name' => 'some-role', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-validate-'.uniqid(), 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->put(route('settings.roles.update', $role), [
@@ -238,18 +255,19 @@ class RoleControllerTest extends TestCase
 
     public function test_admin_can_delete_a_role(): void
     {
-        $role = Role::create(['name' => 'deletable-role', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-delete-'.uniqid(), 'guard_name' => 'web']);
+        $roleId = $role->id;
 
         $response = $this->actingAs($this->admin)
             ->delete(route('settings.roles.destroy', $role));
 
         $response->assertRedirect(route('settings.roles.index'));
-        $this->assertDatabaseMissing('roles', ['id' => $role->id]);
+        $this->assertDatabaseMissing('roles', ['id' => $roleId]);
     }
 
     public function test_cannot_delete_super_settings_role(): void
     {
-        $systemRole = Role::create(['name' => 'super-settings', 'guard_name' => 'web']);
+        $systemRole = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->delete(route('settings.roles.destroy', $systemRole));
@@ -261,7 +279,7 @@ class RoleControllerTest extends TestCase
 
     public function test_cannot_delete_customer_role(): void
     {
-        $systemRole = Role::create(['name' => 'customer', 'guard_name' => 'web']);
+        $systemRole = Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
 
         $response = $this->actingAs($this->admin)
             ->delete(route('settings.roles.destroy', $systemRole));
@@ -273,13 +291,13 @@ class RoleControllerTest extends TestCase
 
     public function test_cannot_delete_role_with_assigned_users(): void
     {
-        $role = Role::create(['name' => 'role-with-users', 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-with-users-'.uniqid(), 'guard_name' => 'web']);
 
         $user = User::create([
             'firstname' => 'Assigned',
-            'lastname'  => 'User',
-            'email'     => 'assigned@test.local',
-            'password'  => Hash::make('password'),
+            'lastname' => 'User',
+            'email' => 'assigned-'.uniqid().'@test.local',
+            'password' => Hash::make('password'),
         ]);
         $user->assignRole($role);
 
@@ -311,24 +329,26 @@ class RoleControllerTest extends TestCase
 
     public function test_unauthenticated_user_cannot_store_role(): void
     {
+        $roleName = 'test-unauth-'.uniqid();
+
         $response = $this->post(route('settings.roles.store'), [
-            'name'       => 'unauthorized-role',
+            'name' => $roleName,
             'guard_name' => 'web',
         ]);
 
         $response->assertRedirect(route('auth.login'));
-        $this->assertDatabaseMissing('roles', ['name' => 'unauthorized-role']);
+        $this->assertDatabaseMissing('roles', ['name' => $roleName]);
     }
 
     public function test_user_without_settings_role_cannot_access_roles(): void
     {
-        $plainRole = Role::create(['name' => 'plain-user', 'guard_name' => 'web']);
+        $plainRole = Role::create(['name' => 'test-plain-'.uniqid(), 'guard_name' => 'web']);
 
         $plainUser = User::create([
             'firstname' => 'Plain',
-            'lastname'  => 'User',
-            'email'     => 'plain@test.local',
-            'password'  => Hash::make('password'),
+            'lastname' => 'User',
+            'email' => 'plain-'.uniqid().'@test.local',
+            'password' => Hash::make('password'),
         ]);
         $plainUser->assignRole($plainRole);
 

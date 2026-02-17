@@ -201,6 +201,7 @@ class TemplateServiceProvider extends ServiceProvider
             'title' => 'Plantillas',
             'items' => [
                 ['label' => 'Plantillas', 'route' => 'settings.templates.index'],
+                ['label' => 'Bloques UI', 'route' => 'settings.ui-blocks.index'],
                 ['label' => 'CSS personalizado', 'route' => 'settings.templates.custom-css.edit'],
                 ['label' => 'JavaScript personalizado', 'route' => 'settings.theme.custom-js'],
                 ['label' => 'HTML personalizado', 'route' => 'settings.theme.custom-html'],

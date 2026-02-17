@@ -266,7 +266,8 @@ class NavService
             try {
                 return $user->hasPermissionTo($permissionName);
             } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist $e) {
-                return false;
+                // Permission not seeded yet — show by default (unprovisioned state)
+                return true;
             }
         });
     }
@@ -301,7 +302,8 @@ class NavService
                     $sidebars[$sidebarId] = $sidebar;
                 }
             } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist $e) {
-                // Permission not seeded yet — skip this sidebar
+                // Permission not seeded yet — show by default (unprovisioned state)
+                $sidebars[$sidebarId] = $sidebar;
             }
         }
 

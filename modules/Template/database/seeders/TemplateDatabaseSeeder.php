@@ -72,6 +72,9 @@ class TemplateDatabaseSeeder extends Seeder
 
         $this->command->info('Template seeds created successfully.');
 
+        // Seed UI Blocks
+        $this->call(UiBlockSeeder::class);
+
         // Create template directories and JSON files
         $this->createTemplateDirectories($user);
     }

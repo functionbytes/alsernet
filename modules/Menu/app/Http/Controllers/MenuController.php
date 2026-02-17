@@ -3,8 +3,10 @@
 namespace Modules\Menu\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\Menu\Http\Requests\UpdateMenuRequest;
 use Modules\Menu\Models\Menu;
 use Modules\Menu\Models\MenuItem;
 use Modules\Menu\Services\MenuService;
@@ -76,21 +78,63 @@ class MenuController extends Controller
     }
 
     /**
-     * Update the specified menu.
+     * Update the specified menu, its config, and its full item tree.
+     *
+     * Expects:
+     *   - Standard menu fields (name, slug, location, status)
+     *   - `menu_nodes`    JSON string representing the full nestable tree
+     *   - `deleted_nodes` Space-separated string of item IDs to delete
      */
-    public function update(Request $request, Menu $menu)
+    public function update(UpdateMenuRequest $request, Menu $menu): \Illuminate\Http\RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:menus,slug,'.$menu->id,
-            'location' => 'nullable|string',
-            'status' => 'boolean',
-        ]);
+        // Step 1: Update menu config
+        $this->menuService->updateMenu($menu, $request->validated());
 
-        $this->menuService->updateMenu($menu, $validated);
+        // Step 2: Delete removed items
+        $deletedIds = array_filter(explode(' ', $request->input('deleted_nodes', '')));
+
+        if ($deletedIds) {
+            $menu->allItems()->whereIn('id', $deletedIds)->delete();
+        }
+
+        // Step 3: Persist the full tree recursively
+        $nodesJson = $request->input('menu_nodes');
+
+        if ($nodesJson) {
+            $nodes = json_decode($nodesJson, true) ?? [];
+            $this->menuService->recursiveSaveMenu($nodes, $menu->id);
+        }
+
+        // Step 4: Clear cache
+        $this->menuService->clearMenuCache($menu->location);
 
         return redirect()->route('menu.edit', $menu)
-            ->with('success', 'Menu updated successfully.');
+            ->with('success', 'Menu actualizado correctamente.');
+    }
+
+    /**
+     * Resolve a new node's URL and return its rendered HTML partial.
+     *
+     * GET /menus/{menu}/node?data[type]=page&data[reference_id]=5&data[title]=Home
+     */
+    public function getNode(Request $request, Menu $menu): JsonResponse
+    {
+        $request->validate(['data' => 'required|array']);
+
+        $data = $request->input('data');
+
+        $menuItem = new MenuItem;
+        $menuItem->fill($data);
+        $this->menuService->resolveNodeUrl($data, $menuItem);
+        $menuItem->menu_id = $menu->id;
+        $menuItem->id = 'new-'.uniqid();
+
+        $html = view('menu::partials.node', [
+            'item' => $menuItem,
+            'menu' => $menu,
+        ])->render();
+
+        return response()->json(['html' => $html]);
     }
 
     /**

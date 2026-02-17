@@ -26,6 +26,8 @@ class UpdateMenuRequest extends FormRequest
             'slug' => 'nullable|string|max:255|unique:menus,slug,'.$menuId,
             'location' => 'nullable|string',
             'status' => 'boolean',
+            'menu_nodes' => 'nullable|json',
+            'deleted_nodes' => 'nullable|string',
         ];
     }
 

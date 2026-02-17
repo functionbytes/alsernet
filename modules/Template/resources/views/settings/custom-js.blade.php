@@ -22,7 +22,7 @@
                         {{-- JS del encabezado --}}
                         <div class="mb-4">
                             <label for="header_js" class="form-label fw-semibold">
-                                <i class="fas fa-code me-2 text-primary"></i>JavaScript del encabezado
+                                JavaScript del encabezado
                             </label>
                             <p class="small text-muted mb-2">
                                 Se inyecta dentro de <code>&lt;head&gt;</code>. Ideal para scripts de carga temprana, variables globales y configuraciones.
@@ -38,7 +38,7 @@
                         {{-- JS del pie de página --}}
                         <div class="mb-4">
                             <label for="footer_js" class="form-label fw-semibold">
-                                <i class="fas fa-code me-2 text-primary"></i>JavaScript del pie de página
+                                JavaScript del pie de página
                             </label>
                             <p class="small text-muted mb-2">
                                 Se inyecta antes de <code>&lt;/body&gt;</code>. Ideal para analytics, widgets y scripts de carga tardía.

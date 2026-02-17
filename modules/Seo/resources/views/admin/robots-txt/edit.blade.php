@@ -12,7 +12,7 @@
                     <p class="small mb-0 text-muted">{{ __('seo::robots-txt.editor_description') }}</p>
                 </div>
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('admin.theme.robots-txt.update') }}" id="robots-txt-form">
+                    <form method="POST" action="{{ route('setting.seo.robots.update') }}" id="robots-txt-form">
                         @csrf
                         <div class="mb-4">
                             <label for="robots-editor" class="form-label fw-semibold">{{ __('seo::robots-txt.content') }}</label>

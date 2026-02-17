@@ -89,32 +89,86 @@ class MenuService
 
     /**
      * Update menu structure from drag & drop.
+     * Delegates to recursiveSaveMenu for full tree persistence.
      */
     public function updateMenuStructure(Menu $menu, array $items): void
     {
-        $this->updateMenuItems($items, $menu->id);
+        $this->recursiveSaveMenu($items, $menu->id);
         $this->clearMenuCache($menu->location);
     }
 
     /**
-     * Recursively update menu items.
+     * Recursively persist the full nestable menu tree.
+     *
+     * Each node may carry an `id` (existing DB id or "new-xxx" string for new items).
+     * Handles creation and update in a single traversal.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
      */
-    protected function updateMenuItems(array $items, int $menuId, ?int $parentId = null, int $order = 0): void
+    public function recursiveSaveMenu(array $nodes, int $menuId, int $parentId = 0): void
     {
-        foreach ($items as $index => $item) {
-            $menuItem = MenuItem::find($item['id']);
+        foreach ($nodes as $index => $node) {
+            $rawId = $node['id'] ?? null;
 
-            if ($menuItem && $menuItem->menu_id == $menuId) {
-                $menuItem->update([
-                    'parent_id' => $parentId,
-                    'order' => $order + $index,
-                ]);
+            // IDs like "new-123" are new items; cast only numeric strings to int
+            $isNew = ! $rawId || ! is_numeric($rawId);
+            $menuItem = $isNew ? new MenuItem : MenuItem::findOrNew((int) $rawId);
 
-                if (isset($item['children']) && is_array($item['children'])) {
-                    $this->updateMenuItems($item['children'], $menuId, $menuItem->id, 0);
-                }
+            $menuItem->menu_id = $menuId;
+            $menuItem->parent_id = $parentId ?: null;
+            $menuItem->order = $index;
+            $menuItem->has_child = count($node['children'] ?? []) > 0;
+
+            $this->resolveNodeUrl($node, $menuItem);
+
+            $menuItem->save();
+
+            if (! empty($node['children'])) {
+                $this->recursiveSaveMenu($node['children'], $menuId, $menuItem->id);
             }
         }
+    }
+
+    /**
+     * Resolve and assign the URL for a menu item node.
+     *
+     * - type === 'custom' or empty reference_type: stores literal url, clears reference fields.
+     * - reference_type present: resolves the referenced model and extracts its URL.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public function resolveNodeUrl(array $item, MenuItem $node): MenuItem
+    {
+        $node->title = $item['title'] ?? $node->title;
+        $node->target = $item['target'] ?? $node->target ?? '_self';
+        $node->icon = $item['icon'] ?? $node->icon;
+        $node->css_class = $item['css_class'] ?? $node->css_class;
+        $node->type = $item['type'] ?? $node->type ?? 'custom';
+
+        $referenceType = $item['reference_type'] ?? null;
+
+        if (! $referenceType || ($item['type'] ?? '') === 'custom') {
+            $node->url = $item['url'] ?? $node->url;
+            $node->reference_id = null;
+            $node->reference_type = null;
+
+            return $node;
+        }
+
+        $referenceId = $item['reference_id'] ?? null;
+
+        if ($referenceId && class_exists($referenceType)) {
+            $referenced = $referenceType::find($referenceId);
+
+            if ($referenced) {
+                $node->url = $referenced->full_url ?? $referenced->slug ?? $node->url;
+            }
+        }
+
+        $node->reference_id = $referenceId;
+        $node->reference_type = $referenceType;
+
+        return $node;
     }
 
     /**

@@ -18,7 +18,7 @@ class PageController extends Controller
     ) {}
 
     /**
-     * Display a listing of pages.
+     * Display a listing of pages.pages.
      *
      * @return \Illuminate\View\View
      */
@@ -39,7 +39,7 @@ class PageController extends Controller
 
         $pages = $this->pageService->getPages($filters);
 
-        return view('page::admin.index', compact('pages', 'filters'));
+        return view('page::pages.pages.index', compact('pages', 'filters'));
     }
 
     /**
@@ -55,7 +55,7 @@ class PageController extends Controller
         $templates = config('page.templates', ['default' => 'Default']);
         $statuses = Page::getStatuses();
 
-        return view('page::admin.create', compact('page', 'templates', 'statuses'));
+        return view('page::pages.pages.create', compact('page', 'templates', 'statuses'));
     }
 
     /**
@@ -70,7 +70,6 @@ class PageController extends Controller
         try {
             $data = $request->validated();
 
-            // Handle file upload
             if ($request->hasFile('featured_image')) {
                 $data['featured_image'] = $request->file('featured_image');
             }
@@ -78,7 +77,7 @@ class PageController extends Controller
             $page = $this->pageService->createPage($data);
 
             return redirect()
-                ->route('pages.edit', $page->id)
+                ->route('pages.pages.edit', $page->id)
                 ->with('success', 'Página creada exitosamente.');
         } catch (Exception $e) {
             return back()
@@ -96,7 +95,7 @@ class PageController extends Controller
     {
         $this->authorize('view', $page);
 
-        return redirect()->route('pages.edit', $page->id);
+        return redirect()->route('pages.pages.edit', $page->id);
     }
 
     /**
@@ -111,7 +110,7 @@ class PageController extends Controller
         $templates = config('page.templates', ['default' => 'Default']);
         $statuses = Page::getStatuses();
 
-        return view('page::admin.edit', compact('page', 'templates', 'statuses'));
+        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses'));
     }
 
     /**
@@ -126,7 +125,6 @@ class PageController extends Controller
         try {
             $data = $request->validated();
 
-            // Handle file upload
             if ($request->hasFile('featured_image')) {
                 $data['featured_image'] = $request->file('featured_image');
             }
@@ -134,7 +132,7 @@ class PageController extends Controller
             $page = $this->pageService->updatePage($page, $data);
 
             return redirect()
-                ->route('pages.edit', $page->id)
+                ->route('pages.pages.edit', $page->id)
                 ->with('success', 'Página actualizada exitosamente.');
         } catch (Exception $e) {
             return back()
@@ -156,7 +154,7 @@ class PageController extends Controller
             $this->pageService->deletePage($page);
 
             return redirect()
-                ->route('pages.index')
+                ->route('pages.pages.index')
                 ->with('success', 'Página eliminada exitosamente.');
         } catch (Exception $e) {
             return back()
@@ -213,7 +211,7 @@ class PageController extends Controller
             $newPage = $this->pageService->duplicatePage($page);
 
             return redirect()
-                ->route('pages.edit', $newPage->id)
+                ->route('pages.pages.edit', $newPage->id)
                 ->with('success', 'Página duplicada exitosamente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al duplicar la página: '.$e->getMessage());
@@ -236,7 +234,7 @@ class PageController extends Controller
             $this->pageService->restorePage($page);
 
             return redirect()
-                ->route('pages.index')
+                ->route('pages.pages.index')
                 ->with('success', 'Página restaurada exitosamente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al restaurar la página: '.$e->getMessage());
@@ -259,7 +257,7 @@ class PageController extends Controller
             $this->pageService->forceDeletePage($page);
 
             return redirect()
-                ->route('pages.index')
+                ->route('pages.pages.index')
                 ->with('success', 'Página eliminada permanentemente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al eliminar la página: '.$e->getMessage());

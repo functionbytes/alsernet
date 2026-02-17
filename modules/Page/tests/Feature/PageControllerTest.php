@@ -47,7 +47,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.index'))
             ->assertOk()
-            ->assertViewIs('page::admin.index')
+            ->assertViewIs('page::pages.index')
             ->assertViewHas('pages');
     }
 
@@ -69,7 +69,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.create'))
             ->assertOk()
-            ->assertViewIs('page::admin.create')
+            ->assertViewIs('page::pages.create')
             ->assertViewHas(['page', 'templates', 'statuses']);
     }
 
@@ -196,7 +196,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.edit', $page))
             ->assertOk()
-            ->assertViewIs('page::admin.edit')
+            ->assertViewIs('page::pages.edit')
             ->assertViewHas(['page', 'templates', 'statuses']);
     }
 

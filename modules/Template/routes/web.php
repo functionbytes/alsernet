@@ -5,6 +5,7 @@ use Modules\Template\Http\Controllers\TemplateController;
 use Modules\Template\Http\Controllers\TemplateWebController;
 use Modules\Template\Http\Controllers\ThemeCustomHtmlController;
 use Modules\Template\Http\Controllers\ThemeCustomJsController;
+use Modules\Template\Http\Controllers\UiBlockController;
 
 /*
 |--------------------------------------------------------------------------
@@ -105,6 +106,25 @@ Route::prefix('settings/templates')
                     ->name('compare');
             });
     });
+
+// Admin Routes - UI Blocks Management
+Route::prefix('settings/ui-blocks')
+    ->middleware(['web', 'auth'])
+    ->name('settings.ui-blocks.')
+    ->group(function () {
+        Route::get('', [UiBlockController::class, 'index'])->name('index');
+        Route::get('/create', [UiBlockController::class, 'create'])->name('create');
+        Route::post('', [UiBlockController::class, 'store'])->name('store');
+        Route::get('/{uiBlock}/edit', [UiBlockController::class, 'edit'])->name('edit');
+        Route::put('/{uiBlock}', [UiBlockController::class, 'update'])->name('update');
+        Route::delete('/{uiBlock}', [UiBlockController::class, 'destroy'])->name('destroy');
+        Route::post('/order', [UiBlockController::class, 'updateOrder'])->name('order');
+    });
+
+// API - UI Blocks para Page editor
+Route::get('/api/ui-blocks', [UiBlockController::class, 'apiIndex'])
+    ->middleware(['web', 'auth'])
+    ->name('api.ui-blocks');
 
 // Public Routes - Frontend Template Rendering
 Route::get('/template/{slug}', [TemplateWebController::class, 'render'])

@@ -49,4 +49,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/preview/{slug}/{token}', [PreviewController::class, 'show'])->name('page.preview')->where('slug', '[a-z0-9-]+')->where('token', '[a-zA-Z0-9]{64}');
-Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')->where('path', '^(?!dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions)([a-z0-9\-\/]+)$');
+Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')->where('path', '^(?!dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media)([a-z0-9\-\/]+)$');

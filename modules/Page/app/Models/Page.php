@@ -42,6 +42,7 @@ class Page extends Model implements HasMedia
         'seo_description',
         'seo_keywords',
         'seo_noindex',
+        'seo_image_url',
         'header_style',
         'published_at',
         'publish_at',
@@ -379,6 +380,10 @@ class Page extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('featured')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+
+        $this->addMediaCollection('seo')
             ->singleFile()
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 

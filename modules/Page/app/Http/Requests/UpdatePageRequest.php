@@ -100,7 +100,12 @@ class UpdatePageRequest extends FormRequest
                 'nullable',
                 'image',
                 'mimes:jpeg,png,jpg,gif,webp',
-                'max:2048', // 2MB
+                'max:2048',
+            ],
+            'seo_image_url' => [
+                'nullable',
+                'string',
+                'max:500',
             ],
         ];
     }
@@ -126,6 +131,7 @@ class UpdatePageRequest extends FormRequest
             'header_style' => 'estilo de encabezado',
             'seo_noindex' => 'noindex',
             'featured_image' => 'imagen destacada',
+            'seo_image_url' => 'URL imagen SEO',
         ];
     }
 

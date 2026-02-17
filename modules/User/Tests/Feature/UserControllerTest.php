@@ -3,15 +3,39 @@
 namespace Modules\User\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
+/**
+ * Feature tests for the User module's UsersController.
+ *
+ * Routes (prefix: /setting/users, name: settings.users.*):
+ *   GET    /             → index
+ *   GET    /create       → create
+ *   GET    /{uid}        → show
+ *   GET    /{uid}/edit   → edit
+ *   POST   /             → store  (JSON response)
+ *   POST   /update       → update (JSON response)
+ *   DELETE /{uid}        → destroy
+ *
+ * Middleware: web, auth, settings
+ * The 'settings' middleware = RoleMiddleware with roles:
+ *   super-settings|administrative|manager|callcenter|license|accounting|
+ *   warehouse|shop|documentation|return
+ *
+ * NOTE: This test uses DatabaseTransactions (no migration refresh) because
+ * the project's SQLite in-memory setup is broken by FULLTEXT index migrations
+ * and duplicate Spatie Permission migrations across modules. It requires the
+ * MariaDB dev database to be pre-migrated with at minimum: users, roles,
+ * model_has_roles, role_has_permissions tables (Spatie Permission).
+ */
 class UserControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private Role $adminRole;
 
@@ -21,9 +45,30 @@ class UserControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Create roles needed for tests
+        // Override DB to use the real MariaDB dev database since in-memory SQLite
+        // is broken for this project (FULLTEXT migrations, duplicate tables).
+        config([
+            'database.default' => 'mysql',
+            'database.connections.mysql.database' => 'inoqualabsystem',
+        ]);
+        \Illuminate\Support\Facades\DB::purge();
+        \Illuminate\Support\Facades\DB::reconnect('mysql');
+
+        $this->ensureTablesExist();
+
         $this->adminRole = Role::firstOrCreate(['name' => 'administrative', 'guard_name' => 'web']);
         $this->basicRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+    }
+
+    /**
+     * Ensure the minimum required tables exist, running pending migrations
+     * only if the users/roles tables are missing.
+     */
+    private function ensureTablesExist(): void
+    {
+        if (! Schema::hasTable('users') || ! Schema::hasTable('roles')) {
+            $this->artisan('migrate', ['--force' => true]);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -31,16 +76,15 @@ class UserControllerTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Create a user with a role that passes the 'settings' middleware.
-     * The middleware allows: super-settings|administrative|manager|callcenter|...
+     * Create a user assigned the 'administrative' role (passes 'settings' middleware).
      */
     private function createAdminUser(): User
     {
         $user = User::create([
             'uid' => Str::uuid(),
             'firstname' => 'Admin',
-            'lastname' => 'User',
-            'email' => 'admin-test-'.Str::random(6).'@example.com',
+            'lastname' => 'Test',
+            'email' => 'pages-'.Str::random(6).'@example.com',
             'password' => Hash::make('password'),
             'available' => true,
         ]);
@@ -51,15 +95,15 @@ class UserControllerTest extends TestCase
     }
 
     /**
-     * Create a plain user without admin roles (fails 'settings' middleware).
+     * Create a plain user with only the basic 'user' role (fails 'settings' middleware).
      */
     private function createBasicUser(): User
     {
         $user = User::create([
             'uid' => Str::uuid(),
             'firstname' => 'Basic',
-            'lastname' => 'User',
-            'email' => 'basic-test-'.Str::random(6).'@example.com',
+            'lastname' => 'Test',
+            'email' => 'basic-'.Str::random(6).'@example.com',
             'password' => Hash::make('password'),
             'available' => true,
         ]);
@@ -116,7 +160,7 @@ class UserControllerTest extends TestCase
     }
 
     // =========================================================================
-    // AUTHORIZATION – user without settings roles
+    // AUTHORIZATION – user without required role
     // =========================================================================
 
     public function test_user_without_settings_role_cannot_access_index(): void
@@ -158,25 +202,6 @@ class UserControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('user::users.index');
-    }
-
-    public function test_index_lists_paginated_users(): void
-    {
-        $admin = $this->createAdminUser();
-
-        // Create extra users to verify they appear
-        User::create([
-            'uid' => Str::uuid(),
-            'firstname' => 'Jane',
-            'lastname' => 'Doe',
-            'email' => 'jane-'.Str::random(6).'@example.com',
-            'password' => Hash::make('password'),
-            'available' => true,
-        ]);
-
-        $response = $this->actingAs($admin)->get(route('settings.users.index'));
-
-        $response->assertOk();
         $response->assertViewHas('users');
     }
 
@@ -206,7 +231,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'John',
             'lastname' => 'Smith',
-            'email' => 'john.smith@example.com',
+            'email' => 'john.smith-'.Str::random(6).'@example.com',
             'password' => 'secret123',
             'available' => '1',
             'role' => $this->adminRole->name,
@@ -214,28 +239,44 @@ class UserControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJson(['success' => true]);
+    }
+
+    public function test_store_creates_user_in_database(): void
+    {
+        $admin = $this->createAdminUser();
+        $email = 'created-'.Str::random(6).'@example.com';
+
+        $this->actingAs($admin)->postJson(route('settings.users.store'), [
+            'firstname' => 'Jane',
+            'lastname' => 'Doe',
+            'email' => $email,
+            'password' => 'secret123',
+            'available' => '1',
+            'role' => $this->adminRole->name,
+        ]);
 
         $this->assertDatabaseHas('users', [
-            'firstname' => 'John',
-            'lastname' => 'Smith',
-            'email' => 'john.smith@example.com',
+            'firstname' => 'Jane',
+            'lastname' => 'Doe',
+            'email' => $email,
         ]);
     }
 
     public function test_store_assigns_role_to_new_user(): void
     {
         $admin = $this->createAdminUser();
+        $email = 'role-test-'.Str::random(6).'@example.com';
 
         $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'Role',
             'lastname' => 'Test',
-            'email' => 'role.test@example.com',
+            'email' => $email,
             'password' => 'secret123',
             'available' => '1',
             'role' => $this->adminRole->name,
         ]);
 
-        $created = User::where('email', 'role.test@example.com')->first();
+        $created = User::where('email', $email)->first();
         $this->assertNotNull($created);
         $this->assertTrue($created->hasRole($this->adminRole->name));
     }
@@ -243,18 +284,19 @@ class UserControllerTest extends TestCase
     public function test_store_sets_mail_verified_at_when_verified_flag_is_set(): void
     {
         $admin = $this->createAdminUser();
+        $email = 'verified-'.Str::random(6).'@example.com';
 
         $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'Verified',
             'lastname' => 'User',
-            'email' => 'verified@example.com',
+            'email' => $email,
             'password' => 'secret123',
             'available' => '1',
             'role' => $this->adminRole->name,
             'verified' => '1',
         ]);
 
-        $created = User::where('email', 'verified@example.com')->first();
+        $created = User::where('email', $email)->first();
         $this->assertNotNull($created);
         $this->assertNotNull($created->mail_verified_at);
     }
@@ -262,21 +304,12 @@ class UserControllerTest extends TestCase
     public function test_store_rejects_duplicate_email(): void
     {
         $admin = $this->createAdminUser();
-
-        // Pre-create a user with this email
-        User::create([
-            'uid' => Str::uuid(),
-            'firstname' => 'Existing',
-            'lastname' => 'User',
-            'email' => 'duplicate@example.com',
-            'password' => Hash::make('password'),
-            'available' => true,
-        ]);
+        $existing = $this->createBasicUser();
 
         $response = $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'New',
             'lastname' => 'User',
-            'email' => 'duplicate@example.com',
+            'email' => $existing->email,
             'password' => 'secret123',
             'available' => '1',
             'role' => $this->adminRole->name,
@@ -303,10 +336,10 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'John',
             'lastname' => 'Doe',
-            'email' => 'john@example.com',
+            'email' => 'john-'.Str::random(6).'@example.com',
             'password' => 'secret123',
             'available' => '1',
-            'role' => 'nonexistent-role',
+            'role' => 'nonexistent-role-xyz',
         ]);
 
         $response->assertUnprocessable();
@@ -320,7 +353,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->postJson(route('settings.users.store'), [
             'firstname' => 'John',
             'lastname' => 'Doe',
-            'email' => 'john@example.com',
+            'email' => 'john-'.Str::random(6).'@example.com',
             'password' => 'short',
             'available' => '1',
             'role' => $this->adminRole->name,
@@ -419,12 +452,12 @@ class UserControllerTest extends TestCase
         $this->assertTrue(Hash::check('newpassword123', $target->fresh()->password));
     }
 
-    public function test_update_returns_404_for_nonexistent_uid(): void
+    public function test_update_returns_not_found_for_nonexistent_uid(): void
     {
         $admin = $this->createAdminUser();
 
         $response = $this->actingAs($admin)->postJson(route('settings.users.update'), [
-            'uid' => 'nonexistent-uid',
+            'uid' => 'nonexistent-uid-xyz',
             'firstname' => 'John',
             'lastname' => 'Doe',
             'email' => 'john@example.com',
@@ -458,7 +491,7 @@ class UserControllerTest extends TestCase
             'uid' => $target->uid,
             'firstname' => $target->firstname,
             'lastname' => $target->lastname,
-            'email' => $target->email, // same email, must be allowed
+            'email' => $target->email,
             'available' => '1',
             'role' => $this->adminRole->id,
         ]);
@@ -487,7 +520,7 @@ class UserControllerTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->delete(route('settings.users.destroy', ['uid' => 'nonexistent-uid']));
+        $response = $this->actingAs($admin)->delete(route('settings.users.destroy', ['uid' => 'nonexistent-uid-xyz']));
 
         $response->assertNotFound();
     }
@@ -512,7 +545,7 @@ class UserControllerTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->get(route('settings.users.show', ['uid' => 'nonexistent-uid']));
+        $response = $this->actingAs($admin)->get(route('settings.users.show', ['uid' => 'nonexistent-uid-xyz']));
 
         $response->assertNotFound();
     }

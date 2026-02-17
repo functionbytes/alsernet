@@ -119,7 +119,7 @@ class PagePolicy
     }
 
     /**
-     * Check if the user is a super admin.
+     * Check if the user is a super pages.
      */
     protected function isSuperAdmin(User $user): bool
     {

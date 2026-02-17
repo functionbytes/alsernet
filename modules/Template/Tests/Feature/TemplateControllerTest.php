@@ -3,8 +3,7 @@
 namespace Modules\Template\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Template\Models\Template;
 use Modules\Template\Services\TemplateManager;
 use Modules\Template\Services\TemplateService;
@@ -12,7 +11,15 @@ use Tests\TestCase;
 
 class TemplateControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    /**
+     * Use the real MariaDB connection for this test suite.
+     *
+     * The project's phpunit.xml defaults to SQLite in-memory which lacks the
+     * full schema. These tests require the actual MariaDB database.
+     */
+    protected $connectionsToTransact = ['mariadb'];
 
     protected User $user;
 
@@ -20,13 +27,9 @@ class TemplateControllerTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        config(['database.default' => 'mariadb']);
 
-        // Ensure the settings table exists and has a default template value
-        DB::table('settings')->updateOrInsert(
-            ['key' => 'template'],
-            ['value' => 'default']
-        );
+        $this->user = User::factory()->create();
     }
 
     // -------------------------------------------------------------------------
@@ -134,15 +137,14 @@ class TemplateControllerTest extends TestCase
 
         $this->app->instance(TemplateService::class, $service);
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->post(route('settings.templates.store'), [
                 'name' => 'New Template',
                 'content' => '<p>Content here</p>',
                 'status' => 'inactive',
-            ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHasNoErrors();
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
     }
 
     public function test_store_validates_name_is_required(): void
@@ -165,12 +167,12 @@ class TemplateControllerTest extends TestCase
 
     public function test_store_validates_slug_is_unique(): void
     {
-        Template::factory()->create(['slug' => 'existing-slug']);
+        $existing = Template::factory()->create(['slug' => 'unique-existing-slug-test']);
 
         $this->actingAs($this->user)
             ->post(route('settings.templates.store'), [
                 'name' => 'Irrelevant Name',
-                'slug' => 'existing-slug',
+                'slug' => $existing->slug,
                 'content' => '<p>Content</p>',
             ])
             ->assertSessionHasErrors(['slug']);
@@ -204,7 +206,7 @@ class TemplateControllerTest extends TestCase
     public function test_edit_returns_404_for_nonexistent_template(): void
     {
         $this->actingAs($this->user)
-            ->get(route('settings.templates.edit', 99999))
+            ->get(route('settings.templates.edit', 99999999))
             ->assertNotFound();
     }
 
@@ -217,20 +219,18 @@ class TemplateControllerTest extends TestCase
         $template = Template::factory()->create(['name' => 'Old Name']);
 
         $service = $this->createMock(TemplateService::class);
-        $updated = $template->fresh();
-        $service->method('update')->willReturn($updated);
+        $service->method('update')->willReturn($template->fresh());
 
         $this->app->instance(TemplateService::class, $service);
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->put(route('settings.templates.update', $template), [
                 'name' => 'Updated Name',
                 'content' => '<p>Updated content</p>',
                 'status' => 'inactive',
-            ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHasNoErrors();
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
     }
 
     public function test_update_validates_name_is_required(): void
@@ -257,7 +257,7 @@ class TemplateControllerTest extends TestCase
 
     public function test_update_allows_same_slug_for_the_template(): void
     {
-        $template = Template::factory()->create(['slug' => 'my-template']);
+        $template = Template::factory()->create(['slug' => 'my-unique-test-template']);
 
         $service = $this->createMock(TemplateService::class);
         $service->method('update')->willReturn($template->fresh());
@@ -267,7 +267,7 @@ class TemplateControllerTest extends TestCase
         $this->actingAs($this->user)
             ->put(route('settings.templates.update', $template), [
                 'name' => 'My Template',
-                'slug' => 'my-template',
+                'slug' => $template->slug,
                 'content' => '<p>Content</p>',
             ])
             ->assertSessionHasNoErrors();
@@ -291,7 +291,7 @@ class TemplateControllerTest extends TestCase
     public function test_destroy_returns_404_for_nonexistent_template(): void
     {
         $this->actingAs($this->user)
-            ->delete(route('settings.templates.destroy', 99999))
+            ->delete(route('settings.templates.destroy', 99999999))
             ->assertNotFound();
     }
 
@@ -317,7 +317,7 @@ class TemplateControllerTest extends TestCase
         $this->actingAs($this->user)
             ->withoutMiddleware('preventDemo')
             ->postJson(route('settings.templates.activate'), [
-                'template' => 'slug-that-does-not-exist',
+                'template' => 'slug-that-absolutely-does-not-exist-xyz',
             ])
             ->assertStatus(422);
     }

@@ -18394,7 +18394,7 @@ progress {
     --bs-secondary-text-emphasis: shade-color(#16CDC7, 60%);
     --bs-success-text-emphasis: shade-color(#36c76c, 60%);
     --bs-info-text-emphasis: shade-color(#081A28, 60%);
-    --bs-warning-text-emphasis: shade-color(#F8C20A, 60%);
+    --bs-warning-text-emphasis: shade-color(#ffffff, 60%);
     --bs-danger-text-emphasis: shade-color(#ff0049, 60%);
     --bs-light-text-emphasis: #f6f7f9;
     --bs-dark-text-emphasis: #000000;
@@ -23601,8 +23601,8 @@ textarea.form-control-lg {
 
 .alert-warning {
     --bs-alert-color: var(--bs-warning-text-emphasis);
-    --bs-alert-bg: var(--bs-warning-bg-subtle);
-    --bs-alert-border-color: var(--bs-warning-border-subtle);
+    --bs-alert-bg: #f4f4f4;
+    --bs-alert-border-color: #d1d1d1;
     --bs-alert-link-color: var(--bs-warning-text-emphasis)
 }
 

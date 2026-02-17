@@ -19,6 +19,7 @@ class MenuItem extends Model
         'icon',
         'css_class',
         'order',
+        'has_child',
         'type',
         'reference_id',
         'reference_type',
@@ -26,6 +27,7 @@ class MenuItem extends Model
 
     protected $casts = [
         'order' => 'integer',
+        'has_child' => 'boolean',
     ];
 
     protected $appends = ['full_url'];

@@ -30,6 +30,12 @@
         {!! $customHeaderHtml !!}
     @endif
 
+    <!-- Custom Header JS from settings -->
+    @php $customHeaderJs = setting('theme.custom_header_js'); @endphp
+    @if($customHeaderJs)
+        <script>{!! $customHeaderJs !!}</script>
+    @endif
+
     @yield('css')
 </head>
 <body class="wowy-template">

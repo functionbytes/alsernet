@@ -14,8 +14,212 @@
 
         <div class="row">
 
+
+            {{-- SIDEBAR --}}
+            <div class="col-lg-4 order-lg-2">
+
+                {{-- Publicar --}}
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Publicar</h5>
+                    </div>
+                    <div class="card-body d-grid gap-2">
+                        <button type="submit" form="pageForm" class="btn btn-primary">
+                            Guardar
+                        </button>
+                        <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                        <hr class="my-1">
+                        <a href="{{ $page->url }}" class="btn btn-outline-secondary" target="_blank">
+                            Ver página
+                        </a>
+                        @if($page->hasVersions())
+                            <a href="{{ route('pages.versions.index', $page->id) }}" class="btn btn-outline-secondary">
+                                Ver versiones ({{ $page->getTotalVersions() }})
+                            </a>
+                        @endif
+                        @if($page->isPublished())
+                            <form action="{{ route('pages.unpublish', $page->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-secondary w-100">Despublicar</button>
+                            </form>
+                        @else
+                            <form action="{{ route('pages.publish', $page->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-secondary w-100">Publicar ahora</button>
+                            </form>
+                        @endif
+                        <form action="{{ route('pages.duplicate', $page->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary w-100">Duplicar página</button>
+                        </form>
+                        <button type="button" class="btn btn-outline-secondary" id="generatePreviewBtn">Generar preview</button>
+                        <button type="button" class="btn btn-outline-secondary" id="revokePreviewBtn">Revocar previews</button>
+                        <hr class="my-1">
+                        <button type="button" class="btn btn-outline-danger" id="deleteBtn">Eliminar página</button>
+                        <form action="{{ route('pages.destroy', $page->id) }}" method="POST" id="deleteForm">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Apariencia --}}
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Apariencia</h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-3">
+                            <label for="header_style" class="form-label fw-semibold">Estilo de encabezado</label>
+                            <select class="form-select @error('header_style') is-invalid @enderror"
+                                    id="header_style" name="header_style">
+                                <option value="header-style-1" {{ old('header_style', $page->header_style) === 'header-style-1' ? 'selected' : '' }}>Por defecto</option>
+                                <option value="header-style-2" {{ old('header_style', $page->header_style) === 'header-style-2' ? 'selected' : '' }}>Estilo de encabezado 2</option>
+                                <option value="header-style-3" {{ old('header_style', $page->header_style) === 'header-style-3' ? 'selected' : '' }}>Estilo de encabezado 3</option>
+                                <option value="header-style-4" {{ old('header_style', $page->header_style) === 'header-style-4' ? 'selected' : '' }}>Estilo de encabezado 4</option>
+                            </select>
+                            @error('header_style')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label fw-semibold">Estatus <span class="text-danger">*</span></label>
+                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                                @foreach($statuses as $key => $label)
+                                    <option value="{{ $key }}" {{ old('status', $page->status) === $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="template" class="form-label fw-semibold">Plantilla <span class="text-danger">*</span></label>
+                            <select class="form-select @error('template') is-invalid @enderror" id="template" name="template">
+                                @foreach($templates as $key => $label)
+                                    <option value="{{ $key }}" {{ old('template', $page->template) === $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('template')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="mb-3">
+                            <label for="published_at" class="form-label fw-semibold small">Fecha de publicación</label>
+                            <input type="datetime-local" class="form-control form-control-sm @error('published_at') is-invalid @enderror"
+                                   id="published_at" name="published_at"
+                                   value="{{ old('published_at', $page->published_at?->format('Y-m-d\TH:i')) }}">
+                            @error('published_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="publish_at" class="form-label fw-semibold small">Publicar el (programado)</label>
+                            <input type="datetime-local" class="form-control form-control-sm @error('publish_at') is-invalid @enderror"
+                                   id="publish_at" name="publish_at"
+                                   value="{{ old('publish_at', $page->publish_at?->format('Y-m-d\TH:i')) }}">
+                            @error('publish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="unpublish_at" class="form-label fw-semibold small">Despublicar el</label>
+                            <input type="datetime-local" class="form-control form-control-sm @error('unpublish_at') is-invalid @enderror"
+                                   id="unpublish_at" name="unpublish_at"
+                                   value="{{ old('unpublish_at', $page->unpublish_at?->format('Y-m-d\TH:i')) }}">
+                            @error('unpublish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        @if($page->willBePublished() || $page->willBeUnpublished())
+                            <div class="alert alert-info mt-3 mb-0 py-2">
+                                <small>
+                                    @if($page->willBePublished())
+                                        <i class="fas fa-clock me-1"></i> Se publica el {{ $page->publish_at->format('d/m/Y H:i') }}<br>
+                                    @endif
+                                    @if($page->willBeUnpublished())
+                                        <i class="fas fa-clock me-1"></i> Se despublica el {{ $page->unpublish_at->format('d/m/Y H:i') }}
+                                    @endif
+                                </small>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+
+                {{-- Imagen destacada --}}
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Imagen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="imagePreviewContainer" class="mb-3">
+                            @if($page->featured_image)
+                                <img src="{{ $page->featured_image }}" alt="Imagen destacada"
+                                     class="img-fluid rounded" style="max-height:180px; object-fit:cover; width:100%">
+                            @else
+                                <div class="text-center py-3 border border-2 border-dashed rounded bg-light">
+                                    <i class="fas fa-image fa-2x text-muted mb-1"></i>
+                                    <p class="text-muted small mb-0">Sin imagen</p>
+                                </div>
+                            @endif
+                        </div>
+                        <input type="file" class="form-control form-control-sm @error('featured_image') is-invalid @enderror"
+                               id="featured_image" name="featured_image"
+                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                        <small class="form-text text-muted">Máx. 2MB. JPG, PNG, GIF, WebP</small>
+                        @error('featured_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                {{-- Información --}}
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Información</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Creado</small>
+                            <strong>{{ $page->created_at->format('d/m/Y H:i') }}</strong>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Modificado</small>
+                            <strong>{{ $page->updated_at->format('d/m/Y H:i') }}</strong>
+                        </div>
+                        @if($page->user)
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Autor</small>
+                                <strong>{{ $page->user->full_name ?? $page->user->name }}</strong>
+                            </div>
+                        @endif
+                        @if($page->hasVersions())
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Versiones</small>
+                                <strong>{{ $page->getTotalVersions() }}</strong>
+                            </div>
+                        @endif
+                        @php
+                            $badges = ['published'=>'bg-success-subtle text-success','draft'=>'bg-secondary-subtle text-secondary','pending'=>'bg-warning-subtle text-warning'];
+                            $labels = ['published'=>'Publicado','draft'=>'Borrador','pending'=>'Pendiente'];
+                        @endphp
+                        <div>
+                            <small class="text-muted d-block mb-1">Estado</small>
+                            <span class="badge {{ $badges[$page->status] ?? 'bg-secondary-subtle text-secondary' }}">
+                                {{ $labels[$page->status] ?? $page->status }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+
             {{-- COLUMNA PRINCIPAL --}}
-            <div class="col-lg-8 order-lg-2">
+            <div class="col-lg-8 order-lg-1">
 
                 {{-- Información principal --}}
                 <div class="card mb-3">
@@ -93,8 +297,6 @@
                         </div>
                         @error('content')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
 
-                        {{-- Input file oculto para Agregar --}}
-                        <input type="file" id="mediaFileInput" accept="image/*" style="display:none">
 
                     </div>
                 </div>
@@ -162,23 +364,32 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="seo_image" class="form-label fw-semibold">Imagen SEO (Open Graph)</label>
-                                <div id="seoImagePreviewContainer" class="mb-2">
-                                    @php $seoMedia = $page->getFirstMedia('seo'); @endphp
-                                    @if($seoMedia)
-                                        <img src="{{ $seoMedia->getUrl() }}" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">
+                                <label class="form-label fw-semibold">Imagen SEO (Open Graph)</label>
+                                <div id="seoImagePreviewContainer" class="mb-2" style="cursor:pointer">
+                                    @if(old('seo_image_url', $page->seo_image_url))
+                                        <img src="{{ old('seo_image_url', $page->seo_image_url) }}"
+                                             class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">
                                     @else
-                                        <div class="text-center py-2 border border-dashed rounded bg-light">
-                                            <i class="fas fa-image text-muted me-1"></i>
-                                            <span class="text-muted small">Sin imagen SEO</span>
+                                        <div class="text-center py-3 border border-dashed rounded bg-light">
+                                            <i class="fas fa-image fa-2x text-muted mb-1"></i>
+                                            <p class="text-muted small mb-0">Haz clic para elegir</p>
                                         </div>
                                     @endif
                                 </div>
-                                <input type="file" class="form-control form-control-sm @error('seo_image') is-invalid @enderror"
-                                       id="seo_image" name="seo_image"
-                                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                <input type="hidden" id="seo_image_url" name="seo_image_url"
+                                       value="{{ old('seo_image_url', $page->seo_image_url) }}">
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1"
+                                            id="seoPickerBtn">
+                                        <i class="fas fa-images me-1"></i> Elegir imagen
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" id="seoImageClearBtn"
+                                            {{ old('seo_image_url', $page->seo_image_url) ? '' : 'style="display:none"' }}>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                                 <small class="form-text text-muted">Recomendado: 1200×630px. Máx. 2MB.</small>
-                                @error('seo_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                @error('seo_image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
 
                             <div class="mb-0">
@@ -222,215 +433,6 @@
                                 </small>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- SIDEBAR --}}
-            <div class="col-lg-4 order-lg-1">
-
-                {{-- Publicar --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Publicar</h5>
-                    </div>
-                    <div class="card-body d-grid gap-2">
-                        <button type="submit" form="pageForm" class="btn btn-primary">
-                            Guardar
-                        </button>
-                        <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
-                            Cancelar
-                        </a>
-                    </div>
-                </div>
-
-                {{-- Apariencia --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Apariencia</h5>
-                    </div>
-                    <div class="card-body">
-
-                        <div class="mb-3">
-                            <label for="header_style" class="form-label fw-semibold">Estilo de encabezado</label>
-                            <select class="form-select @error('header_style') is-invalid @enderror"
-                                    id="header_style" name="header_style">
-                                <option value="header-style-1" {{ old('header_style', $page->header_style) === 'header-style-1' ? 'selected' : '' }}>Por defecto</option>
-                                <option value="header-style-2" {{ old('header_style', $page->header_style) === 'header-style-2' ? 'selected' : '' }}>Estilo de encabezado 2</option>
-                                <option value="header-style-3" {{ old('header_style', $page->header_style) === 'header-style-3' ? 'selected' : '' }}>Estilo de encabezado 3</option>
-                                <option value="header-style-4" {{ old('header_style', $page->header_style) === 'header-style-4' ? 'selected' : '' }}>Estilo de encabezado 4</option>
-                            </select>
-                            @error('header_style')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="status" class="form-label fw-semibold">Estatus <span class="text-danger">*</span></label>
-                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                                @foreach($statuses as $key => $label)
-                                    <option value="{{ $key }}" {{ old('status', $page->status) === $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-0">
-                            <label for="template" class="form-label fw-semibold">Plantilla <span class="text-danger">*</span></label>
-                            <select class="form-select @error('template') is-invalid @enderror" id="template" name="template">
-                                @foreach($templates as $key => $label)
-                                    <option value="{{ $key }}" {{ old('template', $page->template) === $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('template')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                    </div>
-                </div>
-
-                {{-- Imagen destacada --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Imagen</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="imagePreviewContainer" class="mb-3">
-                            @if($page->featured_image)
-                                <img src="{{ $page->featured_image }}" alt="Imagen destacada"
-                                     class="img-fluid rounded" style="max-height:180px; object-fit:cover; width:100%">
-                            @else
-                                <div class="text-center py-3 border border-2 border-dashed rounded bg-light">
-                                    <i class="fas fa-image fa-2x text-muted mb-1"></i>
-                                    <p class="text-muted small mb-0">Sin imagen</p>
-                                </div>
-                            @endif
-                        </div>
-                        <input type="file" class="form-control form-control-sm @error('featured_image') is-invalid @enderror"
-                               id="featured_image" name="featured_image"
-                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                        <small class="form-text text-muted">Máx. 2MB. JPG, PNG, GIF, WebP</small>
-                        @error('featured_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                </div>
-
-                {{-- Información --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Información</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Creado</small>
-                            <strong>{{ $page->created_at->format('d/m/Y H:i') }}</strong>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Modificado</small>
-                            <strong>{{ $page->updated_at->format('d/m/Y H:i') }}</strong>
-                        </div>
-                        @if($page->user)
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Autor</small>
-                                <strong>{{ $page->user->full_name ?? $page->user->name }}</strong>
-                            </div>
-                        @endif
-                        @if($page->hasVersions())
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Versiones</small>
-                                <strong>{{ $page->getTotalVersions() }}</strong>
-                            </div>
-                        @endif
-                        @php
-                            $badges = ['published'=>'bg-success-subtle text-success','draft'=>'bg-secondary-subtle text-secondary','pending'=>'bg-warning-subtle text-warning'];
-                            $labels = ['published'=>'Publicado','draft'=>'Borrador','pending'=>'Pendiente'];
-                        @endphp
-                        <div>
-                            <small class="text-muted d-block mb-1">Estado</small>
-                            <span class="badge {{ $badges[$page->status] ?? 'bg-secondary-subtle text-secondary' }}">
-                                {{ $labels[$page->status] ?? $page->status }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Fechas programadas --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Publicación programada</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="published_at" class="form-label fw-semibold small">Fecha de publicación</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('published_at') is-invalid @enderror"
-                                   id="published_at" name="published_at"
-                                   value="{{ old('published_at', $page->published_at?->format('Y-m-d\TH:i')) }}">
-                            @error('published_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="publish_at" class="form-label fw-semibold small">Publicar el (programado)</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('publish_at') is-invalid @enderror"
-                                   id="publish_at" name="publish_at"
-                                   value="{{ old('publish_at', $page->publish_at?->format('Y-m-d\TH:i')) }}">
-                            @error('publish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="mb-0">
-                            <label for="unpublish_at" class="form-label fw-semibold small">Despublicar el</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('unpublish_at') is-invalid @enderror"
-                                   id="unpublish_at" name="unpublish_at"
-                                   value="{{ old('unpublish_at', $page->unpublish_at?->format('Y-m-d\TH:i')) }}">
-                            @error('unpublish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        @if($page->willBePublished() || $page->willBeUnpublished())
-                            <div class="alert alert-info mt-3 mb-0 py-2">
-                                <small>
-                                    @if($page->willBePublished())
-                                        <i class="fas fa-clock me-1"></i> Se publica el {{ $page->publish_at->format('d/m/Y H:i') }}<br>
-                                    @endif
-                                    @if($page->willBeUnpublished())
-                                        <i class="fas fa-clock me-1"></i> Se despublica el {{ $page->unpublish_at->format('d/m/Y H:i') }}
-                                    @endif
-                                </small>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Acciones adicionales --}}
-                <div class="card mb-3">
-                    <div class="card-body d-grid gap-2">
-                        <a href="{{ $page->url }}" class="btn btn-outline-secondary" target="_blank">
-                            Ver página
-                        </a>
-                        @if($page->hasVersions())
-                            <a href="{{ route('pages.versions.index', $page->id) }}" class="btn btn-outline-secondary">
-                                Ver versiones ({{ $page->getTotalVersions() }})
-                            </a>
-                        @endif
-                        @if($page->isPublished())
-                            <form action="{{ route('pages.unpublish', $page->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-secondary w-100">Despublicar</button>
-                            </form>
-                        @else
-                            <form action="{{ route('pages.publish', $page->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-secondary w-100">Publicar ahora</button>
-                            </form>
-                        @endif
-                        <form action="{{ route('pages.duplicate', $page->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-secondary w-100">Duplicar página</button>
-                        </form>
-                        <button type="button" class="btn btn-outline-secondary" id="generatePreviewBtn">Generar preview</button>
-                        <button type="button" class="btn btn-outline-secondary" id="revokePreviewBtn">Revocar previews</button>
-                        <hr class="my-1">
-                        <button type="button" class="btn btn-outline-danger" id="deleteBtn">Eliminar página</button>
-                        <form action="{{ route('pages.destroy', $page->id) }}" method="POST" id="deleteForm">
-                            @csrf
-                            @method('DELETE')
-                        </form>
                     </div>
                 </div>
 
@@ -523,6 +525,32 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="insertBlockBtn">Insertar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODAL: Selector de imagen SEO --}}
+    <div class="modal fade" id="seoImagePickerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-images me-2"></i>Elegir imagen SEO</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="seoImageSearch" placeholder="Buscar imágenes...">
+                    </div>
+                    <div class="row g-2" id="seoImageGrid">
+                        <div class="col-12 text-center py-4">
+                            <div class="spinner-border text-secondary" role="status"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 mt-3" id="seoImagePagination"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -621,18 +649,8 @@ $(document).ready(function () {
     });
 
     $('#addMediaBtn').on('click', function () {
-        $('#mediaFileInput').trigger('click');
-    });
-
-    $('#mediaFileInput').on('change', function () {
-        var file = this.files[0];
-        if (!file) return;
-        var self = this;
-        var $btn = $('#addMediaBtn').prop('disabled', true).text('Subiendo...');
-        var fd = new FormData();
-        fd.append('file', file);
-        mediaUpload(fd, function (url) {
-            var tag = '<img src="' + url + '" alt="" style="max-width:100%">';
+        mediaPickerCallback = function (url, fullUrl) {
+            var tag = '<img src="' + fullUrl + '" alt="" style="max-width:100%">';
             var editor = tinymce.get(editorId);
             if (editor) {
                 editor.insertContent(tag);
@@ -641,13 +659,9 @@ $(document).ready(function () {
                 var pos = ta.selectionStart || ta.value.length;
                 ta.value = ta.value.substring(0, pos) + tag + ta.value.substring(pos);
             }
-            $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i> Agregar');
-            self.value = '';
-        }, function () {
-            toastr.error('Error al subir la imagen', 'Error');
-            $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i> Agregar');
-            self.value = '';
-        });
+            $('#seoImagePickerModal').modal('hide');
+        };
+        $('#seoImagePickerModal').modal('show');
     });
 
     // =========================================================
@@ -867,18 +881,78 @@ $(document).ready(function () {
     });
 
     // =========================================================
-    // IMAGEN SEO
+    // MEDIA PICKER - compartido por Agregar + Imagen SEO
     // =========================================================
-    $('#seo_image').on('change', function () {
-        var file = this.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
+    var mediaBaseUrl = '{{ url('media') }}';
+    var mediaListUrl = '{{ url('/media/list') }}';
+    var mediaPickerCallback = null;
+
+    function openSeoImagePicker() {
+        mediaPickerCallback = function (url, fullUrl) {
+            $('#seo_image_url').val(fullUrl);
             $('#seoImagePreviewContainer').html(
-                '<img src="' + e.target.result + '" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">'
+                '<img src="' + fullUrl + '" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">'
             );
+            $('#seoImageClearBtn').show();
+            $('#seoImagePickerModal').modal('hide');
         };
-        reader.readAsDataURL(file);
+        $('#seoImagePickerModal').modal('show');
+    }
+
+    $('#seoImagePreviewContainer').on('click', function () { openSeoImagePicker(); });
+    $('#seoPickerBtn').on('click', function () { openSeoImagePicker(); });
+
+    $('#seoImageClearBtn').on('click', function () {
+        $('#seo_image_url').val('');
+        $('#seoImagePreviewContainer').html(
+            '<div class="text-center py-3 border border-dashed rounded bg-light">' +
+            '<i class="fas fa-image fa-2x text-muted mb-1"></i>' +
+            '<p class="text-muted small mb-0">Haz clic para elegir</p></div>'
+        );
+        $(this).hide();
+    });
+
+    function loadSeoImages(page, search) {
+        $('#seoImageGrid').html('<div class="col-12 text-center py-4"><div class="spinner-border text-secondary" role="status"></div></div>');
+        $.get(mediaListUrl, { page: page, search: search, filter: 'image', per_page: 24 }, function (data) {
+            var html = '';
+            var files = (data.files || []).filter(function (f) { return f.type === 'image'; });
+            if (files.length > 0) {
+                $.each(files, function (i, file) {
+                    var fullUrl = mediaBaseUrl + '/' + file.url.replace(/^media\//, '');
+                    html += '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                        '<div class="card h-100 border media-picker-item" style="cursor:pointer" data-url="' + file.url + '" data-full-url="' + fullUrl + '">' +
+                        '<img src="' + fullUrl + '" class="card-img-top" style="height:90px; object-fit:cover" loading="lazy">' +
+                        '<div class="card-body p-1"><p class="card-text x-small text-truncate text-muted mb-0" style="font-size:11px">' + file.name + '</p></div>' +
+                        '</div></div>';
+                });
+            } else {
+                html = '<div class="col-12 text-center py-4 text-muted"><i class="fas fa-image fa-2x mb-2 d-block"></i>No hay imágenes</div>';
+            }
+            $('#seoImageGrid').html(html);
+            var p = data.pagination || {};
+            var pager = '';
+            if (p.last_page > 1) {
+                if (page > 1) pager += '<button class="btn btn-sm btn-outline-secondary" onclick="loadSeoImages(' + (page - 1) + ',\'' + search + '\')">Anterior</button>';
+                pager += '<span class="btn btn-sm disabled">' + page + ' / ' + p.last_page + '</span>';
+                if (page < p.last_page) pager += '<button class="btn btn-sm btn-outline-secondary" onclick="loadSeoImages(' + (page + 1) + ',\'' + search + '\')">Siguiente</button>';
+            }
+            $('#seoImagePagination').html(pager);
+        });
+    }
+
+    var seoSearchTimer;
+    $('#seoImagePickerModal').on('show.bs.modal', function () { loadSeoImages(1, ''); });
+    $('#seoImageSearch').on('input', function () {
+        var q = $(this).val();
+        clearTimeout(seoSearchTimer);
+        seoSearchTimer = setTimeout(function () { loadSeoImages(1, q); }, 400);
+    });
+    $(document).on('click', '.media-picker-item', function () {
+        if (mediaPickerCallback) {
+            mediaPickerCallback($(this).data('url'), $(this).data('full-url'));
+            mediaPickerCallback = null;
+        }
     });
 
     // =========================================================

@@ -23,7 +23,7 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
         // Crear roles y asignar permisos
         $this->createRoles();
 
-        // Asignar rol super-settings al usuario admin (ID=1)
+        // Asignar rol super-settings al usuario pages (ID=1)
         $this->assignDefaultAdminRole();
 
     }
@@ -32,7 +32,7 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
     {
         try {
             $adminUser = \App\Models\User::find(1);
-            if ($adminUser && !$adminUser->hasRole('super-settings')) {
+            if ($adminUser && ! $adminUser->hasRole('super-settings')) {
                 $adminUser->assignRole('super-settings');
             }
         } catch (\Exception $e) {
