@@ -31,7 +31,7 @@ class PageVersionController extends Controller
     {
         $versions = $page->getVersionHistory(100);
 
-        return view('page::admin.versions.index', compact('page', 'versions'));
+        return view('page::settings.versions.index', compact('page', 'versions'));
     }
 
     /**
@@ -48,7 +48,7 @@ class PageVersionController extends Controller
 
         $version->load('user');
 
-        return view('page::admin.versions.show', compact('page', 'version'));
+        return view('page::settings.versions.show', compact('page', 'version'));
     }
 
     /**
@@ -99,7 +99,7 @@ class PageVersionController extends Controller
                 $request->input('version2')
             );
 
-            return view('page::admin.versions.compare', array_merge(
+            return view('page::settings.versions.compare', array_merge(
                 compact('page'),
                 $comparison
             ));

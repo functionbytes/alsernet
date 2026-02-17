@@ -170,9 +170,9 @@
                                         <label class="form-check-label" for="seo_index">Índice</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="seo_noindex" id="seo_noindex"
+                                        <input class="form-check-input" type="radio" name="seo_noindex" id="seo_noindex_radio"
                                                value="1" {{ old('seo_noindex', $page->seo_noindex ? '1' : '0') == '1' ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="seo_noindex">Sin índice</label>
+                                        <label class="form-check-label" for="seo_noindex_radio">Sin índice</label>
                                     </div>
                                 </div>
                             </div>
@@ -220,7 +220,7 @@
                             Guardar
                         </button>
                         <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
-                            Guardar y salir
+                            Cancelar
                         </a>
                     </div>
                 </div>
@@ -544,23 +544,6 @@ $(document).ready(function () {
             promotion: false,
             resize: true,
             content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; }',
-            images_upload_handler: function (blobInfo, progress) {
-                return new Promise(function (resolve, reject) {
-                    var formData = new FormData();
-                    formData.append('file', blobInfo.blob(), blobInfo.filename());
-                    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-                    $.ajax({
-                        url: '{{ route("pages.ajax.slug") }}',  // placeholder — reemplaza con ruta real de upload
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function (data) { resolve(data.url); },
-                        error: function () { reject('Error al subir imagen'); }
-                    });
-                });
-            },
             setup: function (editor) {
                 editor.on('change input keyup', function () {
                     editor.save(); // sync textarea
@@ -804,14 +787,6 @@ $(document).ready(function () {
         updateSlugPreview();
     });
 
-    function updateSlugPreview() {
-        var slug = $('#slug').val();
-        var prefix = '{{ $prefix }}';
-        var path = prefix ? prefix + '/' + slug : slug;
-        var url = '{{ url('/') }}/' + path;
-        $('#slug-preview').text(url);
-        $('#slug-preview-link').attr('href', url);
-    }
     updateSlugPreview();
 
     function generateSlugFromTitle(title) {
@@ -908,10 +883,10 @@ $(document).ready(function () {
 
     // Toastr flash
     @if(session('success'))
-    toastr.success('{{ session('success') }}', 'Éxito');
+    toastr.success(@json(session('success')), 'Éxito');
     @endif
     @if(session('error'))
-    toastr.error('{{ session('error') }}', 'Error');
+    toastr.error(@json(session('error')), 'Error');
     @endif
 
 });

@@ -61,7 +61,8 @@
       "mcp__chrome-devtools__evaluate_script",
       "Bash(done)",
       "Bash(ls:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(node -c:*)"
     ],
     "deny": []
   },

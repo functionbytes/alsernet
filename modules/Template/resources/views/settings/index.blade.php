@@ -176,7 +176,7 @@
         </div>
     </div>
 
-    @push('footer-scripts')
+    @push('scripts')
         <script src="{{ asset('modules/template/js/template.js') }}"></script>
     @endpush
 @endsection

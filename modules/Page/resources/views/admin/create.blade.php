@@ -629,14 +629,6 @@ $(document).ready(function () {
         updateSlugPreview();
     });
 
-    function updateSlugPreview() {
-        var slug = $('#slug').val();
-        var prefix = '{{ $prefix }}';
-        var path = prefix ? prefix + '/' + slug : slug;
-        var url = '{{ url('/') }}/' + path;
-        $('#slug-preview').text(url);
-        $('#slug-preview-link').attr('href', url);
-    }
     updateSlugPreview();
 
     // =========================================================
@@ -655,8 +647,11 @@ $(document).ready(function () {
     });
 
     // Toastr flash
+    @if(session('success'))
+    toastr.success(@json(session('success')), 'Éxito');
+    @endif
     @if(session('error'))
-    toastr.error('{{ session('error') }}', 'Error');
+    toastr.error(@json(session('error')), 'Error');
     @endif
 
 });
