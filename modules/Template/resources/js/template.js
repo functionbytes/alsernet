@@ -1,6 +1,6 @@
 /**
  * Template Module - AJAX Interactions
- * Patrón: Mercosan Theme (activate/remove templates)
+ * Usa toastr para notificaciones (inoqualab pattern)
  */
 
 (function () {
@@ -11,19 +11,39 @@
             this.init();
         }
 
-        /**
-         * Inicializar event listeners
-         */
         init() {
             this.bindActivateTemplate();
             this.bindRemoveTemplate();
             this.bindConfirmRemove();
         }
 
-        /**
-         * Event: Click en botón "Activar Template"
-         * Envía POST request a /settings/templates/activate
-         */
+        setLoading($btn, loading) {
+            if (loading) {
+                $btn.prop('disabled', true)
+                    .data('original-html', $btn.html())
+                    .html('<span class="spinner-border spinner-border-sm me-1" role="status"></span>Procesando...');
+            } else {
+                $btn.prop('disabled', false)
+                    .html($btn.data('original-html'));
+            }
+        }
+
+        showSuccess(message) {
+            if (typeof toastr !== 'undefined') {
+                toastr.success(message);
+            } else {
+                alert(message);
+            }
+        }
+
+        showError(message) {
+            if (typeof toastr !== 'undefined') {
+                toastr.error(message);
+            } else {
+                alert('Error: ' + message);
+            }
+        }
+
         bindActivateTemplate() {
             $(document).on('click', '.btn-trigger-activate-template', (e) => {
                 e.preventDefault();
@@ -31,40 +51,30 @@
                 const templateSlug = $btn.data('template');
                 const url = $btn.data('url');
 
-                Botble.showButtonLoading($btn);
+                this.setLoading($btn, true);
 
                 $.ajax({
                     type: 'POST',
                     url: url,
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
                     },
-                    data: JSON.stringify({
-                        template: templateSlug,
-                    }),
+                    data: JSON.stringify({ template: templateSlug }),
                     success: (response) => {
-                        Botble.showSuccess(response.message || 'Template activated successfully');
-                        Botble.hideButtonLoading($btn);
-
-                        // Recargar página después de 1 segundo
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        this.showSuccess(response.message || 'Plantilla activada correctamente');
+                        setTimeout(() => window.location.reload(), 1000);
                     },
                     error: (xhr) => {
                         const response = xhr.responseJSON || {};
-                        Botble.showError(response.message || 'Error activating template');
-                        Botble.hideButtonLoading($btn);
+                        this.showError(response.message || 'Error al activar la plantilla');
+                        this.setLoading($btn, false);
                     },
                 });
             });
         }
 
-        /**
-         * Event: Click en botón "Eliminar Template"
-         * Abre modal de confirmación
-         */
         bindRemoveTemplate() {
             $(document).on('click', '.btn-trigger-remove-template', (e) => {
                 e.preventDefault();
@@ -73,26 +83,19 @@
                 const templateName = $btn.data('name') || templateSlug;
                 const url = $btn.data('url');
 
-                // Actualizar datos en el botón de confirmación
                 $('#confirm-remove-template-button')
                     .data('template', templateSlug)
-                    .data('url', url)
-                    .data('name', templateName);
+                    .data('url', url);
 
-                // Actualizar mensaje del modal
                 $('#remove-template-modal-text').text(
                     `¿Estás seguro de que deseas eliminar la plantilla "${templateName}"? Esta acción no se puede deshacer.`
                 );
 
-                // Mostrar modal
-                $('#remove-template-modal').modal('show');
+                const modalEl = document.getElementById('remove-template-modal');
+                new bootstrap.Modal(modalEl).show();
             });
         }
 
-        /**
-         * Event: Click en botón "Confirmar eliminación" del modal
-         * Envía POST request a /settings/templates/remove
-         */
         bindConfirmRemove() {
             $(document).on('click', '#confirm-remove-template-button', (e) => {
                 e.preventDefault();
@@ -100,40 +103,32 @@
                 const templateSlug = $btn.data('template');
                 const url = $btn.data('url');
 
-                Botble.showButtonLoading($btn);
+                this.setLoading($btn, true);
 
                 $.ajax({
                     type: 'POST',
                     url: url,
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
                     },
-                    data: JSON.stringify({
-                        template: templateSlug,
-                    }),
+                    data: JSON.stringify({ template: templateSlug }),
                     success: (response) => {
-                        Botble.showSuccess(response.message || 'Template removed successfully');
-                        Botble.hideButtonLoading($btn);
-                        $('#remove-template-modal').modal('hide');
-
-                        // Recargar página después de 1 segundo
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        this.showSuccess(response.message || 'Plantilla eliminada correctamente');
+                        const modalEl = document.getElementById('remove-template-modal');
+                        bootstrap.Modal.getInstance(modalEl)?.hide();
+                        setTimeout(() => window.location.reload(), 1000);
                     },
                     error: (xhr) => {
                         const response = xhr.responseJSON || {};
-                        Botble.showError(response.message || 'Error removing template');
-                        Botble.hideButtonLoading($btn);
+                        this.showError(response.message || 'Error al eliminar la plantilla');
+                        this.setLoading($btn, false);
                     },
                 });
             });
         }
     }
 
-    // Inicializar cuando el DOM esté listo
-    $(document).ready(() => {
-        new TemplateManagement();
-    });
+    $(document).ready(() => new TemplateManagement());
 })();

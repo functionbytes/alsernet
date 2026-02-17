@@ -161,6 +161,26 @@
                                 @error('seo_keywords')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
+                            <div class="mb-3">
+                                <label for="seo_image" class="form-label fw-semibold">Imagen SEO (Open Graph)</label>
+                                <div id="seoImagePreviewContainer" class="mb-2">
+                                    @php $seoMedia = $page->getFirstMedia('seo'); @endphp
+                                    @if($seoMedia)
+                                        <img src="{{ $seoMedia->getUrl() }}" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">
+                                    @else
+                                        <div class="text-center py-2 border border-dashed rounded bg-light">
+                                            <i class="fas fa-image text-muted me-1"></i>
+                                            <span class="text-muted small">Sin imagen SEO</span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <input type="file" class="form-control form-control-sm @error('seo_image') is-invalid @enderror"
+                                       id="seo_image" name="seo_image"
+                                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                <small class="form-text text-muted">Recomendado: 1200×630px. Máx. 2MB.</small>
+                                @error('seo_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
                             <div class="mb-0">
                                 <label class="form-label fw-semibold">Índice</label>
                                 <div class="d-flex gap-3">
@@ -510,7 +530,7 @@
 
 @endsection
 
-@push('header-scripts')
+@push('scripts-head')
     <script src="{{ asset('core/tinymce/tinymce.min.js') }}"></script>
 @endpush
 
@@ -523,30 +543,57 @@ $(document).ready(function () {
     // =========================================================
     var editorActive = true;
     var editorId = 'content';
+    var mediaUploadUrl = '{{ route('media.upload') }}';
+    var mediaBaseUrl = '{{ url('media') }}';
+
+    function mediaUpload(formData, onSuccess, onError) {
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        $.ajax({
+            url: mediaUploadUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    onSuccess(mediaBaseUrl + '/' + res.file.url.replace(/^media\//, ''));
+                } else {
+                    onError('Error al subir la imagen');
+                }
+            },
+            error: function () { onError('Error al subir la imagen'); }
+        });
+    }
 
     function initTinyMCE() {
         tinymce.init({
             selector: '#' + editorId,
             language: 'es',
-            height: 450,
+            height: 500,
             plugins: [
                 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+                'insertdatetime', 'media', 'table', 'wordcount', 'emoticons',
+                'codesample', 'directionality', 'colorpicker', 'textcolor', 'paste'
             ],
-            toolbar:
-                'undo redo | styles | bold italic underline strikethrough | ' +
-                'forecolor backcolor | alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist outdent indent | link image media table | ' +
-                'code fullscreen | removeformat help',
+            toolbar1: 'formatselect | fontselect fontsizeselect | bold italic underline strikethrough | forecolor backcolor | link | bullist numlist',
+            toolbar2: 'alignleft aligncenter alignright alignjustify | ltr rtl | outdent indent | blockquote | image media table | codesample code | undo redo | searchreplace removeformat | fullscreen',
             menubar: false,
             branding: false,
             promotion: false,
             resize: true,
+            automatic_uploads: true,
+            images_upload_handler: function (blobInfo, progress) {
+                return new Promise(function (resolve, reject) {
+                    var fd = new FormData();
+                    fd.append('file', blobInfo.blob(), blobInfo.filename());
+                    mediaUpload(fd, resolve, reject);
+                });
+            },
             content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; }',
             setup: function (editor) {
                 editor.on('change input keyup', function () {
-                    editor.save(); // sync textarea
+                    editor.save();
                 });
             }
         });
@@ -573,7 +620,6 @@ $(document).ready(function () {
         }
     });
 
-    // Botón Agregar (abre file picker → inserta imagen en editor)
     $('#addMediaBtn').on('click', function () {
         $('#mediaFileInput').trigger('click');
     });
@@ -581,20 +627,27 @@ $(document).ready(function () {
     $('#mediaFileInput').on('change', function () {
         var file = this.files[0];
         if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
+        var self = this;
+        var $btn = $('#addMediaBtn').prop('disabled', true).text('Subiendo...');
+        var fd = new FormData();
+        fd.append('file', file);
+        mediaUpload(fd, function (url) {
+            var tag = '<img src="' + url + '" alt="" style="max-width:100%">';
             var editor = tinymce.get(editorId);
             if (editor) {
-                editor.insertContent('<img src="' + e.target.result + '" alt="" style="max-width:100%">');
+                editor.insertContent(tag);
             } else {
-                // modo textarea: insertar HTML
                 var ta = document.getElementById(editorId);
                 var pos = ta.selectionStart || ta.value.length;
-                ta.value = ta.value.substring(0, pos) + '<img src="' + e.target.result + '" alt="" style="max-width:100%">' + ta.value.substring(pos);
+                ta.value = ta.value.substring(0, pos) + tag + ta.value.substring(pos);
             }
-        };
-        reader.readAsDataURL(file);
-        this.value = '';
+            $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i> Agregar');
+            self.value = '';
+        }, function () {
+            toastr.error('Error al subir la imagen', 'Error');
+            $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i> Agregar');
+            self.value = '';
+        });
     });
 
     // =========================================================
@@ -808,6 +861,21 @@ $(document).ready(function () {
         reader.onload = function (e) {
             $('#imagePreviewContainer').html(
                 '<img src="' + e.target.result + '" class="img-fluid rounded mb-2" style="max-height:180px; object-fit:cover; width:100%">'
+            );
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // =========================================================
+    // IMAGEN SEO
+    // =========================================================
+    $('#seo_image').on('change', function () {
+        var file = this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $('#seoImagePreviewContainer').html(
+                '<img src="' + e.target.result + '" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">'
             );
         };
         reader.readAsDataURL(file);

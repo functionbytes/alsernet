@@ -54,13 +54,11 @@ Route::prefix('settings/templates')
 
         // AJAX Actions - Activar template
         Route::post('/activate', [TemplateController::class, 'postActivateTemplate'])
-            ->name('activate')
-            ->middleware('preventDemo');
+            ->name('activate');
 
         // AJAX Actions - Eliminar template
         Route::post('/remove', [TemplateController::class, 'postRemoveTemplate'])
-            ->name('remove')
-            ->middleware('preventDemo');
+            ->name('remove');
 
         // Versioning - Historial de versiones
         Route::prefix('/{template}/versions')
