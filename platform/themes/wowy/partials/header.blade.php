@@ -24,6 +24,12 @@
         <style id="theme-custom-css">{{ $customCss }}</style>
     @endif
 
+    <!-- Custom Header HTML from settings -->
+    @php $customHeaderHtml = setting('theme.custom_header_html'); @endphp
+    @if($customHeaderHtml)
+        {!! $customHeaderHtml !!}
+    @endif
+
     @yield('css')
 </head>
 <body class="wowy-template">

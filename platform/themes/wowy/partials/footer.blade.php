@@ -64,6 +64,12 @@
 
     @yield('js')
 
+    <!-- Custom Footer HTML from settings -->
+    @php $customFooterHtml = setting('theme.custom_footer_html'); @endphp
+    @if($customFooterHtml)
+        {!! $customFooterHtml !!}
+    @endif
+
     <div id="scrollUp">
         <i class="fas fa-arrow-up"></i>
     </div>
