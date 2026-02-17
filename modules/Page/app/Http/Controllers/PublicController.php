@@ -28,7 +28,22 @@ class PublicController extends Controller
             $page->content = shortcode($page->content);
         }
 
-        // Get template or use default
+        // Try to use active Template module if available
+        try {
+            $activeTemplate = \Modules\Template\Models\Template::where('status', 'active')->first();
+            if ($activeTemplate) {
+                // Render using template module layout
+                return view('page::public.show-with-template', [
+                    'page' => $page,
+                    'template' => $activeTemplate,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log and fallback to default page layout
+            \Log::debug('Could not load active template for public page: ' . $e->getMessage());
+        }
+
+        // Fallback: Get template or use default
         $template = $page->template ?? 'default';
         $viewPath = "page::public.templates.{$template}";
 
