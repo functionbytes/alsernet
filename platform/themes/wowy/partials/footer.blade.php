@@ -1,94 +1,71 @@
-    {!! dynamic_sidebar('top_footer_sidebar') !!}
-    <footer class="main">
-        <section class="section-padding-60">
-            <div class="container">
-                <div class="row">
-                    {!! dynamic_sidebar('footer_sidebar') !!}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5 mt-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-3 mb-4">
+                    <h5 class="fw-bold mb-3">{{ config('app.name') }}</h5>
+                    <p class="text-muted">{{ theme_trans('about_us_description') }}</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5 class="fw-bold mb-3">{{ theme_trans('quick_links') }}</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url('/') }}" class="text-muted text-decoration-none">{{ theme_trans('home') }}</a></li>
+                        <li><a href="{{ url('/about') }}" class="text-muted text-decoration-none">{{ theme_trans('about_us') }}</a></li>
+                        <li><a href="{{ url('/contact') }}" class="text-muted text-decoration-none">{{ theme_trans('contact') }}</a></li>
+                        <li><a href="{{ url('/privacidad') }}" class="text-muted text-decoration-none">{{ theme_trans('privacy') }}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5 class="fw-bold mb-3">{{ theme_trans('contact_info') }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt"></i> Alsernet, Inc.
+                    </p>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-phone"></i> +1 (555) 000-0000
+                    </p>
+                    <p class="text-muted small">
+                        <i class="fas fa-envelope"></i> info@alsernet.com
+                    </p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5 class="fw-bold mb-3">{{ theme_trans('follow_us') }}</h5>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="text-muted text-decoration-none"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-muted text-decoration-none"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-muted text-decoration-none"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-muted text-decoration-none"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
                 </div>
             </div>
-        </section>
-        <div class="container pb-20 wow fadeIn animated">
-            <div class="row">
-                <div class="col-12 mb-20">
-                    <div class="footer-bottom"></div>
+            <hr class="bg-secondary">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0 small">
+                        &copy; {{ date('Y') }} {{ config('app.name') }} - {{ theme_trans('all_rights_reserved') }}
+                    </p>
                 </div>
-                <div class="col-lg-6">
-                    <p class="float-md-left font-sm text-muted mb-0">{!! Theme::getSiteCopyright() !!}</p>
-                </div>
-                <div class="col-lg-6">
-                    <p class="text-lg-end text-center font-sm text-muted mb-0">
-                        {{ __('All rights reserved.') }}
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0 small">
+                        <a href="{{ url('/terminos-y-condiciones') }}" class="text-muted text-decoration-none">{{ theme_trans('terms') }}</a> |
+                        <a href="{{ url('/privacidad') }}" class="text-muted text-decoration-none">{{ theme_trans('privacy') }}</a>
                     </p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Quick view -->
-    <div class="modal fade custom-modal quick-view-modal" id="quick-view-modal" tabindex="-1" aria-labelledby="quick-view-modal-label" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                <div class="modal-body">
-                    <div class="half-circle-spinner loading-spinner">
-                        <div class="circle circle-1"></div>
-                        <div class="circle circle-2"></div>
-                    </div>
-                    <div class="quick-view-content"></div>
-                </div>
-            </div>
-        </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Wowy Custom Scripts -->
+    <script src="{{ theme_asset('js/script.js') }}"></script>
+
+    @yield('js')
+
+    <div id="scrollUp">
+        <i class="fas fa-arrow-up"></i>
     </div>
-
-    @if (is_plugin_active('ecommerce'))
-        <script>
-            window.currencies = {!! json_encode(get_currencies_json()) !!};
-        </script>
-    @endif
-
-    {!! Theme::footer() !!}
-
-    <script>
-        window.trans = {
-            "Views": "{{ __('Views') }}",
-            "Read more": "{{ __('Read more') }}",
-            "days": "{{ __('days') }}",
-            "hours": "{{ __('hours') }}",
-            "mins": "{{ __('mins') }}",
-            "sec": "{{ __('sec') }}",
-            "No reviews!": "{{ __('No reviews!') }}"
-        };
-
-        window.trackedStartCheckout = '{{ session("tracked_start_checkout") }}';
-        window.siteUrl = '{{ url("/") }}';
-    </script>
-
-    {!! Theme::place('footer') !!}
-
-    @if (session()->has('success_msg') || session()->has('error_msg') || (isset($errors) && $errors->count() > 0) || isset($error_msg))
-            <script type="text/javascript">
-                window.onload = function () {
-                    @if (session()->has('success_msg'))
-                    window.showAlert('alert-success', '{{ session('success_msg') }}');
-                    @endif
-
-                    @if (session()->has('error_msg'))
-                    window.showAlert('alert-danger', '{{ session('error_msg') }}');
-                    @endif
-
-                    @if (isset($error_msg))
-                    window.showAlert('alert-danger', '{{ $error_msg }}');
-                    @endif
-
-                    @if (isset($errors))
-                    @foreach ($errors->all() as $error)
-                    window.showAlert('alert-danger', '{!! BaseHelper::clean($error) !!}');
-                    @endforeach
-                    @endif
-                };
-            </script>
-        @endif
-
-        <div id="scrollUp"><i class="fal fa-long-arrow-up"></i></div>
-    </body>
+</body>
 </html>

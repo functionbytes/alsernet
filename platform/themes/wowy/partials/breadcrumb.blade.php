@@ -1,22 +1,9 @@
-<div class="page-header breadcrumb-wrap">
+<div class="page-header breadcrumb-wrap bg-light py-3 mb-4">
     <div class="container">
-        <div class="breadcrumb">
-            @foreach ($crumbs = Theme::breadcrumb()->getCrumbs() as $i => $crumb)
-                @if ($i != (count($crumbs) - 1))
-                    <div class="breadcrumb-item d-inline-block">
-                        <a href="{{ $crumb['url'] }}" title="{{ $crumb['label'] }}">
-                            {!! BaseHelper::clean($crumb['label']) !!}
-                        </a>
-                    </div>
-                    <span></span>
-                @else
-                    <div class="breadcrumb-item d-inline-block active">
-                        <i>
-                            {!! BaseHelper::clean($crumb['label']) !!}
-                        </i>
-                    </div>
-                @endif
-            @endforeach
+        <div class="breadcrumb d-flex align-items-center">
+            <a href="{{ url('/') }}" class="text-decoration-none text-muted">{{ theme_trans('home') }}</a>
+            <span class="mx-2">/</span>
+            <span class="text-dark fw-bold">@yield('page_title', 'Page')</span>
         </div>
     </div>
 </div>
