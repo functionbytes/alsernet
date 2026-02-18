@@ -56,11 +56,23 @@
         </div>
     </footer>
 
+    <!-- Cookie Consent Banner -->
+    @include('cookie::index')
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Slick Carousel JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+
+    <!-- Cookie Consent JS -->
+    <script src="/vendor/modules/Cookie/js/cookie-consent.js"></script>
+
     <!-- Wowy Custom Scripts -->
-    <script src="{{ theme_asset('js/script.js') }}"></script>
+    <script src="{{ theme_asset('js/main.js') }}"></script>
 
     @yield('js')
 

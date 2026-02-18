@@ -1,0 +1,12 @@
+{
+    "name": "Optimize",
+    "alias": "Optimize",
+    "description": "HTML optimization: minify, collapse whitespace, defer JS, remove comments",
+    "keywords": [],
+    "priority": 0,
+    "active": 1,
+    "providers": [
+        "Modules\\Optimize\\Providers\\OptimizeServiceProvider"
+    ],
+    "files": []
+}

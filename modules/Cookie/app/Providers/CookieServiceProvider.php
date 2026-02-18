@@ -6,13 +6,23 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Theme\Services\NavService;
 
 class CookieServiceProvider extends ServiceProvider
 {
     protected string $moduleName = 'Cookie';
 
-    protected string $moduleNameLower = 'Cookie';
+    protected string $moduleNameLower = 'cookie';
+
+    /**
+     * Register the service provider.
+     */
+    public function register(): void
+    {
+        $this->app->register(RouteServiceProvider::class);
+    }
 
     /**
      * Boot the application events.
@@ -23,6 +33,9 @@ class CookieServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+        $this->loadHelpers();
+        $this->registerRoutes();
+        $this->registerMenus();
 
         $this->app['events']->listen(RouteMatched::class, function (): void {
             $this->registerCookieAssets();
@@ -184,6 +197,46 @@ class CookieServiceProvider extends ServiceProvider
             $this->loadTranslationsFrom(module_path($this->moduleName, 'resources/lang'), $this->moduleNameLower);
             $this->loadJsonTranslationsFrom(module_path($this->moduleName, 'resources/lang'));
         }
+    }
+
+    /**
+     * Load helper files.
+     */
+    protected function loadHelpers(): void
+    {
+        $helpersPath = module_path($this->moduleName, 'helpers/CookieHelper.php');
+
+        if (file_exists($helpersPath)) {
+            require_once $helpersPath;
+        }
+    }
+
+    /**
+     * Register module routes.
+     */
+    protected function registerRoutes(): void
+    {
+        $webPath = module_path($this->moduleName, 'routes/web.php');
+
+        Route::middleware(['web', 'auth'])
+            ->prefix('setting/cookie')
+            ->name('settings.cookie.')
+            ->group(function () use ($webPath) {
+                require $webPath;
+            });
+    }
+
+    /**
+     * Register module menus.
+     */
+    protected function registerMenus(): void
+    {
+        NavService::registerSidebar('settings', [
+            'title' => 'Configuración de cookies',
+            'items' => [
+                ['label' => 'Cookies', 'route' => 'settings.cookie.index'],
+            ],
+        ]);
     }
 
     /**

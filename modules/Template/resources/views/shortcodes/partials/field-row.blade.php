@@ -11,10 +11,20 @@
 
 <div class="field-row border rounded p-3 mb-2 bg-light">
     <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="fw-semibold small text-secondary">Campo #{{ $index + 1 }}</span>
-        <button type="button" class="btn btn-sm btn-outline-danger remove-field-btn">
-            <i class="fas fa-times"></i>
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <span class="field-drag-handle text-muted" style="cursor:grab;" title="Arrastrar para reordenar">
+                <i class="fas fa-grip-vertical"></i>
+            </span>
+            <span class="fw-semibold small text-secondary">Campo #{{ is_numeric($index) ? $index + 1 : '' }}</span>
+        </div>
+        <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-outline-secondary copy-placeholder-btn" title="Copiar {id} al portapapeles">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-field-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
     <div class="row g-2">
         <div class="col-md-4">

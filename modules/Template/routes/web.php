@@ -7,6 +7,7 @@ use Modules\Template\Http\Controllers\TemplateController;
 use Modules\Template\Http\Controllers\TemplateWebController;
 use Modules\Template\Http\Controllers\ThemeCustomHtmlController;
 use Modules\Template\Http\Controllers\ThemeCustomJsController;
+use Modules\Template\Http\Controllers\ThemeOptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,13 @@ Route::prefix('settings/theme')
 
         Route::post('/custom/js', [ThemeCustomJsController::class, 'update'])
             ->name('custom-js.update');
+
+        // Theme Options
+        Route::get('/options', [ThemeOptionController::class, 'index'])
+            ->name('options');
+
+        Route::post('/options', [ThemeOptionController::class, 'update'])
+            ->name('options.update');
     });
 
 // Admin Routes - Template Management
@@ -119,6 +127,7 @@ Route::prefix('settings/shortcodes')
         Route::get('/{shortcode}/edit', [ShortcodeController::class, 'edit'])->name('edit');
         Route::put('/{shortcode}', [ShortcodeController::class, 'update'])->name('update');
         Route::delete('/{shortcode}', [ShortcodeController::class, 'destroy'])->name('destroy');
+        Route::post('/{shortcode}/toggle', [ShortcodeController::class, 'toggle'])->name('toggle');
         Route::post('/order', [ShortcodeController::class, 'updateOrder'])->name('order');
     });
 

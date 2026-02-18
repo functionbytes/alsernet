@@ -13,9 +13,16 @@
                         <h5 class="mb-1 fw-bold">Referencia de shortcodes</h5>
                         <p class="small mb-0 text-muted">Documentacion detallada de cada shortcode con atributos y ejemplos de uso</p>
                     </div>
-                    <a href="{{ route('setting.shortcode.index') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i> Volver
-                    </a>
+                    <div class="d-flex gap-2">
+                        @if(Route::has('settings.shortcodes.index'))
+                            <a href="{{ route('settings.shortcodes.index') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-cog me-1"></i> Gestionar shortcodes
+                            </a>
+                        @endif
+                        <a href="{{ route('setting.shortcode.index') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Volver
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-body">

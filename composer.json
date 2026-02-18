@@ -59,6 +59,7 @@
             "Modules\\Menu\\": "modules/Menu/app/",
             "Modules\\Modules\\": "modules/Modules/app/",
             "Modules\\Notification\\": "modules/Notification/app/",
+            "Modules\\Optimize\\": "modules/Optimize/app/",
             "Modules\\Page\\": "modules/Page/app/",
             "Modules\\Prestashop\\": "modules/Prestashop/app/",
             "Modules\\Pulse\\": "modules/Pulse/app/",

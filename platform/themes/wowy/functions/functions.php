@@ -51,7 +51,7 @@ if (! function_exists('theme_url')) {
 if (! function_exists('theme_asset')) {
     function theme_asset(string $path): string
     {
-        return theme_url('public/'.ltrim($path, '/'));
+        return '/'.ltrim($path, '/');
     }
 }
 

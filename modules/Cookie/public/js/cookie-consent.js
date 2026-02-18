@@ -2,143 +2,117 @@
 
 $(() => {
     window.Cookie = (function () {
-        const COOKIE_NAME = $('div[data-site-cookie-name]').data('site-cookie-name')
-        const COOKIE_DOMAIN = $('div[data-site-cookie-domain]').data('site-cookie-domain')
-        const COOKIE_LIFETIME = $('div[data-site-cookie-lifetime]').data('site-cookie-lifetime')
-        const SESSION_SECURE = $('div[data-site-session-secure]').data('site-session-secure')
 
-        const $cookieDialog = $('.js-cookie-consent')
-        const $cookieCategories = $('.cookie-consent__categories')
-        const $customizeButton = $('.js-cookie-consent-customize')
+        const $banner     = $('.js-cookie-consent')
+        const $categories = $('.cookie-consent__categories')
 
-        $cookieDialog.addClass('cookie-consent--visible')
-        $cookieCategories.hide()
+        const COOKIE_NAME     = $banner.data('cookie-name') || 'cookie_for_consent'
+        const COOKIE_DOMAIN   = $banner.data('cookie-domain') || window.location.hostname
+        const COOKIE_LIFETIME = parseInt($banner.data('cookie-lifetime') || 36000, 10)
+        const SESSION_SECURE  = $banner.data('session-secure') || ''
 
-        /**
-         * Set a cookie with the given name, value, and expiration
-         */
-        function setCookie(name, value, expirationInDays) {
+        // ── Cookie helpers ──────────────────────────────────────
+
+        function setCookie(name, value, days) {
             const date = new Date()
-            date.setTime(date.getTime() + expirationInDays * 24 * 60 * 60 * 1000)
+            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
             document.cookie =
-                name +
-                '=' +
-                value +
-                ';expires=' +
-                date.toUTCString() +
-                ';domain=' +
-                COOKIE_DOMAIN +
-                ';path=/' +
-                SESSION_SECURE
+                name + '=' + encodeURIComponent(value) +
+                ';expires=' + date.toUTCString() +
+                ';domain=' + COOKIE_DOMAIN +
+                ';path=/' + SESSION_SECURE +
+                ';SameSite=Lax'
         }
 
-        /**
-         * Get a cookie by name
-         */
         function getCookie(name) {
-            const value = `; ${document.cookie}`
-            const parts = value.split(`; ${name}=`)
+            const value = '; ' + document.cookie
+            const parts = value.split('; ' + name + '=')
             if (parts.length === 2) {
-                return parts.pop().split(';').shift()
+                return decodeURIComponent(parts.pop().split(';').shift())
             }
             return null
         }
 
-        /**
-         * Check if a cookie exists
-         */
         function cookieExists(name) {
-            const cookie = getCookie(name)
-            return cookie !== null && cookie !== undefined
+            return getCookie(name) !== null
         }
 
-        /**
-         * Hide the cookie consent dialog
-         */
-        function hideCookieDialog() {
-            $cookieDialog.removeClass('cookie-consent--visible')
-            setTimeout(() => {
-                $cookieDialog.hide()
-            }, 300)
+        // ── Banner visibility ───────────────────────────────────
+
+        function showBanner() {
+            $banner.show()
+            setTimeout(() => $banner.addClass('cookie-consent--visible'), 10)
         }
 
-        /**
-         * Consent with selected categories
-         */
-        function consentWithCookies() {
-            const categories = {}
-            $('.js-cookie-category:checked').each(function() {
+        function hideBanner() {
+            $banner.removeClass('cookie-consent--visible')
+            setTimeout(() => $banner.hide(), 300)
+        }
+
+        // ── Customize view ──────────────────────────────────────
+
+        function toggleCustomizeView() {
+            $categories.slideToggle(250)
+        }
+
+        // ── Google Analytics consent update ─────────────────────
+
+        function updateGtagConsent(categories) {
+            if (typeof gtag !== 'function') {
+                return
+            }
+
+            gtag('consent', 'update', {
+                ad_storage: categories.marketing ? 'granted' : 'denied',
+                analytics_storage: categories.analytics ? 'granted' : 'denied',
+                functionality_storage: categories.essential ? 'granted' : 'denied',
+                personalization_storage: categories.marketing ? 'granted' : 'denied',
+                security_storage: 'granted'
+            })
+        }
+
+        // ── Consent actions ─────────────────────────────────────
+
+        function acceptAllCookies() {
+            const categories = { essential: true }
+            $('.js-cookie-category').each(function () {
                 categories[$(this).val()] = true
             })
             setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
-            updateGoogleAnalyticsConsent(categories)
-            hideCookieDialog()
+            updateGtagConsent(categories)
+            hideBanner()
         }
 
-        /**
-         * Save user preferences
-         */
-        function savePreferences() {
-            consentWithCookies()
-            $cookieCategories.slideUp()
-            $customizeButton.removeClass('active')
-        }
-
-        /**
-         * Reject all non-essential cookies
-         */
         function rejectAllCookies() {
-            // Only keep essential cookies
-            const essentialOnly = {
-                essential: true
-            }
-
-            setCookie(COOKIE_NAME, JSON.stringify(essentialOnly), COOKIE_LIFETIME)
-
-            // Update Google Analytics consent if available
-            updateGoogleAnalyticsConsent(essentialOnly)
-
-            hideCookieDialog()
+            const categories = { essential: true }
+            setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
+            updateGtagConsent(categories)
+            hideBanner()
         }
 
-        /**
-         * Toggle customize preferences view
-         */
-        function toggleCustomizeView() {
-            $cookieCategories.slideToggle()
-            $customizeButton.toggleClass('active')
+        function savePreferences() {
+            const categories = { essential: true }
+            $('.js-cookie-category:checked').each(function () {
+                categories[$(this).val()] = true
+            })
+            setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
+            updateGtagConsent(categories)
+            hideBanner()
         }
 
-        /**
-         * Update Google Analytics consent mode
-         */
-        function updateGoogleAnalyticsConsent(categories) {
-            if (typeof gtag !== 'undefined') {
-                const consents = {
-                    'ad_storage': categories.marketing ? 'granted' : 'denied',
-                    'analytics_storage': categories.analytics ? 'granted' : 'denied',
-                    'functionality_storage': categories.essential ? 'granted' : 'denied',
-                    'personalization_storage': categories.marketing ? 'granted' : 'denied',
-                    'security_storage': 'granted'
-                }
+        // ── Init ────────────────────────────────────────────────
 
-                gtag('consent', 'update', consents)
-            }
-        }
-
-        /**
-         * Initialize - check if cookie already exists
-         */
         if (cookieExists(COOKIE_NAME)) {
-            hideCookieDialog()
+            $banner.hide()
+        } else {
+            showBanner()
         }
 
-        /**
-         * Event Listeners
-         */
+        // ── Event listeners ─────────────────────────────────────
+
         $(document).on('click', '.js-cookie-consent-agree', function (e) {
             e.preventDefault()
-            consentWithCookies()
+            acceptAllCookies()
         })
 
         $(document).on('click', '.js-cookie-consent-reject', function (e) {
@@ -156,17 +130,19 @@ $(() => {
             savePreferences()
         })
 
-        /**
-         * Public API
-         */
+        // ── Public API ──────────────────────────────────────────
+
         return {
-            consentWithCookies: consentWithCookies,
-            rejectAllCookies: rejectAllCookies,
-            hideCookieDialog: hideCookieDialog,
-            savePreferences: savePreferences,
-            getCookie: getCookie,
-            setCookie: setCookie,
-            cookieExists: cookieExists,
+            acceptAllCookies,
+            rejectAllCookies,
+            savePreferences,
+            hideBanner,
+            showBanner,
+            toggleCustomizeView,
+            getCookie,
+            setCookie,
+            cookieExists,
         }
+
     })()
 })

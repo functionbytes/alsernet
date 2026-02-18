@@ -31,14 +31,14 @@ class ShortcodeController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:100'],
             'shortcode_template' => ['nullable', 'string', 'max:500'],
-            'render_template' => ['nullable', 'string'],
+            'render_template' => ['nullable', 'string', 'max:10000'],
+            'js_code' => ['nullable', 'string', 'max:50000'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-            'is_active' => ['nullable', 'boolean'],
             'config_fields' => ['nullable', 'json'],
         ]);
 
         $data['config_fields'] = $data['config_fields'] ? json_decode($data['config_fields'], true) : [];
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->has('is_active');
 
         Shortcode::create($data);
 
@@ -59,14 +59,14 @@ class ShortcodeController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:100'],
             'shortcode_template' => ['nullable', 'string', 'max:500'],
-            'render_template' => ['nullable', 'string'],
+            'render_template' => ['nullable', 'string', 'max:10000'],
+            'js_code' => ['nullable', 'string', 'max:50000'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-            'is_active' => ['nullable', 'boolean'],
             'config_fields' => ['nullable', 'json'],
         ]);
 
         $data['config_fields'] = $data['config_fields'] ? json_decode($data['config_fields'], true) : [];
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->has('is_active');
 
         $shortcode->update($data);
 
@@ -74,20 +74,34 @@ class ShortcodeController extends Controller
             ->with('success', 'Shortcode actualizado correctamente.');
     }
 
-    public function destroy(Shortcode $shortcode): RedirectResponse
+    public function destroy(Request $request, Shortcode $shortcode): RedirectResponse|JsonResponse
     {
         $shortcode->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route('settings.shortcodes.index')
             ->with('success', 'Shortcode eliminado correctamente.');
     }
 
+    public function toggle(Shortcode $shortcode): JsonResponse
+    {
+        $shortcode->update(['is_active' => ! $shortcode->is_active]);
+
+        return response()->json(['is_active' => $shortcode->is_active]);
+    }
+
     public function updateOrder(Request $request): JsonResponse
     {
-        $request->validate(['order' => ['required', 'array']]);
+        $request->validate([
+            'order' => ['required', 'array', 'max:500'],
+            'order.*' => ['integer', 'exists:shortcodes,id'],
+        ]);
 
         foreach ($request->order as $position => $id) {
-            Shortcode::where('id', $id)->update(['sort_order' => $position]);
+            Shortcode::where('id', (int) $id)->update(['sort_order' => (int) $position]);
         }
 
         return response()->json(['success' => true]);

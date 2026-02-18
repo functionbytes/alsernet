@@ -157,7 +157,7 @@ class ShortcodeSeeder extends Seeder
                     ['id' => 'bc_height', 'label' => 'Altura (px)', 'type' => 'number', 'placeholder' => '40'],
                 ],
                 'shortcode_template' => '[spacer height="{bc_height}"]',
-                'render_template' => '<div style="height:{bc_height}px;display:block;"></div>',
+                'render_template' => '<div style="height:{height}px;display:block;"></div>',
                 'sort_order' => 11,
             ],
         ];

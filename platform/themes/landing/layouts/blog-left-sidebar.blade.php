@@ -32,6 +32,10 @@
         </div>
     </main>
     @include('template::partials.footer')
+
+    <!-- Cookie Consent Banner -->
+    @include('cookie::index')
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="{{ theme_asset('js/main.js') }}"></script>

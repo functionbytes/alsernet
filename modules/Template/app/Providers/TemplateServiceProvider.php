@@ -207,6 +207,7 @@ class TemplateServiceProvider extends ServiceProvider
                 ['label' => 'Plantillas', 'route' => 'settings.templates.index'],
                 ['label' => 'Menus', 'route' => 'settings.menus.index'],
                 ['label' => 'Shortcodes', 'route' => 'settings.shortcodes.index'],
+                ['label' => 'Opciones del tema', 'route' => 'settings.theme.options'],
                 ['label' => 'CSS personalizado', 'route' => 'settings.templates.custom-css.edit'],
                 ['label' => 'JavaScript personalizado', 'route' => 'settings.theme.custom-js'],
                 ['label' => 'HTML personalizado', 'route' => 'settings.theme.custom-html'],
@@ -229,11 +230,18 @@ class TemplateServiceProvider extends ServiceProvider
                 foreach ($shortcodes as $sc) {
                     app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
                         $html = $sc->render_template;
+
                         foreach ($attrs as $key => $val) {
                             $html = str_replace('{'.$key.'}', e($val), $html);
                         }
 
-                        return str_replace('{content}', $content, $html);
+                        $html = str_replace('{content}', e($content), $html);
+
+                        if ($sc->js_code) {
+                            $html .= "\n<script>".$sc->js_code.'</script>';
+                        }
+
+                        return $html;
                     });
                 }
             } catch (\Exception) {

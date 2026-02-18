@@ -16,6 +16,16 @@ if (! function_exists('render_menu')) {
     }
 }
 
+if (! function_exists('theme_option')) {
+    /**
+     * Get a theme option value.
+     */
+    function theme_option(string $key, string $default = ''): string
+    {
+        return \Modules\Core\Models\Setting::get('theme.option.'.$key, $default) ?? $default;
+    }
+}
+
 if (! function_exists('menu')) {
     /**
      * Get a menu by location.

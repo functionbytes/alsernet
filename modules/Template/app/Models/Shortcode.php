@@ -17,6 +17,7 @@ class Shortcode extends Model
         'config_fields',
         'shortcode_template',
         'render_template',
+        'js_code',
         'sort_order',
         'is_active',
     ];

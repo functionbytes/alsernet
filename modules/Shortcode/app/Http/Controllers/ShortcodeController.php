@@ -15,7 +15,13 @@ class ShortcodeController extends Controller
      */
     public function index(): View
     {
-        return view('shortcode::admin.index');
+        $shortcodes = Shortcode::all();
+
+        $dbShortcodes = class_exists(\Modules\Template\Models\Shortcode::class)
+            ? \Modules\Template\Models\Shortcode::query()->pluck('id', 'key')
+            : collect();
+
+        return view('shortcode::admin.index', compact('shortcodes', 'dbShortcodes'));
     }
 
     /**

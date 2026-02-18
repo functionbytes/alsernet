@@ -17,6 +17,9 @@
         <link href="{{ theme_asset('css/rtl.css') }}" rel="stylesheet">
     @endif
 
+    <!-- Cookie Consent CSS -->
+    <link href="/modules/cookie/css/cookie-consent.css" rel="stylesheet">
+
     @yield('css')
 </head>
 <body class="{{ rtl_class() }}">
@@ -34,9 +37,15 @@
     <!-- Footer -->
     @include('template::partials.footer')
 
+    <!-- Cookie Consent Banner -->
+    @include('cookie::index')
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- Cookie Consent JS -->
+    <script src="/modules/cookie/js/cookie-consent.js"></script>
 
     <!-- Theme JS -->
     <script src="{{ theme_asset('js/main.js') }}"></script>

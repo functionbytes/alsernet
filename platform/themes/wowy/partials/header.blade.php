@@ -15,8 +15,15 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <!-- Slick Carousel -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
+
     <!-- Wowy Custom Styles -->
     <link rel="stylesheet" href="{{ theme_asset('css/style.css') }}">
+
+    <!-- Cookie Consent CSS -->
+    <link rel="stylesheet" href="/vendor/modules/Cookie/css/cookie-consent.css">
 
     <!-- Custom CSS from settings -->
     @php $customCss = setting('theme.custom_css'); @endphp
