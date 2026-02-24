@@ -24,7 +24,7 @@
                             <label for="header_js" class="form-label fw-semibold">
                                 JavaScript del encabezado
                             </label>
-                            <p class="small text-muted mb-2">
+                            <p class=" text-muted mb-2">
                                 Se inyecta dentro de <code>&lt;head&gt;</code>. Ideal para scripts de carga temprana, variables globales y configuraciones.
                             </p>
                             <textarea id="header_js" name="header_js"
@@ -40,7 +40,7 @@
                             <label for="footer_js" class="form-label fw-semibold">
                                 JavaScript del pie de página
                             </label>
-                            <p class="small text-muted mb-2">
+                            <p class=" text-muted mb-2">
                                 Se inyecta antes de <code>&lt;/body&gt;</code>. Ideal para analytics, widgets y scripts de carga tardía.
                             </p>
                             <textarea id="footer_js" name="footer_js"
@@ -64,11 +64,11 @@
             <div class="card">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Sobre el JS del encabezado</h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Todo lo que escribas aquí se colocará dentro de la etiqueta <code>&lt;head&gt;</code> de cada página.
                         Úsalo para:
                     </p>
-                    <ul class="small text-muted ps-3 mb-4">
+                    <ul class=" text-muted ps-3 mb-4">
                         <li>Variables y constantes globales</li>
                         <li>Scripts de configuración de terceros</li>
                         <li>Código que debe ejecutarse antes del contenido</li>
@@ -76,10 +76,10 @@
                     </ul>
 
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Sobre el JS del pie de página</h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Este bloque se inyecta justo antes de <code>&lt;/body&gt;</code>. Úsalo para:
                     </p>
-                    <ul class="small text-muted ps-3 mb-4">
+                    <ul class=" text-muted ps-3 mb-4">
                         <li>Scripts de analytics (GA, GTM, Hotjar…)</li>
                         <li>Widgets de chat o soporte</li>
                         <li>Scripts de terceros que no bloquean el renderizado</li>

@@ -23,7 +23,7 @@
                             <label for="css-editor" class="form-label fw-semibold">
                                 Estilo personalizado
                             </label>
-                            <p class="small text-muted mb-2">
+                            <p class=" text-muted mb-2">
                                 Escribe reglas CSS que se aplicarán globalmente. Úsalo para personalizar colores, tipografía, espacios y más.
                             </p>
                             <textarea id="css-editor" name="custom_css"
@@ -50,15 +50,15 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Plantilla activa</h6>
                     <p class="mb-1 fw-semibold text-uppercase small">{{ $activeTemplateName ?? setting('template', 'default') }}</p>
-                    <p class="small text-muted mb-4">El CSS se aplica a esta plantilla</p>
+                    <p class=" text-muted mb-4">El CSS se aplica a esta plantilla</p>
 
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Ejemplos rápidos</h6>
-                    <p class="small text-muted mb-1">Cambiar color primario:</p>
+                    <p class=" text-muted mb-1">Cambiar color primario:</p>
                     <pre class="small bg-light p-2 rounded mb-3" style="font-size: 0.78rem;">:root {
   --primary-color: #90bb13;
 }</pre>
 
-                    <p class="small text-muted mb-1">Ocultar un elemento:</p>
+                    <p class=" text-muted mb-1">Ocultar un elemento:</p>
                     <pre class="small bg-light p-2 rounded mb-4" style="font-size: 0.78rem;">.mi-elemento {
   display: none;
 }</pre>

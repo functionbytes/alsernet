@@ -266,7 +266,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <button type="button"
-                                            class="dropdown-item text-danger"
+                                            class="dropdown-item"
                                             data-bs-toggle="modal"
                                             data-bs-target="#deleteModal{{ $automation->id }}">
                                         <i class="fas fa-trash me-2"></i>Eliminar

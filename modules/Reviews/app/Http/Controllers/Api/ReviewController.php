@@ -3,15 +3,21 @@
 namespace Modules\Reviews\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
 use Modules\Reviews\Http\Resources\ReviewResource;
 use Modules\Reviews\Http\Resources\ReviewStatsResource;
 use Modules\Reviews\Models\Review;
+use Modules\Reviews\Services\ReviewAutoSuggestionService;
 
 class ReviewController extends Controller
 {
+    public function __construct(
+        private readonly ReviewAutoSuggestionService $suggestionService
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Review::class);
@@ -141,5 +147,19 @@ class ReviewController extends Controller
         });
 
         return ReviewStatsResource::make($stats);
+    }
+
+    public function suggestions(Review $review): JsonResponse
+    {
+        $this->authorize('view', $review);
+
+        $suggestions = $this->suggestionService->suggestTemplates($review);
+
+        return response()->json([
+            'review_id' => $review->id,
+            'star_rating' => $review->star_rating_value,
+            'has_comment' => ! empty($review->comment),
+            'suggestions' => $suggestions,
+        ]);
     }
 }

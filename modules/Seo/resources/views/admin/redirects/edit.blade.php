@@ -143,7 +143,7 @@
                     <h6 class="card-title mb-3">
                         <i class="fas fa-chart-line text-primary me-2"></i>Estadísticas de uso
                     </h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Información sobre el uso y rendimiento de esta redireccion.
                     </p>
 
@@ -191,28 +191,28 @@
 
                     <div class="mb-3">
                         <span class="badge bg-success-subtle text-success mb-2">301 - Permanente</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Indica cambio permanente. Transfiere el 90-99% del valor SEO.
                         </p>
                     </div>
 
                     <div class="mb-3">
                         <span class="badge bg-info-subtle text-info mb-2">302 - Temporal</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Indica cambio temporal. No transfiere valor SEO.
                         </p>
                     </div>
 
                     <div class="mb-3">
                         <span class="badge bg-warning-subtle text-warning mb-2">307 - Temporal (preserva método)</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Similar a 302 pero mantiene el método HTTP.
                         </p>
                     </div>
 
                     <div class="mb-0">
                         <span class="badge bg-primary-subtle text-primary mb-2">308 - Permanente (preserva método)</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Similar a 301 pero mantiene el método HTTP.
                         </p>
                     </div>
@@ -225,7 +225,7 @@
                     <h6 class="mb-2 text-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>Zona de peligro
                     </h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Eliminar esta redireccion no se puede deshacer. Se perderán todas las estadísticas.
                     </p>
                     <button type="button" class="btn btn-danger w-100 delete-btn"

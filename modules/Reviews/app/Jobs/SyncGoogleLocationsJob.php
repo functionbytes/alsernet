@@ -22,7 +22,7 @@ class SyncGoogleLocationsJob implements ShouldQueue
     public int $backoff = 120;
 
     public function __construct(
-        public ReviewGoogleConnection $connection
+        public ReviewGoogleConnection $googleConnection
     ) {
         $this->onQueue('google-sync');
     }
@@ -30,12 +30,12 @@ class SyncGoogleLocationsJob implements ShouldQueue
     public function handle(GoogleLocationService $service): void
     {
         try {
-            $count = $service->syncLocations($this->connection);
+            $count = $service->syncLocations($this->googleConnection);
 
-            Log::info("Synced {$count} locations for connection {$this->connection->id}");
+            Log::info("Synced {$count} locations for connection {$this->googleConnection->id}");
         } catch (\Exception $e) {
             Log::error('Failed to sync locations', [
-                'connection_id' => $this->connection->id,
+                'connection_id' => $this->googleConnection->id,
                 'error' => $e->getMessage(),
             ]);
 
@@ -46,7 +46,7 @@ class SyncGoogleLocationsJob implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('SyncGoogleLocationsJob failed permanently', [
-            'connection_id' => $this->connection->id,
+            'connection_id' => $this->googleConnection->id,
             'error' => $exception->getMessage(),
         ]);
     }

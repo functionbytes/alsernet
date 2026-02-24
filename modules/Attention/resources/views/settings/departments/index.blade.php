@@ -183,7 +183,7 @@
                                                               onsubmit="return confirm('¿Estás seguro de eliminar este departamento?')">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="dropdown-item text-danger">
+                                                            <button type="submit" class="dropdown-item">
                                                                 <i class="fa fa-trash me-2"></i> Eliminar
                                                             </button>
                                                         </form>

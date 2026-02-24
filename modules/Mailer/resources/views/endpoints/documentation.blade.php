@@ -74,7 +74,7 @@
                                     <i class="fas @if($endpoint->is_active) fa-check-circle text-success @else fa-times-circle text-danger @endif me-2"></i>
                                     {{ $endpoint->name }}
                                 </h5>
-                                <p class="mb-0 small text-muted">{{ $endpoint->description ?? 'Sin descripción' }}</p>
+                                <p class="mb-0  text-muted">{{ $endpoint->description ?? 'Sin descripción' }}</p>
                             </div>
                             <div class="col-auto">
                                 <div class="d-flex gap-2">

@@ -20488,7 +20488,6 @@ progress {
 .form-control-lg {
     min-height: calc(1.5em + 1rem + calc(var(--bs-border-width) * 2));
     padding: .5rem 1rem;
-    font-size: 1.09375rem;
     border-radius: 8px
 }
 
@@ -22230,7 +22229,8 @@ textarea.form-control-lg {
     white-space: nowrap;
     background-color: transparent;
     border: 0;
-    border-radius: var(--bs-dropdown-item-border-radius,0)
+    border-radius: var(--bs-dropdown-item-border-radius,0);
+    cursor: pointer;
 }
 
 .dropdown-item:focus,.dropdown-item:hover {
@@ -23089,7 +23089,6 @@ textarea.form-control-lg {
 .card-subtitle {
     margin-top: calc(-.5 * var(--bs-card-title-spacer-y));
     margin-bottom: 0;
-    color: var(--bs-card-subtitle-color)
 }
 
 .card-text:last-child {
@@ -39488,8 +39487,8 @@ html[data-layout=horizontal] .body-wrapper>.container-fluid,html[data-layout=hor
 }
 
 .card-subtitle {
-    font-size: 15px;
-    line-height: 24px
+    font-size: 14px;
+    line-height: 17px;
 }
 
 .card-hover {
@@ -48567,7 +48566,7 @@ body .select2-container--classic .select2-selection--multiple .select2-selection
 }
 
 body .select2-container {
-    display: inline
+    /* display: inline; */
 }
 
 body .select2-container--default .select2-selection--multiple .select2-selection__choice {
@@ -50347,13 +50346,6 @@ a {
 
 .process-shadow {
     box-shadow: 0 12px 12px -6px rgba(0,0,0,.0509803922)
-}
-
-.blog-bg {
-    min-height: 366px;
-    background-image: url(../images/frontend-pages/blog-10.jpg);
-    background-size: cover;
-    background-repeat: no-repeat
 }
 
 .bg-circle::after {

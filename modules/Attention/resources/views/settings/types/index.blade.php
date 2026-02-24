@@ -145,7 +145,7 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a
-                                                                class="dropdown-item text-danger delete-btn"
+                                                                class="dropdown-item delete-btn"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#delete-modal"
                                                                 data-url="{{ route('settings.attention.types.destroy', $type->id) }}"

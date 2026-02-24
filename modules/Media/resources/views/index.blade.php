@@ -1124,7 +1124,7 @@
                                             <li><a class="dropdown-item" href="#" @click.prevent="showProperties(file)">
                                                 <i class="fas fa-info-circle me-2 text-muted"></i>Propiedades
                                             </a></li>
-                                            <li><a class="dropdown-item text-danger" href="#" @click.prevent="deleteFile(file)">
+                                            <li><a class="dropdown-item" href="#" @click.prevent="deleteFile(file)">
                                                 <i class="fas fa-trash me-2"></i>Eliminar
                                             </a></li>
                                         </ul>

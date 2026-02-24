@@ -24,7 +24,7 @@
                             <label for="header_html" class="form-label fw-semibold">
                                 HTML del encabezado
                             </label>
-                            <p class="small text-muted mb-2">
+                            <p class=" text-muted mb-2">
                                 Se inyecta dentro de <code>&lt;head&gt;</code>. Ideal para estilos CSS, meta tags y scripts de carga temprana.
                             </p>
                             <textarea id="header_html" name="header_html"
@@ -40,7 +40,7 @@
                             <label for="footer_html" class="form-label fw-semibold">
                                 HTML del pie de página
                             </label>
-                            <p class="small text-muted mb-2">
+                            <p class=" text-muted mb-2">
                                 Se inyecta antes de <code>&lt;/body&gt;</code>. Ideal para scripts de analytics, widgets y código de carga tardía.
                             </p>
                             <textarea id="footer_html" name="footer_html"
@@ -64,11 +64,11 @@
             <div class="card">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Sobre el HTML del encabezado</h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Todo lo que escribas aquí se colocará dentro de la etiqueta <code>&lt;head&gt;</code> de cada página.
                         Úsalo para:
                     </p>
-                    <ul class="small text-muted ps-3 mb-4">
+                    <ul class=" text-muted ps-3 mb-4">
                         <li>Hojas de estilos externas (<code>&lt;link&gt;</code>)</li>
                         <li>Meta tags de SEO o redes sociales</li>
                         <li>Scripts que deben cargar antes del contenido</li>
@@ -76,10 +76,10 @@
                     </ul>
 
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Sobre el HTML del pie de página</h6>
-                    <p class="small text-muted mb-3">
+                    <p class=" text-muted mb-3">
                         Este bloque se inyecta justo antes de <code>&lt;/body&gt;</code>. Úsalo para:
                     </p>
-                    <ul class="small text-muted ps-3 mb-4">
+                    <ul class=" text-muted ps-3 mb-4">
                         <li>Scripts de analytics (GA, GTM, Hotjar…)</li>
                         <li>Widgets de chat o soporte</li>
                         <li>Scripts de terceros que no bloquean el renderizado</li>

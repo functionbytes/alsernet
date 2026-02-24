@@ -20,19 +20,19 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-12 mb-3">
-                            <label class="form-label small text-muted">Ruta origen</label>
+                            <label class="form-label  text-muted">Ruta origen</label>
                             <div class="form-control bg-light">
                                 <code class="text-primary">{{ $redirect->source_path }}</code>
                             </div>
                         </div>
                         <div class="col-12 mb-3">
-                            <label class="form-label small text-muted">Ruta destino</label>
+                            <label class="form-label  text-muted">Ruta destino</label>
                             <div class="form-control bg-light">
                                 <code class="text-muted">{{ $redirect->target_path }}</code>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label small text-muted">Tipo de redireccion</label>
+                            <label class="form-label  text-muted">Tipo de redireccion</label>
                             <div>
                                 <span class="badge {{ $redirect->isPermanent() ? 'bg-success-subtle text-success' : 'bg-info-subtle text-info' }} fs-6">
                                     {{ $redirect->status_code }} - {{ $redirect->isPermanent() ? 'Permanente' : 'Temporal' }}
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label small text-muted">Estado</label>
+                            <label class="form-label  text-muted">Estado</label>
                             <div>
                                 <span class="badge {{ $redirect->is_active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }} fs-6">
                                     {{ $redirect->is_active ? 'Activo' : 'Inactivo' }}

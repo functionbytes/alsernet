@@ -269,7 +269,7 @@
                     <h5 class="mb-1 fw-bold"><i class="fas fa-info-circle me-1"></i> Recomendaciones</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="small text-muted ps-3 mb-0">
+                    <ul class="text-muted mb-0">
                         <li>Titulo: entre 50-60 caracteres para mejor visibilidad</li>
                         <li>Descripcion: entre 120-160 caracteres ideal</li>
                         <li>Usa palabras clave naturalmente</li>
@@ -285,7 +285,7 @@
                     <h5 class="mb-0 fw-bold text-danger"><i class="fas fa-exclamation-triangle me-1"></i> Zona de peligro</h5>
                 </div>
                 <div class="card-body">
-                    <p class="small text-muted">Eliminar estos metadatos SEO no se puede deshacer. El modelo asociado no se vera afectado.</p>
+                    <p class=" text-muted">Eliminar estos metadatos SEO no se puede deshacer. El modelo asociado no se vera afectado.</p>
                     <button type="button" class="btn btn-danger w-100 delete-btn"
                             data-bs-toggle="modal"
                             data-bs-target="#delete-modal">

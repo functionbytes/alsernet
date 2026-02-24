@@ -30,7 +30,7 @@
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <x-attention::status-badge :status="$attention->status" class="mb-2" />
-                <div class="small text-muted">
+                <div class=" text-muted">
                     @if($attention->assigned_user_id)
                         <i class="fa-duotone fa-user-check"></i> {{ $attention->assignedUser->name }}
                     @elseif($attention->department_id)

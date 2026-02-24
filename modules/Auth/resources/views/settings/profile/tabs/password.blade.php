@@ -47,7 +47,7 @@
                     <h6 class="fw-bold">Consejos de seguridad</h6>
                 </div>
 
-                <ul class="small text-muted mb-0">
+                <ul class="text-muted mb-0">
                     <li class="mb-2">Usa al menos 8 caracteres</li>
                     <li class="mb-2">Combina letras, números y símbolos</li>
                     <li class="mb-2">No uses información personal</li>
@@ -60,7 +60,7 @@
         <div class="card border mt-3">
             <div class="card-body p-4">
                 <h6 class="fw-bold mb-2">Última actualización</h6>
-                <p class="small text-muted mb-0">{{ $user->updated_at->format('d/m/Y H:i') }}</p>
+                <p class="text-muted mb-0">{{ $user->updated_at->format('d/m/Y H:i') }}</p>
                 <small class="text-muted">{{ $user->updated_at->diffForHumans() }}</small>
             </div>
         </div>

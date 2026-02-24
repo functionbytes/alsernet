@@ -51,7 +51,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">Total roles</h6>
+                                        <h6 class="card-title mb-2">Total roles</h6>
                                         <h4 class="mb-1 fw-bold">{{ $totalRoles }}</h4>
                                         <small class="text-muted">Roles configurados</small>
                                     </div>

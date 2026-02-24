@@ -187,7 +187,7 @@
                             Los módulos permiten extender la funcionalidad del sistema de manera modular y organizada.
                             Cada módulo puede tener sus propias rutas, controladores, modelos, vistas y migraciones.
                         </p>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             <i class="fas fa-info-circle me-1"></i>
                             Para más información sobre la administración de módulos, consulta la
                             <a href="{{ route('settings.modules.index') }}" class="text-decoration-none">lista completa de módulos</a>

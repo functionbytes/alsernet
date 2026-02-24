@@ -142,86 +142,78 @@
                     <h5 class="card-title mb-3">
                         <i class="fas fa-info-circle text-primary me-2"></i>Guía rápida
                     </h5>
-                    <p class="card-text small text-muted">
+                    <p class="card-text  text-muted">
                         Las redirecciones permiten enviar automáticamente a los visitantes y motores de búsqueda de una URL antigua a una nueva.
                     </p>
                 </div>
-            </div>
-
-            <!-- Tipos de redireccion -->
-            <div class="card">
+                <hr>
                 <div class="card-body">
                     <h6 class="card-title mb-3">
-                        <i class="fas fa-code-branch text-success me-2"></i>Tipos de redireccion
+                        Tipos de redireccion
                     </h6>
 
                     <div class="mb-3">
-                        <span class="badge bg-success-subtle text-success mb-2">301 - Permanente</span>
-                        <p class="small text-muted mb-0">
+                        <span class="badge bg-info-subtle text-info mb-2">301 - Permanente</span>
+                        <p class="text-muted mb-0">
                             Indica que la página se ha movido permanentemente. Transfiere el 90-99% del valor SEO. <strong>Recomendado para cambios definitivos.</strong>
                         </p>
                     </div>
 
                     <div class="mb-3">
                         <span class="badge bg-info-subtle text-info mb-2">302 - Temporal</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Indica que la página se ha movido temporalmente. No transfiere valor SEO. Útil para mantenimiento o pruebas.
                         </p>
                     </div>
 
                     <div class="mb-3">
                         <span class="badge bg-warning-subtle text-warning mb-2">307 - Temporal (preserva método)</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Similar a 302 pero garantiza que el método HTTP (POST, GET) se mantenga.
                         </p>
                     </div>
 
                     <div class="mb-0">
                         <span class="badge bg-primary-subtle text-primary mb-2">308 - Permanente (preserva método)</span>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             Similar a 301 pero garantiza que el método HTTP se mantenga.
                         </p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Ejemplos -->
-            <div class="card">
+                <hr>
                 <div class="card-body">
                     <h6 class="card-title mb-3">
-                        <i class="fas fa-lightbulb text-warning me-2"></i>Ejemplos de uso
+                       Ejemplos de uso
                     </h6>
 
                     <div class="mb-3">
                         <strong class="small d-block mb-1">Cambio de estructura:</strong>
                         <code class="d-block small text-primary mb-1">/blog/articulo-viejo</code>
-                        <i class="fas fa-arrow-down small text-muted"></i>
-                        <code class="d-block small text-muted">/articulos/articulo-nuevo</code>
+                        <i class="fas fa-arrow-down  text-muted"></i>
+                        <code class="d-block  text-muted">/articulos/articulo-nuevo</code>
                     </div>
 
                     <div class="mb-3">
                         <strong class="small d-block mb-1">Redireccion externa:</strong>
                         <code class="d-block small text-primary mb-1">/contacto</code>
-                        <i class="fas fa-arrow-down small text-muted"></i>
-                        <code class="d-block small text-muted">https://ejemplo.com/contacto</code>
+                        <i class="fas fa-arrow-down  text-muted"></i>
+                        <code class="d-block  text-muted">https://ejemplo.com/contacto</code>
                     </div>
 
                     <div class="mb-0">
                         <strong class="small d-block mb-1">Página eliminada:</strong>
                         <code class="d-block small text-primary mb-1">/producto-descontinuado</code>
-                        <i class="fas fa-arrow-down small text-muted"></i>
-                        <code class="d-block small text-muted">/productos</code>
+                        <i class="fas fa-arrow-down  text-muted"></i>
+                        <code class="d-block  text-muted">/productos</code>
                     </div>
                 </div>
-            </div>
-
-            <!-- Mejores practicas -->
-            <div class="card">
+                <hr>
                 <div class="card-body">
                     <h6 class="card-title mb-3">
-                        <i class="fas fa-check-circle text-success me-2"></i>Mejores prácticas
+                        Mejores prácticas
                     </h6>
-                    <ul class="small text-muted ps-3 mb-0">
+                    <ul class="text-muted mb-0">
                         <li class="mb-2">Usa 301 para cambios permanentes de contenido</li>
                         <li class="mb-2">Evita cadenas de redirecciones (A → B → C)</li>
                         <li class="mb-2">Redirige a contenido similar o relevante</li>
@@ -229,15 +221,12 @@
                         <li class="mb-0">Revisa periódicamente las redirecciones obsoletas</li>
                     </ul>
                 </div>
-            </div>
-
-            <!-- Advertencias -->
-            <div class="card border-warning">
+                <hr>
                 <div class="card-body">
                     <h6 class="card-title mb-3 text-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Advertencias
+                        Advertencias
                     </h6>
-                    <ul class="small text-muted ps-3 mb-0">
+                    <ul class="text-muted mb-0">
                         <li class="mb-2">Las redirecciones incorrectas pueden afectar el SEO negativamente</li>
                         <li class="mb-2">No redirijas todas las páginas a la home page</li>
                         <li class="mb-0">Verifica que la ruta destino existe antes de crear la redireccion</li>

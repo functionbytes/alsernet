@@ -49,7 +49,7 @@
                             <div class="d-flex align-items-start">
                                 <div>
                                     <h6 class="fw-bold mb-1">Radicado #{{ $attention->radicado }}</h6>
-                                    <p class="mb-0 small text-muted">
+                                    <p class="mb-0  text-muted">
                                         <strong>Solicitante:</strong> {{ $attention->full_name }}
                                         <span class="mx-2">|</span>
                                         <strong>Email:</strong> {{ $attention->email ?? 'No disponible' }}
@@ -186,7 +186,7 @@
                                                 @if($mail->status === 'failed' && $mail->error_message)
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
-                                                    <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#errorModal{{ $mail->id }}">
+                                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#errorModal{{ $mail->id }}">
                                                         Ver error
                                                     </button>
                                                 </li>

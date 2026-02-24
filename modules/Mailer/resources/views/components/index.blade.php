@@ -232,7 +232,7 @@
                                                               onsubmit="return confirm('¿Estás seguro de que deseas eliminar este componente?');">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="dropdown-item text-danger">
+                                                            <button type="submit" class="dropdown-item">
                                                                 Eliminar
                                                             </button>
                                                         </form>

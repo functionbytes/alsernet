@@ -276,7 +276,7 @@
                                                 </div>
                                                 <div>
                                                     <h6 class="mb-0">Verificación de email</h6>
-                                                    <p class="mb-0 small text-muted">Estado de verificación del correo electrónico</p>
+                                                    <p class="mb-0  text-muted">Estado de verificación del correo electrónico</p>
                                                 </div>
                                             </div>
                                             @if($user->email_verified_at)
@@ -293,7 +293,7 @@
                                                 </div>
                                                 <div>
                                                     <h6 class="mb-0">Contraseña</h6>
-                                                    <p class="mb-0 small text-muted">Última actualización: {{ $user->updated_at->format('d/m/Y') }}</p>
+                                                    <p class="mb-0  text-muted">Última actualización: {{ $user->updated_at->format('d/m/Y') }}</p>
                                                 </div>
                                             </div>
                                             <a href="{{ route('settings.users.edit', $user->uid) }}" class="btn btn-sm btn-outline-primary">Cambiar</a>
@@ -356,7 +356,7 @@
                                                 </div>
                                                 <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                                                     <h6 class="mb-1">Perfil actualizado</h6>
-                                                    <p class="mb-0 small text-muted">Se actualizó la información del usuario</p>
+                                                    <p class="mb-0  text-muted">Se actualizó la información del usuario</p>
                                                 </div>
                                             </div>
 
@@ -369,7 +369,7 @@
                                                 </div>
                                                 <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                                                     <h6 class="mb-1">Usuario creado</h6>
-                                                    <p class="mb-0 small text-muted">Cuenta registrada en el sistema</p>
+                                                    <p class="mb-0  text-muted">Cuenta registrada en el sistema</p>
                                                 </div>
                                             </div>
                                         </div>

@@ -213,7 +213,7 @@
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" id="select-all-all">
-                                            <label class="form-check-label small text-muted" for="select-all-all">Seleccionar todo</label>
+                                            <label class="form-check-label  text-muted" for="select-all-all">Seleccionar todo</label>
                                         </div>
                                         <button type="button" class="btn btn-outline-danger btn-sm d-none" id="bulk-delete-btn-all"
                                                 data-bs-toggle="modal" data-bs-target="#bulk-delete-modal">
@@ -297,7 +297,7 @@
                                                                     </li>
                                                                     <li><hr class="dropdown-divider"></li>
                                                                     <li>
-                                                                        <a class="dropdown-item text-danger delete-btn"
+                                                                        <a class="dropdown-item delete-btn"
                                                                            data-bs-toggle="modal"
                                                                            data-bs-target="#delete-modal"
                                                                            data-url="{{ route('setting.seo.metas.destroy', $meta) }}"

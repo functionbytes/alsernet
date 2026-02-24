@@ -1,0 +1,12 @@
+{
+    "name": "Cache",
+    "alias": "Cache",
+    "description": "Cache configuration settings for admin menu, frontend menu, user avatars and sitemap",
+    "keywords": [],
+    "priority": 0,
+    "active": 1,
+    "providers": [
+        "Modules\\Cache\\Providers\\CacheServiceProvider"
+    ],
+    "files": []
+}

@@ -73,11 +73,11 @@
                         <div class="d-flex flex-column gap-3">
                             <div>
                                 <p class="small mb-1"><strong>Sin prefijo:</strong></p>
-                                <p class="small text-muted mb-0">Las páginas se sirven directamente desde la raíz, por ejemplo <code>/mi-pagina</code>.</p>
+                                <p class="text-muted mb-0">Las páginas se sirven directamente desde la raíz, por ejemplo <code>/mi-pagina</code>.</p>
                             </div>
                             <div>
                                 <p class="small mb-1"><strong>Con prefijo:</strong></p>
-                                <p class="small text-muted mb-0">Se agrega un segmento antes del slug, por ejemplo <code>/paginas/mi-pagina</code>.</p>
+                                <p class="text-muted mb-0">Se agrega un segmento antes del slug, por ejemplo <code>/paginas/mi-pagina</code>.</p>
                             </div>
                             <div class="alert alert-warning py-2 mb-0">
                                 <small>Cambiar el prefijo afecta todas las URLs existentes. Si tienes páginas indexadas, configura redirecciones antes de modificarlo.</small>

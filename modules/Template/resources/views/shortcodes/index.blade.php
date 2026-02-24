@@ -36,7 +36,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-success mb-2"><i class="fas fa-toggle-on me-1"></i>Activos</h6>
+                            <h6 class="card-title mb-2"><i class="fas fa-toggle-on me-1"></i>Activos</h6>
                             <h4 class="mb-1 fw-bold">{{ $shortcodes->where('is_active', true)->count() }}</h4>
                             <small class="text-muted">Habilitados</small>
                         </div>
@@ -91,7 +91,7 @@
                                         <i class="{{ $shortcode->icon ?: 'fas fa-code' }}"></i>
                                     </div>
                                     <h6 class="card-title mb-1 fw-semibold">{{ $shortcode->name }}</h6>
-                                    <p class="card-text small text-muted mb-1">{{ $shortcode->description }}</p>
+                                    <p class="card-text  text-muted mb-1">{{ $shortcode->description }}</p>
                                     <code class="small text-secondary">{{ $shortcode->key }}</code>
                                     @if($shortcode->render_template)
                                         <div class="mt-1">

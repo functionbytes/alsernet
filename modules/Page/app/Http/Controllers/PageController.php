@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Page\Events\PagePublished;
 use Modules\Page\Http\Requests\CreatePageRequest;
 use Modules\Page\Http\Requests\UpdatePageRequest;
 use Modules\Page\Models\Page;
@@ -173,6 +174,9 @@ class PageController extends Controller
 
         try {
             $this->pageService->publishPage($page);
+
+            // Dispatch event to warm cache
+            PagePublished::dispatch($page);
 
             return back()->with('success', 'Página publicada exitosamente.');
         } catch (Exception $e) {

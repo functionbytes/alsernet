@@ -53,7 +53,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div>
-                                <h6 class="card-title text-success mb-2">
+                                <h6 class="card-title mb-2">
                                     Activos
                                 </h6>
                                 <h3 class="mb-0 fw-bold">{{ $stats['active'] ?? 0 }}</h3>
@@ -236,7 +236,7 @@
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $field->id }}">
+                                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $field->id }}">
                                                     <i class="fas fa-trash me-2"></i> Eliminar
                                                 </button>
                                             </li>

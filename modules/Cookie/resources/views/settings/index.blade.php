@@ -37,7 +37,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="style" class="form-label">Estilo de presentación</label>
-                        <select class="form-select" id="style" name="style">
+                        <select class="form-select select2" id="style" name="style" data-placeholder="Seleccionar estilo">
                             <option value="full-width" {{ $get('style') === 'full-width' ? 'selected' : '' }}>Full Width (ancho completo)</option>
                             <option value="minimal" {{ $get('style') === 'minimal' ? 'selected' : '' }}>Minimal (card flotante)</option>
                         </select>
@@ -45,7 +45,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="position" class="form-label">Posición del banner</label>
-                        <select class="form-select" id="position" name="position">
+                        <select class="form-select select2" id="position" name="position" data-placeholder="Seleccionar posición">
                             <option value="bottom" {{ $get('position') === 'bottom' ? 'selected' : '' }}>Inferior</option>
                             <option value="top" {{ $get('position') === 'top' ? 'selected' : '' }}>Superior</option>
                             <option value="center" {{ $get('position') === 'center' ? 'selected' : '' }}>Centro</option>
@@ -211,6 +211,13 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // Inicializar Select2
+    $('#style, #position').select2({
+        minimumResultsForSearch: Infinity,
+        width: '100%'
+    });
+
+    // Sincronizar color picker con input de texto
     $('input[type="color"]').on('input change', function () {
         $(this).closest('.input-group').find('.color-text').val(this.value);
     });

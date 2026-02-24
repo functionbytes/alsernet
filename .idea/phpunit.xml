@@ -18,6 +18,9 @@
         <option value="$PROJECT_DIR$/modules/Attention/tests" />
         <option value="$PROJECT_DIR$/modules/MailsSettings/tests" />
         <option value="$PROJECT_DIR$/tests" />
+        <option value="$PROJECT_DIR$/modules/User/Tests" />
+        <option value="$PROJECT_DIR$/modules/Reviews/tests" />
+        <option value="$PROJECT_DIR$/modules/Template/Tests" />
       </list>
     </option>
   </component>

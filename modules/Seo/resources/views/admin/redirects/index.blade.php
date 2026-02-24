@@ -38,7 +38,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-primary mb-2">Total de redirecciones</h6>
+                                        <h6 class="card-title mb-2">Total de redirecciones</h6>
                                         <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
                                         <small class="text-muted">Configuradas en el sistema</small>
                                     </div>
@@ -51,7 +51,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">Activas</h6>
+                                        <h6 class="card-title mb-2">Activas</h6>
                                         <h4 class="mb-1 fw-bold">{{ number_format($stats['active']) }}</h4>
                                         <small class="text-muted">{{ number_format($stats['inactive']) }} inactivas</small>
                                     </div>
@@ -64,7 +64,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Por tipo</h6>
+                                        <h6 class="card-title mb-2">Por tipo</h6>
                                         <h4 class="mb-1 fw-bold">{{ number_format($stats['permanent']) }}</h4>
                                         <small class="text-muted">301 permanente / {{ number_format($stats['temporary']) }} 302 temporal</small>
                                     </div>
@@ -77,7 +77,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Total de visitas</h6>
+                                        <h6 class="card-title mb-2">Total de visitas</h6>
                                         <h4 class="mb-1 fw-bold">{{ number_format($stats['total_hits']) }}</h4>
                                         <small class="text-muted">Redirecciones procesadas</small>
                                     </div>
@@ -92,39 +92,42 @@
             <div class="card-body border-bottom">
                 <form method="GET" action="{{ route('setting.seo.redirects.index') }}" id="filter-form">
                     <div class="row g-3 align-items-center">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-white border-end-0">
+                        <div class="col-md-7">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="text"
                                        name="search"
-                                       class="form-control border-start-0 ps-0"
+                                       class="form-control"
                                        placeholder="Buscar por ruta origen o destino..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="col-md-6 text-end">
-                            <button type="button"
-                                    class="btn btn-outline-primary"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#filters-modal">
-                                <i class="fas fa-filter me-2"></i>Filtros avanzados
-                                @if(request('status_code') || request('is_active') !== null || request('sort_by'))
-                                    <span class="badge bg-primary ms-1">
-                                        {{ collect([request('status_code'), request('is_active'), request('sort_by')])->filter()->count() }}
-                                    </span>
+                        <div class="col-md-5 text-end">
+                            <div class="btn-group">
+                                <button type="button"
+                                        class="btn btn-outline-primary position-relative"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#filters-modal">
+                                    <i class="fas fa-filter me-1"></i> Filtros
+                                    @if(request('status_code') || request('is_active') !== null || request('sort_by'))
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                            {{ collect([request('status_code'), request('is_active'), request('sort_by')])->filter()->count() }}
+                                        </span>
+                                    @endif
+                                </button>
+                                @if(request()->hasAny(['search', 'status_code', 'is_active', 'sort_by']))
+                                    <a href="{{ route('setting.seo.redirects.index') }}"
+                                       class="btn btn-outline-secondary"
+                                       title="Limpiar filtros">
+                                        <i class="fas fa-times"></i>
+                                    </a>
                                 @endif
-                            </button>
-                            @if(request()->hasAny(['search', 'status_code', 'is_active', 'sort_by']))
-                                <a href="{{ route('setting.seo.redirects.index') }}"
-                                   class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-1"></i>Limpiar
-                                </a>
-                            @endif
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search me-1"></i>Buscar
-                            </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Buscar
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -157,7 +160,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="select-all">
-                            <label class="form-check-label small text-muted" for="select-all">Seleccionar todo</label>
+                            <label class="form-check-label  text-muted" for="select-all">Seleccionar todo</label>
                         </div>
                         <button type="button" class="btn btn-outline-primary d-none" id="bulk-delete-btn" data-bs-toggle="modal" data-bs-target="#bulk-delete-modal">
                             <i class="fas fa-trash me-1"></i>(<span id="selected-count">0</span>)

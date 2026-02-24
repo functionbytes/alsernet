@@ -240,14 +240,14 @@
                             <div class="text-center p-3 border rounded">
                                 <div class="fs-2 fw-bold text-info">{{ $stats['opened'] ?? 0 }}</div>
                                 <small class="text-muted">Abiertos</small>
-                                <div class="small text-muted mt-1">{{ number_format($stats['open_rate'] ?? 0, 2) }}%</div>
+                                <div class=" text-muted mt-1">{{ number_format($stats['open_rate'] ?? 0, 2) }}%</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 border rounded">
                                 <div class="fs-2 fw-bold text-warning">{{ $stats['clicked'] ?? 0 }}</div>
                                 <small class="text-muted">Clicks</small>
-                                <div class="small text-muted mt-1">{{ number_format($stats['click_rate'] ?? 0, 2) }}%</div>
+                                <div class=" text-muted mt-1">{{ number_format($stats['click_rate'] ?? 0, 2) }}%</div>
                             </div>
                         </div>
                     </div>

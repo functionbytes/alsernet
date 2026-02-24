@@ -235,7 +235,7 @@
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <button type="button"
-                                                    class="dropdown-item text-danger"
+                                                    class="dropdown-item"
                                                     onclick="confirmDelete('{{ $group->id }}')">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>

@@ -73,7 +73,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">Archivo XML</h6>
+                                        <h6 class="card-title mb-2">Archivo XML</h6>
                                         <h4 class="mb-1 fw-bold">
                                             @if($fileExists)
                                                 <span class="badge bg-success-subtle text-white fs-6">Generado</span>

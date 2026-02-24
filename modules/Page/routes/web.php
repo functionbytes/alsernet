@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Page\Http\Controllers\PageCacheDashboardController;
 use Modules\Page\Http\Controllers\PageController;
 use Modules\Page\Http\Controllers\PageSettingsController;
 use Modules\Page\Http\Controllers\PageVersionController;
@@ -17,6 +18,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('pages', [PageController::class, 'index'])->name('pages.index');
     Route::get('pages/create', [PageController::class, 'create'])->name('pages.create');
+    Route::get('pages/cache/dashboard', [PageCacheDashboardController::class, 'index'])->name('pages.cache.dashboard');
     Route::get('settings/pages', [PageSettingsController::class, 'edit'])->name('settings.pages');
     Route::put('settings/pages', [PageSettingsController::class, 'update'])->name('settings.pages.update');
     Route::post('ajax/pages/slug', [PageController::class, 'ajaxSlug'])->name('pages.ajax.slug');
@@ -49,4 +51,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/preview/{slug}/{token}', [PreviewController::class, 'show'])->name('page.preview')->where('slug', '[a-z0-9-]+')->where('token', '[a-zA-Z0-9]{64}');
-Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')->where('path', '^(?!dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media)([a-z0-9\-\/]+)$');
+
+// Catchall route for pages - must be last
+Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')
+    ->where('path', '^(?!dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|reviews|templates|reply-templates)([a-z0-9\-\/]+)$');

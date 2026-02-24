@@ -355,7 +355,7 @@
                         </div>
                     </div>
                     {{-- Footer con resumen --}}
-                    <div class="card-footer bg-light p-2 small text-muted">
+                    <div class="card-footer bg-light p-2  text-muted">
                         <div class="d-flex gap-3 flex-wrap">
                             <span>
                                 <i class="fas fa-check-circle text-success me-1"></i>

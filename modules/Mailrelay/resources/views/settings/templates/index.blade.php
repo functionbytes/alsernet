@@ -31,7 +31,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div>
-                                <h6 class="card-title text-success mb-2">Activas</h6>
+                                <h6 class="card-title mb-2">Activas</h6>
                                 <h3 class="mb-1 fw-bold text-success">{{ $stats['active'] ?? 0 }}</h3>
                             </div>
                             <div class="round-48 d-flex align-items-center justify-content-center rounded bg-success-subtle">
@@ -247,7 +247,7 @@
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <a href="#" class="dropdown-item text-danger confirm-delete"
+                                                <a href="#" class="dropdown-item confirm-delete"
                                                    data-href="{{ route('settings.mailrelay.templates.destroy', $template->id) }}">
                                                     <i class="fas fa-trash me-2"></i>Eliminar
                                                 </a>

@@ -34,7 +34,7 @@
                     <h6 class="fw-semibold mb-0">{{ __('seo::robots-txt.info_title') }}</h6>
                 </div>
                 <div class="card-body p-4">
-                    <p class="small text-muted mb-3">{{ __('seo::robots-txt.info_description') }}</p>
+                    <p class=" text-muted mb-3">{{ __('seo::robots-txt.info_description') }}</p>
                     <div class="alert alert-info small mb-0">
                         <strong>{{ __('seo::robots-txt.public_url') }}:</strong><br>
                         <code>{{ url('/robots.txt') }}</code>

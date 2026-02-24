@@ -22,7 +22,7 @@
                 {{-- Setup Instructions --}}
                 <div class="mb-4">
                     <h6 class="fw-bold mb-3">Cómo activar 2FA</h6>
-                    <ol class="small text-muted ps-3">
+                    <ol class=" text-muted ps-3">
                         <li class="mb-2">Descarga una aplicación de autenticación como Google Authenticator o Authy</li>
                         <li class="mb-2">Haz clic en "Activar 2FA" para generar un código QR</li>
                         <li class="mb-2">Escanea el código QR con tu aplicación de autenticación</li>
@@ -81,7 +81,7 @@
                 <div class="text-center">
                     <i class="fas fa-info-circle text-info fa-2x mb-2"></i>
                     <h6 class="fw-bold mb-2">¿Por qué 2FA?</h6>
-                    <p class="small text-muted mb-0">
+                    <p class="text-muted mb-0">
                         La autenticación de dos factores añade una capa extra de seguridad,
                         protegiendo tu cuenta incluso si alguien conoce tu contraseña.
                     </p>

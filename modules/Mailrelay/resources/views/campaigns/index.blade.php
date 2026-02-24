@@ -169,7 +169,7 @@
                                             @endif
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <a class="dropdown-item text-danger confirm-delete"
+                                                <a class="dropdown-item confirm-delete"
                                                    data-href="{{ route('mailrelay.campaigns.destroy', $campaign->id) }}">
                                                     Eliminar
                                                 </a>

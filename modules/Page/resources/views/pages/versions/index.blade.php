@@ -131,7 +131,7 @@
                                                         </li>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li>
-                                                            <button type="button" class="dropdown-item text-danger delete-version-btn"
+                                                            <button type="button" class="dropdown-item delete-version-btn"
                                                                 data-url="{{ route('pages.versions.destroy', [$page->id, $version->id]) }}"
                                                                 data-version="v{{ $version->version_number }}">
                                                                 Eliminar

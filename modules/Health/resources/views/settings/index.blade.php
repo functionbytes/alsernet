@@ -54,7 +54,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">Correctos</h6>
+                                        <h6 class="card-title mb-2">Correctos</h6>
                                         <h4 class="mb-1 fw-bold">{{ collect($results)->where('status.value', 'ok')->count() }}</h4>
                                         <small class="text-muted">Funcionando bien</small>
                                     </div>
@@ -96,7 +96,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h6 class="fw-bold mb-1">Acciones del sistema</h6>
-                        <p class="small text-muted mb-0">Ejecuta operaciones manuales de mantenimiento</p>
+                        <p class="text-muted mb-0">Ejecuta operaciones manuales de mantenimiento</p>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="runScheduler()" title="Ejecutar scheduler">
@@ -123,7 +123,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h6 class="fw-bold mb-1">Tareas programadas</h6>
-                        <p class="small text-muted mb-0">Comandos que se ejecutan automáticamente según su programación</p>
+                        <p class="text-muted mb-0">Comandos que se ejecutan automáticamente según su programación</p>
                     </div>
                     <button type="button" class="btn btn-primary btn-sm" onclick="showScheduledTasks()" title="Actualizar tareas programadas">
                         <i class="fas fa-sync"></i>
@@ -154,7 +154,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h6 class="fw-bold mb-1">Estado de la cola</h6>
-                        <p class="small text-muted mb-0">Información sobre workers y trabajos en cola</p>
+                        <p class="text-muted mb-0">Información sobre workers y trabajos en cola</p>
                     </div>
                     <button type="button" class="btn btn-primary btn-sm" onclick="checkQueueStatus()" title="Actualizar estado de cola">
                         <i class="fas fa-sync"></i>
@@ -221,7 +221,7 @@
                                             <h6 class="fw-bold mb-2">
                                                 {{ $result->check->getLabel() }}
                                             </h6>
-                                            <p class="mb-2 small text-muted">
+                                            <p class="mb-2  text-muted">
                                                 {{ $result->shortSummary }}
                                             </p>
 

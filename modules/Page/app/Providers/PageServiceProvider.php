@@ -45,6 +45,7 @@ class PageServiceProvider extends ServiceProvider
 
         // Register services
         $this->app->singleton(\Modules\Page\Services\PageService::class);
+        $this->app->singleton(\Modules\Page\Services\PageCacheService::class);
 
         // Register factories
         $this->registerFactories();
@@ -73,6 +74,9 @@ class PageServiceProvider extends ServiceProvider
             \Modules\Page\Console\PublishScheduledPagesCommand::class,
             \Modules\Page\Console\Commands\CleanupPreviewTokensCommand::class,
             \Modules\Page\Console\ReindexPagesCommand::class,
+            \Modules\Page\Console\Commands\PageCacheWarmCommand::class,
+            \Modules\Page\Console\Commands\PageCacheClearCommand::class,
+            \Modules\Page\Console\Commands\PageCacheStatsCommand::class,
         ]);
     }
 
@@ -94,6 +98,13 @@ class PageServiceProvider extends ServiceProvider
             $schedule->command('page:cleanup-preview-tokens --days=7 --force')
                 ->daily()
                 ->at('02:00')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            // Warm page cache every 6 hours
+            $schedule->command('page:cache-warm --all')
+                ->everyFourHours()
+                ->between('00:00', '23:59')
                 ->withoutOverlapping()
                 ->onOneServer();
         });

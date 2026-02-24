@@ -3,7 +3,7 @@
     "alias": "page",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 999,
     "providers": [
         "modules\\Page\\Providers\\PageServiceProvider"
     ],

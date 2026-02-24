@@ -3,7 +3,7 @@
     "Analytics": true,
     "Auth": true,
     "Backup": true,
-    "CacheSettings": true,
+    "Cache": true,
     "Campaign": false,
     "Core": true,
     "Database": true,
@@ -32,8 +32,9 @@
     "Seo": true,
     "Captcha": true,
     "Cookie": true,
-    "Optimize": false,
+    "Optimize": true,
     "Slug": true,
     "Widget": true,
-    "Template": true
+    "Template": true,
+    "Reviews": true
 }

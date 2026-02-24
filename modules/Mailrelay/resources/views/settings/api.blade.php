@@ -154,7 +154,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
-                                            <h6 class="card-title text-success mb-2">
+                                            <h6 class="card-title mb-2">
                                                 Créditos disponibles
                                             </h6>
                                             <h5 class="mb-0 fw-bold">{{ number_format($accountInfo['credits'] ?? 0) }}</h5>

@@ -335,55 +335,83 @@
             </div>
 
             {{-- Right Column: Variables --}}
-            <div class="col-12 col-lg-4">
-                {{-- Variables Panel --}}
-                <div class="card mb-3" id="variablesCard">
-                    <div class="card-header border-bottom p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-code me-1"></i>Variables disponibles
-                            </h6>
-                            <button type="button" class="btn btn-sm btn-black" id="btnLoadVariables"
-                                    data-bs-toggle="tooltip" title="Recargar variables">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body" id="variablesPanel" style="max-height: 600px; overflow-y: auto;">
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-info-circle fs-3 mb-2 d-block"></i>
-                            <p class="mb-0 small">Selecciona un módulo para ver las variables disponibles</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Info Card --}}
+            <div class="col-lg-4">
+                <!-- Variables disponibles -->
                 <div class="card">
-                    <div class="card-header bg-info-subtle border-bottom p-3">
-                        <h6 class="mb-0 fw-bold">
-                            <i class="fas fa-lightbulb me-2"></i>Atajos de teclado
-                        </h6>
-                    </div>
                     <div class="card-body">
-                        <ul class="list-unstyled mb-0 small">
-                            <li class="mb-2">
-                                <kbd>Ctrl</kbd> + <kbd>S</kbd> - Guardar
-                            </li>
-                            <li class="mb-2">
-                                <kbd>Ctrl</kbd> + <kbd>Space</kbd> - Autocompletar
-                            </li>
-                            <li class="mb-2">
-                                <kbd>Ctrl</kbd> + <kbd>/</kbd> - Comentar línea
-                            </li>
-                            <li class="mb-2">
-                                <kbd>Tab</kbd> - Expandir Emmet
-                            </li>
-                            <li>
-                                <strong>Ejemplo Emmet:</strong><br>
-                                <code>div.container>div.row</code>
-                            </li>
+                        <h6 class="card-title mb-3">
+                            Variables disponibles
+                        </h6>
+                        <p class="card-text text-muted mb-3">
+                            Haz clic en cualquier variable para insertarla en el cursor del editor.
+                        </p>
+                        <div class="small">
+                            <div class="mb-2">
+                                <code class="variable-tag">{reviewer_name}</code>
+                                <span class="text-muted d-block ps-2">Nombre del reviewer</span>
+                            </div>
+                            <div class="mb-2">
+                                <code class="variable-tag">{location_name}</code>
+                                <span class="text-muted d-block ps-2">Nombre del negocio/ubicación</span>
+                            </div>
+                            <div class="mb-2">
+                                <code class="variable-tag">{star_rating}</code>
+                                <span class="text-muted d-block ps-2">Calificación en estrellas</span>
+                            </div>
+                            <div class="mb-2">
+                                <code class="variable-tag">{comment_summary}</code>
+                                <span class="text-muted d-block ps-2">Resumen del comentario</span>
+                            </div>
+                            <div class="mb-0">
+                                <code class="variable-tag">{date}</code>
+                                <span class="text-muted d-block ps-2">Fecha de la reseña</span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            Ejemplo de uso
+                        </h6>
+                        <div class=" text-muted bg-light p-3 rounded">
+                            <p class="mb-0">
+                                Hola {reviewer_name}, muchas gracias por tu reseña de {star_rating} estrellas en {location_name}.
+                                Tu opinión es muy importante para nosotros y nos ayuda a mejorar cada día.
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            Consejos para escribir respuestas
+                        </h6>
+                        <ul class="text-muted mb-0">
+                            <li class="mb-2">Sé personal y auténtico en tus respuestas</li>
+                            <li class="mb-2">Agradece siempre el tiempo dedicado</li>
+                            <li class="mb-2">Responde específicamente a los comentarios</li>
+                            <li class="mb-2">Mantén un tono profesional y amable</li>
+                            <li>Usa las variables para personalizar</li>
                         </ul>
                     </div>
+
+                    <!-- Estadísticas de uso -->
+                    @if($template->usage_count > 0)
+                        <hr>
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                Estadísticas de uso
+                            </h6>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-chart-line text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0  text-muted">Veces utilizada</p>
+                                    <h4 class="mb-0">{{ $template->usage_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

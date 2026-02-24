@@ -5,6 +5,7 @@ namespace Modules\Page\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\Page\Services\PageCacheService;
 use Modules\Page\Models\Page;
 
 class PublicController extends Controller
@@ -19,9 +20,20 @@ class PublicController extends Controller
         $prefix = setting('permalink-modules-page-models-page', '');
         $slug = $prefix ? ltrim(Str::replaceFirst($prefix.'/', '', $path), '/') : $path;
 
-        $page = Page::where('slug', $slug)
-            ->published()
-            ->firstOrFail();
+        // Try to get cached page data
+        $cachedPage = PageCacheService::get($slug);
+        if ($cachedPage) {
+            $page = (object) $cachedPage;
+        } else {
+            $page = Page::where('slug', $slug)
+                ->published()
+                ->firstOrFail();
+
+            // Cache the page if caching is enabled
+            if (PageCacheService::isEnabled()) {
+                PageCacheService::set($page);
+            }
+        }
 
         // Process shortcodes in content if Shortcode module is available
         if (function_exists('shortcode')) {

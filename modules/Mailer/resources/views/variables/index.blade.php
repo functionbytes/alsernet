@@ -231,7 +231,7 @@
                                                               onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta variable?');">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="dropdown-item text-danger">
+                                                            <button type="submit" class="dropdown-item">
                                                                 Eliminar variable
                                                             </button>
                                                         </form>

@@ -44,8 +44,8 @@
                             <span class="badge bg-secondary-subtle text-secondary">v{{ $version1->version_number }}</span>
                             <span class="fw-semibold">Version antigua</span>
                         </div>
-                        <p class="small text-muted mb-1">{{ $version1->created_at->format('d/m/Y H:i') }} · {{ $version1->created_at->diffForHumans() }}</p>
-                        <p class="small text-muted mb-0">
+                        <p class=" text-muted mb-1">{{ $version1->created_at->format('d/m/Y H:i') }} · {{ $version1->created_at->diffForHumans() }}</p>
+                        <p class="text-muted mb-0">
                             @if($version1->user)
                                 {{ $version1->user->full_name ?? $version1->user->name }}
                             @else
@@ -62,8 +62,8 @@
                             <span class="badge bg-primary-subtle text-primary">v{{ $version2->version_number }}</span>
                             <span class="fw-semibold">Version nueva</span>
                         </div>
-                        <p class="small text-muted mb-1">{{ $version2->created_at->format('d/m/Y H:i') }} · {{ $version2->created_at->diffForHumans() }}</p>
-                        <p class="small text-muted mb-0">
+                        <p class=" text-muted mb-1">{{ $version2->created_at->format('d/m/Y H:i') }} · {{ $version2->created_at->diffForHumans() }}</p>
+                        <p class="text-muted mb-0">
                             @if($version2->user)
                                 {{ $version2->user->full_name ?? $version2->user->name }}
                             @else
@@ -181,8 +181,8 @@
                                 <span class="badge bg-secondary-subtle text-secondary me-1">v{{ $version1->version_number }}</span>
                                 <span class="fw-semibold">Version antigua</span>
                             </div>
-                            <p class="small text-muted mb-1">{{ $version1->created_at->format('d/m/Y H:i') }}</p>
-                            <p class="small text-muted mb-3">
+                            <p class=" text-muted mb-1">{{ $version1->created_at->format('d/m/Y H:i') }}</p>
+                            <p class=" text-muted mb-3">
                                 @if($version1->user) {{ $version1->user->full_name ?? $version1->user->name }}
                                 @else Sistema @endif
                             </p>
@@ -205,8 +205,8 @@
                                 <span class="badge bg-primary-subtle text-primary me-1">v{{ $version2->version_number }}</span>
                                 <span class="fw-semibold">Version nueva</span>
                             </div>
-                            <p class="small text-muted mb-1">{{ $version2->created_at->format('d/m/Y H:i') }}</p>
-                            <p class="small text-muted mb-3">
+                            <p class=" text-muted mb-1">{{ $version2->created_at->format('d/m/Y H:i') }}</p>
+                            <p class=" text-muted mb-3">
                                 @if($version2->user) {{ $version2->user->full_name ?? $version2->user->name }}
                                 @else Sistema @endif
                             </p>

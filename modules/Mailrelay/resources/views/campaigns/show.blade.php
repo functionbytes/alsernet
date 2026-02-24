@@ -119,7 +119,7 @@
                         <li><a class="dropdown-item" href="#"><i class="bi bi-download"></i> Export Data</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal">
                                 <i class="bi bi-trash"></i> Delete
                             </a>
                         </li>

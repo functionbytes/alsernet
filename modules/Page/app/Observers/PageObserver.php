@@ -2,83 +2,51 @@
 
 namespace Modules\Page\Observers;
 
-use Illuminate\Support\Facades\Auth;
 use Modules\Page\Models\Page;
+use Modules\Page\Services\PageCacheService;
 
 class PageObserver
 {
     /**
-     * Handle the Page "created" event.
-     * Create initial version when page is created.
-     *
-     * @return void
+     * Handle the Page "updated" event.
      */
-    public function created(Page $page)
+    public function updated(Page $page): void
     {
-        // Create initial version (v1) after page creation
-        $page->createVersion(Auth::id());
-    }
+        // Clear the cache for this page
+        PageCacheService::forget($page->slug);
 
-    /**
-     * Handle the Page "updating" event.
-     * Create a version before the page is updated.
-     *
-     * @return void
-     */
-    public function updating(Page $page)
-    {
-        // Check if any versionable fields have changed
-        if ($this->hasVersionableChanges($page)) {
-            // Create a version snapshot before the update
-            $page->createVersion(Auth::id());
+        // If slug changed, also clear old slug cache
+        if ($page->wasChanged('slug')) {
+            PageCacheService::forget($page->getOriginal('slug'));
         }
-    }
-
-    /**
-     * Check if any versionable fields have changed.
-     */
-    protected function hasVersionableChanges(Page $page): bool
-    {
-        $versionableFields = [
-            'title',
-            'content',
-            'description',
-            'template',
-            'status',
-            'slug',
-            'seo_title',
-            'seo_description',
-            'seo_keywords',
-        ];
-
-        foreach ($versionableFields as $field) {
-            if ($page->isDirty($field)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
      * Handle the Page "deleted" event.
-     *
-     * @return void
      */
-    public function deleted(Page $page)
+    public function deleted(Page $page): void
     {
-        // Optionally, you can create a version when a page is soft-deleted
-        // This would preserve the state at deletion time
+        // Clear the cache for deleted page
+        PageCacheService::forget($page->slug);
     }
 
     /**
      * Handle the Page "restored" event.
-     *
-     * @return void
      */
-    public function restored(Page $page)
+    public function restored(Page $page): void
     {
-        // Create a version when page is restored from soft delete
-        $page->createVersion(Auth::id());
+        // Recache the restored page
+        if (PageCacheService::isEnabled()) {
+            PageCacheService::set($page);
+        }
+    }
+
+    /**
+     * Handle the Page "forceDeleted" event.
+     */
+    public function forceDeleted(Page $page): void
+    {
+        // Clear the cache for permanently deleted page
+        PageCacheService::forget($page->slug);
     }
 }

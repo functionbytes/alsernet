@@ -112,7 +112,7 @@
                                 <h6 class="card-title text-primary">
                                     <i class="fa fa-circle-check me-2"></i>Notificación de recepción
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-text  text-muted mb-2">
                                     Email enviado al ciudadano cuando crea una nueva solicitud.
                                 </p>
                                 <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-sm btn-outline-secondary">
@@ -127,7 +127,7 @@
                                 <h6 class="card-title text-primary">
                                     <i class="fa fa-user-check me-2"></i>Notificación de asignación
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-text  text-muted mb-2">
                                     Email enviado cuando la solicitud es asignada a un responsable.
                                 </p>
                                 <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-sm btn-outline-secondary">
@@ -142,7 +142,7 @@
                                 <h6 class="card-title text-primary">
                                     <i class="fa fa-spinner me-2"></i>Notificación en proceso
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-text  text-muted mb-2">
                                     Email enviado cuando la solicitud cambia a estado "En proceso".
                                 </p>
                                 <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-sm btn-outline-secondary">
@@ -157,7 +157,7 @@
                                 <h6 class="card-title text-success">
                                     <i class="fa fa-check-double me-2"></i>Notificación de resolución
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-text  text-muted mb-2">
                                     Email enviado cuando la solicitud es resuelta con una respuesta oficial.
                                 </p>
                                 <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-sm btn-outline-secondary">
@@ -172,7 +172,7 @@
                                 <h6 class="card-title text-secondary">
                                     <i class="fa fa-lock me-2"></i>Notificación de cierre
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-text  text-muted mb-2">
                                     Email enviado cuando la solicitud es cerrada definitivamente.
                                 </p>
                                 <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-sm btn-outline-secondary">

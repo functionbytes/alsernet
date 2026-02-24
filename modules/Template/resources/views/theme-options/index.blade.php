@@ -192,27 +192,27 @@
                                         <div class="repeatable-row border rounded p-3 mb-3">
                                             <div class="row g-2 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label class="form-label small text-muted">Red social</label>
+                                                    <label class="form-label  text-muted">Red social</label>
                                                     <input type="text" name="social_links[{{ $i }}][name]" class="form-control form-control-sm"
                                                            value="{{ $link['name'] ?? '' }}" placeholder="Facebook">
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label small text-muted">Icono (Font Awesome)</label>
+                                                    <label class="form-label  text-muted">Icono (Font Awesome)</label>
                                                     <input type="text" name="social_links[{{ $i }}][icon]" class="form-control form-control-sm"
                                                            value="{{ $link['icon'] ?? '' }}" placeholder="fab fa-facebook">
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label class="form-label small text-muted">URL</label>
+                                                    <label class="form-label  text-muted">URL</label>
                                                     <input type="text" name="social_links[{{ $i }}][url]" class="form-control form-control-sm"
                                                            value="{{ $link['url'] ?? '' }}" placeholder="https://facebook.com/mipagina">
                                                 </div>
                                                 <div class="col-md-1">
-                                                    <label class="form-label small text-muted">Color</label>
+                                                    <label class="form-label  text-muted">Color</label>
                                                     <input type="color" name="social_links[{{ $i }}][color]" class="form-control form-control-color form-control-sm"
                                                            value="{{ $link['color'] ?? '#000000' }}">
                                                 </div>
                                                 <div class="col-md-1 text-end">
-                                                    <label class="form-label small text-muted d-block">&nbsp;</label>
+                                                    <label class="form-label  text-muted d-block">&nbsp;</label>
                                                     <button type="button" class="btn btn-sm btn-outline-danger remove-row">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -228,23 +228,23 @@
                                     <div class="repeatable-row border rounded p-3 mb-3">
                                         <div class="row g-2 align-items-center">
                                             <div class="col-md-3">
-                                                <label class="form-label small text-muted">Red social</label>
+                                                <label class="form-label  text-muted">Red social</label>
                                                 <input type="text" name="social_links[__IDX__][name]" class="form-control form-control-sm" placeholder="Facebook">
                                             </div>
                                             <div class="col-md-3">
-                                                <label class="form-label small text-muted">Icono (Font Awesome)</label>
+                                                <label class="form-label  text-muted">Icono (Font Awesome)</label>
                                                 <input type="text" name="social_links[__IDX__][icon]" class="form-control form-control-sm" placeholder="fab fa-facebook">
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small text-muted">URL</label>
+                                                <label class="form-label  text-muted">URL</label>
                                                 <input type="text" name="social_links[__IDX__][url]" class="form-control form-control-sm" placeholder="https://...">
                                             </div>
                                             <div class="col-md-1">
-                                                <label class="form-label small text-muted">Color</label>
+                                                <label class="form-label  text-muted">Color</label>
                                                 <input type="color" name="social_links[__IDX__][color]" class="form-control form-control-color form-control-sm" value="#000000">
                                             </div>
                                             <div class="col-md-1 text-end">
-                                                <label class="form-label small text-muted d-block">&nbsp;</label>
+                                                <label class="form-label  text-muted d-block">&nbsp;</label>
                                                 <button type="button" class="btn btn-sm btn-outline-danger remove-row">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -265,27 +265,27 @@
                                         <div class="repeatable-row border rounded p-3 mb-3">
                                             <div class="row g-2 align-items-center">
                                                 <div class="col-md-2">
-                                                    <label class="form-label small text-muted">Icono</label>
+                                                    <label class="form-label  text-muted">Icono</label>
                                                     <input type="text" name="header_messages[{{ $i }}][icon]" class="form-control form-control-sm"
                                                            value="{{ $msg['icon'] ?? '' }}" placeholder="fas fa-truck">
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label class="form-label small text-muted">Mensaje</label>
+                                                    <label class="form-label  text-muted">Mensaje</label>
                                                     <input type="text" name="header_messages[{{ $i }}][message]" class="form-control form-control-sm"
                                                            value="{{ $msg['message'] ?? '' }}" placeholder="Envío gratis en pedidos +50€">
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label small text-muted">Enlace</label>
+                                                    <label class="form-label  text-muted">Enlace</label>
                                                     <input type="text" name="header_messages[{{ $i }}][link]" class="form-control form-control-sm"
                                                            value="{{ $msg['link'] ?? '' }}" placeholder="/envios">
                                                 </div>
                                                 <div class="col-md-2">
-                                                    <label class="form-label small text-muted">Texto del enlace</label>
+                                                    <label class="form-label  text-muted">Texto del enlace</label>
                                                     <input type="text" name="header_messages[{{ $i }}][link_text]" class="form-control form-control-sm"
                                                            value="{{ $msg['link_text'] ?? '' }}" placeholder="Ver más">
                                                 </div>
                                                 <div class="col-md-1 text-end">
-                                                    <label class="form-label small text-muted d-block">&nbsp;</label>
+                                                    <label class="form-label  text-muted d-block">&nbsp;</label>
                                                     <button type="button" class="btn btn-sm btn-outline-danger remove-row">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -301,23 +301,23 @@
                                     <div class="repeatable-row border rounded p-3 mb-3">
                                         <div class="row g-2 align-items-center">
                                             <div class="col-md-2">
-                                                <label class="form-label small text-muted">Icono</label>
+                                                <label class="form-label  text-muted">Icono</label>
                                                 <input type="text" name="header_messages[__IDX__][icon]" class="form-control form-control-sm" placeholder="fas fa-truck">
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small text-muted">Mensaje</label>
+                                                <label class="form-label  text-muted">Mensaje</label>
                                                 <input type="text" name="header_messages[__IDX__][message]" class="form-control form-control-sm" placeholder="Envío gratis en pedidos +50€">
                                             </div>
                                             <div class="col-md-3">
-                                                <label class="form-label small text-muted">Enlace</label>
+                                                <label class="form-label  text-muted">Enlace</label>
                                                 <input type="text" name="header_messages[__IDX__][link]" class="form-control form-control-sm" placeholder="/envios">
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label small text-muted">Texto del enlace</label>
+                                                <label class="form-label  text-muted">Texto del enlace</label>
                                                 <input type="text" name="header_messages[__IDX__][link_text]" class="form-control form-control-sm" placeholder="Ver más">
                                             </div>
                                             <div class="col-md-1 text-end">
-                                                <label class="form-label small text-muted d-block">&nbsp;</label>
+                                                <label class="form-label  text-muted d-block">&nbsp;</label>
                                                 <button type="button" class="btn btn-sm btn-outline-danger remove-row">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -338,22 +338,22 @@
                                         <div class="repeatable-row border rounded p-3 mb-3">
                                             <div class="row g-2">
                                                 <div class="col-md-6">
-                                                    <label class="form-label small text-muted">Nombre / Titulo</label>
+                                                    <label class="form-label  text-muted">Nombre / Titulo</label>
                                                     <input type="text" name="contact_boxes[{{ $i }}][name]" class="form-control form-control-sm"
                                                            value="{{ $box['name'] ?? '' }}" placeholder="Oficina central">
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label small text-muted">Dirección</label>
+                                                    <label class="form-label  text-muted">Dirección</label>
                                                     <input type="text" name="contact_boxes[{{ $i }}][address]" class="form-control form-control-sm"
                                                            value="{{ $box['address'] ?? '' }}" placeholder="Calle Ejemplo 123">
                                                 </div>
                                                 <div class="col-md-5">
-                                                    <label class="form-label small text-muted">Teléfono</label>
+                                                    <label class="form-label  text-muted">Teléfono</label>
                                                     <input type="text" name="contact_boxes[{{ $i }}][phone]" class="form-control form-control-sm"
                                                            value="{{ $box['phone'] ?? '' }}" placeholder="+34 900 000 000">
                                                 </div>
                                                 <div class="col-md-5">
-                                                    <label class="form-label small text-muted">Email</label>
+                                                    <label class="form-label  text-muted">Email</label>
                                                     <input type="email" name="contact_boxes[{{ $i }}][email]" class="form-control form-control-sm"
                                                            value="{{ $box['email'] ?? '' }}" placeholder="contacto@ejemplo.com">
                                                 </div>
@@ -373,19 +373,19 @@
                                     <div class="repeatable-row border rounded p-3 mb-3">
                                         <div class="row g-2">
                                             <div class="col-md-6">
-                                                <label class="form-label small text-muted">Nombre / Titulo</label>
+                                                <label class="form-label  text-muted">Nombre / Titulo</label>
                                                 <input type="text" name="contact_boxes[__IDX__][name]" class="form-control form-control-sm" placeholder="Oficina central">
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label small text-muted">Dirección</label>
+                                                <label class="form-label  text-muted">Dirección</label>
                                                 <input type="text" name="contact_boxes[__IDX__][address]" class="form-control form-control-sm" placeholder="Calle Ejemplo 123">
                                             </div>
                                             <div class="col-md-5">
-                                                <label class="form-label small text-muted">Teléfono</label>
+                                                <label class="form-label  text-muted">Teléfono</label>
                                                 <input type="text" name="contact_boxes[__IDX__][phone]" class="form-control form-control-sm" placeholder="+34 900 000 000">
                                             </div>
                                             <div class="col-md-5">
-                                                <label class="form-label small text-muted">Email</label>
+                                                <label class="form-label  text-muted">Email</label>
                                                 <input type="email" name="contact_boxes[__IDX__][email]" class="form-control form-control-sm" placeholder="contacto@ejemplo.com">
                                             </div>
                                             <div class="col-md-2 text-end d-flex align-items-end justify-content-end">

@@ -196,7 +196,7 @@
                                                 <form action="{{ route('managers.mailrelay.campaigns.destroy', $campaign->id) }}" method="POST" class="delete-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger">
+                                                    <button type="submit" class="dropdown-item">
                                                         <i class="fas fa-trash me-2"></i>Eliminar
                                                     </button>
                                                 </form>

@@ -85,7 +85,7 @@
                             <a class="fw-semibold text-dark text-decoration-none d-flex align-items-center justify-content-between"
                                data-bs-toggle="collapse" href="#collapseCustomLink" role="button" aria-expanded="false">
                                 <span><i class="fas fa-link me-2 text-primary"></i>Agregar enlace personalizado</span>
-                                <i class="fas fa-chevron-down small text-muted"></i>
+                                <i class="fas fa-chevron-down  text-muted"></i>
                             </a>
                         </div>
                         <div id="collapseCustomLink" class="collapse">
@@ -132,7 +132,7 @@
                                 <a class="fw-semibold text-dark text-decoration-none d-flex align-items-center justify-content-between"
                                    data-bs-toggle="collapse" href="#collapsePages" role="button" aria-expanded="false">
                                     <span><i class="fas fa-file-alt me-2 text-primary"></i>Páginas</span>
-                                    <i class="fas fa-chevron-down small text-muted"></i>
+                                    <i class="fas fa-chevron-down  text-muted"></i>
                                 </a>
                             </div>
                             <div id="collapsePages" class="collapse">
@@ -170,7 +170,7 @@
                                 <a class="fw-semibold text-dark text-decoration-none d-flex align-items-center justify-content-between"
                                    data-bs-toggle="collapse" href="#collapsePosts" role="button" aria-expanded="false">
                                     <span><i class="fas fa-newspaper me-2 text-primary"></i>Artículos</span>
-                                    <i class="fas fa-chevron-down small text-muted"></i>
+                                    <i class="fas fa-chevron-down  text-muted"></i>
                                 </a>
                             </div>
                             <div id="collapsePosts" class="collapse">
@@ -208,7 +208,7 @@
                                 <a class="fw-semibold text-dark text-decoration-none d-flex align-items-center justify-content-between"
                                    data-bs-toggle="collapse" href="#collapseCategories" role="button" aria-expanded="false">
                                     <span><i class="fas fa-tags me-2 text-primary"></i>Categorías</span>
-                                    <i class="fas fa-chevron-down small text-muted"></i>
+                                    <i class="fas fa-chevron-down  text-muted"></i>
                                 </a>
                             </div>
                             <div id="collapseCategories" class="collapse">

@@ -124,5 +124,21 @@
   },
   "enabledPlugins": {
     "laravel-boost@claude-plugins-official": true
+  },
+  "vscode": {
+    "git.autorefresh": false,
+    "git.autofetch": false,
+    "git.autoStash": false,
+    "scm.autoReveal": false
+  },
+  "monitoring": {
+    "gitStatus": {
+      "enabled": true,
+      "refreshInterval": 120000,
+      "excludePatterns": [".git", "node_modules", "vendor"]
+    },
+    "fileWatching": {
+      "enabled": false
+    }
   }
 }

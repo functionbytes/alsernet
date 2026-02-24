@@ -53,7 +53,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">Activos</h6>
+                                        <h6 class="card-title mb-2">Activos</h6>
                                         <h4 class="mb-1 fw-bold">{{ $users->where('is_active', true)->count() }}</h4>
                                         <small class="text-muted">Usuarios activos</small>
                                     </div>
@@ -167,7 +167,7 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button type="button" class="dropdown-item text-danger remove-user-btn"
+                                                        <button type="button" class="dropdown-item remove-user-btn"
                                                                 data-user-id="{{ $user->id }}"
                                                                 data-user-name="{{ $user->first_name }} {{ $user->last_name }}"
                                                                 data-role-id="{{ $role->id }}">

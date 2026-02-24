@@ -44,7 +44,7 @@
                                 <i class="fas fa-compress fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="collapse_whitespace">Colapsar espacios en blanco</label>
-                                    <p class="small text-muted mb-0">Elimina espacios y saltos de línea innecesarios del HTML</p>
+                                    <p class="text-muted mb-0">Elimina espacios y saltos de línea innecesarios del HTML</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="collapse_whitespace" id="collapse_whitespace"
@@ -61,7 +61,7 @@
                                 <i class="fas fa-tag fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="elide_attributes">Eliminar atributos por defecto</label>
-                                    <p class="small text-muted mb-0">Elimina valores de atributos HTML que coinciden con el valor por defecto</p>
+                                    <p class="text-muted mb-0">Elimina valores de atributos HTML que coinciden con el valor por defecto</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="elide_attributes" id="elide_attributes"
@@ -78,7 +78,7 @@
                                 <i class="fas fa-paint-brush fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="inline_css">CSS en línea</label>
-                                    <p class="small text-muted mb-0">Mueve los estilos inline a una clase CSS en el head del documento</p>
+                                    <p class="text-muted mb-0">Mueve los estilos inline a una clase CSS en el head del documento</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="inline_css" id="inline_css"
@@ -95,7 +95,7 @@
                                 <i class="fas fa-server fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="insert_dns_prefetch">Insertar DNS prefetch</label>
-                                    <p class="small text-muted mb-0">Inyecta etiquetas de prefetch de DNS para acelerar la carga de recursos externos</p>
+                                    <p class="text-muted mb-0">Inyecta etiquetas de prefetch de DNS para acelerar la carga de recursos externos</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="insert_dns_prefetch" id="insert_dns_prefetch"
@@ -112,7 +112,7 @@
                                 <i class="fas fa-comment-slash fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="remove_comments">Eliminar comentarios HTML</label>
-                                    <p class="small text-muted mb-0">Elimina comentarios HTML, JS y CSS del código fuente</p>
+                                    <p class="text-muted mb-0">Elimina comentarios HTML, JS y CSS del código fuente</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="remove_comments" id="remove_comments"
@@ -129,7 +129,7 @@
                                 <i class="fas fa-quote-left fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="remove_quotes">Eliminar comillas innecesarias</label>
-                                    <p class="small text-muted mb-0">Elimina comillas innecesarias en atributos HTML</p>
+                                    <p class="text-muted mb-0">Elimina comillas innecesarias en atributos HTML</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="remove_quotes" id="remove_quotes"
@@ -146,7 +146,7 @@
                                 <i class="fas fa-clock fa-fw text-muted mt-1"></i>
                                 <div class="flex-grow-1">
                                     <label class="fw-semibold mb-0" for="defer_javascript">Diferir JavaScript</label>
-                                    <p class="small text-muted mb-0">Agrega el atributo defer a los scripts externos para no bloquear el renderizado</p>
+                                    <p class="text-muted mb-0">Agrega el atributo defer a los scripts externos para no bloquear el renderizado</p>
                                 </div>
                                 <div class="form-check form-switch mb-0 flex-shrink-0">
                                     <input class="form-check-input" type="checkbox" name="defer_javascript" id="defer_javascript"

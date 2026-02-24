@@ -475,7 +475,7 @@
                                             <i class="{{ $block->icon }}"></i>
                                         </div>
                                         <h6 class="card-title mb-1 fw-semibold">{{ $block->name }}</h6>
-                                        <p class="card-text small text-muted mb-2">{{ $block->description }}</p>
+                                        <p class="card-text  text-muted mb-2">{{ $block->description }}</p>
                                         <button type="button" class="btn btn-sm btn-outline-primary btn-use-block"
                                                 data-block-key="{{ $block->key }}"
                                                 data-block-name="{{ $block->name }}">

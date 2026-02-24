@@ -13,7 +13,11 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<string, array<int, string>>
      */
-    protected $listen = [];
+    protected $listen = [
+        \Modules\Page\Events\PagePublished::class => [
+            \Modules\Page\Listeners\WarmPageCacheOnPublish::class,
+        ],
+    ];
 
     /**
      * The model observers for the application.

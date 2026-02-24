@@ -137,7 +137,7 @@
                         <div class="bg-black text-white p-3 rounded-3 mb-3">
                             <code class="text-success">php artisan module:make YourModuleName</code>
                         </div>
-                        <p class="small text-muted mb-0">
+                        <p class="text-muted mb-0">
                             <i class="fas fa-info-circle me-1"></i>
                             Para más información sobre cómo desarrollar módulos, consulta la
                             <a href="{{ route('settings.modules.index') }}" class="text-decoration-none">lista de módulos instalados</a>.

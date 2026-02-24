@@ -20,7 +20,7 @@
             </div>
             <div class="content">
                 <div class="mb-1">Email title: <strong class="font-weight-semibold">This is an email Title</strong></div>
-                <div class="small text-muted">
+                <div class=" text-muted">
                     Sent <strong class="font-weight-semibold">12 hours</strong> after items are left in cart
                 </div>
             </div>

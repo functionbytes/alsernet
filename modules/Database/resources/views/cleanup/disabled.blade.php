@@ -63,7 +63,7 @@
                             <i class="fa fa-shield-check text-success"></i>
                             <strong>Protección contra eliminación accidental</strong>
                         </p>
-                        <p class="small text-muted">
+                        <p class=" text-muted">
                             Esta característica requiere una confirmación explícita en el archivo de configuración para
                             prevenir la eliminación accidental de datos.
                         </p>
@@ -74,7 +74,7 @@
                             <i class="fa fa-lock text-warning"></i>
                             <strong>Requiere permisos de administrador</strong>
                         </p>
-                        <p class="small text-muted">
+                        <p class=" text-muted">
                             Solo usuarios con rol de administrador podrán usar esta función.
                         </p>
 
@@ -84,7 +84,7 @@
                             <i class="fa fa-history text-info"></i>
                             <strong>Auditoria registrada</strong>
                         </p>
-                        <p class="small text-muted">
+                        <p class=" text-muted">
                             Todas las operaciones de limpieza se registran en el historial de actividades.
                         </p>
                     </div>

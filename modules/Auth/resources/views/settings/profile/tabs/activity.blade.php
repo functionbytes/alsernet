@@ -19,7 +19,7 @@
                         </div>
                         <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                             <h6 class="mb-1">Inicio de sesión</h6>
-                            <p class="mb-1 small text-muted">Acceso desde {{ request()->ip() }}</p>
+                            <p class="mb-1  text-muted">Acceso desde {{ request()->ip() }}</p>
                             <small class="text-muted">
                                 <i class="fas fa-desktop me-1"></i>
                                 @php
@@ -50,7 +50,7 @@
                         </div>
                         <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                             <h6 class="mb-1">Perfil actualizado</h6>
-                            <p class="mb-0 small text-muted">Se actualizó la información del perfil</p>
+                            <p class="mb-0  text-muted">Se actualizó la información del perfil</p>
                         </div>
                     </div>
                     @endif
@@ -67,7 +67,7 @@
                         </div>
                         <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                             <h6 class="mb-1">Email verificado</h6>
-                            <p class="mb-0 small text-muted">Verificación exitosa del correo electrónico</p>
+                            <p class="mb-0  text-muted">Verificación exitosa del correo electrónico</p>
                         </div>
                     </div>
                     @endif
@@ -82,7 +82,7 @@
                         </div>
                         <div class="timeline-desc fs-3 text-dark ms-3 flex-grow-1">
                             <h6 class="mb-1">Cuenta creada</h6>
-                            <p class="mb-0 small text-muted">Registro en el sistema completado</p>
+                            <p class="mb-0  text-muted">Registro en el sistema completado</p>
                         </div>
                     </div>
                 </div>

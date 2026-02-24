@@ -391,7 +391,7 @@
                 {{-- Help --}}
                 <div class="alert alert-light border mb-0">
                     <p class="small mb-2"><i class="fas fa-question-circle text-primary me-2"></i><strong>¿Necesita ayuda?</strong></p>
-                    <p class="small text-muted mb-0">
+                    <p class="text-muted mb-0">
                         Si tiene dudas sobre como radicar su solicitud, puede comunicarse con nuestra linea de atencion.
                     </p>
                 </div>

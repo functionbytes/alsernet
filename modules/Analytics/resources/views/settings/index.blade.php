@@ -148,7 +148,7 @@
                                     Estas son las métricas que puedes rastrear con GA4.
                                 </p>
 
-                                <ul class="small text-muted ps-3 mb-4">
+                                <ul class=" text-muted ps-3 mb-4">
                                     <li class="mb-2"><strong>Sessions (Sesiones):</strong> Número total de sesiones en tu sitio</li>
                                     <li class="mb-2"><strong>Users (Usuarios):</strong> Cantidad de usuarios únicos</li>
                                     <li class="mb-2"><strong>Page Views (Vistas):</strong> Total de páginas visitadas</li>
@@ -167,7 +167,7 @@
                                     Dimensiones para segmentar y agrupar tus datos.
                                 </p>
 
-                                <ul class="small text-muted ps-3">
+                                <ul class=" text-muted ps-3">
                                     <li class="mb-2"><strong>Date (Fecha):</strong> Agrupación por fecha</li>
                                     <li class="mb-2"><strong>Page Title:</strong> Título de las páginas visitadas</li>
                                     <li class="mb-2"><strong>Browser:</strong> Navegador utilizado</li>

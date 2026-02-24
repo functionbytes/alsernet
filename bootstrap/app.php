@@ -45,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Modules\Core\Http\Middleware\EnsureModuleIsActive::class,
             \Modules\Template\Http\Middleware\RegisterTemplateViewPath::class,
+            \Modules\Page\Http\Middleware\PageCacheMiddleware::class,
         ]);
 
         $middleware->group('api', [

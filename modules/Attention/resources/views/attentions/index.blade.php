@@ -14,7 +14,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-title mb-2">Total pendientes</h6>
-                            <h2 class="text-success" style="font-weight: 700;">{{ $stats['total'] ?? 0 }}</h2>
+                            <h2 >{{ $stats['total'] ?? 0 }}</h2>
                             <small class="text-muted">PQRSF sin finalizar</small>
                         </div>
                     </div>
@@ -27,7 +27,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-title mb-2">Hoy</h6>
-                            <h2 class="text-success" style="font-weight: 700;">{{ $stats['today'] ?? 0 }}</h2>
+                            <h2 >{{ $stats['today'] ?? 0 }}</h2>
                             <small class="text-muted">Registrados hoy</small>
                         </div>
                     </div>
@@ -40,7 +40,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-title mb-2">Vencidos</h6>
-                            <h2 class="text-success" style="font-weight: 700;">{{ $stats['overdue'] ?? 0 }}</h2>
+                            <h2 >{{ $stats['overdue'] ?? 0 }}</h2>
                             <small class="text-muted">Fuera de tiempo</small>
                         </div>
                     </div>
@@ -53,7 +53,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-title mb-2">Asignados a mí</h6>
-                            <h2 class="text-success" style="font-weight: 700;">{{ $stats['assigned_to_me'] ?? 0 }}</h2>
+                            <h2 >{{ $stats['assigned_to_me'] ?? 0 }}</h2>
                             <small class="text-muted">En mi bandeja</small>
                         </div>
                     </div>
