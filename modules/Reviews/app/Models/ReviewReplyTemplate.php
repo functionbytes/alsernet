@@ -102,7 +102,7 @@ class ReviewReplyTemplate extends Model
         return [
             '{reviewer_name}' => 'Nombre del reviewer',
             '{location_name}' => 'Nombre del negocio/ubicación',
-            '{star_rating}' => 'Calificación (ONE_STAR, TWO_STAR, etc.)',
+            '{star_rating}' => 'Calificación (1-5)',
             '{comment_summary}' => 'Resumen del comentario',
             '{date}' => 'Fecha de la reseña',
         ];

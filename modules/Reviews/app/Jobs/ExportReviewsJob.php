@@ -33,11 +33,8 @@ class ExportReviewsJob implements ShouldQueue
     public function handle(ReviewExportService $service): void
     {
         try {
-            $filePath = match ($this->format) {
-                'excel' => $service->exportToExcel($this->filters),
-                'csv' => $service->exportToCsv($this->filters),
-                default => $service->exportToCsv($this->filters),
-            };
+            // Export to CSV (returns file path)
+            $filePath = $service->exportToCsv($this->filters);
 
             Log::info('Reviews export completed', [
                 'user_id' => $this->user->id,

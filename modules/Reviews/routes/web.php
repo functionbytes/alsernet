@@ -48,6 +48,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('list', [ReviewController::class, 'index'])->name('index');
         Route::get('data', [ReviewController::class, 'data'])->name('data');
         Route::get('export', [ReviewController::class, 'export'])->name('export');
+        Route::get('export/download/{file}', [ReviewController::class, 'downloadExport'])->name('export.download');
         Route::post('bulk-moderate', [ReviewController::class, 'bulkModerate'])->name('bulk-moderate');
 
         Route::resource('replies', ReviewReplyController::class)->only(['store', 'update', 'destroy']);

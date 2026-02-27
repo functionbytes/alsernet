@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Reviews\Http\Requests\BulkModerationRequest;
 use Modules\Reviews\Http\Requests\UpdateModerationRequest;
+use Modules\Reviews\Jobs\ExportReviewsJob;
 use Modules\Reviews\Models\Review;
 use Modules\Reviews\Models\ReviewReplyTemplate;
 use Modules\Reviews\Services\ReviewExportService;
@@ -175,7 +176,7 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function export(Request $request): BinaryFileResponse
+    public function export(Request $request): JsonResponse
     {
         $filters = $request->only([
             'location_id',
@@ -187,9 +188,26 @@ class ReviewController extends Controller
             'date_to',
         ]);
 
-        $filePath = $this->exportService->exportToCsv($filters);
+        $format = $request->input('format', 'csv');
 
-        return response()->download($filePath, 'reviews-'.date('Y-m-d').'.csv');
+        // Dispatch async export job
+        ExportReviewsJob::dispatch(auth()->user(), $filters, $format);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'La exportación se está procesando. Recibirás una notificación cuando esté lista.',
+        ]);
+    }
+
+    public function downloadExport(string $file): BinaryFileResponse
+    {
+        $filePath = storage_path('app/exports/'.$file);
+
+        if (! file_exists($filePath)) {
+            abort(404, 'El archivo de exportación no existe o ha expirado');
+        }
+
+        return response()->download($filePath)->deleteFileAfterSend();
     }
 
     private function getCategoryFromRating(string $rating): string

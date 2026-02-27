@@ -44,4 +44,16 @@ return [
     |
     */
     'rate_limit_per_minute' => 60,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Cache TTL (time-to-live) settings for various cached data.
+    |
+    */
+    'cache' => [
+        'stats_ttl_minutes' => env('REVIEWS_STATS_CACHE_TTL', 5),
+    ],
 ];

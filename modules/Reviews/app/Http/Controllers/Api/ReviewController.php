@@ -86,7 +86,8 @@ class ReviewController extends Controller
             'days' => $request->input('days'),
         ]));
 
-        $stats = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($request) {
+        $ttl = now()->addMinutes(config('reviews.general.cache.stats_ttl_minutes', 5));
+        $stats = Cache::remember($cacheKey, $ttl, function () use ($request) {
             $locationId = $request->filled('location_id') ? $request->integer('location_id') : null;
             $days = $request->filled('days') ? $request->integer('days', 30) : null;
             $dateFrom = $days ? now()->subDays($days) : null;

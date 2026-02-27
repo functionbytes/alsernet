@@ -3,6 +3,7 @@
 namespace Modules\Reviews\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Reviews\Exports\ReviewsExport;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -19,15 +20,10 @@ class ReviewExportService
     public function exportToCsv(array $filters = []): string
     {
         $filename = 'reviews_'.now()->format('Y-m-d_His').'.csv';
-        $path = storage_path('app/exports/'.$filename);
-
-        if (! is_dir(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
 
         Excel::store(new ReviewsExport($filters), 'exports/'.$filename, 'local', \Maatwebsite\Excel\Excel::CSV);
 
-        return $path;
+        return Storage::disk('local')->path('exports/'.$filename);
     }
 
     public function exportToArray(array $filters = []): array

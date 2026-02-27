@@ -133,6 +133,15 @@ class Review extends Model
         return ! is_null($this->google_reply_text);
     }
 
+    /**
+     * Get the numeric star rating value.
+     *
+     * Note: This accessor is intentionally kept for API responses and backwards compatibility.
+     * It automatically exposes star_rating as an integer (1-5) instead of the enum value
+     * when the model is serialized to JSON/array, making it easier for frontend consumption.
+     *
+     * @return int Star rating value (1-5)
+     */
     public function getStarRatingValueAttribute(): int
     {
         return $this->star_rating->value();
