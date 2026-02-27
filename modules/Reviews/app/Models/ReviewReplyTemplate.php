@@ -107,4 +107,28 @@ class ReviewReplyTemplate extends Model
             '{date}' => 'Fecha de la reseña',
         ];
     }
+
+    /**
+     * Get actual variable values from a review
+     * Centralizes template variable logic to prevent duplication
+     */
+    public function getVariablesForReview(Review $review): array
+    {
+        return [
+            '{reviewer_name}' => $review->reviewer_name,
+            '{location_name}' => $review->location->name,
+            '{star_rating}' => $review->star_rating->value(),
+            '{date}' => $review->review_time->format('d/m/Y'),
+            '{comment_summary}' => $review->comment ? substr($review->comment, 0, 100) : '',
+        ];
+    }
+
+    /**
+     * Render template with values from a review
+     * Convenience method combining getVariablesForReview + render
+     */
+    public function renderForReview(Review $review): string
+    {
+        return $this->render($this->getVariablesForReview($review));
+    }
 }

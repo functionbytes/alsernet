@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Reviews\Models\ReviewGoogleConnection;
 use Modules\Reviews\Models\ReviewGoogleLocation;
 
@@ -28,6 +29,24 @@ class GoogleLocationService
             'verify' => true, // CRITICAL: Verify SSL certificates
             'http_errors' => false, // Handle errors manually for better control
         ]);
+    }
+
+    /**
+     * PERFORMANCE FIX: Rate limiting for Google API calls
+     * Prevents exceeding Google API quota (60 requests per minute)
+     */
+    private function checkRateLimit(string $connectionId): void
+    {
+        $key = "google-api:{$connectionId}";
+        $limit = 60; // Requests per minute
+        $decayMinutes = 1;
+
+        if (RateLimiter::tooManyAttempts($key, $limit)) {
+            $seconds = RateLimiter::availableIn($key);
+            throw new \RuntimeException("Google API rate limit exceeded. Try again in {$seconds} seconds.");
+        }
+
+        RateLimiter::hit($key, $decayMinutes);
     }
 
     public function syncLocations(ReviewGoogleConnection $connection): int
@@ -56,6 +75,8 @@ class GoogleLocationService
 
     public function fetchLocations(ReviewGoogleConnection $connection, string $accountName): array
     {
+        $this->checkRateLimit($connection->id);
+
         try {
             $client = $this->createSecureClient();
             $baseUrl = config('reviews.google.api.business_information');

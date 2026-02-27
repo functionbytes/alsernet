@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Reviews\Enums\ReviewRating;
 use Modules\Reviews\Events\ReviewSynced;
 use Modules\Reviews\Models\Review;
@@ -33,6 +34,24 @@ class GoogleReviewService
             'verify' => true, // CRITICAL: Verify SSL certificates
             'http_errors' => false, // Handle errors manually for better control
         ]);
+    }
+
+    /**
+     * PERFORMANCE FIX: Rate limiting for Google API calls
+     * Prevents exceeding Google API quota (60 requests per minute)
+     */
+    private function checkRateLimit(string $connectionId): void
+    {
+        $key = "google-api:{$connectionId}";
+        $limit = 60; // Requests per minute
+        $decayMinutes = 1;
+
+        if (RateLimiter::tooManyAttempts($key, $limit)) {
+            $seconds = RateLimiter::availableIn($key);
+            throw new \RuntimeException("Google API rate limit exceeded. Try again in {$seconds} seconds.");
+        }
+
+        RateLimiter::hit($key, $decayMinutes);
     }
 
     public function syncReviews(ReviewGoogleLocation $location): int
@@ -65,6 +84,8 @@ class GoogleReviewService
         \Modules\Reviews\Models\ReviewGoogleConnection $connection,
         string $locationId
     ): array {
+        $this->checkRateLimit($connection->id);
+
         try {
             $client = $this->createSecureClient();
             $baseUrl = config('reviews.google.api.reviews');
@@ -160,6 +181,8 @@ class GoogleReviewService
         $review = $reply->review()->with('location.connection')->first();
         $connection = $review->location->connection;
 
+        $this->checkRateLimit($connection->id);
+
         $this->authService->refreshTokenIfNeeded($connection);
 
         try {
@@ -233,6 +256,9 @@ class GoogleReviewService
     public function deleteReply(Review $review): bool
     {
         $connection = $review->location->connection;
+
+        $this->checkRateLimit($connection->id);
+
         $this->authService->refreshTokenIfNeeded($connection);
 
         try {

@@ -111,14 +111,8 @@ class ReviewReplyService
         ReviewReplyTemplate $template,
         User $user
     ): ReviewReply {
-        $variables = [
-            '{reviewer_name}' => $review->reviewer_name,
-            '{business_name}' => $review->location->name,
-            '{rating}' => $review->star_rating->value(),
-            '{date}' => $review->review_time->format('d/m/Y'),
-        ];
-
-        $replyText = $template->render($variables);
+        $replyText = $template->renderForReview($review);
+        $template->incrementUsage();
 
         return $this->createDraft($review, $replyText, $user);
     }

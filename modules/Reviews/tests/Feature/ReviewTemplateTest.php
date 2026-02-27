@@ -14,10 +14,10 @@ class ReviewTemplateTest extends TestCase
         ReviewReplyTemplate::factory()->count(3)->create();
 
         $response = $this->actingAs($user)
-            ->get(route('reviews.templates.index'));
+            ->get(route('settings.reviews.templates.index'));
 
         $response->assertOk()
-            ->assertViewIs('reviews::templates.index');
+            ->assertViewIs('reviews::replies.templates.index');
     }
 
     public function test_user_can_create_template(): void
@@ -25,14 +25,14 @@ class ReviewTemplateTest extends TestCase
         $user = $this->createUser(['reviews.manage-templates']);
 
         $response = $this->actingAs($user)
-            ->postJson(route('reviews.templates.store'), [
+            ->post(route('settings.reviews.templates.store'), [
                 'name' => 'Thank you template',
                 'body' => 'Thank you {reviewer_name} for your {rating}-star review!',
                 'category' => 'general',
                 'is_active' => true,
             ]);
 
-        $response->assertCreated();
+        $response->assertRedirect(route('settings.reviews.templates.index'));
 
         $this->assertDatabaseHas('review_reply_templates', [
             'name' => 'Thank you template',
@@ -46,14 +46,18 @@ class ReviewTemplateTest extends TestCase
         $user = $this->createUser(['reviews.manage-templates']);
         $template = ReviewReplyTemplate::factory()->create([
             'body' => 'Original content',
+            'created_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
-            ->patchJson(route('reviews.templates.update', $template), [
+            ->put(route('settings.reviews.templates.update', $template), [
+                'name' => $template->name,
                 'body' => 'Updated content with {reviewer_name}',
+                'category' => $template->category,
+                'is_active' => $template->is_active,
             ]);
 
-        $response->assertOk();
+        $response->assertRedirect(route('settings.reviews.templates.index'));
 
         $this->assertDatabaseHas('review_reply_templates', [
             'id' => $template->id,
@@ -64,12 +68,14 @@ class ReviewTemplateTest extends TestCase
     public function test_user_can_delete_template(): void
     {
         $user = $this->createUser(['reviews.manage-templates']);
-        $template = ReviewReplyTemplate::factory()->create();
+        $template = ReviewReplyTemplate::factory()->create([
+            'created_by' => $user->id,
+        ]);
 
         $response = $this->actingAs($user)
-            ->deleteJson(route('reviews.templates.destroy', $template));
+            ->delete(route('settings.reviews.templates.destroy', $template));
 
-        $response->assertOk();
+        $response->assertRedirect(route('settings.reviews.templates.index'));
 
         $this->assertDatabaseMissing('review_reply_templates', [
             'id' => $template->id,

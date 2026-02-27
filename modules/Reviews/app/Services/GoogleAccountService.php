@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Reviews\Models\ReviewGoogleConnection;
 
 class GoogleAccountService
@@ -29,8 +30,28 @@ class GoogleAccountService
         ]);
     }
 
+    /**
+     * PERFORMANCE FIX: Rate limiting for Google API calls
+     * Prevents exceeding Google API quota (60 requests per minute)
+     */
+    private function checkRateLimit(string $connectionId): void
+    {
+        $key = "google-api:{$connectionId}";
+        $limit = 60; // Requests per minute
+        $decayMinutes = 1;
+
+        if (RateLimiter::tooManyAttempts($key, $limit)) {
+            $seconds = RateLimiter::availableIn($key);
+            throw new \RuntimeException("Google API rate limit exceeded. Try again in {$seconds} seconds.");
+        }
+
+        RateLimiter::hit($key, $decayMinutes);
+    }
+
     public function listAccounts(ReviewGoogleConnection $connection): array
     {
+        $this->checkRateLimit($connection->id);
+
         $this->authService->refreshTokenIfNeeded($connection);
 
         try {
@@ -72,6 +93,8 @@ class GoogleAccountService
 
     public function getAccount(ReviewGoogleConnection $connection, string $accountId): array
     {
+        $this->checkRateLimit($connection->id);
+
         $this->authService->refreshTokenIfNeeded($connection);
 
         try {

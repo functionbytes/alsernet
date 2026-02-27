@@ -71,6 +71,8 @@ class ReviewTemplateController extends Controller
 
     public function store(StoreReplyTemplateRequest $request): RedirectResponse
     {
+        $this->authorize('create', ReviewReplyTemplate::class);
+
         $template = ReviewReplyTemplate::query()->create([
             ...$request->validated(),
             'created_by' => auth()->id(),
@@ -88,6 +90,8 @@ class ReviewTemplateController extends Controller
 
     public function show(ReviewReplyTemplate $template): View
     {
+        $this->authorize('view', $template);
+
         return view('reviews::replies.templates.show', compact('template'));
     }
 

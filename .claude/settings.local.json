@@ -123,7 +123,8 @@
       "Bash(/Users/developert/Herd/inoqualab/modules/Page/app/Events/PagePublished.php << 'EOF'\n<?php\n\nnamespace Modules\\\\Page\\\\Events;\n\nuse Illuminate\\\\Foundation\\\\Events\\\\Dispatchable;\nuse Modules\\\\Page\\\\Models\\\\Page;\n\nclass PagePublished\n{\n    use Dispatchable;\n\n    public function __construct\\(\n        public readonly Page $page\n    \\) {}\n}\nEOF)",
       "Bash(/Users/developert/Herd/inoqualab/modules/Page/app/Listeners/WarmPageCacheOnPublish.php << 'EOF'\n<?php\n\nnamespace Modules\\\\Page\\\\Listeners;\n\nuse Modules\\\\Page\\\\Events\\\\PagePublished;\nuse Modules\\\\Page\\\\Jobs\\\\WarmPageCacheJob;\n\nclass WarmPageCacheOnPublish\n{\n    public function handle\\(PagePublished $event\\): void\n    {\n        WarmPageCacheJob::dispatch\\($event->page\\);\n    }\n}\nEOF)",
       "Bash(/Users/developert/Herd/inoqualab/modules/Page/app/Console/ScheduleServiceProvider.php << 'EOF'\n<?php\n\nnamespace Modules\\\\Page\\\\Console;\n\nuse Illuminate\\\\Console\\\\Scheduling\\\\Schedule;\nuse Illuminate\\\\Support\\\\ServiceProvider;\n\nclass ScheduleServiceProvider extends ServiceProvider\n{\n    public function boot\\(\\): void\n    {\n        $this->app->make\\(Schedule::class\\)->call\\(function \\(\\) {\n            // Warm page cache every 6 hours\n            \\\\Modules\\\\Page\\\\Services\\\\PageCacheService::warmPopular\\(20\\);\n        }\\)->everyFourHours\\(\\)->between\\('00:00', '23:59'\\)->withoutOverlapping\\(\\);\n    }\n}\nEOF)",
-      "mcp__laravel-boost__list-artisan-commands"
+      "mcp__laravel-boost__list-artisan-commands",
+      "mcp__jetbrains__create_new_file"
     ],
     "deny": []
   },
