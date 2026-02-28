@@ -5,6 +5,8 @@ namespace Modules\Page\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Page\Events\PageLockAcquired;
+use Modules\Page\Events\PageLockReleased;
 use Modules\Page\Models\Page;
 use Modules\Page\Services\PageLockService;
 
@@ -65,6 +67,9 @@ class PageLockController extends Controller
             $request->session()?->getId()
         );
 
+        // Broadcast lock acquired event
+        PageLockAcquired::dispatch($page, $lock);
+
         return response()->json([
             'success' => true,
             'message' => 'Lock adquirido',
@@ -119,6 +124,9 @@ class PageLockController extends Controller
                 'message' => 'No hay lock para liberar',
             ], 404);
         }
+
+        // Broadcast lock released event
+        PageLockReleased::dispatch($page, auth()->id());
 
         return response()->json([
             'success' => true,

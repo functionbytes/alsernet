@@ -1290,6 +1290,56 @@ $(document).ready(function () {
     // Verificar lock al cargar la página
     checkAndAcquireLock();
 
+    // =========================================================
+    // WEBSOCKET - BROADCASTING CON ECHO
+    // =========================================================
+    if (typeof Reverb !== 'undefined' && typeof Echo !== 'undefined') {
+        // Escuchar eventos en tiempo real para esta página
+        var channel = Echo.channel('page.' + pageId);
+
+        // Cuando otro usuario adquiere lock
+        channel.listen('lock-acquired', function(data) {
+            console.log('👤 ' + data.locked_by.name + ' comenzó a editar');
+
+            // Si no es nuestro lock, mostrar alerta
+            if (data.locked_by.id !== {{ auth()->id() }}) {
+                showLockAlert({
+                    is_locked: true,
+                    is_owned_by_me: false,
+                    locked_by_user: data.locked_by,
+                    locked_at: moment(data.locked_at).fromNow(),
+                    expires_in_human: moment(data.expires_at).fromNow()
+                });
+                disableEditForm();
+            }
+        });
+
+        // Cuando otro usuario libera lock
+        channel.listen('lock-released', function(data) {
+            console.log('✓ Lock liberado');
+
+            // Si fue liberado por otro usuario, esconder alerta
+            if (data.released_by_user_id !== {{ auth()->id() }}) {
+                $('#lockAlert').fadeOut();
+                // Recargar página para adquirir nuevo lock
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            }
+        });
+
+        // Cuando otro usuario hace auto-save
+        channel.listen('auto-saved', function(data) {
+            // Solo mostrar si es otro usuario
+            if (data.saved_by.id !== {{ auth()->id() }}) {
+                console.log('💾 ' + data.saved_by.name + ' guardó cambios en: ' + data.fields_changed.join(', '));
+
+                // Mostrar notificación (opcional)
+                // toastr.info(data.saved_by.name + ' guardó cambios', 'Sincronización', { timeOut: 3000 });
+            }
+        });
+    }
+
 });
 
 function regenerateSlug(title) {

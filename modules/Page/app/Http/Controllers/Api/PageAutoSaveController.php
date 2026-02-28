@@ -5,6 +5,7 @@ namespace Modules\Page\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Page\Events\PageAutoSaved;
 use Modules\Page\Models\Page;
 use Modules\Page\Services\PageAutoSaveService;
 
@@ -37,6 +38,9 @@ class PageAutoSaveController extends Controller
         ]);
 
         $draft = $this->autoSaveService->saveAutoSave($page, auth()->user(), $data);
+
+        // Broadcast auto-save event
+        PageAutoSaved::dispatch($page, $draft);
 
         return response()->json([
             'success' => true,
