@@ -46,6 +46,7 @@ class PageServiceProvider extends ServiceProvider
         // Register services
         $this->app->singleton(\Modules\Page\Services\PageService::class);
         $this->app->singleton(\Modules\Page\Services\PageCacheService::class);
+        $this->app->singleton(\Modules\Page\Services\PageAutoSaveService::class);
 
         // Register factories
         $this->registerFactories();
@@ -77,6 +78,7 @@ class PageServiceProvider extends ServiceProvider
             \Modules\Page\Console\Commands\PageCacheWarmCommand::class,
             \Modules\Page\Console\Commands\PageCacheClearCommand::class,
             \Modules\Page\Console\Commands\PageCacheStatsCommand::class,
+            \Modules\Page\Console\Commands\CleanPageAutoSavesCommand::class,
         ]);
     }
 
@@ -105,6 +107,13 @@ class PageServiceProvider extends ServiceProvider
             $schedule->command('page:cache-warm --all')
                 ->everyFourHours()
                 ->between('00:00', '23:59')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            // Clean expired auto-saves daily
+            $schedule->command('page:clean-auto-saves')
+                ->daily()
+                ->at('03:00')
                 ->withoutOverlapping()
                 ->onOneServer();
         });

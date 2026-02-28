@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Page\Http\Controllers\Api\PageAutoSaveController;
 use Modules\Page\Http\Controllers\Api\PageCacheController;
 use Modules\Page\Http\Controllers\PageController;
 use Modules\Page\Http\Controllers\PublicController;
@@ -24,6 +25,12 @@ Route::prefix('v1')->group(function () {
         Route::post('pages/{page}/publish', [PageController::class, 'publish'])->name('api.settings.pages.publish');
         Route::post('pages/{page}/unpublish', [PageController::class, 'unpublish'])->name('api.settings.pages.unpublish');
         Route::post('pages/{page}/duplicate', [PageController::class, 'duplicate'])->name('api.settings.pages.duplicate');
+
+        // Auto-save routes
+        Route::patch('pages/{page}/auto-save', [PageAutoSaveController::class, 'save'])->name('api.pages.auto-save');
+        Route::get('pages/{page}/auto-save', [PageAutoSaveController::class, 'getDraft'])->name('api.pages.auto-save.get');
+        Route::post('pages/{page}/auto-save/restore', [PageAutoSaveController::class, 'restore'])->name('api.pages.auto-save.restore');
+        Route::delete('pages/{page}/auto-save', [PageAutoSaveController::class, 'discard'])->name('api.pages.auto-save.discard');
 
         // Cache routes
         Route::prefix('cache')->name('cache.')->group(function () {

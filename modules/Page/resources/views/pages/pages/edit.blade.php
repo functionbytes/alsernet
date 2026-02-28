@@ -999,6 +999,135 @@ $(document).ready(function () {
     toastr.error(@json(session('error')), 'Error');
     @endif
 
+    // =========================================================
+    // AUTO-SAVE
+    // =========================================================
+    var pageId = {{ $page->id }};
+    var autoSaveTimeout;
+    var autoSaveUrl = '{{ route('api.pages.auto-save', $page->id) }}';
+    var autoSaveIndicator = '<span id="autoSaveIndicator" class="ms-2 badge bg-info"><i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...</span>';
+    var lastSavedData = {};
+
+    // Crear indicador en la barra de guardar si no existe
+    if ($('#autoSaveIndicator').length === 0) {
+        $('#pageForm .btn-primary:first').after(autoSaveIndicator);
+    }
+
+    function hasChanges() {
+        var currentData = {
+            title: $('#title').val(),
+            slug: $('#slug').val(),
+            description: $('#description').val(),
+            content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
+            status: $('#status').val(),
+            template: $('#template').val(),
+            seo_title: $('#seo_title').val(),
+            seo_description: $('#seo_description').val(),
+            seo_keywords: $('#seo_keywords').val(),
+            header_style: $('#header_style').val(),
+            seo_noindex: $('input[name="seo_noindex"]:checked').val(),
+        };
+
+        return JSON.stringify(currentData) !== JSON.stringify(lastSavedData);
+    }
+
+    function performAutoSave() {
+        var currentData = {
+            title: $('#title').val(),
+            slug: $('#slug').val(),
+            description: $('#description').val(),
+            content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
+            status: $('#status').val(),
+            template: $('#template').val(),
+            seo_title: $('#seo_title').val(),
+            seo_description: $('#seo_description').val(),
+            seo_keywords: $('#seo_keywords').val(),
+            header_style: $('#header_style').val(),
+            seo_noindex: $('input[name="seo_noindex"]:checked').val(),
+        };
+
+        // No guardar si no hay cambios
+        if (JSON.stringify(currentData) === JSON.stringify(lastSavedData)) {
+            return;
+        }
+
+        var $indicator = $('#autoSaveIndicator');
+        $indicator.html('<i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...').removeClass('bg-success').addClass('bg-info');
+
+        $.ajax({
+            url: autoSaveUrl,
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            data: JSON.stringify(currentData),
+            success: function(response) {
+                if (response.success) {
+                    lastSavedData = currentData;
+                    $indicator.html('<i class="fas fa-check me-1"></i>Guardado ' + (new Date().toLocaleTimeString())).removeClass('bg-info').addClass('bg-success');
+
+                    // Desaparecer después de 3 segundos
+                    setTimeout(function() {
+                        $indicator.fadeOut(300, function() { $(this).html('').fadeIn(); });
+                    }, 3000);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error en auto-save:', xhr);
+                $indicator.html('<i class="fas fa-exclamation-triangle me-1"></i>Error al guardar').removeClass('bg-info').addClass('bg-danger');
+
+                // Mostrar el error por más tiempo
+                setTimeout(function() {
+                    $indicator.fadeOut(300, function() {
+                        $(this).html('<i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...').removeClass('bg-danger').addClass('bg-info').fadeIn();
+                    });
+                }, 5000);
+            }
+        });
+    }
+
+    // Detectar cambios en campos
+    $('#title, #slug, #description, #status, #template, #header_style, #seo_title, #seo_description, #seo_keywords').on('input change', function() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(performAutoSave, 2000); // 2 segundos de debounce
+    });
+
+    // Detectar cambios en checkboxes de SEO
+    $('input[name="seo_noindex"]').on('change', function() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(performAutoSave, 2000);
+    });
+
+    // Detectar cambios en TinyMCE
+    if (tinymce.get(editorId)) {
+        tinymce.get(editorId).on('change', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(performAutoSave, 2000);
+        });
+
+        tinymce.get(editorId).on('keyup', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(performAutoSave, 2000);
+        });
+    }
+
+    // Inicializar lastSavedData con datos actuales
+    lastSavedData = {
+        title: $('#title').val(),
+        slug: $('#slug').val(),
+        description: $('#description').val(),
+        content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
+        status: $('#status').val(),
+        template: $('#template').val(),
+        seo_title: $('#seo_title').val(),
+        seo_description: $('#seo_description').val(),
+        seo_keywords: $('#seo_keywords').val(),
+        header_style: $('#header_style').val(),
+        seo_noindex: $('input[name="seo_noindex"]:checked').val(),
+    };
+
 });
 
 function regenerateSlug(title) {
