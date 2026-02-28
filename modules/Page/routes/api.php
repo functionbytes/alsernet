@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Page\Http\Controllers\Api\PageAutoSaveController;
 use Modules\Page\Http\Controllers\Api\PageCacheController;
+use Modules\Page\Http\Controllers\Api\PageLockController;
 use Modules\Page\Http\Controllers\PageController;
 use Modules\Page\Http\Controllers\PublicController;
 use Modules\Page\Http\Controllers\SearchController;
@@ -31,6 +32,12 @@ Route::prefix('v1')->group(function () {
         Route::get('pages/{page}/auto-save', [PageAutoSaveController::class, 'getDraft'])->name('api.pages.auto-save.get');
         Route::post('pages/{page}/auto-save/restore', [PageAutoSaveController::class, 'restore'])->name('api.pages.auto-save.restore');
         Route::delete('pages/{page}/auto-save', [PageAutoSaveController::class, 'discard'])->name('api.pages.auto-save.discard');
+
+        // Page lock routes
+        Route::get('pages/{page}/lock', [PageLockController::class, 'check'])->name('api.pages.lock.check');
+        Route::post('pages/{page}/lock', [PageLockController::class, 'acquire'])->name('api.pages.lock.acquire');
+        Route::patch('pages/{page}/lock', [PageLockController::class, 'renew'])->name('api.pages.lock.renew');
+        Route::delete('pages/{page}/lock', [PageLockController::class, 'release'])->name('api.pages.lock.release');
 
         // Cache routes
         Route::prefix('cache')->name('cache.')->group(function () {

@@ -12,6 +12,7 @@ use Modules\Auth\Traits\HasUserAttributes;
 use Modules\Auth\Traits\HasUserScopes;
 use Modules\Core\Traits\HasQuotaManagement;
 use Modules\Notification\Traits\HasNotificationSystem;
+use Modules\Reviews\Traits\HasNotificationPreferences;
 use Modules\Storage\Traits\HasFileSystemPaths;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -31,6 +32,7 @@ class User extends Authenticatable
     // Custom User traits organized by responsibility
     use HasBasicRelations;
     use HasFileSystemPaths;
+    use HasNotificationPreferences;
 
     // Notifiable and HasNotificationSystem - resolve method conflicts
     use HasNotificationSystem, Notifiable {

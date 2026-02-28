@@ -47,6 +47,7 @@ class PageServiceProvider extends ServiceProvider
         $this->app->singleton(\Modules\Page\Services\PageService::class);
         $this->app->singleton(\Modules\Page\Services\PageCacheService::class);
         $this->app->singleton(\Modules\Page\Services\PageAutoSaveService::class);
+        $this->app->singleton(\Modules\Page\Services\PageLockService::class);
 
         // Register factories
         $this->registerFactories();
@@ -79,6 +80,7 @@ class PageServiceProvider extends ServiceProvider
             \Modules\Page\Console\Commands\PageCacheClearCommand::class,
             \Modules\Page\Console\Commands\PageCacheStatsCommand::class,
             \Modules\Page\Console\Commands\CleanPageAutoSavesCommand::class,
+            \Modules\Page\Console\Commands\CleanPageLocksCommand::class,
         ]);
     }
 
@@ -114,6 +116,12 @@ class PageServiceProvider extends ServiceProvider
             $schedule->command('page:clean-auto-saves')
                 ->daily()
                 ->at('03:00')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            // Clean expired page locks every 10 minutes
+            $schedule->command('page:clean-locks')
+                ->everyTenMinutes()
                 ->withoutOverlapping()
                 ->onOneServer();
         });

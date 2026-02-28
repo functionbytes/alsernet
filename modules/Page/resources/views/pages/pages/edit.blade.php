@@ -8,6 +8,18 @@
 
     @include('core::components.alerts')
 
+    {{-- Página bloqueada por otro usuario --}}
+    <div id="lockAlert" class="alert alert-warning alert-dismissible fade show" style="display:none;">
+        <i class="fas fa-lock me-2"></i>
+        <strong id="lockAlertText">Esta página está siendo editada por otro usuario</strong>
+        <p class="mb-0 small mt-1">
+            <span id="lockUserName"></span>
+            <br>
+            Bloqueado: <span id="lockTime"></span>
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+
     <form action="{{ route('pages.update', $page->id) }}" method="POST" enctype="multipart/form-data" id="pageForm">
         @csrf
         @method('PUT')
@@ -1127,6 +1139,156 @@ $(document).ready(function () {
         header_style: $('#header_style').val(),
         seo_noindex: $('input[name="seo_noindex"]:checked').val(),
     };
+
+    // =========================================================
+    // PAGE LOCKS
+    // =========================================================
+    var pageId = {{ $page->id }};
+    var lockCheckUrl = '{{ route('api.pages.lock.check', $page->id) }}';
+    var lockAcquireUrl = '{{ route('api.pages.lock.acquire', $page->id) }}';
+    var lockReleaseUrl = '{{ route('api.pages.lock.release', $page->id) }}';
+    var lockRenewUrl = '{{ route('api.pages.lock.renew', $page->id) }}';
+    var lockRenewInterval;
+    var currentLock = null;
+
+    // Función para verificar/adquirir lock al cargar
+    function checkAndAcquireLock() {
+        $.ajax({
+            url: lockCheckUrl,
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.data && !response.data.is_owned_by_me) {
+                    // Página bloqueada por otro usuario
+                    showLockAlert(response.data);
+                    disableEditForm();
+                    return;
+                }
+
+                // Intentar adquirir lock
+                acquireLock();
+            },
+            error: function(xhr) {
+                if (xhr.status === 423) {
+                    // Página bloqueada
+                    var lockData = xhr.responseJSON?.data;
+                    if (lockData) {
+                        showLockAlert(lockData);
+                        disableEditForm();
+                    }
+                }
+            }
+        });
+    }
+
+    function acquireLock() {
+        $.ajax({
+            url: lockAcquireUrl,
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentLock = response.data;
+                    console.log('✓ Lock adquirido para página ' + pageId);
+
+                    // Renovar lock cada 3 minutos
+                    clearInterval(lockRenewInterval);
+                    lockRenewInterval = setInterval(renewLock, 180000); // 3 minutos
+
+                    // Liberar lock al abandonar la página
+                    $(window).on('beforeunload', releaseLock);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 423) {
+                    // Otra persona está editando
+                    var lockData = xhr.responseJSON?.data;
+                    if (lockData) {
+                        showLockAlert(lockData);
+                        disableEditForm();
+                    }
+                }
+            }
+        });
+    }
+
+    function renewLock() {
+        if (!currentLock) return;
+
+        $.ajax({
+            url: lockRenewUrl,
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentLock = response.data;
+                    console.log('✓ Lock renovado');
+                }
+            }
+        });
+    }
+
+    function releaseLock() {
+        if (!currentLock) return;
+
+        // Usar navigator.sendBeacon para asegurar que se envíe
+        var token = $('meta[name="csrf-token"]').attr('content');
+        var data = new FormData();
+        data.append('_token', token);
+        data.append('_method', 'DELETE');
+
+        // Intentar con AJAX pero sin esperar respuesta
+        $.ajax({
+            url: lockReleaseUrl,
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': token,
+            },
+            async: false // Esperar respuesta antes de cerrar
+        });
+
+        currentLock = null;
+        console.log('✓ Lock liberado');
+    }
+
+    function showLockAlert(lockData) {
+        var $alert = $('#lockAlert');
+        var userName = lockData.locked_by_user?.name || 'Otro usuario';
+        var lockedTime = lockData.locked_at || 'hace poco';
+
+        $('#lockUserName').html('<strong>' + userName + '</strong>');
+        $('#lockTime').text(lockedTime);
+        $alert.show();
+
+        // Auto-dismiss después de 10 segundos
+        setTimeout(function() {
+            $alert.fadeOut();
+        }, 10000);
+    }
+
+    function disableEditForm() {
+        // Deshabilitar botón de guardar
+        $('#pageForm button[type="submit"]').prop('disabled', true).addClass('disabled');
+
+        // Deshabilitar todos los inputs
+        $('#pageForm input, #pageForm textarea, #pageForm select').prop('disabled', true);
+
+        // Mostrar mensaje
+        toastr.warning('Esta página está siendo editada por otro usuario. No puedes hacer cambios.');
+    }
+
+    // Verificar lock al cargar la página
+    checkAndAcquireLock();
 
 });
 
