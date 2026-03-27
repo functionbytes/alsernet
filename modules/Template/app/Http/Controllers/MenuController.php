@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\Template\Http\Requests\StoreMenuRequest;
 use Modules\Template\Http\Requests\UpdateMenuRequest;
 use Modules\Template\Models\Menu;
 use Modules\Template\Models\MenuItem;
@@ -22,9 +23,18 @@ class MenuController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Menu::class);
+
         $menus = Menu::query()->withCount('allItems')->latest()->get();
 
-        return view('template::settings.menus.index', compact('menus'));
+        $stats = [
+            'total' => $menus->count(),
+            'active' => $menus->where('status', true)->count(),
+            'inactive' => $menus->where('status', false)->count(),
+            'without_location' => $menus->whereNull('location')->count(),
+        ];
+
+        return view('template::settings.menus.index', compact('menus', 'stats'));
     }
 
     /**
@@ -32,6 +42,8 @@ class MenuController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Menu::class);
+
         $locations = config('template.menu.locations');
 
         return view('template::settings.menus.create', compact('locations'));
@@ -40,14 +52,11 @@ class MenuController extends Controller
     /**
      * Store a newly created menu.
      */
-    public function store(Request $request)
+    public function store(StoreMenuRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:menus,slug',
-            'location' => 'nullable|string',
-            'status' => 'boolean',
-        ]);
+        $this->authorize('create', Menu::class);
+
+        $validated = $request->validated();
 
         if (! isset($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
@@ -64,6 +73,8 @@ class MenuController extends Controller
      */
     public function edit(Menu $menu)
     {
+        $this->authorize('update', $menu);
+
         $menu->load(['items' => function ($query) {
             $query->with('children');
         }]);
@@ -84,6 +95,8 @@ class MenuController extends Controller
      */
     public function update(UpdateMenuRequest $request, Menu $menu): \Illuminate\Http\RedirectResponse
     {
+        $this->authorize('update', $menu);
+
         // Step 1: Update menu config
         $this->menuService->updateMenu($menu, $request->validated());
 
@@ -116,6 +129,8 @@ class MenuController extends Controller
      */
     public function getNode(Request $request, Menu $menu): JsonResponse
     {
+        $this->authorize('update', $menu);
+
         $request->validate(['data' => 'required|array']);
 
         $data = $request->input('data');
@@ -139,6 +154,8 @@ class MenuController extends Controller
      */
     public function destroy(Menu $menu)
     {
+        $this->authorize('delete', $menu);
+
         $this->menuService->deleteMenu($menu);
 
         return redirect()->route('settings.menus.index')
@@ -150,6 +167,8 @@ class MenuController extends Controller
      */
     public function updateStructure(Request $request, Menu $menu)
     {
+        $this->authorize('update', $menu);
+
         $validated = $request->validate([
             'items' => 'required|array',
         ]);
@@ -172,8 +191,8 @@ class MenuController extends Controller
             'title' => 'required|string|max:255',
             'url' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank,_parent,_top',
-            'icon' => 'nullable|string|max:255',
-            'css_class' => 'nullable|string|max:255',
+            'icon' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
+            'css_class' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
             'type' => 'required|string|in:custom,page,post,category,route',
             'reference_id' => 'nullable|integer',
             'reference_type' => 'nullable|string',
@@ -197,8 +216,8 @@ class MenuController extends Controller
             'title' => 'nullable|string|max:255',
             'url' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank,_parent,_top',
-            'icon' => 'nullable|string|max:255',
-            'css_class' => 'nullable|string|max:255',
+            'icon' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
+            'css_class' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
             'type' => 'nullable|string|in:custom,page,post,category,route',
             'reference_id' => 'nullable|integer',
             'reference_type' => 'nullable|string',
@@ -218,6 +237,8 @@ class MenuController extends Controller
      */
     public function destroyItem(Menu $menu, MenuItem $item)
     {
+        $this->authorize('update', $menu);
+
         $this->menuService->deleteMenuItem($item);
 
         return response()->json([

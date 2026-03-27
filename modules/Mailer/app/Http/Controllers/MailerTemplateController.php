@@ -4,23 +4,29 @@ namespace Modules\Mailer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use DOMDocument;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
+use Modules\Mailer\Http\Requests\StoreMailerTemplateRequest;
+use Modules\Mailer\Http\Requests\UpdateMailerTemplateRequest;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Models\MailerTemplateLang;
-use Modules\Mailer\Models\MailerVariable;
+use Modules\Mailer\Models\MailerTemplateVersion;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableReplacementService;
+use Modules\Mailer\Services\MailerVariableService;
 
 class MailerTemplateController extends Controller
 {
     /**
      * Listar todos los templates de email (únicos por key, no por idioma)
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', MailerTemplate::class);
         $search = $request->input('search');
@@ -46,7 +52,7 @@ class MailerTemplateController extends Controller
             $q->where('lang_id', $langId);
         }]);
 
-        $templates = $query->paginate(15);
+        $templates = $query->paginate(paginationNumber());
 
         // Obtener módulos únicos para filtro
         $modules = MailerTemplate::distinct('module')->pluck('module')->toArray();
@@ -67,12 +73,12 @@ class MailerTemplateController extends Controller
     /**
      * Mostrar formulario para crear nuevo template
      */
-    public function create(Request $request)
+    public function create(Request $request): View
     {
         $this->authorize('create', MailerTemplate::class);
         $template = new MailerTemplate;
         $layouts = MailerLayout::where('type', 'layout')
-            ->where('is_enabled', true)
+            ->enabled()
             ->with('translations')
             ->orderBy('alias')
             ->get();
@@ -110,23 +116,11 @@ class MailerTemplateController extends Controller
     /**
      * Guardar nuevo template
      */
-    public function store(Request $request)
+    public function store(StoreMailerTemplateRequest $request): RedirectResponse
     {
         $this->authorize('create', MailerTemplate::class);
 
-        // Validar datos
-        $validated = $request->validate([
-            'key' => 'required|string',
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'preheader' => 'nullable|string|max:255',
-            'content' => 'required|string',
-            'layout_id' => 'nullable|exists:mailer_layouts,id',
-            'module' => 'required|string|in:core,documents,orders,notifications',
-            'lang_id' => 'required|exists:langs,id',
-            'is_protected' => 'nullable|boolean',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         try {
             // Validar que no exista ya un template con esta key
@@ -153,7 +147,7 @@ class MailerTemplateController extends Controller
             $template = MailerTemplate::create([
                 'key' => $validated['key'],
                 'name' => $validated['name'],
-                'layout_id' => $validated['layout_id'],
+                'layout_id' => $validated['layout_id'] ?? null,
                 'module' => $validated['module'],
                 'description' => $validated['description'] ?? null,
                 'is_enabled' => true,
@@ -170,6 +164,12 @@ class MailerTemplateController extends Controller
                     'content' => $validated['content'],
                 ]);
             }
+
+            activity()
+                ->performedOn($template)
+                ->causedBy(auth()->user())
+                ->withProperties(['key' => $template->key, 'module' => $template->module])
+                ->log('Mailer template created');
 
             return redirect()
                 ->route('mailers.templates.edit', [
@@ -194,7 +194,7 @@ class MailerTemplateController extends Controller
     /**
      * Mostrar formulario para editar template
      */
-    public function edit(Request $request, $uid, $translation_uid = null)
+    public function edit(Request $request, $uid, $translation_uid = null): View
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
         $this->authorize('update', $template);
@@ -224,7 +224,7 @@ class MailerTemplateController extends Controller
         }
 
         $layouts = MailerLayout::where('type', 'layout')
-            ->where('is_enabled', true)
+            ->enabled()
             ->with('translations')
             ->orderBy('alias')
             ->get();
@@ -254,28 +254,17 @@ class MailerTemplateController extends Controller
     /**
      * Actualizar template
      */
-    public function update(Request $request, $uid)
+    public function update(UpdateMailerTemplateRequest $request, $uid): RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
         $this->authorize('update', $template);
 
-        // Validar datos
-        $validated = $request->validate([
-            'subject' => 'nullable|string|max:255',
-            'preheader' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
-            'layout_id' => 'nullable|exists:mailer_layouts,id',
-            'is_enabled' => 'nullable|boolean',
-            'is_protected' => 'nullable|boolean',
-            'lang_id' => 'required|exists:langs,id',
-            'description' => 'nullable|string',
-            'translation_uid' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         try {
             // Actualizar metadata del template (name, layout_id, is_enabled, etc.)
             $template->update([
-                'layout_id' => $validated['layout_id'],
+                'layout_id' => $validated['layout_id'] ?? null,
                 'is_enabled' => $validated['is_enabled'] ?? true,
                 'is_protected' => $validated['is_protected'] ?? false,
                 'description' => $validated['description'] ?? null,
@@ -285,7 +274,16 @@ class MailerTemplateController extends Controller
             $translation = $template->translate($validated['lang_id']);
 
             if ($translation) {
-                // Actualizar traducción existente
+                // Guardar versión antes de sobrescribir
+                MailerTemplateVersion::create([
+                    'mailer_template_id' => $template->id,
+                    'lang_id' => $translation->lang_id,
+                    'created_by' => auth()->id(),
+                    'subject' => $translation->subject,
+                    'content' => $translation->content,
+                    'change_note' => $request->input('change_note'),
+                ]);
+
                 $translation->update([
                     'subject' => $validated['subject'],
                     'preheader' => $validated['preheader'] ?? null,
@@ -301,6 +299,12 @@ class MailerTemplateController extends Controller
                     'content' => $validated['content'],
                 ]);
             }
+
+            activity()
+                ->performedOn($template)
+                ->causedBy(auth()->user())
+                ->withProperties(['key' => $template->key, 'lang_id' => $validated['lang_id']])
+                ->log('Mailer template updated');
 
             return redirect()
                 ->route('mailers.templates.edit', [
@@ -319,7 +323,7 @@ class MailerTemplateController extends Controller
     /**
      * Obtener preview HTML del template (vista completa)
      */
-    public function preview(Request $request, $uid)
+    public function preview(Request $request, $uid): View|RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
 
@@ -348,7 +352,7 @@ class MailerTemplateController extends Controller
     /**
      * Obtener preview en AJAX (para split-panel en vivo)
      */
-    public function previewAjax(Request $request, $uid)
+    public function previewAjax(Request $request, $uid): JsonResponse
     {
         try {
             $template = MailerTemplate::where('uid', $uid)->firstOrFail();
@@ -398,7 +402,7 @@ class MailerTemplateController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-                'html' => '<div class="alert alert-danger p-3">Error: '.$e->getMessage().'</div>',
+                'html' => '<div class="alert alert-danger p-3">Error: '.e($e->getMessage()).'</div>',
             ], 500);
         }
     }
@@ -414,9 +418,64 @@ class MailerTemplateController extends Controller
     }
 
     /**
+     * Historial de versiones de un template para un idioma
+     */
+    public function versions(Request $request, string $uid): View
+    {
+        $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $template);
+
+        $langId = $request->integer('lang_id', 1);
+
+        $versions = MailerTemplateVersion::where('mailer_template_id', $template->id)
+            ->where('lang_id', $langId)
+            ->with('author:id,name,email')
+            ->latest()
+            ->paginate(paginationNumber());
+
+        $langs = MailerLang::available()->get();
+
+        return view('mailer::templates.versions', compact('template', 'versions', 'langs', 'langId'));
+    }
+
+    /**
+     * Restaurar una versión anterior como contenido activo
+     */
+    public function restoreVersion(Request $request, string $uid, MailerTemplateVersion $version): RedirectResponse
+    {
+        $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $template);
+
+        $translation = $template->translate($version->lang_id);
+
+        if (! $translation) {
+            return redirect()->back()->with('error', 'No existe traducción para restaurar.');
+        }
+
+        // Guardar estado actual como nueva versión antes de restaurar
+        MailerTemplateVersion::create([
+            'mailer_template_id' => $template->id,
+            'lang_id' => $translation->lang_id,
+            'created_by' => auth()->id(),
+            'subject' => $translation->subject,
+            'content' => $translation->content,
+            'change_note' => 'Auto-guardado antes de restaurar versión #'.$version->id,
+        ]);
+
+        $translation->update([
+            'subject' => $version->subject,
+            'content' => $version->content,
+        ]);
+
+        return redirect()
+            ->route('mailers.templates.edit', ['uid' => $template->uid])
+            ->with('success', 'Versión #'.$version->id.' restaurada correctamente.');
+    }
+
+    /**
      * Eliminar template
      */
-    public function destroy($uid)
+    public function destroy($uid): RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
         $this->authorize('delete', $template);
@@ -430,6 +489,13 @@ class MailerTemplateController extends Controller
 
         try {
             $name = $template->name;
+            $key = $template->key;
+
+            activity()
+                ->performedOn($template)
+                ->causedBy(auth()->user())
+                ->withProperties(['name' => $name, 'key' => $key])
+                ->log('Mailer template deleted');
 
             // Delete all translations first (if not using cascade)
             $template->translations()->delete();
@@ -448,133 +514,9 @@ class MailerTemplateController extends Controller
     }
 
     /**
-     * Renderizar template con header y footer (sistema estilo Mercosan)
-     */
-    private function renderTemplateWithLayout(MailerTemplate $template, ?int $langId = null, ?int $overrideLayoutId = null, ?string $customContent = null): string
-    {
-        $langId = $langId ?? 1;
-
-        // Obtener la traducción del template para el idioma especificado
-        $translation = $template->translate($langId);
-
-        if (! $translation) {
-            return '<div class="alert alert-danger p-3">No existe traducción para este idioma</div>';
-        }
-
-        // 1. Reemplazar variables en el contenido del template
-        // Usar contenido custom si se proporciona (para live preview)
-        $content = $customContent ?? $translation->content;
-        $variables = $template->getAvailableVariables();
-
-        foreach ($variables as $variable) {
-            $placeholder = '{'.$variable['name'].'}';
-            $exampleValue = $this->getExampleValue($variable['name']);
-            $content = str_replace($placeholder, $exampleValue, $content);
-        }
-
-        // 2. Obtener header y footer de los layouts base
-        $headerLayout = MailerLayout::where('alias', 'mail_template_header')->first();
-        $footerLayout = MailerLayout::where('alias', 'mail_template_footer')->first();
-
-        $header = '';
-        $footer = '';
-
-        if ($headerLayout) {
-            $headerTranslation = $headerLayout->translate($langId);
-            $header = $headerTranslation ? $headerTranslation->content : '';
-        }
-
-        if ($footerLayout) {
-            $footerTranslation = $footerLayout->translate($langId);
-            $footer = $footerTranslation ? $footerTranslation->content : '';
-        }
-
-        // 3. Reemplazar variables globales en header y footer
-        $globalVariables = $this->getGlobalVariables($translation);
-
-        $header = $this->replaceVariables($header, $globalVariables);
-        $footer = $this->replaceVariables($footer, $globalVariables);
-
-        // 4. Crear preheader HTML si existe
-        $preheaderHtml = '';
-        if ($translation->preheader) {
-            $preheaderHtml = <<<PREHEADER
-    <!-- Preheader text (hidden in email but visible in inbox preview) -->
-    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;" aria-hidden="true">
-        {$translation->preheader}
-    </div>
-    <!-- End Preheader -->
-PREHEADER;
-        }
-
-        // 5. Determinar qué layout usar (override o el del template)
-        $layoutToUse = null;
-        if ($overrideLayoutId) {
-            $layoutToUse = MailerLayout::find($overrideLayoutId);
-        } elseif ($template->layout) {
-            $layoutToUse = $template->layout;
-        }
-
-        // 6. Si hay un layout, usarlo
-        if ($layoutToUse) {
-            $layoutTranslation = $layoutToUse->translate($langId);
-            $layoutContent = $layoutTranslation ? $layoutTranslation->content : $layoutToUse->content;
-
-            // Reemplazar {{ header }} y {{ footer }}
-            $layoutContent = str_replace('{{ header }}', $header, $layoutContent);
-            $layoutContent = str_replace('{{ footer }}', $footer, $layoutContent);
-
-            // Reemplazar {CONTENT}
-            $layoutContent = str_replace('{CONTENT}', $content, $layoutContent);
-
-            return $preheaderHtml.$layoutContent;
-        }
-
-        // 7. Si no hay layout personalizado, retornar solo el contenido
-        return $preheaderHtml.$content;
-    }
-
-    /**
-     * Obtener variables globales para header/footer
-     */
-    private function getGlobalVariables(?MailerTemplateLang $translation = null): array
-    {
-        $subject = $translation ? ($translation->subject ?? 'Email de Alsernet') : 'Email de Alsernet';
-
-        return [
-            'LOGO_URL' => config('app.url').'/images/logo.png',
-            'SITE_NAME' => config('app.name', 'Alsernet'),
-            'SITE_URL' => config('app.url'),
-            'SITE_EMAIL' => 'soporte@Alsernet.com',
-            'COMPANY_ADDRESS' => 'Calle Principal 123',
-            'COMPANY_CITY' => 'Ciudad',
-            'COMPANY_COUNTRY' => 'Colombia',
-            'COMPANY_PHONE' => '+57 300 123 4567',
-            'COMPANY_EMAIL' => 'info@Alsernet.com',
-            'CURRENT_YEAR' => date('Y'),
-            'CURRENT_MONTH' => date('m'),
-            'CURRENT_DAY' => date('d'),
-            'RECIPIENT_EMAIL' => 'ejemplo@email.com',
-            'mail_SUBJECT' => $subject,
-        ];
-    }
-
-    /**
-     * Reemplazar variables en un texto
-     */
-    private function replaceVariables(string $text, array $variables): string
-    {
-        foreach ($variables as $key => $value) {
-            $text = str_replace('{'.$key.'}', $value, $text);
-        }
-
-        return $text;
-    }
-
-    /**
      * Formatear HTML (API endpoint)
      */
-    public function formatHtml(Request $request)
+    public function formatHtml(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'html' => 'required|string',
@@ -623,41 +565,9 @@ PREHEADER;
     }
 
     /**
-     * Obtener variable con valor de ejemplo
-     */
-    private function getExampleValue($variableName): string
-    {
-        $examples = [
-            'CUSTOMER_NAME' => 'Juan García',
-            'CUSTOMER_EMAIL' => 'juan@example.com',
-            'ORDER_ID' => '12345',
-            'ORDER_NUMBER' => 'ORD-2025-001',
-            'ORDER_DATE' => date('d/m/Y'),
-            'ORDER_TOTAL' => '$5,000.00',
-            'ORDER_STATUS' => 'Completada',
-            'ORDER_REFERENCE' => 'ORD-2025-001',
-            'DOCUMENT_TYPE' => 'Cédula de Ciudadanía',
-            'UPLOAD_LINK' => 'https://Alsernet.test/upload/doc-12345',
-            'EXPIRATION_DATE' => date('d/m/Y', strtotime('+7 days')),
-            'SITE_NAME' => 'Alsernet',
-            'SITE_URL' => config('app.url'),
-            'SITE_EMAIL' => 'info@Alsernet.test',
-            'RECIPIENT_NAME' => 'María López',
-            'RECIPIENT_EMAIL' => 'maria@example.com',
-            'NOTIFICATION_TYPE' => 'Información General',
-            'NOTIFICATION_DATE' => date('d/m/Y H:i'),
-            'CURRENT_YEAR' => date('Y'),
-            'CURRENT_MONTH' => date('m'),
-            'CURRENT_DAY' => date('d'),
-        ];
-
-        return $examples[$variableName] ?? '{{'.$variableName.'}}';
-    }
-
-    /**
      * Obtener variables disponibles en AJAX (alias para variables())
      */
-    public function getVariables($uid)
+    public function getVariables($uid): JsonResponse
     {
         return $this->variables($uid);
     }
@@ -665,51 +575,14 @@ PREHEADER;
     /**
      * Obtener variables disponibles para el template (usado por edit.blade.php)
      */
-    public function variables($uid)
+    public function variables($uid): JsonResponse
     {
         try {
             $template = MailerTemplate::where('uid', $uid)->firstOrFail();
 
-            // Obtener variables desde la base de datos filtradas por el módulo del template
-            // Incluye variables del módulo específico + variables core
-            $dbVariables = \Modules\Mailer\Models\MailerVariable::query()
-                ->where('is_enabled', true)
-                ->where(function ($query) use ($template) {
-                    $query->where('module', $template->module)
-                        ->orWhere('module', 'core');
-                })
-                ->orderBy('category')
-                ->orderBy('key')
-                ->get();
-
-            // Agrupar variables por categoría
-            $grouped = $dbVariables->groupBy('category');
-
-            $variables = [];
-            foreach ($grouped as $category => $items) {
-                $categoryLabel = ucfirst($category);
-                $categoryLabels = [
-                    'system' => 'Sistema',
-                    'customer' => 'Cliente',
-                    'order' => 'Pedido',
-                    'document' => 'Documento',
-                    'general' => 'General',
-                ];
-
-                $variables[] = [
-                    'group' => $categoryLabels[$category] ?? $categoryLabel,
-                    'items' => $items->map(function ($variable) {
-                        return [
-                            'name' => $variable->key,
-                            'description' => $variable->description ?? $variable->name,
-                        ];
-                    })->toArray(),
-                ];
-            }
-
             return response()->json([
                 'success' => true,
-                'variables' => $variables,
+                'variables' => MailerVariableService::getGroupedForModule($template->module),
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading variables: '.$e->getMessage());
@@ -726,59 +599,22 @@ PREHEADER;
      * Get variables for a specific module (for create form)
      * Used when creating a new template to load variables based on selected module
      */
-    public function variablesByModule(Request $request)
+    public function variablesByModule(Request $request): JsonResponse
     {
+        $module = $request->query('module');
+
+        if (! $module) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Module parameter is required',
+                'variables' => [],
+            ], 400);
+        }
+
         try {
-            $module = $request->query('module');
-
-            if (! $module) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Module parameter is required',
-                    'variables' => [],
-                ], 400);
-            }
-
-            // Get variables from database filtered by the specified module
-            // Includes variables from the specific module + core variables
-            $dbVariables = MailerVariable::query()
-                ->where('is_enabled', true)
-                ->where(function ($query) use ($module) {
-                    $query->where('module', $module)
-                        ->orWhere('module', 'core');
-                })
-                ->orderBy('category')
-                ->orderBy('key')
-                ->get();
-
-            // Group variables by category
-            $grouped = $dbVariables->groupBy('category');
-
-            $variables = [];
-            foreach ($grouped as $category => $items) {
-                $categoryLabel = ucfirst($category);
-                $categoryLabels = [
-                    'system' => 'Sistema',
-                    'customer' => 'Cliente',
-                    'order' => 'Pedido',
-                    'document' => 'Documento',
-                    'general' => 'General',
-                ];
-
-                $variables[] = [
-                    'group' => $categoryLabels[$category] ?? $categoryLabel,
-                    'items' => $items->map(function ($variable) {
-                        return [
-                            'name' => $variable->key,
-                            'description' => $variable->description ?? $variable->name,
-                        ];
-                    })->toArray(),
-                ];
-            }
-
             return response()->json([
                 'success' => true,
-                'variables' => $variables,
+                'variables' => MailerVariableService::getGroupedForModule($module),
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading variables by module: '.$e->getMessage());
@@ -794,14 +630,21 @@ PREHEADER;
     /**
      * Cambiar estado (enabled/disabled)
      */
-    public function toggleStatus($uid)
+    public function toggleStatus($uid): RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $template);
 
         $template->is_enabled = ! $template->is_enabled;
         $template->save();
 
         $status = $template->is_enabled ? 'Habilitado' : 'Deshabilitado';
+
+        activity()
+            ->performedOn($template)
+            ->causedBy(auth()->user())
+            ->withProperties(['key' => $template->key, 'is_enabled' => $template->is_enabled])
+            ->log('Mailer template status toggled');
 
         return redirect()
             ->back()
@@ -811,7 +654,7 @@ PREHEADER;
     /**
      * Enviar email de prueba
      */
-    public function sendTest(Request $request, $uid)
+    public function sendTest(Request $request, $uid): RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
 
@@ -827,8 +670,9 @@ PREHEADER;
                 return redirect()->back()->with('error', 'No existe traducción para enviar email de prueba');
             }
 
-            // Renderizar el HTML completo con header/footer
-            $html = $this->renderTemplateWithLayout($template, 1);
+            // Render using the canonical renderer service (same as live preview)
+            $variables = $this->getPreviewVariables($template, 1);
+            $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, 1);
 
             // Enviar email usando el facade Mail correctamente
             Mail::send([], [], function ($message) use ($translation, $validated, $html) {

@@ -13,8 +13,8 @@ class PulseController extends Controller
      */
     public function index(): View
     {
-        // Return the Pulse dashboard view
-        // Pulse is configured to handle the dashboard rendering
+        $this->authorize('view-pulse');
+
         return view('pulse::dashboard');
     }
 }

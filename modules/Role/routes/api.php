@@ -6,9 +6,10 @@ use Modules\Role\Http\Controllers\PermissionController;
 use Modules\Role\Http\Controllers\RoleController;
 use Spatie\Permission\Models\Role;
 
-// Model binding for {role} and {user} parameters
+// Model binding for route parameters
 Route::model('role', Role::class);
 Route::model('user', User::class);
+Route::model('permission', \Spatie\Permission\Models\Permission::class);
 
 // Role API routes (POST, PUT, DELETE)
 Route::prefix('roles')->name('roles.')->group(function () {
@@ -25,6 +26,6 @@ Route::prefix('roles')->name('roles.')->group(function () {
 // Permission API routes (POST, PUT, DELETE)
 Route::prefix('permissions')->name('permissions.')->group(function () {
     Route::post('/', [PermissionController::class, 'store'])->name('store');
-    Route::put('{id}', [PermissionController::class, 'update'])->name('update');
-    Route::delete('{id}', [PermissionController::class, 'destroy'])->name('destroy');
+    Route::put('{permission}', [PermissionController::class, 'update'])->name('update');
+    Route::delete('{permission}', [PermissionController::class, 'destroy'])->name('destroy');
 });

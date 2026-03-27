@@ -3,22 +3,24 @@
 namespace Modules\Page\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Modules\Page\Models\Page;
 use Modules\Page\Notifications\PagePublishedNotification;
 
-class PublishScheduledPagesJob implements ShouldQueue
+class PublishScheduledPagesJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
 
     public $timeout = 300;
+
+    public int $uniqueFor = 300;
 
     /**
      * Create a new job instance.
@@ -71,18 +73,17 @@ class PublishScheduledPagesJob implements ShouldQueue
      */
     protected function publishPage(Page $page): void
     {
-        // Publish the page
-        $page->status = Page::STATUS_PUBLISHED;
-        $page->published_at = now();
-        $page->save();
+        $page->update([
+            'status' => Page::STATUS_PUBLISHED,
+            'published_at' => now(),
+            'publish_at' => null,
+        ]);
 
         Log::info('Page published automatically', [
             'page_id' => $page->id,
             'title' => $page->title,
-            'publish_at' => $page->publish_at?->toDateTimeString(),
         ]);
 
-        // Send notification to the page owner
         if ($page->user) {
             try {
                 $page->user->notify(new PagePublishedNotification($page, 'scheduled'));
@@ -90,10 +91,6 @@ class PublishScheduledPagesJob implements ShouldQueue
                 Log::error("Failed to send page published notification: {$e->getMessage()}");
             }
         }
-
-        // Clear publish_at after successful publishing
-        $page->publish_at = null;
-        $page->save();
     }
 
     /**

@@ -3,7 +3,13 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Modules\Attention\Http\Requests\CreateAttentionTypeRequest;
+use Modules\Attention\Http\Requests\UpdateAttentionTypeRequest;
 use Modules\Attention\Models\AttentionType;
 
 class AttentionTypesController extends Controller
@@ -11,7 +17,7 @@ class AttentionTypesController extends Controller
     /**
      * Display a listing of types.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = AttentionType::query();
 
@@ -30,13 +36,16 @@ class AttentionTypesController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $types = $query->withCount('attentions')->ordered()->paginate(20);
+        $types = $query->withCount('attentions')->ordered()->paginate(paginationNumber());
 
-        // Calculate statistics
+        $counts = AttentionType::query()
+            ->selectRaw('COUNT(*) as total, SUM(is_active = 1) as active, SUM(is_active = 0) as inactive')
+            ->first();
+
         $stats = [
-            'total' => AttentionType::count(),
-            'active' => AttentionType::where('is_active', true)->count(),
-            'inactive' => AttentionType::where('is_active', false)->count(),
+            'total' => (int) $counts->total,
+            'active' => (int) $counts->active,
+            'inactive' => (int) $counts->inactive,
         ];
 
         return view('attention::settings.types.index', [
@@ -48,7 +57,7 @@ class AttentionTypesController extends Controller
     /**
      * Show the form for creating a new type.
      */
-    public function create()
+    public function create(): View
     {
         // Get the next order number
         $nextOrder = AttentionType::max('order') + 1;
@@ -61,16 +70,9 @@ class AttentionTypesController extends Controller
     /**
      * Store a newly created type.
      */
-    public function store(Request $request)
+    public function store(CreateAttentionTypeRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:attention_types,code',
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'is_active' => 'nullable|boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active', true);
 
         if (! isset($validated['order'])) {
@@ -86,7 +88,7 @@ class AttentionTypesController extends Controller
     /**
      * Display the specified type.
      */
-    public function show(AttentionType $type)
+    public function show(AttentionType $type): View
     {
         $type->load('attentions');
 
@@ -98,7 +100,7 @@ class AttentionTypesController extends Controller
     /**
      * Show the form for editing a type.
      */
-    public function edit(AttentionType $type)
+    public function edit(AttentionType $type): View
     {
         return view('attention::settings.types.edit', [
             'type' => $type,
@@ -108,16 +110,9 @@ class AttentionTypesController extends Controller
     /**
      * Update the specified type.
      */
-    public function update(Request $request, AttentionType $type)
+    public function update(UpdateAttentionTypeRequest $request, AttentionType $type): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:attention_types,code,'.$type->id,
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'is_active' => 'nullable|boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
         $type->update($validated);
@@ -129,7 +124,7 @@ class AttentionTypesController extends Controller
     /**
      * Toggle the active status of a type.
      */
-    public function toggle(AttentionType $type)
+    public function toggle(AttentionType $type): RedirectResponse
     {
         $type->update(['is_active' => ! $type->is_active]);
 
@@ -141,16 +136,19 @@ class AttentionTypesController extends Controller
     /**
      * Reorder types.
      */
-    public function reorder(Request $request)
+    public function reorder(Request $request): JsonResponse
     {
         $request->validate([
             'order' => 'required|array',
             'order.*' => 'required|integer|exists:attention_types,id',
         ]);
 
-        foreach ($request->order as $index => $typeId) {
-            AttentionType::where('id', $typeId)->update(['order' => $index + 1]);
-        }
+        $cases = collect($request->order)
+            ->map(fn ($id, $i) => 'WHEN '.(int) $id.' THEN '.($i + 1))
+            ->join(' ');
+
+        AttentionType::whereIn('id', $request->order)
+            ->update(['order' => DB::raw("CASE id {$cases} END")]);
 
         return response()->json([
             'success' => true,
@@ -161,7 +159,7 @@ class AttentionTypesController extends Controller
     /**
      * Remove the specified type.
      */
-    public function destroy(AttentionType $type)
+    public function destroy(AttentionType $type): RedirectResponse
     {
         // Check if type has assigned attentions
         if ($type->attentions()->count() > 0) {

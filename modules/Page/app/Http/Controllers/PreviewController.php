@@ -3,97 +3,102 @@
 namespace Modules\Page\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Page\Models\Page;
 use Modules\Page\Models\PagePreviewToken;
+use Modules\Template\Services\TemplateManager;
 use Symfony\Component\HttpFoundation\Response;
 
 class PreviewController extends Controller
 {
+    public function __construct(
+        private readonly TemplateManager $templateManager
+    ) {}
+
     /**
      * Show the page preview with token validation.
      *
-     * Usa la plantilla activa del módulo Template si está disponible
-     *
-     * @return View|Response
+     * Resolves the view using TemplateManager so deleted page::public.* views
+     * are never referenced. Passes the same variables expected by the theme's
+     * page.blade.php (same contract as PublicController::show).
      */
-    public function show(string $slug, string $token)
+    public function show(string $slug, string $token): View|Response
     {
-        // Find the page by slug (including drafts)
         $page = Page::where('slug', $slug)->firstOrFail();
 
-        // Find and validate the preview token
         $previewToken = PagePreviewToken::where('page_id', $page->id)
             ->where('token', $token)
             ->first();
 
-        // Validate token exists
         if (! $previewToken) {
             abort(404, 'Token de preview no encontrado.');
         }
 
-        // Validate token is not expired
         if ($previewToken->isExpired()) {
             abort(403, 'Este enlace de preview ha expirado.');
         }
 
-        // Record the view
         $previewToken->recordView();
 
-        // Load relationships
         $page->load('user');
 
-        // Obtener plantilla activa del módulo Template
-        try {
-            $activeTemplate = \Modules\Template\Models\Template::where('status', 'active')->first();
+        $viewName = $this->resolveView($page->template ?? 'default');
 
-            if ($activeTemplate) {
-                // Usar la plantilla activa del módulo Template
-                return $this->renderWithTemplateModule($page, $previewToken, $activeTemplate);
-            }
-        } catch (\Exception $e) {
-            // Si hay error, caer a layout por defecto de Page
-            \Log::warning('Error loading active template: ' . $e->getMessage());
-        }
+        $rawContent = $page->content ?? '';
+        $transContent = function_exists('shortcode') ? shortcode($rawContent) : $rawContent;
 
-        // Fallback a la vista preview estándar si Template no está disponible
-        $viewPath = "page::public.templates.default";
-
-        if (! view()->exists($viewPath)) {
-            $viewPath = 'page::public.templates.default';
-        }
-
-        return view('page::public.preview', [
+        return view($viewName, [
             'page' => $page,
             'previewToken' => $previewToken,
-            'contentView' => $viewPath,
+            'isPreview' => true,
+            'transTitle' => '[Vista previa] '.($page->seo_title ?? $page->title),
+            'transDescription' => $page->seo_description ?? $page->description ?? '',
+            'transKeywords' => $page->seo_keywords ?? '',
+            'transContent' => $transContent,
+            'featuredImage' => $page->featured_image ?? null,
+            'canonicalUrl' => url()->current(),
+            'xDefaultUrl' => null,
+            'langLinks' => [],
+            'detectedLocale' => app()->getLocale(),
         ]);
     }
 
     /**
-     * Renderizar página con plantilla del módulo Template
+     * Resolve the theme view for a given page template slug.
+     *
+     * Mirrors the logic in PublicController::show using TemplateManager to
+     * build view names under the 'template' namespace.
      */
-    private function renderWithTemplateModule($page, $previewToken, $template)
+    private function resolveView(string $template): string
     {
-        // Renderizar la preview usando la plantilla activa del Template módulo
-        return view('page::public.preview-with-template', [
-            'page' => $page,
-            'previewToken' => $previewToken,
-            'template' => $template,
-            'title' => '[Vista previa] ' . ($page->seo_title ?? $page->title),
-            'description' => $page->seo_description ?? $page->description,
-            'keywords' => $page->seo_keywords,
-        ]);
+        $candidates = [
+            $this->templateManager->getThemeViewPath("templates.{$template}"),
+            $this->templateManager->getThemeViewPath('page'),
+        ];
+
+        // Special-case homepage to use the index view
+        if ($template === 'homepage') {
+            array_unshift($candidates, $this->templateManager->getThemeViewPath('index'));
+        }
+
+        foreach ($candidates as $candidate) {
+            if (view()->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $this->templateManager->getThemeViewPath('page');
     }
 
     /**
      * Generate a new preview token for a page (settings only).
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function generate(Request $request, Page $page)
+    public function generate(Request $request, Page $page): JsonResponse
     {
+        $this->authorize('update', $page);
+
         $request->validate([
             'expires_in_hours' => 'sometimes|integer|min:1|max:720', // Max 30 days
         ]);
@@ -116,11 +121,11 @@ class PreviewController extends Controller
 
     /**
      * Revoke all preview tokens for a page (settings only).
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function revoke(Page $page)
+    public function revoke(Page $page): JsonResponse
     {
+        $this->authorize('update', $page);
+
         $revokedCount = $page->revokeAllPreviewTokens();
 
         return response()->json([
@@ -134,11 +139,11 @@ class PreviewController extends Controller
 
     /**
      * List all preview tokens for a page (settings only).
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Page $page)
+    public function index(Page $page): JsonResponse
     {
+        $this->authorize('update', $page);
+
         $tokens = $page->previewTokens()
             ->with('creator:id,name,email')
             ->latest()

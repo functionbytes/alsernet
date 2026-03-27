@@ -2,6 +2,7 @@
 
 namespace Modules\Mailer\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -28,6 +29,11 @@ class MailerVariable extends Model
             'is_system' => 'boolean',
             'is_enabled' => 'boolean',
         ];
+    }
+
+    public function scopeEnabled(Builder $query): Builder
+    {
+        return $query->where('is_enabled', true);
     }
 
     /**

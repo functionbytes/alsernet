@@ -8,6 +8,14 @@ use Modules\Backup\Models\BackupSchedule;
 
 class BackupScheduleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:Backup.schedules.index')->only('index', 'create', 'edit', 'getScheduleDetails');
+        $this->middleware('can:Backup.schedules.create')->only('store');
+        $this->middleware('can:Backup.schedules.update')->only('update', 'toggle');
+        $this->middleware('can:Backup.schedules.delete')->only('destroy');
+    }
+
     /**
      * Display backup schedules list
      */
@@ -31,11 +39,23 @@ class BackupScheduleController extends Controller
         }
 
         $schedules = $query->get();
-        $pageTitle = 'Backups Programados';
-        $breadcrumb = 'Configuración / Backups Programados';
         $searchKey = $request->get('search');
 
-        return view('backup::schedules.index', compact('schedules', 'pageTitle', 'breadcrumb', 'searchKey'));
+        $statsRow = BackupSchedule::selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN enabled = 0 THEN 1 ELSE 0 END) as inactive,
+            SUM(CASE WHEN last_run_at IS NULL THEN 1 ELSE 0 END) as never_run
+        ')->first();
+
+        $stats = [
+            'total' => (int) $statsRow->total,
+            'active' => (int) $statsRow->active,
+            'inactive' => (int) $statsRow->inactive,
+            'never_run' => (int) $statsRow->never_run,
+        ];
+
+        return view('backup::schedules.index', compact('schedules', 'searchKey', 'stats'));
     }
 
     /**
@@ -117,9 +137,8 @@ class BackupScheduleController extends Controller
     /**
      * Show form to edit schedule
      */
-    public function edit($id)
+    public function edit(BackupSchedule $schedule): \Illuminate\View\View
     {
-        $schedule = BackupSchedule::findOrFail($id);
         $pageTitle = 'Editar Backup Programado';
         $breadcrumb = 'Configuración / Backups Programados / Editar';
 
@@ -146,10 +165,8 @@ class BackupScheduleController extends Controller
     /**
      * Update backup schedule
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, BackupSchedule $schedule)
     {
-        $schedule = BackupSchedule::findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'required|string|max:191',
             'enabled' => 'required|boolean',
@@ -186,9 +203,8 @@ class BackupScheduleController extends Controller
     /**
      * Delete backup schedule
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, BackupSchedule $schedule)
     {
-        $schedule = BackupSchedule::findOrFail($id);
         $schedule->delete();
 
         $isJsonRequest = $request->expectsJson() || $request->header('Accept') === 'application/json';
@@ -207,9 +223,8 @@ class BackupScheduleController extends Controller
     /**
      * Toggle schedule enabled/disabled
      */
-    public function toggle(Request $request, $id)
+    public function toggle(Request $request, BackupSchedule $schedule)
     {
-        $schedule = BackupSchedule::findOrFail($id);
         $schedule->update(['enabled' => ! $schedule->enabled]);
 
         $isJsonRequest = $request->expectsJson() || $request->header('Accept') === 'application/json';
@@ -228,10 +243,8 @@ class BackupScheduleController extends Controller
     /**
      * Get schedule details via AJAX
      */
-    public function getScheduleDetails($id)
+    public function getScheduleDetails(BackupSchedule $schedule): \Illuminate\Http\JsonResponse
     {
-        $schedule = BackupSchedule::findOrFail($id);
-
         return response()->json([
             'success' => true,
             'schedule' => [

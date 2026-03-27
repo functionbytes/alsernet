@@ -3,13 +3,11 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -139,6 +137,24 @@ class LoginController extends Controller
             ])->onlyInput('email');
         }
 
+        // If 2FA is enabled, don't fully log in yet — redirect to challenge
+        if ($user->hasTwoFactorEnabled()) {
+            Auth::logout();
+            $request->session()->put('two_factor_user_id', $user->id);
+
+            $challengeUrl = route('two-factor.challenge');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'two_factor' => true,
+                    'redirect' => $challengeUrl,
+                ]);
+            }
+
+            return redirect($challengeUrl);
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -155,15 +171,7 @@ class LoginController extends Controller
      */
     protected function sendFailedLoginResponse(Request $request): JsonResponse|RedirectResponse
     {
-        $user = User::where('email', $request->input($this->username()))->first();
-
-        if (! $user) {
-            $message = 'El correo no coincide con nuestros registros.';
-        } elseif (! Hash::check($request->input('password'), $user->password)) {
-            $message = 'La contraseña ingresada no es válida.';
-        } else {
-            $message = 'Las credenciales proporcionadas no coinciden con nuestros registros.';
-        }
+        $message = 'Las credenciales proporcionadas no son correctas.';
 
         if ($request->expectsJson()) {
             return response()->json([

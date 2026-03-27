@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Mailer\Enums\EndpointLogStatus;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerEndpointLog;
 
@@ -55,9 +56,19 @@ class SendEndpointEmailJob implements ShouldQueue
                 throw new \Exception('No recipient email found in payload');
             }
 
-            // Replace variables in subject and body
-            $subject = $this->replaceVariables($template->subject, $variables);
-            $body = $this->replaceVariables($template->content, $variables);
+            // Resolve translation for current locale with fallback to first available
+            $translation = $template->translate(
+                \Modules\Mailer\Models\MailerLang::where('locale', app()->getLocale())->value('id')
+            );
+
+            $subject = $this->replaceVariables(
+                $translation?->subject ?? $template->name,
+                $variables
+            );
+            $body = $this->replaceVariables(
+                $translation?->content ?? '',
+                $variables
+            );
 
             // Send email
             Mail::html($body, function ($message) use ($recipientEmail, $subject) {
@@ -67,7 +78,7 @@ class SendEndpointEmailJob implements ShouldQueue
 
             // Mark as success
             $this->log->update([
-                'status' => 'success',
+                'status' => EndpointLogStatus::Success,
                 'sent_at' => now(),
                 'recipient_email' => $recipientEmail,
                 'mailer_subject' => $subject,
@@ -85,7 +96,7 @@ class SendEndpointEmailJob implements ShouldQueue
 
         } catch (\Exception $e) {
             $this->log->update([
-                'status' => 'failed',
+                'status' => EndpointLogStatus::Failed,
                 'error_message' => $e->getMessage(),
             ]);
 
@@ -94,8 +105,7 @@ class SendEndpointEmailJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            // Retry logic - uncomment if needed
-            // $this->release(60); // Retry in 60 seconds
+            $this->fail($e);
         }
     }
 

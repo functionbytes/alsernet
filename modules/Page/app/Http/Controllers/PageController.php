@@ -4,18 +4,25 @@ namespace Modules\Page\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Exception;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Modules\Page\Events\PagePublished;
 use Modules\Page\Http\Requests\CreatePageRequest;
 use Modules\Page\Http\Requests\UpdatePageRequest;
 use Modules\Page\Models\Page;
+use Modules\Page\Models\PageCategory;
 use Modules\Page\Services\PageService;
+use Modules\Template\Services\TemplateManager;
 
 class PageController extends Controller
 {
     public function __construct(
-        private readonly PageService $pageService
+        private readonly PageService $pageService,
+        private readonly TemplateManager $templateManager,
     ) {}
 
     /**
@@ -23,14 +30,17 @@ class PageController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Page::class);
+
+        $trashed = $request->boolean('trashed');
 
         $filters = [
             'status' => $request->get('status'),
             'search' => $request->get('search'),
             'template' => $request->get('template'),
+            'category' => $request->get('category'),
             'date_from' => $request->get('date_from'),
             'date_to' => $request->get('date_to'),
             'sort_by' => $request->get('sort_by', 'created_at'),
@@ -38,9 +48,15 @@ class PageController extends Controller
             'per_page' => $request->get('per_page', config('page.per_page', 20)),
         ];
 
-        $pages = $this->pageService->getPages($filters);
+        $pages = $trashed
+            ? $this->pageService->getTrashedPages($filters)
+            : $this->pageService->getPages($filters);
 
-        return view('page::pages.pages.index', compact('pages', 'filters'));
+        $allCategories = PageCategory::ordered()->get();
+
+        $stats = $this->pageService->getStatsCache();
+
+        return view('page::pages.pages.index', compact('pages', 'filters', 'stats', 'allCategories', 'trashed'));
     }
 
     /**
@@ -48,23 +64,23 @@ class PageController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function create()
+    public function create(): View
     {
         $this->authorize('create', Page::class);
 
         $page = new Page;
-        $templates = config('page.templates', ['default' => 'Default']);
+        $templates = $this->templateManager->getPageTemplates();
         $statuses = Page::getStatuses();
+        $locales = PageService::getSupportedLocales();
+        $categories = PageCategory::ordered()->get();
 
-        return view('page::pages.pages.create', compact('page', 'templates', 'statuses'));
+        return view('page::pages.pages.create', compact('page', 'templates', 'statuses', 'locales', 'categories'));
     }
 
     /**
      * Store a newly created page in storage.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(CreatePageRequest $request)
+    public function store(CreatePageRequest $request): RedirectResponse
     {
         $this->authorize('create', Page::class);
 
@@ -78,7 +94,7 @@ class PageController extends Controller
             $page = $this->pageService->createPage($data);
 
             return redirect()
-                ->route('pages.pages.edit', $page->id)
+                ->route('pages.edit', $page->id)
                 ->with('success', 'Página creada exitosamente.');
         } catch (Exception $e) {
             return back()
@@ -89,14 +105,12 @@ class PageController extends Controller
 
     /**
      * Display the specified page.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function show(Page $page)
+    public function show(Page $page): RedirectResponse
     {
         $this->authorize('view', $page);
 
-        return redirect()->route('pages.pages.edit', $page->id);
+        return redirect()->route('pages.edit', $page->id);
     }
 
     /**
@@ -104,14 +118,19 @@ class PageController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function edit(Page $page)
+    public function edit(Page $page): View
     {
         $this->authorize('update', $page);
 
-        $templates = config('page.templates', ['default' => 'Default']);
-        $statuses = Page::getStatuses();
+        $page->load(['translations', 'categories', 'tags']);
 
-        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses'));
+        $templates = $this->templateManager->getPageTemplates();
+        $statuses = Page::getStatuses();
+        $locales = PageService::getSupportedLocales();
+        $translations = $page->translations->keyBy('locale');
+        $categories = PageCategory::ordered()->get();
+
+        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses', 'locales', 'translations', 'categories'));
     }
 
     /**
@@ -119,7 +138,7 @@ class PageController extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(UpdatePageRequest $request, Page $page)
+    public function update(UpdatePageRequest $request, Page $page): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $page);
 
@@ -132,10 +151,24 @@ class PageController extends Controller
 
             $page = $this->pageService->updatePage($page, $data);
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Página actualizada exitosamente.',
+                ]);
+            }
+
             return redirect()
-                ->route('pages.pages.edit', $page->id)
+                ->route('pages.edit', $page->id)
                 ->with('success', 'Página actualizada exitosamente.');
         } catch (Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al actualizar la página: '.$e->getMessage(),
+                ], 500);
+            }
+
             return back()
                 ->withInput()
                 ->with('error', 'Error al actualizar la página: '.$e->getMessage());
@@ -144,10 +177,8 @@ class PageController extends Controller
 
     /**
      * Remove the specified page from storage.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Page $page)
+    public function destroy(Page $page): RedirectResponse
     {
         $this->authorize('delete', $page);
 
@@ -155,7 +186,7 @@ class PageController extends Controller
             $this->pageService->deletePage($page);
 
             return redirect()
-                ->route('pages.pages.index')
+                ->route('pages.index')
                 ->with('success', 'Página eliminada exitosamente.');
         } catch (Exception $e) {
             return back()
@@ -165,10 +196,8 @@ class PageController extends Controller
 
     /**
      * Publish a page.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function publish(Page $page)
+    public function publish(Page $page): RedirectResponse
     {
         $this->authorize('publish', $page);
 
@@ -186,10 +215,8 @@ class PageController extends Controller
 
     /**
      * Unpublish a page.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function unpublish(Page $page)
+    public function unpublish(Page $page): RedirectResponse
     {
         $this->authorize('publish', $page);
 
@@ -204,10 +231,8 @@ class PageController extends Controller
 
     /**
      * Duplicate a page.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function duplicate(Page $page)
+    public function duplicate(Page $page): RedirectResponse
     {
         $this->authorize('duplicate', $page);
 
@@ -215,7 +240,7 @@ class PageController extends Controller
             $newPage = $this->pageService->duplicatePage($page);
 
             return redirect()
-                ->route('pages.pages.edit', $newPage->id)
+                ->route('pages.edit', $newPage->id)
                 ->with('success', 'Página duplicada exitosamente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al duplicar la página: '.$e->getMessage());
@@ -226,9 +251,8 @@ class PageController extends Controller
      * Restore a soft-deleted page.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function restore($id)
+    public function restore($id): RedirectResponse
     {
         $page = Page::withTrashed()->findOrFail($id);
 
@@ -238,7 +262,7 @@ class PageController extends Controller
             $this->pageService->restorePage($page);
 
             return redirect()
-                ->route('pages.pages.index')
+                ->route('pages.index')
                 ->with('success', 'Página restaurada exitosamente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al restaurar la página: '.$e->getMessage());
@@ -249,9 +273,8 @@ class PageController extends Controller
      * Force delete a page permanently.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function forceDelete($id)
+    public function forceDelete($id): RedirectResponse
     {
         $page = Page::withTrashed()->findOrFail($id);
 
@@ -261,11 +284,111 @@ class PageController extends Controller
             $this->pageService->forceDeletePage($page);
 
             return redirect()
-                ->route('pages.pages.index')
+                ->route('pages.index')
                 ->with('success', 'Página eliminada permanentemente.');
         } catch (Exception $e) {
             return back()->with('error', 'Error al eliminar la página: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Perform bulk action on pages.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('bulkAction', Page::class);
+
+        $request->validate([
+            'action' => ['required', 'string', Rule::in(['publish', 'unpublish', 'delete', 'restore'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $request->input('action');
+        $ids = $request->input('ids');
+
+        $pages = $action === 'restore'
+            ? Page::onlyTrashed()->whereIn('id', $ids)->get()
+            : Page::whereIn('id', $ids)->get();
+
+        $count = 0;
+
+        foreach ($pages as $page) {
+            try {
+                match ($action) {
+                    'publish', 'unpublish' => $this->authorize('update', $page),
+                    'delete' => $this->authorize('delete', $page),
+                    'restore' => $this->authorize('restore', $page),
+                };
+
+                match ($action) {
+                    'publish' => $this->pageService->publishPage($page),
+                    'unpublish' => $this->pageService->unpublishPage($page),
+                    'delete' => $this->pageService->deletePage($page),
+                    'restore' => $this->pageService->restorePage($page),
+                };
+
+                $count++;
+            } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                Log::warning("Bulk action '{$action}' denied for page {$page->id}: ".$e->getMessage());
+            } catch (Exception $e) {
+                Log::warning("Bulk action '{$action}' failed for page {$page->id}: ".$e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} página(s) procesadas correctamente.",
+        ]);
+    }
+
+    /**
+     * Show the analytics dashboard for a page.
+     */
+    public function analytics(Page $page): View
+    {
+        $this->authorize('update', $page);
+
+        return view('page::pages.analytics', compact('page'));
+    }
+
+    /**
+     * Quick search for admin autocomplete (AJAX).
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Page::class);
+
+        $q = trim((string) $request->get('q', ''));
+
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $pages = Page::query()
+            ->where(function ($query) use ($q) {
+                $query->where('title', 'like', "%{$q}%")
+                    ->orWhere('slug', 'like', "%{$q}%");
+            })
+            ->when($request->boolean('include_trashed'), fn ($q) => $q->withTrashed())
+            ->orderByDesc('published_at')
+            ->limit(10)
+            ->get(['id', 'title', 'slug', 'status', 'published_at']);
+
+        return response()->json(
+            $pages->map(fn ($p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'slug' => $p->slug,
+                'status' => $p->status instanceof \Modules\Page\Enums\PageStatus ? $p->status->value : $p->status,
+                'url' => route('pages.edit', $p),
+                'badge' => match ($p->status instanceof \Modules\Page\Enums\PageStatus ? $p->status->value : $p->status) {
+                    'published' => '<span class="badge bg-success">Publicada</span>',
+                    'draft' => '<span class="badge bg-secondary">Borrador</span>',
+                    default => '<span class="badge bg-warning">Pendiente</span>',
+                },
+            ])
+        );
     }
 
     /**
@@ -278,9 +401,9 @@ class PageController extends Controller
             'ignoreId' => ['nullable', 'integer'],
         ]);
 
-        $slug = $this->pageService->generateSlug(
+        $slug = $this->pageService->generateUniqueSlug(
             $request->input('title'),
-            $request->input('ignoreId')
+            ignoreId: $request->input('ignoreId')
         );
 
         return response()->json(['slug' => $slug]);

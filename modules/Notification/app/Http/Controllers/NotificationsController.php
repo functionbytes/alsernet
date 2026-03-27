@@ -3,6 +3,7 @@
 namespace Modules\Notification\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationsController extends Controller
@@ -24,7 +25,7 @@ class NotificationsController extends Controller
             $query->whereNotNull('read_at');
         }
 
-        $notifications = $query->paginate(20);
+        $notifications = $query->paginate(paginationNumber());
 
         return view('notification::managers.notifications.index', [
             'notifications' => $notifications,
@@ -98,5 +99,40 @@ class NotificationsController extends Controller
         }
 
         return redirect()->route('notifications.index')->with('success', 'Notificación eliminada');
+    }
+
+    /**
+     * Delete multiple notifications by ID.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'string',
+        ]);
+
+        $user = $request->user();
+
+        $user->notifications()
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'unread_count' => $user->unreadNotificationsCount(),
+        ]);
+    }
+
+    /**
+     * Delete all notifications for the authenticated user.
+     */
+    public function destroyAll(Request $request): JsonResponse
+    {
+        $request->user()->notifications()->delete();
+
+        return response()->json([
+            'success' => true,
+            'unread_count' => 0,
+        ]);
     }
 }

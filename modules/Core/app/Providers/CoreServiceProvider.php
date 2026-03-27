@@ -49,11 +49,13 @@ class CoreServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
-        // Register Core dashboard route
         Route::middleware(['web', 'auth'])
             ->name('core.')
             ->group(function () {
                 Route::get('/dashboard', [\Modules\Core\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+                Route::get('/dashboard/kpis', [\Modules\Core\Http\Controllers\DashboardController::class, 'kpis'])->name('dashboard.kpis');
+                Route::get('/dashboard/activity', [\Modules\Core\Http\Controllers\DashboardController::class, 'recentActivity'])->name('dashboard.activity');
+                Route::get('/dashboard/queue-stats', [\Modules\Core\Http\Controllers\DashboardController::class, 'queueStats'])->name('dashboard.queue-stats');
             });
     }
 
@@ -110,15 +112,11 @@ class CoreServiceProvider extends ServiceProvider
             // System cleanup - daily
             $schedule->command('system:cleanup')->daily();
 
-            // GeoIP database check - every minute
-            $schedule->command('geoip:check')->everyMinute()->withoutOverlapping(60);
+            // GeoIP database check - daily
+            $schedule->command('geoip:check')->daily();
 
-            // Cache and config clearing - every 30 minutes
-            $schedule->command('cache:clear')->everyThirtyMinutes();
-            $schedule->command('config:clear')->everyThirtyMinutes();
-            $schedule->command('route:clear')->everyThirtyMinutes();
-            $schedule->command('optimize:clear')->everyThirtyMinutes();
-            $schedule->command('view:clear')->everyThirtyMinutes();
+            // Cache/config/route clearing is handled by the deploy pipeline, not the scheduler.
+            // Running these every 30 minutes in production causes race conditions and performance issues.
         });
     }
 }

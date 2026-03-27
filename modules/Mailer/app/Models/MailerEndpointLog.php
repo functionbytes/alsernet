@@ -4,6 +4,7 @@ namespace Modules\Mailer\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Mailer\Enums\EndpointLogStatus;
 
 class MailerEndpointLog extends Model
 {
@@ -20,12 +21,16 @@ class MailerEndpointLog extends Model
         'job_id',
     ];
 
-    protected $casts = [
-        'payload' => 'array',
-        'sent_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => EndpointLogStatus::class,
+            'payload' => 'array',
+            'sent_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the associated email endpoint

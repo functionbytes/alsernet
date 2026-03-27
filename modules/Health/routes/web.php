@@ -34,9 +34,9 @@ Route::middleware(['web', 'auth', 'settings'])
         Route::get('/supervisor/download', [HealthController::class, 'downloadSupervisorConfig'])->name('supervisor.download');
     });
 
-// Health Check API Routes (no authentication, no rate limiting - for external monitoring)
-Route::prefix('api/health')->group(function () {
-    Route::get('ping', [HealthController::class, 'ping']);           // Ping simple
-    Route::get('/', [HealthController::class, 'health']);            // Health check completo
-    Route::get('detailed', [HealthController::class, 'detailed']);   // Detallado (solo debug)
+// Health Check API Routes (rate limited, no authentication - for external monitoring)
+Route::prefix('api/health')->middleware(['throttle:30,1'])->group(function () {
+    Route::get('ping', [HealthController::class, 'ping']);
+    Route::get('/', [HealthController::class, 'health']);
+    Route::get('detailed', [HealthController::class, 'detailed']);
 });

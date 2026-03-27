@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Mailer\Enums\EndpointLogStatus;
 
 class MailerEndpoint extends Model
 {
@@ -97,7 +98,7 @@ class MailerEndpoint extends Model
      */
     public function successLogs(): HasMany
     {
-        return $this->logs()->where('status', 'success');
+        return $this->logs()->where('status', EndpointLogStatus::Success);
     }
 
     /**
@@ -105,6 +106,6 @@ class MailerEndpoint extends Model
      */
     public function failedLogs(): HasMany
     {
-        return $this->logs()->where('status', 'failed');
+        return $this->logs()->where('status', EndpointLogStatus::Failed);
     }
 }

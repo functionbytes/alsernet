@@ -4,6 +4,7 @@ namespace Modules\Storage\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Modules\Core\Models\Setting;
 
 class StorageController extends Controller
@@ -158,13 +159,17 @@ class StorageController extends Controller
             } elseif ($validated['driver'] === 'ftp' || $validated['driver'] === 'sftp') {
                 $diskData['host'] = $validated['host'];
                 $diskData['username'] = $validated['username'];
-                $diskData['password'] = $validated['password'] ?? null;
+                $diskData['password'] = isset($validated['password'])
+                    ? Crypt::encryptString($validated['password'])
+                    : null;
                 $diskData['port'] = $validated['port'] ?? null;
             } elseif ($validated['driver'] === 's3') {
                 $diskData['bucket'] = $validated['bucket'];
                 $diskData['region'] = $validated['region'];
                 $diskData['key'] = $validated['key'];
-                $diskData['secret'] = $validated['secret'] ?? null;
+                $diskData['secret'] = isset($validated['secret'])
+                    ? Crypt::encryptString($validated['secret'])
+                    : null;
             }
 
             $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
@@ -244,6 +249,10 @@ class StorageController extends Controller
         $disk = $storageData['custom_disks'][$index];
         $isFromConfig = $disk['from_config'] ?? false;
 
+        // Load raw stored disks to retrieve the existing encrypted credential value
+        $rawStoredDisks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true) ?: [];
+        $rawDisk = collect($rawStoredDisks)->firstWhere('name', $disk['name']) ?? [];
+
         $validated = $request->validate([
             'name' => 'required|string|max:50',
             'driver' => 'required|string|in:local,ftp,sftp,s3',
@@ -290,13 +299,17 @@ class StorageController extends Controller
             } elseif ($validated['driver'] === 'ftp' || $validated['driver'] === 'sftp') {
                 $diskData['host'] = $validated['host'];
                 $diskData['username'] = $validated['username'];
-                $diskData['password'] = $validated['password'] ?? $disk['password'] ?? null;
+                $diskData['password'] = ! empty($validated['password'])
+                    ? Crypt::encryptString($validated['password'])
+                    : ($rawDisk['password'] ?? null);
                 $diskData['port'] = $validated['port'] ?? null;
             } elseif ($validated['driver'] === 's3') {
                 $diskData['bucket'] = $validated['bucket'];
                 $diskData['region'] = $validated['region'];
                 $diskData['key'] = $validated['key'];
-                $diskData['secret'] = $validated['secret'] ?? $disk['secret'] ?? null;
+                $diskData['secret'] = ! empty($validated['secret'])
+                    ? Crypt::encryptString($validated['secret'])
+                    : ($rawDisk['secret'] ?? null);
             }
 
             $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
@@ -583,6 +596,14 @@ class StorageController extends Controller
 
         foreach ($customDisks as &$disk) {
             $disk['from_config'] = false;
+
+            // Mask sensitive credential fields for display purposes
+            if (! empty($disk['password'])) {
+                $disk['password'] = '••••••••';
+            }
+            if (! empty($disk['secret'])) {
+                $disk['secret'] = '••••••••';
+            }
         }
 
         $allCustomDisks = array_merge($configDisks, $customDisks);

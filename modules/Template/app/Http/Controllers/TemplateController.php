@@ -2,30 +2,33 @@
 
 namespace Modules\Template\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Modules\Template\Http\Requests\StoreTemplateRequest;
 use Modules\Template\Http\Requests\UpdateTemplateRequest;
+use Modules\Template\Models\Shortcode;
 use Modules\Template\Models\Template;
-use Modules\Template\Models\TemplateVersion;
 use Modules\Template\Services\TemplateManager;
 use Modules\Template\Services\TemplateService;
 
-class TemplateController
+class TemplateController extends Controller
 {
     public function __construct(
         protected TemplateManager $manager,
         protected TemplateService $service,
-    ) {
-    }
+    ) {}
 
     /**
      * Mostrar listado de templates en grid 3 columnas (Mercosan pattern)
      */
     public function index(): View
     {
+        $this->authorize('viewAny', Template::class);
+
         $templates = $this->manager->getTemplates();
         $activeTemplate = $this->manager->getActiveTemplateName();
 
@@ -37,9 +40,12 @@ class TemplateController
      */
     public function create(): View
     {
-        $templates = Template::where('deleted_at', null)->pluck('name', 'slug')->toArray();
+        $this->authorize('create', Template::class);
 
-        return view('template::settings.create', compact('templates'));
+        $templates = Template::query()->pluck('name', 'slug')->toArray();
+        $shortcodes = Shortcode::active()->get(['id', 'key', 'name', 'description', 'icon', 'shortcode_template']);
+
+        return view('template::settings.create', compact('templates', 'shortcodes'));
     }
 
     /**
@@ -47,6 +53,7 @@ class TemplateController
      */
     public function store(StoreTemplateRequest $request): RedirectResponse
     {
+        $this->authorize('create', Template::class);
         try {
             $template = $this->service->create($request->validated());
 
@@ -56,7 +63,7 @@ class TemplateController
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_creating_template') . ': ' . $e->getMessage());
+                ->with('error', __('template::template.error_creating_template').': '.$e->getMessage());
         }
     }
 
@@ -65,7 +72,9 @@ class TemplateController
      */
     public function show(Template $template): View
     {
-        $versions = $template->versions()->paginate(10);
+        $this->authorize('view', $template);
+
+        $versions = $template->versions()->paginate(paginationNumber());
 
         return view('template::settings.show', compact('template', 'versions'));
     }
@@ -75,12 +84,15 @@ class TemplateController
      */
     public function edit(Template $template): View
     {
-        $templates = Template::where('deleted_at', null)
+        $this->authorize('update', $template);
+
+        $templates = Template::query()
             ->where('id', '!=', $template->id)
             ->pluck('name', 'slug')
             ->toArray();
+        $shortcodes = Shortcode::active()->get(['id', 'key', 'name', 'description', 'icon', 'shortcode_template']);
 
-        return view('template::settings.edit', compact('template', 'templates'));
+        return view('template::settings.edit', compact('template', 'templates', 'shortcodes'));
     }
 
     /**
@@ -88,6 +100,8 @@ class TemplateController
      */
     public function update(UpdateTemplateRequest $request, Template $template): RedirectResponse
     {
+        $this->authorize('update', $template);
+
         try {
             $this->service->update($template, $request->validated());
 
@@ -97,7 +111,35 @@ class TemplateController
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_updating_template') . ': ' . $e->getMessage());
+                ->with('error', __('template::template.error_updating_template').': '.$e->getMessage());
+        }
+    }
+
+    /**
+     * AJAX: Generar vista previa del contenido del template
+     */
+    public function preview(Request $request): JsonResponse
+    {
+        $request->validate([
+            'content' => ['required', 'string', 'max:100000'],
+        ]);
+
+        try {
+            $content = $this->sanitizeTemplateContent($request->input('content'));
+
+            $html = Blade::render($content, [
+                'title' => 'Título de ejemplo',
+                'description' => 'Descripción de ejemplo para la vista previa.',
+                'content' => '<p>Este es el contenido de ejemplo que se mostrará en el template.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>',
+                'keywords' => 'ejemplo, preview, template',
+                'canonical' => url('/'),
+            ]);
+
+            return response()->json(['html' => $html]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 
@@ -106,6 +148,8 @@ class TemplateController
      */
     public function destroy(Template $template): RedirectResponse
     {
+        $this->authorize('delete', $template);
+
         try {
             $this->service->delete($template);
 
@@ -115,7 +159,7 @@ class TemplateController
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_deleting_template') . ': ' . $e->getMessage());
+                ->with('error', __('template::template.error_deleting_template').': '.$e->getMessage());
         }
     }
 
@@ -128,47 +172,75 @@ class TemplateController
             'zip_file' => ['required', 'file', 'mimes:zip', 'max:20480'],
         ]);
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $tmpPath = $request->file('zip_file')->getPathname();
 
         if ($zip->open($tmpPath) !== true) {
             return back()->with('error', 'No se pudo abrir el archivo ZIP.');
         }
 
-        $extractPath = sys_get_temp_dir() . '/template_import_' . uniqid();
+        $extractPath = sys_get_temp_dir().'/template_import_'.uniqid();
+        mkdir($extractPath, 0755, true);
+        $realExtractPath = realpath($extractPath);
+
+        // Validate all entry paths before extracting to prevent path traversal
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entry = $zip->getNameIndex($i);
+
+            if ($entry === false || str_contains($entry, '..')) {
+                $zip->close();
+                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+
+                return back()->with('error', 'ZIP inválido: se detectó una ruta maliciosa.');
+            }
+        }
+
         $zip->extractTo($extractPath);
         $zip->close();
 
+        // Secondary check: verify no extracted file escaped the destination directory
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($extractPath));
+        foreach ($iterator as $file) {
+            $resolved = realpath($file->getPathname());
+            if ($resolved === false || ! str_starts_with($resolved, $realExtractPath)) {
+                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+
+                return back()->with('error', 'ZIP inválido: se detectó una ruta maliciosa tras la extracción.');
+            }
+        }
+
         // Buscar template.json en raíz o un nivel abajo
         $templateDir = null;
-        if (file_exists($extractPath . '/template.json')) {
+        if (file_exists($extractPath.'/template.json')) {
             $templateDir = $extractPath;
         } else {
             foreach (scandir($extractPath) as $item) {
                 if ($item === '.' || $item === '..') {
                     continue;
                 }
-                $subPath = $extractPath . '/' . $item;
-                if (is_dir($subPath) && file_exists($subPath . '/template.json')) {
+                $subPath = $extractPath.'/'.$item;
+                if (is_dir($subPath) && file_exists($subPath.'/template.json')) {
                     $templateDir = $subPath;
                     break;
                 }
             }
         }
 
-        if (!$templateDir) {
+        if (! $templateDir) {
             \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+
             return back()->with('error', 'El ZIP no contiene un archivo template.json válido.');
         }
 
-        $meta = json_decode(file_get_contents($templateDir . '/template.json'), true);
+        $meta = json_decode(file_get_contents($templateDir.'/template.json'), true);
         $slug = $meta['slug'] ?? basename($templateDir);
         $slug = preg_replace('/[^a-z0-9\-_]/', '-', strtolower($slug));
 
-        $destination = base_path('platform/themes/' . $slug);
+        $destination = base_path('platform/themes/'.$slug);
 
         if (is_dir($destination)) {
             \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+
             return back()->with('error', "Ya existe una plantilla con el slug \"{$slug}\".");
         }
 
@@ -177,7 +249,7 @@ class TemplateController
 
         return redirect()
             ->route('settings.templates.index')
-            ->with('success', 'Plantilla "' . ($meta['name'] ?? $slug) . '" importada correctamente.');
+            ->with('success', 'Plantilla "'.($meta['name'] ?? $slug).'" importada correctamente.');
     }
 
     /**
@@ -185,6 +257,8 @@ class TemplateController
      */
     public function postActivateTemplate(Request $request): JsonResponse
     {
+        $this->authorize('update', Template::class);
+
         try {
             $request->validate([
                 'template' => 'required|string|exists:templates,slug',
@@ -211,6 +285,8 @@ class TemplateController
      */
     public function postRemoveTemplate(Request $request): JsonResponse
     {
+        $this->authorize('delete', Template::class);
+
         try {
             $request->validate([
                 'template' => 'required|string|exists:templates,slug',
@@ -245,7 +321,7 @@ class TemplateController
      */
     public function versionsIndex(Template $template): View
     {
-        $versions = $template->versions()->paginate(15);
+        $versions = $template->versions()->paginate(paginationNumber());
 
         return view('template::settings.versions.index', compact('template', 'versions'));
     }
@@ -300,5 +376,66 @@ class TemplateController
         $comparison = $template->compareVersions($v1->id, $v2->id);
 
         return view('template::settings.versions.compare', compact('template', 'v1', 'v2', 'comparison'));
+    }
+
+    /**
+     * Sanitize template content to reject dangerous Blade/PHP directives before rendering.
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function sanitizeTemplateContent(string $content): string
+    {
+        $dangerousPatterns = [
+            // PHP execution
+            '/@php/i',
+            '/<\?php/i',
+            '/<\?=/i',
+            '/`[^`]*`/i',
+            '/@eval/i',
+
+            // Raw output (already bypasses Blade escaping)
+            '/\{\{!!/i',
+
+            // Blade template inclusion / inheritance
+            '/@include(If|When|First)?/i',
+            '/@extends/i',
+            '/@section/i',
+            '/@component/i',
+            '/@slot/i',
+
+            // Service/container injection
+            '/@inject/i',
+
+            // Sensitive function calls (inside {{ }} or anywhere in template)
+            '/\bconfig\s*\(/i',
+            '/\benv\s*\(/i',
+            '/\bapp\s*\(/i',
+            '/\bresolve\s*\(/i',
+
+            // Filesystem & command execution
+            '/\bfile_get_contents\s*\(/i',
+            '/\bfile_put_contents\s*\(/i',
+            '/\bexec\s*\(/i',
+            '/\bshell_exec\s*\(/i',
+            '/\bsystem\s*\(/i',
+            '/\bpassthru\s*\(/i',
+            '/\bproc_open\s*\(/i',
+            '/\bpopen\s*\(/i',
+
+            // Path helpers that expose server layout
+            '/\bbase_path\s*\(/i',
+            '/\bstorage_path\s*\(/i',
+            '/\bapp_path\s*\(/i',
+            '/\bpublic_path\s*\(/i',
+            '/\bresource_path\s*\(/i',
+        ];
+
+        foreach ($dangerousPatterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                throw new \InvalidArgumentException('El contenido contiene directivas no permitidas.');
+            }
+        }
+
+        return $content;
     }
 }

@@ -39,6 +39,8 @@ class ShortcodeController extends Controller
      */
     public function compile(Request $request): JsonResponse
     {
+        $this->authorize('settings.view');
+
         $request->validate([
             'content' => 'required|string',
         ]);
@@ -58,6 +60,8 @@ class ShortcodeController extends Controller
      */
     public function strip(Request $request): JsonResponse
     {
+        $this->authorize('settings.view');
+
         $request->validate([
             'content' => 'required|string',
         ]);
@@ -77,6 +81,8 @@ class ShortcodeController extends Controller
      */
     public function list(): JsonResponse
     {
+        $this->authorize('settings.view');
+
         $shortcodes = Shortcode::all();
 
         return response()->json([
@@ -91,6 +97,8 @@ class ShortcodeController extends Controller
      */
     public function check(Request $request): JsonResponse
     {
+        $this->authorize('settings.view');
+
         $request->validate([
             'name' => 'required|string',
         ]);
@@ -110,6 +118,8 @@ class ShortcodeController extends Controller
      */
     public function clearCache(): JsonResponse
     {
+        $this->authorize('settings.edit');
+
         Shortcode::clearCache();
 
         return response()->json([

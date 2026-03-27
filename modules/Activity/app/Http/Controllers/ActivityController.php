@@ -3,8 +3,10 @@
 namespace Modules\Activity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityController extends Controller
 {
@@ -13,13 +15,14 @@ class ActivityController extends Controller
      */
     public function logs(Request $request)
     {
+        $this->authorize('Activity.logs.index');
         $pageTitle = 'Registro de cambios';
         $breadcrumb = 'Historial / Registro de cambios';
 
         $query = Activity::query()
+            ->with('causer')
             ->latest('created_at');
 
-        // Filter by search term
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where('description', 'like', "%{$search}%")
@@ -27,23 +30,18 @@ class ActivityController extends Controller
                 ->orWhereJsonContains('properties->attributes', $search);
         }
 
-        // Filter by user
         if ($request->filled('user_id')) {
             $query->where('causer_id', $request->input('user_id'));
         }
 
-        // Filter by model
         if ($request->filled('subject_type')) {
             $query->where('subject_type', $request->input('subject_type'));
         }
 
-        $activities = $query->paginate(50);
+        $activities = $query->paginate(paginationNumber());
+        $stats = $this->eventStats();
 
-        return view('activity::logs.index', compact(
-            'pageTitle',
-            'breadcrumb',
-            'activities'
-        ));
+        return view('activity::settings.logs.index', compact('pageTitle', 'breadcrumb', 'activities', 'stats'));
     }
 
     /**
@@ -51,29 +49,127 @@ class ActivityController extends Controller
      */
     public function audit(Request $request)
     {
+        $this->authorize('Activity.audit.index');
         $pageTitle = 'Auditoría';
         $breadcrumb = 'Historial / Auditoría';
 
         $query = Activity::query()
+            ->with('causer')
             ->latest('created_at');
 
-        // Filter by search term
         if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where('description', 'like', "%{$search}%");
+            $query->where('description', 'like', '%'.$request->input('search').'%');
         }
 
-        // Filter by event
         if ($request->filled('event')) {
             $query->where('event', $request->input('event'));
         }
 
-        $activities = $query->paginate(50);
+        $activities = $query->paginate(paginationNumber());
+        $stats = $this->eventStats();
 
-        return view('activity::audit.index', compact(
-            'pageTitle',
-            'breadcrumb',
-            'activities'
-        ));
+        return view('activity::settings.audit.index', compact('pageTitle', 'breadcrumb', 'activities', 'stats'));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorize('Activity.logs.export');
+
+        $query = Activity::query()
+            ->with('causer')
+            ->when($request->filled('user_id'), fn ($q) => $q->where('causer_id', $request->user_id))
+            ->when($request->filled('event'), fn ($q) => $q->where('event', $request->event))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->from))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->to))
+            ->when($request->filled('search'), fn ($q) => $q->where('description', 'like', "%{$request->search}%"))
+            ->latest();
+
+        $filename = 'actividad_'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($out, ['ID', 'Evento', 'Descripción', 'Tipo', 'ID Objeto', 'Usuario', 'IP', 'Fecha']);
+
+            $query->chunk(500, function ($logs) use ($out) {
+                foreach ($logs as $log) {
+                    fputcsv($out, [
+                        $log->id,
+                        $log->event ?? '',
+                        $log->description,
+                        class_basename($log->subject_type ?? ''),
+                        $log->subject_id ?? '',
+                        $log->causer?->name ?? $log->causer?->email ?? 'Sistema',
+                        $log->properties['ip'] ?? '',
+                        $log->created_at->format('d/m/Y H:i:s'),
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** @return array{total: int, created: int, updated: int, deleted: int} */
+    private function eventStats(): array
+    {
+        $row = Activity::query()
+            ->selectRaw("COUNT(*) as total, SUM(event='created') as created, SUM(event='updated') as updated, SUM(event='deleted') as deleted")
+            ->first();
+
+        return [
+            'total' => (int) $row->total,
+            'created' => (int) $row->created,
+            'updated' => (int) $row->updated,
+            'deleted' => (int) $row->deleted,
+        ];
+    }
+
+    public function auditData(Request $request): JsonResponse
+    {
+        $this->authorize('Activity.audit.index');
+        $query = Activity::with('causer')->latest();
+
+        if ($request->filled('event')) {
+            $query->where('event', $request->input('event'));
+        }
+        if ($request->filled('log_name')) {
+            $query->where('log_name', $request->input('log_name'));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        $activities = $query->paginate(paginationNumber());
+
+        $data = $activities->getCollection()->map(function (Activity $activity) {
+            return [
+                'id' => $activity->id,
+                'log_name' => $activity->log_name,
+                'event' => $activity->event,
+                'description' => $activity->description,
+                'subject_type' => $activity->subject_type ? class_basename($activity->subject_type) : null,
+                'subject_id' => $activity->subject_id,
+                'causer_name' => optional($activity->causer)->name ?? 'Sistema',
+                'causer_email' => optional($activity->causer)->email ?? '',
+                'properties' => $activity->properties?->toArray() ?? [],
+                'created_at' => $activity->created_at?->format('d/m/Y H:i:s'),
+                'created_at_human' => $activity->created_at?->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'pagination' => [
+                'total' => $activities->total(),
+                'per_page' => $activities->perPage(),
+                'current_page' => $activities->currentPage(),
+                'last_page' => $activities->lastPage(),
+            ],
+        ]);
     }
 }

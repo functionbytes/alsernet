@@ -469,7 +469,7 @@ class MailerComponentController extends Controller
     {
         try {
             // Obtener todas las variables habilitadas desde la base de datos
-            $dbVariables = \Modules\Mailer\Models\MailerVariable::where('is_enabled', true)
+            $dbVariables = \Modules\Mailer\Models\MailerVariable::enabled()
                 ->orderBy('category')
                 ->orderBy('module')
                 ->orderBy('key')

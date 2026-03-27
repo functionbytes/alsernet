@@ -3,8 +3,11 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Modules\Attention\Http\Requests\StoreSlaPolicyRequest;
+use Modules\Attention\Http\Requests\UpdateSlaPolicyRequest;
 use Modules\Attention\Models\AttentionSlaBreach;
 use Modules\Attention\Models\AttentionSlaPolicy;
 
@@ -13,7 +16,7 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $policies = AttentionSlaPolicy::withCount(['attentions', 'breaches'])
             ->orderBy('is_default', 'desc')
@@ -37,7 +40,7 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         return view('attention::settings.sla-policies.create');
     }
@@ -45,24 +48,12 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSlaPolicyRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:attention_sla_policies,name',
-            'description' => 'nullable|string',
-            'response_time' => 'required|integer|min:1',
-            'resolution_time' => 'required|integer|min:1',
-            'closure_time' => 'required|integer|min:1',
-            'business_hours_only' => 'boolean',
-            'business_hours' => 'nullable|array',
-            'timezone' => 'required|string',
-            'type_multipliers' => 'nullable|array',
-            'enable_escalation' => 'boolean',
-            'escalation_threshold_percent' => 'nullable|integer|min:1|max:100',
-            'escalation_recipients' => 'nullable|array',
-            'active' => 'boolean',
-            'is_default' => 'boolean',
-        ]);
+        $validated = $request->validated();
+        $validated['enable_escalation'] = (bool) ($validated['enable_escalation'] ?? false);
+        $validated['active'] = (bool) ($validated['active'] ?? true);
+        $validated['is_default'] = (bool) ($validated['is_default'] ?? false);
 
         AttentionSlaPolicy::create($validated);
 
@@ -74,7 +65,7 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(AttentionSlaPolicy $policy)
+    public function show(AttentionSlaPolicy $policy): View
     {
         $policy->load(['attentions', 'breaches.attention']);
 
@@ -101,7 +92,7 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(AttentionSlaPolicy $policy)
+    public function edit(AttentionSlaPolicy $policy): View
     {
         return view('attention::settings.sla-policies.edit', compact('policy'));
     }
@@ -109,24 +100,12 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, AttentionSlaPolicy $policy)
+    public function update(UpdateSlaPolicyRequest $request, AttentionSlaPolicy $policy): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:attention_sla_policies,name,'.$policy->id,
-            'description' => 'nullable|string',
-            'response_time' => 'required|integer|min:1',
-            'resolution_time' => 'required|integer|min:1',
-            'closure_time' => 'required|integer|min:1',
-            'business_hours_only' => 'boolean',
-            'business_hours' => 'nullable|array',
-            'timezone' => 'required|string',
-            'type_multipliers' => 'nullable|array',
-            'enable_escalation' => 'boolean',
-            'escalation_threshold_percent' => 'nullable|integer|min:1|max:100',
-            'escalation_recipients' => 'nullable|array',
-            'active' => 'boolean',
-            'is_default' => 'boolean',
-        ]);
+        $validated = $request->validated();
+        $validated['enable_escalation'] = (bool) ($validated['enable_escalation'] ?? false);
+        $validated['active'] = (bool) ($validated['active'] ?? true);
+        $validated['is_default'] = (bool) ($validated['is_default'] ?? false);
 
         $policy->update($validated);
 
@@ -138,7 +117,7 @@ class AttentionSlaPoliciesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AttentionSlaPolicy $policy)
+    public function destroy(AttentionSlaPolicy $policy): RedirectResponse
     {
         // Prevent deletion of default policy
         if ($policy->is_default) {

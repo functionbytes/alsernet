@@ -129,7 +129,7 @@ class NotificationController extends Controller
             'preferences' => 'required|array',
             'preferences.*.channel' => 'required|in:in_app,push,email,sms',
             'preferences.*.type' => 'required|string',
-            'preferences.*.enabled' => 'required|boolean',
+            'preferences.*.enabled' => 'boolean',
         ]);
 
         foreach ($validated['preferences'] as $pref) {
@@ -201,13 +201,27 @@ class NotificationController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+        $today = today();
+
+        $row = $user->notifications()
+            ->selectRaw(
+                'COUNT(*) as total,
+                 SUM(read_at IS NULL) as unread,
+                 SUM(read_at IS NOT NULL) as `read`,
+                 SUM(DATE(created_at) = ?) as today,
+                 SUM(created_at BETWEEN ? AND ?) as this_week',
+                [$today, $weekStart, $weekEnd]
+            )
+            ->first();
 
         return response()->json([
-            'total' => $user->notifications()->count(),
-            'unread' => $user->unreadNotificationsCount(),
-            'read' => $user->notifications()->whereNotNull('read_at')->count(),
-            'today' => $user->notifications()->whereDate('created_at', today())->count(),
-            'this_week' => $user->notifications()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'total' => (int) $row->total,
+            'unread' => (int) $row->unread,
+            'read' => (int) $row->read,
+            'today' => (int) $row->today,
+            'this_week' => (int) $row->this_week,
         ]);
     }
 }

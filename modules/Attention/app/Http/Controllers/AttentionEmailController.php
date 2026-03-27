@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Attention\Exports\EmailHistoryExport;
 use Modules\Attention\Http\Requests\SendCustomEmailRequest;
@@ -62,7 +63,7 @@ class AttentionEmailController extends Controller
                 $query->whereDate('created_at', '<=', $request->date_to);
             }
 
-            $mails = $query->paginate(20);
+            $mails = $query->paginate(paginationNumber());
 
             // Calculate stats
             $stats = [
@@ -498,7 +499,7 @@ class AttentionEmailController extends Controller
      * Stats de emails
      * GET /emails/stats
      */
-    public function stats(Request $request): JsonResponse
+    public function stats(Request $request): JsonResponse|View
     {
         try {
             $stats = [
@@ -506,29 +507,54 @@ class AttentionEmailController extends Controller
                 'sent' => AttentionMail::where('status', 'sent')->count(),
                 'failed' => AttentionMail::where('status', 'failed')->count(),
                 'pending' => AttentionMail::where('status', 'queued')->count(),
-                'by_type' => AttentionMail::select('email_type', DB::raw('count(*) as count'))
+                'today' => AttentionMail::whereDate('created_at', today())->count(),
+                'this_week' => AttentionMail::whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
+                'this_month' => AttentionMail::whereMonth('created_at', now()->month)->count(),
+                'by_type' => AttentionMail::query()
+                    ->select('email_type', DB::raw('count(*) as count'))
                     ->groupBy('email_type')
                     ->get()
                     ->pluck('count', 'email_type'),
-                'today' => AttentionMail::whereDate('sent_at', today())->count(),
-                'this_week' => AttentionMail::whereBetween('sent_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-                'this_month' => AttentionMail::whereMonth('sent_at', now()->month)->count(),
             ];
 
-            return response()->json([
-                'success' => true,
-                'data' => $stats,
-            ]);
+            $recent = AttentionMail::query()
+                ->with(['attention:id,uid,radicado', 'sender:id,name,email'])
+                ->latest()
+                ->limit(20)
+                ->get();
+
+            $dailyData = AttentionMail::query()
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                ->whereBetween('created_at', [now()->subDays(6)->startOfDay(), now()])
+                ->groupBy(DB::raw('DATE(created_at)'))
+                ->orderBy('date')
+                ->get()
+                ->pluck('count', 'date');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $stats,
+                ]);
+            }
+
+            return view('attention::attentions.emails.stats', compact('stats', 'recent', 'dailyData'));
 
         } catch (Throwable $e) {
-            Log::error('Failed to load email stats', [
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('Failed to load email stats', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'No se pudieron cargar las estadísticas',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudieron cargar las estadísticas',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return view('attention::attentions.emails.stats', [
+                'stats' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'pending' => 0, 'today' => 0, 'this_week' => 0, 'this_month' => 0, 'by_type' => collect()],
+                'recent' => collect(),
+                'dailyData' => collect(),
+            ]);
         }
     }
 

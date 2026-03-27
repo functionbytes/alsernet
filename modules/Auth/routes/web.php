@@ -20,14 +20,14 @@ use Modules\Auth\Http\Controllers\VerificationController;
 
 // Login routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('auth.login');
-Route::post('/login', [LoginController::class, 'login'])->name('auth.login.post');
+Route::post('/login', [LoginController::class, 'login'])->name('auth.login.post')->middleware('throttle:5,1');
 
 // Logout route (requires auth middleware override)
-Route::get('/logout', [LoginController::class, 'logout'])->name('auth.logout')->withoutMiddleware('guest')->middleware('auth');
+Route::post('/logout', [LoginController::class, 'logout'])->name('auth.logout')->withoutMiddleware('guest')->middleware('auth');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequest'])->name('auth.password.request');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('auth.password.email');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('auth.password.email')->middleware('throttle:password-reset');
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('auth.password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('auth.password.update');
 
@@ -40,4 +40,4 @@ Route::get('/validation', [ValidationController::class, 'show'])->name('auth.val
 
 // Register routes (uncomment when ready to enable registration)
 // Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-// Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
+// Route::post('/register', [RegisterController::class, 'register'])->name('register.post')->middleware('throttle:registration');

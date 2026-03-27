@@ -12,17 +12,13 @@ use Modules\Seo\Services\SeoService;
 
 class SeoMetaController extends Controller
 {
-    /**
-     * The SEO service instance.
-     */
-    protected SeoService $seoService;
-
-    /**
-     * Create a new controller instance.
-     */
-    public function __construct(SeoService $seoService)
-    {
-        $this->seoService = $seoService;
+    public function __construct(
+        protected SeoService $seoService
+    ) {
+        $this->middleware('can:Seo.metas.index')->only('index', 'show', 'statistics', 'preview');
+        $this->middleware('can:Seo.metas.create')->only('store');
+        $this->middleware('can:Seo.metas.update')->only('update', 'bulkUpdate');
+        $this->middleware('can:Seo.metas.delete')->only('destroy');
     }
 
     /**

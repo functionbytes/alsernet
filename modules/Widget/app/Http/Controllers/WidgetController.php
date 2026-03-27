@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Modules\Widget\Events\RenderingWidgetSettings;
 use Modules\Widget\Facades\WidgetGroup;
 use Modules\Widget\Models\Widget;
@@ -15,26 +14,26 @@ class WidgetController extends Controller
 {
     public function index()
     {
+        $this->authorize('settings');
+
         RenderingWidgetSettings::dispatch();
 
-        $widgets = Widget::query()->where('theme', Widget::getThemeName())->get();
+        $themeName = Widget::getThemeName();
+        $savedWidgets = Widget::query()->where('theme', $themeName)->orderBy('position')->get();
+
+        // Build a lookup of saved widgets keyed by sidebar_id for the view
+        $savedBySidebar = $savedWidgets->groupBy('sidebar_id');
 
         $groups = WidgetGroup::getGroups();
-        foreach ($widgets as $widget) {
-            if (! Arr::has($groups, $widget->sidebar_id)) {
-                continue;
-            }
+        $availableWidgets = \Modules\Widget\Facades\Widget::getWidgets(); // widget_id => class
 
-            WidgetGroup::group($widget->sidebar_id)
-                ->position($widget->position)
-                ->addWidget($widget->widget_id, $widget->data);
-        }
-
-        return view('widget::list');
+        return view('widget::list', compact('groups', 'availableWidgets', 'savedBySidebar', 'themeName'));
     }
 
     public function update(Request $request): JsonResponse
     {
+        $this->authorize('settings');
+
         try {
             $sidebarId = $request->input('sidebar_id');
             $themeName = Widget::getThemeName();
@@ -79,6 +78,8 @@ class WidgetController extends Controller
 
     public function destroy(Request $request): JsonResponse
     {
+        $this->authorize('settings');
+
         try {
             Widget::query()->where([
                 'theme' => Widget::getThemeName(),
@@ -109,16 +110,24 @@ class WidgetController extends Controller
 
     public function showWidget(Request $request): JsonResponse
     {
+        $this->authorize('settings');
+
         $widgetId = $request->input('widget_id');
-
-        if (! class_exists($widgetId)) {
-            return response()->json(['error' => true, 'message' => 'Widget class not found'], 404);
-        }
-
-        $widget = new $widgetId;
+        $widget = $this->resolveWidget($widgetId);
 
         return response()->json([
             'data' => ['html' => $widget->form($request->input('sidebar_id'), $request->input('position', 0))],
         ]);
+    }
+
+    private function resolveWidget(string $widgetId): object
+    {
+        $allowed = \Modules\Widget\Facades\Widget::getWidgets();
+
+        if (! in_array($widgetId, $allowed, true)) {
+            abort(422, 'Widget no permitido');
+        }
+
+        return app($widgetId);
     }
 }

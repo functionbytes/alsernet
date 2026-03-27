@@ -11,6 +11,12 @@ use Modules\Core\Models\Setting;
 
 class RobotsTxtController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:Seo.robots.index')->only('edit');
+        $this->middleware('can:Seo.robots.update')->only('update', 'reset');
+    }
+
     protected string $settingKey = 'seo.robots_txt';
 
     protected string $defaultRobotsTxt = <<<'ROBOTS'
@@ -24,7 +30,7 @@ ROBOTS;
     {
         $robotsTxt = Setting::get($this->settingKey, $this->getDefaultContent());
 
-        return view('Seo::admin.robots-txt.edit', compact('robotsTxt'));
+        return view('Seo::settings.robots-txt.edit', compact('robotsTxt'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -39,7 +45,14 @@ ROBOTS;
 
         return redirect()
             ->back()
-            ->with('success', __('seo::robots-txt.saved_successfully'));
+            ->with('success', 'Robots.txt guardado correctamente');
+    }
+
+    public function reset(): RedirectResponse
+    {
+        Setting::set($this->settingKey, $this->getDefaultContent());
+
+        return redirect()->back()->with('success', 'Robots.txt restaurado al contenido por defecto.');
     }
 
     public function serve(): Response
@@ -55,7 +68,7 @@ ROBOTS;
     {
         return str_replace(
             '{sitemap_url}',
-            route('sitemap.index'),
+            route('sitemap'),
             $this->defaultRobotsTxt
         );
     }

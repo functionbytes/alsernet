@@ -3,15 +3,20 @@
 namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 use Spatie\Health\Facades\Health;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\Process\Process;
 
 class HealthController extends Controller
 {
     /**
      * Display health check dashboard
      */
-    public function index()
+    public function index(): View
     {
         $checkResults = Health::registeredChecks();
 
@@ -55,7 +60,7 @@ class HealthController extends Controller
     /**
      * Run health checks and return JSON
      */
-    public function check()
+    public function check(): JsonResponse
     {
         $checkResults = Health::registeredChecks();
 
@@ -89,7 +94,7 @@ class HealthController extends Controller
     /**
      * Get historical health check data
      */
-    public function history(Request $request)
+    public function history(Request $request): View|JsonResponse
     {
         $days = $request->input('days', 7);
 
@@ -127,7 +132,7 @@ class HealthController extends Controller
      * Simple health check endpoint (no authentication)
      * Used by load balancers, monitoring systems, etc.
      */
-    public function ping()
+    public function ping(): JsonResponse
     {
         return response()->json([
             'status' => 'ok',
@@ -136,41 +141,51 @@ class HealthController extends Controller
     }
 
     /**
-     * Full health check endpoint for external monitoring
-     * Returns complete health status without authentication
+     * Full health check endpoint for external monitoring.
+     * Without a valid token, returns only overall status to avoid leaking internal details.
      */
-    public function health()
+    public function health(): JsonResponse
     {
         try {
-            $checkResults = Health::registeredChecks();
+            $payload = Cache::remember('health_check_results', 60, function () {
+                $checkResults = Health::registeredChecks();
 
-            $results = collect($checkResults)->map(function ($check) {
-                $result = $check->run();
+                $results = collect($checkResults)->map(function ($check) {
+                    $result = $check->run();
 
-                return [
-                    'name' => $check->getName(),
-                    'label' => $check->getLabel(),
-                    'status' => $result->status->value,
-                    'short_summary' => $result->shortSummary,
-                ];
+                    return [
+                        'name' => $check->getName(),
+                        'label' => $check->getLabel(),
+                        'status' => $result->status->value,
+                        'short_summary' => $result->shortSummary,
+                    ];
+                });
+
+                $overallStatus = 'ok';
+                if ($results->contains(fn ($result) => $result['status'] === 'failed')) {
+                    $overallStatus = 'failed';
+                } elseif ($results->contains(fn ($result) => $result['status'] === 'warning')) {
+                    $overallStatus = 'warning';
+                }
+
+                return ['status' => $overallStatus, 'checks' => $results];
             });
 
-            $overallStatus = 'ok';
-            if ($results->contains(fn ($result) => $result['status'] === 'failed')) {
-                $overallStatus = 'failed';
-            } elseif ($results->contains(fn ($result) => $result['status'] === 'warning')) {
-                $overallStatus = 'warning';
+            if (! $this->hasValidHealthToken()) {
+                return response()->json([
+                    'status' => $payload['status'],
+                    'timestamp' => now()->toIso8601String(),
+                ]);
             }
 
             return response()->json([
-                'status' => $overallStatus,
+                'status' => $payload['status'],
                 'timestamp' => now()->toIso8601String(),
-                'checks' => $results,
+                'checks' => $payload['checks'],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'failed',
-                'message' => 'Health check error',
                 'timestamp' => now()->toIso8601String(),
             ], 503);
         }
@@ -180,14 +195,9 @@ class HealthController extends Controller
      * Detailed health check with system information
      * Only in debug mode for security
      */
-    public function detailed()
+    public function detailed(): JsonResponse
     {
-        // Only allow in debug mode or with API token
-        if (! config('app.debug') && ! $this->hasValidHealthToken()) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
+        abort_unless($this->hasValidHealthToken(), 403);
 
         try {
 
@@ -256,14 +266,14 @@ class HealthController extends Controller
     private function getServerUptime(): int
     {
         try {
-            if (function_exists('exec')) {
-                $uptime = @exec('cat /proc/uptime');
-                if ($uptime) {
-                    return (int) explode(' ', $uptime)[0];
-                }
+            $process = new Process(['cat', '/proc/uptime']);
+            $process->run();
+
+            if ($process->isSuccessful() && $process->getOutput()) {
+                return (int) explode(' ', $process->getOutput())[0];
             }
         } catch (\Exception $e) {
-            // Silently fail, not all servers have /proc/uptime
+            // Not all servers have /proc/uptime
         }
 
         return 0;
@@ -272,7 +282,7 @@ class HealthController extends Controller
     /**
      * Execute scheduler manually
      */
-    public function runSchedule(Request $request)
+    public function runSchedule(Request $request): JsonResponse
     {
         try {
             // Run schedule command
@@ -305,7 +315,7 @@ class HealthController extends Controller
     /**
      * Get queue worker status
      */
-    public function queueStatus()
+    public function queueStatus(): JsonResponse
     {
         try {
             $queueConnection = config('queue.default');
@@ -314,8 +324,15 @@ class HealthController extends Controller
             $workersRunning = false;
             $workerCount = 0;
 
-            if (function_exists('exec')) {
-                exec('ps aux | grep -i "queue:work\|horizon" | grep -v grep', $output);
+            $process = new Process(['ps', 'aux']);
+            $process->run();
+
+            if ($process->isSuccessful()) {
+                $lines = explode("\n", $process->getOutput());
+                $output = array_filter($lines, function (string $line): bool {
+                    return (stripos($line, 'queue:work') !== false || stripos($line, 'horizon') !== false)
+                        && stripos($line, 'grep') === false;
+                });
                 $workerCount = count($output);
                 $workersRunning = $workerCount > 0;
             }
@@ -357,7 +374,7 @@ class HealthController extends Controller
     /**
      * Process pending queue jobs
      */
-    public function processQueue(Request $request)
+    public function processQueue(Request $request): JsonResponse
     {
         try {
             $queueConnection = config('queue.default');
@@ -396,7 +413,7 @@ class HealthController extends Controller
     /**
      * Get scheduled tasks list
      */
-    public function scheduleList()
+    public function scheduleList(): JsonResponse
     {
         try {
             \Illuminate\Support\Facades\Artisan::call('schedule:list');
@@ -433,8 +450,14 @@ class HealthController extends Controller
     /**
      * Generate Supervisor configuration
      */
-    public function generateSupervisorConfig(Request $request)
+    public function generateSupervisorConfig(Request $request): JsonResponse
     {
+        $request->validate([
+            'workers' => 'integer|min:1|max:20',
+            'tries' => 'integer|min:1|max:10',
+            'timeout' => 'integer|min:30|max:3600',
+        ]);
+
         try {
             $workers = $request->input('workers', 3);
             $tries = $request->input('tries', 3);
@@ -480,7 +503,7 @@ class HealthController extends Controller
     /**
      * Download Supervisor configuration file
      */
-    public function downloadSupervisorConfig()
+    public function downloadSupervisorConfig(): BinaryFileResponse|JsonResponse
     {
         try {
             $appName = str_replace(' ', '-', strtolower(config('app.name', 'laravel')));

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Template\Models\Shortcode;
 
@@ -25,6 +26,8 @@ class ShortcodeController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Shortcode::class);
+
         $data = $request->validate([
             'key' => ['required', 'string', 'max:100', 'unique:shortcodes,key', 'regex:/^[a-z0-9\-]+$/'],
             'name' => ['required', 'string', 'max:150'],
@@ -53,6 +56,8 @@ class ShortcodeController extends Controller
 
     public function update(Request $request, Shortcode $shortcode): RedirectResponse
     {
+        $this->authorize('update', $shortcode);
+
         $data = $request->validate([
             'key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9\-]+$/', 'unique:shortcodes,key,'.$shortcode->id],
             'name' => ['required', 'string', 'max:150'],
@@ -76,6 +81,8 @@ class ShortcodeController extends Controller
 
     public function destroy(Request $request, Shortcode $shortcode): RedirectResponse|JsonResponse
     {
+        $this->authorize('delete', $shortcode);
+
         $shortcode->delete();
 
         if ($request->expectsJson()) {
@@ -88,6 +95,8 @@ class ShortcodeController extends Controller
 
     public function toggle(Shortcode $shortcode): JsonResponse
     {
+        $this->authorize('update', $shortcode);
+
         $shortcode->update(['is_active' => ! $shortcode->is_active]);
 
         return response()->json(['is_active' => $shortcode->is_active]);
@@ -95,14 +104,19 @@ class ShortcodeController extends Controller
 
     public function updateOrder(Request $request): JsonResponse
     {
+        $this->authorize('update', Shortcode::class);
+
         $request->validate([
             'order' => ['required', 'array', 'max:500'],
             'order.*' => ['integer', 'exists:shortcodes,id'],
         ]);
 
-        foreach ($request->order as $position => $id) {
-            Shortcode::where('id', (int) $id)->update(['sort_order' => (int) $position]);
-        }
+        $cases = collect($request->order)
+            ->map(fn ($id, $i) => 'WHEN '.(int) $id.' THEN '.(int) $i)
+            ->join(' ');
+
+        Shortcode::whereIn('id', $request->order)
+            ->update(['sort_order' => DB::raw("CASE id {$cases} END")]);
 
         return response()->json(['success' => true]);
     }
@@ -112,6 +126,23 @@ class ShortcodeController extends Controller
         $shortcodes = Shortcode::active()->get([
             'id', 'key', 'name', 'description', 'icon', 'config_fields', 'shortcode_template',
         ]);
+
+        return response()->json($shortcodes);
+    }
+
+    /**
+     * AJAX: shortcodes registrados en runtime por el compilador (ShortcodeServiceProvider).
+     * Combina los shortcodes del compilador con los de la base de datos activos.
+     */
+    public function apiRuntimeIndex(): JsonResponse
+    {
+        $runtime = app('shortcode')->getRegistered();
+
+        $dbKeys = Shortcode::active()->pluck('key')->toArray();
+
+        $shortcodes = array_map(function (array $item) use ($dbKeys): array {
+            return array_merge($item, ['source' => in_array($item['name'], $dbKeys, true) ? 'db' : 'runtime']);
+        }, $runtime);
 
         return response()->json($shortcodes);
     }

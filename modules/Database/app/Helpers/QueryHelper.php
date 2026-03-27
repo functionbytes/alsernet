@@ -21,14 +21,16 @@ if (! function_exists('table')) {
 
 if (! function_exists('quote')) {
     /**
-     * Wrap a value in single quotes for SQL
+     * Quote a value safely for use in SQL via the PDO connection.
+     *
+     * @deprecated Use db_quote() directly. This function now delegates to db_quote().
      *
      * @param  string  $value  The value to quote
-     * @return string The quoted value
+     * @return string The properly quoted value
      */
     function quote($value)
     {
-        return "'$value'";
+        return db_quote($value);
     }
 }
 

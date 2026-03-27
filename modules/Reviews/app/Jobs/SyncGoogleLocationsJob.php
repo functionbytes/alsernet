@@ -3,6 +3,7 @@
 namespace Modules\Reviews\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -11,15 +12,20 @@ use Illuminate\Support\Facades\Log;
 use Modules\Reviews\Models\ReviewGoogleConnection;
 use Modules\Reviews\Services\GoogleLocationService;
 
-class SyncGoogleLocationsJob implements ShouldQueue
+class SyncGoogleLocationsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
+    public function uniqueId(): string
+    {
+        return 'sync-locations-'.$this->googleConnection->id;
+    }
+
     public int $timeout = 300; // 5 minutes
 
-    public int $backoff = 120;
+    public array $backoff = [30, 60, 120];
 
     public function __construct(
         public ReviewGoogleConnection $googleConnection

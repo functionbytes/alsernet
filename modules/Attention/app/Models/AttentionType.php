@@ -4,6 +4,7 @@ namespace Modules\Attention\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Tipos de PQRSF
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class AttentionType extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'attention_types';
 
     protected $fillable = [

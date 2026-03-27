@@ -5,6 +5,7 @@ namespace Modules\Mailer\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Mailer\Enums\EndpointLogStatus;
 use Modules\Mailer\Jobs\SendEndpointEmailJob;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerEndpointLog;
@@ -242,7 +243,7 @@ class MailerEndpointController extends Controller
         $log = MailerEndpointLog::create([
             'mailer_endpoint_id' => $endpoint->id,
             'payload' => $request->json()->all(),
-            'status' => 'pending',
+            'status' => EndpointLogStatus::Pending,
         ]);
 
         // Dispatch job to send email

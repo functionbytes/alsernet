@@ -4,7 +4,11 @@ namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Modules\Attention\Http\Requests\CreateAttentionDepartmentRequest;
+use Modules\Attention\Http\Requests\UpdateAttentionDepartmentRequest;
 use Modules\Attention\Models\AttentionDepartment;
 
 class AttentionDepartmentsController extends Controller
@@ -12,7 +16,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Display a listing of departments.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = AttentionDepartment::query();
 
@@ -26,13 +30,16 @@ class AttentionDepartmentsController extends Controller
             });
         }
 
-        $departments = $query->withCount(['users', 'attentions'])->orderBy('name')->paginate(20);
+        $departments = $query->withCount(['users', 'attentions'])->orderBy('name')->paginate(paginationNumber());
 
-        // Calculate statistics
+        $counts = AttentionDepartment::query()
+            ->selectRaw('COUNT(*) as total, SUM(is_active = 1) as active, SUM(is_active = 0) as inactive')
+            ->first();
+
         $stats = [
-            'total' => AttentionDepartment::count(),
-            'active' => AttentionDepartment::where('is_active', true)->count(),
-            'inactive' => AttentionDepartment::where('is_active', false)->count(),
+            'total' => (int) $counts->total,
+            'active' => (int) $counts->active,
+            'inactive' => (int) $counts->inactive,
             'total_members' => AttentionDepartment::query()
                 ->join('attention_department_user', 'attention_departments.id', '=', 'attention_department_user.department_id')
                 ->distinct('attention_department_user.user_id')
@@ -48,7 +55,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Show the form for creating a new department.
      */
-    public function create()
+    public function create(): View
     {
         $users = User::where('available', 1)
             ->orderBy('firstname')
@@ -63,20 +70,9 @@ class AttentionDepartmentsController extends Controller
     /**
      * Store a newly created department.
      */
-    public function store(Request $request)
+    public function store(CreateAttentionDepartmentRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string|max:1000',
-            'email' => 'nullable|email|max:150',
-            'responsible_name' => 'nullable|string|max:150',
-            'responsible_email' => 'nullable|email|max:150',
-            'phone' => 'nullable|string|max:20',
-            'is_active' => 'nullable|boolean',
-            'users' => 'nullable|array',
-            'users.*' => 'exists:users,id',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active', true);
 
         $department = AttentionDepartment::create($validated);
@@ -93,7 +89,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Display the specified department.
      */
-    public function show(AttentionDepartment $department)
+    public function show(AttentionDepartment $department): View
     {
         $department->load('users', 'attentions');
 
@@ -105,7 +101,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Show the form for editing a department.
      */
-    public function edit(AttentionDepartment $department)
+    public function edit(AttentionDepartment $department): View
     {
         $department->load('users');
         $users = User::where('available', 1)
@@ -122,20 +118,9 @@ class AttentionDepartmentsController extends Controller
     /**
      * Update the specified department.
      */
-    public function update(Request $request, AttentionDepartment $department)
+    public function update(UpdateAttentionDepartmentRequest $request, AttentionDepartment $department): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string|max:1000',
-            'email' => 'nullable|email|max:150',
-            'responsible_name' => 'nullable|string|max:150',
-            'responsible_email' => 'nullable|email|max:150',
-            'phone' => 'nullable|string|max:20',
-            'is_active' => 'nullable|boolean',
-            'users' => 'nullable|array',
-            'users.*' => 'exists:users,id',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
         $department->update($validated);
@@ -152,7 +137,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Toggle the active status of a department.
      */
-    public function toggle(AttentionDepartment $department)
+    public function toggle(AttentionDepartment $department): RedirectResponse
     {
         $department->update(['is_active' => ! $department->is_active]);
 
@@ -162,7 +147,7 @@ class AttentionDepartmentsController extends Controller
     /**
      * Remove the specified department.
      */
-    public function destroy(AttentionDepartment $department)
+    public function destroy(AttentionDepartment $department): RedirectResponse
     {
         // Check if department has assigned attentions
         if ($department->attentions()->count() > 0) {

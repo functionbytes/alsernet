@@ -4,6 +4,7 @@ namespace Modules\Attention\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Categorías temáticas para PQRSF
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class AttentionCategory extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'attention_categories';
 
     protected $fillable = [

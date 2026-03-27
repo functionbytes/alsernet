@@ -1456,13 +1456,20 @@ class AttentionController extends Controller
             $departmentId = $request->department_id;
             $userId = $request->user_id;
 
+            $attentions = Attention::whereIn('id', $attentionIds)->get()->keyBy('id');
             $successCount = 0;
             $failureCount = 0;
             $errors = [];
 
             foreach ($attentionIds as $attentionId) {
                 try {
-                    $attention = Attention::findOrFail($attentionId);
+                    $attention = $attentions->get($attentionId);
+                    if (! $attention) {
+                        $failureCount++;
+                        $errors[] = "Atención ID {$attentionId}: No encontrada";
+
+                        continue;
+                    }
 
                     // Skip if already closed
                     if ($attention->isClosed()) {
@@ -1559,13 +1566,20 @@ class AttentionController extends Controller
             DB::beginTransaction();
 
             $attentionIds = $request->attention_ids;
+            $attentions = Attention::whereIn('id', $attentionIds)->get()->keyBy('id');
             $successCount = 0;
             $failureCount = 0;
             $errors = [];
 
             foreach ($attentionIds as $attentionId) {
                 try {
-                    $attention = Attention::findOrFail($attentionId);
+                    $attention = $attentions->get($attentionId);
+                    if (! $attention) {
+                        $failureCount++;
+                        $errors[] = "Atención ID {$attentionId}: No encontrada";
+
+                        continue;
+                    }
 
                     // Skip if already closed
                     if ($attention->isClosed()) {
@@ -1652,13 +1666,20 @@ class AttentionController extends Controller
             DB::beginTransaction();
 
             $attentionIds = $request->attention_ids;
+            $attentions = Attention::whereIn('id', $attentionIds)->get()->keyBy('id');
             $successCount = 0;
             $failureCount = 0;
             $errors = [];
 
             foreach ($attentionIds as $attentionId) {
                 try {
-                    $attention = Attention::findOrFail($attentionId);
+                    $attention = $attentions->get($attentionId);
+                    if (! $attention) {
+                        $failureCount++;
+                        $errors[] = "Atención ID {$attentionId}: No encontrada";
+
+                        continue;
+                    }
 
                     // Log before deletion
                     Log::warning('Attention soft deleted via bulk action', [

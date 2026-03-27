@@ -23,7 +23,8 @@ class CreateAttentionCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:150', 'unique:attention_categories,name'],
             'description' => ['nullable', 'string', 'max:500'],
             'parent_id' => ['nullable', 'exists:attention_categories,id'],
-            'is_active' => ['boolean'],
+            'is_active' => ['nullable', 'boolean'],
+            'order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

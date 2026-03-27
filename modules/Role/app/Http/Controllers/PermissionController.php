@@ -90,20 +90,16 @@ class PermissionController extends Controller
     /**
      * Show the form for editing the specified permission
      */
-    public function edit($id)
+    public function edit(Permission $permission): \Illuminate\View\View
     {
-        $permission = Permission::findOrFail($id);
-
         return view('role::permissions.edit', compact('permission'));
     }
 
     /**
      * Update the specified permission in storage
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Permission $permission)
     {
-        $permission = Permission::findOrFail($id);
-
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -147,10 +143,8 @@ class PermissionController extends Controller
     /**
      * Remove the specified permission from storage
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, Permission $permission)
     {
-        $permission = Permission::findOrFail($id);
-
         // Check if permission is assigned to any roles
         if (Role::whereHas('permissions', function ($query) use ($permission) {
             $query->where('permissions.id', $permission->id);

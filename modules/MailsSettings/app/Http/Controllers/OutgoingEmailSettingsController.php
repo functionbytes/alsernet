@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Core\Models\Setting;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class OutgoingEmailSettingsController extends Controller
 {
@@ -19,7 +20,7 @@ class OutgoingEmailSettingsController extends Controller
         $pageTitle = 'Configuración de Correo Saliente';
         $breadcrumb = 'Configuración / Email / Saliente';
 
-        return view('mails-backups::settings.outgoing', compact('settings', 'pageTitle', 'breadcrumb'));
+        return view('mails-settings::settings.outgoing', compact('settings', 'pageTitle', 'breadcrumb'));
     }
 
     /**
@@ -32,7 +33,7 @@ class OutgoingEmailSettingsController extends Controller
         $pageTitle = 'Editar Correo Saliente';
         $breadcrumb = 'Configuración / Email / Saliente / Editar';
 
-        return view('mails-backups::settings.outgoing-edit', compact('settings', 'rules', 'pageTitle', 'breadcrumb'));
+        return view('mails-settings::settings.outgoing-edit', compact('settings', 'rules', 'pageTitle', 'breadcrumb'));
     }
 
     /**
@@ -131,7 +132,10 @@ class OutgoingEmailSettingsController extends Controller
 
             $settings = Setting::getEmailSettings();
 
-            // Configure mail backups temporarily
+            // Snapshot existing config so we can restore it after sending
+            $previousSmtp = config('mail.mailers.smtp');
+            $previousFrom = config('mail.from');
+
             config([
                 'mail.default' => 'smtp',
                 'mail.mailers.smtp' => [
@@ -142,7 +146,7 @@ class OutgoingEmailSettingsController extends Controller
                     'username' => $settings['mail_username'],
                     'password' => $settings['mail_password'],
                     'timeout' => null,
-                    'local_domain' => env('MAIL_EHLO_DOMAIN'),
+                    'local_domain' => config('mail.mailers.smtp.local_domain'),
                 ],
                 'mail.from' => [
                     'address' => $settings['mail_from_address'],
@@ -150,12 +154,19 @@ class OutgoingEmailSettingsController extends Controller
                 ],
             ]);
 
-            // Send test email with HTML content
-            Mail::send([], [], function ($message) use ($validated, $settings) {
-                $message->to($validated['test_email'])
-                    ->subject('🧪 Correo de Prueba - Alsernet')
-                    ->html($this->getTestEmailContent($validated['test_email'], $settings));
-            });
+            try {
+                Mail::send([], [], function ($message) use ($validated, $settings) {
+                    $message->to($validated['test_email'])
+                        ->subject('Correo de Prueba - '.config('app.name'))
+                        ->html($this->getTestEmailContent($validated['test_email'], $settings));
+                });
+            } finally {
+                // Always restore — even if the send throws
+                config([
+                    'mail.mailers.smtp' => $previousSmtp,
+                    'mail.from' => $previousFrom,
+                ]);
+            }
 
             Log::info('Test email sent successfully', [
                 'recipient' => $validated['test_email'],
@@ -167,7 +178,7 @@ class OutgoingEmailSettingsController extends Controller
                 'success' => true,
                 'message' => 'Correo de prueba enviado exitosamente a '.$validated['test_email'],
             ]);
-        } catch (\Swift_TransportException $e) {
+        } catch (TransportExceptionInterface $e) {
             Log::error('SMTP Transport error when sending test email', [
                 'error' => $e->getMessage(),
                 'recipient' => $request->test_email ?? 'unknown',
@@ -196,6 +207,10 @@ class OutgoingEmailSettingsController extends Controller
     private function getTestEmailContent(string $recipient, array $settings): string
     {
         $date = now()->format('d/m/Y H:i:s');
+        $appName = config('app.name');
+        $smtpHost = e($settings['mail_host']);
+        $smtpPort = e($settings['mail_port']);
+        $smtpEncryption = e($settings['mail_encryption']);
 
         return <<<HTML
         <!DOCTYPE html>
@@ -205,34 +220,33 @@ class OutgoingEmailSettingsController extends Controller
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #081A28 0%, #7a9f11 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">✅ Prueba Exitosa</h1>
+            <div style="background: linear-gradient(135deg, #b10100 0%, #7a9f11 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">Prueba Exitosa</h1>
             </div>
 
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
-                <h2 style="color: #081A28; margin-top: 0;">¡El sistema de correo funciona correctamente!</h2>
+                <h2 style="color: #b10100; margin-top: 0;">El sistema de correo funciona correctamente</h2>
 
-                <p>Este es un correo de prueba enviado desde <strong>Alsernet</strong> para verificar que la configuración SMTP está funcionando correctamente.</p>
+                <p>Este es un correo de prueba enviado desde <strong>{$appName}</strong> para verificar que la configuración SMTP está funcionando correctamente.</p>
 
-                <div style="background: white; padding: 20px; border-left: 4px solid #081A28; margin: 20px 0;">
-                    <h3 style="margin-top: 0; color: #555;">📋 Detalles de la Prueba</h3>
+                <div style="background: white; padding: 20px; border-left: 4px solid #b10100; margin: 20px 0;">
+                    <h3 style="margin-top: 0; color: #555;">Detalles de la Prueba</h3>
                     <ul style="list-style: none; padding: 0;">
                         <li style="padding: 5px 0;"><strong>Destinatario:</strong> {$recipient}</li>
-                        <li style="padding: 5px 0;"><strong>Servidor SMTP:</strong> {$settings['mail_host']}</li>
-                        <li style="padding: 5px 0;"><strong>Puerto:</strong> {$settings['mail_port']}</li>
-                        <li style="padding: 5px 0;"><strong>Encriptación:</strong> {$settings['mail_encryption']}</li>
+                        <li style="padding: 5px 0;"><strong>Servidor SMTP:</strong> {$smtpHost}</li>
+                        <li style="padding: 5px 0;"><strong>Puerto:</strong> {$smtpPort}</li>
+                        <li style="padding: 5px 0;"><strong>Encriptación:</strong> {$smtpEncryption}</li>
                         <li style="padding: 5px 0;"><strong>Fecha y Hora:</strong> {$date}</li>
                     </ul>
                 </div>
 
                 <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
                     <strong>Nota:</strong> Si recibiste este correo, significa que tu configuración de email está funcionando perfectamente.
-                    No necesitas responder a este mensaje.
                 </p>
 
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #081A28;">
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #b10100;">
                     <p style="color: #999; font-size: 12px; margin: 0;">
-                        Este correo fue generado automáticamente por el sistema de configuración de Alsernet
+                        Este correo fue generado automáticamente por el sistema de configuración de {$appName}
                     </p>
                 </div>
             </div>

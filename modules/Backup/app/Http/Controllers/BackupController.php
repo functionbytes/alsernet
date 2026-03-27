@@ -5,13 +5,21 @@ namespace Modules\Backup\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Modules\Backup\Events\BackupDeleted;
+use Modules\Backup\Events\BackupDownloaded;
 use Modules\Backup\Jobs\CreateBackupJob;
-use Modules\Core\Models\Setting;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 class BackupController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:Backup.backups.index')->only('index', 'create', 'store', 'getStatus');
+        $this->middleware('can:Backup.backups.download')->only('download');
+        $this->middleware('can:Backup.backups.delete')->only('destroy');
+    }
+
     /**
      * Display the backup management page
      */
@@ -82,39 +90,18 @@ class BackupController extends Controller
                 'databases' => [],
             ];
 
-            // Update databases to backup if selected
             if (in_array('database', $backupTypes)) {
-                // Get database configuration from backups
-                $dbSettings = Setting::getDatabaseSettings();
-                $defaultConnection = $dbSettings['db_connection'] ?? config('database.default', 'mysql');
-
-                // Update the database connection with backups from database
-                $dbConnections = config('database.connections');
-                if (isset($dbConnections[$defaultConnection])) {
-                    $dbConnections[$defaultConnection] = [
-                        'driver' => $defaultConnection,
-                        'host' => $dbSettings['db_host'] ?? 'localhost',
-                        'port' => (int) ($dbSettings['db_port'] ?? 3306),
-                        'database' => $dbSettings['db_database'],
-                        'username' => $dbSettings['db_username'],
-                        'password' => $dbSettings['db_password'],
-                        'charset' => $dbSettings['db_charset'] ?? 'utf8mb4',
-                        'collation' => $dbSettings['db_collation'] ?? 'utf8mb4_unicode_ci',
-                    ];
-                    config(['database.connections' => $dbConnections]);
-                }
-
-                $backupConfig['databases'] = [$defaultConnection];
-            }
-
-            // Get database backups if database backup is selected
-            $dbSettings = null;
-            if (in_array('database', $backupTypes)) {
-                $dbSettings = Setting::getDatabaseSettings();
+                $backupConfig['databases'] = [config('database.default', 'mysql')];
             }
 
             // Dispatch the backup job to queue (runs asynchronously)
-            CreateBackupJob::dispatch($backupTypes, $backupConfig, $dbSettings);
+            // Credentials are read from config at job runtime — never serialized here
+            CreateBackupJob::dispatch($backupTypes, $backupConfig);
+
+            activity()
+                ->causedBy(auth()->user())
+                ->withProperties(['types' => $backupTypes])
+                ->log('Backup initiated');
 
             // Format types for display
             $displayTypes = array_map(function ($type) {
@@ -131,7 +118,7 @@ class BackupController extends Controller
                 return $labels[$type] ?? $type;
             }, $backupTypes);
 
-            return redirect()->route('backups.backups.index')
+            return redirect()->route('settings.backups.index')
                 ->with('success', 'Backup en progreso... Se está creando el backup incluyendo: '.implode(', ', $displayTypes).'. Esto puede tardar varios minutos.');
         } catch (\Throwable $e) {
             \Log::error('Backup creation failed: '.$e->getMessage());
@@ -147,6 +134,8 @@ class BackupController extends Controller
     public function download($filename)
     {
         try {
+            $filename = basename($filename);
+
             // Try multiple possible backup locations
             $possiblePaths = [
                 'backups/'.$filename,
@@ -162,13 +151,20 @@ class BackupController extends Controller
             }
 
             if (! $backupPath) {
-                return redirect()->route('backups.backups.index')
+                return redirect()->route('settings.backups.index')
                     ->with('error', 'El archivo de backup no existe');
             }
 
+            activity()
+                ->causedBy(auth()->user())
+                ->withProperties(['filename' => $filename])
+                ->log('Backup downloaded');
+
+            event(new BackupDownloaded($filename, auth()->user()));
+
             return Storage::disk('local')->download($backupPath, $filename);
         } catch (\Exception $e) {
-            return redirect()->route('backups.backups.index')
+            return redirect()->route('settings.backups.index')
                 ->with('error', 'Error al descargar el backup: '.$e->getMessage());
         }
     }
@@ -179,6 +175,8 @@ class BackupController extends Controller
     public function destroy(Request $request, $filename)
     {
         try {
+            $filename = basename($filename);
+
             // Check if this is a JSON request (by Accept header or explicit flag)
             $isJsonRequest = $request->expectsJson() ||
                            $request->header('Accept') === 'application/json' ||
@@ -206,11 +204,18 @@ class BackupController extends Controller
                     ], 404);
                 }
 
-                return redirect()->route('backups.backups.index')
+                return redirect()->route('settings.backups.index')
                     ->with('error', 'El archivo de backup no existe');
             }
 
             Storage::disk('local')->delete($backupPath);
+
+            event(new BackupDeleted($filename, auth()->user()));
+
+            activity()
+                ->causedBy(auth()->user())
+                ->withProperties(['filename' => $filename])
+                ->log('Backup deleted');
 
             if ($isJsonRequest) {
                 return response()->json([
@@ -219,7 +224,7 @@ class BackupController extends Controller
                 ]);
             }
 
-            return redirect()->route('backups.backups.index')
+            return redirect()->route('settings.backups.index')
                 ->with('success', 'Backup eliminado exitosamente');
         } catch (\Exception $e) {
             $isJsonRequest = $request->expectsJson() ||
@@ -233,7 +238,7 @@ class BackupController extends Controller
                 ], 500);
             }
 
-            return redirect()->route('backups.backups.index')
+            return redirect()->route('settings.backups.index')
                 ->with('error', 'Error al eliminar el backup: '.$e->getMessage());
         }
     }
@@ -266,7 +271,7 @@ class BackupController extends Controller
                     $backups[] = [
                         'name' => $file->getFilename(),
                         'path' => $file->getPathname(),
-                        'size' => $this->formatBytes($file->getSize()),
+                        'size' => backup_format_bytes($file->getSize()),
                         'size_raw' => $file->getSize(),
                         'date' => date('Y-m-d H:i:s', $file->getMTime()),
                         'timestamp' => $file->getMTime(),
@@ -284,20 +289,6 @@ class BackupController extends Controller
     }
 
     /**
-     * Format bytes to human readable format
-     */
-    private function formatBytes($bytes)
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-        $bytes /= (1 << (10 * $pow));
-
-        return round($bytes, 2).' '.$units[$pow];
-    }
-
-    /**
      * Get backup status via AJAX
      */
     public function getStatus()
@@ -309,7 +300,7 @@ class BackupController extends Controller
             return response()->json([
                 'success' => true,
                 'count' => count($backups),
-                'total_size' => $this->formatBytes($totalSize),
+                'total_size' => backup_format_bytes($totalSize),
                 'latest' => ! empty($backups) ? [
                     'name' => $backups[0]['name'],
                     'date' => $backups[0]['date'],

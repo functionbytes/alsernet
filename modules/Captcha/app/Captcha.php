@@ -71,13 +71,16 @@ class Captcha extends CaptchaContract
             return false;
         }
 
-        $response = Http::asForm()
-            ->withoutVerifying()
-            ->post(self::RECAPTCHA_VERIFY_API_URL, [
-                'secret' => $this->secretKey,
-                'response' => $response,
-                'remoteip' => $clientIp,
-            ]);
+        $http = Http::asForm();
+        if (app()->isLocal()) {
+            $http = $http->withoutVerifying();
+        }
+
+        $response = $http->post(self::RECAPTCHA_VERIFY_API_URL, [
+            'secret' => $this->secretKey,
+            'response' => $response,
+            'remoteip' => $clientIp,
+        ]);
 
         return $response->json('success');
     }

@@ -21,7 +21,7 @@ class SettingsController extends Controller
         // Get first setting record for ID (required by view)
         $setting = Setting::first() ?? new Setting;
 
-        return view('theme.views.backups.backups.setting')->with([
+        return view('theme::theme.views.settings.metadata.setting')->with([
             'setting' => $setting,
             'logo' => $logo,
             'favicon' => $favicon,
@@ -43,7 +43,7 @@ class SettingsController extends Controller
         $data['page_politic'] = str_replace($exp, '', $request->page_politic);
         $data['page_term'] = str_replace($exp, '', $request->page_term);
         $data['page_address'] = $request->page_address;
-        $data['page_map'] = $request->page_map;
+        $data['page_map'] = strip_tags($request->page_map);
         $data['social_media_facebook'] = $request->social_media_facebook;
         $data['social_media_instagram'] = $request->social_media_instagram;
         $data['social_media_twitter'] = $request->social_media_twitter;
@@ -104,7 +104,7 @@ class SettingsController extends Controller
 
     public function deleteLogo($id)
     {
-        Media::find($id)->delete();
+        Media::findOrFail($id)->delete();
 
         return response()->json(['status' => 'success']);
     }
@@ -153,7 +153,7 @@ class SettingsController extends Controller
 
     public function deleteFavicon($id)
     {
-        Media::find($id)->delete();
+        Media::findOrFail($id)->delete();
 
         return response()->json(['status' => 'success']);
     }

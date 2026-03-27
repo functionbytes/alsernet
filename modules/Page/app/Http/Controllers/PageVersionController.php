@@ -4,8 +4,10 @@ namespace Modules\Page\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Modules\Page\Models\Page;
 use Modules\Page\Models\PageVersion;
 
@@ -24,10 +26,8 @@ class PageVersionController extends Controller
 
     /**
      * Display version history for a page.
-     *
-     * @return \Illuminate\View\View
      */
-    public function index(Page $page)
+    public function index(Page $page): View
     {
         $versions = $page->getVersionHistory(100);
 
@@ -36,10 +36,8 @@ class PageVersionController extends Controller
 
     /**
      * Display a specific version.
-     *
-     * @return \Illuminate\View\View
      */
-    public function show(Page $page, PageVersion $version)
+    public function show(Page $page, PageVersion $version): View
     {
         // Ensure the version belongs to the page
         if ($version->page_id !== $page->id) {
@@ -53,10 +51,8 @@ class PageVersionController extends Controller
 
     /**
      * Restore a specific version.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function restore(Request $request, Page $page, PageVersion $version)
+    public function restore(Request $request, Page $page, PageVersion $version): RedirectResponse
     {
         // Ensure the version belongs to the page
         if ($version->page_id !== $page->id) {
@@ -86,7 +82,7 @@ class PageVersionController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function compare(Request $request, Page $page)
+    public function compare(Request $request, Page $page): View|RedirectResponse
     {
         $request->validate([
             'version1' => 'required|exists:page_versions,id',
@@ -111,10 +107,8 @@ class PageVersionController extends Controller
 
     /**
      * Delete a specific version.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Page $page, PageVersion $version)
+    public function destroy(Page $page, PageVersion $version): RedirectResponse
     {
         // Ensure the version belongs to the page
         if ($version->page_id !== $page->id) {
@@ -142,10 +136,8 @@ class PageVersionController extends Controller
 
     /**
      * Create a manual version snapshot.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function create(Request $request, Page $page)
+    public function create(Request $request, Page $page): RedirectResponse
     {
         try {
             $version = $page->createVersion();

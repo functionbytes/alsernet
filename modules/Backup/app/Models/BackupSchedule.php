@@ -4,9 +4,12 @@ namespace Modules\Backup\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BackupSchedule extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'name',
         'enabled',

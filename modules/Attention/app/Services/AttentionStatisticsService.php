@@ -20,9 +20,12 @@ use Modules\Attention\Models\Attention;
 class AttentionStatisticsService
 {
     /**
-     * Tiempo de cache en minutos
+     * Tiempo de cache en minutos — configurable via config('attention.stats_cache_ttl', 5)
      */
-    protected const CACHE_TTL = 5;
+    protected static function cacheTtl(): int
+    {
+        return (int) config('attention.stats_cache_ttl', 5);
+    }
 
     /**
      * Obtiene estadísticas completas para el dashboard
@@ -42,14 +45,27 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_dashboard_stats_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $query = Attention::whereBetween('created_at', [$from, $to]);
 
-                $total = $query->count();
-                $pending = (clone $query)->where('status', AttentionStatus::PENDING)->count();
-                $in_process = (clone $query)->where('status', AttentionStatus::IN_PROCESS)->count();
-                $resolved = (clone $query)->where('status', AttentionStatus::RESOLVED)->count();
-                $closed = (clone $query)->where('status', AttentionStatus::CLOSED)->count();
+                $row = $query->selectRaw('
+                    COUNT(*) as total,
+                    SUM(status = ?) as pending,
+                    SUM(status = ?) as in_process,
+                    SUM(status = ?) as resolved,
+                    SUM(status = ?) as closed
+                ', [
+                    AttentionStatus::RECEIVED->value,
+                    AttentionStatus::IN_PROCESS->value,
+                    AttentionStatus::RESOLVED->value,
+                    AttentionStatus::CLOSED->value,
+                ])->first();
+
+                $total = (int) $row->total;
+                $pending = (int) $row->pending;
+                $in_process = (int) $row->in_process;
+                $resolved = (int) $row->resolved;
+                $closed = (int) $row->closed;
 
                 return [
                     'period' => [
@@ -97,15 +113,16 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_stats_by_type_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $stats = DB::table('attentions')
-                    ->select('type', DB::raw('COUNT(*) as count'))
-                    ->whereBetween('created_at', [$from, $to])
-                    ->whereNull('deleted_at')
-                    ->groupBy('type')
+                    ->leftJoin('attention_types', 'attentions.type_id', '=', 'attention_types.id')
+                    ->select('attention_types.name as type', DB::raw('COUNT(*) as count'))
+                    ->whereBetween('attentions.created_at', [$from, $to])
+                    ->whereNull('attentions.deleted_at')
+                    ->groupBy('attentions.type_id', 'attention_types.name')
                     ->get()
                     ->mapWithKeys(function ($item) {
-                        return [$item->type => $item->count];
+                        return [($item->type ?? 'Sin tipo') => $item->count];
                     })
                     ->toArray();
 
@@ -135,7 +152,7 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_stats_by_status_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $stats = DB::table('attentions')
                     ->select('status', DB::raw('COUNT(*) as count'))
                     ->whereBetween('created_at', [$from, $to])
@@ -173,7 +190,7 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_stats_by_department_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $stats = DB::table('attentions')
                     ->leftJoin('departments', 'attentions.department_id', '=', 'departments.id')
                     ->select(
@@ -227,7 +244,7 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_avg_satisfaction_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $average = DB::table('attentions')
                     ->whereBetween('created_at', [$from, $to])
                     ->whereNull('deleted_at')
@@ -260,7 +277,7 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_avg_resolution_time_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $average = DB::table('attentions')
                     ->whereBetween('created_at', [$from, $to])
                     ->whereNull('deleted_at')
@@ -294,7 +311,7 @@ class AttentionStatisticsService
 
             $cacheKey = "attention_sla_compliance_{$from->timestamp}_{$to->timestamp}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($from, $to) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($from, $to) {
                 $total = DB::table('attentions')
                     ->whereBetween('created_at', [$from, $to])
                     ->whereNull('deleted_at')
@@ -305,11 +322,12 @@ class AttentionStatisticsService
                     return 0.0;
                 }
 
+                // Considera cumplido si se resolvió dentro de los 5 días hábiles
                 $compliant = DB::table('attentions')
                     ->whereBetween('created_at', [$from, $to])
                     ->whereNull('deleted_at')
                     ->whereNotNull('resolved_at')
-                    ->where('sla_compliant', true)
+                    ->whereRaw('TIMESTAMPDIFF(DAY, created_at, resolved_at) <= 5')
                     ->count();
 
                 return round(($compliant / $total) * 100, 2);
@@ -333,12 +351,13 @@ class AttentionStatisticsService
         try {
             $cacheKey = "attention_top_categories_{$limit}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($limit) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($limit) {
                 return DB::table('attentions')
-                    ->select('category', DB::raw('COUNT(*) as count'))
-                    ->whereNull('deleted_at')
-                    ->whereNotNull('category')
-                    ->groupBy('category')
+                    ->leftJoin('attention_categories', 'attentions.category_id', '=', 'attention_categories.id')
+                    ->select('attention_categories.name as category', DB::raw('COUNT(*) as count'))
+                    ->whereNull('attentions.deleted_at')
+                    ->whereNotNull('attentions.category_id')
+                    ->groupBy('attentions.category_id', 'attention_categories.name')
                     ->orderByDesc('count')
                     ->limit($limit)
                     ->get();
@@ -363,7 +382,7 @@ class AttentionStatisticsService
         try {
             $cacheKey = "attention_time_trend_{$period}_{$periods}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($period, $periods) {
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($period, $periods) {
                 $format = match ($period) {
                     'day' => '%Y-%m-%d',
                     'week' => '%Y-%u',
@@ -412,23 +431,23 @@ class AttentionStatisticsService
         try {
             $cacheKey = "attention_user_stats_{$userId}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL * 60, function () use ($userId) {
-                $total = Attention::where('assigned_to', $userId)->count();
-                $resolved = Attention::where('assigned_to', $userId)
+            return Cache::remember($cacheKey, self::cacheTtl() * 60, function () use ($userId) {
+                $total = Attention::where('assigned_user_id', $userId)->count();
+                $resolved = Attention::where('assigned_user_id', $userId)
                     ->where('status', AttentionStatus::RESOLVED)
                     ->count();
-                $closed = Attention::where('assigned_to', $userId)
+                $closed = Attention::where('assigned_user_id', $userId)
                     ->where('status', AttentionStatus::CLOSED)
                     ->count();
-                $pending = Attention::where('assigned_to', $userId)
-                    ->where('status', AttentionStatus::PENDING)
+                $pending = Attention::where('assigned_user_id', $userId)
+                    ->where('status', AttentionStatus::RECEIVED)
                     ->count();
-                $in_process = Attention::where('assigned_to', $userId)
+                $in_process = Attention::where('assigned_user_id', $userId)
                     ->where('status', AttentionStatus::IN_PROCESS)
                     ->count();
 
                 $avgResolutionTime = DB::table('attentions')
-                    ->where('assigned_to', $userId)
+                    ->where('assigned_user_id', $userId)
                     ->whereNotNull('resolved_at')
                     ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, resolved_at)) as avg_hours')
                     ->first();
@@ -449,6 +468,113 @@ class AttentionStatisticsService
             Log::error('User stats failed', ['user_id' => $userId, 'error' => $e->getMessage()]);
             throw new Exception('Error al obtener estadísticas del usuario: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Retorna conteo por estado en formato [{label, count}] para gráficos.
+     */
+    public static function countByStatus(?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $dateRange = self::getDefaultDateRange();
+        $from = $from ?? $dateRange['from'];
+        $to = $to ?? $dateRange['to'];
+
+        $labelMap = [
+            AttentionStatus::RECEIVED->value => 'Recibido',
+            AttentionStatus::IN_PROCESS->value => 'En proceso',
+            AttentionStatus::RESOLVED->value => 'Resuelto',
+            AttentionStatus::CLOSED->value => 'Cerrado',
+        ];
+
+        return DB::table('attentions')
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->whereBetween('created_at', [$from, $to])
+            ->whereNull('deleted_at')
+            ->groupBy('status')
+            ->get()
+            ->map(fn ($row) => [
+                'label' => $labelMap[$row->status] ?? $row->status,
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Retorna conteo por tipo en formato [{label, count}] para gráficos.
+     */
+    public static function countByType(?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $dateRange = self::getDefaultDateRange();
+        $from = $from ?? $dateRange['from'];
+        $to = $to ?? $dateRange['to'];
+
+        return DB::table('attentions')
+            ->leftJoin('attention_types', 'attentions.type_id', '=', 'attention_types.id')
+            ->select('attention_types.name as label', DB::raw('COUNT(*) as count'))
+            ->whereBetween('attentions.created_at', [$from, $to])
+            ->whereNull('attentions.deleted_at')
+            ->groupBy('attentions.type_id', 'attention_types.name')
+            ->orderByDesc('count')
+            ->get()
+            ->map(fn ($row) => [
+                'label' => $row->label ?? 'Sin tipo',
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Retorna conteo por departamento en formato [{label, count}] para gráficos.
+     */
+    public static function countByDepartment(?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $dateRange = self::getDefaultDateRange();
+        $from = $from ?? $dateRange['from'];
+        $to = $to ?? $dateRange['to'];
+
+        return DB::table('attentions')
+            ->leftJoin('attention_departments', 'attentions.department_id', '=', 'attention_departments.id')
+            ->select('attention_departments.name as label', DB::raw('COUNT(*) as count'))
+            ->whereBetween('attentions.created_at', [$from, $to])
+            ->whereNull('attentions.deleted_at')
+            ->groupBy('attentions.department_id', 'attention_departments.name')
+            ->orderByDesc('count')
+            ->get()
+            ->map(fn ($row) => [
+                'label' => $row->label ?? 'Sin asignar',
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Retorna conteo por día para los últimos 7 días en formato [{date, count}].
+     *
+     * @return array<int, array{date: string, count: int}>
+     */
+    public static function trendLast7Days(): array
+    {
+        $rows = DB::table('attentions')
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
+            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->whereNull('deleted_at')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        // Fill all 7 days, including days with zero attentions
+        return collect(range(6, 0))
+            ->map(fn ($daysAgo) => now()->subDays($daysAgo)->format('Y-m-d'))
+            ->map(fn ($date) => [
+                'date' => $date,
+                'count' => (int) ($rows[$date]->count ?? 0),
+            ])
+            ->values()
+            ->toArray();
     }
 
     /**

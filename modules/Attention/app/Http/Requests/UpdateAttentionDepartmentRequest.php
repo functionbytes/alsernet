@@ -25,7 +25,7 @@ class UpdateAttentionDepartmentRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:150', Rule::unique('attention_departments', 'name')->ignore($departmentId)],
             'email' => ['nullable', 'email', 'max:150'],
-            'description' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'responsible_name' => ['nullable', 'string', 'max:150'],
             'responsible_email' => ['nullable', 'email', 'max:150'],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -50,7 +50,7 @@ class UpdateAttentionDepartmentRequest extends FormRequest
             'email.max' => 'El correo electrónico no puede exceder los 150 caracteres.',
 
             'description.string' => 'La descripción debe ser una cadena de texto.',
-            'description.max' => 'La descripción no puede exceder los 500 caracteres.',
+            'description.max' => 'La descripción no puede exceder los 1000 caracteres.',
 
             'responsible_name.string' => 'El nombre del responsable debe ser una cadena de texto.',
             'responsible_name.max' => 'El nombre del responsable no puede exceder los 150 caracteres.',

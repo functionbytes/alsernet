@@ -27,7 +27,7 @@ Route::middleware(['web', 'auth', 'settings'])
 // Incoming email settings routes
 Route::middleware(['web', 'auth', 'settings'])
     ->prefix('setting/incoming-email')
-    ->name('settings.incoming-email.')
+    ->name('settings.incoming.')
     ->group(function () {
         Route::get('/', [IncomingEmailSettingsController::class, 'index'])->name('index');
         Route::post('/update', [IncomingEmailSettingsController::class, 'update'])->name('update');
@@ -60,7 +60,7 @@ Route::middleware(['web', 'auth', 'settings'])
 // Outgoing email settings routes
 Route::middleware(['web', 'auth', 'settings'])
     ->prefix('setting/outgoing-email')
-    ->name('settings.outgoing-email.')
+    ->name('settings.outgoing.')
     ->group(function () {
         Route::get('/', [OutgoingEmailSettingsController::class, 'index'])->name('index');
         Route::get('/edit', [OutgoingEmailSettingsController::class, 'edit'])->name('edit');

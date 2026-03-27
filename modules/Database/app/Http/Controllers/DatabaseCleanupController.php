@@ -3,15 +3,18 @@
 namespace Modules\Database\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class DatabaseCleanupController extends Controller
 {
     /**
      * Display database cleanup form with table list
      */
-    public function index()
+    public function index(): View|RedirectResponse
     {
         // Check if cleanup is enabled
         $cleanupEnabled = config('database.cleanup.enabled', false);
@@ -73,7 +76,7 @@ class DatabaseCleanupController extends Controller
     /**
      * Truncate selected tables
      */
-    public function truncate(Request $request)
+    public function truncate(Request $request): JsonResponse
     {
         // Check if cleanup is enabled
         if (! config('database.cleanup.enabled', false)) {
@@ -166,7 +169,7 @@ class DatabaseCleanupController extends Controller
     /**
      * Get table record count via AJAX
      */
-    public function getTableCount(Request $request)
+    public function getTableCount(Request $request): JsonResponse
     {
         try {
             $tableName = $request->input('table');

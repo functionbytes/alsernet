@@ -143,6 +143,8 @@ class ModulesController extends Controller
      */
     public function update(Request $request, string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {
@@ -187,6 +189,8 @@ class ModulesController extends Controller
      */
     public function enable(string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {
@@ -210,6 +214,8 @@ class ModulesController extends Controller
      */
     public function disable(string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {
@@ -248,6 +254,8 @@ class ModulesController extends Controller
      */
     public function install(Request $request)
     {
+        $this->authorize('Modules.manage');
+
         $request->validate([
             'module_file' => 'required|file|mimes:zip',
         ], [
@@ -268,6 +276,14 @@ class ModulesController extends Controller
             // Extract ZIP file
             $zip = new ZipArchive;
             if ($zip->open($file->getPathname()) === true) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $entry = $zip->getNameIndex($i);
+                    if (str_contains($entry, '..')) {
+                        $zip->close();
+                        throw new \Exception('Archivo ZIP inválido: se detectó un intento de path traversal.');
+                    }
+                }
+
                 $zip->extractTo($tempPath);
                 $zip->close();
 
@@ -320,6 +336,8 @@ class ModulesController extends Controller
      */
     public function uninstall(string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {

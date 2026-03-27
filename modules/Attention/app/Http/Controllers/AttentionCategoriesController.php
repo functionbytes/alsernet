@@ -3,7 +3,11 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Modules\Attention\Http\Requests\CreateAttentionCategoryRequest;
+use Modules\Attention\Http\Requests\UpdateAttentionCategoryRequest;
 use Modules\Attention\Models\AttentionCategory;
 
 class AttentionCategoriesController extends Controller
@@ -11,7 +15,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Display a listing of categories.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = AttentionCategory::query();
 
@@ -29,13 +33,16 @@ class AttentionCategoriesController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $categories = $query->withCount('attentions')->ordered()->paginate(20);
+        $categories = $query->withCount('attentions')->ordered()->paginate(paginationNumber());
 
-        // Calculate statistics
+        $counts = AttentionCategory::query()
+            ->selectRaw('COUNT(*) as total, SUM(is_active = 1) as active, SUM(is_active = 0) as inactive')
+            ->first();
+
         $stats = [
-            'total' => AttentionCategory::count(),
-            'active' => AttentionCategory::where('is_active', true)->count(),
-            'inactive' => AttentionCategory::where('is_active', false)->count(),
+            'total' => (int) $counts->total,
+            'active' => (int) $counts->active,
+            'inactive' => (int) $counts->inactive,
         ];
 
         return view('attention::settings.categories.index', [
@@ -47,7 +54,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Show the form for creating a new category.
      */
-    public function create()
+    public function create(): View
     {
         // Get the next order number
         $nextOrder = AttentionCategory::max('order') + 1;
@@ -60,15 +67,9 @@ class AttentionCategoriesController extends Controller
     /**
      * Store a newly created category.
      */
-    public function store(Request $request)
+    public function store(CreateAttentionCategoryRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string|max:500',
-            'is_active' => 'nullable|boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active', true);
 
         if (! isset($validated['order'])) {
@@ -84,7 +85,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Display the specified category.
      */
-    public function show(AttentionCategory $category)
+    public function show(AttentionCategory $category): View
     {
         $category->load('attentions');
 
@@ -96,7 +97,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Show the form for editing a category.
      */
-    public function edit(AttentionCategory $category)
+    public function edit(AttentionCategory $category): View
     {
         return view('attention::settings.categories.edit', [
             'category' => $category,
@@ -106,15 +107,9 @@ class AttentionCategoriesController extends Controller
     /**
      * Update the specified category.
      */
-    public function update(Request $request, AttentionCategory $category)
+    public function update(UpdateAttentionCategoryRequest $request, AttentionCategory $category): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string|max:500',
-            'is_active' => 'nullable|boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
         $category->update($validated);
@@ -126,7 +121,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Toggle the active status of a category.
      */
-    public function toggle(AttentionCategory $category)
+    public function toggle(AttentionCategory $category): RedirectResponse
     {
         $category->update(['is_active' => ! $category->is_active]);
 
@@ -138,7 +133,7 @@ class AttentionCategoriesController extends Controller
     /**
      * Remove the specified category.
      */
-    public function destroy(AttentionCategory $category)
+    public function destroy(AttentionCategory $category): RedirectResponse
     {
         // Check if category has assigned attentions
         if ($category->attentions()->count() > 0) {

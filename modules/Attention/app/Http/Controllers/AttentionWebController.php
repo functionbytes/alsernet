@@ -5,9 +5,12 @@ namespace Modules\Attention\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
 use Modules\Attention\Models\Attention;
@@ -16,6 +19,9 @@ use Modules\Attention\Models\AttentionDepartment;
 use Modules\Attention\Models\AttentionNote;
 use Modules\Attention\Models\AttentionSede;
 use Modules\Attention\Models\AttentionType;
+use Modules\Attention\Services\AttentionExportService;
+use Modules\Attention\Services\AttentionRoutingService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 /**
@@ -27,8 +33,10 @@ class AttentionWebController extends Controller
     /**
      * Display pending PQRSF list
      */
-    public function pending(Request $request)
+    public function pending(Request $request): View
     {
+        $this->authorize('viewAny', Attention::class);
+
         $search = $request->get('search');
         $typeId = $request->get('type_id');
         $categoryId = $request->get('category_id');
@@ -86,7 +94,7 @@ class AttentionWebController extends Controller
         }
 
         // Get paginated results
-        $attentions = $query->latest()->paginate(20)->withQueryString();
+        $attentions = $query->latest()->paginate(config('pagination.attentions'))->withQueryString();
 
         // Calculate stats
         $stats = $this->calculateStats($query);
@@ -117,8 +125,10 @@ class AttentionWebController extends Controller
     /**
      * Display all PQRSF list
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
+        $this->authorize('viewAll', Attention::class);
+
         $search = $request->get('search');
         $statusFilter = $request->get('status');
         $typeId = $request->get('type_id');
@@ -149,7 +159,7 @@ class AttentionWebController extends Controller
         }
 
         // Get paginated results
-        $attentions = $query->latest()->paginate(20)->withQueryString();
+        $attentions = $query->latest()->paginate(config('pagination.attentions'))->withQueryString();
 
         // Get filter options
         $types = AttentionType::orderBy('name')->get();
@@ -168,8 +178,9 @@ class AttentionWebController extends Controller
     /**
      * Show the form for creating a new PQRSF
      */
-    public function create()
+    public function create(): View
     {
+        $this->authorize('create', Attention::class);
         $types = AttentionType::orderBy('name')->get();
         $categories = AttentionCategory::orderBy('name')->get();
         $sedes = AttentionSede::orderBy('name')->get();
@@ -184,8 +195,9 @@ class AttentionWebController extends Controller
     /**
      * Store a newly created PQRSF
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Attention::class);
         $validated = $request->validate([
             'type_id' => 'required|exists:attention_types,id',
             'category_id' => 'required|exists:attention_categories,id',
@@ -208,6 +220,8 @@ class AttentionWebController extends Controller
 
         $attention = Attention::create($validated);
 
+        app(AttentionRoutingService::class)->applyRules($attention);
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $attention->addMedia($file)->toMediaCollection('attachments');
@@ -223,10 +237,12 @@ class AttentionWebController extends Controller
     /**
      * Show the form for editing the specified PQRSF
      */
-    public function edit(string $uid)
+    public function edit(string $uid): View|RedirectResponse
     {
         $attention = Attention::with(['type', 'category', 'sede'])
             ->where('uid', $uid)->firstOrFail();
+
+        $this->authorize('update', $attention);
 
         if (! $attention->canBeEdited()) {
             return redirect()->route('attention.show', $attention->uid)
@@ -256,9 +272,13 @@ class AttentionWebController extends Controller
     /**
      * Display the specified PQRSF
      */
-    public function show(string $uid)
+    public function show(string $uid): View
     {
-        $attention = Attention::with([
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+
+        $this->authorize('view', $attention);
+
+        $attention->load([
             'type',
             'category',
             'sede',
@@ -268,7 +288,7 @@ class AttentionWebController extends Controller
             'actions.user',
             'mails',
             'satisfactionSurveys',
-        ])->where('uid', $uid)->firstOrFail();
+        ]);
 
         return view('attention::attentions.show', [
             'attention' => $attention,
@@ -278,7 +298,7 @@ class AttentionWebController extends Controller
     /**
      * Show management page for PQRSF
      */
-    public function manage(string $uid)
+    public function manage(string $uid): View
     {
         $attention = Attention::with([
             'type',
@@ -290,6 +310,8 @@ class AttentionWebController extends Controller
             'actions.user',
             'mails',
         ])->where('uid', $uid)->firstOrFail();
+
+        $this->authorize('manage', $attention);
 
         // Get all available statuses
         $statuses = AttentionStatus::cases();
@@ -315,7 +337,7 @@ class AttentionWebController extends Controller
     /**
      * Show tracking page
      */
-    public function tracking(?string $radicado = null)
+    public function tracking(?string $radicado = null): View
     {
         if (! $radicado) {
             return view('attention::attentions.tracking');
@@ -338,7 +360,7 @@ class AttentionWebController extends Controller
     /**
      * Show emails page
      */
-    public function emails(string $uid)
+    public function emails(string $uid): View
     {
         $attention = Attention::with([
             'mails',
@@ -352,7 +374,7 @@ class AttentionWebController extends Controller
     /**
      * Show satisfaction survey page
      */
-    public function survey(string $radicado)
+    public function survey(string $radicado): View|RedirectResponse
     {
         $attention = Attention::byRadicado($radicado)->firstOrFail();
 
@@ -369,7 +391,7 @@ class AttentionWebController extends Controller
     /**
      * Store a satisfaction survey
      */
-    public function storeSurvey(Request $request, string $radicado)
+    public function storeSurvey(Request $request, string $radicado): RedirectResponse
     {
         $attention = Attention::byRadicado($radicado)->firstOrFail();
 
@@ -391,6 +413,110 @@ class AttentionWebController extends Controller
             ->with('success', 'Gracias por su calificación');
     }
 
+    /**
+     * Queue a PQRSF export job; user is notified when ready.
+     * GET /attentions/export
+     */
+    public function export(Request $request): RedirectResponse|JsonResponse
+    {
+        $this->authorize('viewAny', Attention::class);
+        $validated = $request->validate([
+            'format' => ['nullable', 'in:excel,csv,pdf'],
+            'status' => ['nullable', 'string'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+        ]);
+
+        $format = $validated['format'] ?? 'excel';
+
+        \Modules\Attention\Jobs\ExportAttentionsJob::dispatch(auth()->user(), $validated, $format);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'La exportación está en proceso. Recibirás una notificación cuando esté lista.']);
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'La exportación está en proceso. Recibirás una notificación cuando esté lista.');
+    }
+
+    /**
+     * Download a previously generated PQRSF export by token.
+     * GET /attentions/export/download
+     */
+    public function exportDownload(Request $request): BinaryFileResponse|RedirectResponse
+    {
+        $this->authorize('viewAny', Attention::class);
+        $token = $request->query('token');
+
+        if (! $token || ! preg_match('/^[a-zA-Z0-9]{32}$/', $token)) {
+            abort(400);
+        }
+
+        $file = AttentionExportService::getExportFile($token);
+
+        if (! $file) {
+            return redirect()
+                ->route('attention.pending')
+                ->with('error', 'El archivo no existe o ya expiró.');
+        }
+
+        $mimeTypes = [
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'csv' => 'text/csv',
+            'pdf' => 'application/pdf',
+        ];
+
+        $mime = $mimeTypes[$file['format']] ?? 'application/octet-stream';
+
+        return response()->download($file['path'], $file['filename'], ['Content-Type' => $mime]);
+    }
+
+    // =========================================================================
+    // BULK ACTIONS
+    // =========================================================================
+
+    /**
+     * Execute bulk action on multiple PQRSF
+     * POST /attentions/bulk-action
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|in:close,assign,change_status,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:attentions,id',
+            'value' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->action === 'change_status' && ! in_array($value, ['received', 'in_process', 'resolved', 'closed'])) {
+                        $fail('El estado seleccionado no es válido.');
+                    }
+                },
+            ],
+        ]);
+
+        $attentions = Attention::whereIn('id', $request->ids)->get();
+
+        $policyMethod = $request->action === 'delete' ? 'delete' : 'manage';
+
+        foreach ($attentions as $attention) {
+            $this->authorize($policyMethod, $attention);
+        }
+
+        $query = Attention::whereIn('id', $request->ids);
+
+        match ($request->action) {
+            'close' => $query->update(['status' => AttentionStatus::CLOSED->value, 'closed_at' => now()]),
+            'assign' => $query->update(['assigned_user_id' => $request->value]),
+            'change_status' => $query->update(['status' => $request->value]),
+            'delete' => $query->delete(),
+        };
+
+        return response()->json(['success' => true, 'count' => $attentions->count()]);
+    }
+
     // =========================================================================
     // AJAX ENDPOINTS (Web-authenticated, JSON responses)
     // =========================================================================
@@ -405,8 +531,10 @@ class AttentionWebController extends Controller
             'content' => 'required|string|min:3|max:2000',
         ]);
 
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('manageNotes', $attention);
+
         try {
-            $attention = Attention::where('uid', $uid)->firstOrFail();
             $note = $attention->addNote($request->content, auth()->id());
 
             return response()->json([
@@ -435,8 +563,10 @@ class AttentionWebController extends Controller
             'content' => 'required|string|min:3|max:2000',
         ]);
 
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('manageNotes', $attention);
+
         try {
-            $attention = Attention::where('uid', $uid)->firstOrFail();
             $note = AttentionNote::where('id', $noteId)
                 ->where('attention_id', $attention->id)
                 ->firstOrFail();
@@ -465,8 +595,10 @@ class AttentionWebController extends Controller
      */
     public function deleteNote(string $uid, int $noteId): JsonResponse
     {
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('manageNotes', $attention);
+
         try {
-            $attention = Attention::where('uid', $uid)->firstOrFail();
             $note = AttentionNote::where('id', $noteId)
                 ->where('attention_id', $attention->id)
                 ->firstOrFail();
@@ -494,10 +626,21 @@ class AttentionWebController extends Controller
      */
     public function updateManagement(Request $request, string $uid): JsonResponse
     {
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('manage', $attention);
+
+        $request->validate([
+            'status' => 'nullable|string|in:received,in_process,resolved,closed',
+            'department_id' => 'nullable|integer|exists:attention_departments,id',
+            'assigned_user_id' => 'nullable|integer|exists:users,id',
+            'resolution' => 'nullable|string',
+            'response_type' => 'nullable|string',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
         try {
             DB::beginTransaction();
 
-            $attention = Attention::where('uid', $uid)->firstOrFail();
             $changes = [];
 
             // Update status
@@ -582,9 +725,10 @@ class AttentionWebController extends Controller
             'attachment' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
         ]);
 
-        try {
-            $attention = Attention::where('uid', $uid)->firstOrFail();
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $attention);
 
+        try {
             if ($attention->isClosed()) {
                 return response()->json([
                     'success' => false,
@@ -619,8 +763,10 @@ class AttentionWebController extends Controller
      */
     public function deleteAttachment(string $uid, int $mediaId): JsonResponse
     {
+        $attention = Attention::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $attention);
+
         try {
-            $attention = Attention::where('uid', $uid)->firstOrFail();
 
             if ($attention->isClosed()) {
                 return response()->json([
@@ -659,49 +805,44 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Get user departments
-     *
-     * @param  \App\Models\User  $user
+     * Get IDs of departments the user belongs to via the attention_department_user pivot.
+     * Cache is invalidated when department memberships change (see AttentionDepartment observers).
      */
     private function getUserDepartments($user): array
     {
-        // TODO: Implement logic to get user departments from groups or roles
-        // For now, return empty array
-        // This should be implemented based on your user-department relationship
-        return [];
+        return Cache::remember("user_departments_{$user->id}", 300, function () use ($user) {
+            return AttentionDepartment::query()
+                ->whereHas('users', fn ($q) => $q->where('user_id', $user->id))
+                ->pluck('id')
+                ->toArray();
+        });
     }
 
     /**
-     * Calculate statistics for pending attentions
+     * Calculate statistics for pending attentions using a single query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $baseQuery
      */
     private function calculateStats($baseQuery): array
     {
-        // Clone queries to avoid modifying the original
-        $totalQuery = clone $baseQuery;
-        $todayQuery = clone $baseQuery;
-        $assignedQuery = clone $baseQuery;
+        $userId = auth()->id();
+        $today = today()->toDateString();
+        $overdueThreshold = now()->subDays(5)->toDateTimeString();
 
-        // Total pending
-        $total = $totalQuery->count();
-
-        // Today's count
-        $today = $todayQuery->whereDate('created_at', today())->count();
-
-        // Assigned to current user
-        $assignedToMe = $assignedQuery->where('assigned_user_id', auth()->id())->count();
-
-        // Overdue count (older than 5 days for example)
-        // You can adjust this based on your SLA configuration
-        $overdueQuery = clone $baseQuery;
-        $overdue = $overdueQuery->where('created_at', '<', now()->subDays(5))->count();
+        $row = (clone $baseQuery)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN DATE(created_at) = ? THEN 1 ELSE 0 END) as today,
+                SUM(CASE WHEN assigned_user_id = ? THEN 1 ELSE 0 END) as assigned_to_me,
+                SUM(CASE WHEN created_at < ? THEN 1 ELSE 0 END) as overdue
+            ', [$today, $userId, $overdueThreshold])
+            ->first();
 
         return [
-            'total' => $total,
-            'today' => $today,
-            'assigned_to_me' => $assignedToMe,
-            'overdue' => $overdue,
+            'total' => (int) $row->total,
+            'today' => (int) $row->today,
+            'assigned_to_me' => (int) $row->assigned_to_me,
+            'overdue' => (int) $row->overdue,
         ];
     }
 }

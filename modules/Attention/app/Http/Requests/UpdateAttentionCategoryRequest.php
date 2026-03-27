@@ -26,7 +26,8 @@ class UpdateAttentionCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:150', Rule::unique('attention_categories', 'name')->ignore($categoryId)],
             'description' => ['nullable', 'string', 'max:500'],
             'parent_id' => ['nullable', 'exists:attention_categories,id'],
-            'is_active' => ['boolean'],
+            'is_active' => ['nullable', 'boolean'],
+            'order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

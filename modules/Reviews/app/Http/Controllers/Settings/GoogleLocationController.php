@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Reviews\Jobs\SyncGoogleReviewsJob;
+use Modules\Reviews\Models\Review;
 use Modules\Reviews\Models\ReviewGoogleLocation;
 
 class GoogleLocationController extends Controller
@@ -35,7 +36,7 @@ class GoogleLocationController extends Controller
             'total' => ReviewGoogleLocation::count(),
             'active' => ReviewGoogleLocation::where('is_active', true)->count(),
             'avg_rating' => ReviewGoogleLocation::where('is_active', true)->avg('average_rating') ?? 0,
-            'total_reviews' => ReviewGoogleLocation::withCount('reviews')->get()->sum('reviews_count'),
+            'total_reviews' => Review::count(),
         ];
 
         return view('reviews::settings.locations.index', compact('locations', 'stats'));

@@ -2,6 +2,9 @@
 
 namespace Modules\Storage\Providers;
 
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
@@ -65,7 +68,6 @@ class StorageServiceProvider extends ServiceProvider
      */
     protected function registerMenus(): void
     {
-
         // Add storage configuration to settings sidebar
         NavService::registerSidebar('settings', [
             'title' => 'Configuraciones',
@@ -73,6 +75,27 @@ class StorageServiceProvider extends ServiceProvider
                 ['label' => 'Almacenamiento', 'route' => 'settings.storage'],
             ],
         ]);
+    }
+
+    /**
+     * Decrypt a stored credential, falling back to the raw value for legacy unencrypted entries.
+     */
+    private function decryptCredential(string $value, string $diskName, string $field): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException) {
+            Log::warning('Storage disk has unencrypted credential, please re-save the configuration.', [
+                'disk' => $diskName,
+                'field' => $field,
+            ]);
+
+            return $value;
+        }
     }
 
     /**
@@ -84,17 +107,12 @@ class StorageServiceProvider extends ServiceProvider
             $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
             $customDisks = json_decode($customDisksJson, true) ?: [];
 
-            // Register each custom disk with Laravel's filesystem config
             foreach ($customDisks as $disk) {
                 $diskName = $disk['name'];
                 $driver = $disk['driver'];
 
-                // Build disk configuration based on driver type
-                $diskConfig = [
-                    'driver' => $driver,
-                ];
+                $diskConfig = ['driver' => $driver];
 
-                // Add driver-specific configuration
                 switch ($driver) {
                     case 'local':
                         $diskConfig['root'] = $disk['root'] ?? storage_path('app');
@@ -107,7 +125,7 @@ class StorageServiceProvider extends ServiceProvider
                     case 'ftp':
                         $diskConfig['host'] = $disk['host'] ?? '';
                         $diskConfig['username'] = $disk['username'] ?? '';
-                        $diskConfig['password'] = $disk['password'] ?? '';
+                        $diskConfig['password'] = $this->decryptCredential($disk['password'] ?? '', $diskName, 'password');
                         $diskConfig['port'] = (int) ($disk['port'] ?? 21);
                         $diskConfig['root'] = $disk['root'] ?? '/';
                         $diskConfig['passive'] = true;
@@ -118,7 +136,7 @@ class StorageServiceProvider extends ServiceProvider
                     case 'sftp':
                         $diskConfig['host'] = $disk['host'] ?? '';
                         $diskConfig['username'] = $disk['username'] ?? '';
-                        $diskConfig['password'] = $disk['password'] ?? '';
+                        $diskConfig['password'] = $this->decryptCredential($disk['password'] ?? '', $diskName, 'password');
                         $diskConfig['port'] = (int) ($disk['port'] ?? 22);
                         $diskConfig['root'] = $disk['root'] ?? '/';
                         $diskConfig['timeout'] = 30;
@@ -126,7 +144,7 @@ class StorageServiceProvider extends ServiceProvider
 
                     case 's3':
                         $diskConfig['key'] = $disk['key'] ?? '';
-                        $diskConfig['secret'] = $disk['secret'] ?? '';
+                        $diskConfig['secret'] = $this->decryptCredential($disk['secret'] ?? '', $diskName, 'secret');
                         $diskConfig['region'] = $disk['region'] ?? '';
                         $diskConfig['bucket'] = $disk['bucket'] ?? '';
                         if (isset($disk['url'])) {
@@ -138,12 +156,10 @@ class StorageServiceProvider extends ServiceProvider
                         break;
                 }
 
-                // Register the disk configuration
                 config(["filesystems.disks.{$diskName}" => $diskConfig]);
             }
         } catch (\Exception $e) {
-            // Storage config not available yet or database not initialized
-            \Log::debug('Storage configuration could not be loaded', [
+            Log::debug('Storage configuration could not be loaded', [
                 'error' => $e->getMessage(),
             ]);
         }

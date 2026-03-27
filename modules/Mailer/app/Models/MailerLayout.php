@@ -2,6 +2,7 @@
 
 namespace Modules\Mailer\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Mailer\Traits\HasUid;
@@ -65,6 +66,11 @@ class MailerLayout extends Model
     public function getContentAttribute(): ?string
     {
         return $this->translate()?->content;
+    }
+
+    public function scopeEnabled(Builder $query): Builder
+    {
+        return $query->where('is_enabled', true);
     }
 
     public function scopeAlias($query, $alias)

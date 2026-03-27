@@ -12,7 +12,7 @@ class MailerVariableService
     public static function getVariablesByModule(string $module): array
     {
         $variables = MailerVariable::where('module', $module)
-            ->where('is_enabled', true)
+            ->enabled()
             ->orderBy('category')
             ->orderBy('key')
             ->get();
@@ -60,7 +60,7 @@ class MailerVariableService
     {
         $variables = MailerVariable::where('module', $module)
             ->where('category', $category)
-            ->where('is_enabled', true)
+            ->enabled()
             ->orderBy('key')
             ->get();
 
@@ -81,7 +81,7 @@ class MailerVariableService
     public static function getVariable(string $key): ?MailerVariable
     {
         return MailerVariable::where('key', $key)
-            ->where('is_enabled', true)
+            ->enabled()
             ->first();
     }
 
@@ -113,7 +113,7 @@ class MailerVariableService
     public static function variableExists(string $key): bool
     {
         return MailerVariable::where('key', $key)
-            ->where('is_enabled', true)
+            ->enabled()
             ->exists();
     }
 
@@ -133,7 +133,7 @@ class MailerVariableService
     public static function getVariablesGroupedByCategory(string $module): array
     {
         $variables = MailerVariable::where('module', $module)
-            ->where('is_enabled', true)
+            ->enabled()
             ->orderBy('category')
             ->orderBy('key')
             ->get();
@@ -152,5 +152,49 @@ class MailerVariableService
         }
 
         return $grouped;
+    }
+
+    /**
+     * Category label map for display purposes
+     */
+    private static array $categoryLabels = [
+        'system' => 'Sistema',
+        'customer' => 'Cliente',
+        'order' => 'Pedido',
+        'document' => 'Documento',
+        'general' => 'General',
+    ];
+
+    /**
+     * Get variables for a module (+ core) grouped and formatted for the editor panel.
+     * Used by both variables() and variablesByModule() controller actions.
+     *
+     * @return array<int, array{group: string, items: array<int, array{name: string, description: string}>}>
+     */
+    public static function getGroupedForModule(string $module): array
+    {
+        $dbVariables = MailerVariable::query()
+            ->enabled()
+            ->where(function ($query) use ($module) {
+                $query->where('module', $module)
+                    ->orWhere('module', 'core');
+            })
+            ->orderBy('category')
+            ->orderBy('key')
+            ->get();
+
+        $variables = [];
+
+        foreach ($dbVariables->groupBy('category') as $category => $items) {
+            $variables[] = [
+                'group' => self::$categoryLabels[$category] ?? ucfirst($category),
+                'items' => $items->map(fn ($v) => [
+                    'name' => $v->key,
+                    'description' => $v->description ?? $v->name,
+                ])->toArray(),
+            ];
+        }
+
+        return $variables;
     }
 }

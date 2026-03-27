@@ -4,7 +4,15 @@ namespace Modules\Role\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Modules\Role\Events\RoleCreated;
+use Modules\Role\Events\RoleDeleted;
+use Modules\Role\Events\RoleUpdated;
+use Modules\Role\Events\UserRoleChanged;
 use Modules\Role\Http\Requests\Systems\RoleRequest;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -14,7 +22,7 @@ class RoleController extends Controller
     /**
      * Display a listing of roles
      */
-    public function index(Request $request)
+    public function index(Request $request): View|JsonResponse
     {
         $perPage = $request->get('per_page', $this->getPaginationPerPage());
         $searchKey = $request->get('search', '');
@@ -41,7 +49,7 @@ class RoleController extends Controller
     /**
      * Show the form for creating a new role
      */
-    public function create()
+    public function create(): View
     {
         return view('role::roles.create');
     }
@@ -49,13 +57,9 @@ class RoleController extends Controller
     /**
      * Store a newly created role in storage
      */
-    public function store(RoleRequest $request)
+    public function store(RoleRequest $request): RedirectResponse|JsonResponse
     {
         $data = $request->validated();
-
-        // Track who created this role
-        $data['created_by'] = auth()->id();
-        $data['updated_by'] = auth()->id();
 
         $role = Role::create($data);
 
@@ -67,6 +71,14 @@ class RoleController extends Controller
 
             $role->syncPermissions($permissions);
         }
+
+        event(new RoleCreated($role, auth()->user()));
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['name' => $role->name])
+            ->log('Role created');
 
         if ($request->expectsJson()) {
             return $this->success('Role created successfully', [
@@ -81,7 +93,7 @@ class RoleController extends Controller
     /**
      * Display the specified role
      */
-    public function show(Role $role)
+    public function show(Role $role): View|JsonResponse
     {
         $role->load('users', 'permissions');
 
@@ -97,7 +109,7 @@ class RoleController extends Controller
     /**
      * Show the form for editing the specified role
      */
-    public function edit(Role $role)
+    public function edit(Role $role): View
     {
         $permissions = $this->getAvailablePermissions();
         $rolePermissions = $role->permissions->pluck('id')->toArray();
@@ -108,17 +120,14 @@ class RoleController extends Controller
     /**
      * Update the specified role in storage
      */
-    public function update(RoleRequest $request, Role $role)
+    public function update(RoleRequest $request, Role $role): RedirectResponse|JsonResponse
     {
         $data = $request->validated();
 
         // Prevent system roles from being modified
-        if (in_array($role->name, ['super-settings', 'customer'])) {
+        if (in_array($role->name, config('role.protected_roles', []), true)) {
             return $this->error('Cannot modify system roles');
         }
-
-        // Track who updated this role
-        $data['updated_by'] = auth()->id();
 
         $role->update($data);
 
@@ -130,6 +139,14 @@ class RoleController extends Controller
 
             $role->syncPermissions($permissions);
         }
+
+        event(new RoleUpdated($role, auth()->user()));
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['name' => $role->name])
+            ->log('Role updated');
 
         if ($request->expectsJson()) {
             return $this->success('Role updated successfully', [
@@ -144,10 +161,10 @@ class RoleController extends Controller
     /**
      * Remove the specified role from storage
      */
-    public function destroy(Role $role)
+    public function destroy(Role $role): RedirectResponse|JsonResponse
     {
         // Prevent system roles from being deleted
-        if (in_array($role->name, ['super-settings', 'customer'])) {
+        if (in_array($role->name, config('role.protected_roles', []), true)) {
             if (request()->expectsJson()) {
                 return $this->error('Cannot delete system roles');
             }
@@ -164,6 +181,13 @@ class RoleController extends Controller
             return back()->with('error', 'No se puede eliminar un rol que tiene usuarios asignados.');
         }
 
+        event(new RoleDeleted($role, auth()->user()));
+
+        activity()
+            ->causedBy(auth()->user())
+            ->withProperties(['name' => $role->name, 'id' => $role->id])
+            ->log('Role deleted');
+
         $role->delete();
 
         if (request()->expectsJson()) {
@@ -175,17 +199,14 @@ class RoleController extends Controller
     }
 
     /**
-     * Duplicate a role
+     * Duplicate a role (API response)
      */
-    public function duplicate(Role $role)
+    public function duplicate(Role $role): JsonResponse
     {
         $newRole = $role->replicate();
         $newRole->name = $role->name.' (Copy)';
-        $newRole->created_by = auth()->id();
-        $newRole->updated_by = auth()->id();
         $newRole->save();
 
-        // Copy permissions
         $newRole->syncPermissions($role->permissions);
 
         return $this->success('Role duplicated successfully', [
@@ -194,9 +215,24 @@ class RoleController extends Controller
     }
 
     /**
+     * Clone a role and redirect to its edit page
+     */
+    public function clone(Role $role): RedirectResponse
+    {
+        $newRole = $role->replicate();
+        $newRole->name = $role->name.'_copia_'.now()->format('His');
+        $newRole->save();
+
+        $newRole->syncPermissions($role->permissions);
+
+        return redirect()->route('settings.roles.edit', $newRole->id)
+            ->with('success', 'Rol clonado correctamente. Puedes renombrarlo y ajustar permisos.');
+    }
+
+    /**
      * Assign users to a role
      */
-    public function assignUsers(Role $role, Request $request)
+    public function assignUsers(Role $role, Request $request): JsonResponse
     {
         $request->validate([
             'user_ids' => 'required|array',
@@ -204,27 +240,38 @@ class RoleController extends Controller
         ]);
 
         $userIds = $request->input('user_ids', []);
-        $assignedCount = 0;
 
-        foreach ($userIds as $userId) {
-            $user = User::find($userId);
-            if ($user) {
-                $user->roles()->syncWithoutDetaching([$role->id]);
-                $assignedCount++;
-            }
-        }
+        $users = User::whereIn('id', $userIds)->get();
+        $users->each(fn ($user) => $user->roles()->syncWithoutDetaching([$role->id]));
 
-        return $this->success("$assignedCount users assigned to role successfully", [
-            'assigned_count' => $assignedCount,
+        $actor = auth()->user();
+        $users->each(fn ($user) => event(new UserRoleChanged($user, $role, 'assigned', $actor)));
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['user_ids' => $userIds, 'count' => $users->count()])
+            ->log('Users assigned to role');
+
+        return $this->success("{$users->count()} users assigned to role successfully", [
+            'assigned_count' => $users->count(),
         ]);
     }
 
     /**
      * Remove a user from a role
      */
-    public function removeUser(Role $role, User $user)
+    public function removeUser(Role $role, User $user): JsonResponse
     {
         $user->roles()->detach($role->id);
+
+        event(new UserRoleChanged($user, $role, 'removed', auth()->user()));
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['user_id' => $user->id])
+            ->log('User removed from role');
 
         return $this->success('User removed from role successfully', [
             'role_id' => $role->id,
@@ -235,9 +282,9 @@ class RoleController extends Controller
     /**
      * Show permissions assignment form
      */
-    public function showPermissions(Role $role)
+    public function showPermissions(Role $role): View
     {
-        $permissions = Permission::all();
+        $permissions = Permission::orderBy('name')->get();
         $rolePermissions = $role->permissions->pluck('id')->toArray();
 
         return view('role::roles.permissions', compact('role', 'permissions', 'rolePermissions'));
@@ -246,7 +293,7 @@ class RoleController extends Controller
     /**
      * Update permissions for a role
      */
-    public function updatePermissions(Request $request, Role $role)
+    public function updatePermissions(Request $request, Role $role): JsonResponse
     {
         // Handle individual permission toggle (from permission matrix)
         if ($request->has('permission_id') && $request->has('action')) {
@@ -260,6 +307,12 @@ class RoleController extends Controller
             } elseif ($action === 'detach') {
                 $role->revokePermissionTo($permission);
             }
+
+            activity()
+                ->performedOn($role)
+                ->causedBy(auth()->user())
+                ->withProperties(['permission' => $permission->name, 'action' => $action])
+                ->log('Role permission toggled');
 
             return $this->success('Permiso actualizado correctamente', [
                 'permission' => $permission->name,
@@ -280,6 +333,12 @@ class RoleController extends Controller
 
         $role->syncPermissions($permissions);
 
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['permissions' => $permissions->pluck('name')])
+            ->log('Role permissions updated');
+
         return $this->success('Permisos actualizados correctamente', [
             'assigned' => $permissions->pluck('name'),
         ]);
@@ -288,7 +347,7 @@ class RoleController extends Controller
     /**
      * Show users assigned to a role
      */
-    public function showUsers(Role $role, Request $request)
+    public function showUsers(Role $role, Request $request): View|JsonResponse
     {
         $search = $request->get('search', '');
 
@@ -314,7 +373,7 @@ class RoleController extends Controller
     /**
      * Show modules that can be viewed by a role
      */
-    public function showModules(Role $role)
+    public function showModules(Role $role): View
     {
         // Lista de módulos disponibles (debe coincidir con ModulePermissionsSeeder)
         $modules = [
@@ -351,7 +410,7 @@ class RoleController extends Controller
     /**
      * Update modules that can be viewed by a role
      */
-    public function updateModules(Request $request, Role $role)
+    public function updateModules(Request $request, Role $role): JsonResponse
     {
         $request->validate([
             'modules' => 'array',
@@ -374,16 +433,23 @@ class RoleController extends Controller
             }
         }
 
-        // Primero, remover todos los permisos de módulos actuales
-        $role->permissions()
-            ->where('guard_name', $role->guard_name)
-            ->whereIn('id', $modulePermissions->pluck('id'))
-            ->detach();
+        // Wrap detach+attach in a transaction to avoid race conditions
+        DB::transaction(function () use ($role, $modulePermissions, $permissionsToSync) {
+            $role->permissions()
+                ->where('guard_name', $role->guard_name)
+                ->whereIn('id', $modulePermissions->pluck('id'))
+                ->detach();
 
-        // Luego, asignar los nuevos permisos de módulos
-        if (! empty($permissionsToSync)) {
-            $role->permissions()->attach($permissionsToSync);
-        }
+            if (! empty($permissionsToSync)) {
+                $role->permissions()->attach($permissionsToSync);
+            }
+        });
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['modules' => $modules])
+            ->log('Role modules updated');
 
         return $this->success('Módulos actualizados correctamente', [
             'modules' => $modules,
@@ -393,32 +459,21 @@ class RoleController extends Controller
     /**
      * Show permission matrix for all roles
      */
-    public function showPermissionMatrix()
+    public function showPermissionMatrix(): View
     {
-        // Get all roles
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::with('permissions')->orderBy('name')->get();
 
-        // Get all permissions grouped by module and then by category
         $permissions = Permission::orderBy('name')->get();
 
-        // Group permissions by module, then by category/action
-        $permissionsByModule = $permissions->groupBy(function ($permission) {
-            $parts = explode('.', $permission->name);
+        $permissionsByModule = $permissions->groupBy(function (Permission $permission) {
+            return explode('.', $permission->name)[0] ?? 'other';
+        })->map(fn ($modulePerms) => $modulePerms->groupBy(function (Permission $permission) {
+            return explode('.', $permission->name)[1] ?? 'general';
+        }));
 
-            return $parts[0] ?? 'other';
-        })->map(function ($modulePermissions) {
-            return $modulePermissions->groupBy(function ($permission) {
-                $parts = explode('.', $permission->name);
-
-                return $parts[1] ?? 'general';
-            });
-        });
-
-        // Get role permissions mapped by role_id => [permission_ids]
-        $rolePermissions = [];
-        foreach ($roles as $role) {
-            $rolePermissions[$role->id] = $role->permissions()->pluck('id')->toArray();
-        }
+        $rolePermissions = $roles->mapWithKeys(
+            fn (Role $role) => [$role->id => $role->permissions->pluck('id')->toArray()]
+        )->toArray();
 
         return view('role::roles.matrix', compact(
             'roles',

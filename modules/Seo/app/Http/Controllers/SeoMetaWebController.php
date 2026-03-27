@@ -11,6 +11,16 @@ use Modules\Seo\Models\SeoMeta;
 
 class SeoMetaWebController extends Controller
 {
+    /** @var array<string> */
+    private const SORTABLE_COLUMNS = ['updated_at', 'created_at', 'title'];
+
+    public function __construct()
+    {
+        $this->middleware('can:Seo.metas.index')->only('index', 'show');
+        $this->middleware('can:Seo.metas.update')->only('edit', 'update');
+        $this->middleware('can:Seo.metas.delete')->only('destroy', 'bulkDelete');
+    }
+
     /**
      * Display a listing of SEO meta records with filters and statistics.
      */
@@ -33,7 +43,9 @@ class SeoMetaWebController extends Controller
             $query->withRobots($robots);
         }
 
-        $sortBy = $request->get('sort_by', 'updated_at');
+        $sortBy = in_array($request->get('sort_by'), self::SORTABLE_COLUMNS, true)
+            ? $request->get('sort_by')
+            : 'updated_at';
         $query->orderBy($sortBy, 'desc');
 
         $metas = $query->paginate(15)->withQueryString();
@@ -52,7 +64,7 @@ class SeoMetaWebController extends Controller
             'missing_og_image' => SeoMeta::whereNull('og_image')->count(),
         ];
 
-        return view('Seo::admin.metas.index', compact('metas', 'seoableTypes', 'stats'));
+        return view('Seo::settings.metas.index', compact('metas', 'seoableTypes', 'stats'));
     }
 
     /**
@@ -62,7 +74,7 @@ class SeoMetaWebController extends Controller
     {
         $meta->load('seoable');
 
-        return view('Seo::admin.metas.show', compact('meta'));
+        return view('Seo::settings.metas.show', compact('meta'));
     }
 
     /**
@@ -72,7 +84,7 @@ class SeoMetaWebController extends Controller
     {
         $meta->load('seoable');
 
-        return view('Seo::admin.metas.edit', compact('meta'));
+        return view('Seo::settings.metas.edit', compact('meta'));
     }
 
     /**

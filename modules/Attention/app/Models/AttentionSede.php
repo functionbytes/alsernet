@@ -4,12 +4,15 @@ namespace Modules\Attention\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Sedes físicas donde se reciben PQRSF
  */
 class AttentionSede extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'attention_sedes';
 
     protected $fillable = [

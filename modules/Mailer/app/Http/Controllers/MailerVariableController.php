@@ -3,8 +3,11 @@
 namespace Modules\Mailer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerVariable;
 use Modules\Mailer\Traits\AuthorizesMailerActions;
@@ -16,7 +19,7 @@ class MailerVariableController extends Controller
     /**
      * Display a listing of email variables
      */
-    public function index()
+    public function index(): View
     {
         $pageTitle = 'Gestionar Variables de Email';
         $breadcrumb = 'Configuración / Correos / Variables';
@@ -25,7 +28,7 @@ class MailerVariableController extends Controller
             ->orderBy('module')
             ->orderBy('category')
             ->orderBy('key')
-            ->paginate(20);
+            ->paginate(paginationNumber());
 
         return view('mailer::variables.index', compact(
             'pageTitle',
@@ -37,7 +40,7 @@ class MailerVariableController extends Controller
     /**
      * Show the form for creating a new variable
      */
-    public function create()
+    public function create(): View
     {
         $pageTitle = 'Crear Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Crear';
@@ -69,7 +72,7 @@ class MailerVariableController extends Controller
     /**
      * Store a newly created variable in storage
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'key' => 'required|string|unique:mailer_variables,key|regex:/^[A-Z_]+$/',
@@ -104,7 +107,7 @@ class MailerVariableController extends Controller
     /**
      * Show the form for editing a variable
      */
-    public function edit(MailerVariable $variable)
+    public function edit(MailerVariable $variable): View
     {
         $pageTitle = 'Editar Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Editar';
@@ -139,7 +142,7 @@ class MailerVariableController extends Controller
     /**
      * Update the specified variable in storage
      */
-    public function update(Request $request, MailerVariable $variable)
+    public function update(Request $request, MailerVariable $variable): RedirectResponse
     {
         // For system variables, key and category are not validated (they're fixed)
         // For custom variables, they must follow strict validation rules
@@ -198,7 +201,7 @@ class MailerVariableController extends Controller
     /**
      * Remove the specified variable from storage
      */
-    public function destroy(MailerVariable $variable)
+    public function destroy(MailerVariable $variable): RedirectResponse
     {
         if ($variable->is_system) {
             return redirect()
@@ -217,7 +220,7 @@ class MailerVariableController extends Controller
     /**
      * Toggle variable status
      */
-    public function toggleStatus(MailerVariable $variable)
+    public function toggleStatus(MailerVariable $variable): JsonResponse
     {
         $variable->update(['is_enabled' => ! $variable->is_enabled]);
 
@@ -233,13 +236,13 @@ class MailerVariableController extends Controller
     /**
      * Get variables for a specific module and category
      */
-    public function getByModule(Request $request)
+    public function getByModule(Request $request): JsonResponse
     {
         $module = $request->get('module', 'core');
         $category = $request->get('category');
 
         $query = MailerVariable::where('module', $module)
-            ->where('is_enabled', true);
+            ->enabled();
 
         if ($category) {
             $query->where('category', $category);
@@ -253,13 +256,13 @@ class MailerVariableController extends Controller
     /**
      * Get variables grouped by category for template editor
      */
-    public function getGroupedByCategory(Request $request)
+    public function getGroupedByCategory(Request $request): JsonResponse
     {
         $module = $request->get('module', 'core');
 
         $variables = MailerVariable::where('module', $module)
             ->orWhere('module', 'core')
-            ->where('is_enabled', true)
+            ->enabled()
             ->orderBy('category')
             ->orderBy('key')
             ->get();
@@ -283,13 +286,13 @@ class MailerVariableController extends Controller
     /**
      * Get all available variable keys for validation
      */
-    public function getAvailableKeys(Request $request)
+    public function getAvailableKeys(Request $request): JsonResponse
     {
         $module = $request->get('module', 'core');
 
         $keys = MailerVariable::where('module', $module)
             ->orWhere('module', 'core')
-            ->where('is_enabled', true)
+            ->enabled()
             ->pluck('key')
             ->toArray();
 

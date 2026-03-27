@@ -4,6 +4,7 @@ namespace Modules\Analytics\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AnalyticsSettingsController extends Controller
@@ -37,7 +38,7 @@ class AnalyticsSettingsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => false,
+                'success' => false,
                 'message' => 'Validación fallida',
                 'errors' => $validator->errors(),
             ], 422);
@@ -56,13 +57,19 @@ class AnalyticsSettingsController extends Controller
             }
 
             return response()->json([
-                'status' => true,
+                'success' => true,
                 'message' => 'Configuración de Analytics actualizada correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Error updating analytics settings', [
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
             return response()->json([
-                'status' => false,
-                'message' => 'Error al actualizar configuración: ' . $e->getMessage(),
+                'success' => false,
+                'message' => 'Ha ocurrido un error al actualizar la configuración. Por favor intenta más tarde.',
             ], 500);
         }
     }
@@ -77,7 +84,7 @@ class AnalyticsSettingsController extends Controller
 
         if (empty($propertyId) || empty($credentials)) {
             return response()->json([
-                'status' => false,
+                'success' => false,
                 'message' => 'Property ID y credenciales son requeridos',
             ]);
         }
@@ -90,13 +97,13 @@ class AnalyticsSettingsController extends Controller
             }
 
             return response()->json([
-                'status' => true,
+                'success' => true,
                 'message' => 'Credenciales válidas',
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
-                'message' => 'Error al validar credenciales: ' . $e->getMessage(),
+                'success' => false,
+                'message' => 'Error al validar credenciales: '.$e->getMessage(),
             ]);
         }
     }
