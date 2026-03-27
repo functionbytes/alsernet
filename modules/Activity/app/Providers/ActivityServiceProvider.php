@@ -3,6 +3,7 @@
 namespace Modules\Activity\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Activity\Console\Commands\PruneActivityLogsCommand;
 use Modules\Theme\Services\NavService;
 
 class ActivityServiceProvider extends ServiceProvider
@@ -12,9 +13,15 @@ class ActivityServiceProvider extends ServiceProvider
         $this->registerConfigurations();
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'activity');
-
-        // Register menus
         $this->registerMenus();
+        $this->registerCommands();
+    }
+
+    protected function registerCommands(): void
+    {
+        $this->commands([
+            PruneActivityLogsCommand::class,
+        ]);
     }
 
     protected function registerConfigurations(): void

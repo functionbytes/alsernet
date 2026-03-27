@@ -18,6 +18,10 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 2;
+
+    public int $timeout = 600;
+
     public int $maxExceptions = 2;
 
     public int $uniqueFor = 3600;
@@ -280,5 +284,14 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
         }
 
         return 'mysqldump';
+    }
+
+    /**
+     * Handle job final failure after all retries are exhausted.
+     */
+    public function failed(\Throwable $e): void
+    {
+        Log::error('Backup job failed after all retries: '.$e->getMessage());
+        $this->notifyFailure($e->getMessage());
     }
 }

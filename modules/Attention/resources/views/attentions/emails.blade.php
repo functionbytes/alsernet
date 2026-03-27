@@ -98,7 +98,7 @@
 
                                         <div class="email-content">
                                             @if($mail->body)
-                                                {!! $mail->body !!}
+                                                {!! clean_html($mail->body) !!}
                                             @else
                                                 <p class="text-muted">No hay contenido disponible</p>
                                             @endif

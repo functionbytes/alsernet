@@ -28,7 +28,7 @@
                     <div class="preview-wrapper">
                         <div class="preview-email-container preview-desktop-view" id="previewContainer">
                             @if($mail->body_html)
-                                {!! $mail->body_html !!}
+                                {!! clean_html($mail->body_html) !!}
                             @elseif($mail->body_text)
                                 <div class="p-4">
                                     <pre class="mb-0" style="white-space: pre-wrap;">{{ $mail->body_text }}</pre>

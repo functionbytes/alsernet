@@ -17,6 +17,13 @@ class SendEndpointEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+
+    public int $timeout = 30;
+
+    /** @var array<int> */
+    public array $backoff = [60, 120, 300];
+
     protected MailerEndpointLog $log;
 
     /**
@@ -95,18 +102,30 @@ class SendEndpointEmailJob implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            $this->log->update([
-                'status' => EndpointLogStatus::Failed,
-                'error_message' => $e->getMessage(),
-            ]);
-
-            Log::error('Failed to send endpoint email', [
+            Log::warning('Endpoint email attempt failed, will retry if attempts remain', [
                 'endpoint_id' => $this->log->mailer_endpoint_id,
+                'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
             ]);
 
-            $this->fail($e);
+            throw $e;
         }
+    }
+
+    /**
+     * Handle job final failure after all retries are exhausted.
+     */
+    public function failed(\Throwable $e): void
+    {
+        $this->log->update([
+            'status' => EndpointLogStatus::Failed,
+            'error_message' => $e->getMessage(),
+        ]);
+
+        Log::error('Failed to send endpoint email after all retries', [
+            'endpoint_id' => $this->log->mailer_endpoint_id,
+            'error' => $e->getMessage(),
+        ]);
     }
 
     /**

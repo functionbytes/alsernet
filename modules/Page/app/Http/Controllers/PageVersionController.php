@@ -14,17 +14,6 @@ use Modules\Page\Models\PageVersion;
 class PageVersionController extends Controller
 {
     /**
-     * Create a new controller instance.
-     */
-    public function __construct()
-    {
-        // Middleware can be added here
-        // $this->middleware('auth');
-        // $this->middleware('permission:view page versions')->only(['index', 'show']);
-        // $this->middleware('permission:restore page versions')->only('restore');
-    }
-
-    /**
      * Display version history for a page.
      */
     public function index(Page $page): View
@@ -54,6 +43,8 @@ class PageVersionController extends Controller
      */
     public function restore(Request $request, Page $page, PageVersion $version): RedirectResponse
     {
+        $this->authorize('update', $page);
+
         // Ensure the version belongs to the page
         if ($version->page_id !== $page->id) {
             abort(404);
@@ -110,6 +101,8 @@ class PageVersionController extends Controller
      */
     public function destroy(Page $page, PageVersion $version): RedirectResponse
     {
+        $this->authorize('delete', $page);
+
         // Ensure the version belongs to the page
         if ($version->page_id !== $page->id) {
             abort(404);
