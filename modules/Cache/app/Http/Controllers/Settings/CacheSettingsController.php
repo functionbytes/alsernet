@@ -4,13 +4,25 @@ namespace Modules\Cache\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Modules\Cache\Http\Requests\Settings\CacheRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
+use Modules\Cache\Http\Requests\Settings\CacheSettingsRequest;
 use Modules\Core\Models\Setting;
+use Modules\Page\Services\PageCacheService;
 
-class CacheController extends Controller
+class CacheSettingsController extends Controller
 {
     private const PREFIX = 'cache.';
+
+    public function __construct()
+    {
+        $this->middleware('can:Cache.settings.index')->only('index', 'stats', 'redisStats');
+        $this->middleware('can:Cache.settings.update')->only('update', 'flush');
+    }
 
     public function index(): View
     {
@@ -21,7 +33,61 @@ class CacheController extends Controller
         ]);
     }
 
-    public function update(CacheRequest $request): RedirectResponse
+    public function stats(): JsonResponse
+    {
+        if (! \App\Helpers\ModuleStatusHelper::isModuleEnabled('Page')) {
+            return response()->json(['error' => 'Page module not enabled'], 404);
+        }
+
+        return response()->json(PageCacheService::getStats());
+    }
+
+    public function redisStats(): JsonResponse
+    {
+        try {
+            $info = Redis::connection()->info();
+
+            $hits = (int) ($info['keyspace_hits'] ?? 0);
+            $misses = (int) ($info['keyspace_misses'] ?? 0);
+            $total = $hits + $misses;
+
+            return response()->json([
+                'connected' => true,
+                'used_memory' => $info['used_memory_human'] ?? 'N/A',
+                'connected_clients' => (int) ($info['connected_clients'] ?? 0),
+                'keyspace_hits' => $hits,
+                'keyspace_misses' => $misses,
+                'hit_rate' => $total > 0 ? round($hits / $total * 100, 1) : 0,
+                'uptime_days' => round(((int) ($info['uptime_in_seconds'] ?? 0)) / 86400, 1),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Redis stats unavailable', ['error' => $e->getMessage()]);
+
+            return response()->json(['connected' => false, 'error' => 'Error al gestionar la caché.']);
+        }
+    }
+
+    public function flush(Request $request): JsonResponse
+    {
+        $type = $request->input('type', 'all');
+
+        try {
+            match ($type) {
+                'menu' => Cache::forget('menu'),
+                'settings' => Cache::forget('settings'),
+                'pages' => Cache::tags(['pages'])->flush(),
+                default => Cache::flush(),
+            };
+
+            return response()->json(['success' => true, 'type' => $type]);
+        } catch (\Throwable $e) {
+            Log::error('Cache flush failed', ['error' => $e->getMessage(), 'type' => $type]);
+
+            return response()->json(['success' => false, 'message' => 'Error al gestionar la caché.'], 500);
+        }
+    }
+
+    public function update(CacheSettingsRequest $request): RedirectResponse
     {
         $checkboxes = [
             'admin_menu_enabled',
@@ -31,7 +97,7 @@ class CacheController extends Controller
         ];
 
         // Only include pages_enabled if the Page module is active
-        if (module_exists('Page')) {
+        if (\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page')) {
             $checkboxes[] = 'pages_enabled';
         }
 
@@ -42,7 +108,7 @@ class CacheController extends Controller
         Setting::set(self::PREFIX.'sitemap_ttl', $request->validated()['sitemap_ttl']);
 
         // Only save pages_ttl if the Page module is active
-        if (module_exists('Page') && $request->has('pages_ttl')) {
+        if (\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page') && $request->has('pages_ttl')) {
             Setting::set(self::PREFIX.'pages_ttl', $request->validated()['pages_ttl']);
         }
 

@@ -4,56 +4,51 @@ namespace Modules\System\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class MaintenanceMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    private array $excludedRoutes = [
+        'settings/*',
+        'settings',
+        'livechat/*',
+        'image/*',
+        'imagedownload/*',
+        'emailtoticket/*',
+        'emtcimageurl/*',
+        'emtcimagedownload/*',
+        'emailtoticketdownload/*',
+        'getProfile/*',
+        'getimage/*',
+        'notificationsreading',
+        'badgecount',
+        'markasreadcount',
+        'notificationalerts',
+        'timeupdate',
+        'captcha',
+    ];
+
+    public function handle(Request $request, Closure $next): Response
     {
-        $excludedRoutes = [
-            'settings/*',
-            'settings',
-            'livechat/*',
-            'image/*',
-            'imagedownload/*',
-            'emailtoticket/*',
-            'emtcimageurl/*',
-            'emtcimagedownload/*',
-            'emailtoticketdownload/*',
-            'getProfile/*',
-            'getimage/*',
-            'notificationsreading',
-            'badgecount',
-            'markasreadcount',
-            'notificationalerts',
-            'timeupdate',
-            'captcha',
-        ];
+        $installed = Cache::remember('app.installed', 3600, fn () => Schema::hasTable('settings'));
 
-        try {
-            DB::connection()->getPdo();
-            if (! DB::getSchemaBuilder()->hasTable('backups')) {
-
-                return $next($request);
-            } else {
-
-                if (setting('MAINTENANCE_MODE') == 'on' && ! $this->isExcludedRoute($request, $excludedRoutes)) {
-
-                    return response()->view('errors.503', [], 503);
-                }
-
-                return $next($request);
-            }
-        } catch (\Exception $e) {
+        if (! $installed) {
             return $next($request);
-
         }
+
+        if (setting('MAINTENANCE_MODE') == 'on' && ! $this->isExcludedRoute($request)) {
+            return response()->view('errors.503', [], 503);
+        }
+
+        return $next($request);
     }
 
-    private function isExcludedRoute(Request $request, array $excludedRoutes): bool
+    private function isExcludedRoute(Request $request): bool
     {
-        foreach ($excludedRoutes as $route) {
+        foreach ($this->excludedRoutes as $route) {
             if (Str::is($route, $request->path())) {
                 return true;
             }

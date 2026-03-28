@@ -4,26 +4,23 @@ namespace Modules\System\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpFoundation\Response;
 
 class LanguageMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        try {
-            DB::connection()->getPdo();
-            if (! DB::getSchemaBuilder()->hasTable('backups')) {
+        $installed = Cache::remember('app.installed', 3600, fn () => Schema::hasTable('settings'));
 
-                return $next($request);
-            } else {
-
-                \App::setlocale(session()->get('locale') ?? @(DB::table('backups')->where('key', 'default_lang')->first()->value));
-
-                return $next($request);
-            }
-        } catch (\Exception $e) {
+        if (! $installed) {
             return $next($request);
-            exit('Could not connect to the database.  Please check your configuration. error:'.$e);
         }
+
+        App::setLocale(session()->get('locale') ?? setting('default_lang', config('app.locale')));
+
+        return $next($request);
     }
 }

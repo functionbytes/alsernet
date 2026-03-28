@@ -4,33 +4,24 @@ namespace Modules\Core\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpFoundation\Response;
 
 class HttpsProtocolMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        try {
-            DB::connection()->getPdo();
-            if (! DB::getSchemaBuilder()->hasTable('backups')) {
+        $installed = Cache::remember('app.installed', 3600, fn () => Schema::hasTable('settings'));
 
-                return $next($request);
-            } else {
-
-                if (setting('FORCE_SSL') == 'on') {
-                    if (! $request->secure()) {
-                        return redirect()->secure($request->getPathInfo());
-                    }
-
-                    return $next($request);
-                } else {
-                    return $next($request);
-                }
-            }
-        } catch (\Exception $e) {
+        if (! $installed) {
             return $next($request);
-            exit('Could not connect to the database.  Please check your configuration. error:'.$e);
         }
 
+        if (setting('FORCE_SSL') == 'on' && ! $request->secure()) {
+            return redirect()->secure($request->getPathInfo());
+        }
+
+        return $next($request);
     }
 }

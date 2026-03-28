@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
 use Modules\Template\Http\Requests\StoreTemplateRequest;
 use Modules\Template\Http\Requests\UpdateTemplateRequest;
 use Modules\Template\Models\Shortcode;
@@ -61,9 +62,11 @@ class TemplateController extends Controller
                 ->route('settings.templates.show', $template)
                 ->with('success', __('template::template.template_created'));
         } catch (\Exception $e) {
+            Log::error('Template creation failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_creating_template').': '.$e->getMessage());
+                ->with('error', __('template::template.error_creating_template'));
         }
     }
 
@@ -109,9 +112,11 @@ class TemplateController extends Controller
                 ->route('settings.templates.show', $template)
                 ->with('success', __('template::template.template_updated'));
         } catch (\Exception $e) {
+            Log::error('Template update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_updating_template').': '.$e->getMessage());
+                ->with('error', __('template::template.error_updating_template'));
         }
     }
 
@@ -139,7 +144,9 @@ class TemplateController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            Log::error('Template preview failed', ['error' => $e->getMessage()]);
+
+            return response()->json(['error' => 'Error al procesar la plantilla.'], 422);
         }
     }
 
@@ -157,9 +164,11 @@ class TemplateController extends Controller
                 ->route('settings.templates.index')
                 ->with('success', __('template::template.template_deleted'));
         } catch (\Exception $e) {
+            Log::error('Template deletion failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', __('template::template.error_deleting_template').': '.$e->getMessage());
+                ->with('error', __('template::template.error_deleting_template'));
         }
     }
 

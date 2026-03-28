@@ -6,6 +6,7 @@ use App\Events\Auth\Password\ForgotPasswordCreated;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -62,12 +63,12 @@ class ForgotPasswordController extends Controller
 
             $password_token = Str::random(50);
 
-            $user->password_reset_token = $password_token;
+            $user->password_reset_token = Hash::make($password_token);
             $user->password_reset_max_tries = $reset_tries;
             $user->password_reset_last_tried_on = now();
             $user->save();
 
-            ForgotPasswordCreated::dispatch($user);
+            ForgotPasswordCreated::dispatch($user, $password_token);
 
             return view('auth::passwords.success')->with([
                 'email' => $user->email,

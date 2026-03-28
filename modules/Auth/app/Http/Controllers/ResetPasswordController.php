@@ -19,50 +19,47 @@ class ResetPasswordController extends Controller
         $this->middleware('guest');
     }
 
-    public function showResetForm($uid)
+    public function showResetForm(Request $request, string $token): \Illuminate\View\View
     {
-
         return view('auth::passwords.reset')->with([
-            'email' => $uid,
+            'token' => $token,
+            'email' => $request->query('email', ''),
         ]);
-
     }
 
     public function reset(Request $request)
     {
-
-        $new_password_hashed_password = bcrypt($request->new_password);
-        $new_password_confirmation_hashed_password = bcrypt($request->new_password_confirmation);
-
-        if (Hash::check($new_password_hashed_password, $new_password_confirmation_hashed_password) == false) {
-
-            $user = User::orWhere('email', $request->email)->first();
-
-            if ($user != null) {
-
-                $user->password = $request->password;
-                $user->remember_token = Str::random(60);
-                $user->password_reset_token = null;
-                $user->password_reset_max_tries = null;
-                $user->password_reset_last_tried_on = null;
-                $user->save();
-
-                $user->sessions()->delete();
-
-                ResetPasswordCreated::dispatch($user);
-
-                return view('auth::passwords.confirm')->with([
-                    'email' => $user->email,
-                ]);
-            }
-
-        } else {
+        if ($request->password !== $request->password_confirmation) {
             return redirect()->back()
-                ->withErrors([
-                    'password' => 'Lo sentimos, parece que la contraseña que ingresó no es válida.',
-                ]);
+                ->withErrors(['password' => 'Las contraseñas no coinciden.']);
         }
 
+        $user = User::where('email', $request->email)->first();
+
+        if ($user === null) {
+            return redirect()->back()
+                ->withErrors(['password' => 'No se encontró una cuenta con ese correo electrónico.']);
+        }
+
+        if (! Hash::check($request->token, $user->password_reset_token)) {
+            return redirect()->back()
+                ->withErrors(['password' => 'El enlace de restablecimiento es inválido o ha expirado.']);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->remember_token = Str::random(60);
+        $user->password_reset_token = null;
+        $user->password_reset_max_tries = null;
+        $user->password_reset_last_tried_on = null;
+        $user->save();
+
+        $user->sessions()->delete();
+
+        ResetPasswordCreated::dispatch($user);
+
+        return view('auth::passwords.confirm')->with([
+            'email' => $user->email,
+        ]);
     }
 
     protected function guard()

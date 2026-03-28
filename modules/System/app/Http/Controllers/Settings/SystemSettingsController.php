@@ -3,8 +3,11 @@
 namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Modules\Core\Models\Setting;
 
@@ -95,9 +98,11 @@ class SystemSettingsController extends Controller
                 'message' => 'Configuración de cola actualizada correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Queue settings update failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la configuración: '.$e->getMessage(),
+                'message' => 'Error al actualizar la configuración.',
             ], 500);
         }
     }
@@ -194,9 +199,11 @@ class SystemSettingsController extends Controller
                 'message' => 'Configuración de websockets actualizada correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Websockets settings update failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la configuración: '.$e->getMessage(),
+                'message' => 'Error al actualizar la configuración.',
             ], 500);
         }
     }
@@ -217,9 +224,11 @@ class SystemSettingsController extends Controller
                 'message' => 'Conexión de cola funcionando correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Queue connection test failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error en la conexión: '.$e->getMessage(),
+                'message' => 'Error en la conexión.',
             ], 500);
         }
     }
@@ -237,11 +246,125 @@ class SystemSettingsController extends Controller
                 'message' => 'Workers de cola reiniciados correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Queue workers restart failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al reiniciar workers: '.$e->getMessage(),
+                'message' => 'Error al reiniciar workers.',
             ], 500);
         }
+    }
+
+    /**
+     * Get queue health statistics
+     */
+    public function queueStats(): JsonResponse
+    {
+        $stats = [];
+
+        try {
+            $stats['pending'] = DB::table('jobs')->count();
+            $stats['failed'] = DB::table('failed_jobs')->count();
+
+            $stats['by_queue'] = DB::table('jobs')
+                ->select('queue', DB::raw('COUNT(*) as count'))
+                ->groupBy('queue')
+                ->get();
+
+            $stats['recent_failed'] = DB::table('failed_jobs')
+                ->latest('failed_at')
+                ->limit(5)
+                ->get(['id', 'uuid', 'queue', 'exception', 'failed_at']);
+        } catch (\Throwable $e) {
+            Log::error('Queue stats unavailable', ['error' => $e->getMessage()]);
+            $stats = ['error' => 'Las estadísticas de cola no están disponibles.'];
+        }
+
+        try {
+            if (class_exists(\Laravel\Horizon\Contracts\MasterSupervisorRepository::class)) {
+                $supervisors = app(\Laravel\Horizon\Contracts\MasterSupervisorRepository::class)->all();
+                $stats['horizon'] = ['status' => $supervisors ? 'running' : 'stopped'];
+            }
+        } catch (\Throwable) {
+        }
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Delete a failed job by ID
+     */
+    public function deleteFailedJob(int $id): JsonResponse
+    {
+        try {
+            $deleted = DB::table('failed_jobs')->where('id', $id)->delete();
+
+            if (! $deleted) {
+                return response()->json(['success' => false, 'message' => 'Job no encontrado'], 404);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Job eliminado correctamente']);
+        } catch (\Throwable $e) {
+            Log::error('Failed job deletion failed', ['error' => $e->getMessage(), 'id' => $id]);
+
+            return response()->json(['success' => false, 'message' => 'Error al realizar la operación.'], 500);
+        }
+    }
+
+    /**
+     * Retry a failed job by ID
+     */
+    public function retryFailedJob(int $id): JsonResponse
+    {
+        try {
+            $job = DB::table('failed_jobs')->where('id', $id)->first(['uuid']);
+
+            if (! $job) {
+                return response()->json(['success' => false, 'message' => 'Job no encontrado'], 404);
+            }
+
+            Artisan::call('queue:retry', ['id' => [$job->uuid]]);
+
+            return response()->json(['success' => true, 'message' => 'Job enviado a reintentar']);
+        } catch (\Throwable $e) {
+            Log::error('Failed job retry failed', ['error' => $e->getMessage(), 'id' => $id]);
+
+            return response()->json(['success' => false, 'message' => 'Error al realizar la operación.'], 500);
+        }
+    }
+
+    /**
+     * Get disk space statistics
+     */
+    public function diskStats(): JsonResponse
+    {
+        $storagePath = storage_path();
+        $total = disk_total_space($storagePath);
+        $free = disk_free_space($storagePath);
+        $used = $total - $free;
+
+        $logPath = storage_path('logs/laravel.log');
+        $logSize = file_exists($logPath) ? filesize($logPath) : 0;
+
+        return response()->json([
+            'total' => $this->formatBytes((int) $total),
+            'free' => $this->formatBytes((int) $free),
+            'used' => $this->formatBytes((int) $used),
+            'used_percent' => round($used / $total * 100, 1),
+            'log_size' => $this->formatBytes((int) $logSize),
+        ]);
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = (int) floor(log($bytes, 1024));
+
+        return round($bytes / pow(1024, $i), 2).' '.$units[$i];
     }
 
     /**
