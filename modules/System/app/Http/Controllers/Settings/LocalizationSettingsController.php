@@ -5,6 +5,7 @@ namespace Modules\System\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Lang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 
 class LocalizationSettingsController extends Controller
@@ -59,8 +60,10 @@ class LocalizationSettingsController extends Controller
             return redirect()->route('manager.backups.localization.index')
                 ->with('success', 'Configuración de localización actualizada correctamente');
         } catch (\Exception $e) {
+            Log::error('Localization settings update failed', ['error' => $e->getMessage()]);
+
             return redirect()->back()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración.')
                 ->withInput();
         }
     }

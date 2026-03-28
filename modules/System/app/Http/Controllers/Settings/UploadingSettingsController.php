@@ -4,6 +4,7 @@ namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 
 class UploadingSettingsController extends Controller
@@ -58,8 +59,10 @@ class UploadingSettingsController extends Controller
             return redirect()->route('settings.system.uploading.index')
                 ->with('success', 'Configuración de carga de archivos actualizada correctamente');
         } catch (\Exception $e) {
+            Log::error('Uploading settings update failed', ['error' => $e->getMessage()]);
+
             return redirect()->back()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración.')
                 ->withInput();
         }
     }

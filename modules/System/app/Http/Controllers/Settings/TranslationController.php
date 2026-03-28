@@ -5,6 +5,7 @@ namespace Modules\System\Http\Controllers\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TranslationController extends Controller
@@ -151,9 +152,11 @@ class TranslationController extends Controller
                 ->route('manager.backups.translations.edit', [$locale, $file])
                 ->with('success', "Traducción de $fileLabel actualizada correctamente");
         } catch (\Exception $e) {
+            Log::error('Translation file save failed', ['error' => $e->getMessage(), 'locale' => $locale, 'file' => $file]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al guardar las traducciones: '.$e->getMessage());
+                ->with('error', 'Error al guardar las traducciones.');
         }
     }
 

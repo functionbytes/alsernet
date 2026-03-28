@@ -4,6 +4,7 @@ namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 
 class SearchSettingsController extends Controller
@@ -46,8 +47,10 @@ class SearchSettingsController extends Controller
             return redirect()->route('manager.backups.search.index')
                 ->with('success', 'Configuración de búsqueda actualizada correctamente');
         } catch (\Exception $e) {
+            Log::error('Search settings update failed', ['error' => $e->getMessage()]);
+
             return redirect()->back()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración.')
                 ->withInput();
         }
     }

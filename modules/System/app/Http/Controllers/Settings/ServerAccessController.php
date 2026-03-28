@@ -5,6 +5,7 @@ namespace Modules\System\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Modules\Activity\Models\ApplicationLog;
 
 class ServerAccessController extends Controller
@@ -216,9 +217,11 @@ class ServerAccessController extends Controller
                 'message' => 'Logs limpiados correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Log file clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar logs: '.$e->getMessage(),
+                'message' => 'Error al limpiar logs.',
             ], 500);
         }
     }

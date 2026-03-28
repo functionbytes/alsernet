@@ -5,6 +5,7 @@ namespace Modules\System\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 use Symfony\Component\Process\Process;
 
@@ -139,9 +140,11 @@ class SystemCacheController extends Controller
                 'message' => 'Cache del sistema limpiado correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Cache clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar el cache: '.$e->getMessage(),
+                'message' => 'Error al limpiar el cache.',
             ], 500);
         }
     }
@@ -159,9 +162,11 @@ class SystemCacheController extends Controller
                 'message' => 'Cache de configuración limpiado correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Config cache clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar el cache de configuración: '.$e->getMessage(),
+                'message' => 'Error al limpiar el cache de configuración.',
             ], 500);
         }
     }
@@ -179,9 +184,11 @@ class SystemCacheController extends Controller
                 'message' => 'Configuración cacheada correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Config cache failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cachear la configuración: '.$e->getMessage(),
+                'message' => 'Error al cachear la configuración.',
             ], 500);
         }
     }
@@ -199,9 +206,11 @@ class SystemCacheController extends Controller
                 'message' => 'Cache de rutas limpiado correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Route cache clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar el cache de rutas: '.$e->getMessage(),
+                'message' => 'Error al limpiar el cache de rutas.',
             ], 500);
         }
     }
@@ -219,9 +228,11 @@ class SystemCacheController extends Controller
                 'message' => 'Vistas compiladas limpiadas correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('View cache clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar las vistas compiladas: '.$e->getMessage(),
+                'message' => 'Error al limpiar las vistas compiladas.',
             ], 500);
         }
     }
@@ -239,9 +250,11 @@ class SystemCacheController extends Controller
                 'message' => 'Optimización limpiada correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Optimization clear failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar la optimización: '.$e->getMessage(),
+                'message' => 'Error al limpiar la optimización.',
             ], 500);
         }
     }
@@ -294,9 +307,11 @@ class SystemCacheController extends Controller
                 'message' => 'Composer dump-autoload ejecutado correctamente',
             ]);
         } catch (\Exception $e) {
+            Log::error('Composer dump-autoload failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al ejecutar composer dump-autoload: '.$e->getMessage(),
+                'message' => 'Error al ejecutar composer dump-autoload.',
             ], 500);
         }
     }
@@ -386,9 +401,10 @@ class SystemCacheController extends Controller
                     ];
                 }
             } catch (\Exception $e) {
+                Log::error('executeAll: composer dump-autoload failed', ['error' => $e->getMessage()]);
                 $results['composer_dump_autoload'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al ejecutar composer dump-autoload.',
                 ];
             }
 
@@ -400,9 +416,10 @@ class SystemCacheController extends Controller
                     'message' => 'Cache limpiado',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: cache clear failed', ['error' => $e->getMessage()]);
                 $results['cache_clear'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al limpiar el cache.',
                 ];
             }
 
@@ -414,9 +431,10 @@ class SystemCacheController extends Controller
                     'message' => 'Configuración cacheada',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: config cache failed', ['error' => $e->getMessage()]);
                 $results['config_cache'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al cachear la configuración.',
                 ];
             }
 
@@ -428,9 +446,10 @@ class SystemCacheController extends Controller
                     'message' => 'Cache de configuración limpiado',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: config clear failed', ['error' => $e->getMessage()]);
                 $results['config_clear'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al limpiar el cache de configuración.',
                 ];
             }
 
@@ -442,9 +461,10 @@ class SystemCacheController extends Controller
                     'message' => 'Cache de rutas limpiado',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: route clear failed', ['error' => $e->getMessage()]);
                 $results['route_clear'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al limpiar el cache de rutas.',
                 ];
             }
 
@@ -456,9 +476,10 @@ class SystemCacheController extends Controller
                     'message' => 'Vistas compiladas limpiadas',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: view clear failed', ['error' => $e->getMessage()]);
                 $results['view_clear'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al limpiar las vistas compiladas.',
                 ];
             }
 
@@ -470,9 +491,10 @@ class SystemCacheController extends Controller
                     'message' => 'Optimización limpiada',
                 ];
             } catch (\Exception $e) {
+                Log::error('executeAll: optimize clear failed', ['error' => $e->getMessage()]);
                 $results['optimize_clear'] = [
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => 'Error al limpiar la optimización.',
                 ];
             }
 
@@ -487,9 +509,11 @@ class SystemCacheController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('executeAll: general failure', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error general: '.$e->getMessage(),
+                'message' => 'Error al realizar la operación.',
                 'results' => $results,
             ], 500);
         }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 use Modules\System\Services\SupervisorService;
 
@@ -33,8 +34,10 @@ class SupervisorController extends Controller
                 'breadcrumb'
             ));
         } catch (\Exception $e) {
+            Log::error('Supervisor connection failed', ['error' => $e->getMessage()]);
+
             return view('system::supervisor.index', [
-                'error' => 'Error al conectar con Supervisor: '.$e->getMessage(),
+                'error' => 'Error al conectar con Supervisor.',
                 'processes' => [],
                 'alsarnetProcesses' => [],
                 'pageTitle' => 'Panel de Control - Supervisor',
@@ -73,8 +76,10 @@ class SupervisorController extends Controller
                 'breadcrumb'
             ));
         } catch (\Exception $e) {
+            Log::error('Supervisor process details failed', ['error' => $e->getMessage(), 'process' => $processName]);
+
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al cargar detalles del proceso: '.$e->getMessage());
+                ->with('error', 'Error al cargar detalles del proceso.');
         }
     }
 
@@ -97,15 +102,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso iniciado correctamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor process start failed', ['error' => $e->getMessage(), 'process' => $processName]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al iniciar el proceso: '.$e->getMessage(),
+                    'message' => 'Error al iniciar el proceso.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al iniciar el proceso: '.$e->getMessage());
+                ->with('error', 'Error al iniciar el proceso.');
         }
     }
 
@@ -128,15 +135,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso detenido correctamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor process stop failed', ['error' => $e->getMessage(), 'process' => $processName]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al detener el proceso: '.$e->getMessage(),
+                    'message' => 'Error al detener el proceso.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al detener el proceso: '.$e->getMessage());
+                ->with('error', 'Error al detener el proceso.');
         }
     }
 
@@ -159,15 +168,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso reiniciado correctamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor process restart failed', ['error' => $e->getMessage(), 'process' => $processName]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al reiniciar el proceso: '.$e->getMessage(),
+                    'message' => 'Error al reiniciar el proceso.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al reiniciar el proceso: '.$e->getMessage());
+                ->with('error', 'Error al reiniciar el proceso.');
         }
     }
 
@@ -190,15 +201,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Configuración recargada correctamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor reload failed', ['error' => $e->getMessage()]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al recargar la configuración: '.$e->getMessage(),
+                    'message' => 'Error al recargar la configuración.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al recargar la configuración: '.$e->getMessage());
+                ->with('error', 'Error al recargar la configuración.');
         }
     }
 
@@ -223,9 +236,11 @@ class SupervisorController extends Controller
                 'logs' => $logs['logs'] ?? '',
             ]);
         } catch (\Exception $e) {
+            Log::error('Supervisor get logs failed', ['error' => $e->getMessage(), 'process' => $processName]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener logs: '.$e->getMessage(),
+                'message' => 'Error al obtener logs.',
             ], 500);
         }
     }
@@ -259,11 +274,11 @@ class SupervisorController extends Controller
                 'alsarnetProcesses' => $alsarnetProcesses,
             ]);
         } catch (\Exception $e) {
-            \Log::error('SupervisorController::getStatusAjax - '.$e->getMessage());
+            Log::error('Supervisor get status failed', ['error' => $e->getMessage()]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener estado: '.$e->getMessage(),
+                'message' => 'Error al obtener estado.',
             ], 200); // Return 200 so JavaScript success block handles it
         }
     }
@@ -292,9 +307,11 @@ class SupervisorController extends Controller
                 'jobs' => $jobs,
             ]);
         } catch (\Exception $e) {
+            Log::error('Supervisor get scheduled jobs failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener scheduled jobs: '.$e->getMessage(),
+                'message' => 'Error al obtener scheduled jobs.',
             ], 500);
         }
     }
@@ -314,9 +331,11 @@ class SupervisorController extends Controller
                 'output' => $output,
             ]);
         } catch (\Exception $e) {
+            Log::error('Supervisor run scheduler failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al ejecutar scheduler: '.$e->getMessage(),
+                'message' => 'Error al ejecutar scheduler.',
             ], 500);
         }
     }
@@ -345,9 +364,11 @@ class SupervisorController extends Controller
                 'output' => $output,
             ]);
         } catch (\Exception $e) {
+            Log::error('Supervisor run command failed', ['error' => $e->getMessage(), 'command' => $command]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al ejecutar comando: '.$e->getMessage(),
+                'message' => 'Error al ejecutar comando.',
             ], 500);
         }
     }
@@ -416,15 +437,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Supervisor reiniciado correctamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor restart failed', ['error' => $e->getMessage()]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al reiniciar supervisor: '.$e->getMessage(),
+                    'message' => 'Error al reiniciar supervisor.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al reiniciar supervisor: '.$e->getMessage());
+                ->with('error', 'Error al reiniciar supervisor.');
         }
     }
 
@@ -459,9 +482,11 @@ class SupervisorController extends Controller
 
             return redirect()->route('settings.system.supervisor.index');
         } catch (\Exception $e) {
+            Log::error('Supervisor list backups failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener backups: '.$e->getMessage(),
+                'message' => 'Error al obtener backups.',
             ], 500);
         }
     }
@@ -491,15 +516,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Backup creado exitosamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor create backup failed', ['error' => $e->getMessage()]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al crear backup: '.$e->getMessage(),
+                    'message' => 'Error al crear backup.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al crear backup: '.$e->getMessage());
+                ->with('error', 'Error al crear backup.');
         }
     }
 
@@ -518,15 +545,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Configuración restaurada exitosamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor restore backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al restaurar backup: '.$e->getMessage(),
+                    'message' => 'Error al restaurar backup.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al restaurar backup: '.$e->getMessage());
+                ->with('error', 'Error al restaurar backup.');
         }
     }
 
@@ -545,15 +574,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Backup eliminado exitosamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor delete backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al eliminar backup: '.$e->getMessage(),
+                    'message' => 'Error al eliminar backup.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al eliminar backup: '.$e->getMessage());
+                ->with('error', 'Error al eliminar backup.');
         }
     }
 
@@ -571,9 +602,11 @@ class SupervisorController extends Controller
                 ->header('Content-Disposition', 'attachment; filename="'.$filename.'"')
                 ->header('Content-Type', 'application/json');
         } catch (\Exception $e) {
+            Log::error('Supervisor download backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al descargar backup: '.$e->getMessage(),
+                'message' => 'Error al descargar backup.',
             ], 500);
         }
     }
@@ -597,9 +630,11 @@ class SupervisorController extends Controller
                 'files' => $files,
             ]);
         } catch (\Exception $e) {
+            Log::error('Supervisor list config files failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener archivos de configuración: '.$e->getMessage(),
+                'message' => 'Error al obtener archivos de configuración.',
             ], 500);
         }
     }
@@ -623,9 +658,11 @@ class SupervisorController extends Controller
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('Supervisor get config file failed', ['error' => $e->getMessage(), 'file' => $filePath]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener archivo: '.$e->getMessage(),
+                'message' => 'Error al obtener archivo.',
             ], 500);
         }
     }
@@ -650,15 +687,17 @@ class SupervisorController extends Controller
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Archivo actualizado exitosamente');
         } catch (\Exception $e) {
+            Log::error('Supervisor update config file failed', ['error' => $e->getMessage(), 'file' => $validated['file']]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al actualizar archivo: '.$e->getMessage(),
+                    'message' => 'Error al actualizar archivo.',
                 ], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
-                ->with('error', 'Error al actualizar archivo: '.$e->getMessage());
+                ->with('error', 'Error al actualizar archivo.');
         }
     }
 }
