@@ -16,7 +16,6 @@ use Modules\Attention\Mail\AttentionCustomMail;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionMail;
 use Modules\Attention\Services\AttentionNotificationService;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -37,7 +36,7 @@ class AttentionEmailController extends Controller
      * Lista historial de emails de un PQRSF
      * GET /attentions/{uid}/emails
      */
-    public function index(Request $request, string $uid)
+    public function index(Request $request, string $uid): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         try {
             $attention = Attention::where('uid', $uid)->firstOrFail();
@@ -108,7 +107,7 @@ class AttentionEmailController extends Controller
      * Ver preview de email específico
      * GET /attentions/{uid}/emails/{mailUid}/preview
      */
-    public function preview(Request $request, string $uid, string $mailUid)
+    public function preview(Request $request, string $uid, string $mailUid): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         try {
             $attention = Attention::where('uid', $uid)->firstOrFail();
@@ -436,7 +435,7 @@ class AttentionEmailController extends Controller
      * Historial global de emails (settings)
      * GET /emails/history
      */
-    public function history(Request $request)
+    public function history(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         try {
             $query = AttentionMail::with(['attention'])
@@ -560,10 +559,8 @@ class AttentionEmailController extends Controller
 
     /**
      * Export email history to Excel or CSV
-     *
-     * @return JsonResponse|BinaryFileResponse
      */
-    public function export(Request $request)
+    public function export(Request $request): \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         try {
             $validated = $request->validate([

@@ -94,7 +94,7 @@
                                     <div class="diff-old rounded p-3">
                                         @if($field === 'content')
                                             <div class="content-preview">
-                                                {!! $diff['old_value'] ?? '<em class="text-muted">Sin contenido</em>' !!}
+                                                {!! clean_html($diff['old_value'] ?? '') ?: '<em class="text-muted">Sin contenido</em>' !!}
                                             </div>
                                         @else
                                             <p class="mb-0 small">{{ $diff['old_value'] ?? '-' }}</p>
@@ -108,7 +108,7 @@
                                     <div class="diff-new rounded p-3">
                                         @if($field === 'content')
                                             <div class="content-preview">
-                                                {!! $diff['new_value'] ?? '<em class="text-muted">Sin contenido</em>' !!}
+                                                {!! clean_html($diff['new_value'] ?? '') ?: '<em class="text-muted">Sin contenido</em>' !!}
                                             </div>
                                         @else
                                             <p class="mb-0 small">{{ $diff['new_value'] ?? '-' }}</p>
@@ -166,6 +166,31 @@
             </div>
         </div>
         @endif
+
+        {{-- Diff visual con diff2html --}}
+        <div class="card mb-3">
+            <div class="card-header p-3 bg-white border-bottom">
+                <h5 class="mb-0 fw-bold">Diferencias de contenido</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="diff-tabs" role="tablist">
+                    @foreach($differences as $field => $diff)
+                        @if(in_array($field, ['content', 'title', 'description']))
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $loop->first ? 'active' : '' }} diff-tab-btn"
+                                    data-field="{{ $field }}" type="button" role="tab">
+                                {{ $diff['label'] }}
+                                @if($diff['changed'])
+                                    <span class="badge bg-warning-subtle text-warning ms-1">Modificado</span>
+                                @endif
+                            </button>
+                        </li>
+                        @endif
+                    @endforeach
+                </ul>
+                <div id="diff-container" style="max-height:600px;overflow-y:auto;"></div>
+            </div>
+        </div>
 
         {{-- Acciones de restauración --}}
         <div class="card mb-3">
@@ -232,6 +257,7 @@
 @endsection
 
 @push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/css/diff2html.min.css">
 <style>
 .diff-old {
     background-color: #fff5f5;
@@ -256,8 +282,64 @@
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/js/diff2html-ui.min.js"></script>
 <script>
+var versionDiffData = {
+    content: {
+        old: @json(strip_tags($differences['content']['old_value'] ?? '')),
+        new: @json(strip_tags($differences['content']['new_value'] ?? ''))
+    },
+    title: {
+        old: @json($differences['title']['old_value'] ?? ''),
+        new: @json($differences['title']['new_value'] ?? '')
+    },
+    description: {
+        old: @json($differences['description']['old_value'] ?? ''),
+        new: @json($differences['description']['new_value'] ?? '')
+    }
+};
+
+function buildUnifiedDiff(oldText, newText, filename) {
+    oldText = String(oldText || '');
+    newText = String(newText || '');
+    var oldLines = oldText.split('\n');
+    var newLines = newText.split('\n');
+    var header = [
+        '--- a/' + filename,
+        '+++ b/' + filename,
+        '@@ -1,' + oldLines.length + ' +1,' + newLines.length + ' @@'
+    ];
+    var body = oldLines.map(function(l) { return '-' + l; })
+        .concat(newLines.map(function(l) { return '+' + l; }));
+    return header.concat(body).join('\n');
+}
+
+function renderDiff(field) {
+    var data = versionDiffData[field];
+    if (!data) return;
+    var diff = buildUnifiedDiff(data.old, data.new, field);
+    var targetEl = document.getElementById('diff-container');
+    targetEl.innerHTML = '';
+    var diff2htmlUi = new Diff2HtmlUI(targetEl, diff, {
+        drawFileList: false,
+        matching: 'lines',
+        outputFormat: 'line-by-line',
+        highlight: false
+    });
+    diff2htmlUi.draw();
+}
+
 $(document).ready(function () {
+    // Render diff for the first visible tab
+    var firstField = $('#diff-tabs .diff-tab-btn.active').data('field');
+    if (firstField) { renderDiff(firstField); }
+
+    $(document).on('click', '.diff-tab-btn', function () {
+        $('.diff-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        renderDiff($(this).data('field'));
+    });
+
     $('.restore-btn').on('click', function (e) {
         e.preventDefault();
         const version = $(this).data('version');

@@ -13,7 +13,7 @@ class PermissionController extends Controller
     /**
      * Display a listing of permissions
      */
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\View\View
     {
         $search = $request->get('search', '');
         $perPage = $request->get('per_page', $this->getPaginationPerPage());
@@ -37,7 +37,7 @@ class PermissionController extends Controller
     /**
      * Show the form for creating a new permission
      */
-    public function create()
+    public function create(): \Illuminate\View\View
     {
         return view('role::permissions.create');
     }
@@ -45,7 +45,7 @@ class PermissionController extends Controller
     /**
      * Store a newly created permission in storage
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => [
@@ -98,7 +98,7 @@ class PermissionController extends Controller
     /**
      * Update the specified permission in storage
      */
-    public function update(Request $request, Permission $permission)
+    public function update(Request $request, Permission $permission): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => [
@@ -143,7 +143,7 @@ class PermissionController extends Controller
     /**
      * Remove the specified permission from storage
      */
-    public function destroy(Request $request, Permission $permission)
+    public function destroy(Request $request, Permission $permission): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
     {
         // Check if permission is assigned to any roles
         if (Role::whereHas('permissions', function ($query) use ($permission) {

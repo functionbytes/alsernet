@@ -53,7 +53,7 @@
                     <div class="card-body">
                         @if($version->content)
                             <div class="p-3 bg-light rounded">
-                                {!! $version->content !!}
+                                {!! clean_html($version->content) !!}
                             </div>
                         @else
                             <p class="text-muted mb-0"><em>Sin contenido</em></p>
