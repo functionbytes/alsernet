@@ -134,10 +134,9 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                         <tr>
-                            <th style="width: 20%;">Parámetro</th>
-                            <th style="width: 20%;">Valor actual</th>
-                            <th style="width: 55%;">Descripción</th>
-                            <th style="width: 5%; text-align: center;">Acciones</th>
+                            <th style="width: 25%;">Parámetro</th>
+                            <th style="width: 25%;">Valor actual</th>
+                            <th style="width: 50%;">Descripción</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -145,114 +144,37 @@
                             <td><code>db_connection</code></td>
                             <td><strong>{{ $settings['db_connection'] ?? 'mysql' }}</strong></td>
                             <td><small class="text-muted">Tipo de base de datos (mysql, pgsql, sqlite, etc)</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Tipo de base de datos actual">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_host</code></td>
                             <td><strong>{{ $settings['db_host'] ?? 'localhost' }}</strong></td>
                             <td><small class="text-muted">Dirección del servidor de base de datos</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Host de la base de datos">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_port</code></td>
                             <td><strong>{{ $settings['db_port'] ?? '3306' }}</strong></td>
                             <td><small class="text-muted">Puerto de la conexión (3306 MySQL, 5432 PostgreSQL)</small>
                             </td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Puerto de conexión">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_database</code></td>
                             <td><strong>{{ $settings['db_database'] ?? 'N/A' }}</strong></td>
                             <td><small class="text-muted">Nombre de la base de datos</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Nombre de la base de datos">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_username</code></td>
                             <td><strong>{{ $settings['db_username'] ?? 'root' }}</strong></td>
                             <td><small class="text-muted">Usuario para la conexión</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Usuario de base de datos">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_charset</code></td>
                             <td><strong>{{ $settings['db_charset'] ?? 'utf8mb4' }}</strong></td>
                             <td><small class="text-muted">Conjunto de caracteres para almacenamiento</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Charset utilizado">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         <tr>
                             <td><code>db_collation</code></td>
                             <td><strong>{{ $settings['db_collation'] ?? 'utf8mb4_unicode_ci' }}</strong></td>
                             <td><small class="text-muted">Reglas de comparación de caracteres</small></td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="fa fa-ellipsis-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="tooltip" title="Collation de caracteres">Ver detalles</a></li>
-                                    </ul>
-                                </div>
-                            </td>
                         </tr>
                         </tbody>
                     </table>
@@ -267,12 +189,6 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
-            // Initialize tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-              return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
-
             // Test Database Connection
             $('#testConnectionLink').on('click', function (e) {
                 e.preventDefault();
