@@ -15,13 +15,21 @@
                         <h5 class="mb-1 fw-bold">Formularios</h5>
                         <p class="small mb-0 text-muted">Gestiona todos los formularios del sitio</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
-                            <i class="fas fa-file-import me-1"></i> Importar JSON
-                        </button>
-                        <a href="{{ route('settings.forms.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i> Nuevo formulario
-                        </a>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
+                                    <i class="fas fa-file-import me-2"></i> Importar JSON
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('settings.forms.create') }}">
+                                    <i class="fas fa-plus me-2"></i> Nuevo formulario
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
