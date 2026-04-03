@@ -3,13 +3,17 @@
 @section('title', 'Formularios')
 
 @section('content')
+
     @include('core::components.card', ['title' => 'Formularios'])
 
     <div class="widget-content searchable-container list">
+
         @include('core::components.alerts')
 
         <div class="card">
-            <div class="card-header p-4 border-bottom">
+
+            {{-- Header --}}
+            <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Formularios</h5>
@@ -22,11 +26,11 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
-                                    <i class="fas fa-file-import me-2"></i> Importar JSON
+                                    Importar JSON
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ route('settings.forms.create') }}">
-                                    <i class="fas fa-plus me-2"></i> Nuevo formulario
+                                    Nuevo formulario
                                 </a>
                             </div>
                         </div>
@@ -38,54 +42,38 @@
             <div class="card-body border-bottom">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title mb-2">Total formularios</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $stats->total_forms ?? 0 }}</h4>
-                                        <small class="text-muted">Formularios registrados</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Total formularios</h6>
+                                <h4 class="mb-1 fw-bold">{{ $stats->total_forms ?? 0 }}</h4>
+                                <small class="text-muted">Formularios registrados</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title mb-2">Total submissions</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $totalSubmissions ?? 0 }}</h4>
-                                        <small class="text-muted">Envíos recibidos</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Total submissions</h6>
+                                <h4 class="mb-1 fw-bold">{{ $totalSubmissions ?? 0 }}</h4>
+                                <small class="text-muted">Envíos recibidos</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title mb-2">Formularios activos</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $stats->active_forms ?? 0 }}</h4>
-                                        <small class="text-muted">Habilitados en el sitio</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Formularios activos</h6>
+                                <h4 class="mb-1 fw-bold">{{ $stats->active_forms ?? 0 }}</h4>
+                                <small class="text-muted">Habilitados en el sitio</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title mb-2">Submissions hoy</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $submissionsToday ?? 0 }}</h4>
-                                        <small class="text-muted">Recibidos hoy</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Submissions hoy</h6>
+                                <h4 class="mb-1 fw-bold">{{ $submissionsToday ?? 0 }}</h4>
+                                <small class="text-muted">Recibidos hoy</small>
                             </div>
                         </div>
                     </div>
@@ -95,9 +83,9 @@
             {{-- Filtros --}}
             <div class="card-body border-bottom">
                 <form method="GET" action="{{ route('settings.forms.index') }}">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-5">
-                            <div class="input-group">
+                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                        <div class="flex-fill">
+                            <div class="input-group h-100">
                                 <span class="input-group-text bg-white border-end-0">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
@@ -106,8 +94,8 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <select name="category_id" class="form-select select2">
+                        <div class="flex-shrink-0" style="min-width: 180px;">
+                            <select name="category_id" class="form-select select2 h-100">
                                 <option value="">Todas las categorías</option>
                                 @foreach ($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -116,18 +104,22 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <select name="status" class="form-select">
+                        <div class="flex-shrink-0" style="min-width: 160px;">
+                            <select name="status" class="form-select h-100">
                                 <option value="">Todos los estados</option>
                                 <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Activos</option>
                                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivos</option>
                             </select>
                         </div>
-                        <div class="col-md-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-                            <a href="{{ route('settings.forms.index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-times"></i>
-                            </a>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-search me-1"></i>
+                            </button>
+                            @if(request('search') || request('category_id') || request('status'))
+                                <a href="{{ route('settings.forms.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </form>
@@ -137,16 +129,34 @@
             <div class="card-body">
                 @if ($forms->isEmpty())
                     <div class="text-center py-5">
-                        <i class="fas fa-wpforms fa-3x text-muted mb-3"></i>
-                        <h6 class="text-muted">No hay formularios</h6>
-                        <p class="text-muted small">Crea tu primer formulario para comenzar</p>
-                        <a href="{{ route('settings.forms.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i> Nuevo formulario
-                        </a>
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-wpforms fs-7"></i>
+                            </div>
+                            <h6 class="mb-1">
+                                @if(request('search') || request('category_id') || request('status'))
+                                    No se encontraron formularios
+                                @else
+                                    No hay formularios creados
+                                @endif
+                            </h6>
+                            <p class="text-muted mb-3">
+                                @if(request('search') || request('category_id') || request('status'))
+                                    No hay resultados para los criterios de búsqueda
+                                @else
+                                    Crea el primer formulario para comenzar a recopilar datos
+                                @endif
+                            </p>
+                            @if(!request('search') && !request('category_id') && !request('status'))
+                                <a href="{{ route('settings.forms.create') }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Nuevo formulario
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Nombre</th>
@@ -155,7 +165,7 @@
                                     <th class="text-center">Submissions</th>
                                     <th>Estado</th>
                                     <th>Creado</th>
-                                    <th class="text-end">Acciones</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -168,17 +178,14 @@
                                                 <button type="button"
                                                         class="btn btn-link btn-sm p-0 btn-copy-shortcode"
                                                         data-shortcode='[form id="{{ $form->id }}"]'
-                                                        title="Copiar shortcode"
-                                                        aria-label="Copiar shortcode">
+                                                        title="Copiar shortcode">
                                                     <i class="far fa-copy text-muted"></i>
                                                 </button>
                                             </div>
                                         </td>
                                         <td>
                                             @if ($form->category)
-                                                <span class="badge bg-light text-dark">
-                                                    {{ $form->category->name }}
-                                                </span>
+                                                <span class="badge bg-light text-dark">{{ $form->category->name }}</span>
                                             @else
                                                 <span class="text-muted small">—</span>
                                             @endif
@@ -195,70 +202,58 @@
                                         </td>
                                         <td>
                                             @if ($form->is_active)
-                                                <span class="badge bg-light-success text-success">Activo</span>
+                                                <span class="badge bg-success-subtle text-success">Activo</span>
                                             @else
-                                                <span class="badge bg-light-danger text-danger">Inactivo</span>
+                                                <span class="badge bg-light text-black">Inactivo</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="text-muted small">
-                                                {{ $form->created_at->format('d/m/Y') }}
-                                            </span>
+                                            <small class="text-muted">{{ $form->created_at->format('d/m/Y') }}</small>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-center">
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                        type="button"
-                                                        data-bs-toggle="dropdown"
-                                                        aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-v"></i>
-                                                </button>
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('settings.forms.show', $form) }}">
-                                                            <i class="far fa-eye me-2"></i> Ver
-                                                        </a>
+                                                        <a class="dropdown-item" href="{{ route('settings.forms.show', $form) }}">Ver</a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('settings.forms.edit', $form) }}">
-                                                            <i class="fas fa-pencil-alt me-2"></i> Editar
-                                                        </a>
+                                                        <a class="dropdown-item" href="{{ route('settings.forms.edit', $form) }}">Editar</a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('settings.forms.preview', $form) }}" target="_blank">
-                                                            <i class="fas fa-desktop me-2"></i> Preview
-                                                        </a>
+                                                        <a class="dropdown-item" href="{{ route('settings.forms.preview', $form) }}" target="_blank">Preview</a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('settings.forms.submissions.index', $form) }}">
-                                                            <i class="fas fa-inbox me-2"></i> Ver submissions
-                                                        </a>
+                                                        <a class="dropdown-item" href="{{ route('settings.forms.submissions.index', $form) }}">Ver submissions</a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <button type="button" class="dropdown-item btn-copy-shortcode"
                                                                 data-shortcode='[form id="{{ $form->id }}"]'>
-                                                            <i class="far fa-copy me-2"></i> Copiar shortcode
+                                                            Copiar shortcode
                                                         </button>
                                                     </li>
                                                     <li>
                                                         <button type="button" class="dropdown-item btn-clone-form"
                                                                 data-id="{{ $form->id }}">
-                                                            <i class="far fa-clone me-2"></i> Clonar
+                                                            Clonar
                                                         </button>
                                                     </li>
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('settings.forms.export-json', $form) }}">
-                                                            <i class="fas fa-file-export me-2"></i> Exportar JSON
+                                                            Exportar JSON
                                                         </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <button type="button" class="dropdown-item text-danger btn-delete-form"
-                                                                data-id="{{ $form->id }}"
-                                                                data-name="{{ $form->name }}">
-                                                            <i class="fas fa-trash-alt me-2"></i> Eliminar
-                                                        </button>
+                                                        <a class="dropdown-item delete-btn"
+                                                           data-bs-toggle="modal" data-bs-target="#delete-modal"
+                                                           data-url="{{ route('settings.forms.destroy', $form) }}"
+                                                           data-title="Eliminar: {{ $form->name }}">
+                                                            Eliminar
+                                                        </a>
                                                     </li>
                                                 </ul>
                                             </div>
@@ -268,14 +263,13 @@
                             </tbody>
                         </table>
                     </div>
-
-                    @if ($forms->hasPages())
-                        <div class="mt-3">
-                            {{ $forms->withQueryString()->links() }}
-                        </div>
-                    @endif
                 @endif
             </div>
+
+            @if ($forms->hasPages())
+                <div class="card-footer">{{ $forms->withQueryString()->links() }}</div>
+            @endif
+
         </div>
     </div>
 
@@ -307,39 +301,21 @@
         </div>
     </div>
 
-    {{-- Modal eliminar --}}
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Eliminar formulario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Eliminar el formulario <strong id="deleteFormName"></strong>?</p>
-                    <p class="text-danger small mb-0">Esta acción no se puede deshacer. Solo es posible si no tiene envíos.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <form id="deleteForm" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt me-1"></i> Eliminar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('core::components.delete')
+
 @endsection
 
 @push('scripts')
 <script>
+$(document).ready(function () {
+    $('.delete-btn').on('click', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').attr('action', $(this).data('url'));
+    });
+
     // Copiar shortcode al portapapeles
     $(document).on('click', '.btn-copy-shortcode', function () {
-        const shortcode = $(this).data('shortcode');
-        navigator.clipboard.writeText(shortcode).then(function () {
+        navigator.clipboard.writeText($(this).data('shortcode')).then(function () {
             toastr.success('Shortcode copiado al portapapeles');
         });
     });
@@ -363,21 +339,17 @@
         });
     });
 
-    // Eliminar formulario — abre modal con datos
-    $(document).on('click', '.btn-delete-form', function () {
-        const id   = $(this).data('id');
-        const name = $(this).data('name');
-
-        $('#deleteFormName').text(name);
-        $('#deleteForm').attr('action', '/settings/forms/' + id);
-
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        modal.show();
-    });
-
     // Importar — deshabilitar botón al enviar
     $('#importForm').on('submit', function () {
         $('#importSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Importando...');
     });
+
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Éxito');
+    @endif
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
+    @endif
+});
 </script>
 @endpush
