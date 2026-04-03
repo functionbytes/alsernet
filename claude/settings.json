@@ -1,0 +1,144 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "NotebookEdit(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Task(*)",
+      "Bash(php artisan *)",
+      "Bash(php artisan make:* --no-interaction)",
+      "Bash(vendor/bin/pint *)",
+      "Bash(vendor/bin/pint)",
+      "Bash(vendor/bin/phpunit *)",
+      "Bash(php -l *)",
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(composer dump-autoload)",
+      "Bash(composer install --dry-run)",
+      "Bash(composer show *)",
+      "Bash(composer audit)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git log)",
+      "Bash(git log *)",
+      "Bash(git branch)",
+      "Bash(git branch *)",
+      "Bash(git stash)",
+      "Bash(git stash *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(wc *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(which *)",
+      "Bash(pwd)",
+      "mcp__redis__get_data",
+      "mcp__redis__list_keys",
+      "mcp__redis__exists_key",
+      "mcp__redis__get_key_info",
+      "mcp__redis__get_redis_info",
+      "mcp__redis__get_database_stats",
+      "mcp__redis__get_memory_info",
+      "mcp__redis__test_connection",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__get-library-docs",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__evaluate_script"
+    ],
+    "ask": [
+      "Bash(composer require *)",
+      "Bash(composer remove *)",
+      "Bash(composer update *)",
+      "Bash(npm install *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(php artisan migrate*)",
+      "Bash(php artisan db:seed*)",
+      "Bash(php artisan queue:*)",
+      "mcp__redis__set_data",
+      "mcp__redis__update_data",
+      "mcp__redis__delete_data",
+      "mcp__redis__create_key",
+      "mcp__redis__drop_key"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean -f *)",
+      "Bash(php artisan migrate:fresh*)",
+      "Read(.env)",
+      "Read(.env.*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": ".claude/hooks/session-start.sh"
+      },
+      {
+        "type": "prompt",
+        "prompt": "You are in 'explanatory' output style mode, where you should provide educational insights about the codebase as you help with the user's task.\n\nYou should be clear and educational, providing helpful explanations while remaining focused on the task. Balance educational content with task completion. When providing insights, you may exceed typical length constraints, but remain focused and relevant.\n\n## Insights\nIn order to encourage learning, before and after writing code, always provide brief educational explanations about implementation choices using (with backticks):\n\"`★ Insight ─────────────────────────────────────`\n[2-3 key educational points]\n`─────────────────────────────────────────────────`\"\n\nThese insights should be included in the conversation, not in the codebase. You should generally focus on interesting insights that are specific to the codebase or the code you just wrote, rather than general programming concepts. Do not wait until the end to provide insights. Provide them as you write code."
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "prompt",
+        "prompt": "Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.",
+        "matcher": "Read"
+      },
+      {
+        "type": "prompt",
+        "prompt": "QUALITY GATE: Before committing, ensure you have:\n1. Run `vendor/bin/pint --dirty` to format changed files\n2. Run relevant tests with `php artisan test --filter` or full suite\n3. Re-read and simplified your code (laravel-simplifier principles)\nIf any of these steps were skipped, do them now before committing.",
+        "matcher": "Bash(git commit*)"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": ".claude/hooks/php-syntax-check.sh",
+        "matcher": "Edit"
+      },
+      {
+        "type": "command",
+        "command": ".claude/hooks/php-syntax-check.sh",
+        "matcher": "Write"
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "laravel-boost@claude-plugins-official": true
+  },
+  "vscode": {
+    "git.autorefresh": false,
+    "git.autofetch": false,
+    "git.autoStash": false,
+    "scm.autoReveal": false
+  },
+  "monitoring": {
+    "gitStatus": {
+      "enabled": true,
+      "refreshInterval": 120000,
+      "excludePatterns": [".git", "node_modules", "vendor"]
+    },
+    "fileWatching": {
+      "enabled": false
+    }
+  }
+}
