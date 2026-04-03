@@ -25,13 +25,17 @@
                         <p class="small mb-0 text-muted">Gestiona la conexión a la base de datos y verifica su
                             estado.</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary" id="testConnectionBtn">
-                            <i class="fa fa-plug me-1"></i> Probar conexión
-                        </button>
-                        <a href="{{ route('settings.database.edit') }}" class="btn btn-secondary">
-                            <i class="fa fa-pen-to-square me-1"></i> Editar configuración
-                        </a>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="#" id="testConnectionLink">Probar conexión</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('settings.database.edit') }}">Editar configuración</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -270,10 +274,12 @@
             })
 
             // Test Database Connection
-            $('#testConnectionBtn').on('click', function () {
-                var btn = $(this);
-                btn.prop('disabled', true);
-                btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Probando...');
+            $('#testConnectionLink').on('click', function (e) {
+                e.preventDefault();
+                var link = $(this);
+                var originalText = link.html();
+                link.addClass('disabled');
+                link.html('<i class="fa fa-spinner fa-spin me-1"></i> Probando...');
 
                 $.ajax({
                     url: '{{ route("settings.database.check-connection") }}',
@@ -321,8 +327,8 @@
                         toastr.error('Error al probar la conexión', 'Error');
                     },
                     complete: function () {
-                        btn.prop('disabled', false);
-                        btn.html('<i class="fa fa-plug me-1"></i> Probar conexión');
+                        link.removeClass('disabled');
+                        link.html(originalText);
                     }
                 });
             });
