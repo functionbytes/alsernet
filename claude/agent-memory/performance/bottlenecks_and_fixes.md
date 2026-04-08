@@ -32,6 +32,17 @@ type: project
 - **Problem**: Loaded all `review_moderations.tags` rows into PHP with no limit.
 - **Fix**: Added `->limit(500)` cap on the query; cached result in Redis for 30 minutes under key `reviews:tags-list`. Search filtering is applied in-memory on the cached collection.
 
+### Fix 7 — composer.lock parsed on every request (SystemInfoService)
+- **File**: `modules/System/app/Services/SystemInfoService.php`
+- **Problem**: `getComposerPackages()` called `file_get_contents('composer.lock')` + `json_decode` (~3 MB) on every request with no cache.
+- **Fix**: Wrapped the entire method body in `Cache::remember('system.composer_packages', now()->addHours(6), ...)`. Added `use Illuminate\Support\Facades\Cache`.
+- **TTL rationale**: 6 hours — `composer.lock` never changes at runtime; long TTL appropriate (see Cache TTL Guide: static config = 24h+).
+
+### Fix 8 — `static $depth` in getDirectorySize() (SystemInfoService)
+- **File**: `modules/System/app/Services/SystemInfoService.php`
+- **Problem**: `static $depth = 0` inside `getDirectorySize()` persists between calls in the same PHP process. Concurrent or sequential calls would find `$depth` at a non-zero value, silently skipping directory traversal. The original code also had a separate unbounded `getDirectorySizeRecursive()` helper that had no depth limit.
+- **Fix**: Eliminated `static $depth`. Renamed the two-method design to a single `getDirectorySizeBytes(string $path, int $depth = 0): int` helper. The public entry point `getDirectorySize()` delegates to it passing `$depth = 0`. Recursive calls pass `$depth + 1`, and the `< 3` guard is applied there. Return types added to both new private methods.
+
 ### Fix 6 — Non-sargable date function in correlated subquery (ReviewController::index)
 - **File**: `modules/Reviews/app/Http/Controllers/ReviewController.php`
 - **Problem**: `DATE(review_replies.created_at) = CURDATE()` wraps column in a function, preventing index use.

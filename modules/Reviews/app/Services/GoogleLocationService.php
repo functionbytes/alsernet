@@ -2,57 +2,17 @@
 
 namespace Modules\Reviews\Services;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 use Modules\Reviews\Models\ReviewGoogleConnection;
 use Modules\Reviews\Models\ReviewGoogleLocation;
 
 class GoogleLocationService
 {
     public function __construct(
-        private GoogleAuthService $authService
+        private readonly GoogleApiClient $apiClient
     ) {}
-
-    /**
-     * SECURITY FIX: Create Guzzle client with secure defaults
-     * Ensures SSL verification, timeouts, and proper error handling
-     */
-    private function createSecureClient(): GuzzleClient
-    {
-        return new GuzzleClient([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-            'verify' => true, // CRITICAL: Verify SSL certificates
-            'http_errors' => false, // Handle errors manually for better control
-        ]);
-    }
-
-    /**
-     * PERFORMANCE FIX: Rate limiting for Google API calls
-     * Prevents exceeding Google API quota (60 requests per minute)
-     */
-    private function checkRateLimit(string $connectionId): void
-    {
-        $key = "google-api:{$connectionId}";
-        $limit = 60; // Requests per minute
-        $decayMinutes = 1;
-
-        if (RateLimiter::tooManyAttempts($key, $limit)) {
-            $seconds = RateLimiter::availableIn($key);
-            throw new \RuntimeException("Google API rate limit exceeded. Try again in {$seconds} seconds.");
-        }
-
-        RateLimiter::hit($key, $decayMinutes);
-    }
 
     public function syncLocations(ReviewGoogleConnection $connection): int
     {
-        $this->authService->refreshTokenIfNeeded($connection);
-
         $accounts = app(GoogleAccountService::class)->listAccounts($connection);
         $syncedCount = 0;
 
@@ -75,49 +35,14 @@ class GoogleLocationService
 
     public function fetchLocations(ReviewGoogleConnection $connection, string $accountName): array
     {
-        $this->checkRateLimit($connection->id);
+        $baseUrl = config('reviews.google.api.business_information');
+        $endpoint = "{$baseUrl}/{$accountName}/locations";
 
-        try {
-            $client = $this->createSecureClient();
-            $baseUrl = config('reviews.google.api.business_information');
+        $data = $this->apiClient->get($connection, $endpoint, [
+            'readMask' => 'name,title,phoneNumbers,websiteUri,storefrontAddress,regularHours',
+        ]);
 
-            $response = $client->get("{$baseUrl}/{$accountName}/locations", [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$connection->access_token,
-                    'Accept' => 'application/json',
-                ],
-                'query' => [
-                    'readMask' => 'name,title,phoneNumbers,websiteUri,storefrontAddress,regularHours',
-                ],
-            ]);
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            return $data['locations'] ?? [];
-        } catch (ConnectException $e) {
-            Log::error('Connection failed while fetching locations', [
-                'connection_id' => $connection->id,
-                'account_name' => $accountName,
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        } catch (ServerException $e) {
-            Log::error('Google API server error while fetching locations', [
-                'connection_id' => $connection->id,
-                'account_name' => $accountName,
-                'status_code' => $e->getResponse()->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        } catch (RequestException $e) {
-            Log::error('Google API request error while fetching locations', [
-                'connection_id' => $connection->id,
-                'account_name' => $accountName,
-                'status_code' => $e->getResponse()?->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        }
+        return $data['locations'] ?? [];
     }
 
     private function saveLocation(ReviewGoogleConnection $connection, array $locationData): ReviewGoogleLocation

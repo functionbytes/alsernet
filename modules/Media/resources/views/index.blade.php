@@ -277,6 +277,15 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
+    .card.hover-img {
+        overflow: visible !important;
+    }
+
+    .card.hover-img .position-relative:first-child {
+        overflow: hidden;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
     /* Folder Card Styles */
     .folder-icon-wrapper {
         width: 40px;
@@ -634,7 +643,23 @@
 </style>
 @endpush
 
+@if($pickerMode)
+@push('css')
+<style>
+    aside.side-mini-panel, header.topbar { display: none !important; }
+    .page-wrapper { margin-left: 0 !important; }
+    .body-wrapper { padding-top: 0 !important; }
+</style>
+@endpush
+@endif
+
 @section('content')
+@if($pickerMode)
+<div id="media-picker-banner" class="alert alert-primary mb-3 d-flex align-items-center gap-2 py-2">
+    <i class="fas fa-hand-pointer"></i>
+    <span>Haz clic en el archivo que deseas insertar.</span>
+</div>
+@endif
 <div id="mediaManagerApp">
 
 
@@ -656,31 +681,30 @@
             {{-- Header Section - Switches between normal header and selection toolbar --}}
             <div class="card-header p-4 border-bottom border-light">
                 {{-- Normal Header --}}
-                <div v-if="selectedItems.length === 0" class="d-flex justify-content-between align-items-center">
+                <div v-show="selectedItems.length === 0" class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Gestor de Medios</h5>
+                        <h5 class="mb-1 fw-bold">Gestor de medios</h5>
                         <p class="small mb-0 text-muted">Organiza y gestiona todos tus archivos y carpetas en un solo lugar</p>
                     </div>
                     <div class="d-flex gap-2 align-items-center">
                         {{-- Filesystem Selector --}}
                         <div class="d-flex align-items-center gap-2">
-                            <label class="form-label mb-0 text-muted small"><i class="fas fa-hdd me-1"></i>Almacenamiento:</label>
-                            <select v-model="activeDisk" @change="changeActiveDisk" class="form-select form-select-sm" style="min-width: 150px;">
+                            <select id="mediaDiskSelect" class="form-select" style="min-width: 150px;">
                                 @foreach($availableDisks as $disk)
                                 <option value="{{ $disk['name'] }}">{{ $disk['label'] }} ({{ $disk['driver'] }})</option>
                                 @endforeach
                             </select>
                         </div>
-                        <button v-if="currentView === 'all'" @click="showNewFolderModal" class="btn btn-primary">
-                            <i class="fas fa-folder-plus me-1"></i>Nueva Carpeta
+                        <button v-if="currentView === 'all'" v-on:click="showNewFolderModal" class="btn btn-primary mb-1 w-100">
+                            <i class="fas fa-folder-plus"></i>
                         </button>
                     </div>
                 </div>
 
                 {{-- Selection Toolbar (replaces header when items are selected) --}}
-                <div v-else class="d-flex justify-content-between align-items-center">
+                <div v-if="selectedItems.length > 0" class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
-                        <button @click="clearSelection" class="btn btn-sm btn-light rounded-circle" style="width: 36px; height: 36px; padding: 0;" title="Cancelar selección">
+                        <button v-on:click="clearSelection" class="btn btn-sm btn-light rounded-circle" style="width: 36px; height: 36px; padding: 0;" title="Cancelar selección">
                             <i class="fas fa-times"></i>
                         </button>
                         <div>
@@ -693,18 +717,18 @@
 
                     <div class="d-flex gap-2">
                         <template v-if="currentView === 'trash'">
-                            <button @click="bulkRestore" class="btn btn-success">
+                            <button v-on:click="bulkRestore" class="btn btn-success">
                                Restaurar
                             </button>
                         </template>
                         <template v-else>
-                            <button @click="bulkMove" class="btn btn-outline-primary">
+                            <button v-on:click="bulkMove" class="btn btn-outline-primary">
                                 Mover
                             </button>
-                            <button @click="bulkDownload" class="btn btn-outline-info" v-if="hasOnlyFiles">
+                            <button v-on:click="bulkDownload" class="btn btn-outline-info" v-if="hasOnlyFiles">
                                 Descargar
                             </button>
-                            <button @click="bulkDelete" class="btn btn-outline-danger">
+                            <button v-on:click="bulkDelete" class="btn btn-outline-danger">
                                 Eliminar
                             </button>
                         </template>
@@ -717,23 +741,23 @@
                 {{-- Sidebar Navigation --}}
                 <div class="media-sidebar">
                     {{-- Navigation Pills --}}
-            <ul class="nav nav-pills user-profile-tab border-bottom" id="media-view-tabs" role="tablist">
+            <ul class="nav nav-tabs border-0 user-profile-tab" id="media-view-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button
                         class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                         :class="{'active': currentView === 'all'}"
-                        @click="switchView('all')"
+                        v-on:click="switchView('all')"
                         type="button"
                         role="tab">
 
-                        <span class="d-none d-md-block">Mis Archivos</span>
+                        <span class="d-none d-md-block">Mis archivos</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button
                         class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                         :class="{'active': currentView === 'recent'}"
-                        @click="switchView('recent')"
+                        v-on:click="switchView('recent')"
                         type="button"
                         role="tab">
 
@@ -744,7 +768,7 @@
                     <button
                         class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                         :class="{'active': currentView === 'favorites'}"
-                        @click="switchView('favorites')"
+                        v-on:click="switchView('favorites')"
                         type="button"
                         role="tab">
                         <span class="d-none d-md-block">Favoritos</span>
@@ -754,7 +778,7 @@
                     <button
                         class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                         :class="{'active': currentView === 'trash'}"
-                        @click="switchView('trash')"
+                        v-on:click="switchView('trash')"
                         type="button"
                         role="tab">
                         <span class="d-none d-md-block">Papelera</span>
@@ -768,31 +792,26 @@
             {{-- Upload Zone - Only visible in "all" view --}}
             <div v-if="currentView === 'all'" class="card-body border-bottom">
                 <div
-                    class="upload-zone-modern rounded-3 p-4"
+                    class="upload-zone-modern rounded-3 p-4 card w-100 bg-primary-subtle overflow-hidden shadow-none"
                     :class="{ 'drag-active': isDragging }"
-                    @dragover.prevent="handleDragOver"
-                    @dragleave.prevent="handleDragLeave"
-                    @drop.prevent="handleDrop">
+                    v-on:dragover.prevent="handleDragOver"
+                    v-on:dragleave.prevent="handleDragLeave"
+                    v-on:drop.prevent="handleDrop">
                     <div class="row align-items-center">
-                        <div class="col-auto">
-                            <div class="upload-icon-wrapper">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                        </div>
                         <div class="col">
-                            <h6 class="fw-bold mb-1">Subir archivos</h6>
-                            <p class="mb-3 text-muted small">
-                                <i class="fas fa-hand-pointer me-1"></i>Arrastra archivos aquí o usa los botones
-                                <span class="d-block d-sm-inline ms-0 ms-sm-2">
-                                    <i class="fas fa-info-circle me-1"></i>Límite: <strong>100MB</strong> por archivo
+                            <h6 class="fw-bold mb-1">Arrastra y suelta archivos aqui</h6>
+                            <p class="mb-3 text-muted">
+                                Suelta tus archivos en esta zona o seleccionalos desde tu dispositivo.
+                                <span class="d-block mt-1">
+                                    Formatos: imagenes, documentos y archivos comprimidos. Maximo <strong>100 MB</strong> por archivo.
                                 </span>
                             </p>
                             <div class="d-flex flex-wrap gap-2">
-                                <button @click="showUploadModal" class="btn btn-primary btn-sm rounded-pill px-3">
-                                    <i class="fas fa-upload me-1"></i>Seleccionar archivos
+                                <button v-on:click="showUploadModal" class="btn btn-primary px-3">
+                                    <i class="fas fa-upload me-1"></i> Seleccionar archivos
                                 </button>
-                                <button @click="showUploadFromUrlModal" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                    <i class="fas fa-link me-1"></i>Desde URL
+                                <button v-on:click="showUploadFromUrlModal" class="btn btn-outline-primary px-3">
+                                    <i class="fas fa-link me-1"></i> Importar desde URL
                                 </button>
                             </div>
                         </div>
@@ -800,96 +819,74 @@
                 </div>
             </div>
 
-            {{-- Toolbar --}}
+            {{-- Toolbar: Search + Sort + Filter --}}
             <div class="card-body border-bottom">
-                <div class="row align-items-center g-2">
-                    {{-- Trash View Actions --}}
-                    <div v-if="currentView === 'trash'" class="col-auto">
-                        <button class="btn btn-danger" @click="emptyTrash" :disabled="files.length === 0 && folders.length === 0">
-                            <i class="fas fa-trash-can me-2"></i>Vaciar Papelera
-                        </button>
-                    </div>
-
-                    {{-- Standard View Actions --}}
-                    <div v-else class="col-auto">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Ordenar">
-                                <i class="fas fa-sort me-1"></i>Ordenar
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" @click.prevent="applySortBy('name')"><i class="fas fa-sort-a-z me-2"></i>Nombre</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="applySortBy('created_at')"><i class="fas fa-calendar me-2"></i>Fecha</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="applySortBy('size')"><i class="fas fa-code me-2"></i>Tamaño</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="toggleSortOrder()"><i class="me-2" :class="sortOrder === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'"></i>@{{ sortOrder === 'asc' ? 'Ascendente' : 'Descendente' }}</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div v-if="currentView !== 'trash'" class="col-auto">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Filtrar">
-                                <i class="fas fa-filter me-1"></i>Filtrar
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" @click.prevent="filterByType('all')"><i class="fas fa-file me-2"></i>Todos los archivos</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="filterByType('image')"><i class="fas fa-image me-2"></i>Imágenes</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="filterByType('video')"><i class="fas fa-video me-2"></i>Videos</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="filterByType('document')"><i class="fas fa-file-alt me-2"></i>Documentos</a></li>
-                                <li><a class="dropdown-item" href="#" @click.prevent="filterByType('archive')"><i class="fas fa-file-archive me-2"></i>Archivos</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-auto ms-auto">
-                        <button @click="loadList" class="btn btn-outline-primary" title="Recargar">
-                            <i class="fas fa-sync"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Breadcrumbs & Search --}}
-            <div class="card-body border-bottom">
-                <div class="row align-items-center">
-                    {{-- Breadcrumbs - Only visible in "all" view --}}
-                    <div v-if="currentView === 'all'" class="col-md-6">
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="#" class="text-primary text-decoration-none" @click.prevent="navigateToFolder(0)">
-                                        <i class="fas fa-home me-1"></i>Inicio
-                                    </a>
-                                </li>
-                                <li v-for="(item, idx) in breadcrumbs" :key="idx" class="breadcrumb-item" :class="{ active: idx === breadcrumbs.length - 1 }">
-                                    <a v-if="idx !== breadcrumbs.length - 1" href="#" class="text-primary text-decoration-none" @click.prevent="navigateToFolder(item.id)">
-                                        @{{ item.name }}
-                                    </a>
-                                    <span v-else class="fw-semibold">@{{ item.name }}</span>
-                                </li>
-                            </ol>
-                        </nav>
-                    </div>
-
-                    {{-- View Title for special views --}}
-                    <div v-else class="col-md-6">
-                        <h6 class="mb-0 fw-bold text-muted">
-                            <i v-if="currentView === 'recent'" class="fas fa-clock me-2"></i>
-                            <i v-if="currentView === 'favorites'" class="fas fa-star me-2"></i>
-                            <i v-if="currentView === 'trash'" class="fas fa-trash me-2"></i>
-                            @{{ getViewTitle }}
-                        </h6>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search text-primary"></i>
+                <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                    <div class="flex-fill">
+                        <div class="input-group h-100">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-muted"></i>
                             </span>
-                            <input type="text" v-model="searchQuery" @input="performSearch" class="form-control" placeholder="Buscar archivos y carpetas..." />
-                            <button v-if="searchQuery" @click="clearSearch" class="btn btn-outline-danger" title="Limpiar búsqueda">
+                            <input type="text" v-model="searchQuery" v-on:input="performSearch" class="form-control border-start-0 ps-0" placeholder="Buscar archivos y carpetas..." />
+                            <button v-if="searchQuery" v-on:click="clearSearch" class="btn btn-outline-secondary" title="Limpiar búsqueda">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
+                    <template v-if="currentView !== 'trash'">
+                        <div class="flex-shrink-0" style="min-width: 160px;">
+                            <select id="mediaSortBy" class="form-select select2 h-100">
+                                <option value="name">Nombre</option>
+                                <option value="created_at">Fecha</option>
+                                <option value="size">Tamaño</option>
+                            </select>
+                        </div>
+                        <div class="flex-shrink-0" style="min-width: 160px;">
+                            <select id="mediaFilterType" class="form-select select2 h-100">
+                                <option value="all">Todos los tipos</option>
+                                <option value="image">Imágenes</option>
+                                <option value="video">Videos</option>
+                                <option value="document">Documentos</option>
+                                <option value="archive">Archivos</option>
+                            </select>
+                        </div>
+                    </template>
+                    <div v-if="currentView === 'trash'" class="flex-shrink-0">
+                        <button class="btn btn-danger h-100" v-on:click="emptyTrash" :disabled="files.length === 0 && folders.length === 0">
+                            Vaciar papelera
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <button v-on:click="loadList" class="btn btn-primary" title="Buscar">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Breadcrumbs --}}
+            <div class="card-body border-bottom">
+                <div v-if="currentView === 'all'">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(0)">
+                                    Inicio
+                                </a>
+                            </li>
+                            <li v-for="(item, idx) in breadcrumbs" :key="idx" class="breadcrumb-item" :class="{ active: idx === breadcrumbs.length - 1 }">
+                                <a v-if="idx !== breadcrumbs.length - 1" href="#" class="text-primary text-decoration-none" v-on:click.prevent="navigateToFolder(item.id)">
+                                    @{{ item.name }}
+                                </a>
+                                <span v-else class="fw-semibold">@{{ item.name }}</span>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <div v-else>
+                    <h6 class="mb-0 fw-bold text-muted">
+                        @{{ getViewTitle }}
+                    </h6>
                 </div>
             </div>
 
@@ -898,10 +895,10 @@
                 {{-- Empty State --}}
                 <div v-if="files.length === 0 && folders.length === 0" class="text-center py-5">
                     <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i v-if="currentView === 'all'" class="fas fa-folder fs-1 text-muted"></i>
-                        <i v-if="currentView === 'recent'" class="fas fa-clock fs-1 text-muted"></i>
-                        <i v-if="currentView === 'favorites'" class="fas fa-star fs-1 text-muted"></i>
-                        <i v-if="currentView === 'trash'" class="fas fa-trash fs-1 text-muted"></i>
+                        <i v-if="currentView === 'all'" class="fas fa-folder fs-9 text-muted"></i>
+                        <i v-if="currentView === 'recent'" class="fas fa-clock fs-9 text-muted"></i>
+                        <i v-if="currentView === 'favorites'" class="fas fa-star fs-9 text-muted"></i>
+                        <i v-if="currentView === 'trash'" class="fas fa-trash fs-9 text-muted"></i>
                     </div>
                     <h5 class="fw-bold">
                         <span v-if="searchQuery">No se encontraron resultados</span>
@@ -925,16 +922,15 @@
                     <div v-for="folder in folders" :key="'folder-' + folder.id" class="col-md-6 col-xl-4 col-xxl-3">
                         <div class="card h-100 border-0 shadow-sm folder-card no-select position-relative"
                              :class="{ 'selected': isItemSelected('folder', folder.id) }"
-                             @click="handleCardClick($event, 'folder', folder)"
-                             @contextmenu.prevent="showContextMenu($event, 'folder', folder)"
-                             style="cursor: pointer;">
+                             v-on:click="handleCardClick($event, 'folder', folder)"
+                                                          style="cursor: pointer;">
                             {{-- Selection Checkbox --}}
                             <div class="selection-checkbox"
                                  :class="{ 'visible': selectedItems.length > 0 }"
-                                 @click.stop>
+                                 v-on:click.stop>
                                 <input type="checkbox"
                                        :checked="isItemSelected('folder', folder.id)"
-                                       @change="toggleSelection('folder', folder.id, folder)">
+                                       v-on:change="toggleSelection('folder', folder.id, folder)">
                             </div>
                             <div class="card-body">
                                 <div class="d-flex align-items-start mb-3">
@@ -964,20 +960,20 @@
                                             @{{ folder.created_at }}
                                         </small>
                                     </div>
-                                    <div class="ms-auto" @click.stop>
+                                    <div class="ms-auto" v-on:click.stop>
                                         <div class="dropdown dropstart">
                                             <a href="javascript:void(0)" class="link text-dark p-2" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <template v-if="currentView === 'trash'">
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="restoreFolder(folder)">Restaurar</a></li>
+                                                    <li><a class="dropdown-item" href="#" v-on:click.prevent="restoreFolder(folder)">Restaurar</a></li>
                                                 </template>
                                                 <template v-else>
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="navigateToFolder(folder.id)">Abrir</a></li>
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="renameFolder(folder)">Renombrar</a></li>
+                                                    <li><a class="dropdown-item" href="#" v-on:click.prevent="navigateToFolder(folder.id)">Abrir</a></li>
+                                                    <li><a class="dropdown-item" href="#" v-on:click.prevent="renameFolder(folder)">Renombrar</a></li>
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="deleteFolder(folder)">Eliminar</a></li>
+                                                    <li><a class="dropdown-item" href="#" v-on:click.prevent="deleteFolder(folder)">Eliminar</a></li>
                                                 </template>
                                             </ul>
                                         </div>
@@ -988,7 +984,7 @@
                                 <div class="folder-preview rounded-3 bg-light-subtle p-3">
                                     <div v-if="folder.files_count === 0" class="text-center py-3">
                                         <i class="fas fa-folder-open fs-1 text-muted opacity-25 mb-2"></i>
-                                        <p class="text-muted small mb-0 fw-medium">Carpeta vacía</p>
+                                        <p class="text-muted mb-0 fw-medium">Carpeta vacía</p>
                                     </div>
                                     <div v-else>
                                         <div class="row g-2 mb-2">
@@ -1008,152 +1004,74 @@
                     </div>
 
                     {{-- Files --}}
-                    <div v-for="file in files" :key="'file-' + file.id" class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                        <div class="card media-card border h-100 shadow-sm no-select position-relative"
+                    <div v-for="file in files" :key="'file-' + file.id" class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                        <div class="card hover-img rounded-2 no-select position-relative"
                              :class="{ 'selected': isItemSelected('file', file.id) }"
-                             @click="handleCardClick($event, 'file', file)"
-                             @contextmenu.prevent="showContextMenu($event, 'file', file)">
-                            {{-- Selection Checkbox --}}
-                            <div class="selection-checkbox"
-                                 :class="{ 'visible': selectedItems.length > 0 }"
-                                 @click.stop>
-                                <input type="checkbox"
-                                       :checked="isItemSelected('file', file.id)"
-                                       @change="toggleSelection('file', file.id, file)">
-                            </div>
-                            {{-- File Preview/Icon Area --}}
-                            <div class="file-preview-area position-relative">
+                             v-on:click="handleCardClick($event, 'file', file)"
+                             >
+                            <div class="position-relative">
                                 {{-- Image Preview --}}
-                                <div v-if="file.type === 'image'" class="file-image-preview">
-                                    <img :src="`{{ url('media') }}/${file.url.replace(/^media\//, '')}`"
+                                <template v-if="file.type === 'image'">
+                                    <img :src="file.public_url"
                                          :alt="file.name"
-                                         class="w-100 h-100"
-                                         style="object-fit: cover;">
-                                    <div class="file-type-badge">
-                                        <i class="fas fa-image"></i>
-                                    </div>
-                                </div>
+                                         class="card-img-top rounded-0"
+                                         style="height: 180px; object-fit: cover;"
+                                         v-on:error="$event.target.style.display='none'">
+                                </template>
 
-                                {{-- Video Preview --}}
-                                <div v-else-if="file.type === 'video'" class="file-icon-preview bg-gradient-danger">
-                                    <i class="fas fa-play-circle display-4 text-white"></i>
-                                    <div class="file-type-badge bg-danger">
-                                        <i class="fas fa-video"></i>
+                                {{-- Non-image file icon preview --}}
+                                <template v-else>
+                                    <div class="d-flex align-items-center justify-content-center rounded-0" style="height: 180px;"
+                                         :class="{
+                                             'bg-danger-subtle': file.type === 'video' || file.type === 'pdf',
+                                             'bg-info-subtle': file.type === 'document',
+                                             'bg-success-subtle': file.type === 'spreadsheet',
+                                             'bg-warning-subtle': file.type === 'archive',
+                                             'bg-secondary-subtle': !['video','pdf','document','spreadsheet','archive','audio'].includes(file.type),
+                                             'bg-primary-subtle': file.type === 'audio'
+                                         }">
+                                        <i class="display-4"
+                                           :class="{
+                                               'fas fa-play-circle text-danger': file.type === 'video',
+                                               'fas fa-file-pdf text-danger': file.type === 'pdf',
+                                               'fas fa-file-audio text-primary': file.type === 'audio',
+                                               'fas fa-file-word text-info': file.type === 'document',
+                                               'fas fa-file-excel text-success': file.type === 'spreadsheet',
+                                               'fas fa-file-archive text-warning': file.type === 'archive',
+                                               'fas fa-file-code text-dark': file.type === 'code',
+                                               'fas fa-file text-muted': !['video','pdf','audio','document','spreadsheet','archive','code'].includes(file.type)
+                                           }"></i>
                                     </div>
-                                </div>
+                                </template>
 
-                                {{-- PDF Preview --}}
-                                <div v-else-if="file.type === 'pdf'" class="file-icon-preview bg-gradient-danger">
-                                    <i class="fas fa-file-pdf display-4 text-danger"></i>
-                                    <div class="file-type-badge bg-danger">
-                                        <i class="fas fa-file-pdf"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Audio Preview --}}
-                                <div v-else-if="file.type === 'audio'" class="file-icon-preview bg-gradient-purple">
-                                    <i class="fas fa-file-audio display-4 text-purple"></i>
-                                    <div class="file-type-badge bg-purple">
-                                        <i class="fas fa-music"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Document Preview --}}
-                                <div v-else-if="file.type === 'document'" class="file-icon-preview bg-gradient-info">
-                                    <i class="fas fa-file-word display-4 text-info"></i>
-                                    <div class="file-type-badge bg-info">
-                                        <i class="fas fa-file-word"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Spreadsheet Preview --}}
-                                <div v-else-if="file.type === 'spreadsheet'" class="file-icon-preview bg-gradient-success">
-                                    <i class="fas fa-file-excel display-4 text-success"></i>
-                                    <div class="file-type-badge bg-success">
-                                        <i class="fas fa-file-excel"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Archive Preview --}}
-                                <div v-else-if="file.type === 'archive'" class="file-icon-preview bg-gradient-warning">
-                                    <i class="fas fa-file-archive display-4 text-warning"></i>
-                                    <div class="file-type-badge bg-warning">
-                                        <i class="fas fa-file-archive"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Code Preview --}}
-                                <div v-else-if="file.type === 'code'" class="file-icon-preview bg-gradient-dark">
-                                    <i class="fas fa-file-code display-4 text-dark"></i>
-                                    <div class="file-type-badge bg-black">
-                                        <i class="fas fa-code"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Generic File Preview --}}
-                                <div v-else class="file-icon-preview bg-gradient-secondary">
-                                    <i class="fas fa-file display-4 text-muted"></i>
-                                    <div class="file-type-badge bg-secondary">
-                                        <i class="fas fa-file"></i>
-                                    </div>
-                                </div>
-
-                                {{-- Options Menu --}}
-                                <div class="file-options-menu" @click.stop>
+                                {{-- Options Menu (floating button) --}}
+                                <div v-on:click.stop class="position-absolute bottom-0 end-0 mb-n3 me-3" style="z-index: 10;">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-light rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0;" type="button" data-bs-toggle="dropdown" title="Más opciones">
-                                            <i class="fas fa-ellipsis-v" style="font-size: 0.875rem;"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                                            <li><a class="dropdown-item" href="#" @click.prevent="renameFile(file)">
-                                                <i class="fas fa-edit me-2 text-primary"></i>Renombrar
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="copyFile(file)">
-                                                <i class="fas fa-copy me-2 text-info"></i>Hacer copia
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="copyFileLink(file)">
-                                                <i class="fas fa-link me-2 text-success"></i>Copiar link
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="shareFile(file)">
-                                                <i class="fas fa-share-alt me-2 text-warning"></i>Compartir
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="toggleFavorite(file)">
-                                                <i class="fas fa-star me-2 text-warning"></i>Favoritos
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="showProperties(file)">
-                                                <i class="fas fa-info-circle me-2 text-muted"></i>Propiedades
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" @click.prevent="deleteFile(file)">
-                                                <i class="fas fa-trash me-2"></i>Eliminar
-                                            </a></li>
+                                        <a href="javascript:void(0)" class="bg-primary rounded-circle text-white d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <template v-if="currentView === 'trash'">
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="restoreFile(file)">Restaurar</a></li>
+                                            </template>
+                                            <template v-else>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="renameFile(file)">Renombrar</a></li>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="copyFile(file)">Hacer copia</a></li>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="copyFileLink(file)">Copiar link</a></li>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="toggleFavorite(file)">Favoritos</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="showProperties(file)">Propiedades</a></li>
+                                                <li><a class="dropdown-item" href="#" v-on:click.prevent="deleteFile(file)">Eliminar</a></li>
+                                            </template>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body p-3 d-flex flex-column">
-                                <h6 class="card-title mb-2 text-truncate fw-semibold text-center" style="font-size: 0.9rem;" :title="file.name">
-                                    @{{ file.name }}
-                                </h6>
-                                <div class="d-flex justify-content-center align-items-center gap-2 mb-3 flex-wrap">
-                                    <span class="badge bg-light text-dark border px-3 py-2">
-                                        <i class="fas fa-hdd me-1"></i>@{{ file.human_size }}
-                                    </span>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2">
-                                        @{{ getFileExtension(file.name) }}
-                                    </span>
-                                </div>
-                                <div class="d-flex gap-2 mt-auto">
-                                    <template v-if="currentView === 'trash'">
-                                        <button @click="restoreFile(file)" class="btn btn-sm btn-success w-100 rounded-pill" title="Restaurar">
-                                            Restaurar
-                                        </button>
-                                    </template>
-                                    <template v-else>
-                                        <a :href="`{{ url('media') }}/${file.url.replace(/^media\//, '')}`" target="_blank" class="btn btn-sm btn-primary w-100 rounded-pill" title="Descargar">
-                                            Descargar
-                                        </a>
-                                    </template>
+                            <div class="card-body pt-3 p-4">
+                                <h6 class="fw-semibold fs-4 text-truncate mb-2" :title="file.name">@{{ file.name }}</h6>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="text-muted fs-3">@{{ file.human_size }}</span>
+                                    <span class="badge bg-primary-subtle text-primary">@{{ getFileExtension(file.name) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1166,15 +1084,15 @@
                 <nav>
                     <ul class="pagination pagination-sm justify-content-center mb-0">
                         <li class="page-item" :class="{ disabled: pagination.current_page === 1 }">
-                            <a class="page-link" href="#" @click.prevent="goToPage(pagination.current_page - 1)">
+                            <a class="page-link" href="#" v-on:click.prevent="goToPage(pagination.current_page - 1)">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                         </li>
                         <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: page === pagination.current_page }">
-                            <a class="page-link" href="#" @click.prevent="goToPage(page)">@{{ page }}</a>
+                            <a class="page-link" href="#" v-on:click.prevent="goToPage(page)">@{{ page }}</a>
                         </li>
                         <li class="page-item" :class="{ disabled: pagination.current_page === pagination.last_page }">
-                            <a class="page-link" href="#" @click.prevent="goToPage(pagination.current_page + 1)">
+                            <a class="page-link" href="#" v-on:click.prevent="goToPage(pagination.current_page + 1)">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
@@ -1192,7 +1110,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-folder-plus me-2"></i>Nueva Carpeta</h5>
+                    <h5 class="modal-title fw-bold">Nueva carpeta</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1202,17 +1120,17 @@
                             type="text"
                             class="form-control"
                             v-model="newFolderName"
-                            @keyup.enter="confirmCreateFolder"
+                            v-on:keyup.enter="confirmCreateFolder"
                             placeholder="Ingresa el nombre de la carpeta"
                             autofocus>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Cancelar
                     </button>
-                    <button type="button" class="btn btn-primary" @click="confirmCreateFolder">
-                        <i class="fas fa-check me-1"></i>Crear Carpeta
+                    <button type="button" class="btn btn-primary mb-1 w-100" v-on:click="confirmCreateFolder">
+                        <i class="fas fa-check me-1"></i>Crear carpeta
                     </button>
                 </div>
             </div>
@@ -1224,7 +1142,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Renombrar Carpeta</h5>
+                    <h5 class="modal-title fw-bold">Renombrar carpeta</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1234,17 +1152,17 @@
                             type="text"
                             class="form-control"
                             v-model="renameFolderData.name"
-                            @keyup.enter="confirmRenameFolder"
+                            v-on:keyup.enter="confirmRenameFolder"
                             placeholder="Ingresa el nuevo nombre"
                             autofocus>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
+                    <button type="button" class="btn btn-primary mb-1 w-100" v-on:click="confirmRenameFolder">
+                        Renombrar
                     </button>
-                    <button type="button" class="btn btn-primary" @click="confirmRenameFolder">
-                        <i class="fas fa-check me-1"></i>Renombrar
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -1256,7 +1174,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Renombrar Archivo</h5>
+                    <h5 class="modal-title fw-bold">Renombrar archivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1266,17 +1184,17 @@
                             type="text"
                             class="form-control"
                             v-model="renameFileData.name"
-                            @keyup.enter="confirmRenameFile"
+                            v-on:keyup.enter="confirmRenameFile"
                             placeholder="Ingresa el nuevo nombre"
                             autofocus>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
+                    <button type="button" class="btn btn-primary mb-1 w-100" v-on:click="confirmRenameFile">
+                        Renombrar
                     </button>
-                    <button type="button" class="btn btn-primary" @click="confirmRenameFile">
-                        <i class="fas fa-check me-1"></i>Renombrar
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -1288,7 +1206,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-copy me-2"></i>Hacer Copia</h5>
+                    <h5 class="modal-title fw-bold">Hacer copia</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1298,11 +1216,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
+                    <button type="button" class="btn btn-primary mb-1 w-100" v-on:click="confirmCopyFile()">
+                        Crear copia
                     </button>
-                    <button type="button" class="btn btn-primary" @click="confirmCopyFile()">
-                        <i class="fas fa-check me-1"></i>Crear Copia
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -1314,22 +1232,22 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-link me-2"></i>Copiar Link</h5>
+                    <h5 class="modal-title fw-bold">Copiar link</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <label class="form-label fw-semibold mb-2">Link del archivo</label>
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" v-model="copyLinkData.url" readonly>
-                        <button class="btn btn-outline-primary" type="button" @click="copyToClipboard(copyLinkData.url)">
-                            <i class="fas fa-copy me-1"></i>Copiar
+                        <button class="btn btn-info" type="button" v-on:click="copyToClipboard(copyLinkData.url)">
+                            <i class="fas fa-copy me-1"></i>
                         </button>
                     </div>
                     <small class="text-muted">El link ha sido copiado al portapapeles</small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Listo
+                    <button type="button" class="btn btn-primary mb-1 w-100" data-bs-dismiss="modal">
+                        Listo
                     </button>
                 </div>
             </div>
@@ -1341,7 +1259,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-info-circle me-2"></i>Propiedades del Archivo</h5>
+                    <h5 class="modal-title fw-bold">Propiedades del archivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1369,8 +1287,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Cerrar
+                    <button type="button" class="btn btn-primary mb-1 w-100" data-bs-dismiss="modal">
+                        Cerrar
                     </button>
                 </div>
             </div>
@@ -1382,7 +1300,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-danger">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-trash me-2"></i>Eliminar Archivo</h5>
+                    <h5 class="modal-title fw-bold">Eliminar archivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1392,10 +1310,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
                         Cancelar
                     </button>
-                    <button type="button" class="btn btn-danger" @click="confirmDeleteFile">
+                    <button type="button" class="btn btn-danger" v-on:click="confirmDeleteFile">
                        Eliminar
                     </button>
                 </div>
@@ -1408,7 +1326,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-star me-2"></i>Favoritos</h5>
+                    <h5 class="modal-title fw-bold">Favoritos</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1418,8 +1336,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Entendido
+                    <button type="button" class="btn btn-primary mb-1 w-100" data-bs-dismiss="modal">
+                        Entendido
                     </button>
                 </div>
             </div>
@@ -1431,7 +1349,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-link me-2"></i>Subir desde URL</h5>
+                    <h5 class="modal-title fw-bold">Subir desde URL</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1441,7 +1359,7 @@
                             type="url"
                             class="form-control"
                             v-model="uploadUrlData.url"
-                            @keyup.enter="confirmUploadFromUrl"
+                            v-on:keyup.enter="confirmUploadFromUrl"
                             placeholder="https://ejemplo.com/archivo.pdf"
                             autofocus>
                     </div>
@@ -1458,11 +1376,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
+                    <button type="button" class="btn btn-primary mb-1 w-100" v-on:click="confirmUploadFromUrl" :disabled="!uploadUrlData.url">
+                        Subir desde URL
                     </button>
-                    <button type="button" class="btn btn-primary" @click="confirmUploadFromUrl" :disabled="!uploadUrlData.url">
-                        <i class="fas fa-upload me-1"></i>Subir desde URL
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -1475,7 +1393,7 @@
             <div class="modal-content">
                 <div class="modal-header border-bottom">
                     <h5 class="modal-title fw-bold">
-                        <i class="fas fa-cloud-upload-alt me-2 text-primary"></i>Subir Archivos
+                        Subir archivos
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -1483,27 +1401,25 @@
                     {{-- Drag & Drop Zone --}}
                     <div class="upload-drop-zone mb-4 p-5 text-center border border-2 border-dashed rounded-3"
                          :class="{'border-primary bg-primary bg-opacity-10': isDragging}"
-                         @dragover.prevent="isDragging = true"
-                         @dragleave.prevent="isDragging = false"
-                         @drop.prevent="handleFilesDrop">
+                         v-on:dragover.prevent="isDragging = true"
+                         v-on:dragleave.prevent="isDragging = false"
+                         v-on:drop.prevent="handleFilesDrop">
                         <div class="mb-3">
-                            <i class="fas fa-cloud-upload-alt text-primary" style="font-size: 3.5rem;"></i>
+
                         </div>
                         <h5 class="fw-semibold mb-2">Arrastra archivos aquí</h5>
                         <p class="text-muted mb-3">o haz clic para seleccionar archivos</p>
                         <input type="file"
                                ref="fileInput"
                                multiple
-                               @change="handleFilesSelect"
+                               v-on:change="handleFilesSelect"
                                class="d-none">
                         <button type="button"
                                 class="btn btn-primary rounded-pill px-4"
-                                @click="$refs.fileInput.click()">
-                            <i class="fas fa-plus me-2"></i>Seleccionar Archivos
+                                v-on:click="$refs.fileInput.click()"> Seleccionar Archivos
                         </button>
                         <div class="mt-3">
                             <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
                                 Tamaño máximo: 100MB por archivo
                             </small>
                         </div>
@@ -1517,8 +1433,8 @@
                             </h6>
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger rounded-pill"
-                                    @click="clearUploadQueue">
-                                <i class="fas fa-trash me-1"></i>Limpiar todo
+                                    v-on:click="clearUploadQueue">
+                                <i class="fas fa-trash me-1"></i>
                             </button>
                         </div>
 
@@ -1544,7 +1460,7 @@
                                             </div>
                                             <button type="button"
                                                     class="btn btn-sm btn-light rounded-circle ms-2"
-                                                    @click="removeFromQueue(index)"
+                                                    v-on:click="removeFromQueue(index)"
                                                     :disabled="fileItem.uploading"
                                                     style="width: 32px; height: 32px;">
                                                 <i class="fas fa-times text-danger"></i>
@@ -1586,95 +1502,21 @@
                     </div>
                 </div>
                 <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
-                    </button>
                     <button type="button"
-                            class="btn btn-primary"
-                            @click="startUpload"
+                            class="btn btn-primary mb-1 w-100"
+                            v-on:click="startUpload"
                             :disabled="uploadQueue.length === 0 || isUploading">
-                        <i class="fas fa-upload me-1"></i>
                         <span v-if="isUploading">Subiendo...</span>
                         <span v-else>Subir @{{ uploadQueue.length }} archivo@{{ uploadQueue.length !== 1 ? 's' : '' }}</span>
+                    </button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Context Menu (Right Click) --}}
-    <div id="contextMenu" class="context-menu" @click.stop>
-        {{-- Folder Context Menu --}}
-        <div v-if="contextMenu.type === 'folder'" class="context-menu-content">
-            <div v-if="currentView === 'trash'">
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('restore')">
-                    <i class="fas fa-undo"></i>
-                    <span>Restaurar</span>
-                </a>
-            </div>
-            <div v-else>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('open')">
-                    <i class="fas fa-folder-open"></i>
-                    <span>Abrir</span>
-                </a>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('rename')">
-                    <i class="fas fa-edit"></i>
-                    <span>Renombrar</span>
-                </a>
-                <div class="context-menu-divider"></div>
-                <a href="#" class="context-menu-item danger" @click.prevent="handleContextAction('delete')">
-                    <i class="fas fa-trash"></i>
-                    <span>Eliminar</span>
-                </a>
-            </div>
-        </div>
-
-        {{-- File Context Menu --}}
-        <div v-if="contextMenu.type === 'file'" class="context-menu-content">
-            <div v-if="currentView === 'trash'">
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('restore')">
-                    <i class="fas fa-undo"></i>
-                    <span>Restaurar</span>
-                </a>
-            </div>
-            <div v-else>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('download')">
-                    <i class="fas fa-download"></i>
-                    <span>Descargar</span>
-                </a>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('rename')">
-                    <i class="fas fa-edit"></i>
-                    <span>Renombrar</span>
-                </a>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('copy')">
-                    <i class="fas fa-copy"></i>
-                    <span>Hacer copia</span>
-                </a>
-                <div class="context-menu-divider"></div>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('copyLink')">
-                    <i class="fas fa-link"></i>
-                    <span>Copiar enlace</span>
-                </a>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('share')">
-                    <i class="fas fa-share"></i>
-                    <span>Compartir</span>
-                </a>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('favorite')">
-                    <i class="fas fa-star"></i>
-                    <span>@{{ contextMenu.item?.is_favorite ? 'Quitar de' : 'Agregar a' }} favoritos</span>
-                </a>
-                <div class="context-menu-divider"></div>
-                <a href="#" class="context-menu-item" @click.prevent="handleContextAction('properties')">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Propiedades</span>
-                </a>
-                <a href="#" class="context-menu-item danger" @click.prevent="handleContextAction('delete')">
-                    <i class="fas fa-trash"></i>
-                    <span>Eliminar</span>
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -1732,7 +1574,8 @@
                 },
                 // Multiple selection
                 selectedItems: [],  // Array of { type: 'file'|'folder', id: number }
-                selectionMode: false
+                selectionMode: false,
+                pickerMode: {{ $pickerMode ? 'true' : 'false' }}
             }
         },
         computed: {
@@ -1783,13 +1626,17 @@
                     this.loading = false;
                 }
             },
-            async changeActiveDisk() {
+            async changeActiveDisk(disk) {
+                if (disk) {
+                    this.activeDisk = disk;
+                }
+
                 try {
                     const response = await fetch('{{ route('media.set-disk') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({
                             disk: this.activeDisk
@@ -1799,8 +1646,10 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        toastr.success(data.message, 'Éxito');
-                        // Reload media list with new disk
+                        this.currentView = 'all';
+                        this.currentFolderId = 0;
+                        this.searchQuery = '';
+                        this.selectedItems = [];
                         await this.loadMedia(0);
                     } else {
                         toastr.error(data.message || 'Error al cambiar disco', 'Error');
@@ -1819,11 +1668,11 @@
                 }
             },
             performSearch() {
-                this.loadMedia(this.currentFolderId);
+                this.loadList();
             },
             clearSearch() {
                 this.searchQuery = '';
-                this.loadMedia(this.currentFolderId);
+                this.loadList();
             },
             async handleFileUpload(event) {
                 const files = event.target.files;
@@ -1840,7 +1689,7 @@
                         }
                         formData.append('file', file);
 
-                        const response = await fetch('{{ route("media.upload") }}', {
+                        const response = await fetch('{{ route("media.files.upload") }}', {
                             method: 'POST',
                             body: formData,
                             headers: {
@@ -1854,7 +1703,7 @@
                     }
 
                     // Recargar después de subir todos
-                    this.loadMedia(this.currentFolderId);
+                    this.loadList();
                     this.$refs.fileInput.value = '';
                     toastr.success('Archivos cargados exitosamente', 'Éxito');
                 } catch (error) {
@@ -1869,7 +1718,7 @@
                 if (!this.newFolderName.trim()) return;
 
                 try {
-                    const response = await fetch('{{ route("media.folder.create") }}', {
+                    const response = await fetch('{{ route("media.folders.create") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1883,7 +1732,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalNewFolder')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Carpeta creada exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al crear carpeta', 'Error');
@@ -1900,7 +1749,7 @@
                 if (!this.renameFolderData.name.trim()) return;
 
                 try {
-                    const response = await fetch(`{{ url('manager/media/folder') }}/${this.renameFolderData.id}/rename`, {
+                    const response = await fetch(`{{ url('panel/media/folders') }}/${this.renameFolderData.id}/rename`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1911,7 +1760,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalRenameFolder')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Carpeta renombrada exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al renombrar carpeta', 'Error');
@@ -1920,39 +1769,11 @@
                     toastr.error('Error al renombrar carpeta', 'Error');
                 }
             },
-            renameFile(file) {
-                this.renameFileData = { id: file.id, name: file.name };
-                new bootstrap.Modal(document.getElementById('modalRenameFile')).show();
-            },
-            async confirmRenameFile() {
-                if (!this.renameFileData.name.trim()) return;
-
-                try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${this.renameFileData.id}/rename`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ name: this.renameFileData.name })
-                    });
-
-                    if (response.ok) {
-                        bootstrap.Modal.getInstance(document.getElementById('modalRenameFile')).hide();
-                        this.loadMedia(this.currentFolderId);
-                        toastr.success('Archivo renombrado exitosamente', 'Éxito');
-                    } else {
-                        toastr.error('Error al renombrar archivo', 'Error');
-                    }
-                } catch (error) {
-                    toastr.error('Error al renombrar archivo', 'Error');
-                }
-            },
             async deleteFolder(folder) {
                 if (!confirm(`¿Estás seguro de eliminar la carpeta "${folder.name}"?`)) return;
 
                 try {
-                    const response = await fetch(`{{ url('manager/media/folder') }}/${folder.id}`, {
+                    const response = await fetch(`{{ url('panel/media/folders') }}/${folder.id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -1960,7 +1781,7 @@
                     });
 
                     if (response.ok) {
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Carpeta eliminada exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al eliminar carpeta', 'Error');
@@ -1973,7 +1794,7 @@
                 if (!confirm(`¿Estás seguro de eliminar el archivo "${file.name}"?`)) return;
 
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${file.id}`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${file.id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -1981,7 +1802,7 @@
                     });
 
                     if (response.ok) {
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Archivo eliminado exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al eliminar archivo', 'Error');
@@ -1990,36 +1811,9 @@
                     toastr.error('Error al eliminar archivo', 'Error');
                 }
             },
-            renameFile(file) {
-                const newName = prompt(`Nuevo nombre para "${file.name}":`, file.name);
-                if (newName && newName !== file.name) {
-                    this.confirmRenameFile(file, newName);
-                }
-            },
-            async confirmRenameFile(file, newName) {
-                try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${file.id}/rename`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ name: newName })
-                    });
-
-                    if (response.ok) {
-                        this.loadMedia(this.currentFolderId);
-                        toastr.success('Archivo renombrado exitosamente', 'Éxito');
-                    } else {
-                        toastr.error('Error al renombrar archivo', 'Error');
-                    }
-                } catch (error) {
-                    toastr.error('Error al renombrar archivo', 'Error');
-                }
-            },
             async copyFile(file) {
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${file.id}/copy`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${file.id}/copy`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2028,22 +1822,13 @@
 
                     if (response.ok) {
                         toastr.success('Archivo copiado exitosamente', 'Éxito');
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                     } else {
                         toastr.error('Error al copiar archivo', 'Error');
                     }
                 } catch (error) {
                     toastr.error('Error al copiar archivo', 'Error');
                 }
-            },
-            copyFileLink(file) {
-                const url = `{{ url('/storage') }}/${file.url}`;
-                navigator.clipboard.writeText(url).then(() => {
-                    toastr.success('Link copiado al portapapeles', 'Éxito');
-                }).catch(err => {
-                    toastr.error('Error al copiar link', 'Error');
-                    prompt('Copiar link:', url);
-                });
             },
             renameFile(file) {
                 this.renameFileData = { id: file.id, name: file.name };
@@ -2053,7 +1838,7 @@
                 if (!this.renameFileData.name.trim()) return;
 
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${this.renameFileData.id}/rename`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${this.renameFileData.id}/rename`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -2064,7 +1849,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalRenameFile')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Archivo renombrado exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al renombrar archivo', 'Error');
@@ -2079,7 +1864,7 @@
             },
             async confirmCopyFile() {
                 try {
-                    const response = await fetch(`/manager/media/file/${this.copyFileData.id}/copy`, {
+                    const response = await fetch(`/panel/media/files/${this.copyFileData.id}/copy`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2088,7 +1873,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalCopyFile')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Archivo copiado exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al copiar archivo', 'Error');
@@ -2098,7 +1883,7 @@
                 }
             },
             copyFileLink(file) {
-                this.copyLinkData.url = `{{ url('/media') }}/${file.url.replace(/^media\//, '')}`;
+                this.copyLinkData.url = file.public_url || `{{ url('/media') }}/${file.url}`;
                 new bootstrap.Modal(document.getElementById('modalCopyLink')).show();
             },
             copyToClipboard(text) {
@@ -2114,7 +1899,7 @@
             },
             async confirmDeleteFile() {
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${this.deleteFileData.id}`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${this.deleteFileData.id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2123,7 +1908,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalConfirmDelete')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Archivo eliminado exitosamente', 'Éxito');
                     } else {
                         toastr.error('Error al eliminar archivo', 'Error');
@@ -2133,7 +1918,7 @@
                 }
             },
             copyIndirectLink(file) {
-                const indirectUrl = `{{ url('manager/media/file') }}/${file.id}`;
+                const indirectUrl = `{{ url('panel/media/files') }}/${file.id}`;
                 navigator.clipboard.writeText(indirectUrl).then(() => {
                     toastr.success('Enlace indirecto copiado al portapapeles', 'Éxito');
                 }).catch(err => {
@@ -2144,7 +1929,7 @@
                 toastr.info(`Funcionalidad de compartir en desarrollo para: ${file.name}`, 'Información');
             },
             downloadFile(file) {
-                window.location.href = `/media/${file.url.replace(/^media\//, '')}`;
+                window.location.href = file.public_url || `/media/${file.url}`;
             },
             toggleFavorite(file) {
                 this.favoriteMessage = `¿Deseas marcar "${file.name}" como favorito?`;
@@ -2309,7 +2094,7 @@
                 // Client-side filtering of already loaded files
                 if (filterValue === '') {
                     // Show all files
-                    this.loadMedia(this.currentFolderId);
+                    this.loadList();
                 } else {
                     // Filter files by type
                     const typeFilterMap = {
@@ -2329,7 +2114,15 @@
                 }
             },
             loadList() {
-                this.loadMedia(this.currentFolderId);
+                if (this.currentView === 'trash') {
+                    this.loadTrash();
+                } else if (this.currentView === 'recent') {
+                    this.loadRecent();
+                } else if (this.currentView === 'favorites') {
+                    this.loadFavorites();
+                } else {
+                    this.loadList();
+                }
             },
             async switchView(view) {
                 this.currentView = view;
@@ -2419,7 +2212,7 @@
             },
             async toggleFavorite(file) {
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${file.id}/toggle-favorite`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${file.id}/toggle-favorite`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2443,7 +2236,7 @@
             },
             async restoreFile(file) {
                 try {
-                    const response = await fetch(`{{ url('manager/media/file') }}/${file.id}/restore`, {
+                    const response = await fetch(`{{ url('panel/media/files') }}/${file.id}/restore`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2462,7 +2255,7 @@
             },
             async restoreFolder(folder) {
                 try {
-                    const response = await fetch(`{{ url('manager/media/folder') }}/${folder.id}/restore`, {
+                    const response = await fetch(`{{ url('panel/media/folders') }}/${folder.id}/restore`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2487,7 +2280,7 @@
                 if (!this.uploadUrlData.url.trim()) return;
 
                 try {
-                    const response = await fetch('{{ route("media.upload-url") }}', {
+                    const response = await fetch('{{ route("media.files.upload-url") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -2502,7 +2295,7 @@
 
                     if (response.ok) {
                         bootstrap.Modal.getInstance(document.getElementById('modalUploadFromUrl')).hide();
-                        this.loadMedia(this.currentFolderId);
+                        this.loadList();
                         toastr.success('Archivo cargado exitosamente', 'Éxito');
                     } else {
                         const error = await response.json();
@@ -2514,6 +2307,7 @@
             },
             // Enhanced Upload Modal Methods
             showUploadModal() {
+                this.uploadQueue = [];
                 new bootstrap.Modal(document.getElementById('modalEnhancedUpload')).show();
             },
             handleDragOver(event) {
@@ -2588,14 +2382,10 @@
                 }
 
                 this.isUploading = false;
-
-                // Close modal and refresh
-                bootstrap.Modal.getInstance(document.getElementById('modalEnhancedUpload')).hide();
-                this.loadMedia(this.currentFolderId);
-
-                // Clear queue after successful upload
                 this.uploadQueue = [];
 
+                bootstrap.Modal.getInstance(document.getElementById('modalEnhancedUpload')).hide();
+                this.loadList();
                 toastr.success('Todos los archivos se han subido exitosamente', 'Éxito');
             },
             async uploadFile(index) {
@@ -2635,7 +2425,7 @@
                             reject(new Error('Network error during upload'));
                         });
 
-                        xhr.open('POST', '{{ route("media.upload") }}');
+                        xhr.open('POST', '{{ route("media.files.upload") }}');
                         xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
                         xhr.send(formData);
                     });
@@ -2824,6 +2614,10 @@
             },
 
             handleCardClick(event, type, item) {
+                if (this.pickerMode && type === 'file') {
+                    window.parent.postMessage({ type: 'media-picker-select', url: item.public_url, name: item.name }, '*');
+                    return;
+                }
                 // If there are selected items, treat click as selection toggle
                 if (this.selectedItems.length > 0) {
                     this.toggleSelection(type, item.id, item);
@@ -2855,7 +2649,7 @@
 
                     await Promise.all(promises);
                     this.clearSelection();
-                    await this.loadMedia(this.currentFolderId);
+                    await this.loadList();
                     toastr.success('Elementos eliminados correctamente');
                 } catch (error) {
                     console.error('Bulk delete error:', error);
@@ -2875,7 +2669,7 @@
 
                     await Promise.all(promises);
                     this.clearSelection();
-                    await this.loadMedia(this.currentFolderId);
+                    await this.loadList();
                     toastr.success('Elementos restaurados correctamente');
                 } catch (error) {
                     console.error('Bulk restore error:', error);
@@ -2917,6 +2711,29 @@
             document.addEventListener('click', () => {
                 this.hideContextMenu();
             });
+
+            // Initialize selects after jQuery is ready
+            const vm = this;
+
+            const initSelects = () => {
+                if (typeof jQuery === 'undefined') {
+                    setTimeout(initSelects, 200);
+                    return;
+                }
+
+                jQuery('#mediaDiskSelect').val(vm.activeDisk).on('change', function () {
+                    vm.changeActiveDisk(jQuery(this).val());
+                });
+
+                jQuery('#mediaSortBy').select2({ width: '100%', minimumResultsForSearch: -1 }).on('change', function () {
+                    vm.applySortBy(jQuery(this).val());
+                });
+                jQuery('#mediaFilterType').select2({ width: '100%', minimumResultsForSearch: -1 }).on('change', function () {
+                    vm.filterByType(jQuery(this).val());
+                });
+            };
+
+            setTimeout(initSelects, 500);
         }
     }).mount('#mediaManagerApp');
 </script>

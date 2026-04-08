@@ -22,7 +22,7 @@ class PermissionBladeServiceProvider extends ServiceProvider
     {
         // Directiva para verificar módulos
         Blade::directive('module', function ($expression) {
-            return "<?php if(\App\Helpers\PermissionHelper::canAccessModule({$expression})): ?>";
+            return "<?php if(\Modules\Role\Helpers\PermissionHelper::canAccessModule({$expression})): ?>";
         });
 
         Blade::directive('endmodule', function () {
@@ -31,7 +31,7 @@ class PermissionBladeServiceProvider extends ServiceProvider
 
         // Directiva para verificar múltiples roles
         Blade::directive('hasanyrole', function ($expression) {
-            return "<?php if(\App\Helpers\PermissionHelper::hasAnyRole({$expression})): ?>";
+            return "<?php if(\Modules\Role\Helpers\PermissionHelper::hasAnyRole({$expression})): ?>";
         });
 
         Blade::directive('endhasanyrole', function () {
@@ -40,7 +40,7 @@ class PermissionBladeServiceProvider extends ServiceProvider
 
         // Directiva para verificar múltiples permisos
         Blade::directive('hasanypermission', function ($expression) {
-            return "<?php if(\App\Helpers\PermissionHelper::hasAnyPermission({$expression})): ?>";
+            return "<?php if(\Modules\Role\Helpers\PermissionHelper::hasAnyPermission({$expression})): ?>";
         });
 
         Blade::directive('endhasanypermission', function () {
@@ -49,9 +49,9 @@ class PermissionBladeServiceProvider extends ServiceProvider
 
         // Directiva para acciones en devoluciones
         Blade::directive('canmanagereturn', function ($expression) {
-            [$return, $action] = explode(',', $expression);
+            [$return, $action] = array_map('trim', explode(',', $expression, 2));
 
-            return "<?php if(\App\Helpers\PermissionHelper::canManageReturn({$return}, {$action})): ?>";
+            return "<?php if(\Modules\Role\Helpers\PermissionHelper::canManageReturn({$return}, {$action})): ?>";
         });
 
         Blade::directive('endcanmanagereturn', function () {

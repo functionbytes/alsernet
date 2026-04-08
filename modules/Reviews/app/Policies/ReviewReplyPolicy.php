@@ -43,7 +43,7 @@ class ReviewReplyPolicy
     {
         // SECURITY FIX: Verify user has access to the reply's review location connection
         return $user->can('reviews.replies.approve')
-            && $reply->isDraft()
+            && ($reply->isDraft() || $reply->isPendingApproval())
             && ($reply->review->location->connection->user_id === $user->id || $user->hasRole('super-admin'));
     }
 

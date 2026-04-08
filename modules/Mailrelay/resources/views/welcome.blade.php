@@ -270,28 +270,28 @@
                     <div class="p-4">
                         <i class="bi bi-filetype-php text-primary" style="font-size: 3rem;"></i>
                         <h5 class="mt-3">Laravel 11</h5>
-                        <p class="text-muted small">PHP Framework</p>
+                        <p class="text-muted">PHP Framework</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-4">
                         <i class="bi bi-bootstrap-fill text-primary" style="font-size: 3rem;"></i>
                         <h5 class="mt-3">Bootstrap 5</h5>
-                        <p class="text-muted small">CSS Framework</p>
+                        <p class="text-muted">CSS Framework</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-4">
                         <i class="bi bi-database-fill text-primary" style="font-size: 3rem;"></i>
                         <h5 class="mt-3">MySQL & Redis</h5>
-                        <p class="text-muted small">Database Layer</p>
+                        <p class="text-muted">Database Layer</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-4">
                         <i class="bi bi-envelope-at-fill text-primary" style="font-size: 3rem;"></i>
                         <h5 class="mt-3">Mailrelay API</h5>
-                        <p class="text-muted small">Email Service</p>
+                        <p class="text-muted">Email Service</p>
                     </div>
                 </div>
             </div>

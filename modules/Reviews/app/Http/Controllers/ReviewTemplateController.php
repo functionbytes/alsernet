@@ -3,11 +3,15 @@
 namespace Modules\Reviews\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Reviews\Http\Requests\StoreReplyTemplateRequest;
+use Modules\Reviews\Models\ReviewGoogleLocation;
 use Modules\Reviews\Models\ReviewReplyTemplate;
+use Modules\Reviews\Models\ReviewTemplateTranslation;
 
 class ReviewTemplateController extends Controller
 {
@@ -15,7 +19,7 @@ class ReviewTemplateController extends Controller
     {
         $this->authorize('viewAny', ReviewReplyTemplate::class);
 
-        $query = ReviewReplyTemplate::query()->with('createdBy');
+        $query = ReviewReplyTemplate::query()->with(['createdBy', 'location']);
 
         // Search filter
         if ($search = $request->get('search')) {
@@ -28,6 +32,11 @@ class ReviewTemplateController extends Controller
         // Category filter
         if ($category = $request->get('category')) {
             $query->byCategory($category);
+        }
+
+        // Location filter
+        if ($locationId = $request->get('location_id')) {
+            $query->byLocation((int) $locationId);
         }
 
         // Active/Inactive filter
@@ -45,7 +54,9 @@ class ReviewTemplateController extends Controller
             $query->latest();
         }
 
-        $templates = $query->paginate(20)->withQueryString();
+        $templates = $query->paginate(config('pagination.reviews'))->withQueryString();
+
+        $locations = ReviewGoogleLocation::query()->orderBy('name')->get(['id', 'name']);
 
         // Calculate stats
         $stats = [
@@ -59,14 +70,16 @@ class ReviewTemplateController extends Controller
             'total_usage' => ReviewReplyTemplate::sum('usage_count'),
         ];
 
-        return view('reviews::replies.templates.index', compact('templates', 'stats'));
+        return view('reviews::replies.templates.index', compact('templates', 'stats', 'locations'));
     }
 
     public function create(): View
     {
         $this->authorize('create', ReviewReplyTemplate::class);
 
-        return view('reviews::replies.templates.create');
+        $locations = ReviewGoogleLocation::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('reviews::replies.templates.create', compact('locations'));
     }
 
     public function store(StoreReplyTemplateRequest $request): RedirectResponse
@@ -101,12 +114,21 @@ class ReviewTemplateController extends Controller
 
         $template->loadCount('createdBy');
 
-        return view('reviews::replies.templates.edit', compact('template'));
+        $locations = ReviewGoogleLocation::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('reviews::replies.templates.edit', compact('template', 'locations'));
     }
 
     public function update(StoreReplyTemplateRequest $request, ReviewReplyTemplate $template): RedirectResponse
     {
         $template->update($request->validated());
+
+        $template->versions()->create([
+            'content' => $template->body,
+            'language' => $template->language ?? 'es',
+            'version_number' => $template->versions()->max('version_number') + 1,
+            'created_by' => auth()->id(),
+        ]);
 
         activity()
             ->performedOn($template)
@@ -116,6 +138,22 @@ class ReviewTemplateController extends Controller
         return redirect()
             ->route('settings.reviews.templates.index')
             ->with('success', 'Plantilla actualizada correctamente');
+    }
+
+    public function versions(Request $request, ReviewReplyTemplate $template): JsonResponse|View
+    {
+        $this->authorize('view', $template);
+
+        $versions = $template->versions()
+            ->with('creator:id,name')
+            ->orderByDesc('version_number')
+            ->paginate(10);
+
+        if ($request->expectsJson()) {
+            return response()->json($versions);
+        }
+
+        return view('reviews::replies.templates.versions', compact('template', 'versions'));
     }
 
     public function destroy(ReviewReplyTemplate $template): RedirectResponse
@@ -150,6 +188,75 @@ class ReviewTemplateController extends Controller
         return redirect()
             ->route('settings.reviews.templates.index')
             ->with('success', "Plantilla {$status} correctamente");
+    }
+
+    public function addTranslation(Request $request, ReviewReplyTemplate $template): JsonResponse
+    {
+        $this->authorize('update', $template);
+
+        $validated = $request->validate([
+            'language' => ['required', 'string', 'size:2'],
+            'template_text' => ['required', 'string'],
+        ]);
+
+        $translation = ReviewTemplateTranslation::query()->updateOrCreate(
+            ['template_id' => $template->id, 'language' => $validated['language']],
+            ['template_text' => $validated['template_text']],
+        );
+
+        activity()
+            ->performedOn($template)
+            ->causedBy(auth()->user())
+            ->log("Translation added for language: {$validated['language']}");
+
+        return response()->json([
+            'message' => 'Traducción guardada correctamente',
+            'translation' => $translation,
+        ]);
+    }
+
+    public function removeTranslation(ReviewReplyTemplate $template, string $language): JsonResponse
+    {
+        $this->authorize('update', $template);
+
+        $deleted = ReviewTemplateTranslation::query()
+            ->where('template_id', $template->id)
+            ->where('language', $language)
+            ->delete();
+
+        if (! $deleted) {
+            return response()->json(['message' => 'Traducción no encontrada'], 404);
+        }
+
+        activity()
+            ->performedOn($template)
+            ->causedBy(auth()->user())
+            ->log("Translation removed for language: {$language}");
+
+        return response()->json(['message' => 'Traducción eliminada correctamente']);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $templates = ReviewReplyTemplate::query()->whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($templates as $template) {
+            match ($validated['action']) {
+                'activate' => $template->update(['is_active' => true]),
+                'deactivate' => $template->update(['is_active' => false]),
+                'delete' => $template->delete(),
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     public function bulkDelete(Request $request): RedirectResponse
@@ -190,9 +297,15 @@ class ReviewTemplateController extends Controller
                 ->route('settings.reviews.templates.index')
                 ->with('success', "Se eliminaron {$deletedCount} plantillas correctamente");
         } catch (\Exception $e) {
+            Log::error('Error deleting review templates', [
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
             return redirect()
                 ->route('settings.reviews.templates.index')
-                ->with('error', 'Error al eliminar plantillas: '.$e->getMessage());
+                ->with('error', 'Ha ocurrido un error al eliminar las plantillas. Por favor intenta más tarde.');
         }
     }
 }

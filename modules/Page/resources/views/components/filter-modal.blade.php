@@ -25,7 +25,7 @@
                             <label for="status" class="form-label">
                                 <i class="fas fa-circle-check"></i> Estado
                             </label>
-                            <select class="form-select" id="status" name="status">
+                            <select class="form-select select2" id="status" name="status">
                                 <option value="">Todos los estados</option>
                                 @foreach($statuses as $key => $label)
                                     <option value="{{ $key }}" {{ ($filters['status'] ?? '') === $key ? 'selected' : '' }}>
@@ -39,7 +39,7 @@
                             <label for="template" class="form-label">
                                 <i class="fas fa-file-code"></i> Plantilla
                             </label>
-                            <select class="form-select" id="template" name="template">
+                            <select class="form-select select2" id="template" name="template">
                                 <option value="">Todas las plantillas</option>
                                 @foreach($templates as $key => $label)
                                     <option value="{{ $key }}" {{ ($filters['template'] ?? '') === $key ? 'selected' : '' }}>

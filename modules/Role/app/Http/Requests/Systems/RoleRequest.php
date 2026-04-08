@@ -12,7 +12,7 @@ class RoleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check();
+        return $this->user()?->hasAnyRole(['super-settings', 'settings', 'manager']) ?? false;
     }
 
     /**

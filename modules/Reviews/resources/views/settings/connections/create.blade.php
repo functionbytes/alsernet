@@ -14,7 +14,7 @@
                     <div class="mb-4 text-center">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
                              style="width: 80px; height: 80px; background: rgba(66, 133, 244, 0.1);">
-                            <i class="fab fa-google fa-3x" style="color: #4285f4;"></i>
+                            <i class="fab fa-google fa-3x" ></i>
                         </div>
                         <h5 class="fw-bold. ">Conectar cuenta de Google</h5>
                         <p class="text-muted mb-0">
@@ -110,7 +110,7 @@
                 </div>
 
                 <div class="card-footer gap-2">
-                    <button type="submit" id="connect-google" class="btn btn-dark w-100 py-2">
+                    <button type="submit" id="connect-google" class="btn btn-primary w-100 py-2">
                         Conectar
                     </button>
                     <a href="{{ route('settings.reviews.connections.index') }}"  class="btn btn-light border w-100 py-2">

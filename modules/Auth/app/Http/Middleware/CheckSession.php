@@ -3,29 +3,20 @@
 namespace Modules\Auth\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckSession
 {
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
+        if (! Auth::check() || ! Auth::user()->available) {
+            Auth::logout();
 
-        if (! Auth::check() && Auth::user()->available == 1) {
             return redirect()->route('auth.login');
-        } else {
-
-            $previousSession = Auth::User()->session;
-
-            if ($previousSession !== Session::getId()) {
-                Session::getHandler()->destroy($previousSession);
-                $request->session()->regenerate();
-                Auth::user()->session = Session::getId();
-                Auth::user()->save();
-            }
-
-            return $next($request);
         }
 
+        return $next($request);
     }
 }

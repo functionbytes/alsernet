@@ -1,29 +1,29 @@
 @extends('layouts.theme')
 
-@section('title', 'Crear Departamento')
+@section('title', 'Crear departamento')
 
 @section('content')
-    <div class="row">
-        <div class="col-lg-12 d-flex align-items-stretch">
-            <div class="card w-100">
+
+    @include('core::components.card', ['title' => 'Crear departamento'])
+
+    <div class="row g-3">
+
+        {{-- Formulario --}}
+        <div class="col-12 col-lg-8">
+            <div class="card">
                 <form id="formDepartment" action="{{ route('settings.attention.departments.store') }}" method="POST">
                     @csrf
                     <div class="card-header border-bottom p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1 fw-bold">Crear Departamento</h5>
-                                <p class="mb-0 text-muted small">Complete la información para registrar un nuevo departamento.</p>
-                            </div>
-                        </div>
+                        <h5 class="mb-0 fw-bold">Nuevo departamento</h5>
+                        <small class="text-muted">Complete la información para registrar un nuevo departamento.</small>
                     </div>
-
                     <div class="card-body">
                         @include('core::components.alerts')
 
                         <div class="row">
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('name') is-invalid @enderror"
                                            name="name" value="{{ old('name') }}"
                                            placeholder="ej: Atención al Ciudadano" required>
@@ -33,10 +33,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Email</label>
+                                    <label class="form-label">Correo electronico</label>
                                     <input type="email" class="form-control @error('email') is-invalid @enderror"
                                            name="email" value="{{ old('email') }}"
                                            placeholder="departamento@ejemplo.com">
@@ -46,10 +45,9 @@
                                     @enderror
                                 </div>
                             </div>
-
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Descripción</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea class="form-control @error('description') is-invalid @enderror"
                                               name="description" rows="3"
                                               placeholder="Descripción del departamento y sus funciones">{{ old('description') }}</textarea>
@@ -58,10 +56,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Nombre del Responsable</label>
+                                    <label class="form-label">Nombre del responsable</label>
                                     <input type="text" class="form-control @error('responsible_name') is-invalid @enderror"
                                            name="responsible_name" value="{{ old('responsible_name') }}"
                                            placeholder="Juan Pérez">
@@ -70,10 +67,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Email del Responsable</label>
+                                    <label class="form-label">Correo electronico del responsable</label>
                                     <input type="email" class="form-control @error('responsible_email') is-invalid @enderror"
                                            name="responsible_email" value="{{ old('responsible_email') }}"
                                            placeholder="responsable@ejemplo.com">
@@ -82,10 +78,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Teléfono</label>
+                                    <label class="form-label">Teléfono</label>
                                     <input type="text" class="form-control @error('phone') is-invalid @enderror"
                                            name="phone" value="{{ old('phone') }}"
                                            placeholder="(123) 456-7890">
@@ -94,23 +89,18 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Estado</label>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_active" 
-                                               id="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_active">
-                                            Departamento activo
-                                        </label>
-                                    </div>
+                                    <label class="form-label">Estado</label>
+                                    <select class="form-select select2" name="is_active">
+                                        <option value="1" {{ old('is_active', '1') == '1' ? 'selected' : '' }}>Activo</option>
+                                        <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Inactivo</option>
+                                    </select>
                                 </div>
                             </div>
-
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Usuarios Asignados</label>
+                                    <label class="form-label">Usuarios asignados</label>
                                     <select class="form-select select2" name="users[]" multiple data-placeholder="Seleccionar usuarios...">
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" {{ in_array($user->id, old('users', [])) ? 'selected' : '' }}>
@@ -123,29 +113,54 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="card-footer">
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ route('settings.attention.departments.index') }}" class="btn btn-light">
-                                Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                Crear Departamento
-                            </button>
-                        </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-1">Crear departamento</button>
+                            <a href="{{ route('settings.attention.departments.index') }}" class="btn btn-light w-100">Cancelar</a>
                     </div>
                 </form>
             </div>
         </div>
+
+        {{-- Panel informativo --}}
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">¿Qué es un departamento?</h6>
+                    <p class="card-text text-muted">
+                        Los departamentos agrupan a los funcionarios responsables de atender solicitudes PQRSF según su área de gestión.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Responsable</h6>
+                    <p class="card-text text-muted mb-0">
+                        El responsable del departamento recibe notificaciones cuando se asignen nuevas solicitudes y puede supervisar el seguimiento.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Usuarios asignados</h6>
+                    <p class="card-text text-muted mb-0">
+                        Asigna los funcionarios que gestionarán las PQRSF enrutadas a este departamento. Pueden ser modificados en cualquier momento.
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </div>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    $('.select2').select2({
-        theme: 'bootstrap-5',
+    $('select[name="is_active"]').select2('destroy').select2({
         width: '100%',
+        minimumResultsForSearch: Infinity,
+    });
+    $('select[name="users[]"]').select2('destroy').select2({
+        width: '100%',
+        placeholder: 'Seleccionar usuarios...',
     });
 });
 </script>

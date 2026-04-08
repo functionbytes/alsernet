@@ -22,13 +22,13 @@ class PublishReviewReplyJob implements ShouldQueue
 
     public int $timeout = 300; // 5 minutes
 
-    public int $backoff = 60;
+    public array $backoff = [30, 60, 120];
 
     public function __construct(
         public ReviewReply $reply,
         public User $user
     ) {
-        $this->onQueue('google-sync');
+        $this->onQueue('reviews-replies');
     }
 
     public function handle(GoogleReviewService $service): void

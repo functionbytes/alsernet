@@ -2,6 +2,7 @@
 
 namespace Modules\Cache\Http\Controllers\Settings;
 
+use App\Helpers\ModuleStatusHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ class CacheSettingsController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:Cache.settings.index')->only('index', 'stats', 'redisStats');
+        $this->middleware('can:Cache.settings.index')->only('index', 'monitor', 'stats', 'redisStats');
         $this->middleware('can:Cache.settings.update')->only('update', 'flush');
     }
 
@@ -33,9 +34,14 @@ class CacheSettingsController extends Controller
         ]);
     }
 
+    public function monitor(): View
+    {
+        return view('Cache::settings.monitor');
+    }
+
     public function stats(): JsonResponse
     {
-        if (! \App\Helpers\ModuleStatusHelper::isModuleEnabled('Page')) {
+        if (! ModuleStatusHelper::isModuleEnabled('Page')) {
             return response()->json(['error' => 'Page module not enabled'], 404);
         }
 
@@ -97,7 +103,7 @@ class CacheSettingsController extends Controller
         ];
 
         // Only include pages_enabled if the Page module is active
-        if (\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page')) {
+        if (ModuleStatusHelper::isModuleEnabled('Page')) {
             $checkboxes[] = 'pages_enabled';
         }
 
@@ -108,7 +114,7 @@ class CacheSettingsController extends Controller
         Setting::set(self::PREFIX.'sitemap_ttl', $request->validated()['sitemap_ttl']);
 
         // Only save pages_ttl if the Page module is active
-        if (\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page') && $request->has('pages_ttl')) {
+        if (ModuleStatusHelper::isModuleEnabled('Page') && $request->has('pages_ttl')) {
             Setting::set(self::PREFIX.'pages_ttl', $request->validated()['pages_ttl']);
         }
 

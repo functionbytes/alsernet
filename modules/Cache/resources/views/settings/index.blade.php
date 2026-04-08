@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form method="POST" action="{{ route('settings.cache.update') }}">
+    <form id="form-cache-settings" method="POST" action="{{ route('settings.cache.update') }}">
         @csrf
         @method('PATCH')
 
@@ -88,7 +88,7 @@
                     </small>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-12">
                     <label for="sitemap_ttl" class="form-label">Tiempo de vida del cache (minutos)</label>
                     <input type="number" class="form-control" id="sitemap_ttl" name="sitemap_ttl"
                            min="1" max="10080"
@@ -99,9 +99,9 @@
                 </div>
             </div>
 
-            @if(module_exists('Page'))
+            @if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
                 {{-- Cache de páginas --}}
-                <div class="card-body p-4">
+                <div class="card-body border-bottom p-4">
                     <h6 class="fw-bold mb-3">Cache de páginas</h6>
 
                     <div class="mb-3">
@@ -118,7 +118,7 @@
                         </small>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-12">
                         <label for="pages_ttl" class="form-label">Tiempo de vida del cache (minutos)</label>
                         <input type="number" class="form-control" id="pages_ttl" name="pages_ttl"
                                min="1" max="10080"
@@ -128,15 +128,38 @@
                         </small>
                     </div>
                 </div>
+
             @endif
 
             {{-- Footer --}}
-            <div class="card-footer p-4 border-top d-flex justify-content-end gap-2">
-                <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Guardar cambios
+            <div class="card-footer">
+                <button type="button" class="btn btn-primary w-100 mb-1" data-bs-toggle="modal" data-bs-target="#modal-save-cache">
+                    Guardar cambios
                 </button>
+                <a href="{{ route('settings.cache.monitor') }}" class="btn btn-secondary w-100">Monitor de cache</a>
             </div>
         </div>
     </form>
+
+    <div class="modal fade" id="modal-save-cache" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar cambios de cache</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Confirmas que quieres guardar la configuracion de cache?</p>
+                    <p class="text-muted mb-0">Cambiar la configuracion puede afectar el rendimiento del sistema temporalmente mientras se regenera el cache.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" form="form-cache-settings" class="btn btn-primary w-100 mb-2">Guardar cambios</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    @endpush
 @endsection

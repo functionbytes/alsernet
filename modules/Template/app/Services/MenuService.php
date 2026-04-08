@@ -4,11 +4,32 @@ namespace Modules\Template\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Modules\Blog\Models\Category;
+use Modules\Blog\Models\Post;
+use Modules\Page\Models\Page;
 use Modules\Template\Models\Menu;
 use Modules\Template\Models\MenuItem;
 
 class MenuService
 {
+    /**
+     * Whitelist of model classes allowed as reference_type in menu items.
+     * Only these models can be resolved via dynamic class instantiation.
+     */
+    protected array $allowedReferenceTypes = [
+        Page::class,
+        Post::class,
+        Category::class,
+    ];
+
+    /**
+     * Compatibilidad con Botble: alias de renderMenu().
+     */
+    public function renderMenuLocation(string $location, array $attributes = []): string
+    {
+        return $this->renderMenu($location, $attributes);
+    }
+
     /**
      * Render a menu by location.
      */
@@ -17,14 +38,26 @@ class MenuService
         $menu = Cache::remember("menu.{$location}", 3600, function () use ($location) {
             return Menu::where('location', $location)
                 ->where('status', true)
-                ->with(['items' => function ($query) {
-                    $query->with('children');
-                }])
+                ->with(['items.children.children'])
                 ->first();
         });
 
         if (! $menu) {
             return '';
+        }
+
+        // If a view is specified, delegate to the Blade partial
+        if (! empty($attributes['view'])) {
+            $view = 'template::partials.'.$attributes['view'];
+            $options = $attributes['options'] ?? ('class="'.($attributes['class'] ?? '').'"');
+
+            if (view()->exists($view)) {
+                return view($view, [
+                    'menu_nodes' => $menu->items,
+                    'menu' => $menu,
+                    'options' => $options,
+                ])->render();
+            }
         }
 
         $class = $attributes['class'] ?? '';
@@ -53,7 +86,7 @@ class MenuService
         $hasChildren = $item->children->isNotEmpty();
         $isActive = $item->isActive() || $item->hasActiveChild();
         $activeClass = $isActive ? 'active' : '';
-        $cssClass = trim("{$item->css_class} {$activeClass}");
+        $cssClass = trim(e($item->css_class).' '.$activeClass);
 
         $html = '<li';
         if ($cssClass) {
@@ -61,14 +94,14 @@ class MenuService
         }
         $html .= '>';
 
-        $html .= "<a href=\"{$item->full_url}\" target=\"{$item->target}\"";
+        $html .= '<a href="'.e($item->full_url).'" target="'.e($item->target).'"';
         if ($cssClass) {
             $html .= " class=\"{$cssClass}\"";
         }
         $html .= '>';
 
         if ($item->icon) {
-            $html .= "<i class=\"{$item->icon}\"></i> ";
+            $html .= '<i class="'.e($item->icon).'"></i> ';
         }
 
         $html .= htmlspecialchars($item->title);
@@ -130,6 +163,25 @@ class MenuService
     }
 
     /**
+     * Reject dangerous URL schemes (javascript:, data:, vbscript:).
+     * Allows relative URLs, http/https, mailto, tel, and hash links.
+     */
+    protected function sanitizeUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if (preg_match('/^(javascript|data|vbscript):/i', $url)) {
+            return '#';
+        }
+
+        if (! empty($url) && ! preg_match('/^(https?:\/\/|mailto:|tel:|\/|#)/', $url)) {
+            return '#';
+        }
+
+        return $url;
+    }
+
+    /**
      * Resolve and assign the URL for a menu item node.
      *
      * - type === 'custom' or empty reference_type: stores literal url, clears reference fields.
@@ -148,7 +200,15 @@ class MenuService
         $referenceType = $item['reference_type'] ?? null;
 
         if (! $referenceType || ($item['type'] ?? '') === 'custom') {
-            $node->url = $item['url'] ?? $node->url;
+            $node->url = $this->sanitizeUrl($item['url'] ?? $node->url ?? '');
+            $node->reference_id = null;
+            $node->reference_type = null;
+
+            return $node;
+        }
+
+        if (! in_array($referenceType, $this->allowedReferenceTypes, true)) {
+            $node->url = '#';
             $node->reference_id = null;
             $node->reference_type = null;
 
@@ -161,7 +221,7 @@ class MenuService
             $referenced = $referenceType::find($referenceId);
 
             if ($referenced) {
-                $node->url = $referenced->full_url ?? $referenced->slug ?? $node->url;
+                $node->url = $this->sanitizeUrl($referenced->full_url ?? $referenced->slug ?? $node->url ?? '');
             }
         }
 
@@ -181,7 +241,7 @@ class MenuService
         $menuItem = $menu->allItems()->create([
             'parent_id' => $data['parent_id'] ?? null,
             'title' => $data['title'],
-            'url' => $data['url'] ?? null,
+            'url' => $this->sanitizeUrl($data['url'] ?? ''),
             'target' => $data['target'] ?? '_self',
             'icon' => $data['icon'] ?? null,
             'css_class' => $data['css_class'] ?? null,
@@ -203,7 +263,7 @@ class MenuService
     {
         $menuItem->update([
             'title' => $data['title'] ?? $menuItem->title,
-            'url' => $data['url'] ?? $menuItem->url,
+            'url' => isset($data['url']) ? $this->sanitizeUrl($data['url']) : $menuItem->url,
             'target' => $data['target'] ?? $menuItem->target,
             'icon' => $data['icon'] ?? $menuItem->icon,
             'css_class' => $data['css_class'] ?? $menuItem->css_class,
@@ -229,74 +289,83 @@ class MenuService
 
     /**
      * Get available references for menu items.
+     *
+     * Results are cached for 5 minutes and limited to 50 per type to prevent
+     * unbounded queries on large datasets. Pass a search string to filter by title.
      */
-    public function getAvailableReferences(): array
+    public function getAvailableReferences(string $search = ''): array
+    {
+        if ($search !== '' && strlen($search) < 2) {
+            return $this->fetchAvailableReferences($search);
+        }
+
+        $cacheKey = 'menu_references_'.md5($search);
+
+        return Cache::remember($cacheKey, 300, fn () => $this->fetchAvailableReferences($search));
+    }
+
+    private function fetchAvailableReferences(string $search): array
     {
         $references = [];
 
-        // Pages
-        if (class_exists(\Modules\Page\Models\Page::class)) {
-            $pages = \Modules\Page\Models\Page::where('status', 'published')
+        if (class_exists(Page::class)) {
+            $references['pages'] = Page::where('status', 'published')
                 ->select('id', 'title', 'slug')
+                ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+                ->limit(50)
                 ->get()
-                ->map(function ($page) {
-                    return [
-                        'id' => $page->id,
-                        'title' => $page->title,
-                        'type' => 'page',
-                        'reference_type' => \Modules\Page\Models\Page::class,
-                    ];
-                });
-
-            $references['pages'] = $pages;
+                ->map(fn ($page) => [
+                    'id' => $page->id,
+                    'title' => $page->title,
+                    'type' => 'page',
+                    'reference_type' => Page::class,
+                ]);
         }
 
-        // Posts
-        if (class_exists(\Modules\Blog\Models\Post::class)) {
-            $posts = \Modules\Blog\Models\Post::where('status', 'published')
+        if (class_exists(Post::class)) {
+            $references['posts'] = Post::where('status', 'published')
                 ->select('id', 'title', 'slug')
+                ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+                ->limit(50)
                 ->get()
-                ->map(function ($post) {
-                    return [
-                        'id' => $post->id,
-                        'title' => $post->title,
-                        'type' => 'post',
-                        'reference_type' => \Modules\Blog\Models\Post::class,
-                    ];
-                });
-
-            $references['posts'] = $posts;
+                ->map(fn ($post) => [
+                    'id' => $post->id,
+                    'title' => $post->title,
+                    'type' => 'post',
+                    'reference_type' => Post::class,
+                ]);
         }
 
-        // Categories
-        if (class_exists(\Modules\Blog\Models\Category::class)) {
-            $categories = \Modules\Blog\Models\Category::select('id', 'name', 'slug')
+        if (class_exists(Category::class)) {
+            $references['categories'] = Category::select('id', 'name', 'slug')
+                ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                ->limit(50)
                 ->get()
-                ->map(function ($category) {
-                    return [
-                        'id' => $category->id,
-                        'title' => $category->name,
-                        'type' => 'category',
-                        'reference_type' => \Modules\Blog\Models\Category::class,
-                    ];
-                });
-
-            $references['categories'] = $categories;
+                ->map(fn ($category) => [
+                    'id' => $category->id,
+                    'title' => $category->name,
+                    'type' => 'category',
+                    'reference_type' => Category::class,
+                ]);
         }
 
         return $references;
     }
 
     /**
-     * Clear menu cache.
+     * Clear menu cache for a specific location or all menu locations.
      */
     public function clearMenuCache(?string $location = null): void
     {
         if ($location) {
             Cache::forget("menu.{$location}");
-        } else {
-            Cache::flush();
+
+            return;
         }
+
+        Menu::distinct()->pluck('location')->filter()->each(function (string $loc): void {
+            Cache::forget("menu.{$loc}");
+        });
     }
 
     /**

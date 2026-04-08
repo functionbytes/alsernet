@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\MailrelayVariable;
 use Modules\Mailrelay\Http\Controllers\Controller;
@@ -104,10 +105,12 @@ class VariableController extends Controller
                 ->route('managers.settings.mailrelay.variables.index')
                 ->with('success', 'Variable creada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay variable create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear la variable: '.$e->getMessage());
+                ->with('error', 'Error al crear la variable. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -159,10 +162,12 @@ class VariableController extends Controller
                 ->route('managers.settings.mailrelay.variables.index')
                 ->with('success', 'Variable actualizada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay variable update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la variable: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la variable. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -189,9 +194,11 @@ class VariableController extends Controller
                 ->route('managers.settings.mailrelay.variables.index')
                 ->with('success', 'Variable eliminada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay variable delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar la variable: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la variable. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -219,7 +226,7 @@ class VariableController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -264,7 +271,7 @@ class VariableController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -301,7 +308,7 @@ class VariableController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -337,7 +344,7 @@ class VariableController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -378,7 +385,7 @@ class VariableController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

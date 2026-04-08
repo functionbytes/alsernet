@@ -2,6 +2,7 @@
 
 namespace Modules\Attention\Notifications;
 
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +27,12 @@ class AttentionStatusChangedNotification extends Notification implements ShouldB
     {
         $this->recipientUserId = $notifiable->id;
 
-        return ['database', 'broadcast'];
+        $channels = array_values(array_filter(
+            ['database', 'broadcast'],
+            fn ($ch) => $notifiable->canReceiveNotification($ch, 'attention.status_changed')
+        ));
+
+        return $channels ?: ['database'];
     }
 
     public function toDatabase($notifiable): array
@@ -67,7 +73,7 @@ class AttentionStatusChangedNotification extends Notification implements ShouldB
     public function broadcastOn(): array
     {
         return [
-            new \Illuminate\Broadcasting\Channel('attentions.status'),
+            new Channel('attentions.status'),
         ];
     }
 

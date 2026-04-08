@@ -78,7 +78,7 @@
             <div class="mb-3">
                 <i class="fas fa-inbox text-muted" style="font-size: 2rem;"></i>
             </div>
-            <p class="text-muted small mb-0">
+            <p class="text-muted mb-0">
                 <strong>Sin acciones registradas</strong>
                 <br>
                 No hay acciones registradas para este PQRSF aún.

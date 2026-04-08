@@ -3,7 +3,7 @@
     div#notification-badge {
         width: 14px !important;
         height: 14px !important;
-        background-color: #081A28 !important;
+        background-color: #b10100 !important;
         border-radius: 50% !important;
         position: absolute !important;
         top: -4px !important;
@@ -49,7 +49,7 @@
     data-limit="4">
 
     <a class="nav-link position-relative" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="fa-duotone fa-bell fs-6"></i>
+        <i class="fas fa-bell fs-6"></i>
         <div id="notification-badge"></div>
     </a>
 
@@ -79,7 +79,7 @@
                 <i class="fas fa-bell-slash fs-6 text-muted opacity-50"></i>
             </div>
             <h6 class="fw-semibold mb-1">Sin notificaciones</h6>
-            <p class="text-muted mb-0 small">No tienes notificaciones nuevas</p>
+            <p class="text-muted mb-0">No tienes notificaciones nuevas</p>
         </div>
 
         <!-- Footer -->

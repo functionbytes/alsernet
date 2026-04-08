@@ -12,6 +12,7 @@ use Modules\Attention\Console\Commands\ValidateAttentionDeletionCommand;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Policies\AttentionPolicy;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class AttentionServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,10 @@ class AttentionServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Attention')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
@@ -122,8 +127,8 @@ class AttentionServiceProvider extends ServiceProvider
         NavService::registerSidebar('attentions', [
             'title' => 'Gestion PQRSF',
             'items' => [
+                ['label' => 'Dashboard', 'route' => 'attention.dashboard'],
                 ['label' => 'Pendientes', 'route' => 'attention.pending'],
-                ['label' => 'Nueva atencion', 'route' => 'attention.create'],
                 ['label' => 'Seguimiento', 'route' => 'attention.tracking'],
             ],
         ]);
@@ -139,6 +144,7 @@ class AttentionServiceProvider extends ServiceProvider
                 ['label' => 'Sedes', 'route' => 'settings.attention.sedes.index'],
                 ['label' => 'Politicas SLA', 'route' => 'settings.attention.sla-policies.index'],
                 ['label' => 'Plantillas email', 'route' => 'settings.attention.templates.index'],
+                ['label' => 'Reglas de asignacion', 'route' => 'settings.attention.routing-rules.index'],
             ],
         ]);
     }

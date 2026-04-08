@@ -73,7 +73,7 @@
                     {{-- Validation Level --}}
                     <div class="col-md-6 mb-3">
                         <label for="validationLevel" class="form-label fw-semibold">Nivel de validación</label>
-                        <select class="form-select form-select-lg" id="validationLevel">
+                        <select class="form-select form-select-lg select2" id="validationLevel">
                             <option value="basic">Básico - Validación rápida (Solo sintaxis)</option>
                             <option value="standard" selected>Estándar - Balanceado (Sintaxis + DNS)</option>
                             <option value="strict">Estricto - Completo (Todos los validadores)</option>
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="${iconClass} fs-4 me-3"></i>
                         <div class="flex-grow-1">
                             <h6 class="mb-1 fw-bold">${getValidatorName(name)}</h6>
-                            <p class="mb-0 text-muted small">${result.message || 'Sin información adicional'}</p>
+                            <p class="mb-0 text-muted">${result.message || 'Sin información adicional'}</p>
                         </div>
                         <span class="badge ${result.valid ? 'bg-success' : 'bg-danger'} rounded-3 py-2">
                             ${result.valid ? 'Aprobado' : 'Fallido'}

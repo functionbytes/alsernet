@@ -88,7 +88,7 @@
                         @if (!empty($types))
                             <div class="col-12 col-sm-6 col-md-3">
                                 <label for="type" class="form-label fw-semibold">Tipo</label>
-                                <select id="type" name="type" class="form-select">
+                                <select class="select2" id="type" name="type" class="form-select">
                                     <option value="">Todos los tipos</option>
                                     @foreach ($types as $t)
                                         <option value="{{ $t }}" @if($type === $t) selected @endif>
@@ -201,8 +201,8 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="dropdown">
-                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Acciones">
+                                                <i class="fas fa-ellipsis"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
@@ -228,12 +228,13 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <form method="POST"
-                                                              action="{{ route('mailers.components.destroy', $component->uid) }}"
-                                                              onsubmit="return confirm('¿Estás seguro de que deseas eliminar este componente?');">
+                                                              action="{{ route('mailers.components.destroy', $component->uid) }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="dropdown-item">
-                                                                Eliminar
+                                                            <button type="submit" class="dropdown-item text-danger"
+                                                                    data-confirm="¿Estas seguro de que deseas eliminar este componente?"
+                                                                    data-confirm-title="Eliminar componente">
+                                                                <i class="fas fa-trash me-2"></i> Eliminar
                                                             </button>
                                                         </form>
                                                     </li>
@@ -351,5 +352,7 @@
     });
 </script>
 @endpush
+
+@include('mailer::partials.confirm-modal')
 
 @endsection

@@ -3,17 +3,17 @@
 namespace Modules\Template\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StoreTemplateRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Authorization is handled by $this->authorize() in the controller.
      */
     public function authorize(): bool
     {
-        return true; // Ajustar según políticas de autorización
+        return true;
     }
 
     /**
@@ -98,22 +98,22 @@ class StoreTemplateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Auto-generate slug from name if not provided
-        if (!$this->has('slug') || empty($this->slug)) {
+        if (! $this->has('slug') || empty($this->slug)) {
             $this->merge([
                 'slug' => Str::slug($this->name),
             ]);
         }
 
         // Set status to inactive by default if not provided
-        if (!$this->has('status') || empty($this->status)) {
+        if (! $this->has('status') || empty($this->status)) {
             $this->merge([
                 'status' => 'inactive',
             ]);
         }
 
-        // Set template_path based on slug
+        // Set template_path based on slug (must match createTemplateDirectories() in TemplateService)
         $this->merge([
-            'template_path' => 'public/templates/' . Str::slug($this->slug),
+            'template_path' => 'platform/themes/'.Str::slug($this->slug),
         ]);
     }
 }

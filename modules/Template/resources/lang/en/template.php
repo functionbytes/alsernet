@@ -75,6 +75,13 @@ return [
     'published' => 'Published',
     'draft' => 'Draft',
 
+    // Custom CSS
+    'custom_css' => 'Custom CSS',
+    'custom_css_editor' => 'Custom CSS editor',
+    'custom_css_saved' => 'Custom CSS saved successfully',
+    'error_saving_custom_css' => 'Error saving custom CSS',
+    'custom_css_help' => 'Here you can add custom CSS styles that will be applied to the website. The CSS will be injected into the &lt;head&gt; element of all public pages.',
+
     // Custom HTML
     'custom_html' => 'Custom HTML',
     'custom_html_updated' => 'Custom HTML updated successfully',
@@ -84,4 +91,6 @@ return [
     'custom_js' => 'Custom JavaScript',
     'custom_js_updated' => 'Custom JavaScript saved successfully',
     'error_saving_custom_js' => 'Error saving custom JavaScript',
+
+    'active_template' => 'Active template',
 ];

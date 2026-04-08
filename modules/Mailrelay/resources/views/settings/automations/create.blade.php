@@ -330,7 +330,7 @@
                         <a href="{{ route('settings.mailrelay.automations.index') }}" class="btn btn-secondary px-4">
                             <i class="fas fa-times-circle me-2"></i>Cancelar
                         </a>
-                        <button type="submit" class="btn btn-primary px-4">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Guardar
                         </button>
                     </div>
@@ -491,7 +491,7 @@ $(document).ready(function() {
                                 Tipo de acción
                                 <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select action-type-select"
+                            <select class="form-select action-type-select select2"
                                     name="acciones[${actionIndex}][tipo_accion]"
                                     id="action-type-${actionIndex}"
                                     required>
@@ -537,7 +537,7 @@ $(document).ready(function() {
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Template de email <span class="text-danger">*</span></label>
-                                <select class="form-select" name="acciones[${index}][template]" required>
+                                <select class="form-select select2" name="acciones[${index}][template]" required>
                                     <option value="">Seleccionar template...</option>
                                     <option value="1">Bienvenida</option>
                                     <option value="2">Confirmación</option>
@@ -556,7 +556,7 @@ $(document).ready(function() {
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Grupo <span class="text-danger">*</span></label>
-                                <select class="form-select" name="acciones[${index}][grupo]" required>
+                                <select class="form-select select2" name="acciones[${index}][grupo]" required>
                                     <option value="">Seleccionar grupo...</option>
                                     <option value="1">Clientes VIP</option>
                                     <option value="2">Newsletter semanal</option>
@@ -574,7 +574,7 @@ $(document).ready(function() {
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Campo <span class="text-danger">*</span></label>
-                                <select class="form-select" name="acciones[${index}][campo]" required>
+                                <select class="form-select select2" name="acciones[${index}][campo]" required>
                                     <option value="">Seleccionar campo...</option>
                                     <option value="empresa">Empresa</option>
                                     <option value="cargo">Cargo</option>

@@ -25,6 +25,7 @@ class StoreReplyTemplateRequest extends FormRequest
             'body' => ['required', 'string', 'min:10', 'max:4000'],
             'category' => ['required', 'in:positive,negative,neutral,general'],
             'is_active' => ['sometimes', 'boolean'],
+            'review_google_location_id' => ['nullable', 'integer', 'exists:review_google_locations,id'],
         ];
     }
 

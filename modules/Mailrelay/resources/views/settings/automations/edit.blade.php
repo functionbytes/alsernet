@@ -204,7 +204,7 @@
                         <label for="trigger_type" class="form-label">
                             Tipo de evento <span class="text-danger">*</span>
                         </label>
-                        <select class="form-select @error('trigger_type') is-invalid @enderror"
+                        <select class="form-select @error('trigger_type') is-invalid @enderror select2"
                                 id="trigger_type" name="trigger_type" required>
                             <option value="">Seleccionar evento...</option>
                             <option value="nuevo_suscriptor" {{ old('trigger_type', $automation->trigger_type) === 'nuevo_suscriptor' ? 'selected' : '' }}>
@@ -259,7 +259,7 @@
 
                                     <div class="mb-3">
                                         <label class="form-label">Tipo de acción</label>
-                                        <select class="form-select action-type-select" name="actions[{{ $index }}][type]" required onchange="updateActionConfig({{ $index }}, this.value)">
+                                        <select class="form-select action-type-select select2" name="actions[{{ $index }}][type]" required onchange="updateActionConfig({{ $index }}, this.value)">
                                             <option value="">Seleccionar...</option>
                                             <option value="enviar_email" {{ ($action['type'] ?? '') === 'enviar_email' ? 'selected' : '' }}>Enviar email</option>
                                             <option value="agregar_grupo" {{ ($action['type'] ?? '') === 'agregar_grupo' ? 'selected' : '' }}>Agregar a grupo</option>
@@ -273,7 +273,7 @@
                                         @if(($action['type'] ?? '') === 'enviar_email')
                                             <div class="mb-3">
                                                 <label class="form-label">Plantilla de email</label>
-                                                <select class="form-select" name="actions[{{ $index }}][config][template_id]" required>
+                                                <select class="form-select select2" name="actions[{{ $index }}][config][template_id]" required>
                                                     <option value="">Seleccionar plantilla...</option>
                                                     <option value="{{ $action['config']['template_id'] ?? '' }}" selected>Plantilla seleccionada</option>
                                                 </select>
@@ -281,7 +281,7 @@
                                         @elseif(($action['type'] ?? '') === 'agregar_grupo')
                                             <div class="mb-3">
                                                 <label class="form-label">Grupo destino</label>
-                                                <select class="form-select" name="actions[{{ $index }}][config][group_id]" required>
+                                                <select class="form-select select2" name="actions[{{ $index }}][config][group_id]" required>
                                                     <option value="">Seleccionar grupo...</option>
                                                     <option value="{{ $action['config']['group_id'] ?? '' }}" selected>Grupo seleccionado</option>
                                                 </select>
@@ -309,7 +309,7 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Método HTTP</label>
-                                                <select class="form-select" name="actions[{{ $index }}][config][method]" required>
+                                                <select class="form-select select2" name="actions[{{ $index }}][config][method]" required>
                                                     <option value="POST" {{ ($action['config']['method'] ?? 'POST') === 'POST' ? 'selected' : '' }}>POST</option>
                                                     <option value="GET" {{ ($action['config']['method'] ?? '') === 'GET' ? 'selected' : '' }}>GET</option>
                                                     <option value="PUT" {{ ($action['config']['method'] ?? '') === 'PUT' ? 'selected' : '' }}>PUT</option>
@@ -446,7 +446,7 @@ function addAction(actionData = null) {
 
             <div class="mb-3">
                 <label class="form-label">Tipo de acción</label>
-                <select class="form-select action-type-select" name="actions[${actionCounter}][type]" required onchange="updateActionConfig(${actionCounter}, this.value)">
+                <select class="form-select action-type-select select2" name="actions[${actionCounter}][type]" required onchange="updateActionConfig(${actionCounter}, this.value)">
                     <option value="">Seleccionar...</option>
                     <option value="enviar_email" ${actionType === 'enviar_email' ? 'selected' : ''}>Enviar email</option>
                     <option value="agregar_grupo" ${actionType === 'agregar_grupo' ? 'selected' : ''}>Agregar a grupo</option>
@@ -482,7 +482,7 @@ function updateActionConfig(actionId, type, existingConfig = {}) {
             configHtml = `
                 <div class="mb-3">
                     <label class="form-label">Plantilla de email</label>
-                    <select class="form-select" name="actions[${actionId}][config][template_id]" required>
+                    <select class="form-select select2" name="actions[${actionId}][config][template_id]" required>
                         <option value="">Seleccionar plantilla...</option>
                         <!-- Las plantillas se cargarían dinámicamente -->
                     </select>
@@ -493,7 +493,7 @@ function updateActionConfig(actionId, type, existingConfig = {}) {
             configHtml = `
                 <div class="mb-3">
                     <label class="form-label">Grupo destino</label>
-                    <select class="form-select" name="actions[${actionId}][config][group_id]" required>
+                    <select class="form-select select2" name="actions[${actionId}][config][group_id]" required>
                         <option value="">Seleccionar grupo...</option>
                         <!-- Los grupos se cargarían dinámicamente -->
                     </select>
@@ -530,7 +530,7 @@ function updateActionConfig(actionId, type, existingConfig = {}) {
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Método HTTP</label>
-                    <select class="form-select" name="actions[${actionId}][config][method]" required>
+                    <select class="form-select select2" name="actions[${actionId}][config][method]" required>
                         <option value="POST" ${existingConfig.method === 'POST' ? 'selected' : ''}>POST</option>
                         <option value="GET" ${existingConfig.method === 'GET' ? 'selected' : ''}>GET</option>
                         <option value="PUT" ${existingConfig.method === 'PUT' ? 'selected' : ''}>PUT</option>

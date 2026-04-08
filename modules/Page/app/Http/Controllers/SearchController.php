@@ -24,11 +24,15 @@ class SearchController extends Controller
         $query = $request->input('q');
         $perPage = $request->input('per_page', 10);
 
-        // Search published pages only
+        $useFullText = strlen($query) >= 3;
+
         $pages = Page::published()
-            ->searchPages($query)
+            ->searchPages($query, $useFullText)
             ->select(['id', 'title', 'slug', 'content', 'description', 'published_at'])
-            ->orderByRaw('MATCH(title, content, description) AGAINST(? IN BOOLEAN MODE) DESC', [$query.'*'])
+            ->when($useFullText, fn ($q) => $q->orderByRaw(
+                'MATCH(title, content, description) AGAINST(? IN BOOLEAN MODE) DESC',
+                [$query.'*']
+            ))
             ->orderBy('published_at', 'desc')
             ->paginate($perPage);
 

@@ -15,6 +15,8 @@ class ShortcodeController extends Controller
      */
     public function index(): View
     {
+        $this->authorize('settings.view');
+
         $shortcodes = Shortcode::all();
 
         $dbShortcodes = class_exists(\Modules\Template\Models\Shortcode::class)
@@ -29,6 +31,8 @@ class ShortcodeController extends Controller
      */
     public function reference(): View
     {
+        $this->authorize('settings.view');
+
         $shortcodes = Shortcode::all();
 
         return view('shortcode::admin.reference', compact('shortcodes'));

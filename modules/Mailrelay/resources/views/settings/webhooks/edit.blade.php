@@ -44,7 +44,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="event_type" class="form-label">Tipo de Evento</label>
-                        <select class="form-select @error('event_type') is-invalid @enderror"
+                        <select class="form-select @error('event_type') is-invalid @enderror select2"
                                 id="event_type"
                                 name="event_type"
                                 required>

@@ -15,8 +15,8 @@ class ImportService
 
     public function __construct()
     {
-        $this->apiKey = env('MAILRELAY_API_KEY');
-        $this->apiUrl = env('MAILRELAY_URL', 'https://app.mailrelay.com/api');
+        $this->apiKey = config('mailrelay.api_key');
+        $this->apiUrl = config('mailrelay.api_url');
         $this->client = new Client;
     }
 

@@ -12,7 +12,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1 fw-bold">Crear campo personalizado</h5>
-                                <p class="mb-0 text-muted small">Configure un nuevo campo personalizado para sus suscriptores.</p>
+                                <p class="mb-0 text-muted">Configure un nuevo campo personalizado para sus suscriptores.</p>
                             </div>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
                                                 <label class="control-label col-form-label">
                                                     Tipo de campo <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select @error('type') is-invalid @enderror"
+                                                <select class="form-select @error('type') is-invalid @enderror select2"
                                                         id="type"
                                                         name="type"
                                                         required>

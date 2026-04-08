@@ -3,7 +3,9 @@
 namespace Modules\Template\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Modules\Template\Http\Requests\StoreMenuRequest;
@@ -21,17 +23,36 @@ class MenuController extends Controller
     /**
      * Display a listing of menus.
      */
-    public function index()
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Menu::class);
 
-        $menus = Menu::query()->withCount('allItems')->latest()->get();
+        $query = Menu::query()->withCount('allItems')->latest();
 
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search): void {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->get('status')) {
+            $query->where('status', $status === 'active');
+        }
+
+        $menus = $query->get();
+
+        $row = Menu::selectRaw('
+            COUNT(*) as total,
+            SUM(status = 1) as active,
+            SUM(status = 0) as inactive,
+            SUM(location IS NULL) as without_location
+        ')->first();
         $stats = [
-            'total' => $menus->count(),
-            'active' => $menus->where('status', true)->count(),
-            'inactive' => $menus->where('status', false)->count(),
-            'without_location' => $menus->whereNull('location')->count(),
+            'total' => (int) $row->total,
+            'active' => (int) $row->active,
+            'inactive' => (int) $row->inactive,
+            'without_location' => (int) $row->without_location,
         ];
 
         return view('template::settings.menus.index', compact('menus', 'stats'));
@@ -40,7 +61,7 @@ class MenuController extends Controller
     /**
      * Show the form for creating a new menu.
      */
-    public function create()
+    public function create(): View
     {
         $this->authorize('create', Menu::class);
 
@@ -52,7 +73,7 @@ class MenuController extends Controller
     /**
      * Store a newly created menu.
      */
-    public function store(StoreMenuRequest $request)
+    public function store(StoreMenuRequest $request): RedirectResponse
     {
         $this->authorize('create', Menu::class);
 
@@ -71,7 +92,7 @@ class MenuController extends Controller
     /**
      * Show the form for editing the menu.
      */
-    public function edit(Menu $menu)
+    public function edit(Menu $menu): View
     {
         $this->authorize('update', $menu);
 
@@ -93,7 +114,7 @@ class MenuController extends Controller
      *   - `menu_nodes`    JSON string representing the full nestable tree
      *   - `deleted_nodes` Space-separated string of item IDs to delete
      */
-    public function update(UpdateMenuRequest $request, Menu $menu): \Illuminate\Http\RedirectResponse
+    public function update(UpdateMenuRequest $request, Menu $menu): RedirectResponse
     {
         $this->authorize('update', $menu);
 
@@ -152,7 +173,7 @@ class MenuController extends Controller
     /**
      * Remove the specified menu.
      */
-    public function destroy(Menu $menu)
+    public function destroy(Menu $menu): RedirectResponse
     {
         $this->authorize('delete', $menu);
 
@@ -162,10 +183,35 @@ class MenuController extends Controller
             ->with('success', 'Menu deleted successfully.');
     }
 
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('update', Menu::class);
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $menus = Menu::query()->whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($menus as $menu) {
+            match ($validated['action']) {
+                'activate' => $menu->update(['status' => true]),
+                'deactivate' => $menu->update(['status' => false]),
+                'delete' => $menu->delete(),
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
+    }
+
     /**
      * Update menu structure (drag & drop).
      */
-    public function updateStructure(Request $request, Menu $menu)
+    public function updateStructure(Request $request, Menu $menu): JsonResponse
     {
         $this->authorize('update', $menu);
 
@@ -184,8 +230,10 @@ class MenuController extends Controller
     /**
      * Store a new menu item.
      */
-    public function storeItem(Request $request, Menu $menu)
+    public function storeItem(Request $request, Menu $menu): JsonResponse
     {
+        $this->authorize('update', $menu);
+
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:menu_items,id',
             'title' => 'required|string|max:255',
@@ -210,8 +258,14 @@ class MenuController extends Controller
     /**
      * Update a menu item.
      */
-    public function updateItem(Request $request, Menu $menu, MenuItem $item)
+    public function updateItem(Request $request, Menu $menu, MenuItem $item): JsonResponse
     {
+        $this->authorize('update', $menu);
+
+        if ($item->menu_id !== $menu->id) {
+            abort(403, 'El item no pertenece a este menú.');
+        }
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'url' => 'nullable|string|max:255',
@@ -235,7 +289,7 @@ class MenuController extends Controller
     /**
      * Remove a menu item.
      */
-    public function destroyItem(Menu $menu, MenuItem $item)
+    public function destroyItem(Menu $menu, MenuItem $item): JsonResponse
     {
         $this->authorize('update', $menu);
 

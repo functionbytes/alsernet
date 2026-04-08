@@ -5,12 +5,13 @@ namespace Modules\Seo\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class SeoPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
             // SEO Metas
@@ -34,6 +35,29 @@ class SeoPermissionsSeeder extends Seeder
             'Seo.static-urls.create' => 'Crear URLs estáticas del sitemap',
             'Seo.static-urls.update' => 'Actualizar URLs estáticas del sitemap',
             'Seo.static-urls.delete' => 'Eliminar URLs estáticas del sitemap',
+
+            // Dashboard
+            'Seo.dashboard.view' => 'Ver dashboard SEO',
+
+            // Reports
+            'Seo.report.view' => 'Ver reporte SEO',
+
+            // Orphan pages (content without SEO)
+            'Seo.orphans.view' => 'Ver contenido sin SEO',
+            'Seo.orphans.generate' => 'Generar listado de contenido sin SEO',
+
+            // 404 Logs
+            'Seo.404-logs.view' => 'Ver errores 404',
+            'Seo.404-logs.delete' => 'Eliminar errores 404',
+
+            // SEO Templates
+            'Seo.templates.index' => 'Ver plantillas SEO',
+            'Seo.templates.create' => 'Crear plantillas SEO',
+            'Seo.templates.update' => 'Actualizar plantillas SEO',
+            'Seo.templates.delete' => 'Eliminar plantillas SEO',
+
+            // SEO Audit
+            'Seo.audit.history' => 'Ver historial de auditorías SEO',
         ];
 
         foreach ($permissions as $name => $description) {

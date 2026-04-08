@@ -18,8 +18,15 @@
         <option value="$PROJECT_DIR$/modules/Attention/tests" />
         <option value="$PROJECT_DIR$/modules/MailsSettings/tests" />
         <option value="$PROJECT_DIR$/tests" />
+        <option value="$PROJECT_DIR$/modules/Seo/tests" />
+        <option value="$PROJECT_DIR$/modules/Blog/tests" />
         <option value="$PROJECT_DIR$/modules/User/Tests" />
+        <option value="$PROJECT_DIR$/modules/Forms/tests" />
+        <option value="$PROJECT_DIR$/modules/Cookie/tests" />
+        <option value="$PROJECT_DIR$/modules/Locales/tests" />
         <option value="$PROJECT_DIR$/modules/Reviews/tests" />
+        <option value="$PROJECT_DIR$/modules/Helpdesk/tests" />
+        <option value="$PROJECT_DIR$/modules/Optimize/Tests" />
         <option value="$PROJECT_DIR$/modules/Template/Tests" />
       </list>
     </option>

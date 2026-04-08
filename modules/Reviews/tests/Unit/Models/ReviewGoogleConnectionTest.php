@@ -22,8 +22,8 @@ class ReviewGoogleConnectionTest extends TestCase
     public function test_connection_has_many_locations(): void
     {
         $connection = ReviewGoogleConnection::factory()->create();
-        $location1 = ReviewGoogleLocation::factory()->for($connection)->create();
-        $location2 = ReviewGoogleLocation::factory()->for($connection)->create();
+        $location1 = ReviewGoogleLocation::factory()->for($connection, 'connection')->create();
+        $location2 = ReviewGoogleLocation::factory()->for($connection, 'connection')->create();
 
         $this->assertCount(2, $connection->locations);
         $this->assertTrue($connection->locations->contains($location1));

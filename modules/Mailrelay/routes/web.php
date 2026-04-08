@@ -26,7 +26,7 @@ use Modules\Mailrelay\Http\Controllers\Web\ValidationController;
 // CONFIGURATION ROUTES - /settings/mailrelay (Admin only)
 // ====================================================================
 Route::middleware(['web', 'auth'])
-    ->prefix('mailrelay/setting')
+    ->prefix('panel/mailrelay/setting')
     ->name('settings.mailrelay.')
     ->group(function () {
 
@@ -223,7 +223,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // ====================================================================
     // MANAGER ROUTES - /managers/mailrelay (Multi-Provider v2.0) ✨
     // ====================================================================
-    Route::prefix('managers/mailrelay')->name('managers.mailrelay.')->group(function () {
+    Route::prefix('panel/managers/mailrelay')->name('managers.mailrelay.')->group(function () {
 
         // ----------------------------------------------------------------
         // MAIL PROVIDERS MANAGEMENT
@@ -267,7 +267,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // ====================================================================
     // OPERATIONAL ROUTES - /mailrelay
     // ====================================================================
-    Route::prefix('mailrelay')->name('mailrelay.')->group(function () {
+    Route::prefix('panel/mailrelay')->name('mailrelay.')->group(function () {
         // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');

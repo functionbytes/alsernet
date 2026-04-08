@@ -7,8 +7,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
+use Modules\Page\Enums\PageStatus;
 use Modules\Page\Models\Page;
 use Modules\Page\Notifications\PageUnpublishedNotification;
 
@@ -71,17 +72,18 @@ class UnpublishScheduledPagesJob implements ShouldQueue
      */
     protected function unpublishPage(Page $page): void
     {
-        // Unpublish the page
-        $page->status = Page::STATUS_DRAFT;
-        $page->save();
+        DB::transaction(function () use ($page) {
+            $page->update([
+                'status' => PageStatus::Draft->value,
+                'unpublish_at' => null,
+            ]);
+        });
 
         Log::info('Page unpublished automatically', [
             'page_id' => $page->id,
             'title' => $page->title,
-            'unpublish_at' => $page->unpublish_at?->toDateTimeString(),
         ]);
 
-        // Send notification to the page owner
         if ($page->user) {
             try {
                 $page->user->notify(new PageUnpublishedNotification($page, 'scheduled'));
@@ -89,10 +91,6 @@ class UnpublishScheduledPagesJob implements ShouldQueue
                 Log::error("Failed to send page unpublished notification: {$e->getMessage()}");
             }
         }
-
-        // Clear unpublish_at after successful unpublishing
-        $page->unpublish_at = null;
-        $page->save();
     }
 
     /**

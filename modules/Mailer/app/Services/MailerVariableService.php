@@ -155,15 +155,14 @@ class MailerVariableService
     }
 
     /**
-     * Category label map for display purposes
+     * Get the display label for a category
      */
-    private static array $categoryLabels = [
-        'system' => 'Sistema',
-        'customer' => 'Cliente',
-        'order' => 'Pedido',
-        'document' => 'Documento',
-        'general' => 'General',
-    ];
+    private static function getCategoryLabel(string $category): string
+    {
+        $labels = config('mailer-module.category_labels', []);
+
+        return $labels[$category] ?? ucfirst($category);
+    }
 
     /**
      * Get variables for a module (+ core) grouped and formatted for the editor panel.
@@ -187,7 +186,7 @@ class MailerVariableService
 
         foreach ($dbVariables->groupBy('category') as $category => $items) {
             $variables[] = [
-                'group' => self::$categoryLabels[$category] ?? ucfirst($category),
+                'group' => self::getCategoryLabel($category),
                 'items' => $items->map(fn ($v) => [
                     'name' => $v->key,
                     'description' => $v->description ?? $v->name,

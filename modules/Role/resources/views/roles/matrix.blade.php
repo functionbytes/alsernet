@@ -189,7 +189,7 @@
                     </button>
                 </div>
                 <div class="col-md-6 text-end">
-                    <span class="text-muted small">
+                    <span class="text-muted">
                         Total: <strong>{{ count($permissions) }}</strong> permisos | <strong>{{ count($roles) }}</strong> roles
                     </span>
                 </div>
@@ -211,8 +211,8 @@
     }
 
     .form-check-input:checked {
-        background-color: #081A28;
-        border-color: #081A28;
+        background-color: #b10100;
+        border-color: #b10100;
     }
 
     .form-check-input:disabled {

@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\File;
  */
 trait HasFileSystemPaths
 {
-    public const BASE_DIR = 'app/customers'; // storage/customers/000000
+    public const BASE_DIR = 'app/customers';
 
-    public const ATTACHMENTS_DIR = 'home/attachments';  // storage/customers/000000/home/files
+    public const ATTACHMENTS_DIR = 'home/attachments';
 
-    public const TEMPLATES_DIR = 'home/templates';  // storage/customers/000000/home/files
+    public const TEMPLATES_DIR = 'home/templates';
 
     public const PRODUCT_DIR = 'home/inventaries';
 
@@ -25,78 +25,67 @@ trait HasFileSystemPaths
     /**
      * Get user's base path
      */
-    public function getBasePath($path = null): string
+    public function getBasePath(?string $path = null): string
     {
-        $base = storage_path(join_paths(self::BASE_DIR, $this->uid)); // storage/app/customers/000000/
-
-        if (! File::exists($base)) {
-            File::makeDirectory($base, 0777, true, true);
-        }
-
-        return join_paths($base, $path);
+        return $this->ensureDirectory(
+            storage_path(join_paths(self::BASE_DIR, $this->uid)),
+            $path
+        );
     }
 
     /**
      * Get user's templates path
      */
-    public function getTemplatesPath($path = null): string
+    public function getTemplatesPath(?string $path = null): string
     {
-        $base = $this->getBasePath(self::TEMPLATES_DIR);
-
-        if (! File::exists($base)) {
-            File::makeDirectory($base, 0777, true, true);
-        }
-
-        return join_paths($base, $path);
+        return $this->ensureDirectory($this->getBasePath(self::TEMPLATES_DIR), $path);
     }
 
     /**
      * Get user's products path
      */
-    public function getProductsPath($path = null): string
+    public function getProductsPath(?string $path = null): string
     {
-        $base = $this->getBasePath(self::PRODUCT_DIR);
-
-        if (! File::exists($base)) {
-            File::makeDirectory($base, 0777, true, true);
-        }
-
-        return join_paths($base, $path);
+        return $this->ensureDirectory($this->getBasePath(self::PRODUCT_DIR), $path);
     }
 
     /**
      * Get user's attachments path
      */
-    public function getAttachmentsPath($path = null): string
+    public function getAttachmentsPath(?string $path = null): string
     {
-        $base = $this->getBasePath(self::ATTACHMENTS_DIR);
-
-        if (! File::exists($base)) {
-            File::makeDirectory($base, 0777, true, true);
-        }
-
-        return join_paths($base, $path);
+        return $this->ensureDirectory($this->getBasePath(self::ATTACHMENTS_DIR), $path);
     }
 
     /**
      * Get user's log path
      */
-    public function getLogPath($path = null): string
+    public function getLogPath(?string $path = null): string
     {
-        $base = $this->getBasePath(self::LOGS_DIR);
-
-        if (! File::exists($base)) {
-            File::makeDirectory($base, 0777, true, true);
-        }
-
-        return join_paths($base, $path);
+        return $this->ensureDirectory($this->getBasePath(self::LOGS_DIR), $path);
     }
 
     /**
      * Get lock path
      */
-    public function getLockPath($path): string
+    public function getLockPath(string $path): string
     {
         return $this->user->getLockPath($path);
+    }
+
+    /**
+     * Ensure the given directory exists, then return the joined path.
+     */
+    private function ensureDirectory(string $base, ?string $append): string
+    {
+        if ($append !== null && str_contains($append, '..')) {
+            throw new \InvalidArgumentException("Path traversal not allowed in storage path: {$append}");
+        }
+
+        if (! File::exists($base)) {
+            File::makeDirectory($base, 0755, true, true);
+        }
+
+        return join_paths($base, $append);
     }
 }

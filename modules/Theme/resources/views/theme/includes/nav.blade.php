@@ -65,7 +65,7 @@
                         $sidebarIsActive = $activeSidebarId === $sidebarId;
                     @endphp
                     <!-- ---------------------------------- -->
-                    <!-- Sidebar: {{ $sidebar['title'] ?? 'Menu' }} -->
+                    <!-- Sidebar: {{ $sidebar['sections'][0]['title'] ?? $sidebarId }} -->
                     <!-- ---------------------------------- -->
                     <nav class="sidebar-nav scroll-sidebar {{ $sidebarIsActive ? 'd-block' : '' }}"
                          id="menu-right-{{ $sidebarId }}"
@@ -89,28 +89,9 @@
                                 <!-- Section Items -->
                                 @forelse($section['items'] as $item)
                                     @php
-                                        $currentRouteName = request()->route()?->getName() ?? '';
                                         $itemRoute = $item['route'] ?? '';
-
-                                        // Usar comparación con wildcard para marcar rutas hijas como activas
                                         $isItemActive = $itemRoute && request()->routeIs($itemRoute . '*');
-
-                                        // Validación de permisos del item
-                                        $canAccessItem = true;
-                                        if (!empty($item['permission'])) {
-                                            $permissions = array_map('trim', explode('|', $item['permission']));
-                                            $canAccessItem = false;
-
-                                            // Verificar si el usuario tiene al menos uno de los permisos (OR logic)
-                                            foreach ($permissions as $permission) {
-                                                if (auth()->user()?->can($permission)) {
-                                                    $canAccessItem = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-
-                                        // Verificar si el item tiene sub-items (para has-arrow)
+                                        $canAccessItem = \Modules\Theme\Services\NavService::userCanAccessItem($item, auth()->user());
                                         $hasSubItems = !empty($item['children']) && is_array($item['children']);
                                     @endphp
 
@@ -137,20 +118,7 @@
                                                         @php
                                                             $childRoute = $child['route'] ?? '';
                                                             $childIsActive = $childRoute && request()->routeIs($childRoute . '*');
-
-                                                            // Validar permisos del child
-                                                            $canAccessChild = true;
-                                                            if (!empty($child['permission'])) {
-                                                                $childPermissions = array_map('trim', explode('|', $child['permission']));
-                                                                $canAccessChild = false;
-
-                                                                foreach ($childPermissions as $perm) {
-                                                                    if (auth()->user()?->can($perm)) {
-                                                                        $canAccessChild = true;
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
+                                                            $canAccessChild = \Modules\Theme\Services\NavService::userCanAccessItem($child, auth()->user());
                                                         @endphp
 
                                                         @if($canAccessChild)
@@ -169,7 +137,7 @@
                                                 <a href="{{ $itemRoute ? route($itemRoute) : 'javascript:void(0)' }}"
                                                    class="sidebar-link {{ $isItemActive ? 'active' : '' }}"
                                                    aria-expanded="false"
-                                                   data-current-route="{{ $currentRouteName }}"
+                                                   data-current-route="{{ $currentRoute }}"
                                                    data-item-route="{{ $itemRoute }}"
                                                    data-is-active="{{ $isItemActive ? 'true' : 'false' }}">
                                                     @if(!empty($item['icon']))
@@ -224,10 +192,6 @@
      */
     document.addEventListener('DOMContentLoaded', function() {
         'use strict';
-
-        // Initialize tooltips
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
         // Add click handlers to mini nav items
         document.querySelectorAll('.mini-nav-item').forEach(item => {

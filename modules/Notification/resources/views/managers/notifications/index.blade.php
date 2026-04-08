@@ -11,7 +11,8 @@
         @include('core::components.alerts')
 
         <div class="card">
-            {{-- Header Section --}}
+
+            {{-- Header --}}
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -19,185 +20,208 @@
                         <p class="small mb-0 text-muted">Administra y revisa todas tus notificaciones del sistema</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary mark-all-read-btn" @if($unreadCount === 0) disabled @endif>
-                            <i class="fas fa-check-double me-2"></i>Marcar todas como leídas
-                        </button>
+                        <a href="{{ route('notifications.preferences.index') }}" class="btn btn-outline-secondary">
+                            Preferencias
+                        </a>
+                        <div class="dropdown">
+                            <a href="#" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                Acciones
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button type="button" class="dropdown-item mark-all-read-btn" @if($unreadCount === 0) disabled @endif>
+                                        Marcar todas como leídas
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button type="button" class="dropdown-item delete-all-btn" @if($notifications->total() === 0) disabled @endif>
+                                        Eliminar todas
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Stats Cards --}}
+            {{-- Stats --}}
             <div class="card-body border-bottom">
+                @php
+                    $totalCount = $notifications->total();
+                    $readCount  = $totalCount - $unreadCount;
+                    $todayCount = \App\Models\User::find(auth()->id())->notifications()->whereDate('created_at', today())->count();
+                @endphp
                 <div class="row g-3">
-                    @php
-                        $totalCount = $notifications->total();
-                        $readCount = $totalCount - $unreadCount;
-                        $todayCount = \App\Models\User::find(auth()->id())->notifications()->whereDate('created_at', today())->count();
-                    @endphp
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-primary mb-2">Total</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $totalCount }}</h4>
-                                        <small class="text-muted">Todas las notificaciones</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title text-primary mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ $totalCount }}</h4>
+                                <small class="text-muted">Todas las notificaciones</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-warning mb-2">No leídas</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $unreadCount }}</h4>
-                                        <small class="text-muted">Pendientes de revisar</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title text-warning mb-2">No leídas</h6>
+                                <h4 class="mb-1 fw-bold">{{ $unreadCount }}</h4>
+                                <small class="text-muted">Pendientes de revisar</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title mb-2">Leídas</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $readCount }}</h4>
-                                        <small class="text-muted">Ya revisadas</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Leídas</h6>
+                                <h4 class="mb-1 fw-bold">{{ $readCount }}</h4>
+                                <small class="text-muted">Ya revisadas</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-info mb-2">Hoy</h6>
-                                        <h4 class="mb-1 fw-bold">{{ $todayCount }}</h4>
-                                        <small class="text-muted">Recibidas hoy</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title text-info mb-2">Hoy</h6>
+                                <h4 class="mb-1 fw-bold">{{ $todayCount }}</h4>
+                                <small class="text-muted">Recibidas hoy</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Filter Tabs --}}
+            {{-- Filter --}}
             <div class="card-body border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0 fw-semibold">Filtrar notificaciones</h6>
+                <form method="GET" action="{{ route('notifications.index') }}">
+                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                        <div class="flex-shrink-0" style="min-width: 200px;">
+                            <select name="filter" class="form-select select2 h-100" onchange="this.form.submit()">
+                                <option value="all"    {{ $filter === 'all'    ? 'selected' : '' }}>Todas</option>
+                                <option value="unread" {{ $filter === 'unread' ? 'selected' : '' }}>No leídas</option>
+                                <option value="read"   {{ $filter === 'read'   ? 'selected' : '' }}>Leídas</option>
+                            </select>
+                        </div>
+                        <div class="flex-fill">
+                            <div class="input-group h-100">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar notificaciones..."
+                                       value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            @if(request('search') || (request('filter') && request('filter') !== 'all'))
+                                <a href="{{ route('notifications.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
-                    <div class="btn-group" role="group">
-                        <a href="{{ route('notifications.index', ['filter' => 'all']) }}"
-                           class="btn btn-sm {{ $filter === 'all' ? 'btn-primary' : 'btn-outline-secondary' }}">
-                            Todas
-                        </a>
-                        <a href="{{ route('notifications.index', ['filter' => 'unread']) }}"
-                           class="btn btn-sm {{ $filter === 'unread' ? 'btn-primary' : 'btn-outline-secondary' }}">
-                            No leídas
-                         </a>
-                        <a href="{{ route('notifications.index', ['filter' => 'read']) }}"
-                           class="btn btn-sm {{ $filter === 'read' ? 'btn-primary' : 'btn-outline-secondary' }}">
-                            Leídas
-                        </a>
-                    </div>
-                </div>
+                </form>
             </div>
 
-            {{-- Notifications List --}}
+            {{-- Notifications list --}}
             <div class="card-body">
                 @if($notifications->count() > 0)
                     <div class="notifications-list">
                         @foreach($notifications as $notification)
                             @php
-                                $data = $notification->data;
-                                $isUnread = $notification->read_at === null;
+                                $data       = $notification->data;
+                                $isUnread   = $notification->read_at === null;
                                 $colorClass = $data['color'] ?? 'primary';
-                                $iconClass = $data['icon'] ?? 'fas fa-bell';
-                                $actionUrl = $data['action_url'] ?? null;
+                                $iconClass  = $data['icon']  ?? 'fas fa-bell';
+                                $actionUrl  = $data['action_url'] ?? null;
                             @endphp
 
-                            <div class="notification-item card mb-3 {{ $isUnread ? 'border-start border-' . $colorClass . ' border-3' : '' }} {{ $actionUrl ? 'notification-clickable' : '' }}"
+                            <div class="notification-item d-flex align-items-start gap-3 p-3 mb-2 rounded border {{ $isUnread ? 'border-start border-' . $colorClass . ' border-3 bg-light-subtle' : 'border-light' }}"
                                  data-notification-id="{{ $notification->id }}"
-                                 data-action-url="{{ $actionUrl }}"
-                                 style="position: relative; transition: all 0.2s ease; {{ $isUnread ? 'background-color: rgba(144, 187, 19, 0.02);' : '' }} {{ $actionUrl ? 'cursor: pointer;' : '' }}">
+                                 data-action-url="{{ $actionUrl }}">
 
-                                {{-- Delete button in top-right corner --}}
-                                <button type="button" class="btn btn-sm btn-light delete-notification-btn"
-                                        style="position: absolute; top: 12px; right: 12px; padding: 6px 10px; z-index: 10;">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                                {{-- Checkbox --}}
+                                <div class="flex-shrink-0 pt-1">
+                                    <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $notification->id }}">
+                                </div>
 
-                                <div class="card-body p-4">
-                                    <div class="d-flex gap-3 align-items-start">
-                                        {{-- Icon --}}
-                                        <div class="flex-shrink-0">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-{{ $colorClass }}-subtle"
-                                                 style="width: 56px; height: 56px;">
-                                                <i class="{{ $iconClass }} fs-4 text-{{ $colorClass }}"></i>
+                                {{-- Icon --}}
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-{{ $colorClass }}-subtle"
+                                         style="width: 48px; height: 48px;">
+                                        <i class="{{ $iconClass }} fs-5 text-{{ $colorClass }}"></i>
+                                    </div>
+                                </div>
+
+                                {{-- Content --}}
+                                <div class="flex-grow-1" style="min-width: 0;">
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <h6 class="mb-0 fw-semibold">{{ $data['title'] ?? 'Notificación' }}</h6>
+                                                @if($isUnread)
+                                                    <span class="badge rounded-pill bg-success" style="font-size: 9px; padding: 3px 8px;">NUEVO</span>
+                                                @endif
+                                                @if(isset($data['priority']) && $data['priority'] === 'high')
+                                                    <i class="fas fa-exclamation-circle text-danger" title="Prioridad alta"></i>
+                                                @endif
                                             </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}
+                                            </small>
                                         </div>
-
-                                        {{-- Content --}}
-                                        <div class="flex-grow-1" style="min-width: 0; padding-right: 30px;">
-                                            <div class="d-flex align-items-start justify-content-between gap-3 mb-2">
-                                                <div class="flex-grow-1">
-                                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                                        <h6 class="mb-0 fw-semibold" style="font-size: 15px;">
-                                                            {{ $data['title'] ?? 'Notificación' }}
-                                                        </h6>
-                                                        @if($isUnread)
-                                                            <span class="badge rounded-pill bg-success" style="font-size: 9px; padding: 3px 8px;">
-                                                                NUEVO
-                                                            </span>
-                                                        @endif
-                                                        @if(isset($data['priority']) && $data['priority'] === 'high')
-                                                            <i class="fas fa-exclamation-circle text-danger" title="Prioridad alta"></i>
-                                                        @endif
-                                                    </div>
-                                                    <small class="text-muted d-block" style="font-size: 12px;">
-                                                        <i class="fas fa-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}
-                                                    </small>
-                                                </div>
-                                            </div>
-
-                                            @if(isset($data['message']) && $data['message'])
-                                                <p class="mb-3 text-muted" style="font-size: 13px; line-height: 1.6;">
-                                                    {{ $data['message'] }}
-                                                </p>
-                                            @endif
-
-                                            {{-- Actions --}}
-                                            @if($isUnread)
-                                                <div class="d-flex gap-2 flex-wrap align-items-center">
-                                                    <button type="button" class="btn btn-sm btn-outline-success mark-as-read-btn">
-                                                        <i class="fas fa-check-circle me-1"></i>Marcar como leída
+                                        {{-- Per-row actions --}}
+                                        <div class="dropdown flex-shrink-0">
+                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-vertical"></i>
+                                            </a>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                @if($isUnread)
+                                                    <li>
+                                                        <button type="button" class="dropdown-item mark-as-read-btn">
+                                                            Marcar como leída
+                                                        </button>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                @endif
+                                                @if($actionUrl)
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ $actionUrl }}" target="_blank">
+                                                            Ver detalle
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                @endif
+                                                <li>
+                                                    <button type="button" class="dropdown-item delete-notification-btn">
+                                                        Eliminar
                                                     </button>
-                                                </div>
-                                            @endif
+                                                </li>
+                                            </ul>
                                         </div>
                                     </div>
+
+                                    @if(isset($data['message']) && $data['message'])
+                                        <p class="mb-0 mt-2 text-muted" style="font-size: 13px; line-height: 1.6;">
+                                            {{ $data['message'] }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    {{-- Empty State --}}
                     <div class="text-center py-5">
                         <div class="d-flex flex-column align-items-center">
                             <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                                <i class="fas fa-bell-slash fs-8"></i>
+                                <i class="fas fa-bell-slash fs-4"></i>
                             </div>
                             <h6 class="mb-1">No hay notificaciones</h6>
-                            <p class="text-muted mb-3">
+                            <p class="text-muted mb-0">
                                 @if($filter === 'unread')
                                     No tienes notificaciones sin leer en este momento
                                 @elseif($filter === 'read')
@@ -215,70 +239,106 @@
             @if($notifications->hasPages())
                 <div class="card-footer bg-white border-top">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
+                        <div class="text-muted">
                             Mostrando <strong>{{ $notifications->firstItem() }}</strong> a <strong>{{ $notifications->lastItem() }}</strong>
                             de <strong>{{ $notifications->total() }}</strong> notificaciones
                         </div>
-                        <nav aria-label="Page navigation">
-                            {{ $notifications->links() }}
-                        </nav>
+                        <nav>{{ $notifications->links() }}</nav>
                     </div>
                 </div>
             @endif
+
         </div>
     </div>
 
-    <!-- Confirmation Modal for Mark All as Read -->
-    <div class="modal fade" id="markAllAsReadModal" tabindex="-1" aria-labelledby="markAllAsReadModalLabel" aria-hidden="true">
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionada(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title" id="markAllAsReadModalLabel">
-                        Marcar todas como leídas
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">
-                        ¿Estás seguro de que deseas marcar <strong>todas las notificaciones como leídas</strong>?
-                        Esta acción no se puede deshacer.
-                    </p>
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> notificación(es)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="mark_read">Marcar como leídas</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-primary  w-100  mb-1" id="confirmMarkAllReadBtn">
-                        Sí, marcar todas
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary w-100 " data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Confirmation Modal for Delete Notification -->
-    <div class="modal fade" id="deleteNotificationModal" tabindex="-1" aria-labelledby="deleteNotificationModalLabel" aria-hidden="true">
+    {{-- Confirm: mark all as read --}}
+    <div class="modal fade" id="markAllAsReadModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title" id="deleteNotificationModalLabel">
-                        <i class="fas fa-trash text-danger me-2"></i>Eliminar notificación
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Marcar todas como leídas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">
-                        ¿Estás seguro de que deseas eliminar esta notificación?
-                        Esta acción no se puede deshacer.
-                    </p>
+                    <p class="mb-0">¿Deseas marcar <strong>todas las notificaciones como leídas</strong>? Esta acción no se puede deshacer.</p>
                 </div>
-                <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="confirmMarkAllReadBtn">
+                        Sí, marcar todas
                     </button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                        <i class="fas fa-trash me-1"></i>Sí, eliminar
-                    </button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Confirm: delete single --}}
+    <div class="modal fade" id="deleteNotificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar notificación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">¿Deseas eliminar esta notificación? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="confirmDeleteBtn">Sí, eliminar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Confirm: delete all --}}
+    <div class="modal fade" id="deleteAllModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar todas las notificaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">¿Deseas eliminar <strong>todas las notificaciones</strong>? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="confirmDeleteAllBtn">Sí, eliminar todas</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -286,211 +346,175 @@
 
 @endsection
 
-@push('styles')
-<style>
-    .notification-item {
-        transition: all 0.2s ease;
-    }
-
-    .notification-item:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .notification-item.border-primary {
-        background-color: rgba(144, 187, 19, 0.02);
-    }
-
-    .notification-item.border-primary:hover {
-        background-color: rgba(144, 187, 19, 0.05);
-        border-color: #081A28 !important;
-        box-shadow: 0 4px 12px rgba(144, 187, 19, 0.2);
-    }
-
-    .notification-clickable {
-        user-select: none;
-    }
-
-    .delete-notification-btn {
-        transition: all 0.15s ease;
-        border-radius: 4px;
-        color: #6c757d;
-    }
-
-    .delete-notification-btn:hover {
-        background-color: #dc3545 !important;
-        color: white !important;
-        border-color: #dc3545 !important;
-        transform: scale(1.1);
-    }
-
-    .stat-card {
-        transition: all 0.2s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-</style>
-@endpush
-
 @push('scripts')
 <script>
-$(document).ready(function() {
-    let currentDeleteBtn = null;
-    const markAllReadModal = new bootstrap.Modal(document.getElementById('markAllAsReadModal'));
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteNotificationModal'));
+$(document).ready(function () {
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-    // Make notification clickable to open document
-    $('.notification-clickable').on('click', function(e) {
-        // Don't trigger if clicking on buttons
-        if ($(e.target).closest('button').length > 0) {
-            return;
-        }
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
-        const actionUrl = $(this).data('action-url');
-        if (actionUrl) {
-            window.open(actionUrl, '_blank');
-        }
+    const markAllModal   = new bootstrap.Modal(document.getElementById('markAllAsReadModal'));
+    const deleteModal    = new bootstrap.Modal(document.getElementById('deleteNotificationModal'));
+    const deleteAllModal = new bootstrap.Modal(document.getElementById('deleteAllModal'));
+
+    let currentDeleteItem = null;
+
+    // -----------------------------------------------------------------------
+    // Bulk action
+    // -----------------------------------------------------------------------
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
     });
 
-    // Mark as read functionality (individual)
-    $('.mark-as-read-btn').on('click', function() {
-        const btn = $(this);
-        const notificationCard = btn.closest('.notification-item');
-        const notificationId = notificationCard.data('notification-id');
-        const url = '{{ url('/api/notifications') }}/' + notificationId + '/read';
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
 
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Procesando...');
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una notificación.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' notificación(es) seleccionadas?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
         $.ajax({
-            url: url,
-            type: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            url: '{{ route('notifications.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' notificación(es) procesadas.');
+                setTimeout(() => location.reload(), 800);
             },
-            success: function(response) {
-                toastr.success('Notificación marcada como leída', 'Éxito', {
-                    positionClass: 'toast-bottom-right'
-                });
-
-                // Remove the card with animation
-                notificationCard.fadeOut(300, function() {
-                    $(this).remove();
-
-                    // If no notifications left, reload page to show empty state
-                    if ($('.notification-item').length === 0) {
-                        setTimeout(() => location.reload(), 500);
-                    }
-                });
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
             },
-            error: function(xhr) {
-                btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>Marcar como leída');
-                toastr.error('Error al marcar la notificación como leída', 'Error', {
-                    positionClass: 'toast-bottom-right'
-                });
-            }
         });
     });
 
-    // Delete notification functionality - Show modal
-    $('.delete-notification-btn').on('click', function() {
-        currentDeleteBtn = $(this);
+    // -----------------------------------------------------------------------
+    // Per-row: mark as read
+    // -----------------------------------------------------------------------
+
+    $(document).on('click', '.mark-as-read-btn', function () {
+        const $item = $(this).closest('.notification-item');
+        const id    = $item.data('notification-id');
+        const url   = '{{ url('/api/notifications') }}/' + id + '/read';
+
+        $.ajax({
+            url,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function () {
+                toastr.success('Notificación marcada como leída');
+                setTimeout(() => location.reload(), 600);
+            },
+            error: function () {
+                toastr.error('Error al marcar la notificación como leída');
+            },
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // Per-row: delete
+    // -----------------------------------------------------------------------
+
+    $(document).on('click', '.delete-notification-btn', function (e) {
+        e.stopPropagation();
+        currentDeleteItem = $(this).closest('.notification-item');
         deleteModal.show();
     });
 
-    // Confirm delete from modal
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!currentDeleteBtn) return;
+    $('#confirmDeleteBtn').on('click', function () {
+        if (!currentDeleteItem) { return; }
 
-        const btn = currentDeleteBtn;
-        const notificationCard = btn.closest('.notification-item');
-        const notificationId = notificationCard.data('notification-id');
-        const url = '{{ url('/api/notifications') }}/' + notificationId;
+        const id  = currentDeleteItem.data('notification-id');
+        const url = '{{ url('/api/notifications') }}/' + id;
+        const $item = currentDeleteItem;
 
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Eliminando...');
         deleteModal.hide();
 
         $.ajax({
-            url: url,
+            url,
             type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                toastr.success('Notificación eliminada correctamente', 'Éxito', {
-                    positionClass: 'toast-bottom-right'
-                });
-
-                // Remove the card with animation
-                notificationCard.fadeOut(300, function() {
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function () {
+                toastr.success('Notificación eliminada');
+                $item.fadeOut(300, function () {
                     $(this).remove();
-
-                    // If no notifications left, reload page to show empty state
-                    if ($('.notification-item').length === 0) {
-                        setTimeout(() => location.reload(), 500);
-                    }
+                    if ($('.notification-item').length === 0) { setTimeout(() => location.reload(), 400); }
                 });
             },
-            error: function(xhr) {
-                btn.prop('disabled', false).html('<i class="fas fa-trash me-1"></i>Eliminar');
-                toastr.error('Error al eliminar la notificación', 'Error', {
-                    positionClass: 'toast-bottom-right'
-                });
-            }
+            error: function () {
+                toastr.error('Error al eliminar la notificación');
+            },
         });
     });
 
-    // Mark all as read functionality - Show modal
-    $('.mark-all-read-btn').on('click', function() {
-        // Don't proceed if button is disabled (no unread notifications)
-        if ($(this).prop('disabled')) {
-            return;
-        }
-        markAllReadModal.show();
+    // -----------------------------------------------------------------------
+    // Mark all as read
+    // -----------------------------------------------------------------------
+
+    $('.mark-all-read-btn').on('click', function () {
+        if ($(this).prop('disabled')) { return; }
+        markAllModal.show();
     });
 
-    // Confirm mark all as read from modal
-    $('#confirmMarkAllReadBtn').on('click', function() {
-        const btn = $('.mark-all-read-btn');
-        const originalHtml = btn.html();
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Procesando...');
-        markAllReadModal.hide();
-
+    $('#confirmMarkAllReadBtn').on('click', function () {
+        markAllModal.hide();
         $.ajax({
             url: '{{ route('api.notifications.mark-all-read') }}',
             type: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function () {
+                toastr.success('Todas las notificaciones han sido marcadas como leídas');
+                setTimeout(() => location.reload(), 800);
             },
-            success: function(response) {
-                toastr.success('Todas las notificaciones han sido marcadas como leídas', 'Éxito', {
-                    positionClass: 'toast-bottom-right'
-                });
-
-                setTimeout(() => location.reload(), 1000);
+            error: function () {
+                toastr.error('Error al marcar todas las notificaciones como leídas');
             },
-            error: function(xhr) {
-                btn.prop('disabled', false).html(originalHtml);
-                toastr.error('Error al marcar todas las notificaciones como leídas', 'Error', {
-                    positionClass: 'toast-bottom-right'
-                });
-            }
         });
     });
 
-    // Show session messages
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito', {
-            positionClass: 'toast-bottom-right'
-        });
-    @endif
+    // -----------------------------------------------------------------------
+    // Delete all
+    // -----------------------------------------------------------------------
 
-    @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error', {
-            positionClass: 'toast-bottom-right'
+    $('.delete-all-btn').on('click', function () {
+        if ($(this).prop('disabled')) { return; }
+        deleteAllModal.show();
+    });
+
+    $('#confirmDeleteAllBtn').on('click', function () {
+        deleteAllModal.hide();
+        $.ajax({
+            url: '{{ route('notifications.destroy-all') }}',
+            type: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function () {
+                toastr.success('Todas las notificaciones han sido eliminadas');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function () {
+                toastr.error('Error al eliminar todas las notificaciones');
+            },
         });
+    });
+
+    // -----------------------------------------------------------------------
+    // Flash messages
+    // -----------------------------------------------------------------------
+
+    @if (session('success'))
+        toastr.success(@json(session('success')));
+    @endif
+    @if (session('error'))
+        toastr.error(@json(session('error')));
     @endif
 });
 </script>

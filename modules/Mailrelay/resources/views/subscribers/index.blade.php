@@ -93,7 +93,7 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <select name="status" class="form-select">
+                        <select class="select2" name="status" class="form-select">
                             <option value="">Todos los estados</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Activos</option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pendientes</option>
@@ -103,14 +103,14 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <select name="sync_status" class="form-select">
+                        <select class="select2" name="sync_status" class="form-select">
                             <option value="">Estado de sincronización</option>
                             <option value="synced" {{ request('sync_status') == 'synced' ? 'selected' : '' }}>Sincronizados</option>
                             <option value="not_synced" {{ request('sync_status') == 'not_synced' ? 'selected' : '' }}>No sincronizados</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <select name="validation" class="form-select">
+                        <select class="select2" name="validation" class="form-select">
                             <option value="">Validación</option>
                             <option value="validated" {{ request('validation') == 'validated' ? 'selected' : '' }}>Validados</option>
                             <option value="not_validated" {{ request('validation') == 'not_validated' ? 'selected' : '' }}>No validados</option>

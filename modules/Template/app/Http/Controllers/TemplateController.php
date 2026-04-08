@@ -7,7 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Modules\Template\Http\Requests\StoreTemplateRequest;
 use Modules\Template\Http\Requests\UpdateTemplateRequest;
@@ -125,6 +125,8 @@ class TemplateController extends Controller
      */
     public function preview(Request $request): JsonResponse
     {
+        $this->authorize('create', Template::class);
+
         $request->validate([
             'content' => ['required', 'string', 'max:100000'],
         ]);
@@ -132,13 +134,14 @@ class TemplateController extends Controller
         try {
             $content = $this->sanitizeTemplateContent($request->input('content'));
 
-            $html = Blade::render($content, [
-                'title' => 'Título de ejemplo',
-                'description' => 'Descripción de ejemplo para la vista previa.',
-                'content' => '<p>Este es el contenido de ejemplo que se mostrará en el template.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>',
-                'keywords' => 'ejemplo, preview, template',
-                'canonical' => url('/'),
-            ]);
+            $variables = [
+                '{{ $title }}' => 'Título de ejemplo',
+                '{{ $description }}' => 'Descripción de ejemplo para la vista previa.',
+                '{{ $content }}' => '<p>Este es el contenido de ejemplo...</p>',
+                '{{ $keywords }}' => 'ejemplo, preview, template',
+                '{{ $canonical }}' => url('/'),
+            ];
+            $html = str_replace(array_keys($variables), array_values($variables), $content);
 
             return response()->json(['html' => $html]);
         } catch (\InvalidArgumentException $e) {
@@ -173,10 +176,22 @@ class TemplateController extends Controller
     }
 
     /**
+     * Mostrar página dedicada de importación de plantilla
+     */
+    public function importPage(): View
+    {
+        $this->authorize('create', Template::class);
+
+        return view('template::settings.import');
+    }
+
+    /**
      * Importar una plantilla desde un archivo ZIP
      */
     public function importZip(Request $request): RedirectResponse
     {
+        $this->authorize('create', Template::class);
+
         $request->validate([
             'zip_file' => ['required', 'file', 'mimes:zip', 'max:20480'],
         ]);
@@ -198,7 +213,7 @@ class TemplateController extends Controller
 
             if ($entry === false || str_contains($entry, '..')) {
                 $zip->close();
-                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+                File::deleteDirectory($extractPath);
 
                 return back()->with('error', 'ZIP inválido: se detectó una ruta maliciosa.');
             }
@@ -212,7 +227,7 @@ class TemplateController extends Controller
         foreach ($iterator as $file) {
             $resolved = realpath($file->getPathname());
             if ($resolved === false || ! str_starts_with($resolved, $realExtractPath)) {
-                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+                File::deleteDirectory($extractPath);
 
                 return back()->with('error', 'ZIP inválido: se detectó una ruta maliciosa tras la extracción.');
             }
@@ -236,7 +251,7 @@ class TemplateController extends Controller
         }
 
         if (! $templateDir) {
-            \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+            File::deleteDirectory($extractPath);
 
             return back()->with('error', 'El ZIP no contiene un archivo template.json válido.');
         }
@@ -248,13 +263,13 @@ class TemplateController extends Controller
         $destination = base_path('platform/themes/'.$slug);
 
         if (is_dir($destination)) {
-            \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+            File::deleteDirectory($extractPath);
 
             return back()->with('error', "Ya existe una plantilla con el slug \"{$slug}\".");
         }
 
-        \Illuminate\Support\Facades\File::moveDirectory($templateDir, $destination);
-        \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+        File::moveDirectory($templateDir, $destination);
+        File::deleteDirectory($extractPath);
 
         return redirect()
             ->route('settings.templates.index')

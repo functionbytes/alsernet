@@ -6,6 +6,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as LaravelEvent
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class EventServiceProvider extends LaravelEventServiceProvider
 {
@@ -25,6 +26,11 @@ class EventServiceProvider extends LaravelEventServiceProvider
 
     public function register(): void
     {
+        // Don't register anything if Pulse module is disabled
+        if (Module::find('Pulse')?->isDisabled()) {
+            return;
+        }
+
         $this->app->register(RouteServiceProvider::class);
 
         // Merge module config
@@ -36,6 +42,10 @@ class EventServiceProvider extends LaravelEventServiceProvider
 
     public function boot(): void
     {
+        if (Module::find('Pulse')?->isDisabled()) {
+            return;
+        }
+
         parent::boot();
 
         $this->registerCommands();
@@ -145,6 +155,7 @@ class EventServiceProvider extends LaravelEventServiceProvider
             'title' => 'Monitoreo del sistema',
             'items' => [
                 ['label' => 'Dashboard', 'route' => 'pulse.dashboard'],
+                ['label' => 'Configuración', 'route' => 'settings.pulse.index'],
             ],
         ]);
     }

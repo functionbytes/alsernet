@@ -3,8 +3,11 @@
 namespace Modules\Role\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -13,7 +16,7 @@ class PermissionController extends Controller
     /**
      * Display a listing of permissions
      */
-    public function index(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\View\View
+    public function index(Request $request): JsonResponse|View
     {
         $search = $request->get('search', '');
         $perPage = $request->get('per_page', $this->getPaginationPerPage());
@@ -37,7 +40,7 @@ class PermissionController extends Controller
     /**
      * Show the form for creating a new permission
      */
-    public function create(): \Illuminate\View\View
+    public function create(): View
     {
         return view('role::permissions.create');
     }
@@ -45,7 +48,7 @@ class PermissionController extends Controller
     /**
      * Store a newly created permission in storage
      */
-    public function store(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => [
@@ -90,7 +93,7 @@ class PermissionController extends Controller
     /**
      * Show the form for editing the specified permission
      */
-    public function edit(Permission $permission): \Illuminate\View\View
+    public function edit(Permission $permission): View
     {
         return view('role::permissions.edit', compact('permission'));
     }
@@ -98,7 +101,7 @@ class PermissionController extends Controller
     /**
      * Update the specified permission in storage
      */
-    public function update(Request $request, Permission $permission): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    public function update(Request $request, Permission $permission): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => [
@@ -143,7 +146,7 @@ class PermissionController extends Controller
     /**
      * Remove the specified permission from storage
      */
-    public function destroy(Request $request, Permission $permission): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    public function destroy(Request $request, Permission $permission): JsonResponse|RedirectResponse
     {
         // Check if permission is assigned to any roles
         if (Role::whereHas('permissions', function ($query) use ($permission) {
@@ -164,5 +167,28 @@ class PermissionController extends Controller
 
         return redirect()->route('settings.permissions.index')
             ->with('success', 'Permiso eliminado correctamente.');
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'in:delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:permissions,id'],
+        ]);
+
+        $permissions = Permission::whereIn('id', $request->ids)
+            ->whereDoesntHave('roles')
+            ->get();
+
+        $skipped = count($request->ids) - $permissions->count();
+        $permissions->each->delete();
+
+        $msg = $permissions->count().' permiso(s) eliminado(s).';
+        if ($skipped) {
+            $msg .= " {$skipped} omitido(s) por estar asignado(s) a roles.";
+        }
+
+        return response()->json(['success' => true, 'count' => $permissions->count(), 'message' => $msg]);
     }
 }

@@ -19,6 +19,8 @@ class PageCacheService
 
     private const PAGES_ENABLED_KEY = 'cache.pages_enabled';
 
+    private const CACHED_COUNT_KEY = 'pages:stats:cached_count';
+
     /**
      * Check if page caching is enabled
      */
@@ -98,20 +100,42 @@ class PageCacheService
 
         $locale = $locale ?? app()->getLocale();
 
+        // Cargar traducciones si no están en memoria
+        if (! $page->relationLoaded('translations')) {
+            $page->load('translations.localeModel');
+        }
+
+        $translation = $page->translations->firstWhere('locale', $locale);
+
         $data = [
+            // Campos no traducibles (siempre del modelo base)
             'id' => $page->id,
-            'title' => $page->title,
-            'slug' => $page->slug,
-            'content' => $page->content,
-            'meta_title' => $page->meta_title,
-            'meta_description' => $page->meta_description,
             'template' => $page->template,
-            'published_at' => $page->published_at,
+            'header_style' => $page->header_style,
+            'featured_image' => $page->featured_image,
+            'status' => $page->status,
+            'publish_at' => $page->publish_at,
+            'unpublish_at' => $page->unpublish_at,
+            'created_at' => $page->created_at,
+            'updated_at' => $page->updated_at,
             'locale' => $locale,
             'cached_at' => now()->toDateTimeString(),
+
+            // Campos traducibles: traducción > fallback modelo
+            'title' => $translation?->title ?? $page->title,
+            'slug' => $translation?->slug ?? $page->slug,
+            'content' => $translation?->content ?? $page->content,
+            'description' => $translation?->description ?? $page->description,
+            'published_at' => $translation?->published_at ?? $page->published_at,
+            'seo_title' => $translation?->seo_title ?? $page->seo_title,
+            'seo_description' => $translation?->seo_description ?? $page->seo_description,
+            'seo_keywords' => $translation?->seo_keywords ?? $page->seo_keywords,
+            'seo_image_url' => $translation?->seo_image_url ?? $page->seo_image_url,
+            'seo_noindex' => $translation?->seo_noindex ?? $page->seo_noindex,
+            'structured_data' => $page->generateCompleteSchema(),
         ];
 
-        $key = self::getCacheKey($page->slug, $locale);
+        $key = self::getCacheKey($translation?->slug ?? $page->slug, $locale);
 
         // Use tags if cache store supports them (Redis), otherwise put directly
         if (self::supportsTagging()) {
@@ -119,6 +143,8 @@ class PageCacheService
         } else {
             Cache::put($key, $data, self::getTtlInSeconds());
         }
+
+        Cache::increment(self::CACHED_COUNT_KEY);
 
         // Record audit
         self::auditLog('cached', $page->id, $slug = $page->slug);
@@ -133,6 +159,8 @@ class PageCacheService
     {
         $locale = $locale ?? app()->getLocale();
         Cache::forget(self::getCacheKey($slug, $locale));
+        Cache::forget('pages:cache:blacklist');
+        self::decrementCachedCount();
         self::auditLog('cleared', null, $slug);
     }
 
@@ -141,12 +169,13 @@ class PageCacheService
      */
     public static function forgetAllLocales(string $slug): void
     {
-        $locales = config('app.supported_locales', [app()->getLocale()]);
+        $locales = PageService::getSupportedLocales();
 
         foreach ($locales as $locale) {
             Cache::forget(self::getCacheKey($slug, $locale));
         }
 
+        Cache::decrement(self::CACHED_COUNT_KEY, count($locales));
         self::auditLog('cleared_all_locales', null, $slug);
     }
 
@@ -159,14 +188,13 @@ class PageCacheService
         if (self::supportsTagging()) {
             Cache::tags(['pages'])->flush();
         } else {
-            // For file driver, manually delete all page cache keys
-            $keys = Cache::getStore()->getPrefix() ? glob(storage_path('framework/cache').'/*') : [];
-            foreach ($keys as $key) {
-                if (strpos(basename($key), 'pages:') === 0) {
-                    @unlink($key);
-                }
-            }
+            // For non-taggable drivers (file, array), full flush is the only safe option
+            // since Laravel hashes cache keys and partial flush is not supported
+            Cache::flush();
         }
+
+        Cache::forget('pages:cache:blacklist');
+        Cache::put(self::CACHED_COUNT_KEY, 0);
 
         self::auditLog('flushed_all', null, null);
         Log::info('All page cache flushed');
@@ -188,7 +216,8 @@ class PageCacheService
      */
     public static function warm(Page $page): void
     {
-        $locales = config('app.supported_locales', [app()->getLocale()]);
+        $locales = PageService::getSupportedLocales();
+        $page->load('translations');  // un solo query
 
         foreach ($locales as $locale) {
             self::set($page, $locale);
@@ -204,7 +233,6 @@ class PageCacheService
     public static function warmPopular(int $limit = 10): int
     {
         $pages = Page::published()
-            ->where('is_active', true)
             ->orderByDesc('views_count')
             ->limit($limit)
             ->get();
@@ -228,12 +256,6 @@ class PageCacheService
         $totalRequests = $totalHits + $totalMisses;
         $hitRatio = $totalRequests > 0 ? round(($totalHits / $totalRequests) * 100, 2) : 0;
 
-        // Get size
-        $size = self::getCacheSize();
-
-        // Get cached pages count
-        $cachedCount = self::getCachedPagesCount();
-
         return [
             'enabled' => self::isEnabled(),
             'ttl_minutes' => self::getTtlInMinutes(),
@@ -241,45 +263,38 @@ class PageCacheService
             'total_misses' => $totalMisses,
             'total_requests' => $totalRequests,
             'hit_ratio' => $hitRatio,
-            'size_bytes' => $size,
-            'cached_pages_count' => $cachedCount,
+            // cached_pages_count is an approximation: TTL-expired entries are not decremented
+            'cached_pages_count' => self::getCachedPagesCount(),
             'last_cleared' => Cache::get(self::STATS_PREFIX.'last_cleared'),
             'last_warmed' => Cache::get(self::STATS_PREFIX.'last_warmed'),
         ];
     }
 
     /**
-     * Get cached pages count
+     * Get cached pages count from dedicated Redis counter.
+     *
+     * Using a counter instead of Redis key scanning because pages are stored
+     * under tag-namespaced keys that do not match the plain `pages:*` pattern.
      */
     private static function getCachedPagesCount(): int
     {
-        if (Cache::store() === 'redis') {
-            $keys = Cache::connection()->keys(self::CACHE_PREFIX.'*');
-
-            return count($keys);
-        }
-
-        return 0;
-    }
-
-    /**
-     * Get cache size in bytes
-     */
-    private static function getCacheSize(): int
-    {
-        if (Cache::store() !== 'redis') {
+        if (! self::isEnabled()) {
             return 0;
         }
 
-        $size = 0;
-        $keys = Cache::connection()->keys(self::CACHE_PREFIX.'*');
+        return max(0, (int) Cache::get(self::CACHED_COUNT_KEY, 0));
+    }
 
-        foreach ($keys as $key) {
-            $value = Cache::connection()->get($key);
-            $size += strlen(serialize($value));
+    /**
+     * Decrement cached count, clamping at zero to avoid negative values.
+     */
+    private static function decrementCachedCount(): void
+    {
+        $current = (int) Cache::get(self::CACHED_COUNT_KEY, 0);
+
+        if ($current > 0) {
+            Cache::decrement(self::CACHED_COUNT_KEY);
         }
-
-        return $size;
     }
 
     /**
@@ -301,15 +316,17 @@ class PageCacheService
     }
 
     /**
-     * Check if page is blacklisted from caching
+     * Check if page is blacklisted from caching.
+     *
+     * The full blacklist is fetched once per 5 minutes and cached in Redis,
+     * avoiding one DB query per locale per page during warmCache().
      */
     private static function isBlacklisted(int $pageId): bool
     {
-        $config = PageCacheConfig::where('page_id', $pageId)
-            ->where('cache_enabled', false)
-            ->exists();
+        $blacklisted = Cache::remember('pages:cache:blacklist', 300, fn () => PageCacheConfig::where('cache_enabled', false)->pluck('page_id')->toArray()
+        );
 
-        return $config;
+        return in_array($pageId, $blacklisted, true);
     }
 
     /**

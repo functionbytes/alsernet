@@ -9,33 +9,7 @@
         'title' => 'Editor de Componente de Email'
     ])
 
-    {{-- Alerts --}}
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fa fa-check-circle fs-4 me-2"></i>
-                <div>{{ session('success') }}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-start">
-                <i class="fa fa-exclamation-circle fs-4 me-2 mt-1"></i>
-                <div>
-                    <h6 class="alert-heading fw-bold mb-2">Errores de Validación</h6>
-                    <ul class="mb-0">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    @include('mailer::partials.alerts')
 
     {{-- Main Form --}}
     <form method="POST" action="{{ route('mailers.components.update', $component->uid) }}" id="formEdit">
@@ -384,31 +358,31 @@
                         <div class="list-group list-group-flush">
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Guardar plantilla</span>
+                                    <span class="text-muted">Guardar plantilla</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+S</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Autocompletar</span>
+                                    <span class="text-muted">Autocompletar</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+Space</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Comentar/Descomentar</span>
+                                    <span class="text-muted">Comentar/Descomentar</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+/</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Expandir Emmet</span>
+                                    <span class="text-muted">Expandir Emmet</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Tab</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Envolver con Emmet</span>
+                                    <span class="text-muted">Envolver con Emmet</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+Alt+Enter</kbd>
                                 </div>
                             </div>
@@ -453,16 +427,14 @@
 <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.9/dist/beautify.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.9/dist/beautify-html.js"></script>
 
-<script>
-// Prevent Quill from initializing on this page (we use CodeMirror instead)
-console.log('🎨 CodeMirror Email Editor Loading...');
+<!-- Shared Mailer Editor utilities -->
+<script src="{{ asset('js/modules/mailer-editor.js') }}"></script>
 
+<script>
 // Declare editor as global variable so it can be accessed in form submit handler
 let editor;
 
 $(document).ready(function() {
-    console.log('✅ DOM Ready - Initializing CodeMirror');
-
     // Initialize Bootstrap Tooltips
     $('[data-bs-toggle="tooltip"]').each(function() {
         new bootstrap.Tooltip(this);
@@ -470,313 +442,28 @@ $(document).ready(function() {
 
     // Initialize Select2
     if (typeof $.fn.select2 !== 'undefined') {
-        $('.select2').select2({
-            allowClear: false,
-            width: '100%'
-        });
+        $('.select2').select2({ allowClear: false, width: '100%' });
     }
 
-    // Verify textarea exists before initializing CodeMirror
-    const $contentTextarea = $('#content');
-    if ($contentTextarea.length === 0) {
-        console.error('❌ Textarea #content not found!');
-        return;
-    }
+    // Initialize CodeMirror via shared utility
+    MailerEditor.registerHintHelpers();
+    editor = MailerEditor.initCodeMirror();
+    if (!editor) return;
+    MailerEditor.bindAutocomplete(editor);
 
-    console.log('📝 Textarea found, initializing CodeMirror...');
-
-    // Initialize CodeMirror
-    editor = CodeMirror.fromTextArea($contentTextarea[0], {
-        mode: 'htmlmixed',
-        theme: 'monokai',
-        lineNumbers: true,
-        lineWrapping: true,
-        indentUnit: 4,
-        tabSize: 4,
-        indentWithTabs: false,
-        autoCloseTags: true,
-        autoCloseBrackets: true,
-        styleActiveLine: true,
-        matchBrackets: true,
-        highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
-        extraKeys: {
-            'Ctrl-Space': 'autocomplete',
-            'Ctrl-/': 'toggleComment',
-            'Tab': 'emmetExpandAbbreviation',
-            'Ctrl-Alt-Enter': 'emmetWrapWithAbbreviation'
-        }
-    });
-
-    console.log('✨ CodeMirror initialized successfully!', editor);
-
-    // Initialize Emmet for CodeMirror
-    try {
-        if (typeof emmetCodeMirror !== 'undefined') {
-            emmetCodeMirror(editor);
-            console.log('✅ Emmet initialized successfully!');
-        }
-    } catch (e) {
-        console.warn('⚠️ Emmet not available:', e);
-    }
-
-    // Smart Autocomplete - Complete system for email templates
-    CodeMirror.registerHelper('hint', 'smartHints', function(editor) {
-        const cur = editor.getCursor();
-        const token = editor.getTokenAt(cur);
-        const line = editor.getLine(cur.line);
-        const start = token.start;
-        const end = cur.ch;
-        const word = token.string.substring(0, end - start).toLowerCase();
-
-        const beforeCursor = line.substring(0, cur.ch);
-        const insideStyleAttr = beforeCursor.match(/style\s*=\s*["'][^"']*$/);
-        const insideTag = beforeCursor.match(/<[^>]*$/);
-        const afterTagName = beforeCursor.match(/<\w+\s+[\w\s-]*$/);
-        const insideHref = beforeCursor.match(/href\s*=\s*["'][^"']*$/);
-        const insideSrc = beforeCursor.match(/src\s*=\s*["'][^"']*$/);
-        const insideAlt = beforeCursor.match(/alt\s*=\s*["'][^"']*$/);
-
-        let completions = [];
-
-        if (insideStyleAttr) {
-            // 🎨 CSS Properties - Complete for emails
-            const cssProperties = [
-                // Colors & Background
-                'color', 'background-color', 'background', 'opacity',
-                // Dimensions
-                'width', 'height', 'max-width', 'min-width', 'min-height', 'max-height',
-                // Spacing
-                'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
-                'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
-                // Borders
-                'border', 'border-color', 'border-radius', 'border-width', 'border-style',
-                'border-top', 'border-bottom', 'border-left', 'border-right',
-                // Typography
-                'font-size', 'font-weight', 'font-family', 'font-style', 'line-height',
-                'text-align', 'text-decoration', 'text-transform', 'letter-spacing',
-                'text-indent', 'white-space', 'word-break', 'word-wrap',
-                // Layout
-                'display', 'position', 'overflow', 'overflow-x', 'overflow-y',
-                'visibility', 'z-index', 'float', 'clear',
-                // Flexbox
-                'flex', 'flex-direction', 'flex-wrap', 'flex-grow', 'flex-shrink',
-                'justify-content', 'align-items', 'align-content', 'gap',
-                // Effects
-                'box-shadow', 'text-shadow', 'transform', 'transition', 'animation'
-            ];
-
-            completions = cssProperties
-                .filter(prop => prop.toLowerCase().startsWith(word))
-                .map(prop => ({text: prop + ': ', displayText: `🎨 ${prop}`}));
-        }
-        else if (insideHref) {
-            // 🔗 URLs & Links
-            const urls = [
-                '{SITE_URL}', '{RESET_LINK}', 'https://', 'http://', 'mailto:', 'tel:',
-                '#', 'javascript:void(0)'
-            ];
-
-            completions = urls
-                .filter(url => url.toLowerCase().startsWith(word))
-                .map(url => ({text: url, displayText: `🔗 ${url}`}));
-        }
-        else if (insideSrc) {
-            // 🖼️ Image URLs & Variables
-            const images = [
-                '{LOGO_URL}', 'https://', 'http://', 'data:image/png;base64,'
-            ];
-
-            completions = images
-                .filter(img => img.toLowerCase().startsWith(word))
-                .map(img => ({text: img, displayText: `🖼️ ${img}`}));
-        }
-        else if (insideAlt) {
-            // 📝 Common alt text
-            const alts = [
-                'Logo', 'Banner', 'Product Image', 'Company Logo', 'Hero Image', 'Icon',
-                'Button Image', 'Social Icon', 'Header Image', 'Footer Image'
-            ];
-
-            completions = alts
-                .filter(alt => alt.toLowerCase().startsWith(word))
-                .map(alt => ({text: alt, displayText: `📝 ${alt}`}));
-        }
-        else if (afterTagName) {
-            // 🏷️ HTML Attributes - Email focused
-            const htmlAttributes = [
-                // Basic
-                'id', 'class', 'style', 'dir',
-                // Links & Media
-                'href', 'src', 'alt', 'title', 'target',
-                // Form
-                'name', 'value', 'type', 'placeholder', 'required', 'disabled', 'readonly',
-                // Table (Email common)
-                'cellpadding', 'cellspacing', 'border', 'bordercolor', 'align', 'valign',
-                'colspan', 'rowspan', 'bgcolor', 'width', 'height',
-                // Email specific
-                'role', 'aria-label', 'aria-describedby',
-                // Events
-                'onclick', 'onload', 'onmouseover', 'onmouseout',
-                // Others
-                'action', 'method', 'enctype', 'tabindex', 'lang'
-            ];
-
-            completions = htmlAttributes
-                .filter(attr => attr.toLowerCase().startsWith(word))
-                .map(attr => ({text: attr + '="', displayText: `🏷️ ${attr}`}));
-        }
-        else if (insideTag) {
-            // 📦 Classes - Bootstrap & Custom
-            const classes = [
-                // Email container classes
-                'email-wrapper', 'email-container', 'email-body', 'email-footer',
-                'email-header', 'email-content', 'email-section',
-                // Bootstrap Layout
-                'container', 'container-fluid', 'row', 'col', 'col-12', 'col-6', 'col-4', 'col-3',
-                'col-md-6', 'col-lg-6', 'col-xl-6',
-                // Spacing
-                'mt-1', 'mt-2', 'mt-3', 'mt-4', 'mt-5', 'mb-1', 'mb-2', 'mb-3', 'mb-4', 'mb-5',
-                'p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'px-2', 'py-2', 'pt-2', 'pb-2',
-                'ms-1', 'me-1', 'ms-auto',
-                // Display & Flex
-                'd-flex', 'd-block', 'd-none', 'd-inline', 'd-grid',
-                'flex-column', 'flex-row', 'justify-content-center', 'justify-content-between',
-                'justify-content-end', 'align-items-center', 'align-items-start', 'gap-2', 'gap-3',
-                // Colors
-                'text-primary', 'text-success', 'text-danger', 'text-warning', 'text-muted',
-                'bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 'bg-light',
-                // Typography
-                'text-center', 'text-end', 'text-start', 'fw-bold', 'fw-normal', 'small', 'lead',
-                // Buttons
-                'btn', 'btn-primary', 'btn-secondary', 'btn-success', 'btn-danger',
-                'btn-outline-primary', 'btn-lg', 'btn-sm',
-                // Cards & Sections
-                'card', 'card-body', 'card-header', 'card-footer', 'card-title', 'section-block',
-                // Tables
-                'table', 'table-striped', 'table-hover', 'table-bordered', 'table-responsive',
-                // Forms
-                'form-control', 'form-group', 'form-label', 'input-group',
-                // Alerts
-                'alert', 'alert-primary', 'alert-success', 'alert-danger', 'alert-warning',
-                // Utilities
-                'rounded', 'shadow', 'border', 'h-100', 'w-100', 'overflow-hidden',
-                'text-truncate', 'text-uppercase', 'text-lowercase'
-            ];
-
-            completions = classes
-                .filter(cls => cls.toLowerCase().startsWith(word))
-                .map(cls => ({text: cls, displayText: `📦 ${cls}`}));
-        }
-        else {
-            // 🏷️ HTML Tags - Email template focused
-            const htmlTags = [
-                // Email structure
-                'html', 'head', 'body', 'meta', 'title',
-                // Containers
-                'div', 'section', 'header', 'footer', 'main', 'article',
-                // Tables (Email common)
-                'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
-                // Content
-                'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'span', 'strong', 'em', 'u', 'code', 'pre', 'blockquote',
-                // Lists
-                'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-                // Media
-                'img', 'picture', 'figure', 'figcaption',
-                // Links & Navigation
-                'a', 'nav', 'menu',
-                // Forms
-                'form', 'input', 'button', 'label', 'select', 'textarea', 'fieldset',
-                // Text
-                'br', 'hr', 'small', 'mark', 'del', 'ins', 'sub', 'sup',
-                // Semantic
-                'aside', 'address', 'time'
-            ];
-
-            completions = htmlTags
-                .filter(tag => tag.toLowerCase().startsWith(word))
-                .map(tag => ({text: tag, displayText: `🏷️ ${tag}`}));
-        }
-
-        return {
-            from: CodeMirror.Pos(cur.line, start),
-            to: CodeMirror.Pos(cur.line, end),
-            list: completions
-        };
-    });
-
-    // 🔤 Template Variables Hint
-    CodeMirror.registerHelper('hint', 'variables', function(editor) {
-        const cur = editor.getCursor();
-        const token = editor.getTokenAt(cur);
-        const line = editor.getLine(cur.line);
-        const start = token.start;
-        const end = cur.ch;
-
-        const beforeCursor = line.substring(0, cur.ch);
-        if (!beforeCursor.includes('{')) return;
-
-        const word = token.string.substring(0, end - start).toUpperCase();
-
-        const templateVariables = [
-            // Site
-            'SITE_NAME', 'SITE_URL', 'SITE_EMAIL', 'LOGO_URL',
-            // Company
-            'COMPANY_NAME', 'COMPANY_ADDRESS', 'COMPANY_CITY', 'COMPANY_STATE', 'COMPANY_ZIP',
-            'COMPANY_COUNTRY', 'COMPANY_PHONE', 'COMPANY_EMAIL', 'COMPANY_WEBSITE',
-            // Dates
-            'CURRENT_YEAR', 'CURRENT_MONTH', 'CURRENT_DAY', 'CURRENT_DATE', 'CURRENT_TIME',
-            // Recipient
-            'RECIPIENT_EMAIL', 'CUSTOMER_NAME', 'CUSTOMER_FIRST_NAME', 'CUSTOMER_LAST_NAME',
-            'CUSTOMER_PHONE', 'CUSTOMER_ADDRESS',
-            // Email
-            'EMAIL_SUBJECT', 'EMAIL_TITLE', 'CONTENT', 'FOOTER_CONTENT',
-            // Links
-            'RESET_LINK', 'CONFIRM_LINK', 'ACTIVATION_LINK', 'UNSUBSCRIBE_LINK',
-            // Special
-            'CURRENT_YEAR_FULL', 'MONTH_NAME', 'DAY_NAME'
-        ];
-
-        const completions = templateVariables
-            .filter(v => v.startsWith(word))
-            .map(v => ({text: v + '}', displayText: `🔤 {${v}}`}));
-
-        return {
-            from: CodeMirror.Pos(cur.line, start),
-            to: CodeMirror.Pos(cur.line, end),
-            list: completions
-        };
-    });
-
-    // Enable autocomplete on input
-    editor.on('inputRead', function(instance, changeObj) {
-        if (changeObj.text[0] === ' ' || /\w/.test(changeObj.text[0]) || changeObj.text[0] === '-') {
-            CodeMirror.commands.autocomplete(instance, null, {async: true});
-        }
-    });
-    console.log('📊 Editor has', editor.lineCount(), 'lines');
-
-    const componentUid = '{{ $component->uid }}';
     const currentLangId = {{ $currentLangId ?? 1 }};
     let isPreviewExpanded = false;
     let previewTimeout;
     let hasChanges = false;
 
-    // Update Editor Status
-    function updateEditorStatus(status, icon = 'check-circle', color = 'success') {
-        $('#editorStatus')
-            .html(`<i class="fas fa-${icon} me-1"></i>${status}`)
-            .attr('class', `badge bg-${color}`);
-    }
+    // Delegate to shared utilities
+    function updateEditorStatus(s, i, c) { MailerEditor.updateEditorStatus(s, i, c); }
+    function updatePreviewStatus(s) { MailerEditor.updatePreviewStatus(s); }
+    function formatCode() { MailerEditor.formatCode(editor); }
+    function togglePreview() { isPreviewExpanded = MailerEditor.togglePreview(isPreviewExpanded); updatePreview(); }
+    function toggleVariables() { MailerEditor.toggleVariables(); }
 
-    // Update Preview Status
-    function updatePreviewStatus(status, icon = 'circle', color = 'success') {
-        $('#previewStatus')
-            .text(status)
-            .attr('class', 'badge bg-primary');
-    }
-
-    // Update Preview (both containers)
+    // Update Preview (AJAX call to backend for edit view)
     function updatePreview() {
         const previewUrl = `{{ route('mailers.components.preview-ajax', $component->uid) }}?lang_id=${currentLangId}`;
 
@@ -786,41 +473,23 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(data) {
                 if (data.success) {
-                    // Update right panel preview
                     const $container = $('#previewContainer');
                     const $containerTab = $('#previewContainerTab');
                     const height = isPreviewExpanded ? '800px' : '400px';
 
-                    const $iframe = $('<iframe>')
-                        .css({
-                            'width': '100%',
-                            'min-height': height,
-                            'border': 'none',
-                            'display': 'block',
-                            'background': 'white'
-                        });
-
-                    const $iframeTab = $('<iframe>')
-                        .css({
-                            'width': '100%',
-                            'border': 'none',
-                            'display': 'block',
-                            'background': 'white',
-                            'min-height': '500px'
-                        });
+                    const $iframe = $('<iframe>').css({ 'width': '100%', 'min-height': height, 'border': 'none', 'display': 'block', 'background': 'white' });
+                    const $iframeTab = $('<iframe>').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'min-height': '500px' });
 
                     $container.empty().append($iframe);
                     $containerTab.empty().append($iframeTab);
-
                     $iframe[0].srcdoc = data.html;
                     $iframeTab[0].srcdoc = data.html;
 
-                    updatePreviewStatus('En vivo', 'circle-dot-filled', 'success');
+                    updatePreviewStatus('En vivo');
                 }
             },
-            error: function(error) {
-                console.error('Error updating preview:', error);
-                updatePreviewStatus('Error', 'alert-circle', 'danger');
+            error: function() {
+                updatePreviewStatus('Error');
                 const errorHtml = '<div class="alert alert-danger m-3"><i class="fas fa-exclamation-circle me-2"></i>Error al cargar vista previa</div>';
                 $('#previewContainer').html(errorHtml);
                 $('#previewContainerTab').html(errorHtml);
@@ -830,10 +499,8 @@ $(document).ready(function() {
 
     // Load Variables
     function loadVariables() {
-        const variablesUrl = '{{ route('mailers.components.variables') }}';
-
         $.ajax({
-            url: variablesUrl,
+            url: '{{ route('mailers.components.variables') }}',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -841,8 +508,7 @@ $(document).ready(function() {
                     renderVariables(data.variables);
                 }
             },
-            error: function(error) {
-                console.error('Error loading variables:', error);
+            error: function() {
                 $('#variablesPanel').html(
                     '<div class="alert alert-danger m-2"><i class="fas fa-exclamation-circle me-2"></i>Error al cargar variables</div>'
                 );
@@ -850,134 +516,28 @@ $(document).ready(function() {
         });
     }
 
-    // Render Variables
+    // Render Variables (component style: grid cards, no filtering)
     function renderVariables(variableGroups) {
         let html = '<div class="row g-1">';
 
         $.each(variableGroups, function(idx, group) {
             $.each(group.items, function(idx, variable) {
-                html += `<div class="col-6 col-md-4 col-lg-3">`;
-                html += `<div class="variable-card variable-insert" data-variable-name="${variable.name}" data-bs-toggle="tooltip" title="${variable.description}">`;
-                html += `<code class="variable-code">{${variable.name}}</code>`;
-                html += `</div>`;
-                html += `</div>`;
+                html += '<div class="col-6 col-md-4 col-lg-3">';
+                html += '<div class="variable-card variable-insert" data-variable-name="' + variable.name + '" data-bs-toggle="tooltip" title="' + (variable.description || '') + '">';
+                html += '<code class="variable-code">{' + variable.name + '}</code>';
+                html += '</div></div>';
             });
         });
 
         html += '</div>';
-
         $('#variablesPanel').html(html);
 
-        // Initialize tooltips for new elements
-        $('[data-bs-toggle="tooltip"]').each(function() {
-            new bootstrap.Tooltip(this);
-        });
+        $('[data-bs-toggle="tooltip"]').each(function() { new bootstrap.Tooltip(this); });
 
-        // Add event listeners with jQuery
-        $(document).on('click', '.variable-insert', function(e) {
+        $(document).off('click.compEditVar').on('click.compEditVar', '.variable-insert', function(e) {
             e.preventDefault();
-            const variableName = $(this).data('variable-name');
-            const variable = `{${variableName}}`;
-            const cursor = editor.getCursor();
-            editor.replaceRange(variable, cursor);
-            editor.focus();
-
-            // Show feedback
-            toastr.success(`Variable ${variable} insertada`, 'Éxito', {
-                timeOut: 2000,
-                progressBar: true
-            });
+            MailerEditor.insertVariable($(this).data('variable-name'), editor);
         });
-    }
-
-    // Format Code
-    function formatCode() {
-        updateEditorStatus('Formateando...', 'spinner', 'info');
-        const code = editor.getValue();
-
-        try {
-            const indentSize = 4;
-            const indent = ' ';
-            let result = [];
-            let indentLevel = 0;
-
-            const selfClosingTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
-
-            let processed = code
-                .replace(/>\s*</g, '>\n<')
-                .replace(/}\s*(?=[a-zA-Z])/g, '}\n')
-                .replace(/{/g, ' {\n')
-                .replace(/;/g, ';\n')
-                .split('\n');
-
-            processed.forEach(function(line) {
-                line = line.trim();
-                if (line.length === 0) return;
-
-                if (line.startsWith('}')) {
-                    indentLevel = Math.max(0, indentLevel - 1);
-                }
-
-                if (line.startsWith('</')) {
-                    indentLevel = Math.max(0, indentLevel - 1);
-                }
-
-                result.push(indent.repeat(indentLevel * indentSize) + line);
-
-                if (line.endsWith('{')) {
-                    indentLevel++;
-                }
-
-                if (line.startsWith('<') && !line.startsWith('</') && !line.startsWith('<!')) {
-                    const tagMatch = line.match(/<(\w+)/);
-                    if (tagMatch) {
-                        const tagName = tagMatch[1].toLowerCase();
-                        const isSelfClosing = selfClosingTags.includes(tagName) || line.endsWith('/>');
-
-                        if (!isSelfClosing) {
-                            indentLevel++;
-                        }
-                    }
-                }
-            });
-
-            let formatted = result.join('\n').trim();
-            formatted = formatted.replace(/\n\s*\n/g, '\n');
-
-            editor.setValue(formatted);
-            updateEditorStatus('Listo', 'circle-check', 'success');
-
-            toastr.success('Código formateado correctamente', 'Éxito', {
-                timeOut: 2000,
-                progressBar: true
-            });
-        } catch (error) {
-            console.error('Format error:', error);
-            updateEditorStatus('Error', 'alert-circle', 'danger');
-            toastr.error('Error al formatear el código', 'Error');
-        }
-    }
-
-    // Toggle Preview Size
-    function togglePreview() {
-        isPreviewExpanded = !isPreviewExpanded;
-        const $btn = $('#btnTogglePreview');
-        const $container = $('#previewContainer');
-
-        if (isPreviewExpanded) {
-            $container.css('max-height', '1200px');
-            $btn.html('<i class="fas fa-compress"></i>');
-        } else {
-            $container.css('max-height', '600px');
-            $btn.html('<i class="fas fa-expand"></i>');
-        }
-
-        updatePreview();
-    }
-
-    // Toggle Variables Panel (Mobile)
-    function toggleVariables() {
-        $('#variablesCard').toggleClass('d-none');
     }
 
     // Initial load
@@ -1071,6 +631,14 @@ $(document).ready(function() {
         'Ctrl-/': 'toggleComment'
     });
 
+    // Warn on unsaved changes when navigating away
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            e.preventDefault();
+            return '';
+        }
+    });
+
     // Sync textarea before submit - CRITICAL: Must sync even if empty!
     $('#formEdit').on('submit', function(e) {
         // Get CodeMirror content (even if empty)
@@ -1079,8 +647,12 @@ $(document).ready(function() {
         // Sync to textarea - this is what gets sent to server
         $('#content').val(editorContent);
 
-        console.log('Form submitted with content length:', editorContent.length);
-        console.log('Content being sent:', editorContent.substring(0, 100) + '...');
+        // Clear unsaved changes flag so beforeunload doesn't trigger
+        hasChanges = false;
+
+        // Disable submit button to prevent double-submit
+        const $btn = $(this).find('[type="submit"]');
+        $btn.prop('disabled', true);
 
         // Show saving indicator
         toastr.info('Guardando cambios...', 'Información', {
@@ -1094,7 +666,6 @@ $(document).ready(function() {
         if (editor) {
             const currentContent = editor.getValue();
             $('#content').val(currentContent);
-            console.log('Language switching - content synced');
         }
     });
 
@@ -1103,7 +674,6 @@ $(document).ready(function() {
         if (editor) {
             const currentContent = editor.getValue();
             $('#content').val(currentContent);
-            console.log('Pre-navigation sync - content length:', currentContent.length);
         }
         return true; // Allow navigation
     };

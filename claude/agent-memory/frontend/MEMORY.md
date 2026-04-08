@@ -24,6 +24,15 @@
 - `menu.update` handles both config fields AND tree in ONE PUT form
 - `menu.structure.update` is for drag-only (no field edits)
 
+## No icons in buttons or links
+- [No icons in buttons or links](feedback_no_icons_in_buttons.md) — Never use `<i>` tags inside `<button>` or `<a>` elements — text only
+
+## Table row actions dropdown
+- [Table row actions dropdown](feedback_table_row_actions_dropdown.md) — In-row actions use a `ti-dots` dropdown, not buttons. Only allowed use of Tabler icons.
+
+## Card header actions
+- [Card header actions dropdown](feedback_card_header_actions.md) — 2+ actions anywhere in UI always go in a Bootstrap dropdown with ms-auto, never loose buttons/links
+
 ## Key File Paths
 - Menu views: `modules/Menu/resources/views/`
 - Menu partials: `modules/Menu/resources/views/partials/`

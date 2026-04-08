@@ -2,15 +2,25 @@
 
 namespace App\Providers;
 
+use App\Services\DeepLTranslationService;
+use App\Services\GlobalSearchRegistrar;
+use App\Services\GlobalSearchService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Horizon\Horizon;
+use Modules\Page\Services\PageService;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(GlobalSearchService::class);
+        $this->app->singleton(DeepLTranslationService::class);
     }
 
     public function boot(): void
@@ -18,17 +28,47 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         $this->configureApplicationDefaults();
+        $this->configureHorizonGate();
+        $this->shareGlobalViewData();
+        $this->app->make(GlobalSearchRegistrar::class)->register();
+        $this->configureRateLimiters();
+    }
+
+    private function configureHorizonGate(): void
+    {
+        Horizon::auth(function (Request $request) {
+            return auth()->check() && auth()->user()->hasRole(['super-settings', 'settings']);
+        });
+    }
+
+    private function shareGlobalViewData(): void
+    {
+        View::composer('*', function ($view) {
+            if (! $view->offsetExists('supportedLocales')) {
+                $view->with('supportedLocales', PageService::getSupportedLocales());
+            }
+        });
     }
 
     private function configureApplicationDefaults(): void
     {
-
-        ini_set('memory_limit', '-1');
-        ini_set('pcre.backtrack_limit', '1000000000');
-
-        // Force HTTPS if request is secure or header indicates it
         if (request()->isSecure() || (! empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strcasecmp($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') === 0)) {
             URL::forceScheme('https');
         }
+    }
+
+    private function configureRateLimiters(): void
+    {
+        RateLimiter::for('global-search', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('registration', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
     }
 }

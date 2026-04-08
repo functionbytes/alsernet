@@ -29,19 +29,8 @@ class MenuServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Registrar menús del core/sistema principal
-        $this->registerCoreMenus();
-
-        // Hacer el servicio disponible en las vistas
         $this->shareWithViews();
     }
-
-    /**
-     * Registrar menús del core del sistema (solo core, no módulos)
-     *
-     * Los módulos deben registrar sus menús en su propio ServiceProvider
-     */
-    private function registerCoreMenus(): void {}
 
     /**
      * Compartir el servicio con las vistas

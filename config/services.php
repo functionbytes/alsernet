@@ -35,4 +35,29 @@ return [
         ],
     ],
 
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY', ''),
+    ],
+
+    'google' => [
+        'pagespeed_key' => env('GOOGLE_PAGESPEED_KEY', ''),
+    ],
+
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID', ''),
+        'credentials_path' => env('FCM_CREDENTIALS_PATH', storage_path('app/firebase-credentials.json')),
+    ],
+
+    'deepl' => [
+        'key' => env('DEEPL_API_KEY', ''),
+        'url' => env('DEEPL_API_URL', 'https://api-free.deepl.com'),
+    ],
+
+    'mailrelay' => [
+        'api_key' => env('MAILRELAY_API_KEY'),
+        'host' => env('MAILRELAY_HOST'),
+        'newsletter_group_id' => env('MAILRELAY_NEWSLETTER_GROUP_ID'),
+        'webhook_token' => env('MAILRELAY_WEBHOOK_TOKEN', ''),
+    ],
+
 ];

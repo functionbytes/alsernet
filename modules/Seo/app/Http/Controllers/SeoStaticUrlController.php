@@ -3,7 +3,10 @@
 namespace Modules\Seo\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Seo\Http\Requests\StoreSeoStaticUrlRequest;
 use Modules\Seo\Http\Requests\UpdateSeoStaticUrlRequest;
@@ -24,7 +27,18 @@ class SeoStaticUrlController extends Controller
      */
     public function index(): View
     {
-        $staticUrls = SeoStaticUrl::orderBy('url')->paginate(20);
+        $search = request('search');
+        $status = request('status');
+
+        $staticUrls = SeoStaticUrl::query()
+            ->when($search, fn ($q) => $q->where('url', 'like', "%{$search}%")
+                ->orWhere('notes', 'like', "%{$search}%"))
+            ->when($status === 'active', fn ($q) => $q->where('is_active', true))
+            ->when($status === 'inactive', fn ($q) => $q->where('is_active', false))
+            ->orderBy('url')
+            ->paginate(20)
+            ->withQueryString();
+
         $totalActive = SeoStaticUrl::where('is_active', true)->count();
         $total = SeoStaticUrl::count();
 
@@ -95,5 +109,29 @@ class SeoStaticUrlController extends Controller
             : 'seo::static-urls.deactivated';
 
         return back()->with('success', __($messageKey));
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'string', Rule::in(['activate', 'deactivate', 'delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:seo_static_urls,id'],
+        ]);
+
+        $action = $request->input('action');
+        $ids = $request->input('ids');
+
+        $count = match ($action) {
+            'activate' => SeoStaticUrl::query()->whereIn('id', $ids)->update(['is_active' => true]),
+            'deactivate' => SeoStaticUrl::query()->whereIn('id', $ids)->update(['is_active' => false]),
+            'delete' => SeoStaticUrl::query()->whereIn('id', $ids)->delete(),
+        };
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'message' => $count.' URL(s) actualizadas.',
+        ]);
     }
 }

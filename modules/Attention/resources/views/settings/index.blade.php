@@ -66,7 +66,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Estas configuraciones se aplican automáticamente a todos los tipos de PQRSF sin excepción.
                         </p>
                     </div>
@@ -119,7 +119,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Cada tipo tiene sus propios requisitos y flujos de trabajo independientes.
                         </p>
                     </div>
@@ -172,7 +172,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Las categorías ayudan a organizar y distribuir eficientemente las solicitudes.
                         </p>
                     </div>
@@ -225,7 +225,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Los departamentos permiten distribuir el trabajo según la estructura organizacional.
                         </p>
                     </div>
@@ -278,7 +278,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Las sedes permiten gestionar atención presencial y reportes geográficos.
                         </p>
                     </div>
@@ -331,7 +331,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Las plantillas mantienen informados a los ciudadanos sobre el estado de sus solicitudes.
                         </p>
                     </div>

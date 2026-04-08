@@ -6,15 +6,19 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
+use Modules\Optimize\Http\Middleware\AddLoadingLazy;
 use Modules\Optimize\Http\Middleware\CollapseWhitespace;
 use Modules\Optimize\Http\Middleware\DeferJavascript;
 use Modules\Optimize\Http\Middleware\ElideAttributes;
 use Modules\Optimize\Http\Middleware\InlineCss;
 use Modules\Optimize\Http\Middleware\InsertDNSPrefetch;
+use Modules\Optimize\Http\Middleware\MinifyInlineScripts;
+use Modules\Optimize\Http\Middleware\MinifyInlineStyles;
+use Modules\Optimize\Http\Middleware\OptimizeResponseCache;
 use Modules\Optimize\Http\Middleware\RemoveComments;
 use Modules\Optimize\Http\Middleware\RemoveQuotes;
-use Modules\Optimize\Supports\Optimizer;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class OptimizeServiceProvider extends ServiceProvider
 {
@@ -24,22 +28,24 @@ class OptimizeServiceProvider extends ServiceProvider
 
     /** @var array<string, class-string> */
     private const MIDDLEWARE_MAP = [
-        'optimize.collapse_whitespace'  => CollapseWhitespace::class,
-        'optimize.elide_attributes'     => ElideAttributes::class,
-        'optimize.inline_css'           => InlineCss::class,
-        'optimize.insert_dns_prefetch'  => InsertDNSPrefetch::class,
-        'optimize.remove_comments'      => RemoveComments::class,
-        'optimize.remove_quotes'        => RemoveQuotes::class,
-        'optimize.defer_javascript'     => DeferJavascript::class,
+        'optimize.remove_comments' => RemoveComments::class,
+        'optimize.collapse_whitespace' => CollapseWhitespace::class,
+        'optimize.elide_attributes' => ElideAttributes::class,
+        'optimize.remove_quotes' => RemoveQuotes::class,
+        'optimize.minify_inline_styles' => MinifyInlineStyles::class,
+        'optimize.minify_inline_scripts' => MinifyInlineScripts::class,
+        'optimize.defer_javascript' => DeferJavascript::class,
+        'optimize.add_loading_lazy' => AddLoadingLazy::class,
+        'optimize.inline_css' => InlineCss::class,
+        'optimize.insert_dns_prefetch' => InsertDNSPrefetch::class,
     ];
-
-    public function register(): void
-    {
-        $this->app->singleton(Optimizer::class);
-    }
 
     public function boot(): void
     {
+        if (Module::find('Optimize')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->registerRoutes();
@@ -57,6 +63,10 @@ class OptimizeServiceProvider extends ServiceProvider
         }
 
         $router = $this->app['router'];
+
+        if (Setting::get('optimize.response_cache', '0') === '1') {
+            $router->pushMiddlewareToGroup('web', OptimizeResponseCache::class);
+        }
 
         foreach (self::MIDDLEWARE_MAP as $settingKey => $middlewareClass) {
             if (Setting::get($settingKey, '0') === '1') {
@@ -94,7 +104,7 @@ class OptimizeServiceProvider extends ServiceProvider
         $webPath = module_path($this->moduleName, 'routes/web.php');
 
         Route::middleware(['web', 'auth'])
-            ->prefix('setting/optimize')
+            ->prefix('panel/setting/optimize')
             ->name('settings.optimize.')
             ->group(function () use ($webPath) {
                 require $webPath;
@@ -103,12 +113,11 @@ class OptimizeServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
-        NavService::registerSidebar('settings', [
-            'title' => 'Optimización',
-            'items' => [
-                ['label' => 'Optimizar', 'route' => 'settings.optimize.index'],
-            ],
+
+        NavService::addItemsToSection('settings', 'Configuraciones', [
+            ['label' => 'Configuracion de optimización', 'route' => 'settings.optimize.index'],
         ]);
+
     }
 
     /**

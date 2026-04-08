@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Page\Models\Page;
 use Modules\Page\Notifications\PagePublishedNotification;
+use Modules\Page\Services\PageService;
 
 class PublishScheduledPagesJob implements ShouldBeUnique, ShouldQueue
 {
@@ -69,15 +70,12 @@ class PublishScheduledPagesJob implements ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * Publish a scheduled page.
+     * Publish a scheduled page via PageService to ensure webhooks,
+     * subscriber events, and cache invalidation are all triggered.
      */
     protected function publishPage(Page $page): void
     {
-        $page->update([
-            'status' => Page::STATUS_PUBLISHED,
-            'published_at' => now(),
-            'publish_at' => null,
-        ]);
+        app(PageService::class)->publishPage($page);
 
         Log::info('Page published automatically', [
             'page_id' => $page->id,

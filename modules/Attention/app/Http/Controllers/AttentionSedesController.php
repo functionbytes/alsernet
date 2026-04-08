@@ -3,6 +3,7 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -135,6 +136,32 @@ class AttentionSedesController extends Controller
         $status = $sede->is_active ? 'activada' : 'desactivada';
 
         return back()->with('success', "Sede {$status} exitosamente.");
+    }
+
+    /**
+     * Bulk action on multiple sedes.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $sedes = AttentionSede::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($sedes as $sede) {
+            match ($validated['action']) {
+                'activate' => $sede->update(['is_active' => true]),
+                'deactivate' => $sede->update(['is_active' => false]),
+                'delete' => $sede->attentions()->count() === 0 ? $sede->delete() : null,
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     /**

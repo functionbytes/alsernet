@@ -2,16 +2,18 @@
 
 namespace Modules\Role\Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class CompleteRolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Crear todos los permisos
         $permissions = $this->getAllPermissions();
@@ -31,7 +33,7 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
     private function assignDefaultAdminRole(): void
     {
         try {
-            $adminUser = \App\Models\User::find(1);
+            $adminUser = User::find(1);
             if ($adminUser && ! $adminUser->hasRole('super-settings')) {
                 $adminUser->assignRole('super-settings');
             }
@@ -209,6 +211,15 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'system.api.manage' => 'Gestionar API tokens del sistema',
             'system.emails.manage' => 'Configurar emails del sistema',
             'system.hours.manage' => 'Configurar horarios del sistema',
+
+            // Módulo Cookie (consentimiento de cookies)
+            'Cookie.settings.index' => 'Ver configuración de cookies',
+            'Cookie.settings.update' => 'Actualizar configuración de cookies',
+
+            // Módulo Cache
+            'Cache.index' => 'Acceder al módulo de caché',
+            'Cache.settings.index' => 'Ver configuración de caché',
+            'Cache.settings.update' => 'Actualizar configuración de caché',
         ];
     }
 

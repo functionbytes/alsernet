@@ -4,15 +4,20 @@ namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categorie;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Modules\System\Http\Requests\StoreCategorieRequest;
+use Modules\System\Http\Requests\UpdateCategorieRequest;
 
 class CategoriesController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
 
-        $searchKey = null ?? $request->search;
-        $available = null ?? $request->available;
+        $searchKey = $request->search ?? null;
+        $available = $request->available ?? null;
 
         $categories = Categorie::descending();
 
@@ -34,7 +39,7 @@ class CategoriesController extends Controller
 
     }
 
-    public function create()
+    public function create(): View
     {
 
         return view('theme.views.backups.categories.create')->with([
@@ -43,7 +48,7 @@ class CategoriesController extends Controller
 
     }
 
-    public function view($uid)
+    public function view(string $uid): View
     {
 
         $categorie = Categorie::uid($uid);
@@ -54,7 +59,7 @@ class CategoriesController extends Controller
 
     }
 
-    public function edit($uid)
+    public function edit(string $uid): View
     {
 
         $categorie = Categorie::uid($uid);
@@ -65,13 +70,14 @@ class CategoriesController extends Controller
 
     }
 
-    public function store(Request $request)
+    public function store(StoreCategorieRequest $request): JsonResponse
     {
+        $validated = $request->validated();
 
         $categorie = new Categorie;
         $categorie->uid = $this->generate_uid('categories');
-        $categorie->title = $request->title;
-        $categorie->available = $request->available;
+        $categorie->title = $validated['title'];
+        $categorie->available = $validated['available'];
         $categorie->save();
 
         return response()->json([
@@ -81,12 +87,13 @@ class CategoriesController extends Controller
 
     }
 
-    public function update(Request $request)
+    public function update(UpdateCategorieRequest $request): JsonResponse
     {
+        $validated = $request->validated();
 
-        $categorie = Categorie::uid($request->uid);
-        $categorie->title = $request->title;
-        $categorie->available = $request->available;
+        $categorie = Categorie::uid($validated['uid']);
+        $categorie->title = $validated['title'];
+        $categorie->available = $validated['available'];
         $categorie->update();
 
         return response()->json([
@@ -96,7 +103,7 @@ class CategoriesController extends Controller
 
     }
 
-    public function destroy($uid)
+    public function destroy(string $uid): RedirectResponse
     {
 
         $categorie = Categorie::uid($uid);

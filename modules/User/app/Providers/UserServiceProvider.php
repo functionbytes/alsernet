@@ -2,22 +2,30 @@
 
 namespace Modules\User\Providers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Theme\Services\NavService;
 use Modules\User\Http\Controllers\UsersController;
+use Modules\User\Policies\UserPolicy;
+use Nwidart\Modules\Facades\Module;
 
 class UserServiceProvider extends ServiceProvider
 {
     protected string $name = 'User';
 
-    public function register()
+    public function register(): void
     {
-        // Register User services
+        Gate::policy(User::class, UserPolicy::class);
     }
 
-    public function boot()
+    public function boot(): void
     {
+        if (Module::find('User')?->isDisabled()) {
+            return;
+        }
+
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'user');
 
         $this->publishes([
@@ -43,7 +51,7 @@ class UserServiceProvider extends ServiceProvider
         // Public search route FIRST (accessible to authenticated users for role assignment)
         // Must be registered before the greedy {uid} route
         Route::middleware(['web', 'auth'])
-            ->prefix('setting/users')
+            ->prefix('panel/setting/users')
             ->name('settings.users.')
             ->group(function () {
                 Route::get('/search', [UsersController::class, 'search'])->name('search');
@@ -51,7 +59,7 @@ class UserServiceProvider extends ServiceProvider
 
         // User settings routes (GET views + POST/PUT/DELETE API)
         Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('setting/users')
+            ->prefix('panel/setting/users')
             ->name('settings.users.')
             ->group(function () use ($modulePath) {
                 // Load view routes (GET)
@@ -74,6 +82,7 @@ class UserServiceProvider extends ServiceProvider
             'icon' => 'fa-duotone fa-thin fa-users-medical',
             'tooltip' => 'Usuarios',
             'sidebar_id' => 'users',
+            'url' => 'settings.users.index',
             'order' => 30,
         ]);
 

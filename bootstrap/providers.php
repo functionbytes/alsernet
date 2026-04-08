@@ -46,6 +46,8 @@ $allProviders = [
     'Modules\Theme\Providers\ThemeServiceProvider' => true, // Always load
     'Modules\User\Providers\UserServiceProvider' => 'User',
     'Modules\Webhook\Providers\WebhookServiceProvider' => 'Webhook',
+    'Modules\Blog\Providers\BlogServiceProvider' => 'Blog',
+    'Modules\Newsletter\Providers\NewsletterServiceProvider' => 'Newsletter',
 ];
 
 // Load module statuses

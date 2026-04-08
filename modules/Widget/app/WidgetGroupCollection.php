@@ -3,6 +3,7 @@
 namespace Modules\Widget;
 
 use Illuminate\Support\Collection;
+use Modules\Widget\Facades\Widget;
 
 class WidgetGroupCollection
 {
@@ -124,6 +125,61 @@ class WidgetGroupCollection
         }
 
         return $this->groups->get($groupName)->getWidgets();
+    }
+
+    /**
+     * Register a group using a WordPress-style args array (id, name, description)
+     *
+     * @return $this
+     */
+    public function setGroup(array $args): self
+    {
+        $id = $args['id'] ?? $args['name'] ?? '';
+        $name = $args['name'] ?? $id;
+        $description = $args['description'] ?? null;
+
+        if ($id) {
+            $this->group($id, $name, $description);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Render a sidebar/widget group by its ID.
+     * Loads widget assignments from the database and maps them to registered widget classes.
+     */
+    public function render(string $sidebarId): string
+    {
+        $registeredWidgets = Widget::getWidgets();
+
+        if (empty($registeredWidgets)) {
+            return '';
+        }
+
+        $theme = function_exists('setting') ? setting('template', '') : '';
+
+        $dbWidgets = Models\Widget::query()
+            ->where('sidebar_id', $sidebarId)
+            ->where('theme', $theme)
+            ->orderBy('position')
+            ->get();
+
+        $output = '';
+
+        foreach ($dbWidgets as $dbWidget) {
+            $class = $registeredWidgets[$dbWidget->widget_id] ?? null;
+
+            if (! $class || ! class_exists($class)) {
+                continue;
+            }
+
+            $config = is_array($dbWidget->data) ? $dbWidget->data : [];
+            $instance = new $class($config);
+            $output .= $instance->run();
+        }
+
+        return $output;
     }
 
     /**

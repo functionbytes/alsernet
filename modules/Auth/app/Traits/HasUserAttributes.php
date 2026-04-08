@@ -2,6 +2,9 @@
 
 namespace Modules\Auth\Traits;
 
+use Illuminate\Support\Facades\Hash;
+use Modules\Core\Models\Setting;
+
 /**
  * Trait HasUserAttributes
  *
@@ -41,15 +44,18 @@ trait HasUserAttributes
     }
 
     /**
-     * Set password attribute - auto-hash if not already hashed
+     * Set password attribute - auto-hash if not already a valid hash.
      */
-    public function setPasswordAttribute($password): void
+    public function setPasswordAttribute(string $password): void
     {
-        if (strlen($password) !== 60 || ! preg_match('/^\$2y\$/', $password)) {
-            $this->attributes['password'] = bcrypt($password);
-        } else {
-            $this->attributes['password'] = $password;
-        }
+        // Only hash if the value is not already a hashed string (i.e. Hash::needsRehash
+        // would return true for plain text). We detect plain text by checking whether
+        // the value is a recognized hash format. If it already looks like a bcrypt/
+        // argon hash, store it as-is (supports seeding pre-hashed values).
+        $isAlreadyHashed = strlen($password) >= 60
+            && preg_match('/^\$(?:2[ayb]|argon2(?:id?)?)\$/', $password);
+
+        $this->attributes['password'] = $isAlreadyHashed ? $password : Hash::make($password);
     }
 
     /**
@@ -143,7 +149,7 @@ trait HasUserAttributes
         if (! empty($this->color_scheme)) {
             return $this->color_scheme;
         } else {
-            return \Modules\Core\Models\Setting::get('frontend_scheme');
+            return Setting::get('frontend_scheme');
         }
     }
 

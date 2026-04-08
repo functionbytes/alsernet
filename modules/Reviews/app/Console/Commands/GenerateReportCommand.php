@@ -21,7 +21,7 @@ class GenerateReportCommand extends Command
         $to = $this->option('to') ? Carbon::createFromFormat('Y-m-d', $this->option('to')) : now();
 
         $query = Review::query()
-            ->whereBetween('published_at', [$from, $to]);
+            ->whereBetween('review_time', [$from, $to]);
 
         if ($locationId) {
             $location = ReviewGoogleLocation::findOrFail($locationId);
@@ -68,11 +68,11 @@ class GenerateReportCommand extends Command
         foreach ($reviews as $review) {
             fputcsv($handle, [
                 $review->id,
-                $review->author_name,
-                $review->rating,
-                substr($review->comment, 0, 100),
-                $review->published_at->format('Y-m-d'),
-                $review->reply ? 'Sí' : 'No',
+                $review->reviewer_name,
+                $review->star_rating->value(),
+                substr($review->comment ?? '', 0, 100),
+                $review->review_time->format('Y-m-d'),
+                $review->hasGoogleReply() ? 'Sí' : 'No',
             ]);
         }
 
@@ -94,11 +94,11 @@ class GenerateReportCommand extends Command
 
         $data = $reviews->map(fn ($review) => [
             'id' => $review->id,
-            'author' => $review->author_name,
-            'rating' => $review->rating,
+            'author' => $review->reviewer_name,
+            'rating' => $review->star_rating->value(),
             'comment' => $review->comment,
-            'date' => $review->published_at->toIso8601String(),
-            'has_reply' => (bool) $review->reply,
+            'date' => $review->review_time->toIso8601String(),
+            'has_reply' => $review->hasGoogleReply(),
         ]);
 
         file_put_contents($filepath, json_encode($data, JSON_PRETTY_PRINT));

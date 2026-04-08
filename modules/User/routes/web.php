@@ -18,5 +18,6 @@ use Modules\User\Http\Controllers\UsersController;
 
 Route::get('/', [UsersController::class, 'index'])->name('index');
 Route::get('/create', [UsersController::class, 'create'])->name('create');
+Route::get('/export', [UsersController::class, 'export'])->name('export');
 Route::get('{uid}', [UsersController::class, 'view'])->name('show');
 Route::get('{uid}/edit', [UsersController::class, 'edit'])->name('edit');

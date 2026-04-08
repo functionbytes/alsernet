@@ -482,4 +482,51 @@ class RoleController extends Controller
             'rolePermissions'
         ));
     }
+
+    public function bulkRemoveUsers(Role $role, Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_ids' => ['required', 'array', 'min:1', 'max:200'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $role->users()->detach($request->user_ids);
+
+        $count = count($request->user_ids);
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'message' => "{$count} usuario(s) removido(s) del rol.",
+        ]);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'in:delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:roles,id'],
+        ]);
+
+        $systemRoles = ['super-settings', 'customer'];
+
+        $roles = Role::whereIn('id', $request->ids)
+            ->whereNotIn('name', $systemRoles)
+            ->get();
+
+        $skipped = count($request->ids) - $roles->count();
+
+        foreach ($roles as $role) {
+            event(new RoleDeleted($role, auth()->user()));
+            $role->delete();
+        }
+
+        $msg = $roles->count().' rol(es) eliminado(s).';
+        if ($skipped) {
+            $msg .= " {$skipped} omitido(s) por ser roles del sistema.";
+        }
+
+        return response()->json(['success' => true, 'count' => $roles->count(), 'message' => $msg]);
+    }
 }

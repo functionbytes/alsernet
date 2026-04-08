@@ -20,7 +20,8 @@
 
             {{-- Identidad --}}
             <div class="card-body border-bottom p-4">
-                <h6 class="fw-bold mb-3">Identidad</h6>
+                <h6 class="fw-bold mb-1">Identidad</h6>
+                <p class="text-muted mb-3">Información pública del blog que aparece en el sitio web.</p>
 
                 <div class="row g-3">
                     <div class="col-12">
@@ -50,7 +51,8 @@
 
             {{-- General --}}
             <div class="card-body border-bottom p-4">
-                <h6 class="fw-bold mb-3">General</h6>
+                <h6 class="fw-bold mb-1">General</h6>
+                <p class="text-muted mb-3">Opciones que controlan el comportamiento del listado y los nuevos posts.</p>
 
                 <div class="row g-3">
                     <div class="col-12">
@@ -83,17 +85,15 @@
 
             {{-- Comentarios --}}
             <div class="card-body border-bottom p-4">
-                <h6 class="fw-bold mb-3">Comentarios</h6>
+                <h6 class="fw-bold mb-1">Comentarios</h6>
+                <p class="text-muted mb-3">Configura cómo se gestionan los comentarios en los posts.</p>
 
                 <div class="mb-0">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="allow_comments"
-                               name="allow_comments" value="1"
-                               {{ ($settings['allow_comments'] ?? false) ? 'checked' : '' }}>
-                        <label class="form-check-label fw-semibold" for="allow_comments">
-                            Permitir comentarios en los posts
-                        </label>
-                    </div>
+                    <label for="allow_comments" class="form-label fw-semibold">Permitir comentarios en los posts</label>
+                    <select class="form-select select2" id="allow_comments" name="allow_comments">
+                        <option value="1" {{ ($settings['allow_comments'] ?? false) ? 'selected' : '' }}>Habilitado</option>
+                        <option value="0" {{ !($settings['allow_comments'] ?? false) ? 'selected' : '' }}>Deshabilitado</option>
+                    </select>
                     <small class="text-muted d-block mt-1">
                         Habilita la sección de comentarios en los posts publicados. Puede sobreescribirse por post individual.
                     </small>
@@ -102,7 +102,7 @@
 
             {{-- Footer --}}
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary w-100 mb-2">Guardar configuración </button>
+                <button type="submit" class="btn btn-primary w-100 mb-1">Guardar configuración </button>
                 <a href="javascript:history.back()" class="btn btn-secondary w-100">Cancelar</a>
 
             </div>

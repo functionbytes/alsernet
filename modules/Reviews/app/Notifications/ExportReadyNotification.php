@@ -4,6 +4,7 @@ namespace Modules\Reviews\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Modules\Reviews\Services\NotificationService;
 
 class ExportReadyNotification extends Notification
 {
@@ -13,7 +14,10 @@ class ExportReadyNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        $service = app(NotificationService::class);
+        $channels = $service->getEnabledChannels($notifiable, NotificationService::TYPE_EXPORT_READY);
+
+        return array_filter($channels, fn ($channel) => in_array($channel, ['database', 'mail']));
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -32,7 +36,6 @@ class ExportReadyNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'file_path' => $this->filePath,
             'file_name' => basename($this->filePath),
             'message' => 'Your reviews export is ready for download',
         ];

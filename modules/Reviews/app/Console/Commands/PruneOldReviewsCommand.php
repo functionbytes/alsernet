@@ -27,8 +27,7 @@ class PruneOldReviewsCommand extends Command
         $this->newLine();
 
         $reviewsToDelete = Review::query()
-            ->whereNull('deleted_at')
-            ->where('published_at', '<', $cutoffDate)
+            ->where('review_time', '<', $cutoffDate)
             ->count();
 
         if ($reviewsToDelete === 0) {
@@ -52,8 +51,7 @@ class PruneOldReviewsCommand extends Command
         $progressBar->start();
 
         Review::query()
-            ->whereNull('deleted_at')
-            ->where('published_at', '<', $cutoffDate)
+            ->where('review_time', '<', $cutoffDate)
             ->chunk(100, function ($reviews) use ($progressBar) {
                 foreach ($reviews as $review) {
                     $review->delete();

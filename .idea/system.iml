@@ -33,7 +33,6 @@
       <sourceFolder url="file://$MODULE_DIR$/modules/Database/tests" isTestSource="true" packagePrefix="Modules\Database\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Document/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/app" isTestSource="false" packagePrefix="Modules\HealthCheck\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Health/app" isTestSource="false" packagePrefix="Modules\Health\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/database/factories" isTestSource="false" packagePrefix="Modules\HealthCheck\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/database/seeders" isTestSource="false" packagePrefix="Modules\HealthCheck\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/tests" isTestSource="true" packagePrefix="Modules\HealthCheck\Tests\" />
@@ -112,29 +111,50 @@
       <sourceFolder url="file://$MODULE_DIR$/modules/Captcha/app" isTestSource="false" packagePrefix="Modules\Captcha\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Captcha/database/factories" isTestSource="false" packagePrefix="Modules\Captcha\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Captcha/database/seeders" isTestSource="false" packagePrefix="Modules\Captcha\Database\Seeders\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Menu/app" isTestSource="false" packagePrefix="modules\Menu\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Menu/app" isTestSource="false" packagePrefix="Modules\Menu\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Menu/database/factories" isTestSource="false" packagePrefix="modules\Menu\Database\Factories\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Menu/database/seeders" isTestSource="false" packagePrefix="modules\Menu\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Menu/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Menu/tests" isTestSource="true" packagePrefix="modules\Menu\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/app" isTestSource="false" packagePrefix="modules\Page\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Page/app" isTestSource="false" packagePrefix="Modules\Page\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/database/factories" isTestSource="false" packagePrefix="modules\Page\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/database/seeders" isTestSource="false" packagePrefix="modules\Page\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/tests" isTestSource="true" packagePrefix="modules\Page\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Optimize/app" isTestSource="false" packagePrefix="Modules\Optimize\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Blog/app" isTestSource="false" packagePrefix="Modules\Blog\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Blog/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Cache/app" isTestSource="false" packagePrefix="Modules\Cache\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Cookie/app" isTestSource="false" packagePrefix="Modules\Cookie\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Cookie/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Forms/app" isTestSource="false" packagePrefix="Modules\Forms\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Forms/database/factories" isTestSource="false" packagePrefix="Modules\Forms\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Forms/database/seeders" isTestSource="false" packagePrefix="Modules\Forms\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Forms/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Helpdesk/app" isTestSource="false" packagePrefix="Modules\Helpdesk\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Helpdesk/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Reviews/app" isTestSource="false" packagePrefix="Modules\Reviews\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Reviews/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/app" isTestSource="false" packagePrefix="Modules\Shortcode\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Template/Tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Seo/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Analytics/tests" isTestSource="true" packagePrefix="Modules\Analytics\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Attention/tests" isTestSource="true" packagePrefix="Modules\Attention\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Blog/tests" isTestSource="true" packagePrefix="Modules\Blog\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Cookie/tests" isTestSource="true" packagePrefix="Modules\Cookie\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Forms/tests" isTestSource="true" packagePrefix="Modules\Forms\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Mailer/tests" isTestSource="true" packagePrefix="Modules\Mailer\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Notification/tests" isTestSource="true" packagePrefix="Modules\Notification\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Reviews/tests" isTestSource="true" packagePrefix="Modules\Reviews\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Role/tests" isTestSource="true" packagePrefix="Modules\Role\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Modules/Seo/tests" isTestSource="true" packagePrefix="Modules\Seo\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Locales/app" isTestSource="false" packagePrefix="Modules\Locales\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Locales/database/seeders" isTestSource="false" packagePrefix="Modules\Locales\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Locales/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Optimize/Tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Template/app" isTestSource="false" packagePrefix="Modules\Template\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/User/Tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/database/factories" isTestSource="false" packagePrefix="Modules\Shortcode\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/database/seeders" isTestSource="false" packagePrefix="Modules\Shortcode\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/tests" isTestSource="true" packagePrefix="Modules\Shortcode\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/app" isTestSource="false" packagePrefix="modules\Sitemap\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/app" isTestSource="false" packagePrefix="Modules\Sitemap\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/database/factories" isTestSource="false" packagePrefix="modules\Sitemap\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/database/seeders" isTestSource="false" packagePrefix="modules\Sitemap\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/tests" isTestSource="true" />
@@ -146,6 +166,12 @@
       <excludeFolder url="file://$MODULE_DIR$/storage/app" />
       <excludeFolder url="file://$MODULE_DIR$/storage/framework" />
       <excludeFolder url="file://$MODULE_DIR$/storage/temp" />
+      <excludeFolder url="file://$MODULE_DIR$/bootstrap/cache" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/iamcal/sql-parser" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/larastan/larastan" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/phpstan/phpstan" />
+      <excludeFolder url="file://$MODULE_DIR$/storage/db-backups" />
+      <excludeFolder url="file://$MODULE_DIR$/storage/testing" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

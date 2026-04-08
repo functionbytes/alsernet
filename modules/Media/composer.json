@@ -23,7 +23,10 @@
             "Modules\\Media\\": "app/",
             "Modules\\Media\\Database\\Factories\\": "database/factories/",
             "Modules\\Media\\Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "helpers/common.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

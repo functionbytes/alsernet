@@ -21,6 +21,11 @@ enum ReviewRating: string
         };
     }
 
+    public function toNumeric(): int
+    {
+        return $this->value();
+    }
+
     public function stars(): string
     {
         return str_repeat('⭐', $this->value());

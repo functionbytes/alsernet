@@ -5,6 +5,7 @@ namespace Modules\Core\Providers;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Theme\Services\NavService;
 
 class CoreServiceProvider extends ServiceProvider
@@ -50,12 +51,13 @@ class CoreServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         Route::middleware(['web', 'auth'])
+            ->prefix('panel')
             ->name('core.')
             ->group(function () {
-                Route::get('/dashboard', [\Modules\Core\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-                Route::get('/dashboard/kpis', [\Modules\Core\Http\Controllers\DashboardController::class, 'kpis'])->name('dashboard.kpis');
-                Route::get('/dashboard/activity', [\Modules\Core\Http\Controllers\DashboardController::class, 'recentActivity'])->name('dashboard.activity');
-                Route::get('/dashboard/queue-stats', [\Modules\Core\Http\Controllers\DashboardController::class, 'queueStats'])->name('dashboard.queue-stats');
+                Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+                Route::get('/dashboard/kpis', [DashboardController::class, 'kpis'])->name('dashboard.kpis');
+                Route::get('/dashboard/activity', [DashboardController::class, 'recentActivity'])->name('dashboard.activity');
+                Route::get('/dashboard/queue-stats', [DashboardController::class, 'queueStats'])->name('dashboard.queue-stats');
             });
     }
 
@@ -89,6 +91,7 @@ class CoreServiceProvider extends ServiceProvider
             'icon' => 'fa-duotone fa-home',
             'tooltip' => 'Panel de control',
             'sidebar_id' => 'dashboard',
+            'url' => 'core.dashboard',
             'order' => 10,
         ]);
 

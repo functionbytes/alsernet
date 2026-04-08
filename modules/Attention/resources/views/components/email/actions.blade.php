@@ -10,7 +10,7 @@
                 <label class="form-label fw-semibold mb-1">
                     Confirmación de recepción
                 </label>
-                <p class="text-muted small mb-2">
+                <p class="text-muted mb-2">
                     Enviar confirmación al ciudadano de que su PQRSF fue recibido
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100 send-confirmation-btn"
@@ -26,7 +26,7 @@
                 <label class="form-label fw-semibold mb-1">
                     Notificación de trámite
                 </label>
-                <p class="text-muted small mb-2">
+                <p class="text-muted mb-2">
                     Notificar al ciudadano que su PQRSF está en proceso
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100 send-in-process-btn"
@@ -42,7 +42,7 @@
                 <label class="form-label fw-semibold mb-1">
                     Notificación de resolución
                 </label>
-                <p class="text-muted small mb-2">
+                <p class="text-muted mb-2">
                     Notificar al ciudadano que su PQRSF fue resuelto
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
@@ -58,7 +58,7 @@
                 <label class="form-label fw-semibold mb-1">
                    Correo personalizado
                 </label>
-                <p class="text-muted small mb-2">
+                <p class="text-muted mb-2">
                     Enviar email con contenido personalizado al ciudadano
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"

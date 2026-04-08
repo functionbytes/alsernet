@@ -8,17 +8,10 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
-    protected $pushService;
-
-    protected $smsService;
-
     public function __construct(
-        PushNotificationService $pushService,
-        SmsService $smsService
-    ) {
-        $this->pushService = $pushService;
-        $this->smsService = $smsService;
-    }
+        protected PushNotificationService $pushService,
+        protected SmsService $smsService
+    ) {}
 
     public function sendToUser(User $user, Notification $notification, array $channels = ['database']): array
     {
@@ -89,13 +82,5 @@ class NotificationService
         $message = $notification->toSms($user);
 
         return $this->smsService->send($user->phone, $message);
-    }
-
-    public function scheduleNotification(User $user, Notification $notification, \Carbon\Carbon $sendAt, array $channels = ['database']): void
-    {
-        // Implementar usando queues
-        dispatch(function () use ($user, $notification, $channels) {
-            $this->sendToUser($user, $notification, $channels);
-        })->delay($sendAt);
     }
 }

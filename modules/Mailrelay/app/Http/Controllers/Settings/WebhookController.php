@@ -6,9 +6,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Mailrelay\Entities\Webhook;
 use Modules\Mailrelay\Http\Controllers\Controller;
-use Modules\Mailrelay\Models\MailrelayWebhook;
 
 class WebhookController extends Controller
 {
@@ -17,8 +18,7 @@ class WebhookController extends Controller
      */
     public function index(): View
     {
-        dd('GeneralSettingsController@index');
-        $webhooks = MailrelayWebhook::orderBy('created_at', 'desc')->get();
+        $webhooks = Webhook::orderBy('created_at', 'desc')->get();
 
         return view('mailrelay::settings.webhooks.index', [
             'webhooks' => $webhooks,
@@ -48,16 +48,18 @@ class WebhookController extends Controller
                 'verify_ssl' => 'boolean',
             ]);
 
-            MailrelayWebhook::create($validated);
+            Webhook::create($validated);
 
             return redirect()
                 ->route('settings.mailrelay.webhooks.index')
                 ->with('success', 'Webhook creado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay webhook create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear el webhook: '.$e->getMessage());
+                ->with('error', 'Error al crear el webhook. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -66,7 +68,7 @@ class WebhookController extends Controller
      */
     public function edit(int $id): View
     {
-        $webhook = MailrelayWebhook::findOrFail($id);
+        $webhook = Webhook::findOrFail($id);
 
         return view('mailrelay::settings.webhooks.edit', [
             'webhook' => $webhook,
@@ -79,7 +81,7 @@ class WebhookController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         try {
-            $webhook = MailrelayWebhook::findOrFail($id);
+            $webhook = Webhook::findOrFail($id);
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -96,10 +98,12 @@ class WebhookController extends Controller
                 ->route('settings.mailrelay.webhooks.index')
                 ->with('success', 'Webhook actualizado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay webhook update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el webhook: '.$e->getMessage());
+                ->with('error', 'Error al actualizar el webhook. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -109,16 +113,18 @@ class WebhookController extends Controller
     public function destroy(int $id): RedirectResponse
     {
         try {
-            $webhook = MailrelayWebhook::findOrFail($id);
+            $webhook = Webhook::findOrFail($id);
             $webhook->delete();
 
             return redirect()
                 ->route('settings.mailrelay.webhooks.index')
                 ->with('success', 'Webhook eliminado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay webhook delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar el webhook: '.$e->getMessage());
+                ->with('error', 'Error al eliminar el webhook. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -128,7 +134,7 @@ class WebhookController extends Controller
     public function test(int $id): JsonResponse
     {
         try {
-            $webhook = MailrelayWebhook::findOrFail($id);
+            $webhook = Webhook::findOrFail($id);
 
             $testPayload = [
                 'event' => $webhook->event_type,
@@ -179,7 +185,7 @@ class WebhookController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al probar el webhook: '.$e->getMessage(),
+                'message' => 'Error al probar el webhook. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

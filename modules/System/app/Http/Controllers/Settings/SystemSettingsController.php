@@ -9,14 +9,19 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\View\View;
+use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use Modules\Core\Models\Setting;
+use Modules\System\Traits\FormatsBytes;
 
 class SystemSettingsController extends Controller
 {
+    use FormatsBytes;
+
     /**
      * Display system backups page with tabs
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $pageTitle = 'Configuración del sistema';
         $breadcrumb = 'Configuración / Sistema';
@@ -81,7 +86,7 @@ class SystemSettingsController extends Controller
     /**
      * Update queue backups
      */
-    public function updateQueue(Request $request)
+    public function updateQueue(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'default_connection' => 'required|string',
@@ -91,7 +96,7 @@ class SystemSettingsController extends Controller
             Setting::set('queue_connection', $validated['default_connection']);
 
             // Update environment variable
-            $this->updateEnvVariable('QUEUE_CONNECTION', $validated['default_connection']);
+            write_env('QUEUE_CONNECTION', $validated['default_connection']);
 
             return response()->json([
                 'success' => true,
@@ -110,7 +115,7 @@ class SystemSettingsController extends Controller
     /**
      * Update websockets backups
      */
-    public function updateWebsockets(Request $request)
+    public function updateWebsockets(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'broadcast_driver' => 'required|string',
@@ -135,59 +140,59 @@ class SystemSettingsController extends Controller
 
         try {
             Setting::set('broadcast_driver', $validated['broadcast_driver']);
-            $this->updateEnvVariable('BROADCAST_DRIVER', $validated['broadcast_driver']);
+            write_env('BROADCAST_DRIVER', $validated['broadcast_driver']);
 
             // Reverb backups
             if (isset($validated['reverb_host'])) {
                 Setting::set('reverb_host', $validated['reverb_host']);
-                $this->updateEnvVariable('REVERB_HOST', $validated['reverb_host']);
+                write_env('REVERB_HOST', $validated['reverb_host']);
             }
 
             if (isset($validated['reverb_port'])) {
                 Setting::set('reverb_port', $validated['reverb_port']);
-                $this->updateEnvVariable('REVERB_PORT', $validated['reverb_port']);
+                write_env('REVERB_PORT', $validated['reverb_port']);
             }
 
             if (isset($validated['reverb_scheme'])) {
                 Setting::set('reverb_scheme', $validated['reverb_scheme']);
-                $this->updateEnvVariable('REVERB_SCHEME', $validated['reverb_scheme']);
+                write_env('REVERB_SCHEME', $validated['reverb_scheme']);
             }
 
             // Pusher backups
             if (isset($validated['pusher_app_id'])) {
                 Setting::set('pusher_app_id', $validated['pusher_app_id']);
-                $this->updateEnvVariable('PUSHER_APP_ID', $validated['pusher_app_id']);
+                write_env('PUSHER_APP_ID', $validated['pusher_app_id']);
             }
 
             if (isset($validated['pusher_key'])) {
                 Setting::set('pusher_key', $validated['pusher_key']);
-                $this->updateEnvVariable('PUSHER_APP_KEY', $validated['pusher_key']);
+                write_env('PUSHER_APP_KEY', $validated['pusher_key']);
             }
 
             if (isset($validated['pusher_secret'])) {
                 Setting::set('pusher_secret', $validated['pusher_secret']);
-                $this->updateEnvVariable('PUSHER_APP_SECRET', $validated['pusher_secret']);
+                write_env('PUSHER_APP_SECRET', $validated['pusher_secret']);
             }
 
             if (isset($validated['pusher_cluster'])) {
                 Setting::set('pusher_cluster', $validated['pusher_cluster']);
-                $this->updateEnvVariable('PUSHER_APP_CLUSTER', $validated['pusher_cluster']);
+                write_env('PUSHER_APP_CLUSTER', $validated['pusher_cluster']);
             }
 
             // Redis backups
             if (isset($validated['redis_host'])) {
                 Setting::set('redis_host', $validated['redis_host']);
-                $this->updateEnvVariable('REDIS_HOST', $validated['redis_host']);
+                write_env('REDIS_HOST', $validated['redis_host']);
             }
 
             if (isset($validated['redis_port'])) {
                 Setting::set('redis_port', $validated['redis_port']);
-                $this->updateEnvVariable('REDIS_PORT', $validated['redis_port']);
+                write_env('REDIS_PORT', $validated['redis_port']);
             }
 
             if (isset($validated['redis_password'])) {
                 Setting::set('redis_password', $validated['redis_password']);
-                $this->updateEnvVariable('REDIS_PASSWORD', $validated['redis_password']);
+                write_env('REDIS_PASSWORD', $validated['redis_password']);
             }
 
             if (isset($validated['redis_database'])) {
@@ -211,7 +216,7 @@ class SystemSettingsController extends Controller
     /**
      * Test queue connection
      */
-    public function testQueue(Request $request)
+    public function testQueue(Request $request): JsonResponse
     {
         try {
             $connection = $request->input('connection', config('queue.default'));
@@ -236,7 +241,7 @@ class SystemSettingsController extends Controller
     /**
      * Restart queue workers
      */
-    public function restartQueue()
+    public function restartQueue(): JsonResponse
     {
         try {
             Artisan::call('queue:restart');
@@ -274,15 +279,21 @@ class SystemSettingsController extends Controller
             $stats['recent_failed'] = DB::table('failed_jobs')
                 ->latest('failed_at')
                 ->limit(5)
-                ->get(['id', 'uuid', 'queue', 'exception', 'failed_at']);
+                ->get(['id', 'uuid', 'queue', 'exception', 'failed_at'])
+                ->map(function (object $job): object {
+                    $job->exception_summary = strtok((string) $job->exception, "\n");
+                    unset($job->exception);
+
+                    return $job;
+                });
         } catch (\Throwable $e) {
             Log::error('Queue stats unavailable', ['error' => $e->getMessage()]);
             $stats = ['error' => 'Las estadísticas de cola no están disponibles.'];
         }
 
         try {
-            if (class_exists(\Laravel\Horizon\Contracts\MasterSupervisorRepository::class)) {
-                $supervisors = app(\Laravel\Horizon\Contracts\MasterSupervisorRepository::class)->all();
+            if (class_exists(MasterSupervisorRepository::class)) {
+                $supervisors = app(MasterSupervisorRepository::class)->all();
                 $stats['horizon'] = ['status' => $supervisors ? 'running' : 'stopped'];
             }
         } catch (\Throwable) {
@@ -353,48 +364,5 @@ class SystemSettingsController extends Controller
             'used_percent' => round($used / $total * 100, 1),
             'log_size' => $this->formatBytes((int) $logSize),
         ]);
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes <= 0) {
-            return '0 B';
-        }
-
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $i = (int) floor(log($bytes, 1024));
-
-        return round($bytes / pow(1024, $i), 2).' '.$units[$i];
-    }
-
-    /**
-     * Update environment variable in .env file
-     */
-    private function updateEnvVariable($key, $value)
-    {
-        $path = base_path('.env');
-
-        if (! file_exists($path)) {
-            return false;
-        }
-
-        $content = file_get_contents($path);
-        $oldValue = env($key);
-
-        if ($oldValue === null) {
-            // Variable doesn't exist, add it
-            $content .= "\n{$key}={$value}";
-        } else {
-            // Variable exists, replace it
-            $content = preg_replace(
-                "/^{$key}=.*/m",
-                "{$key}={$value}",
-                $content
-            );
-        }
-
-        file_put_contents($path, $content);
-
-        return true;
     }
 }

@@ -8,7 +8,7 @@ class UpdateCustomCssRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('template.custom-code') ?? false;
     }
 
     public function rules(): array

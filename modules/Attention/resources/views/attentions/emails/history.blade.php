@@ -17,7 +17,7 @@
                                 <i class="fa-duotone fa-envelope-open-text text-primary me-2"></i>
                                 Historial Global de Emails
                             </h4>
-                            <p class="mb-0 text-muted small">Todos los emails enviados del sistema PQRSF</p>
+                            <p class="mb-0 text-muted">Todos los emails enviados del sistema PQRSF</p>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-success" id="exportEmailsBtn">
@@ -50,7 +50,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold">Tipo de Email</label>
-                                <select name="type" class="form-select form-select-sm">
+                                <select class="select2" name="type" class="form-select form-select-sm">
                                     <option value="">Todos</option>
                                     <option value="confirmation" {{ request('type') === 'confirmation' ? 'selected' : '' }}>Confirmación</option>
                                     <option value="assigned" {{ request('type') === 'assigned' ? 'selected' : '' }}>Asignación</option>
@@ -60,7 +60,7 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold">Estado</label>
-                                <select name="status" class="form-select form-select-sm">
+                                <select class="select2" name="status" class="form-select form-select-sm">
                                     <option value="">Todos</option>
                                     <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Enviado</option>
                                     <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Fallido</option>

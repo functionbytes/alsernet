@@ -2,8 +2,26 @@
 
 namespace Modules\Template\Providers;
 
+use Illuminate\Events\Dispatcher;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Factory;
+use Modules\Template\Console\ClearMenuCacheCommand;
+use Modules\Template\Console\ThemeActivateCommand;
+use Modules\Template\Console\ThemeLinkCommand;
+use Modules\Template\Facades\Menu;
+use Modules\Template\Helpers\BaseHelper;
+use Modules\Template\Helpers\RvMedia;
+use Modules\Template\Helpers\SeoHelper;
+use Modules\Template\Models\Shortcode;
+use Modules\Template\Services\MenuService;
+use Modules\Template\Services\TemplateManager;
+use Modules\Template\Services\TemplateService;
+use Modules\Template\Theme\Asset;
+use Modules\Template\Theme\Breadcrumb;
+use Modules\Template\Theme\Theme;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -30,6 +48,8 @@ class TemplateServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->loadMenuHelpers();
         $this->loadTemplateFunctions();
+        $this->loadThemeRoutes();
+        $this->initializeThemeEngine();
         $this->registerDynamicShortcodes();
     }
 
@@ -41,14 +61,66 @@ class TemplateServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
 
+        // Register Theme engine
+        $this->app->singleton(Asset::class);
+
+        $this->app->singleton(Theme::class, function ($app) {
+            return new Theme(
+                $app->make(Dispatcher::class),
+                $app->make(Factory::class),
+                $app->make(Asset::class),
+            );
+        });
+
+        $this->app->alias(Theme::class, 'theme.engine');
+
+        AliasLoader::getInstance()->alias(
+            'Theme',
+            \Modules\Template\Facades\Theme::class
+        );
+
+        // BaseHelper
+        $this->app->singleton(BaseHelper::class);
+        AliasLoader::getInstance()->alias(
+            'BaseHelper',
+            \Modules\Template\Facades\BaseHelper::class
+        );
+
+        // RvMedia
+        $this->app->singleton(RvMedia::class);
+        AliasLoader::getInstance()->alias(
+            'RvMedia',
+            \Modules\Template\Facades\RvMedia::class
+        );
+
+        // SeoHelper (stub de compatibilidad con plantillas Botble)
+        $this->app->singleton(SeoHelper::class);
+        AliasLoader::getInstance()->alias(
+            'SeoHelper',
+            \Modules\Template\Facades\SeoHelper::class
+        );
+
+        // Menu facade (compatibilidad con Botble: Menu::renderMenuLocation())
+        AliasLoader::getInstance()->alias(
+            'Menu',
+            Menu::class
+        );
+
+        // Breadcrumb
+        $this->app->singleton(Breadcrumb::class);
+        AliasLoader::getInstance()->alias(
+            'Breadcrumb',
+            \Modules\Template\Facades\Breadcrumb::class
+        );
+
         // Register manager service
-        $this->app->singleton(\Modules\Template\Services\TemplateManager::class);
+        $this->app->singleton(TemplateManager::class);
 
         // Register template service
-        $this->app->singleton(\Modules\Template\Services\TemplateService::class);
+        $this->app->singleton(TemplateService::class);
 
         // Register menu service
-        $this->app->singleton(\Modules\Template\Services\MenuService::class);
+        $this->app->singleton(MenuService::class);
 
         // Register factories
         $this->registerFactories();
@@ -72,7 +144,9 @@ class TemplateServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\Template\Console\ClearMenuCacheCommand::class,
+            ClearMenuCacheCommand::class,
+            ThemeLinkCommand::class,
+            ThemeActivateCommand::class,
         ]);
     }
 
@@ -222,27 +296,51 @@ class TemplateServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             try {
-                $shortcodes = \Modules\Template\Models\Shortcode::query()
+                $shortcodes = Shortcode::query()
                     ->where('is_active', true)
-                    ->whereNotNull('render_template')
                     ->get();
 
                 foreach ($shortcodes as $sc) {
-                    app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
-                        $html = $sc->render_template;
+                    // If the DB has a render_template, it takes priority over any PHP handler.
+                    // If not, keep the existing PHP handler (if registered) and only register
+                    // a stub so the shortcode still appears in the visual editor panel.
+                    $alreadyRegistered = app('shortcode')->has($sc->key);
 
-                        foreach ($attrs as $key => $val) {
-                            $html = str_replace('{'.$key.'}', e($val), $html);
-                        }
+                    if (! $sc->render_template && $alreadyRegistered) {
+                        continue;
+                    }
 
-                        $html = str_replace('{content}', e($content), $html);
+                    $meta = [
+                        'description' => $sc->description ?? '',
+                        'example' => $sc->shortcode_template ?? "[{$sc->key}][/{$sc->key}]",
+                        'attributes' => collect($sc->config_fields ?? [])
+                            ->mapWithKeys(fn ($f) => [$f['id'] => $f['label'] ?? $f['id']])
+                            ->all(),
+                    ];
 
-                        if ($sc->js_code) {
-                            $html .= "\n<script>".$sc->js_code.'</script>';
-                        }
+                    if ($sc->render_template) {
+                        app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
+                            $html = $sc->render_template;
 
-                        return $html;
-                    });
+                            foreach ($attrs as $key => $val) {
+                                $html = str_replace('{'.$key.'}', e($val), $html);
+                            }
+
+                            $html = str_replace('{content}', e($content), $html);
+
+                            if ($sc->js_code) {
+                                $jsCode = str_replace('</script>', '<\/script>', $sc->js_code);
+                                $html .= "\n<script>{$jsCode}</script>";
+                            }
+
+                            return $html;
+                        }, $meta);
+                    } else {
+                        // No render template — register stub so the shortcode appears in the
+                        // visual editor panel. The builder inserts the raw shortcode tag,
+                        // which the theme compiles on the public-facing page.
+                        app('shortcode')->register($sc->key, fn (): string => '', $meta);
+                    }
                 }
             } catch (\Exception) {
                 // Silently fail if the table does not exist yet (e.g. before migration)
@@ -263,27 +361,45 @@ class TemplateServiceProvider extends ServiceProvider
     }
 
     /**
-     * Load template functions from the active template
+     * Load template functions from the active template.
+     *
+     * Deferred via app()->booted() so modules with higher priority (e.g. Widget)
+     * have already registered their helpers before the theme's functions.php runs.
+     * This prevents Template's stubs from overriding Widget's real dynamic_sidebar().
      */
     protected function loadTemplateFunctions(): void
     {
-        try {
-            $activeTemplateName = $this->getActiveTemplateName();
-            $functionsPath = base_path('platform/themes/'.$activeTemplateName.'/functions/functions.php');
+        $this->app->booted(function () {
+            try {
+                $activeTemplateName = $this->getActiveTemplateName();
+                $functionsPath = base_path('platform/themes/'.$activeTemplateName.'/functions/functions.php');
 
-            if (file_exists($functionsPath)) {
-                require $functionsPath;
-            }
+                if (file_exists($functionsPath)) {
+                    require $functionsPath;
+                }
 
-            // Also load helpers
-            $helpersPath = base_path('platform/themes/'.$activeTemplateName.'/functions/helpers.php');
-            if (file_exists($helpersPath)) {
-                require $helpersPath;
+                $helpersPath = base_path('platform/themes/'.$activeTemplateName.'/functions/helpers.php');
+                if (file_exists($helpersPath)) {
+                    require $helpersPath;
+                }
+
+                // Cargar shortcodes del tema (requiere Shortcode module ya booteado y add_shortcode() disponible)
+                $shortcodesPath = base_path('platform/themes/'.$activeTemplateName.'/functions/shortcodes.php');
+                if (file_exists($shortcodesPath)) {
+                    require $shortcodesPath;
+                }
+
+                // Cargar registros de widgets del tema
+                $widgetsPath = base_path('platform/themes/'.$activeTemplateName.'/widgets');
+                if (is_dir($widgetsPath) && function_exists('register_widget')) {
+                    foreach (glob($widgetsPath.'/*/registration.php') as $registrationFile) {
+                        require_once $registrationFile;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::debug('Could not load template functions: '.$e->getMessage());
             }
-        } catch (\Exception $e) {
-            // Silently fail if unable to load template functions
-            \Log::debug('Could not load template functions: '.$e->getMessage());
-        }
+        });
     }
 
     /**
@@ -292,6 +408,35 @@ class TemplateServiceProvider extends ServiceProvider
     public function provides(): array
     {
         return [];
+    }
+
+    protected function loadThemeRoutes(): void
+    {
+        $this->app->booted(function () {
+            try {
+                $activeTemplateName = $this->getActiveTemplateName();
+                $routesPath = base_path('platform/themes/'.$activeTemplateName.'/routes/web.php');
+
+                if (file_exists($routesPath)) {
+                    require $routesPath;
+                }
+            } catch (\Exception $e) {
+                Log::debug('Could not load theme routes: '.$e->getMessage());
+            }
+        });
+    }
+
+    protected function initializeThemeEngine(): void
+    {
+        $this->app->booted(function () {
+            try {
+                $activeTemplateName = $this->getActiveTemplateName();
+                $theme = $this->app->make(Theme::class);
+                $theme->uses($activeTemplateName)->layout(setting('layout', 'default'));
+            } catch (\Exception $e) {
+                Log::debug('Could not initialize Theme engine: '.$e->getMessage());
+            }
+        });
     }
 
     private function getPublishableViewPaths(): array

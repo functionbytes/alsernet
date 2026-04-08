@@ -1,224 +1,231 @@
 @extends('layouts.theme')
 
-@section('title', 'Detalles de plantilla')
+@section('title', 'Detalle de plantilla')
 
 @section('content')
-    <div class="row">
-        <!-- Panel principal (izquierda) -->
-        <div class="col-lg-8">
-            <div class="card w-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-2">{{ $template->name }}</h5>
-                            <p class="card-subtitle mb-0">
-                                Detalles de la plantilla de respuesta
-                            </p>
-                        </div>
-                        <div>
-                            @if($template->is_active)
-                                <span class="badge bg-success">Activa</span>
-                            @else
-                                <span class="badge bg-secondary">Inactiva</span>
+
+    @include('core::components.card', ['title' => 'Detalle de plantilla'])
+
+    @include('core::components.alerts')
+
+    <div class="widget-content searchable-container list">
+
+        <div class="row g-4 align-items-start">
+
+            {{-- Columna izquierda --}}
+            <div class="col-lg-8">
+
+                <div class="card">
+
+                    {{-- Información general --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Información general</h6>
+                        <p class="text-muted mb-3">Datos principales de la plantilla de respuesta.</p>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Nombre de la plantilla</label>
+                                <input type="text" class="form-control" value="{{ $template->name }}" disabled>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Categoría</label>
+                                @php
+                                    $categoryLabels = [
+                                        'positive' => ['label' => 'Positiva', 'color' => 'success'],
+                                        'negative' => ['label' => 'Negativa', 'color' => 'danger'],
+                                        'neutral'  => ['label' => 'Neutral',  'color' => 'warning'],
+                                        'general'  => ['label' => 'General',  'color' => 'info'],
+                                    ];
+                                    $category = $categoryLabels[$template->category] ?? ['label' => 'General', 'color' => 'secondary'];
+                                @endphp
+                                <div class="mt-1">
+                                    <span class="badge bg-{{ $category['color'] }}">{{ $category['label'] }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Estado</label>
+                                <div class="mt-1">
+                                    @if($template->is_active)
+                                        <span class="badge bg-success">Activa</span>
+                                    @else
+                                        <span class="badge bg-secondary">Inactiva</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if(isset($locations) && $locations->count() > 0 && $template->review_google_location_id)
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Ubicación</label>
+                                    <input type="text" class="form-control"
+                                           value="{{ $locations->find($template->review_google_location_id)?->name ?? 'Global (todas las ubicaciones)' }}"
+                                           disabled>
+                                </div>
                             @endif
                         </div>
                     </div>
 
-                    <div class="row">
-                        <!-- Categoría -->
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label fw-bold">Categoría</label>
-                                <div class="mt-1">
-                                    @php
-                                        $categoryLabels = [
-                                            'positive' => ['label' => 'Positiva', 'color' => 'success'],
-                                            'negative' => ['label' => 'Negativa', 'color' => 'danger'],
-                                            'neutral' => ['label' => 'Neutral', 'color' => 'warning'],
-                                            'general' => ['label' => 'General', 'color' => 'info'],
-                                        ];
-                                        $category = $categoryLabels[$template->category] ?? ['label' => 'General', 'color' => 'secondary'];
-                                    @endphp
-                                    <span class="badge bg-{{ $category['color'] }}">{{ $category['label'] }}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <hr class="my-0">
 
-                        <!-- Veces utilizada -->
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label fw-bold">Veces utilizada</label>
-                                <div class="mt-1">
-                                    <span class="badge bg-primary">{{ $template->usage_count }}</span>
-                                </div>
-                            </div>
-                        </div>
+                    {{-- Cuerpo de la plantilla --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Cuerpo de la respuesta</h6>
+                        <p class="text-muted mb-3">Contenido de la plantilla con las variables definidas.</p>
 
-                        <!-- Cuerpo de la plantilla -->
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label fw-bold">Cuerpo de la respuesta</label>
-                                <div class="mt-2 p-3 bg-light rounded">
-                                    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ $template->body }}</pre>
-                                </div>
-                            </div>
+                        <div class="bg-light p-3 rounded">
+                            <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ $template->body }}</pre>
                         </div>
+                    </div>
 
-                        <!-- Creado por -->
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label fw-bold">Creado por</label>
-                                <div class="mt-1">
-                                    @if($template->createdBy)
-                                        <span class="text-muted">{{ $template->createdBy->name }}</span>
-                                    @else
-                                        <span class="text-muted">Sistema</span>
-                                    @endif
-                                </div>
+                    <hr class="my-0">
+
+                    {{-- Metadatos --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Información adicional</h6>
+                        <p class="text-muted mb-3">Datos de creación y uso de la plantilla.</p>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Creado por</label>
+                                <input type="text" class="form-control"
+                                       value="{{ $template->createdBy?->name ?? 'Sistema' }}"
+                                       disabled>
                             </div>
-                        </div>
 
-                        <!-- Fecha de creación -->
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label class="control-label col-form-label fw-bold">Fecha de creación</label>
-                                <div class="mt-1">
-                                    <span class="text-muted">{{ $template->created_at->format('d/m/Y H:i') }}</span>
-                                </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold">Fecha de creación</label>
+                                <input type="text" class="form-control"
+                                       value="{{ $template->created_at->format('d/m/Y H:i') }}"
+                                       disabled>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold">Veces utilizada</label>
+                                <input type="text" class="form-control"
+                                       value="{{ $template->usage_count }}"
+                                       disabled>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="card-footer d-flex gap-2">
-                    @can('update', $template)
-                        <a href="{{ route('settings.reviews.templates.edit', $template) }}" class="btn btn-info px-4 waves-effect waves-light">
-                            <i class="fas fa-edit me-1"></i>
-                            Editar
+                    <div class="card-footer">
+                        @can('update', $template)
+                            <a href="{{ route('settings.reviews.templates.edit', $template) }}" class="btn btn-primary w-100 mb-2">
+                                Editar plantilla
+                            </a>
+                        @endcan
+                        <a href="{{ route('settings.reviews.templates.index') }}" class="btn btn-secondary w-100 mb-2">
+                            Volver al listado
                         </a>
-                    @endcan
-                    <a href="{{ route('settings.reviews.templates.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Volver al listado
-                    </a>
-                    @can('delete', $template)
-                        <button type="button" class="btn btn-danger ms-auto" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="fas fa-trash me-1"></i>
-                            Eliminar
-                        </button>
-                    @endcan
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel informativo (derecha) -->
-        <div class="col-lg-4">
-            <!-- Variables disponibles -->
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title mb-3">
-                        Variables disponibles
-                    </h6>
-                    <p class="card-text text-muted mb-3">
-                        Esta plantilla puede utilizar las siguientes variables para personalizar las respuestas.
-                    </p>
-                    <div class="small">
-                        <div class="mb-2">
-                            <code class="bg-light px-2 py-1 rounded">{reviewer_name}</code>
-                            <span class="text-muted d-block ps-2">Nombre del reviewer</span>
-                        </div>
-                        <div class="mb-2">
-                            <code class="bg-light px-2 py-1 rounded">{location_name}</code>
-                            <span class="text-muted d-block ps-2">Nombre del negocio/ubicación</span>
-                        </div>
-                        <div class="mb-2">
-                            <code class="bg-light px-2 py-1 rounded">{star_rating}</code>
-                            <span class="text-muted d-block ps-2">Calificación en estrellas</span>
-                        </div>
-                        <div class="mb-2">
-                            <code class="bg-light px-2 py-1 rounded">{comment_summary}</code>
-                            <span class="text-muted d-block ps-2">Resumen del comentario</span>
-                        </div>
-                        <div class="mb-0">
-                            <code class="bg-light px-2 py-1 rounded">{date}</code>
-                            <span class="text-muted d-block ps-2">Fecha de la reseña</span>
-                        </div>
+                        @can('delete', $template)
+                            <button type="button" class="btn btn-secondary w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delete-modal"
+                                    data-url="{{ route('settings.reviews.templates.destroy', $template) }}"
+                                    data-title="Eliminar plantilla: {{ e($template->name) }}">
+                                Eliminar plantilla
+                            </button>
+                        @endcan
                     </div>
+
                 </div>
+
             </div>
 
-            <!-- Estadísticas de uso -->
-            @if($template->usage_count > 0)
+            {{-- Columna derecha --}}
+            <div class="col-lg-4">
+
                 <div class="card">
                     <div class="card-body">
-                        <h6 class="card-title mb-3">
-                            Estadísticas de uso
-                        </h6>
-                        <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <i class="fas fa-chart-line text-primary" style="font-size: 2rem;"></i>
+                        <h6 class="fw-bold mb-1">Variables disponibles</h6>
+                        <p class="text-muted mb-3">Variables que pueden usarse para personalizar las respuestas.</p>
+                        <div class="small">
+                            <div class="mb-2">
+                                <code class="bg-light px-2 py-1 rounded">{reviewer_name}</code>
+                                <span class="text-muted d-block ps-2">Nombre del reviewer</span>
                             </div>
-                            <div>
-                                <p class="mb-0 text-muted">Veces utilizada</p>
-                                <h4 class="mb-0">{{ $template->usage_count }}</h4>
+                            <div class="mb-2">
+                                <code class="bg-light px-2 py-1 rounded">{location_name}</code>
+                                <span class="text-muted d-block ps-2">Nombre del negocio/ubicación</span>
+                            </div>
+                            <div class="mb-2">
+                                <code class="bg-light px-2 py-1 rounded">{star_rating}</code>
+                                <span class="text-muted d-block ps-2">Calificación en estrellas</span>
+                            </div>
+                            <div class="mb-2">
+                                <code class="bg-light px-2 py-1 rounded">{comment_summary}</code>
+                                <span class="text-muted d-block ps-2">Resumen del comentario</span>
+                            </div>
+                            <div class="mb-0">
+                                <code class="bg-light px-2 py-1 rounded">{date}</code>
+                                <span class="text-muted d-block ps-2">Fecha de la reseña</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            @endif
 
-            <!-- Última actualización -->
-            @if($template->updated_at->ne($template->created_at))
-                <div class="card">
+                    <hr class="my-0">
+
                     <div class="card-body">
-                        <h6 class="card-title mb-3">
-                            Última actualización
-                        </h6>
-                        <p class="text-muted mb-0">
-                            {{ $template->updated_at->diffForHumans() }}
-                            <br>
-                            <small>{{ $template->updated_at->format('d/m/Y H:i:s') }}</small>
-                        </p>
+                        <h6 class="fw-bold mb-1">Ejemplo de uso</h6>
+                        <div class="text-muted bg-light p-3 rounded">
+                            <p class="mb-0">
+                                Hola {reviewer_name}, muchas gracias por tu reseña de {star_rating} estrellas en {location_name}.
+                                Tu opinión es muy importante para nosotros y nos ayuda a mejorar cada día.
+                            </p>
+                        </div>
                     </div>
+
+                    @if($template->usage_count > 0)
+                        <hr class="my-0">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1">Estadisticas de uso</h6>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="text-muted">Veces utilizada</span>
+                                <strong>{{ $template->usage_count }}</strong>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($template->updated_at->ne($template->created_at))
+                        <hr class="my-0">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1">Ultima actualizacion</h6>
+                            <p class="text-muted mb-0">
+                                {{ $template->updated_at->diffForHumans() }}<br>
+                                <small>{{ $template->updated_at->format('d/m/Y H:i:s') }}</small>
+                            </p>
+                        </div>
+                    @endif
                 </div>
-            @endif
+
+            </div>
+
         </div>
+
     </div>
 
-    <!-- Modal de confirmación de eliminación -->
     @can('delete', $template)
-        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>¿Está seguro de que desea eliminar esta plantilla?</p>
-                        <p class="text-muted mb-0">
-                            <strong>{{ $template->name }}</strong>
-                        </p>
-                        @if($template->usage_count > 0)
-                            <div class="alert alert-warning mt-3 mb-0">
-                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                Esta plantilla ha sido utilizada {{ $template->usage_count }} {{ $template->usage_count === 1 ? 'vez' : 'veces' }}
-                            </div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form action="{{ route('settings.reviews.templates.destroy', $template) }}" method="POST" style="display: inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-trash me-1"></i>
-                                Eliminar
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('core::components.delete')
     @endcan
+
 @endsection
+
+@push('scripts')
+<script>
+$(function () {
+    $('#delete-modal').on('show.bs.modal', function (e) {
+        var $trigger = $(e.relatedTarget);
+        $(this).find('.modal-title').text($trigger.data('title'));
+        $('#delete-form').attr('action', $trigger.data('url'));
+    });
+
+    @if (session('success'))
+        toastr.success(@json(session('success')), 'Éxito');
+    @endif
+    @if (session('error'))
+        toastr.error(@json(session('error')), 'Error');
+    @endif
+});
+</script>
+@endpush

@@ -2,8 +2,8 @@
 
 namespace Modules\Analytics\Console\Commands;
 
-use Modules\Analytics\Jobs\GenerateAnalyticsReport;
 use Illuminate\Console\Command;
+use Modules\Analytics\Jobs\GenerateAnalyticsReport;
 
 class GenerateAnalyticsReportCommand extends Command
 {
@@ -34,8 +34,9 @@ class GenerateAnalyticsReportCommand extends Command
         $shouldQueue = $this->option('queue');
 
         // Validar tipo de reporte
-        if (!in_array($type, ['daily', 'weekly', 'monthly'])) {
+        if (! in_array($type, ['daily', 'weekly', 'monthly'])) {
             $this->error("Invalid report type: {$type}. Must be: daily, weekly, or monthly");
+
             return 1;
         }
 
@@ -58,7 +59,8 @@ class GenerateAnalyticsReportCommand extends Command
 
             return 0;
         } catch (\Exception $e) {
-            $this->error('Failed to generate report: ' . $e->getMessage());
+            $this->error('Failed to generate report: '.$e->getMessage());
+
             return 1;
         }
     }

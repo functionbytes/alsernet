@@ -3,8 +3,12 @@
 namespace Modules\Analytics;
 
 use Google\Analytics\Data\V1beta\Client\BetaAnalyticsDataClient;
+use Google\Analytics\Data\V1beta\Metric;
+use Google\Analytics\Data\V1beta\MetricAggregation;
+use Google\Analytics\Data\V1beta\RunRealtimeReportRequest;
 use Google\Analytics\Data\V1beta\RunReportRequest;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Modules\Analytics\Abstracts\AnalyticsAbstract;
 use Modules\Analytics\Abstracts\AnalyticsContract;
@@ -35,10 +39,15 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
 
     public array $orderBys = [];
 
+    private ?BetaAnalyticsDataClient $client = null;
+
+    private readonly string $credentialsFileName;
+
     public function __construct(int|string $propertyId, string $credentials)
     {
         $this->propertyId = $propertyId;
         $this->credentials = $credentials;
+        $this->credentialsFileName = 'analytics-credentials.json';
     }
 
     public function getCredentials(): string
@@ -48,21 +57,37 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
 
     public function getClient(): BetaAnalyticsDataClient
     {
-        $storage = Storage::disk('local');
-
-        $fileName = 'analytics-credentials.json';
-
-        if (! $storage->exists($fileName) || md5_file($storage->path($fileName)) !== md5($this->getCredentials())) {
-            $storage->put('analytics-credentials.json', $this->getCredentials());
+        if ($this->client !== null) {
+            return $this->client;
         }
 
-        if (! $storage->exists($fileName)) {
+        $credentialsPath = $this->ensureCredentialsFile();
+
+        return $this->client = new BetaAnalyticsDataClient([
+            'credentials' => $credentialsPath,
+        ]);
+    }
+
+    private function ensureCredentialsFile(): string
+    {
+        $credentials = $this->getCredentials();
+        $currentHash = md5($credentials);
+        $cachedHash = Cache::get('analytics.credentials_hash');
+
+        $storage = Storage::disk('local');
+
+        if ($cachedHash !== $currentHash || ! $storage->exists($this->credentialsFileName)) {
+            $storage->put($this->credentialsFileName, $credentials);
+            Cache::forever('analytics.credentials_hash', $currentHash);
+        }
+
+        $path = $storage->path($this->credentialsFileName);
+
+        if (! file_exists($path)) {
             throw new InvalidConfiguration('The credentials file does not exist.');
         }
 
-        return new BetaAnalyticsDataClient([
-            'credentials' => $storage->path($fileName),
-        ]);
+        return $path;
     }
 
     public function get(): AnalyticsResponse
@@ -153,5 +178,190 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
         }
 
         return $query->get()->table;
+    }
+
+    public function fetchTopCountries(Period $period, int $maxResults = 20): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions('country')
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchDeviceCategories(Period $period): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions('deviceCategory')
+            ->orderByMetricDesc('sessions')
+            ->get()
+            ->table;
+    }
+
+    public function fetchOperatingSystems(Period $period, int $maxResults = 10): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions('operatingSystem')
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchTrafficSources(Period $period, int $maxResults = 10): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions(['sessionSource', 'sessionMedium'])
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchSessionMetrics(Period $period): array
+    {
+        $that = clone $this;
+
+        $response = $that->dateRange($period)
+            ->metrics(['sessions', 'newUsers', 'averageSessionDuration'])
+            ->metricAggregation(MetricAggregation::TOTAL)
+            ->get();
+
+        $totals = collect($response->metricAggregationsTable)->first() ?? [];
+
+        return [
+            'sessions' => (int) ($totals['sessions'] ?? 0),
+            'new_users' => (int) ($totals['newUsers'] ?? 0),
+            'avg_session_duration' => (float) ($totals['averageSessionDuration'] ?? 0),
+        ];
+    }
+
+    public function fetchLandingPages(Period $period, int $maxResults = 10): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics(['sessions', 'bounceRate'])
+            ->dimensions('landingPage')
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchExitPages(Period $period, int $maxResults = 10): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics(['sessions', 'screenPageViews'])
+            ->dimensions('pagePath')
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchChannelTrend(Period $period): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions(['date', 'sessionMedium'])
+            ->get()
+            ->table;
+    }
+
+    public function fetchHourlyHeatmap(Period $period): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics('sessions')
+            ->dimensions(['hour', 'dayOfWeek'])
+            ->get()
+            ->table;
+    }
+
+    public function fetchPreviousPeriodOverview(Period $period): array
+    {
+        $that = clone $this;
+
+        $days = $period->startDate->diffInDays($period->endDate) + 1;
+        $prevEnd = $period->startDate->copy()->subDay();
+        $prevStart = $prevEnd->copy()->subDays($days - 1);
+        $previousPeriod = Period::create($prevStart, $prevEnd);
+
+        $response = $that->dateRange($previousPeriod)
+            ->metrics(['sessions', 'totalUsers', 'screenPageViews', 'bounceRate'])
+            ->metricAggregation(MetricAggregation::TOTAL)
+            ->get();
+
+        $totals = collect($response->metricAggregationsTable)->first() ?? [];
+
+        return [
+            'sessions' => (int) ($totals['sessions'] ?? 0),
+            'totalUsers' => (int) ($totals['totalUsers'] ?? 0),
+            'screenPageViews' => (int) ($totals['screenPageViews'] ?? 0),
+            'bounceRate' => (float) ($totals['bounceRate'] ?? 0),
+        ];
+    }
+
+    public function fetchRealtimeUsers(): int
+    {
+        $request = new RunRealtimeReportRequest([
+            'property' => 'properties/'.$this->getPropertyId(),
+            'metrics' => [new Metric(['name' => 'activeUsers'])],
+        ]);
+
+        $response = $this->getClient()->runRealtimeReport($request);
+
+        foreach ($response->getRows() as $row) {
+            foreach ($row->getMetricValues() as $value) {
+                return (int) $value->getValue();
+            }
+        }
+
+        return 0;
+    }
+
+    public function fetchSearchTerms(Period $period, int $maxResults = 20): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics(['sessions', 'screenPageViews'])
+            ->dimensions('searchTerm')
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
+    }
+
+    public function fetchUserFlow(Period $period, int $maxResults = 10): Collection
+    {
+        $that = clone $this;
+
+        return $that->dateRange($period)
+            ->metrics(['sessions', 'screenPageViews', 'bounceRate'])
+            ->dimensions(['landingPage', 'pagePath'])
+            ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
+            ->get()
+            ->table;
     }
 }

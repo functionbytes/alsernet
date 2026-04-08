@@ -3,7 +3,7 @@
         <div class="card border">
             <div class="card-body p-4">
                 <h6 class="fw-bold mb-3">Cambiar contraseña</h6>
-                <p class="text-muted small mb-4">Actualiza tu contraseña para mantener tu cuenta segura</p>
+                <p class="text-muted mb-4">Actualiza tu contraseña para mantener tu cuenta segura</p>
 
                 <form id="formPassword" onSubmit="return false">
                     @csrf
@@ -19,6 +19,12 @@
                         <label class="form-label">Nueva contraseña <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" name="new_password" id="new_password"
                                placeholder="Mínimo 8 caracteres" required>
+                        <div class="mt-2" id="password-strength-wrapper" style="display:none">
+                            <div class="progress" style="height:6px">
+                                <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+                            <small id="password-strength-text" class="text-muted mt-1 d-block"></small>
+                        </div>
                         <small class="text-muted">Debe tener al menos 8 caracteres</small>
                     </div>
 
@@ -70,6 +76,41 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+
+    // Password strength meter
+    function passwordStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8)  { score++; }
+        if (pw.length >= 12) { score++; }
+        if (/[A-Z]/.test(pw))  { score++; }
+        if (/[0-9]/.test(pw))  { score++; }
+        if (/[^A-Za-z0-9]/.test(pw)) { score++; }
+        return score;
+    }
+
+    const strengthLabels = ['', 'Muy débil', 'Débil', 'Regular', 'Fuerte', 'Muy fuerte'];
+    const strengthClasses = ['', 'bg-danger', 'bg-warning', 'bg-info', 'bg-primary', 'bg-success'];
+
+    $('#new_password').on('input', function () {
+        const val = $(this).val();
+        const $wrapper = $('#password-strength-wrapper');
+        const $bar = $('#password-strength-bar');
+        const $text = $('#password-strength-text');
+
+        if (!val) {
+            $wrapper.hide();
+            return;
+        }
+
+        $wrapper.show();
+        const score = passwordStrength(val);
+        const pct = (score / 5) * 100;
+        $bar.css('width', pct + '%')
+            .removeClass('bg-danger bg-warning bg-info bg-primary bg-success')
+            .addClass(strengthClasses[score] || 'bg-danger');
+        $text.text(strengthLabels[score] || '');
+    });
+
     $("#formPassword").validate({
         rules: {
             current_password: {

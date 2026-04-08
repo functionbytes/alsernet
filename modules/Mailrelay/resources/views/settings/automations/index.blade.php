@@ -148,7 +148,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="status" class="form-label">Estado</label>
-                    <select name="status" id="status" class="form-select">
+                    <select class="select2" name="status" id="status" class="form-select">
                         <option value="">Todas</option>
                         <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activas</option>
                         <option value="paused" {{ request('status') === 'paused' ? 'selected' : '' }}>Pausadas</option>
@@ -197,7 +197,7 @@
                 <!-- Card Body -->
                 <div class="card-body">
                     <!-- Description -->
-                    <p class="text-muted small mb-3">
+                    <p class="text-muted mb-3">
                         {{ Str::limit($automation->description ?? 'Sin descripción', 100) }}
                     </p>
 

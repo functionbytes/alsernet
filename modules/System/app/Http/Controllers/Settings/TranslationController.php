@@ -2,11 +2,13 @@
 
 namespace Modules\System\Http\Controllers\Settings;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class TranslationController extends Controller
 {
@@ -26,7 +28,7 @@ class TranslationController extends Controller
     /**
      * Mostrar lista de archivos de traducción
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         // Detectar dinámicamente todos los archivos de traducción
         $baseLocale = 'es';
@@ -87,10 +89,14 @@ class TranslationController extends Controller
     /**
      * Mostrar formulario de edición de un archivo de traducción
      */
-    public function edit(string $locale, string $file)
+    public function edit(string $locale, string $file): View
     {
         if (! in_array($locale, $this->availableLocales)) {
             abort(404, 'Locale not found');
+        }
+
+        if (! preg_match('/^[a-zA-Z0-9_\-]+$/', $file)) {
+            abort(404);
         }
 
         $path = resource_path("lang/{$locale}/{$file}.php");
@@ -119,10 +125,14 @@ class TranslationController extends Controller
     /**
      * Guardar cambios en un archivo de traducción
      */
-    public function update(Request $request, string $locale, string $file)
+    public function update(Request $request, string $locale, string $file): RedirectResponse
     {
         if (! in_array($locale, $this->availableLocales)) {
             abort(404, 'Locale not found');
+        }
+
+        if (! preg_match('/^[a-zA-Z0-9_\-]+$/', $file)) {
+            abort(404);
         }
 
         $path = resource_path("lang/{$locale}/{$file}.php");
@@ -141,10 +151,12 @@ class TranslationController extends Controller
             // Actualizar recursivamente el array de traducciones
             $content = $this->updateTranslationArray($content, $translations);
 
-            // Guardar el archivo
+            // Guardar el archivo de forma atómica
             $fileContent = "<?php\n\nreturn ".var_export($content, true).";\n";
 
-            File::put($path, $fileContent);
+            $tmpPath = $path.'.tmp.'.uniqid('', true);
+            File::put($tmpPath, $fileContent);
+            rename($tmpPath, $path);
 
             $fileLabel = $this->translationFileLabels[$file] ?? ucfirst(str_replace('_', ' ', $file));
 

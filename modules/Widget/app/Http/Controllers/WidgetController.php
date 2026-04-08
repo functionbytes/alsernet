@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Modules\Widget\Events\RenderingWidgetSettings;
 use Modules\Widget\Facades\WidgetGroup;
 use Modules\Widget\Models\Widget;
 
 class WidgetController extends Controller
 {
-    public function index()
+    public function index(): View
     {
         $this->authorize('settings');
 
@@ -43,10 +44,16 @@ class WidgetController extends Controller
                 'theme' => $themeName,
             ])->delete();
 
+            $allowedWidgets = \Modules\Widget\Facades\Widget::getWidgets();
+
             foreach (array_filter($request->input('items', [])) as $key => $item) {
                 parse_str($item, $data);
 
                 if (empty($data['id'])) {
+                    continue;
+                }
+
+                if (! in_array($data['id'], $allowedWidgets, true)) {
                     continue;
                 }
 

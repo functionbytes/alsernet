@@ -32,9 +32,12 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="preview-wrapper">
-                            <div class="preview-email-container" id="previewContainer" >
-                                {!! $html !!}
-                            </div>
+                            <iframe id="previewContainer" class="preview-email-container"
+                                    srcdoc="{{ $html }}"
+                                    sandbox="allow-same-origin"
+                                    style="width: 100%; min-height: 600px; border: none;"
+                                    onload="this.style.height = this.contentDocument.body.scrollHeight + 'px'">
+                            </iframe>
                         </div>
                     </div>
                     <div class="card-footer bg-light">
@@ -253,7 +256,7 @@
                                             <div class="col-12">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <div>
-                                                        <label class="text-muted small fw-semibold mb-0">PLANTILLA</label>
+                                                        <label class="text-muted fw-semibold mb-0">PLANTILLA</label>
                                                         <div class="fw-bold">{{ $template->name }}</div>
                                                     </div>
                                                 </div>
@@ -261,7 +264,7 @@
                                             <div class="col-12">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <div>
-                                                        <label class="text-muted small fw-semibold mb-0">ASUNTO</label>
+                                                        <label class="text-muted fw-semibold mb-0">ASUNTO</label>
                                                         <div class="fw-bold">{{ $translation->subject ?? 'Sin asunto definido' }}</div>
                                                     </div>
                                                 </div>
@@ -313,14 +316,14 @@
             }
 
             .variable-badge:hover {
-                border-color: #081A28;
+                border-color: #b10100;
                 background: #f6faf0;
                 transform: translateY(-1px);
                 box-shadow: 0 2px 8px rgba(144, 187, 19, 0.15);
             }
 
             .variable-badge i {
-                color: #081A28;
+                color: #b10100;
                 font-size: 12px;
             }
 
@@ -381,8 +384,8 @@
 
             /* Button Group Active State */
             .btn-group .btn.active {
-                background-color: #081A28 !important;
-                border-color: #081A28 !important;
+                background-color: #b10100 !important;
+                border-color: #b10100 !important;
                 color: white !important;
             }
 
@@ -505,7 +508,7 @@
                 }
                 window.PreviewPageActive = true;
             } catch (error) {
-                console.warn('Preview initialization warning:', error);
+                // Preview initialization warning
             }
 
             // Initialize preview container with desktop view class

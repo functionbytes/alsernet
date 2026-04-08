@@ -10,6 +10,8 @@ return [
     | with Google Business Profile API.
     |
     */
+    'maps_api_key' => env('GOOGLE_MAPS_API_KEY', null),
+
     'client_id' => env('GOOGLE_CLIENT_ID'),
     'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     'redirect_uri' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost').'/settings/reviews/oauth/callback'),

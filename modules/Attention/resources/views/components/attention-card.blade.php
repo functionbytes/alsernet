@@ -16,11 +16,11 @@
                                 {{ $attention->subject }}
                             </a>
                         </h6>
-                        <p class="mb-2 text-muted small">
+                        <p class="mb-2 text-muted">
                             <span class="badge bg-light-info text-info me-2">{{ $attention->type->name }}</span>
                             <strong>Radicado:</strong> {{ $attention->radicado }}
                         </p>
-                        <p class="mb-0 text-muted small">
+                        <p class="mb-0 text-muted">
                             <i class="fa-duotone fa-user me-1"></i> {{ $attention->full_name }}
                             <span class="mx-2">|</span>
                             <i class="fa-duotone fa-calendar me-1"></i> {{ $attention->created_at->format('d/m/Y') }}

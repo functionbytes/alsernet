@@ -3,47 +3,23 @@
 use Laravel\Pulse\Http\Middleware\Authorize;
 use Laravel\Pulse\Pulse;
 use Laravel\Pulse\Recorders;
+use Nwidart\Modules\Facades\Module;
+
+// Only load full config if module is enabled
+// Otherwise, all recorders will be disabled
+$moduleEnabled = true;
+try {
+    $module = Module::find('Pulse');
+    $moduleEnabled = ! $module?->isDisabled();
+} catch (Exception $e) {
+    // Fallback
+}
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pulse Domain
-    |--------------------------------------------------------------------------
-    |
-    | This is the subdomain which the Pulse dashboard will be accessible from.
-    | When set to null, the dashboard will reside under the same domain as
-    | the application. Remember to configure your DNS entries correctly.
-    |
-    */
-
     'domain' => env('PULSE_DOMAIN'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Pulse Path
-    |--------------------------------------------------------------------------
-    |
-    | This is the path which the Pulse dashboard will be accessible from. Feel
-    | free to change this path to anything you'd like. Note that this won't
-    | affect the path of the internal API that is never exposed to users.
-    |
-    */
-
     'path' => env('PULSE_PATH', 'pulse'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Pulse Master Switch
-    |--------------------------------------------------------------------------
-    |
-    | This configuration option may be used to completely disable all Pulse
-    | data recorders regardless of their individual configurations. This
-    | provides a single option to quickly disable all Pulse recording.
-    |
-    */
-
-    'enabled' => env('PULSE_ENABLED', true),
+    'enabled' => $moduleEnabled && env('PULSE_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -138,7 +114,7 @@ return [
 
     'recorders' => [
         Recorders\CacheInteractions::class => [
-            'enabled' => env('PULSE_CACHE_INTERACTIONS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_CACHE_INTERACTIONS_ENABLED', true),
             'sample_rate' => env('PULSE_CACHE_INTERACTIONS_SAMPLE_RATE', 1),
             'ignore' => [
                 ...Pulse::defaultVendorCacheKeys(),
@@ -150,7 +126,7 @@ return [
         ],
 
         Recorders\Exceptions::class => [
-            'enabled' => env('PULSE_EXCEPTIONS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_EXCEPTIONS_ENABLED', true),
             'sample_rate' => env('PULSE_EXCEPTIONS_SAMPLE_RATE', 1),
             'location' => env('PULSE_EXCEPTIONS_LOCATION', true),
             'ignore' => [
@@ -159,7 +135,7 @@ return [
         ],
 
         Recorders\Queues::class => [
-            'enabled' => env('PULSE_QUEUES_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_QUEUES_ENABLED', true),
             'sample_rate' => env('PULSE_QUEUES_SAMPLE_RATE', 1),
             'ignore' => [
                 // '/^Package\\\\Jobs\\\\/',
@@ -172,7 +148,7 @@ return [
         ],
 
         Recorders\SlowJobs::class => [
-            'enabled' => env('PULSE_SLOW_JOBS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_SLOW_JOBS_ENABLED', true),
             'sample_rate' => env('PULSE_SLOW_JOBS_SAMPLE_RATE', 1),
             'threshold' => env('PULSE_SLOW_JOBS_THRESHOLD', 1000),
             'ignore' => [
@@ -181,7 +157,7 @@ return [
         ],
 
         Recorders\SlowOutgoingRequests::class => [
-            'enabled' => env('PULSE_SLOW_OUTGOING_REQUESTS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_SLOW_OUTGOING_REQUESTS_ENABLED', true),
             'sample_rate' => env('PULSE_SLOW_OUTGOING_REQUESTS_SAMPLE_RATE', 1),
             'threshold' => env('PULSE_SLOW_OUTGOING_REQUESTS_THRESHOLD', 1000),
             'ignore' => [
@@ -195,7 +171,7 @@ return [
         ],
 
         Recorders\SlowQueries::class => [
-            'enabled' => env('PULSE_SLOW_QUERIES_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_SLOW_QUERIES_ENABLED', true),
             'sample_rate' => env('PULSE_SLOW_QUERIES_SAMPLE_RATE', 1),
             'threshold' => env('PULSE_SLOW_QUERIES_THRESHOLD', 1000),
             'location' => env('PULSE_SLOW_QUERIES_LOCATION', true),
@@ -207,7 +183,7 @@ return [
         ],
 
         Recorders\SlowRequests::class => [
-            'enabled' => env('PULSE_SLOW_REQUESTS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_SLOW_REQUESTS_ENABLED', true),
             'sample_rate' => env('PULSE_SLOW_REQUESTS_SAMPLE_RATE', 1),
             'threshold' => env('PULSE_SLOW_REQUESTS_THRESHOLD', 1000),
             'ignore' => [
@@ -217,7 +193,7 @@ return [
         ],
 
         Recorders\UserJobs::class => [
-            'enabled' => env('PULSE_USER_JOBS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_USER_JOBS_ENABLED', true),
             'sample_rate' => env('PULSE_USER_JOBS_SAMPLE_RATE', 1),
             'ignore' => [
                 // '/^Package\\\\Jobs\\\\/',
@@ -225,7 +201,7 @@ return [
         ],
 
         Recorders\UserRequests::class => [
-            'enabled' => env('PULSE_USER_REQUESTS_ENABLED', true),
+            'enabled' => $moduleEnabled && env('PULSE_USER_REQUESTS_ENABLED', true),
             'sample_rate' => env('PULSE_USER_REQUESTS_SAMPLE_RATE', 1),
             'ignore' => [
                 '#^/'.env('PULSE_PATH', 'pulse').'$#', // Pulse dashboard...

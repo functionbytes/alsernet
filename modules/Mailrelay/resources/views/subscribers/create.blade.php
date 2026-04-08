@@ -132,8 +132,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="status" class="form-label required-field">Status</label>
-                            <select
-                                class="form-select @error('status') is-invalid @enderror"
+                            <select class="select2"                                 class="form-select @error('status') is-invalid @enderror"
                                 id="status"
                                 name="status"
                                 required
@@ -162,8 +161,7 @@
 
                         <div class="col-md-6">
                             <label for="list_id" class="form-label">Mailing List</label>
-                            <select
-                                class="form-select @error('list_id') is-invalid @enderror"
+                            <select class="select2"                                 class="form-select @error('list_id') is-invalid @enderror"
                                 id="list_id"
                                 name="list_id"
                             >
@@ -271,8 +269,7 @@
 
                     <div class="mb-3">
                         <label for="mailrelay_groups" class="form-label">Mailrelay Groups</label>
-                        <select
-                            class="form-select @error('mailrelay_groups') is-invalid @enderror"
+                        <select class="select2"                             class="form-select @error('mailrelay_groups') is-invalid @enderror"
                             id="mailrelay_groups"
                             name="mailrelay_groups[]"
                             multiple

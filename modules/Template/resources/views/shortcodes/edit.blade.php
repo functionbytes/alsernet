@@ -4,6 +4,6 @@
 
 @section('content')
 
-    @include('template::shortcodes.form', ['shortcode' => $shortcode])
+    @include('template::shortcodes.form', ['shortcode' => $shortcode, 'themeCssUrls' => $themeCssUrls, 'themeJsUrls' => $themeJsUrls])
 
 @endsection

@@ -149,9 +149,9 @@
                                     </td>
                                     <td>
                                         @if($mail->sender)
-                                            <span class="text-muted small">{{ $mail->sender->firstname ?? 'Usuario' }}</span>
+                                            <span class="text-muted">{{ $mail->sender->firstname ?? 'Usuario' }}</span>
                                         @else
-                                            <span class="text-muted small">Sistema</span>
+                                            <span class="text-muted">Sistema</span>
                                         @endif
                                     </td>
                                     <td>
@@ -259,7 +259,7 @@
             @if($mails->hasPages())
                 <div class="card-footer bg-white border-top">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
+                        <div class="text-muted">
                             Mostrando {{ $mails->firstItem() }} - {{ $mails->lastItem() }} de {{ $mails->total() }} emails
                         </div>
                         <div>
@@ -287,7 +287,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipo de email</label>
-                        <select name="type" class="form-select">
+                        <select class="select2" name="type" class="form-select">
                             <option value="">Todos los tipos</option>
                             <option value="confirmation" {{ request('type') === 'confirmation' ? 'selected' : '' }}>Confirmacion</option>
                             <option value="assigned" {{ request('type') === 'assigned' ? 'selected' : '' }}>Asignacion</option>
@@ -298,7 +298,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Estado</label>
-                        <select name="status" class="form-select">
+                        <select class="select2" name="status" class="form-select">
                             <option value="">Todos los estados</option>
                             <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Enviado</option>
                             <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Fallido</option>

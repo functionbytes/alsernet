@@ -139,7 +139,7 @@
                                 });
 
                                 setTimeout(function () {
-                                    window.location.href = "{{ route('manager.dashboard') }}";
+                                    window.location.href = "{{ route('core.dashboard') }}";
                                 }, 2000);
 
                             } else {

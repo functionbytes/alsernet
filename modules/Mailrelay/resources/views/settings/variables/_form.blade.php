@@ -46,7 +46,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="category" class="form-label">Categoría <span class="text-danger">*</span></label>
-                        <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required>
+                        <select class="form-select @error('category') is-invalid @enderror select2" id="category" name="category" required>
                             <option value="">Selecciona una categoría...</option>
                             <option value="system" {{ old('category', $variable->category ?? '') === 'system' ? 'selected' : '' }}>Sistema</option>
                             <option value="customer" {{ old('category', $variable->category ?? '') === 'customer' ? 'selected' : '' }}>Cliente</option>
@@ -114,7 +114,7 @@
 
                 <div class="mb-3">
                     <label for="status" class="form-label">Estado</label>
-                    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
+                    <select class="form-select @error('status') is-invalid @enderror select2" id="status" name="status">
                         <option value="active" {{ old('status', $variable->status ?? 'active') === 'active' ? 'selected' : '' }}>Activo</option>
                         <option value="inactive" {{ old('status', $variable->status ?? 'active') === 'inactive' ? 'selected' : '' }}>Inactivo</option>
                     </select>

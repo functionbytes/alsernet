@@ -44,13 +44,13 @@
                         {{-- Tipo, Categoria, Sede --}}
                         <div class="section-header mb-3">
                             <h5 class="fw-bold mb-1">Clasificacion de la solicitud</h5>
-                            <p class="text-muted small mb-0">Seleccione el tipo y categoria que mejor describa su solicitud</p>
+                            <p class="text-muted mb-0">Seleccione el tipo y categoria que mejor describa su solicitud</p>
                         </div>
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label" for="type_id">Tipo de PQRSF <span class="text-danger">*</span></label>
-                                <select class="form-select" name="type_id" id="type_id" required>
+                                <select class="form-select select2" name="type_id" id="type_id" required>
                                     <option value="">Seleccione un tipo</option>
                                     @foreach($types as $type)
                                         <option value="{{ $type->id }}" {{ old('type_id') == $type->id ? 'selected' : '' }}>
@@ -64,7 +64,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="category_id">Categoria <span class="text-danger">*</span></label>
-                                <select class="form-select" name="category_id" id="category_id" required>
+                                <select class="form-select select2" name="category_id" id="category_id" required>
                                     <option value="">Seleccione una categoria</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -78,7 +78,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="sede_id">Sede</label>
-                                <select class="form-select" name="sede_id" id="sede_id">
+                                <select class="form-select select2" name="sede_id" id="sede_id">
                                     <option value="">Seleccione una sede</option>
                                     @foreach($sedes as $sede)
                                         <option value="{{ $sede->id }}" {{ old('sede_id') == $sede->id ? 'selected' : '' }}>
@@ -97,7 +97,7 @@
                         {{-- Informacion del ciudadano --}}
                         <div class="section-header mb-3">
                             <h5 class="fw-bold mb-1">Informacion del ciudadano</h5>
-                            <p class="text-muted small mb-0">Proporcione sus datos de contacto para recibir respuesta</p>
+                            <p class="text-muted mb-0">Proporcione sus datos de contacto para recibir respuesta</p>
                         </div>
 
                         <div class="alert alert-info border-0 mb-4" style="background-color: #e8f4fd;">
@@ -175,7 +175,7 @@
                         {{-- Contenido de la solicitud --}}
                         <div class="section-header mb-3">
                             <h5 class="fw-bold mb-1">Contenido de la solicitud</h5>
-                            <p class="text-muted small mb-0">Describa de forma clara y detallada su peticion, queja, reclamo, sugerencia o felicitacion</p>
+                            <p class="text-muted mb-0">Describa de forma clara y detallada su peticion, queja, reclamo, sugerencia o felicitacion</p>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -205,7 +205,7 @@
                         {{-- Tipo de respuesta --}}
                         <div class="section-header mb-3">
                             <h5 class="fw-bold mb-1">Tipo de respuesta preferido</h5>
-                            <p class="text-muted small mb-0">Seleccione como desea recibir la respuesta a su solicitud</p>
+                            <p class="text-muted mb-0">Seleccione como desea recibir la respuesta a su solicitud</p>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -255,15 +255,15 @@
                         {{-- Documentos adjuntos --}}
                         <div class="section-header mb-3">
                             <h5 class="fw-bold mb-1">Documentos adjuntos <small class="text-muted fw-normal">(Opcional)</small></h5>
-                            <p class="text-muted small mb-0">Adjunte documentos que respalden su solicitud</p>
+                            <p class="text-muted mb-0">Adjunte documentos que respalden su solicitud</p>
                         </div>
 
                         <div class="mb-4">
                             <div class="file-upload-area">
                                 <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-muted"></i>
                                 <p class="mb-2"><strong>Haga clic o arrastre archivos aqui</strong></p>
-                                <p class="text-muted small mb-0">PDF, DOC, DOCX, JPG, PNG, GIF, TXT, ZIP, RAR</p>
-                                <p class="text-muted small">Maximo 5 archivos, 10MB cada uno</p>
+                                <p class="text-muted mb-0">PDF, DOC, DOCX, JPG, PNG, GIF, TXT, ZIP, RAR</p>
+                                <p class="text-muted">Maximo 5 archivos, 10MB cada uno</p>
                                 <input type="file" class="form-control file-upload-input @error('attachments.*') is-invalid @enderror"
                                        name="attachments[]" id="attachments" multiple
                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.zip,.rar">
@@ -358,7 +358,7 @@
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <p class="mb-0 small"><strong>Peticiones</strong></p>
-                                <p class="mb-0 text-muted small">Hasta 15 dias habiles</p>
+                                <p class="mb-0 text-muted">Hasta 15 dias habiles</p>
                             </div>
                         </div>
                         <div class="d-flex align-items-start mb-3">
@@ -370,7 +370,7 @@
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <p class="mb-0 small"><strong>Quejas y Reclamos</strong></p>
-                                <p class="mb-0 text-muted small">Hasta 15 dias habiles</p>
+                                <p class="mb-0 text-muted">Hasta 15 dias habiles</p>
                             </div>
                         </div>
                         <div class="d-flex align-items-start">
@@ -382,7 +382,7 @@
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <p class="mb-0 small"><strong>Sugerencias</strong></p>
-                                <p class="mb-0 text-muted small">Evaluacion y respuesta</p>
+                                <p class="mb-0 text-muted">Evaluacion y respuesta</p>
                             </div>
                         </div>
                     </div>

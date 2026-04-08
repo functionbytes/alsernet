@@ -3,7 +3,9 @@
 namespace Modules\Seo\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Modules\Seo\Models\SeoMeta;
+use Modules\Seo\Models\SeoTemplate;
 
 class SeoService
 {
@@ -16,6 +18,23 @@ class SeoService
      * Schema.org structured data container.
      */
     protected array $schemas = [];
+
+    /**
+     * Whether caching is enabled for render().
+     */
+    protected bool $cachingEnabled = false;
+
+    /**
+     * Cache key for the rendered HTML.
+     */
+    protected ?string $cacheKey = null;
+
+    /**
+     * Pagination prev/next URLs for rel=prev/next link tags.
+     */
+    private string $prevUrl = '';
+
+    private string $nextUrl = '';
 
     /**
      * Initialize with default values.
@@ -174,6 +193,17 @@ class SeoService
     }
 
     /**
+     * Set pagination rel=prev/next URLs for SEO link tags.
+     */
+    public function setPagination(string $prevUrl = '', string $nextUrl = ''): self
+    {
+        $this->prevUrl = $prevUrl;
+        $this->nextUrl = $nextUrl;
+
+        return $this;
+    }
+
+    /**
      * Load SEO data from a model.
      */
     public function loadFromModel(Model $model): self
@@ -194,15 +224,68 @@ class SeoService
             $this->data['twitter_image'] = $seoMeta->twitter_image;
             $this->data['canonical_url'] = $seoMeta->canonical_url;
             $this->data['robots'] = $seoMeta->robots ?? 'index,follow';
+
+            // A/B testing: override title/description and track impressions
+            if ($seoMeta->hasAbTest()) {
+                $variant = $seoMeta->getActiveVariant();
+                $this->data['title'] = $seoMeta->getActiveTitle() ?: ($model->title ?? null);
+                $this->data['description'] = $seoMeta->getActiveDescription() ?: ($model->description ?? null);
+
+                try {
+                    $seoMeta->increment("ab_impressions_{$variant}");
+                } catch (\Throwable) {
+                    // Non-blocking: don't fail the request if increment fails
+                }
+            }
+
+            if (empty($this->data['og_image']) && method_exists($model, 'getFirstMediaUrl')) {
+                $mediaUrl = $model->getFirstMediaUrl('seo') ?: $model->getFirstMediaUrl();
+                if ($mediaUrl) {
+                    $this->data['og_image'] = $mediaUrl;
+                }
+            }
+        }
+
+        // Apply template fallbacks for empty fields
+        if (method_exists($model, 'seoMeta')) {
+            $this->applyTemplateDefaults($model);
         }
 
         return $this;
     }
 
     /**
-     * Save SEO meta data to a model.
+     * Apply template defaults to fields that are still empty after loading from the meta record.
      */
-    public function saveMeta(Model $model, array $data): SeoMeta
+    private function applyTemplateDefaults(Model $model): void
+    {
+        if (! empty($this->data['title']) && ! empty($this->data['description'])) {
+            return;
+        }
+
+        $template = SeoTemplate::query()
+            ->active()
+            ->forModel(get_class($model))
+            ->orderByDesc('priority')
+            ->first();
+
+        if (! $template) {
+            return;
+        }
+
+        $applied = $template->applyToModel($model);
+
+        foreach ($applied as $field => $value) {
+            if (empty($this->data[$field])) {
+                $this->data[$field] = $value;
+            }
+        }
+    }
+
+    /**
+     * Save SEO meta data to a model, scoped by locale.
+     */
+    public function saveMeta(Model $model, array $data, ?string $locale = null): SeoMeta
     {
         if (! method_exists($model, 'seoMeta')) {
             throw new \Exception('Model must use the HasSeo trait');
@@ -212,6 +295,7 @@ class SeoService
             [
                 'seoable_id' => $model->id,
                 'seoable_type' => get_class($model),
+                'locale' => $locale,
             ],
             array_filter($data, fn ($value) => ! is_null($value))
         );
@@ -234,9 +318,44 @@ class SeoService
     }
 
     /**
-     * Render all meta tags as HTML.
+     * Enable caching for rendered HTML output.
+     */
+    public function enableCache(string $key, int $ttl = 3600): self
+    {
+        $this->cachingEnabled = true;
+        $this->cacheKey = 'seo_render_'.md5($key);
+
+        return $this;
+    }
+
+    /**
+     * Invalidate the cached render for a specific key.
+     */
+    public function invalidateCache(string $key): void
+    {
+        Cache::forget('seo_render_'.md5($key));
+    }
+
+    /**
+     * Render all meta tags as HTML, with optional caching.
      */
     public function render(): string
+    {
+        if ($this->cachingEnabled && $this->cacheKey) {
+            return Cache::remember(
+                $this->cacheKey,
+                3600,
+                fn () => $this->buildHtml()
+            );
+        }
+
+        return $this->buildHtml();
+    }
+
+    /**
+     * Build the full HTML string of meta tags.
+     */
+    private function buildHtml(): string
     {
         $html = [];
 
@@ -261,6 +380,15 @@ class SeoService
             $html[] = '<link rel="canonical" href="'.e($this->data['canonical_url']).'">';
         }
 
+        // Pagination rel=prev/next
+        if ($this->prevUrl !== '') {
+            $html[] = '<link rel="prev" href="'.e($this->prevUrl).'">';
+        }
+
+        if ($this->nextUrl !== '') {
+            $html[] = '<link rel="next" href="'.e($this->nextUrl).'">';
+        }
+
         // Open Graph
         $ogTitle = $this->data['og_title'] ?? $this->data['title'];
         if ($ogTitle) {
@@ -278,6 +406,13 @@ class SeoService
 
         $html[] = '<meta property="og:url" content="'.e(url()->current()).'">';
         $html[] = '<meta property="og:type" content="'.e($this->data['og_type']).'">';
+        $html[] = '<meta property="og:site_name" content="'.e(config('app.name')).'">';
+        $html[] = '<meta property="og:locale" content="'.e(config('app.locale', 'es_ES')).'">';
+
+        if ($this->data['og_image']) {
+            $html[] = '<meta property="og:image:width" content="'.e(config('Seo.og_image_width', 1200)).'">';
+            $html[] = '<meta property="og:image:height" content="'.e(config('Seo.og_image_height', 630)).'">';
+        }
 
         // Twitter Card
         $html[] = '<meta name="twitter:card" content="'.e($this->data['twitter_card']).'">';
@@ -301,7 +436,61 @@ class SeoService
             $html[] = '<meta name="twitter:image" content="'.e($twitterImage).'">';
         }
 
+        // Search engine verification tags (database-first, config/env fallback)
+        $verification = [
+            'google' => setting('seo_google_verification', config('Seo.verification.google', '')),
+            'bing' => setting('seo_bing_verification', config('Seo.verification.bing', '')),
+            'pinterest' => setting('seo_pinterest_verification', config('Seo.verification.pinterest', '')),
+            'baidu' => setting('seo_baidu_verification', config('Seo.verification.baidu', '')),
+            'yandex' => setting('seo_yandex_verification', config('Seo.verification.yandex', '')),
+        ];
+
+        if (! empty($verification['google'])) {
+            $html[] = '<meta name="google-site-verification" content="'.e($verification['google']).'">';
+        }
+
+        if (! empty($verification['bing'])) {
+            $html[] = '<meta name="msvalidate.01" content="'.e($verification['bing']).'">';
+        }
+
+        if (! empty($verification['pinterest'])) {
+            $html[] = '<meta name="p:domain_verify" content="'.e($verification['pinterest']).'">';
+        }
+
+        if (! empty($verification['baidu'])) {
+            $html[] = '<meta name="baidu-site-verification" content="'.e($verification['baidu']).'">';
+        }
+
+        if (! empty($verification['yandex'])) {
+            $html[] = '<meta name="yandex-verification" content="'.e($verification['yandex']).'">';
+        }
+
+        // Hreflang
+        if ($this->data['canonical_url']) {
+            $html[] = $this->renderHreflang();
+        }
+
         return implode("\n", $html);
+    }
+
+    /**
+     * Render hreflang alternate link tags for the current canonical URL.
+     */
+    public function renderHreflang(): string
+    {
+        if (! $this->data['canonical_url']) {
+            return '';
+        }
+
+        $canonical = $this->data['canonical_url'];
+        $defaultLocale = config('app.locale', 'es');
+
+        $lines = [
+            sprintf('<link rel="alternate" hreflang="x-default" href="%s">', e($canonical)),
+            sprintf('<link rel="alternate" hreflang="%s" href="%s">', e($defaultLocale), e($canonical)),
+        ];
+
+        return implode(PHP_EOL, $lines).PHP_EOL;
     }
 
     /**

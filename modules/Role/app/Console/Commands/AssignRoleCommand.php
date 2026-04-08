@@ -12,7 +12,7 @@ class AssignRoleCommand extends Command
 
     protected $description = 'Assign or change a role for a user. Usage: roles:assign user@email.com rolename';
 
-    public function handle()
+    public function handle(): int
     {
         $email = $this->argument('email');
         $roleName = $this->argument('role');
@@ -53,25 +53,17 @@ class AssignRoleCommand extends Command
         return 0;
     }
 
-    private function showAccessInfo($roleName)
+    private function showAccessInfo(string $roleName): void
     {
         $this->newLine();
         $this->info('🔐 Permisos y acceso para este rol:');
 
-        // Get permissions for this role
-        $role = Role::where('name', $roleName)->first();
-        if ($role && $role->permissions->count() > 0) {
-            $this->line("  Permisos: {$role->permissions->count()} permisos asignados");
-        }
+        $role = Role::where('name', $roleName)->with('permissions')->first();
 
-        // Show which profiles this role can access
-        $this->line("\n  Perfiles accesibles:");
-        $roleMapping = \App\Models\Role\RoleMapping::getActive();
-        foreach ($roleMapping as $profile => $roles) {
-            if (in_array($roleName, $roles)) {
-                $route = \App\Models\ProfileRoute::getRoute($profile);
-                $this->line("  • {$profile} → {$route}");
-            }
+        if ($role && $role->permissions->isNotEmpty()) {
+            $this->line("  Permisos asignados: {$role->permissions->count()}");
+        } else {
+            $this->line('  Sin permisos asignados');
         }
     }
 }

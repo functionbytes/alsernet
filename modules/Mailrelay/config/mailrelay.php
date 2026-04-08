@@ -21,7 +21,7 @@ return [
     | Example: https://your-account.mailrelay.com/api/v1
     |
     */
-    'api_url' => env('MAILRELAY_URL', 'https://inoqualab.mailrelay.com/api/v1'),
+    'api_url' => env('MAILRELAY_URL', ''),
 
     /*
     |--------------------------------------------------------------------------
@@ -356,6 +356,28 @@ return [
 
         // Debug mode (verbose output)
         'debug' => env('MAILRELAY_DEBUG', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mail Providers Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Provider-specific URLs, driver metadata, and other settings.
+    |
+    */
+    'providers' => [
+        'mailtrap' => [
+            'send_url' => env('MAILTRAP_SEND_URL', 'https://send.api.mailtrap.io/api/send'),
+            'inboxes_url' => env('MAILTRAP_INBOXES_URL', 'https://mailtrap.io/api/v1/inboxes'),
+        ],
+        'driver_info' => [
+            'mailrelay' => ['name' => 'Mailrelay', 'icon' => 'fas fa-envelope-open-text', 'color' => 'primary'],
+            'mailtrap' => ['name' => 'Mailtrap', 'icon' => 'fas fa-inbox', 'color' => 'success'],
+            'sendgrid' => ['name' => 'SendGrid', 'icon' => 'fas fa-paper-plane', 'color' => 'info'],
+            'aws_ses' => ['name' => 'AWS SES', 'icon' => 'fab fa-aws', 'color' => 'warning'],
+            'postmark' => ['name' => 'Postmark', 'icon' => 'fas fa-stamp', 'color' => 'danger'],
+        ],
     ],
 
 ];

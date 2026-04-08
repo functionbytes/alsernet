@@ -2,18 +2,21 @@
 
 namespace Modules\Template\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Models\Setting;
 
-class ThemeCustomHtmlController
+class ThemeCustomHtmlController extends Controller
 {
     /**
      * Mostrar formulario de configuración de HTML personalizado
      */
     public function index(): View
     {
+        $this->authorize('template.custom-code');
+
         $headerHtml = Setting::get('theme.custom_header_html', '');
         $footerHtml = Setting::get('theme.custom_footer_html', '');
 
@@ -25,6 +28,8 @@ class ThemeCustomHtmlController
      */
     public function update(Request $request): RedirectResponse
     {
+        $this->authorize('template.custom-code');
+
         $request->validate([
             'header_html' => 'nullable|string',
             'footer_html' => 'nullable|string',

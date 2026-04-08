@@ -110,7 +110,7 @@
                                             <div class="mb-4">
                                                 <label for="exampleInputPassword1"
                                                     class="form-label fw-semibold">Location</label>
-                                                <select class="form-select" aria-label="Default select example">
+                                                <select class="form-select select2" aria-label="Default select example">
                                                     <option selected>United Kingdom</option>
                                                     <option value="1">United States</option>
                                                     <option value="2">United Kingdom</option>
@@ -135,7 +135,7 @@
                                             <div class="mb-4">
                                                 <label for="exampleInputPassword1"
                                                     class="form-label fw-semibold">Currency</label>
-                                                <select class="form-select" aria-label="Default select example">
+                                                <select class="form-select select2" aria-label="Default select example">
                                                     <option selected>India (INR)</option>
                                                     <option value="1">US Dollar ($)</option>
                                                     <option value="2">United Kingdom (Pound)</option>

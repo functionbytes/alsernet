@@ -67,7 +67,7 @@
                                 </div>
                                 <div class="next-step-content">
                                     <h6 class="fw-bold mb-1">1. Recepcion</h6>
-                                    <p class="text-muted small mb-0">Su solicitud ha sido recibida y asignada automaticamente</p>
+                                    <p class="text-muted mb-0">Su solicitud ha sido recibida y asignada automaticamente</p>
                                 </div>
                             </div>
                             <div class="next-step">
@@ -76,7 +76,7 @@
                                 </div>
                                 <div class="next-step-content">
                                     <h6 class="fw-bold mb-1">2. Revision</h6>
-                                    <p class="text-muted small mb-0">El departamento correspondiente analizara su caso</p>
+                                    <p class="text-muted mb-0">El departamento correspondiente analizara su caso</p>
                                 </div>
                             </div>
                             <div class="next-step">
@@ -85,7 +85,7 @@
                                 </div>
                                 <div class="next-step-content">
                                     <h6 class="fw-bold mb-1">3. Respuesta</h6>
-                                    <p class="text-muted small mb-0">Recibira una respuesta segun el medio elegido</p>
+                                    <p class="text-muted mb-0">Recibira una respuesta segun el medio elegido</p>
                                 </div>
                             </div>
                         </div>

@@ -8,16 +8,20 @@ use Modules\Page\Models\PageAutoSave;
 
 class PageAutoSaveService
 {
+    public function __construct(private readonly PageService $pageService) {}
+
     /**
-     * Guardar cambios automáticamente
+     * Guardar cambios automáticamente.
+     * Content is sanitized before storage so restored drafts are always clean.
      */
     public function saveAutoSave(Page $page, User $user, array $data): PageAutoSave
     {
-        // Validar que los datos contengan al menos algo
         $validData = array_filter([
             'title' => $data['title'] ?? null,
             'slug' => $data['slug'] ?? null,
-            'content' => $data['content'] ?? null,
+            'content' => isset($data['content'])
+                ? $this->pageService->sanitizeContent($data['content'])
+                : null,
             'description' => $data['description'] ?? null,
             'status' => $data['status'] ?? null,
             'template' => $data['template'] ?? null,

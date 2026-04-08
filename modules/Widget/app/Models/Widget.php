@@ -2,6 +2,7 @@
 
 namespace Modules\Widget\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -61,8 +62,8 @@ class Widget extends Model
     /**
      * Scope to get active widgets
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -72,8 +73,8 @@ class Widget extends Model
     /**
      * Scope to get widgets by sidebar
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeBySidebar($query, string $sidebarId)
     {
@@ -83,8 +84,8 @@ class Widget extends Model
     /**
      * Scope to get widgets by theme
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByTheme($query, string $theme)
     {
@@ -94,12 +95,20 @@ class Widget extends Model
     /**
      * Scope to order by position
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeOrdered($query, string $direction = 'asc')
     {
         return $query->orderBy('position', $direction);
+    }
+
+    /**
+     * Get the current active theme name for widget storage.
+     */
+    public static function getThemeName(): string
+    {
+        return function_exists('setting') ? (string) setting('template', 'default') : 'default';
     }
 
     /**

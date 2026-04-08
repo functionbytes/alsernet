@@ -26,19 +26,19 @@ class PreviewController extends Controller
      */
     public function show(string $slug, string $token): View|Response
     {
-        $page = Page::where('slug', $slug)->firstOrFail();
-
-        $previewToken = PagePreviewToken::where('page_id', $page->id)
+        // Single query joining token + page to avoid slug-enumeration side-channel:
+        // a two-step lookup (page then token) would reveal whether a slug exists
+        // via differing 404 messages.
+        $previewToken = PagePreviewToken::with('page')
             ->where('token', $token)
-            ->first();
+            ->whereHas('page', fn ($q) => $q->where('slug', $slug))
+            ->firstOrFail();
 
-        if (! $previewToken) {
-            abort(404, 'Token de preview no encontrado.');
+        if ($previewToken->expires_at && $previewToken->expires_at->isPast()) {
+            abort(410, 'Este enlace de preview ha expirado.');
         }
 
-        if ($previewToken->isExpired()) {
-            abort(403, 'Este enlace de preview ha expirado.');
-        }
+        $page = $previewToken->page;
 
         $previewToken->recordView();
 

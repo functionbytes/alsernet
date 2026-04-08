@@ -14,7 +14,7 @@ class ReviewTest extends TestCase
     public function test_review_belongs_to_location(): void
     {
         $location = ReviewGoogleLocation::factory()->create();
-        $review = Review::factory()->for($location)->create();
+        $review = Review::factory()->for($location, 'location')->create();
 
         $this->assertInstanceOf(ReviewGoogleLocation::class, $review->location);
         $this->assertTrue($review->location->is($location));

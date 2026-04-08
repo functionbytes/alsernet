@@ -3,6 +3,10 @@
 namespace Modules\Page\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Page\Events\PagePublished;
+use Modules\Page\Events\PagePublishedForSubscribers;
+use Modules\Page\Listeners\NotifySubscribersOnPagePublish;
+use Modules\Page\Listeners\WarmPageCacheOnPublish;
 use Modules\Page\Models\Page;
 use Modules\Page\Observers\PageObserver;
 
@@ -14,8 +18,11 @@ class EventServiceProvider extends ServiceProvider
      * @var array<string, array<int, string>>
      */
     protected $listen = [
-        \Modules\Page\Events\PagePublished::class => [
-            \Modules\Page\Listeners\WarmPageCacheOnPublish::class,
+        PagePublished::class => [
+            WarmPageCacheOnPublish::class,
+        ],
+        PagePublishedForSubscribers::class => [
+            NotifySubscribersOnPagePublish::class,
         ],
     ];
 

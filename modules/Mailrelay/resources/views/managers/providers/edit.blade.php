@@ -198,7 +198,7 @@
                 {{-- Actions --}}
                 <div class="card">
                     <div class="card-body p-3">
-                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">
                             <i class="fas fa-save me-2"></i>Actualizar provider
                         </button>
                         <a href="{{ route('managers.mailrelay.providers.index') }}" class="btn btn-light w-100">

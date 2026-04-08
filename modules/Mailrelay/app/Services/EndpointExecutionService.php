@@ -8,15 +8,14 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\Mailrelay\Entities\MailrelayEndpoint;
 use Modules\Mailrelay\Entities\MailrelayEndpointLog;
+use Modules\Mailrelay\Exceptions\ProviderException;
 
 class EndpointExecutionService
 {
-    protected TemplateRendererService $rendererService;
-
-    public function __construct(TemplateRendererService $rendererService)
-    {
-        $this->rendererService = $rendererService;
-    }
+    public function __construct(
+        protected TemplateRendererService $rendererService,
+        protected ProviderManager $providerManager,
+    ) {}
 
     /**
      * Execute an endpoint request.
@@ -153,22 +152,26 @@ class EndpointExecutionService
     }
 
     /**
-     * Send the email (integrate with your mail service).
+     * Send the email via the default mail provider.
+     *
+     * @throws ProviderException
      */
     protected function sendEmail(?string $to, string $subject, string $content): void
     {
         if (! $to) {
-            throw new \Exception('Recipient email address is required');
+            throw ProviderException::recipientRequired();
         }
 
-        // TODO: Integrate with your existing mail service
-        // For now, just validate the email format
         if (! filter_var($to, FILTER_VALIDATE_EMAIL)) {
-            throw new \Exception('Invalid recipient email address');
+            throw ProviderException::invalidRecipient($to);
         }
 
-        // Example integration:
-        // Mail::to($to)->send(new DynamicEmail($subject, $content));
+        $provider = $this->providerManager->default();
+        $result = $provider->send($to, $subject, $content);
+
+        if (! $result['success']) {
+            throw ProviderException::sendingFailed($to, $result['error'] ?? 'Unknown error');
+        }
     }
 
     /**

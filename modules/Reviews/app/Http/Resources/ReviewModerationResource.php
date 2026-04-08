@@ -16,7 +16,7 @@ class ReviewModerationResource extends JsonResource
             'tags' => $this->tags ?? [],
             'internalNotes' => $this->when(
                 $request->user()?->can('moderate', $this->review),
-                $this->internal_notes
+                fn () => $this->internal_notes
             ),
             'moderatedBy' => $this->moderated_by,
             'moderatedAt' => $this->moderated_at?->toIso8601String(),

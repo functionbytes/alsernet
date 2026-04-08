@@ -94,7 +94,7 @@
 
                         <div class="col-12 col-sm-6 col-md-3">
                             <label for="module" class="form-label fw-semibold">Módulo</label>
-                            <select id="module" name="module" class="form-select">
+                            <select class="select2 form-select" id="module" name="module">
                                 <option value="">Todos los módulos</option>
                                 <option value="core" @selected(request('module') === 'core')>Core</option>
                                 <option value="documents" @selected(request('module') === 'documents')>Documentos</option>
@@ -104,7 +104,7 @@
 
                         <div class="col-12 col-sm-6 col-md-3">
                             <label for="category" class="form-label fw-semibold">Categoría</label>
-                            <select id="category" name="category" class="form-select">
+                            <select class="select2 form-select" id="category" name="category">
                                 <option value="">Todas las categorías</option>
                                 <option value="system" @selected(request('category') === 'system')>Sistema</option>
                                 <option value="customer" @selected(request('category') === 'customer')>Cliente</option>
@@ -214,8 +214,8 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="dropdown">
-                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Acciones">
+                                                <i class="fas fa-ellipsis"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
@@ -227,12 +227,13 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <form method="POST"
-                                                              action="{{ route('mailers.variables.destroy', $variable) }}"
-                                                              onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta variable?');">
+                                                              action="{{ route('mailers.variables.destroy', $variable) }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="dropdown-item">
-                                                                Eliminar variable
+                                                            <button type="submit" class="dropdown-item text-danger"
+                                                                    data-confirm="¿Estas seguro de que deseas eliminar esta variable?"
+                                                                    data-confirm-title="Eliminar variable">
+                                                                <i class="fas fa-trash me-2"></i> Eliminar variable
                                                             </button>
                                                         </form>
                                                     </li>
@@ -275,7 +276,7 @@
             @if($variables->hasPages())
                 <div class="card-footer bg-white border-top">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
+                        <div class="text-muted">
                             Mostrando {{ $variables->firstItem() }} - {{ $variables->lastItem() }} de {{ $variables->total() }} variables
                         </div>
                         <div>
@@ -374,20 +375,19 @@
 
                     if (data.success) {
                         // Show success message
-                        console.log(data.message);
                     } else {
                         // Revert the toggle if failed
                         this.checked = !this.checked;
-                        console.error(data.message);
                     }
                 } catch (error) {
                     this.checked = !this.checked;
-                    console.error('Error:', error);
                 }
             });
         });
     });
 </script>
 @endpush
+
+@include('mailer::partials.confirm-modal')
 
 @endsection

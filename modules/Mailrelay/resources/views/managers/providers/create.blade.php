@@ -44,7 +44,7 @@
                         {{-- Driver --}}
                         <div class="mb-4">
                             <label for="driver" class="form-label fw-semibold">Tipo de provider <span class="text-danger">*</span></label>
-                            <select class="form-select @error('driver') is-invalid @enderror"
+                            <select class="form-select @error('driver') is-invalid @enderror select2"
                                     id="driver" name="driver" required>
                                 <option value="">Selecciona un proveedor...</option>
                                 @foreach($availableDrivers as $driver)
@@ -177,7 +177,7 @@
                 {{-- Actions --}}
                 <div class="card">
                     <div class="card-body p-3">
-                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">
                             <i class="fas fa-save me-2"></i>Guardar provider
                         </button>
                         <a href="{{ route('managers.mailrelay.providers.index') }}" class="btn btn-light w-100">

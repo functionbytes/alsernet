@@ -5,6 +5,7 @@ namespace Modules\Reviews\Notifications;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Reviews\Models\Review;
+use Modules\Reviews\Services\NotificationService;
 
 class NewNegativeReviewNotification extends Notification
 {
@@ -14,7 +15,10 @@ class NewNegativeReviewNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        $service = app(NotificationService::class);
+        $channels = $service->getEnabledChannels($notifiable, NotificationService::TYPE_NEGATIVE_REVIEW);
+
+        return array_filter($channels, fn ($channel) => in_array($channel, ['database', 'mail']));
     }
 
     public function toMail(object $notifiable): MailMessage

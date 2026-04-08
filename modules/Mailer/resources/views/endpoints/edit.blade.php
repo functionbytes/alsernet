@@ -32,7 +32,7 @@
                             <i class="fas fa-key me-2 text-primary"></i>
                             Token API
                         </h6>
-                        <p class="text-muted small mb-3">Este token es necesario para autenticar las peticiones al endpoint. Envíalo en el header <code>X-API-Token</code>.</p>
+                        <p class="text-muted mb-3">Este token es necesario para autenticar las peticiones al endpoint. Envíalo en el header <code>X-API-Token</code>.</p>
                     </div>
 
                     <div class="col-12 col-lg-8">
@@ -72,16 +72,10 @@
                         <h6 class="mb-1 fw-semibold">
                             Estadísticas de uso
                         </h6>
-                        <p class="text-muted small mb-3">Resumen del uso de este endpoint.</p>
+                        <p class="text-muted mb-3">Resumen del uso de este endpoint.</p>
                     </div>
 
-                    @php
-                        $last24h = $endpoint->logs()->where('created_at', '>=', now()->subDay())->count();
-                        $successCount = $endpoint->successLogs()->count();
-                        $failedCount = $endpoint->failedLogs()->count();
-                        $total = $endpoint->requests_count;
-                        $successRate = $total > 0 ? round(($successCount / $total) * 100, 1) : 0;
-                    @endphp
+                    {{-- Stats pre-calculated in controller --}}
 
                     <div class="col-6 col-md-3">
                         <div class="card bg-light-primary border-0 mb-3">
@@ -152,7 +146,7 @@
                             <i class="fas fa-info-circle me-2 text-primary"></i>
                             Información básica
                         </h6>
-                        <p class="text-muted small mb-3">Define el nombre, slug único y la fuente del endpoint.</p>
+                        <p class="text-muted mb-3">Define el nombre, slug único y la fuente del endpoint.</p>
                     </div>
 
                     <div class="col-12 col-md-6">
@@ -162,7 +156,7 @@
                             </label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror"
                                    id="name" name="name" value="{{ old('name', $endpoint->name) }}"
-                                   placeholder="Ej: PrestaShop Password Reset" required>
+                                   placeholder="Ej: PrestaShop Password Reset" required maxlength="255">
                             <small class="form-text text-muted">Nombre descriptivo para identificar este endpoint</small>
                             @error('name')
                                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -177,7 +171,8 @@
                             </label>
                             <input type="text" class="form-control @error('slug') is-invalid @enderror"
                                    id="slug" name="slug" value="{{ old('slug', $endpoint->slug) }}"
-                                   placeholder="prestashop_password_reset" required>
+                                   placeholder="prestashop_password_reset" required maxlength="255"
+                                   pattern="[a-z0-9\-]+">
                             <small class="form-text text-muted">
                                 <i class="fas fa-link me-1"></i>
                                 URL: <code>/api/email-endpoints/<strong>{{ $endpoint->slug }}</strong>/send</code>
@@ -193,9 +188,12 @@
                             <label class="control-label col-form-label">
                                 Fuente (Sistema) <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control @error('source') is-invalid @enderror"
-                                   id="source" name="source" value="{{ old('source', $endpoint->source) }}"
-                                   placeholder="Ej: prestashop, shopify, custom" required>
+                            <select class="form-select @error('source') is-invalid @enderror" id="source" name="source" required>
+                                <option value="">Seleccionar tipo de fuente...</option>
+                                <option value="internal" {{ old('source', $endpoint->source) === 'internal' ? 'selected' : '' }}>Internal</option>
+                                <option value="webhook" {{ old('source', $endpoint->source) === 'webhook' ? 'selected' : '' }}>Webhook</option>
+                                <option value="api" {{ old('source', $endpoint->source) === 'api' ? 'selected' : '' }}>API</option>
+                            </select>
                             <small class="form-text text-muted">Sistema origen de las peticiones</small>
                             @error('source')
                                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -208,9 +206,11 @@
                             <label class="control-label col-form-label">
                                 Tipo de correo <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control @error('type') is-invalid @enderror"
-                                   id="type" name="type" value="{{ old('type', $endpoint->type) }}"
-                                   placeholder="Ej: password_reset, order_confirmation" required>
+                            <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="transactional" {{ old('type', $endpoint->type) === 'transactional' ? 'selected' : '' }}>Transactional</option>
+                                <option value="notification" {{ old('type', $endpoint->type) === 'notification' ? 'selected' : '' }}>Notification</option>
+                            </select>
                             <small class="form-text text-muted">Categoría del email (para organización)</small>
                             @error('type')
                                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -247,7 +247,7 @@
                             <i class="fas fa-palette me-2 text-primary"></i>
                             Plantilla e idioma
                         </h6>
-                        <p class="text-muted small mb-3">Selecciona la plantilla de email que se usará y el idioma predeterminado para los envíos.</p>
+                        <p class="text-muted mb-3">Selecciona la plantilla de email que se usará y el idioma predeterminado para los envíos.</p>
                     </div>
 
                     <div class="col-12 col-md-6">
@@ -295,7 +295,7 @@
                             <i class="fas fa-code me-2 text-primary"></i>
                             Variables esperadas
                         </h6>
-                        <p class="text-muted small mb-3">Define las variables que esperas recibir en el JSON desde el sistema externo.</p>
+                        <p class="text-muted mb-3">Define las variables que esperas recibir en el JSON desde el sistema externo.</p>
                     </div>
 
                     <div class="col-12">
@@ -331,7 +331,7 @@
                             <i class="fas fa-asterisk me-2 text-primary"></i>
                             Variables obligatorias
                         </h6>
-                        <p class="text-muted small mb-3">Marca las variables que son obligatorias en cada request.</p>
+                        <p class="text-muted mb-3">Marca las variables que son obligatorias en cada request.</p>
                     </div>
 
                     <div class="col-12">
@@ -362,7 +362,7 @@
                             <i class="fas fa-exchange-alt me-2 text-primary"></i>
                             Mapeo de variables (opcional)
                         </h6>
-                        <p class="text-muted small mb-3">Si los nombres de las variables en el JSON no coinciden con los de la plantilla, puedes mapearlos aquí.</p>
+                        <p class="text-muted mb-3">Si los nombres de las variables en el JSON no coinciden con los de la plantilla, puedes mapearlos aquí.</p>
                     </div>
 
                     <div class="col-12">
@@ -424,7 +424,7 @@
                             <i class="fas fa-history me-2 text-primary"></i>
                             Logs recientes
                         </h6>
-                        <p class="text-muted small mb-3">Últimas peticiones recibidas en este endpoint.</p>
+                        <p class="text-muted mb-3">Últimas peticiones recibidas en este endpoint.</p>
                     </div>
 
                     <div class="col-12">
@@ -452,7 +452,7 @@
                                                     </span>
                                                 </td>
                                                 <td class="text-muted">{{ Str::limit($log->recipient_email, 30) }}</td>
-                                                <td class="text-muted small">{{ $log->created_at->format('d/m/Y H:i') }}</td>
+                                                <td class="text-muted">{{ $log->created_at->format('d/m/Y H:i') }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -461,7 +461,7 @@
                         @else
                             <div class="alert alert-light border text-center">
                                 <i class="fas fa-inbox fs-4 text-muted mb-2 d-block"></i>
-                                <p class="text-muted small mb-0">No hay logs registrados aún</p>
+                                <p class="text-muted mb-0">No hay logs registrados aún</p>
                             </div>
                         @endif
                     </div>
@@ -520,157 +520,17 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/modules/mailer-endpoint-edit.js') }}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        allowClear: false,
-        language: {
-            noResults: function() {
-                return 'Sin resultados';
-            }
-        }
-    });
+    MailerEndpointEdit.init();
 
-    // Copy Token Button
-    $('#copyTokenBtn').on('click', function() {
-        const token = $('#tokenInput');
-        token.select();
-        document.execCommand('copy');
-
-        const btn = $(this);
-        const originalHtml = btn.html();
-        btn.html('<i class="fas fa-check text-success"></i>');
-
-        setTimeout(function() {
-            btn.html(originalHtml);
-        }, 2000);
-
-        toastr.success('Token copiado al portapapeles', 'Éxito');
-    });
-
-    // Add Expected Variable
-    $('#addExpectedVariable').on('click', function() {
-        var html = `
-            <div class="input-group mb-2">
-                <span class="input-group-text bg-light">
-                    <i class="fas fa-cube text-primary"></i>
-                </span>
-                <input type="text" class="form-control" name="expected_variables[]" placeholder="Ej: customer_email">
-                <button type="button" class="btn btn-outline-danger remove-variable">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        $('#expectedVariablesContainer').append(html);
-        attachRemoveHandlers();
-        updateRequiredVariablesCheckboxes();
-    });
-
-    // Add Mapping
-    $('#addMapping').on('click', function() {
-        var html = `
-            <div class="row g-2 mb-2 mapping-row">
-                <div class="col-5">
-                    <input type="text" class="form-control form-control-sm mapping-template" placeholder="email">
-                </div>
-                <div class="col-5">
-                    <input type="text" class="form-control form-control-sm mapping-json" placeholder="user.email">
-                </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-mapping w-100">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        $('#mappingsContainer').append(html);
-        attachRemoveHandlers();
-    });
-
-    function attachRemoveHandlers() {
-        $('.remove-variable').off('click').on('click', function() {
-            $(this).closest('.input-group').remove();
-            updateRequiredVariablesCheckboxes();
-        });
-
-        $('.remove-mapping').off('click').on('click', function() {
-            $(this).closest('.mapping-row').remove();
-        });
-    }
-
-    // Dynamically update required variables checkboxes
-    function updateRequiredVariablesCheckboxes() {
-        var expectedVars = [];
-        $('input[name="expected_variables[]"]').each(function() {
-            var val = $(this).val().trim();
-            if (val.length > 0) {
-                expectedVars.push(val);
-            }
-        });
-
-        var currentChecked = [];
-        $('#requiredVariablesContainer input[type="checkbox"]:checked').each(function() {
-            currentChecked.push($(this).val());
-        });
-
-        $('#requiredVariablesContainer').empty();
-
-        if (expectedVars.length === 0) {
-            $('#requiredVariablesContainer').html('<small class="text-muted"><i class="fas fa-info-circle me-1"></i>Primero agrega variables esperadas arriba</small>');
-            return;
-        }
-
-        $.each(expectedVars, function(index, variable) {
-            var isChecked = currentChecked.indexOf(variable) !== -1;
-            var html = `
-                <div class="form-check form-check-inline mb-2">
-                    <input class="form-check-input" type="checkbox" name="required_variables[]"
-                           id="required_${index}" value="${variable}" ${isChecked ? 'checked' : ''}>
-                    <label class="form-check-label" for="required_${index}">
-                        <span class="badge bg-light text-dark border rounded-pill py-1 px-2">${variable}</span>
-                    </label>
-                </div>
-            `;
-            $('#requiredVariablesContainer').append(html);
-        });
-    }
-
-    // Monitor expected variables for changes
-    $(document).on('input', 'input[name="expected_variables[]"]', function() {
-        updateRequiredVariablesCheckboxes();
-    });
-
-    // Form Submit - Prepare hidden fields for mappings
-    $('#formEdit').on('submit', function() {
-        var mappings = {};
-        $('.mapping-row').each(function() {
-            var templateVar = $(this).find('.mapping-template').val();
-            var jsonPath = $(this).find('.mapping-json').val();
-            if (templateVar && jsonPath) {
-                mappings[templateVar] = jsonPath;
-            }
-        });
-
-        if (Object.keys(mappings).length > 0) {
-            $('<input>').attr({
-                type: 'hidden',
-                name: 'variable_mappings',
-                value: JSON.stringify(mappings)
-            }).appendTo(this);
-        }
-    });
-
-    // Initialize
-    attachRemoveHandlers();
-
-    // Show toastr notifications
     @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
+        toastr.success('{{ session('success') }}');
     @endif
 
     @if (session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
+        toastr.error('{{ session('error') }}');
     @endif
 });
 </script>

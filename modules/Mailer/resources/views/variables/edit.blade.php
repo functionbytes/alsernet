@@ -24,7 +24,7 @@
                         <div class="d-flex align-items-center justify-content-between mb-4">
                             <div>
                                 <h5 class="mb-1 fw-bold">Editar: {{ $variable->key }}</h5>
-                                <p class="text-muted small mb-0">
+                                <p class="text-muted mb-0">
                                     Actualice la información en todos los idiomas disponibles.
                                 </p>
                             </div>
@@ -71,7 +71,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="category" class="form-label">Categoría <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required
+                                    <select class="form-select @error('category') is-invalid @enderror select2" id="category" name="category" required
                                         @if($variable->is_system) disabled @endif>
                                         <option value="">Seleccionar categoría</option>
                                         @foreach ($categories as $value => $label)
@@ -87,7 +87,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="module" class="form-label">Módulo <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('module') is-invalid @enderror" id="module" name="module" required
+                                    <select class="form-select @error('module') is-invalid @enderror select2" id="module" name="module" required
                                         @if($variable->is_system) disabled @endif>
                                         <option value="">Seleccionar módulo</option>
                                         @foreach ($modules as $value => $label)
@@ -103,7 +103,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="is_enabled" class="form-label">Estado</label>
-                                    <select class="form-select @error('is_enabled') is-invalid @enderror" id="is_enabled" name="is_enabled">
+                                    <select class="form-select @error('is_enabled') is-invalid @enderror select2" id="is_enabled" name="is_enabled">
                                         <option value="1" {{ old('is_enabled', $variable->is_enabled) == 1 ? 'selected' : '' }}>Habilitada</option>
                                         <option value="0" {{ old('is_enabled', $variable->is_enabled) == 0 ? 'selected' : '' }}>Deshabilitada</option>
                                     </select>
@@ -141,7 +141,7 @@
                                 <h5 class="fw-bold ">
                                    Traducciones
                                 </h5>
-                                <p class="text-muted small mb-2">
+                                <p class="text-muted mb-2">
                                     Actualice la información en todos los idiomas disponibles.
                                 </p>
                             </div>

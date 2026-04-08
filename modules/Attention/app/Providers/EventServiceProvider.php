@@ -13,6 +13,7 @@ use Modules\Attention\Listeners\SendAttentionClosedNotification;
 use Modules\Attention\Listeners\SendAttentionCreatedNotification;
 use Modules\Attention\Listeners\SendAttentionResolvedNotification;
 use Modules\Attention\Listeners\SendAttentionStatusChangedNotification;
+use Nwidart\Modules\Facades\Module;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -39,6 +40,10 @@ class EventServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (Module::find('Attention')?->isDisabled()) {
+            return;
+        }
+
         parent::boot();
     }
 

@@ -30,7 +30,15 @@ class SyncGoogleReviewsJob implements ShouldBeUnique, ShouldQueue
     public function __construct(
         public ReviewGoogleLocation $location
     ) {
-        $this->onQueue('default');
+        $this->onQueue('reviews-sync');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function tags(): array
+    {
+        return ['reviews', 'sync'];
     }
 
     public function handle(GoogleReviewService $service): void

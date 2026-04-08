@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Auth\Http\Controllers\LoginController;
+use Modules\Auth\Http\Controllers\TwoFactorChallengeController;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -86,9 +87,16 @@ class AuthServiceProvider extends ServiceProvider
                 require $webPath;
             });
 
+        // 2FA challenge routes (auth required, but exempt from 2FA middleware)
+        Route::middleware(['web', 'auth'])
+            ->group(function () {
+                Route::get('/two-factor/challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
+                Route::post('/two-factor/challenge', [TwoFactorChallengeController::class, 'verify'])->name('two-factor.verify');
+            });
+
         // Auth settings routes (2FA, sessions, security)
         Route::middleware(['web', 'auth'])
-            ->prefix('setting/auth')
+            ->prefix('panel/setting/auth')
             ->name('settings.auth.')
             ->group(function () use ($settingsPath) {
                 require $settingsPath;

@@ -3,6 +3,8 @@
 namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +16,7 @@ class SystemCacheController extends Controller
     /**
      * Find composer executable path - Cross-platform (macOS + Linux)
      */
-    private function findComposerPath()
+    private function findComposerPath(): ?string
     {
         // 1. Check if custom path is configured in database (Setting)
         $configuredPath = Setting::get('composer_path');
@@ -99,7 +101,7 @@ class SystemCacheController extends Controller
     /**
      * Show the system maintenance page
      */
-    public function index()
+    public function index(): RedirectResponse
     {
         // Redirect to unified maintenance page
         return redirect()->route('settings.system.maintenance.index');
@@ -108,7 +110,7 @@ class SystemCacheController extends Controller
     /**
      * Debug: Show detected paths
      */
-    public function debug()
+    public function debug(): JsonResponse
     {
         $composerPath = $this->findComposerPath();
         $phpPath = $this->findPhpPath();
@@ -130,7 +132,7 @@ class SystemCacheController extends Controller
     /**
      * Clear application cache
      */
-    public function clearCache(Request $request)
+    public function clearCache(Request $request): JsonResponse
     {
         try {
             Artisan::call('cache:clear');
@@ -152,7 +154,7 @@ class SystemCacheController extends Controller
     /**
      * Clear config cache
      */
-    public function clearConfigCache(Request $request)
+    public function clearConfigCache(Request $request): JsonResponse
     {
         try {
             Artisan::call('config:clear');
@@ -174,7 +176,7 @@ class SystemCacheController extends Controller
     /**
      * Cache configuration
      */
-    public function cacheConfig(Request $request)
+    public function cacheConfig(Request $request): JsonResponse
     {
         try {
             Artisan::call('config:cache');
@@ -196,7 +198,7 @@ class SystemCacheController extends Controller
     /**
      * Clear route cache
      */
-    public function clearRouteCache(Request $request)
+    public function clearRouteCache(Request $request): JsonResponse
     {
         try {
             Artisan::call('route:clear');
@@ -218,7 +220,7 @@ class SystemCacheController extends Controller
     /**
      * Clear compiled views
      */
-    public function clearViewCache(Request $request)
+    public function clearViewCache(Request $request): JsonResponse
     {
         try {
             Artisan::call('view:clear');
@@ -240,7 +242,7 @@ class SystemCacheController extends Controller
     /**
      * Clear all optimization cache
      */
-    public function clearOptimization(Request $request)
+    public function clearOptimization(Request $request): JsonResponse
     {
         try {
             Artisan::call('optimize:clear');
@@ -262,7 +264,7 @@ class SystemCacheController extends Controller
     /**
      * Execute composer dump-autoload
      */
-    public function composerDumpAutoload(Request $request)
+    public function composerDumpAutoload(Request $request): JsonResponse
     {
         try {
             $basePath = base_path();
@@ -319,7 +321,7 @@ class SystemCacheController extends Controller
     /**
      * Find PHP executable path
      */
-    private function findPhpPath()
+    private function findPhpPath(): string
     {
         $isMac = PHP_OS === 'Darwin';
         $home = getenv('HOME') ?: (getenv('USERPROFILE') ?: '');
@@ -352,7 +354,7 @@ class SystemCacheController extends Controller
     /**
      * Execute all maintenance commands at once
      */
-    public function executeAll(Request $request)
+    public function executeAll(Request $request): JsonResponse
     {
         $results = [];
 

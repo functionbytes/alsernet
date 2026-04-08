@@ -40,7 +40,7 @@
         </div>
         <div class="col-md-4">
             <label class="form-label small fw-semibold mb-1">Tipo</label>
-            <select class="form-select form-select-sm field-type-select">
+            <select class="form-select form-select-sm field-type-select select2">
                 @foreach(['text' => 'Texto', 'textarea' => 'Área de texto', 'url' => 'URL', 'number' => 'Número', 'select' => 'Selección'] as $val => $lbl)
                     <option value="{{ $val }}" {{ $fType === $val ? 'selected' : '' }}>{{ $lbl }}</option>
                 @endforeach

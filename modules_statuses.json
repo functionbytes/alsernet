@@ -9,7 +9,7 @@
     "Database": true,
     "Health": true,
     "Mailer": true,
-    "Mailing": true,
+    "Mailing": false,
     "MailsSettings": true,
     "Media": true,
     "Modules": true,
@@ -28,7 +28,7 @@
     "Page": true,
     "Menu": true,
     "Shortcode": true,
-    "Sitemap": false,
+    "Sitemap": true,
     "Seo": true,
     "Captcha": true,
     "Cookie": true,
@@ -36,5 +36,10 @@
     "Slug": true,
     "Widget": true,
     "Template": true,
-    "Reviews": true
+    "Reviews": true,
+    "Blog": true,
+    "Forms": true,
+    "Helpdesk": true,
+    "Locales": true,
+    "Newsletter": true
 }

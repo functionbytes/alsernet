@@ -70,23 +70,47 @@
                         <div class="row align-items-center mb-4">
                             <div class="col-sm-9">
                                 <h6 class="mb-1">Estado del modo mantenimiento</h6>
-                                <p class="text-muted small mb-0">Activa o desactiva el modo mantenimiento</p>
+                                <p class="text-muted mb-0">Activa o desactiva el modo mantenimiento</p>
                             </div>
                             <div class="col-sm-3 text-end">
                                 <div class="form-check form-switch d-inline-block">
                                     <input class="form-check-input" type="checkbox" name="maintenance_mode"
                                            id="maintenance_mode"
-                                           @if(setting('maintenance_mode')=='true') checked @endif>
+                                           @if($maintenanceMode=='true') checked @endif>
                                 </div>
                             </div>
                         </div>
 
+                        {{-- Maintenance page customization --}}
+                        <div class="mb-4">
+                            <label for="maintenance_title" class="form-label fw-semibold">Título de la página</label>
+                            <input type="text"
+                                   id="maintenance_title"
+                                   name="maintenance_title"
+                                   class="form-control"
+                                   value="{{ $maintenanceTitle }}"
+                                   maxlength="120"
+                                   placeholder="Volvemos pronto">
+                            <small class="text-muted">Título visible en la página de mantenimiento</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="maintenance_message" class="form-label fw-semibold">Mensaje de la página</label>
+                            <textarea id="maintenance_message"
+                                      name="maintenance_message"
+                                      class="form-control"
+                                      rows="3"
+                                      maxlength="500"
+                                      placeholder="Estamos realizando mejoras en el sistema...">{{ $maintenanceMessage }}</textarea>
+                            <small class="text-muted">Texto informativo que verán los visitantes</small>
+                        </div>
+
                         <!-- Secret Key Section (shown when enabled) -->
-                        <div class="maintenance_mode @if(setting('maintenance_mode')=='false') d-none @endif">
+                        <div class="maintenance_mode @if($maintenanceMode=='false') d-none @endif">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Llave secreta de acceso</label>
                                 <input type="text" id="maintenance_mode_value" name="maintenance_mode_value"
-                                       value="{{ setting('maintenance_mode_value') ?? $secret }}" class="form-control"
+                                       value="{{ $maintenanceModeValue ?? $secret }}" class="form-control"
                                        readonly>
                                 <small class="text-muted">Usa esta clave para acceder al sistema durante el
                                     mantenimiento</small>
@@ -98,8 +122,7 @@
                                     <li class="mb-1">La llave secreta permite acceder al sistema cuando está en modo
                                         mantenimiento.
                                     </li>
-                                    <li class="mb-1">Accede usando esta URL: <br><code class="text-dark">{{ getUrl() }}
-                                            /{{ setting('maintenance_mode_value') ?? $secret }}</code></li>
+                                    <li class="mb-1">Accede usando esta URL: <br><code class="text-dark">{{ url('/') }}/{{ $maintenanceModeValue ?? $secret }}</code></li>
                                     <li class="mb-0">Comparte esta llave solo con personal autorizado.</li>
                                 </ol>
                             </div>
@@ -327,6 +350,8 @@
 
                         formData.set('maintenance_mode', maintenanceMode ? 'true' : 'false');
                         formData.set('maintenance_mode_value', maintenanceModeValue);
+                        formData.set('maintenance_title', document.getElementById('maintenance_title').value);
+                        formData.set('maintenance_message', document.getElementById('maintenance_message').value);
 
                         const submitButton = this.querySelector('button[type="submit"]');
                         const originalContent = submitButton.innerHTML;
@@ -350,7 +375,7 @@
                                     toastr.success(data.message, 'Modo Mantenimiento');
 
                                     setTimeout(() => {
-                                        window.location.href = '{{ route('manager.dashboard') }}';
+                                        window.location.href = '{{ route('core.dashboard') }}';
                                     }, 2000);
                                 } else {
                                     toastr.error(data.message || 'Error al guardar la configuración', 'Modo Mantenimiento');

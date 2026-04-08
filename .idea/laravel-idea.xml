@@ -16,7 +16,9 @@
         </option>
       </LaravelCodeGeneration>
     </option>
+    <option name="defaultLanguage" value="es" />
     <option name="frameworkFound" value="true" />
+    <option name="moduleSystemName" value="nwidart/laravel-modules" />
     <option name="translation">
       <LaravelTranslation>
         <option name="defaultLanguageFromConfig" value="es" />

@@ -72,6 +72,32 @@
                                     Puedes usar variables Blade: @{{ $title }}, @{{ $description }}, @{{ $content }}, etc.
                                 </small>
                             </div>
+
+                            {{-- Panel de Shortcodes --}}
+                            @php $availableShortcodes = $shortcodes ?? collect(); @endphp
+                            @if($availableShortcodes->isNotEmpty())
+                                <div class="border rounded p-3 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold text-secondary" style="font-size:0.85rem;">
+                                            <i class="fas fa-code me-1"></i>Shortcodes disponibles
+                                        </span>
+                                        <small class="text-muted">Clic para insertar en el contenido</small>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach($availableShortcodes as $sc)
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary btn-insert-shortcode"
+                                                    data-shortcode="{{ $sc->shortcode_template ?: '[' . $sc->key . ']' }}"
+                                                    title="{{ $sc->description }}">
+                                                @if($sc->icon)
+                                                    <i class="{{ $sc->icon }} me-1"></i>
+                                                @endif
+                                                {{ $sc->name }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -108,7 +134,7 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ __('template::template.inherit') }}</h5>
 
-                            <select name="inherit" class="form-select @error('inherit') is-invalid @enderror">
+                            <select name="inherit" class="select2 form-select @error('inherit') is-invalid @enderror">
                                 <option value="">Sin herencia</option>
                                 @foreach($templates as $slug => $name)
                                     <option value="{{ $slug }}"
@@ -185,6 +211,10 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="btn-list">
+                                <button type="button" class="btn btn-outline-info w-100" id="btn-preview-template">
+                                    <i class="fas fa-eye me-2"></i>Vista previa
+                                </button>
+
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="fas fa-save me-2"></i>
                                     {{ isset($template) ? __('template::template.edit') : __('template::template.create') }}
@@ -196,9 +226,7 @@
 
                                 @if(isset($template))
                                     <button type="button" class="btn btn-danger w-100"
-                                            onclick="if(confirm('{{ __('template::template.confirm_delete') }}')) {
-                                                    document.getElementById('delete-form').submit();
-                                            }">
+                                            data-bs-toggle="modal" data-bs-target="#modal-confirm-delete">
                                         <i class="fas fa-trash me-2"></i>{{ __('template::template.delete') }}
                                     </button>
 
@@ -217,6 +245,64 @@
         </div>
     </div>
 
+    {{-- Modal Vista Previa --}}
+    <div class="modal fade" id="modal-preview" tabindex="-1" aria-labelledby="modal-preview-label">
+        <div class="modal-dialog modal-xl modal-fullscreen-lg-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-preview-label">
+                        <i class="fas fa-eye me-2"></i>Vista previa del template
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="min-height: 70vh;">
+                    <div id="preview-loading" class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Generando vista previa...</p>
+                    </div>
+                    <div id="preview-error" class="alert alert-danger m-3 d-none"></div>
+                    <iframe id="preview-frame" style="width:100%;height:70vh;border:0;" class="d-none" sandbox="allow-same-origin allow-scripts"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <small class="text-muted me-auto">
+                        <i class="fas fa-info-circle me-1"></i>Vista previa generada con datos de ejemplo
+                    </small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if(isset($template))
+    {{-- Modal confirmación eliminar --}}
+    <div class="modal fade" id="modal-confirm-delete" tabindex="-1" aria-labelledby="modal-confirm-delete-label">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-confirm-delete-label">
+                        {{ __('template::template.delete') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {{ __('template::template.confirm_delete') }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ __('core::core.cancel') }}
+                    </button>
+                    <button type="button" class="btn btn-danger"
+                            onclick="document.getElementById('delete-form').submit()">
+                        <i class="fas fa-trash me-1"></i>{{ __('template::template.delete') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @push('footer-scripts')
         <script>
             $(document).ready(function() {
@@ -224,7 +310,7 @@
                 $('#btn-generate-slug').click(function() {
                     const name = $('input[name="name"]').val();
                     if (!name) {
-                        alert('Por favor ingresa un nombre primero');
+                        toastr.warning('Por favor ingresa un nombre primero');
                         return;
                     }
 
@@ -243,6 +329,64 @@
                     if (!$('input[name="slug"]').val()) {
                         $('#btn-generate-slug').click();
                     }
+                });
+
+                // Insertar shortcode en el textarea al cursor
+                $(document).on('click', '.btn-insert-shortcode', function() {
+                    const shortcode = $(this).data('shortcode');
+                    const textarea = document.getElementById('template-content');
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const value = textarea.value;
+
+                    textarea.value = value.substring(0, start) + shortcode + value.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + shortcode.length;
+                    textarea.focus();
+                });
+
+                // Vista previa del template
+                $('#btn-preview-template').click(function() {
+                    const content = $('#template-content').val().trim();
+
+                    if (!content) {
+                        toastr.warning('El contenido está vacío. Ingresa algo para previsualizar.');
+                        return;
+                    }
+
+                    const $modal = new bootstrap.Modal(document.getElementById('modal-preview'));
+                    $modal.show();
+
+                    $('#preview-loading').removeClass('d-none');
+                    $('#preview-error').addClass('d-none');
+                    $('#preview-frame').addClass('d-none');
+
+                    $.ajax({
+                        url: '{{ route("settings.templates.preview") }}',
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json',
+                        },
+                        data: { content: content },
+                        success: function(response) {
+                            const iframe = document.getElementById('preview-frame');
+                            iframe.srcdoc = response.html;
+                            $('#preview-loading').addClass('d-none');
+                            $('#preview-frame').removeClass('d-none');
+                        },
+                        error: function(xhr) {
+                            const msg = xhr.responseJSON?.error || 'Error al generar la vista previa.';
+                            $('#preview-loading').addClass('d-none');
+                            $('#preview-error').text(msg).removeClass('d-none');
+                        },
+                    });
+                });
+
+                // Limpiar preview al cerrar el modal
+                document.getElementById('modal-preview').addEventListener('hidden.bs.modal', function() {
+                    $('#preview-frame').attr('srcdoc', '').addClass('d-none');
+                    $('#preview-loading').removeClass('d-none');
+                    $('#preview-error').addClass('d-none');
                 });
             });
         </script>

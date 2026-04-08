@@ -19,70 +19,54 @@ class SupervisorBackup extends Model
         'is_auto',
     ];
 
-    protected $casts = [
-        'config_files' => 'json',
-        'supervisor_status' => 'json',
-        'backed_up_at' => 'datetime',
-        'restored_at' => 'datetime',
-        'is_auto' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'config_files' => 'json',
+            'supervisor_status' => 'json',
+            'backed_up_at' => 'datetime',
+            'restored_at' => 'datetime',
+            'is_auto' => 'boolean',
+        ];
+    }
 
-    /**
-     * Scope para obtener backups de un ambiente específico
-     */
-    public function scopeEnvironment($query, $environment)
+    public function scopeEnvironment($query, string $environment): mixed
     {
         return $query->where('environment', $environment);
     }
 
-    /**
-     * Scope para obtener backups manuales
-     */
-    public function scopeManual($query)
+    public function scopeManual($query): mixed
     {
         return $query->where('is_auto', false);
     }
 
-    /**
-     * Scope para obtener backups automáticos
-     */
-    public function scopeAuto($query)
+    public function scopeAuto($query): mixed
     {
         return $query->where('is_auto', true);
     }
 
-    /**
-     * Obtener backups recientes
-     */
-    public function scopeRecent($query, $days = 30)
+    public function scopeRecent($query, int $days = 30): mixed
     {
         return $query->where('backed_up_at', '>=', now()->subDays($days))
             ->orderBy('backed_up_at', 'desc');
     }
 
-    /**
-     * Formato legible del tamaño del backup
-     */
-    public function getFormattedSizeAttribute()
+    public function getFormattedSizeAttribute(): string
     {
         if (! $this->backup_size) {
             return 'N/A';
         }
 
-        $bytes = $this->backup_size;
+        $bytes = max((int) $this->backup_size, 0);
         $units = ['B', 'KB', 'MB', 'GB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = $bytes ? (int) floor(log($bytes) / log(1024)) : 0;
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
 
         return round($bytes, 2).' '.$units[$pow];
     }
 
-    /**
-     * Obtener tiempo relativo del backup
-     */
-    public function getRelativeTimeAttribute()
+    public function getRelativeTimeAttribute(): string
     {
         return $this->backed_up_at?->diffForHumans() ?? 'Never';
     }

@@ -3,16 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Cookie\Http\Controllers\CookieSettingsController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 Route::get('', [CookieSettingsController::class, 'index'])->name('index');
-Route::post('', [CookieSettingsController::class, 'update'])->name('update');
+Route::patch('', [CookieSettingsController::class, 'update'])->name('update');
+Route::get('logs', [CookieSettingsController::class, 'logs'])->name('logs');
+Route::get('logs/export', [CookieSettingsController::class, 'export'])->name('export');

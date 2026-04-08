@@ -116,7 +116,7 @@ class EmailValidationController extends Controller
 
             return response()->json([
                 'error' => 'Email validation failed',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -225,7 +225,7 @@ class EmailValidationController extends Controller
 
             return response()->json([
                 'error' => 'Bulk email validation failed',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

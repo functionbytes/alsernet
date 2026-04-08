@@ -119,7 +119,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small mb-3">
+                    <p class="text-muted mb-3">
                         Deleting a list will remove it permanently. Subscribers will not be affected.
                     </p>
                     <form action="{{ route('mailrelay.lists.destroy', $list) }}" method="POST" style="display: inline;">

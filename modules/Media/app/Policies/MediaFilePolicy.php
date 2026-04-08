@@ -3,7 +3,7 @@
 namespace Modules\Media\Policies;
 
 use App\Models\User;
-use Modules\Media\Entities\MediaFile;
+use Modules\Media\Models\MediaFile;
 
 class MediaFilePolicy
 {

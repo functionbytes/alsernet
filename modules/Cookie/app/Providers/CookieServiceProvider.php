@@ -2,12 +2,11 @@
 
 namespace Modules\Cookie\Providers;
 
-use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
 
 class CookieServiceProvider extends ServiceProvider
@@ -17,19 +16,10 @@ class CookieServiceProvider extends ServiceProvider
     protected string $moduleNameLower = 'cookie';
 
     /**
-     * Register the service provider.
-     */
-    public function register(): void
-    {
-        $this->app->register(RouteServiceProvider::class);
-    }
-
-    /**
      * Boot the application events.
      */
     public function boot(): void
     {
-        $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
@@ -55,50 +45,6 @@ class CookieServiceProvider extends ServiceProvider
         $this->app->resolving(EncryptCookies::class, function (EncryptCookies $encryptCookies): void {
             $encryptCookies->disableFor(config('Cookie.general.cookie_name'));
         });
-
-        // Register view composer
-        $this->app['view']->composer('Cookie::index', function (View $view): void {
-            $CookieConfig = config('Cookie.general', []);
-            $view->with(compact('CookieConfig'));
-        });
-
-        // Only load assets if cookie hasn't been set
-        if (! Cookie::has(config('Cookie.general.cookie_name'))) {
-            $this->loadAssets();
-        }
-
-        // NOTE: add_filter() is a Botble CMS function, not available in Laravel.
-        // The cookie consent banner should be included in the layout via:
-        // @include('Cookie::index')
-        if (function_exists('add_filter') && defined('THEME_FRONT_FOOTER')) {
-            add_filter(THEME_FRONT_FOOTER, [$this, 'registerCookie'], 1346);
-        }
-    }
-
-    /**
-     * Load CSS and JS assets
-     */
-    protected function loadAssets(): void
-    {
-        if (function_exists('add_theme_asset')) {
-            // CSS
-            add_theme_asset([
-                'name' => 'cookie-consent-css',
-                'src' => 'vendor/modules/Cookie/css/cookie-consent.css',
-                'type' => 'css',
-                'version' => '1.0.0',
-            ]);
-
-            // JS
-            add_theme_asset([
-                'name' => 'cookie-consent-js',
-                'src' => 'vendor/modules/Cookie/js/cookie-consent.js',
-                'type' => 'js',
-                'dependencies' => ['jquery'],
-                'location' => 'footer',
-                'version' => '1.0.0',
-            ]);
-        }
     }
 
     /**
@@ -106,45 +52,19 @@ class CookieServiceProvider extends ServiceProvider
      */
     protected function shouldDisplayCookie(): bool
     {
-        // Don't show in settings area
-        if (function_exists('is_in_admin') && is_in_admin()) {
+        if ($this->isInAdmin()) {
             return false;
         }
 
-        // Check if enabled in settings (if using theme options)
-        if (function_exists('theme_option')) {
-            return theme_option('cookie_consent_enable', 'yes') === 'yes';
-        }
-
-        // Default to enabled if no theme options
-        return config('Cookie.general.enabled', true);
+        return Setting::get('cookie.enabled', '0') === '1';
     }
 
     /**
-     * Render cookie consent banner
-     */
-    public function registerCookie(?string $html): string
-    {
-        $CookieConfig = config('Cookie.general', []);
-        $alreadyConsentedWithCookies = Cookie::has($CookieConfig['cookie_name'] ?? 'cookie_for_consent');
-
-        if ($this->isInAdmin() || $alreadyConsentedWithCookies) {
-            return $html;
-        }
-
-        return $html.view('Cookie::index')->render();
-    }
-
-    /**
-     * Check if we're in settings area
+     * Check if we're in the admin/settings area
      */
     protected function isInAdmin(): bool
     {
-        if (function_exists('is_in_admin')) {
-            return is_in_admin();
-        }
-
-        return request()->is('settings/*') || request()->is('managers/*');
+        return request()->is('panel/*') || request()->is('settings/*') || request()->is('managers/*');
     }
 
     /**
@@ -184,22 +104,6 @@ class CookieServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register translations.
-     */
-    public function registerTranslations(): void
-    {
-        $langPath = resource_path('lang/modules/'.$this->moduleNameLower);
-
-        if (is_dir($langPath)) {
-            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
-            $this->loadJsonTranslationsFrom($langPath);
-        } else {
-            $this->loadTranslationsFrom(module_path($this->moduleName, 'resources/lang'), $this->moduleNameLower);
-            $this->loadJsonTranslationsFrom(module_path($this->moduleName, 'resources/lang'));
-        }
-    }
-
-    /**
      * Load helper files.
      */
     protected function loadHelpers(): void
@@ -217,13 +121,23 @@ class CookieServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         $webPath = module_path($this->moduleName, 'routes/web.php');
+        $publicPath = module_path($this->moduleName, 'routes/public.php');
 
         Route::middleware(['web', 'auth'])
-            ->prefix('setting/cookie')
+            ->prefix('panel/setting/cookie')
             ->name('settings.cookie.')
             ->group(function () use ($webPath) {
                 require $webPath;
             });
+
+        if (file_exists($publicPath)) {
+            Route::middleware(['web'])
+                ->prefix('cookie')
+                ->name('cookie.')
+                ->group(function () use ($publicPath) {
+                    require $publicPath;
+                });
+        }
     }
 
     /**
@@ -235,16 +149,9 @@ class CookieServiceProvider extends ServiceProvider
             'title' => 'Configuración de cookies',
             'items' => [
                 ['label' => 'Cookies', 'route' => 'settings.cookie.index'],
+                ['label' => 'Registros de consentimiento', 'route' => 'settings.cookie.logs'],
             ],
         ]);
-    }
-
-    /**
-     * Get the services provided by the provider.
-     */
-    public function provides(): array
-    {
-        return [];
     }
 
     /**

@@ -25,6 +25,7 @@ class MediaController extends Controller
         return view('media::index', [
             'activeDisk' => $this->getActiveDisk(),
             'availableDisks' => $this->getAvailableDisks(),
+            'pickerMode' => request()->boolean('picker'),
         ]);
     }
 
@@ -37,8 +38,8 @@ class MediaController extends Controller
         $page = $request->integer('page', 1);
 
         $breadcrumbs = [];
-        $files = [];
-        $folders = [];
+        $files = collect();
+        $folders = collect();
 
         switch ($view) {
             case 'trash':
@@ -49,42 +50,86 @@ class MediaController extends Controller
                 break;
 
             case 'favorites':
+                $activeDisk = $this->getActiveDisk();
                 $breadcrumbs = [['id' => 0, 'name' => 'Favoritos', 'icon' => 'fas fa-star']];
                 $favoriteItems = $this->settingRepository->getFavorites(auth()->id());
                 $fileIds = collect($favoriteItems)->where('is_folder', false)->pluck('id');
                 $folderIds = collect($favoriteItems)->where('is_folder', true)->pluck('id');
-                $files = MediaFile::byUser()->whereIn('id', $fileIds)->get()->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => false, 'human_size' => $f->human_size]));
-                $folders = MediaFolder::byUser()->whereIn('id', $folderIds)->get()->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => true]));
+                $files = MediaFile::byUser()->whereIn('id', $fileIds)
+                    ->where('disk', $activeDisk)
+                    ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->get()
+                    ->map(fn ($f) => $this->formatFileForList($f));
+                $folders = MediaFolder::byUser()->whereIn('id', $folderIds)
+                    ->where('disk', $activeDisk)
+                    ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->get()
+                    ->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => true]));
                 break;
 
             case 'recent':
+                $activeDisk = $this->getActiveDisk();
                 $breadcrumbs = [['id' => 0, 'name' => 'Recientes', 'icon' => 'fas fa-clock']];
-                $files = MediaFile::byUser()->where('created_at', '>=', now()->subHours(24))->orderByDesc('created_at')->get()->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => false, 'human_size' => $f->human_size]));
+                $files = MediaFile::byUser()
+                    ->where('disk', $activeDisk)
+                    ->where('created_at', '>=', now()->subHours(24))
+                    ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orderByDesc('created_at')
+                    ->get()
+                    ->map(fn ($f) => $this->formatFileForList($f));
                 $folders = collect();
                 break;
 
             default: // all_media
+                $activeDisk = $this->getActiveDisk();
                 $breadcrumbs = $this->buildBreadcrumbs($folderId);
                 $items = $this->fileRepository->getFilesByFolderId(
                     $folderId,
-                    ['search' => $search ?: null],
+                    ['search' => $search ?: null, 'disk' => $activeDisk],
                     true,
-                    ['search' => $search ?: null]
+                    ['search' => $search ?: null, 'disk' => $activeDisk]
                 );
                 $folders = $items->where('is_folder', true)->values();
-                $files = $items->where('is_folder', false)->forPage($page, $perPage)->values();
+                $allFiles = $items->where('is_folder', false);
+                $totalFiles = $allFiles->count();
+                $files = $allFiles->forPage($page, $perPage)->values();
                 break;
         }
 
+        // Add public_url to files that have a url
+        $files = $files->map(function ($file) {
+            $obj = is_object($file) ? $file : (object) $file;
+            if (! empty($obj->url) && ! isset($obj->public_url)) {
+                $obj->public_url = url('media/'.$obj->url);
+            }
+
+            return $obj;
+        });
+
+        $totalFiles = $totalFiles ?? $files->count();
+
         return response()->json([
-            'files' => $files,
+            'files' => $files->values(),
             'folders' => $folders,
             'breadcrumbs' => $breadcrumbs,
             'pagination' => [
                 'current_page' => $page,
                 'per_page' => $perPage,
-                'total' => count($files),
+                'total' => $totalFiles,
+                'last_page' => max(1, (int) ceil($totalFiles / $perPage)),
             ],
+        ]);
+    }
+
+    /**
+     * Format a MediaFile model for list API response.
+     */
+    private function formatFileForList(MediaFile $file): object
+    {
+        return (object) array_merge($file->toArray(), [
+            'is_folder' => false,
+            'human_size' => $file->human_size,
+            'public_url' => url('media/'.$file->url),
         ]);
     }
 
@@ -122,9 +167,14 @@ class MediaController extends Controller
 
     private function getAvailableDisks(): array
     {
+        $allowList = ['media', 'public', 's3'];
         $disks = [];
 
         foreach (config('filesystems.disks', []) as $diskName => $diskConfig) {
+            if (! in_array($diskName, $allowList)) {
+                continue;
+            }
+
             $disks[$diskName] = [
                 'name' => $diskName,
                 'driver' => $diskConfig['driver'] ?? 'unknown',

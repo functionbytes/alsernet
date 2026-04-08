@@ -9,17 +9,34 @@ use Modules\Analytics\Rules\AnalyticsCredentialRule;
 
 class AnalyticsSettingJsonController extends Controller
 {
+    /** Fields that must never be included in any response payload. */
+    private const SENSITIVE_FIELDS = ['private_key', 'private_key_id'];
+
+    /** Required fields for a Google Service Account JSON credential. */
+    private const REQUIRED_FIELDS = [
+        'type',
+        'project_id',
+        'private_key_id',
+        'private_key',
+        'client_email',
+        'client_id',
+        'auth_uri',
+        'token_uri',
+    ];
+
     /**
      * Upload and validate JSON credentials file.
      */
     public function upload(Request $request): JsonResponse
     {
+        $this->authorize('analytics.settings.update');
+
         $request->validate([
             'credentials_file' => [
                 'required',
                 'file',
                 'mimes:json',
-                'max:10240', // 10MB max
+                'max:50', // 50 KB — a real service account JSON is ~2-3 KB
             ],
         ]);
 
@@ -27,17 +44,30 @@ class AnalyticsSettingJsonController extends Controller
             $file = $request->file('credentials_file');
             $content = file_get_contents($file->getRealPath());
 
-            // Validate JSON format
             $decoded = json_decode($content, true);
+
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Archivo JSON inválido: '.json_last_error_msg());
+                throw new \Exception(__('analytics::analytics.validation.json_invalid', ['error' => json_last_error_msg()]));
             }
 
-            // Validate credentials structure using the rule
+            if (! is_array($decoded)) {
+                throw new \Exception(__('analytics::analytics.validation.json_not_object'));
+            }
+
+            $missing = array_filter(
+                self::REQUIRED_FIELDS,
+                fn (string $field) => empty($decoded[$field])
+            );
+
+            if (! empty($missing)) {
+                throw new \Exception(__('analytics::analytics.validation.missing_fields', ['fields' => implode(', ', array_values($missing))]));
+            }
+
+            // Run full structural validation (type, email format, private key, URIs)
             $rule = new AnalyticsCredentialRule;
             $errors = [];
 
-            $rule->validate('credentials', $content, function ($message) use (&$errors) {
+            $rule->validate('credentials', $content, function (string $message) use (&$errors): void {
                 $errors[] = $message;
             });
 
@@ -47,17 +77,17 @@ class AnalyticsSettingJsonController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Archivo de credenciales cargado y validado correctamente',
+                'message' => __('analytics::analytics.success.credentials_loaded'),
                 'data' => [
                     'credentials' => $content,
-                    'project_id' => $decoded['project_id'] ?? null,
-                    'client_email' => $decoded['client_email'] ?? null,
+                    'project_id' => $decoded['project_id'],
+                    'client_email' => $decoded['client_email'],
                 ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error al procesar archivo: '.$e->getMessage(),
+                'message' => __('analytics::analytics.errors.json_upload_failed', ['error' => $e->getMessage()]),
             ], 422);
         }
     }
@@ -67,12 +97,14 @@ class AnalyticsSettingJsonController extends Controller
      */
     public function validateJson(Request $request): JsonResponse
     {
+        $this->authorize('analytics.settings.update');
+
         $credentials = $request->input('credentials');
 
         if (empty($credentials)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Las credenciales no pueden estar vacías',
+                'message' => __('analytics::analytics.validation.credentials_required'),
             ], 422);
         }
 
@@ -93,7 +125,7 @@ class AnalyticsSettingJsonController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Credenciales validadas correctamente',
+                'message' => __('analytics::analytics.success.credentials_validated_json'),
                 'data' => [
                     'project_id' => $decoded['project_id'] ?? null,
                     'client_email' => $decoded['client_email'] ?? null,
@@ -113,6 +145,8 @@ class AnalyticsSettingJsonController extends Controller
      */
     public function downloadTemplate(): JsonResponse
     {
+        $this->authorize('analytics.settings.update');
+
         $template = [
             'type' => 'service_account',
             'project_id' => 'your-project-id',
@@ -143,26 +177,29 @@ class AnalyticsSettingJsonController extends Controller
      */
     public function formatJson(Request $request): JsonResponse
     {
+        $this->authorize('analytics.settings.update');
+
         $credentials = $request->input('credentials');
 
         if (empty($credentials)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Las credenciales no pueden estar vacías',
+                'message' => __('analytics::analytics.validation.credentials_required'),
             ], 422);
         }
 
         try {
             $decoded = json_decode($credentials, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('JSON inválido: '.json_last_error_msg());
+                throw new \Exception(__('analytics::analytics.validation.json_invalid', ['error' => json_last_error_msg()]));
             }
 
-            $formatted = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $safe = array_diff_key($decoded, array_flip(self::SENSITIVE_FIELDS));
+            $formatted = json_encode($safe, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
             return response()->json([
                 'status' => true,
-                'message' => 'JSON formateado correctamente',
+                'message' => __('analytics::analytics.success.json_formatted'),
                 'data' => [
                     'formatted' => $formatted,
                 ],
@@ -170,7 +207,7 @@ class AnalyticsSettingJsonController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error al formatear JSON: '.$e->getMessage(),
+                'message' => __('analytics::analytics.errors.json_format_failed', ['error' => $e->getMessage()]),
             ], 422);
         }
     }
@@ -180,19 +217,21 @@ class AnalyticsSettingJsonController extends Controller
      */
     public function extractInfo(Request $request): JsonResponse
     {
+        $this->authorize('analytics.settings.update');
+
         $credentials = $request->input('credentials');
 
         if (empty($credentials)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Las credenciales no pueden estar vacías',
+                'message' => __('analytics::analytics.validation.credentials_required'),
             ], 422);
         }
 
         try {
             $decoded = json_decode($credentials, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('JSON inválido');
+                throw new \Exception(__('analytics::analytics.validation.json_invalid_short'));
             }
 
             return response()->json([
@@ -202,15 +241,12 @@ class AnalyticsSettingJsonController extends Controller
                     'project_id' => $decoded['project_id'] ?? null,
                     'client_email' => $decoded['client_email'] ?? null,
                     'client_id' => $decoded['client_id'] ?? null,
-                    'has_private_key' => isset($decoded['private_key']),
-                    'auth_uri' => $decoded['auth_uri'] ?? null,
-                    'token_uri' => $decoded['token_uri'] ?? null,
                 ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error al extraer información: '.$e->getMessage(),
+                'message' => __('analytics::analytics.errors.json_extract_failed', ['error' => $e->getMessage()]),
             ], 422);
         }
     }

@@ -108,7 +108,7 @@
                                 </span>
                             @endif
                         </button>
-                        @if(request()->hasAny(['search', 'category', 'is_active', 'sort_by']))
+                        @if(request()->hasAny(['search', 'category', 'is_active', 'sort_by', 'location_id']))
                             <a href="{{ route('settings.reviews.templates.index') }}"
                                class="btn btn-outline-secondary"
                                title="Limpiar filtros"
@@ -120,6 +120,23 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+
+                    <!-- Location filter -->
+                    @if($locations->count() > 0)
+                        <div class="mt-2">
+                            <select name="location_id" class="form-select select2"
+                                    data-placeholder="Todas las ubicaciones"
+                                    onchange="this.form.submit()">
+                                <option value="">Todas las ubicaciones</option>
+                                @foreach($locations as $location)
+                                    <option value="{{ $location->id }}"
+                                        {{ request('location_id') == $location->id ? 'selected' : '' }}>
+                                        {{ $location->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
 
                     <!-- Hidden inputs for filters -->
                     <input type="hidden" name="category" id="filter-category" value="{{ request('category') }}">
@@ -133,7 +150,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Listado de plantillas</h6>
-                        <p class="text-muted small mb-0">Administra todas las plantillas configuradas</p>
+                        <p class="text-muted mb-0">Administra todas las plantillas configuradas</p>
                     </div>
                 </div>
 
@@ -147,21 +164,11 @@
                 </div>
 
                 @if($templates->count() > 0)
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="select-all">
-                            <label class="form-check-label  text-muted" for="select-all">Seleccionar todo</label>
-                        </div>
-                        <button type="button" class="btn btn-outline-primary d-none" id="bulk-delete-btn" data-bs-toggle="modal" data-bs-target="#bulk-delete-modal">
-                            <i class="fas fa-trash me-1"></i>(<span id="selected-count">0</span>)
-                        </button>
-                    </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="30"></th>
+                                    <th width="30"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Categoria</th>
                                     <th>Extracto</th>
@@ -175,10 +182,15 @@
                                 @foreach($templates as $template)
                                     <tr>
                                         <td>
-                                            <input type="checkbox" class="form-check-input template-checkbox" value="{{ $template->id }}">
+                                            <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $template->id }}">
                                         </td>
                                         <td>
                                             <strong>{{ $template->name }}</strong>
+                                            @if($template->review_google_location_id)
+                                                <span class="badge bg-primary-subtle text-primary ms-1" title="Ubicación específica">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ $template->location?->name ?? '—' }}
+                                                </span>
+                                            @endif
                                         </td>
                                         <td>
                                             <span class="badge bg-light-subtle text-black">
@@ -218,6 +230,13 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
+                                                        <a class="dropdown-item preview-template-btn"
+                                                           href="#"
+                                                           data-template-id="{{ $template->id }}">
+                                                            Vista previa
+                                                        </a>
+                                                    </li>
+                                                    <li>
                                                         <a class="dropdown-item" href="{{ route('settings.reviews.templates.edit', $template) }}">
                                                            Editar
                                                         </a>
@@ -246,7 +265,7 @@
                             <i class="fas fa-file-alt fa-4x text-muted opacity-50"></i>
                         </div>
                         <h5 class="text-muted mb-2">No hay plantillas configuradas</h5>
-                        <p class="text-muted small mb-4">Comienza creando tu primera plantilla para responder reseñas mas rapido</p>
+                        <p class="text-muted mb-4">Comienza creando tu primera plantilla para responder reseñas mas rapido</p>
                         <a href="{{ route('settings.reviews.templates.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Crear primera plantilla
                         </a>
@@ -262,30 +281,39 @@
 
     @include('core::components.delete')
 
-    {{-- Modal eliminacion masiva --}}
-    <div id="bulk-delete-modal" class="modal fade">
-        <div class="modal-dialog modal-md modal-dialog-centered">
+    @include('reviews::partials.template-preview')
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="bulk-delete-form" method="POST" action="{{ route('settings.reviews.templates.bulk-delete') }}">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="ids" id="bulk-delete-ids">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Eliminacion masiva</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> plantilla(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
                     </div>
-                    <div class="modal-body text-center">
-                        <div class="display-4 text-warning mb-3">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <h4 class="my-0">Eliminar plantillas seleccionadas?</h4>
-                        <p>Se eliminaran <strong id="bulk-count">0</strong> plantillas. Esta accion no se puede deshacer.</p>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">Confirmar eliminacion</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
-                    </div>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -352,29 +380,43 @@ $(document).ready(function() {
     });
 
     // Bulk selection
-    const $selectAll = $('#select-all');
-    const $checkboxes = $('.template-checkbox');
-    const $bulkBtn = $('#bulk-delete-btn');
-    const $selectedCount = $('#selected-count');
-    const $bulkCount = $('#bulk-count');
-    const $bulkIds = $('#bulk-delete-ids');
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-    function updateBulkState() {
-        const selected = $checkboxes.filter(':checked');
-        const count = selected.length;
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
-        $bulkBtn.toggleClass('d-none', count === 0);
-        $selectedCount.text(count);
-        $bulkCount.text(count);
-        $bulkIds.val(JSON.stringify(selected.map(function() { return $(this).val(); }).get()));
-    }
-
-    $selectAll.on('change', function() {
-        $checkboxes.prop('checked', $(this).is(':checked'));
-        updateBulkState();
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
     });
 
-    $checkboxes.on('change', updateBulkState);
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una plantilla.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' plantilla(s) seleccionadas?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('settings.reviews.templates.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' plantilla(s) actualizadas.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
+    });
 
     // Advanced filters
     $('#apply-filters').on('click', function() {
@@ -383,6 +425,60 @@ $(document).ready(function() {
         $('#filter-sort-by').val($('#modal-filter-sort-by').val());
         $('#filters-modal').modal('hide');
         $('#filter-form').submit();
+    });
+
+    // Template preview panel
+    const previewUrl = '{{ rtrim(route("reviews.dashboard"), "/") }}/templates/';
+    const $panel = $('#templatePreviewPanel');
+    const $loading = $('#templatePreviewLoading');
+    const $content = $('#templatePreviewContent');
+    const $applyBtn = $('#applyTemplateBtn');
+    let offcanvasInstance = null;
+
+    $(document).on('click', '.preview-template-btn', function(e) {
+        e.preventDefault();
+
+        const templateId = $(this).data('template-id');
+        const reviewId = $(this).data('review-id') || null;
+
+        $loading.removeClass('d-none');
+        $content.addClass('d-none');
+        $applyBtn.prop('disabled', true);
+
+        if (!offcanvasInstance) {
+            offcanvasInstance = new bootstrap.Offcanvas(document.getElementById('templatePreviewPanel'));
+        }
+        offcanvasInstance.show();
+
+        const params = reviewId ? { review_id: reviewId } : {};
+
+        $.get(previewUrl + templateId + '/preview', params, function(data) {
+            $('#previewTemplateName').text(data.name || '—');
+            $('#previewTemplateCategory').text(data.category || '—');
+            $('#previewTemplateText').text(data.template_text || '');
+            $('#previewTemplateRendered').text(data.rendered_text || data.template_text || '');
+
+            $applyBtn.data('template-id', templateId).prop('disabled', false);
+        }).fail(function(xhr) {
+            const msg = xhr.responseJSON?.message || 'No se pudo cargar el template.';
+            toastr.error(msg);
+            if (offcanvasInstance) {
+                offcanvasInstance.hide();
+            }
+        }).always(function() {
+            $loading.addClass('d-none');
+            $content.removeClass('d-none');
+        });
+    });
+
+    $applyBtn.on('click', function() {
+        const text = $('#previewTemplateText').text();
+        $('textarea[name="reply_text"], #replyTextarea').val(text).trigger('input');
+        toastr.success('Template aplicado correctamente');
+
+        if (offcanvasInstance) {
+            offcanvasInstance.hide();
+        }
     });
 });
 </script>

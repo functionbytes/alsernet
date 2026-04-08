@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
 use Modules\Core\Models\Setting;
 
 /**
@@ -10,19 +11,27 @@ use Modules\Core\Models\Setting;
  */
 if (! function_exists('updateSettings')) {
     /**
-     * Update multiple settings at once
+     * Update multiple settings at once using a single upsert query.
      *
-     * @param  array  $data  Key-value pairs of settings to update
-     * @return void
+     * @param  array<string, mixed>  $data  Key-value pairs of settings to update
      */
-    function updateSettings($data)
+    function updateSettings(array $data): void
     {
-        foreach ($data as $key => $val) {
-            $setting = Setting::where('key', $key);
-            if ($setting->exists()) {
-                $setting->first()->update(['value' => $val]);
-            }
+        if (empty($data)) {
+            return;
         }
+
+        $rows = collect($data)
+            ->map(fn ($val, $key) => [
+                'key' => $key,
+                'value' => is_array($val) ? json_encode($val) : $val,
+            ])
+            ->values()
+            ->all();
+
+        Setting::upsert($rows, ['key'], ['value']);
+
+        Cache::forget('settings');
     }
 }
 
@@ -31,11 +40,12 @@ if (! function_exists('setting')) {
      * Get a setting value by key
      *
      * @param  string  $key  The setting key
-     * @return string|null The setting value or empty string
+     * @param  mixed  $default  Value to return if setting is not found
+     * @return mixed The setting value or default
      */
-    function setting($key)
+    function setting($key, $default = '')
     {
-        return Setting::where('key', '=', $key)->first()->value ?? '';
+        return Setting::where('key', '=', $key)->first()->value ?? $default;
     }
 }
 
@@ -62,6 +72,6 @@ if (! function_exists('paginationNumber')) {
      */
     function paginationNumber($value = null)
     {
-        return $value != null ? $value : env('DEFAULT_PAGINATION');
+        return $value != null ? $value : config('app.default_pagination', 20);
     }
 }

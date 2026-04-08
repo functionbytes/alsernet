@@ -76,7 +76,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Configuración de radicado
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Define el formato del número de radicado para las solicitudes PQRSF.
                                 </p>
 
@@ -114,7 +114,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Archivos adjuntos
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Configura los límites para archivos adjuntos en las solicitudes.
                                 </p>
 
@@ -151,7 +151,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Opciones generales
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Configuraciones adicionales del sistema.
                                 </p>
 
@@ -190,7 +190,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificación de recepción
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Se envía automáticamente cuando el ciudadano crea una nueva solicitud.
                                 </p>
 
@@ -230,7 +230,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificación de asignación
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Se envía cuando la solicitud es asignada a un funcionario o departamento.
                                 </p>
 
@@ -267,7 +267,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificación en proceso
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Se envía cuando la solicitud cambia a estado "En proceso".
                                 </p>
 
@@ -304,7 +304,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificación de resolución
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Se envía cuando la solicitud es resuelta con una respuesta oficial.
                                 </p>
 
@@ -341,7 +341,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificación de cierre
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Se envía cuando la solicitud es cerrada definitivamente.
                                 </p>
 
@@ -379,7 +379,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Tiempos de respuesta (SLA)
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Define los tiempos máximos para cada etapa del proceso de atención.
                                 </p>
 
@@ -424,7 +424,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Alertas SLA
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Configura cuándo se envían alertas de vencimiento.
                                 </p>
 
@@ -453,7 +453,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificaciones internas
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Configura las notificaciones que reciben los funcionarios.
                                 </p>
 
@@ -500,7 +500,7 @@
                                 <h6 class="mb-1 fw-bold text-dark">
                                     Notificaciones al ciudadano
                                 </h6>
-                                <p class="text-muted small mb-3">
+                                <p class="text-muted mb-3">
                                     Configura las notificaciones que reciben los ciudadanos.
                                 </p>
 

@@ -7,10 +7,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Mailrelay\Entities\MailrelayGroup;
+use Modules\Mailrelay\Entities\MailrelaySettings;
 use Modules\Mailrelay\Http\Controllers\Controller;
-use Modules\Mailrelay\Models\MailrelayGroup;
-use Modules\Mailrelay\Models\MailrelaySettings;
 
 class GroupController extends Controller
 {
@@ -59,10 +60,12 @@ class GroupController extends Controller
                 ->route('managers.settings.mailrelay.groups.index')
                 ->with('success', 'Grupo creado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay group create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear el grupo: '.$e->getMessage());
+                ->with('error', 'Error al crear el grupo. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -103,10 +106,12 @@ class GroupController extends Controller
                 ->route('managers.settings.mailrelay.groups.index')
                 ->with('success', 'Grupo actualizado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay group update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el grupo: '.$e->getMessage());
+                ->with('error', 'Error al actualizar el grupo. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -125,9 +130,11 @@ class GroupController extends Controller
                 ->route('managers.settings.mailrelay.groups.index')
                 ->with('success', 'Grupo eliminado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay group delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar el grupo: '.$e->getMessage());
+                ->with('error', 'Error al eliminar el grupo. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -185,7 +192,7 @@ class GroupController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al sincronizar el grupo: '.$e->getMessage(),
+                'message' => 'Error al sincronizar el grupo. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

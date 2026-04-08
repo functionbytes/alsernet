@@ -2,11 +2,15 @@
 
 namespace Modules\Seo\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class SeoMeta extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
@@ -23,11 +27,18 @@ class SeoMeta extends Model
         'seoable_id',
         'seoable_type',
         'title',
+        'title_b',
         'description',
+        'description_b',
+        'ab_winner',
+        'ab_impressions_a',
+        'ab_impressions_b',
         'keywords',
+        'target_keyword',
         'og_title',
         'og_description',
         'og_image',
+        'locale',
         'og_type',
         'twitter_card',
         'twitter_title',
@@ -35,6 +46,13 @@ class SeoMeta extends Model
         'twitter_image',
         'canonical_url',
         'robots',
+        'seo_score',
+        'seo_grade',
+        'seo_audited_at',
+        'gsc_clicks',
+        'gsc_impressions',
+        'gsc_position',
+        'gsc_updated_at',
     ];
 
     /**
@@ -43,6 +61,14 @@ class SeoMeta extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'seo_score' => 'integer',
+        'seo_audited_at' => 'datetime',
+        'gsc_clicks' => 'integer',
+        'gsc_impressions' => 'integer',
+        'gsc_position' => 'decimal:1',
+        'gsc_updated_at' => 'datetime',
+        'ab_impressions_a' => 'integer',
+        'ab_impressions_b' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -104,10 +130,21 @@ class SeoMeta extends Model
     }
 
     /**
+     * Scope to order by seo_score.
+     *
+     * @param  Builder  $query
+     * @return Builder
+     */
+    public function scopeByScore($query, string $direction = 'asc')
+    {
+        return $query->orderBy('seo_score', $direction);
+    }
+
+    /**
      * Scope to filter by seoable type.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForType($query, string $type)
     {
@@ -117,8 +154,8 @@ class SeoMeta extends Model
     /**
      * Scope to filter by robots directive.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeWithRobots($query, string $robots)
     {
@@ -151,5 +188,63 @@ class SeoMeta extends Model
         $robots = $this->robots ?? 'index,follow';
 
         return str_contains(strtolower($robots), 'follow');
+    }
+
+    /**
+     * Get the active title for A/B testing.
+     * When no winner is set and variant B exists, rotate by serving the less-shown variant.
+     */
+    public function getActiveTitle(): string
+    {
+        if ($this->ab_winner === 'b' && $this->title_b) {
+            return $this->title_b;
+        }
+
+        if (! $this->ab_winner && $this->title_b) {
+            return $this->ab_impressions_a <= $this->ab_impressions_b
+                ? ($this->title ?? '')
+                : ($this->title_b ?? $this->title ?? '');
+        }
+
+        return $this->title ?? '';
+    }
+
+    /**
+     * Get the active description for A/B testing.
+     * When no winner is set and variant B exists, rotate by serving the less-shown variant.
+     */
+    public function getActiveDescription(): string
+    {
+        if ($this->ab_winner === 'b' && $this->description_b) {
+            return $this->description_b;
+        }
+
+        if (! $this->ab_winner && $this->description_b) {
+            return $this->ab_impressions_a <= $this->ab_impressions_b
+                ? ($this->description ?? '')
+                : ($this->description_b ?? $this->description ?? '');
+        }
+
+        return $this->description ?? '';
+    }
+
+    /**
+     * Determine which A/B variant is currently active (for impression tracking).
+     */
+    public function getActiveVariant(): string
+    {
+        if ($this->ab_winner) {
+            return $this->ab_winner;
+        }
+
+        return $this->ab_impressions_a <= $this->ab_impressions_b ? 'a' : 'b';
+    }
+
+    /**
+     * Check if A/B testing is active (variant B is configured).
+     */
+    public function hasAbTest(): bool
+    {
+        return (bool) ($this->title_b || $this->description_b);
     }
 }

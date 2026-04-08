@@ -7,7 +7,7 @@
                 </p>
             </div>
             <div class="col-md-6 text-end">
-                <p class="mb-0 text-muted small">
+                <p class="mb-0 text-muted">
                     Powered by <a href="#" class="text-decoration-none">Alsernet</a>
                 </p>
             </div>

@@ -3,13 +3,14 @@
 namespace Modules\Role\Helpers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class PermissionHelper
 {
     /**
      * Verificar si el usuario tiene alguno de los roles especificados
      */
-    public static function hasAnyRole($roles)
+    public static function hasAnyRole(string|array $roles): bool
     {
         if (! Auth::check()) {
             return false;
@@ -23,7 +24,7 @@ class PermissionHelper
     /**
      * Verificar si el usuario tiene todos los roles especificados
      */
-    public static function hasAllRoles($roles)
+    public static function hasAllRoles(string|array $roles): bool
     {
         if (! Auth::check()) {
             return false;
@@ -37,7 +38,7 @@ class PermissionHelper
     /**
      * Verificar si el usuario tiene alguno de los permisos especificados
      */
-    public static function hasAnyPermission($permissions)
+    public static function hasAnyPermission(string|array $permissions): bool
     {
         if (! Auth::check()) {
             return false;
@@ -51,7 +52,7 @@ class PermissionHelper
     /**
      * Verificar si el usuario tiene un permiso específico
      */
-    public static function can($permission)
+    public static function can(string $permission): bool
     {
         if (! Auth::check()) {
             return false;
@@ -63,7 +64,7 @@ class PermissionHelper
     /**
      * Verificar si el usuario puede acceder a un módulo específico
      */
-    public static function canAccessModule($module)
+    public static function canAccessModule(string $module): bool
     {
         if (! Auth::check()) {
             return false;
@@ -88,7 +89,7 @@ class PermissionHelper
     /**
      * Obtener el módulo principal al que tiene acceso el usuario
      */
-    public static function getDefaultModule()
+    public static function getDefaultModule(): ?string
     {
         if (! Auth::check()) {
             return null;
@@ -122,7 +123,7 @@ class PermissionHelper
     /**
      * Verificar si el usuario puede realizar una acción específica en una devolución
      */
-    public static function canManageReturn($return, $action = 'view')
+    public static function canManageReturn(mixed $return, string $action = 'view'): bool
     {
         if (! Auth::check()) {
             return false;
@@ -130,33 +131,19 @@ class PermissionHelper
 
         $user = Auth::user();
 
-        // Super settings puede todo
         if ($user->hasRole('super-settings')) {
             return true;
         }
 
-        switch ($action) {
-            case 'view':
-                return $user->canAccessReturn($return);
-
-            case 'update':
-                return $user->can('returns.update') && $user->canAccessReturn($return);
-
-            case 'delete':
-                return $user->can('returns.delete');
-
-            case 'approve':
-                return $user->can('returns.status.approve');
-
-            case 'reject':
-                return $user->can('returns.status.reject');
-
-            case 'assign':
-                return $user->can('returns.assign');
-
-            default:
-                return false;
-        }
+        return match ($action) {
+            'view' => $user->canAccessReturn($return),
+            'update' => $user->can('returns.update') && $user->canAccessReturn($return),
+            'delete' => $user->can('returns.delete'),
+            'approve' => $user->can('returns.status.approve'),
+            'reject' => $user->can('returns.status.reject'),
+            'assign' => $user->can('returns.assign'),
+            default => false,
+        };
     }
 
     /**
@@ -205,15 +192,13 @@ class PermissionHelper
             ];
         }
 
-        // Obtener permisos del usuario y extraer IDs de módulos
-        $permissions = $user->getPermissionsViaRoles()
-            ->where('name', 'like', 'modules.view.%')
-            ->pluck('name')
-            ->map(function ($name) {
-                return str_replace('modules.view.', '', $name);
-            })
-            ->toArray();
-
-        return $permissions;
+        return Cache::remember("user_{$user->id}_visible_modules", now()->addHours(1), function () use ($user) {
+            return $user->getPermissionsViaRoles()
+                ->where('name', 'like', 'modules.view.%')
+                ->pluck('name')
+                ->map(fn (string $name) => str_replace('modules.view.', '', $name))
+                ->values()
+                ->all();
+        });
     }
 }

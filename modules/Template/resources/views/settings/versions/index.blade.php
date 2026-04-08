@@ -45,7 +45,7 @@
                                                         </p>
 
                                                         @if($version->description)
-                                                            <p class="text-muted small mb-2">
+                                                            <p class="text-muted mb-2">
                                                                 {{ $version->description }}
                                                             </p>
                                                         @endif

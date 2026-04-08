@@ -30,7 +30,12 @@ class AttentionClosedNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['database', 'broadcast'];
+        $channels = array_values(array_filter(
+            ['database', 'broadcast'],
+            fn ($ch) => $notifiable->canReceiveNotification($ch, 'attention.status_changed')
+        ));
+
+        return $channels ?: ['database'];
     }
 
     /**

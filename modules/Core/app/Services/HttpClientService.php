@@ -2,6 +2,8 @@
 
 namespace Modules\Core\Services;
 
+use App\Services\CircuitBreaker;
+
 /**
  * HTTP Client Service
  *
@@ -27,6 +29,12 @@ class HttpClientService
             throw new \Exception('url_get_contents_ssl_safe() requires a URL as input. Received: '.$url);
         }
 
+        $circuit = new CircuitBreaker('http-client', 5, 60);
+
+        if (! $circuit->isAvailable()) {
+            throw new \Exception('HTTP client circuit breaker is open — external request blocked');
+        }
+
         $client = curl_init();
         curl_setopt_array($client, [
             CURLOPT_URL => $url,
@@ -36,7 +44,15 @@ class HttpClientService
         ]);
 
         $result = curl_exec($client);
+        $error = curl_error($client);
         curl_close($client);
+
+        if ($result === false) {
+            $circuit->recordFailure();
+            throw new \Exception('cURL error: '.$error);
+        }
+
+        $circuit->recordSuccess();
 
         return $result;
     }
@@ -54,6 +70,6 @@ if (! function_exists('url_get_contents_ssl_safe')) {
      */
     function url_get_contents_ssl_safe($url)
     {
-        return \Modules\Core\Services\HttpClientService::getContentSslSafe($url);
+        return HttpClientService::getContentSslSafe($url);
     }
 }

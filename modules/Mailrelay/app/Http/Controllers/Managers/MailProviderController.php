@@ -4,6 +4,7 @@ namespace Modules\Mailrelay\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Mailrelay\Entities\MailProvider;
 use Modules\Mailrelay\Services\ProviderManager;
 
@@ -97,10 +98,12 @@ class MailProviderController extends Controller
                 ->route('managers.mailrelay.providers.index')
                 ->with('success', "Provider '{$provider->name}' creado exitosamente");
         } catch (\Exception $e) {
+            Log::error('Mailrelay mail provider create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear provider: '.$e->getMessage());
+                ->with('error', 'Error al crear provider. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -149,10 +152,12 @@ class MailProviderController extends Controller
                 ->route('managers.mailrelay.providers.index')
                 ->with('success', "Provider '{$provider->name}' actualizado exitosamente");
         } catch (\Exception $e) {
+            Log::error('Mailrelay mail provider update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar provider: '.$e->getMessage());
+                ->with('error', 'Error al actualizar provider. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -197,7 +202,7 @@ class MailProviderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$e->getMessage(),
+                'message' => 'Error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

@@ -31,7 +31,7 @@ return new class extends Migration
             $table->unsignedBigInteger('lang_id');
             $table->string('name', 255)->nullable();
             $table->text('description')->nullable();
-            $table->string('example_value', 255')->nullable();
+            $table->string('example_value', 255)->nullable();
             $table->timestamps();
 
             $table->unique(['mailrelay_variable_id', 'lang_id'], 'mailrelay_variable_lang_unique');

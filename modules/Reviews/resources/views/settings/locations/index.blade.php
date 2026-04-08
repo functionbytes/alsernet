@@ -118,7 +118,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Listado de ubicaciones</h6>
-                        <p class="text-muted small mb-0">Administra todas las ubicaciones sincronizadas</p>
+                        <p class="text-muted mb-0">Administra todas las ubicaciones sincronizadas</p>
                     </div>
                 </div>
 
@@ -132,29 +132,16 @@
                 </div>
 
                 @if(isset($locations) && $locations->count() > 0)
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="select-all">
-                            <label class="form-check-label  text-muted" for="select-all">Seleccionar todo</label>
-                        </div>
-                        <button type="button" class="btn btn-outline-primary d-none" id="bulk-sync-btn">
-                            <i class="fas fa-sync me-1"></i>Sincronizar (<span id="selected-count">0</span>)
-                        </button>
-                    </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="30"></th>
+                                    <th width="30"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
-                                    <th>Direccion</th>
-                                    <th>Telefono</th>
                                     <th class="text-center">Rating</th>
                                     <th class="text-center">Reseñas</th>
                                     <th class="text-center">Estado sync</th>
                                     <th>Ultima sync</th>
-                                    <th class="text-center">Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -162,16 +149,10 @@
                                 @foreach($locations as $location)
                                     <tr>
                                         <td>
-                                            <input type="checkbox" class="form-check-input location-checkbox" value="{{ $location->id }}">
+                                            <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $location->id }}">
                                         </td>
                                         <td>
                                             <strong>{{ $location->name }}</strong>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">{{ Str::limit($location->address, 40) }}</small>
-                                        </td>
-                                        <td>
-                                            <small>{{ $location->phone ?? '-' }}</small>
                                         </td>
                                         <td class="text-center">
                                             @if($location->average_rating)
@@ -183,7 +164,7 @@
                                                         @if($i <= $rating)
                                                             <i class="fas fa-star text-warning small"></i>
                                                         @else
-                                                            <i class="far fa-star text-muted small"></i>
+                                                            <i class="far fa-star text-muted"></i>
                                                         @endif
                                                     @endfor
                                                     <small class="text-muted ms-1">{{ number_format($location->average_rating, 1) }}</small>
@@ -198,32 +179,24 @@
                                         <td class="text-center">
                                             @if($location->sync_status === 'syncing')
                                                 <span class="badge bg-primary-subtle text-white">
-                                                    <i class="fas fa-spinner fa-spin"></i> Sincronizando
+                                                    Sincronizando
                                                 </span>
                                             @elseif($location->sync_status === 'error')
                                                 <span class="badge bg-danger-subtle text-white">
-                                                    <i class="fas fa-exclamation-circle"></i> Error
+                                                    Error
                                                 </span>
                                             @else
                                                 <span class="badge bg-success-subtle text-white">
-                                                    <i class="fas fa-check"></i> OK
+                                                    OK
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if($location->last_synced_at)
-                                                <small class="text-muted">{{ $location->last_synced_at->diffForHumans() }}</small>
+                                            @if($location->synced_at)
+                                                <span class="text-muted">{{ $location->synced_at->diffForHumans() }}</span>
                                             @else
-                                                <small class="text-muted">Nunca</small>
+                                                <span class="text-muted">Nunca</span>
                                             @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="form-check form-switch d-flex justify-content-center">
-                                                <input class="form-check-input toggle-location-active"
-                                                       type="checkbox"
-                                                       data-location-id="{{ $location->id }}"
-                                                       {{ $location->is_active ? 'checked' : '' }}>
-                                            </div>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
@@ -254,7 +227,7 @@
                             <i class="fas fa-map-marker-alt fa-4x text-muted opacity-50"></i>
                         </div>
                         <h5 class="text-muted mb-2">No hay ubicaciones sincronizadas</h5>
-                        <p class="text-muted small mb-4">Conecta una cuenta de Google para sincronizar tus ubicaciones</p>
+                        <p class="text-muted mb-4">Conecta una cuenta de Google para sincronizar tus ubicaciones</p>
                         <a href="{{ route('settings.reviews.connections.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i>
                         </a>
@@ -265,6 +238,41 @@
             @if(isset($locations) && $locations->hasPages())
                 <div class="card-footer">{{ $locations->links() }}</div>
             @endif
+        </div>
+    </div>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> ubicación(es)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="sync">Sincronizar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -317,46 +325,40 @@ $(document).ready(function() {
     });
 
     // Bulk selection
-    const $selectAll = $('#select-all');
-    const $checkboxes = $('.location-checkbox');
-    const $bulkBtn = $('#bulk-sync-btn');
-    const $selectedCount = $('#selected-count');
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-    function updateBulkState() {
-        const selected = $checkboxes.filter(':checked');
-        const count = selected.length;
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
-        $bulkBtn.toggleClass('d-none', count === 0);
-        $selectedCount.text(count);
-    }
-
-    $selectAll.on('change', function() {
-        $checkboxes.prop('checked', $(this).is(':checked'));
-        updateBulkState();
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
     });
 
-    $checkboxes.on('change', updateBulkState);
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
 
-    // Bulk sync
-    $bulkBtn.on('click', function() {
-        const selected = $checkboxes.filter(':checked');
-        const ids = selected.map(function() { return $(this).val(); }).get();
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una ubicación.'); return; }
 
-        if (!confirm(`¿Sincronizar ${ids.length} ubicaciones seleccionadas?`)) {
-            return;
-        }
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
-        $bulkBtn.prop('disabled', true).html('Sincronizando...');
-
-        $.post('{{ route("settings.reviews.locations.bulk-sync") }}', {
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            ids: JSON.stringify(ids)
-        }).done(function(response) {
-            toastr.success(response.message || 'Sincronización iniciada');
-            setTimeout(() => location.reload(), 2000);
-        }).fail(function() {
-            $bulkBtn.prop('disabled', false).html('Sincronizar (<span id="selected-count">' + ids.length + '</span>)');
-            toastr.error('Error al iniciar sincronización');
+        $.ajax({
+            url: '{{ route('settings.reviews.locations.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' ubicación(es) actualizadas.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
         });
     });
 });

@@ -4,6 +4,7 @@ namespace Modules\Cache\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class CacheServiceProvider extends ServiceProvider
 {
@@ -18,6 +19,10 @@ class CacheServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (Module::find('Cache')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->registerMenus();
@@ -37,11 +42,8 @@ class CacheServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
-        NavService::registerSidebar('settings', [
-            'title' => 'Cache',
-            'items' => [
-                ['label' => 'Configuracion de cache', 'route' => 'settings.cache.index'],
-            ],
+        NavService::addItemsToSection('settings', 'Configuraciones', [
+            ['label' => 'Configuracion de cache', 'route' => 'settings.cache.index'],
         ]);
     }
 

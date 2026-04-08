@@ -59,6 +59,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | SEO Score Goal
+    |--------------------------------------------------------------------------
+    |
+    | Target SEO score (0-100). Pages meeting or exceeding this score are
+    | considered to have achieved the goal.
+    |
+    */
+    'score_goal' => env('SEO_SCORE_GOAL', 80),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search Engine Verification Tags
+    |--------------------------------------------------------------------------
+    |
+    | Verification meta tags for search engine webmaster tools.
+    | Set these values in your .env file.
+    |
+    */
+    'verification' => [
+        'google' => env('SEO_GOOGLE_VERIFICATION', ''),
+        'bing' => env('SEO_BING_VERIFICATION', ''),
+        'pinterest' => env('SEO_PINTEREST_VERIFICATION', ''),
+        'baidu' => env('SEO_BAIDU_VERIFICATION', ''),
+        'yandex' => env('SEO_YANDEX_VERIFICATION', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Open Graph Defaults
     |--------------------------------------------------------------------------
     |
@@ -299,5 +327,62 @@ return [
             'organization' => true,
             'webpage' => true,
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PageSpeed Insights API Key
+    |--------------------------------------------------------------------------
+    |
+    | Optional Google PageSpeed Insights API key for Core Web Vitals analysis.
+    | Without a key, requests are rate-limited. Set SEO_PAGESPEED_API_KEY in .env.
+    |
+    */
+    'pagespeed_api_key' => env('SEO_PAGESPEED_API_KEY', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cleanup Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure automatic log cleanup retention periods.
+    |
+    */
+    'cleanup' => [
+        '404_logs_after_days' => 90,
+        'audit_logs_after_days' => 180,
+        'keep_audit_records_per_meta' => 5,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure email notifications for SEO events.
+    |
+    */
+    'notifications' => [
+        'email' => env('SEO_NOTIFICATION_EMAIL', null),
+        'score_drop_threshold' => 10,
+        'notify_on_orphans' => false,
+        'notify_on_redirect_chains' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Configure Slack and Discord webhook URLs for SEO event alerts.
+    | Set the URLs in your .env file to enable notifications.
+    |
+    */
+    'webhooks' => [
+        'slack_url' => env('SEO_SLACK_WEBHOOK_URL', ''),
+        'discord_url' => env('SEO_DISCORD_WEBHOOK_URL', ''),
+        'notify_score_drop' => env('SEO_WEBHOOK_SCORE_DROP', true),
+        'notify_redirect_chain' => env('SEO_WEBHOOK_REDIRECT_CHAIN', true),
+        'notify_orphans' => env('SEO_WEBHOOK_ORPHANS', false),
     ],
 ];

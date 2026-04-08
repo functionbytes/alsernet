@@ -5,6 +5,9 @@ namespace Modules\Mailrelay\Http\Controllers\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\MessageBag;
+use Illuminate\Validation\ValidationException;
 use Modules\Mailrelay\Entities\MailrelaySettings;
 use Modules\Mailrelay\Http\Controllers\Controller;
 
@@ -21,7 +24,7 @@ class GeneralSettingsController extends Controller
         $settings = MailrelaySettings::instance();
 
         return view('mailrelay::settings.general', compact('settings'))
-            ->withErrors(session()->get('errors', new \Illuminate\Support\MessageBag));
+            ->withErrors(session()->get('errors', new MessageBag));
     }
 
     /**
@@ -73,17 +76,19 @@ class GeneralSettingsController extends Controller
             return redirect()
                 ->route('settings.mailrelay.general.index')
                 ->with('success', 'Configuración actualizada correctamente');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->withErrors($e->errors())
                 ->with('error', 'Por favor, corrige los errores en el formulario.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay general settings save failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al guardar: '.$e->getMessage());
+                ->with('error', 'Error al guardar. Por favor, inténtalo de nuevo.');
         }
     }
 }

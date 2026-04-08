@@ -5,113 +5,93 @@ namespace Modules\Auth\Http\Controllers;
 use App\Events\Auth\Password\ForgotPasswordCreated;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ForgotPasswordController extends Controller
 {
-    public function showLinkRequest()
+    private const MAX_DAILY_TRIES = 3;
+
+    public function showLinkRequest(): View
     {
         return view('auth::passwords.email');
     }
 
-    public function sendResetLinkEmail(Request $request)
+    public function sendResetLinkEmail(Request $request): View|RedirectResponse
     {
+        $request->validate([
+            'email' => ['required', 'string', 'max:255'],
+        ]);
 
-        $user = User::orWhere('email', $request->email)->orWhere('identification', $request->email)->get();
+        $user = User::query()
+            ->where('email', $request->email)
+            ->orWhere('identification', $request->email)
+            ->first();
 
-        $email = $request->email;
-
-        if (count($user) == 0) {
-
-            return redirect()->back()
-                ->withInput($request->only($this->username(), 'remember'))
-                ->withErrors([
-                    $this->username() => 'El correo o cedula  no coincide con nuestros registros'.$email,
-                ]);
-
-        } else {
-
-            $user = $user->first();
-            $reset_tries = 0;
-
-            if ($user->password_reset_last_tried_on != '') {
-
-                $current_date = date('Y-m-d');
-                $last_tried_date = date('Y-m-d', strtotime($user->password_reset_last_tried_on));
-
-                if ($last_tried_date == $current_date && $user->password_reset_max_tries >= 3) {
-                    return redirect()->back()
-                        ->withInput($request->only($this->username(), 'remember'))
-                        ->withErrors([
-                            'tried' => 'Ya lo has probado 3 veces hoy. Comuníquese con el administrador para restablecer la contraseña.',
-                        ]);
-
-                }
-
-                if ($last_tried_date == $current_date && $user->password_reset_max_tries < 3) {
-                    $reset_tries = $user->password_reset_max_tries + 1;
-                } elseif ($last_tried_date != $current_date) {
-                    $reset_tries = $reset_tries + 1;
-                }
-
-            } else {
-                $reset_tries = $reset_tries + 1;
-            }
-
-            $password_token = Str::random(50);
-
-            $user->password_reset_token = Hash::make($password_token);
-            $user->password_reset_max_tries = $reset_tries;
-            $user->password_reset_last_tried_on = now();
-            $user->save();
-
-            ForgotPasswordCreated::dispatch($user, $password_token);
-
-            return view('auth::passwords.success')->with([
-                'email' => $user->email,
-            ]);
-
+        if (! $user) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'El correo o cédula no coincide con nuestros registros.']);
         }
 
-    }
-
-    protected function validateEmail(Request $request)
-    {
-        $request->validate(['email' => 'required|email']);
-
-    }
-
-    protected function credentials(Request $request)
-    {
-        return $request->only('email');
-    }
-
-    protected function sendResetLinkResponse(Request $request, $response)
-    {
-        return view('auth::passwords.success');
-    }
-
-    protected function sendResetLinkFailedResponse(Request $request, $response)
-    {
-        if (! User::where('email', $request->email)->first()) {
-            return redirect()->back()
-                ->withInput($request->only($this->username(), 'remember'))
-                ->withErrors([
-                    $this->username() => 'El correo o cedula  no coincide con nuestros registros.',
-                ]);
+        if ($this->hasTooManyResetAttempts($user)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['tried' => 'Ya lo has intentado 3 veces hoy. Comuníquese con el administrador para restablecer la contraseña.']);
         }
+
+        $passwordToken = Str::random(50);
+
+        $user->forceFill([
+            'password_reset_token' => Hash::make($passwordToken),
+            'password_reset_max_tries' => $this->nextTryCount($user),
+            'password_reset_last_tried_on' => now(),
+        ])->save();
+
+        ForgotPasswordCreated::dispatch($user, $passwordToken);
+
+        return view('auth::passwords.success', ['email' => $user->email]);
     }
 
-    public function username()
+    /**
+     * Check if the user has exceeded the daily reset attempt limit.
+     */
+    private function hasTooManyResetAttempts(User $user): bool
+    {
+        if (empty($user->password_reset_last_tried_on)) {
+            return false;
+        }
+
+        $lastTried = date('Y-m-d', strtotime($user->password_reset_last_tried_on));
+        $today = date('Y-m-d');
+
+        return $lastTried === $today && $user->password_reset_max_tries >= self::MAX_DAILY_TRIES;
+    }
+
+    /**
+     * Calculate the next try count (reset counter on a new day).
+     */
+    private function nextTryCount(User $user): int
+    {
+        if (empty($user->password_reset_last_tried_on)) {
+            return 1;
+        }
+
+        $lastTried = date('Y-m-d', strtotime($user->password_reset_last_tried_on));
+        $today = date('Y-m-d');
+
+        if ($lastTried !== $today) {
+            return 1;
+        }
+
+        return ($user->password_reset_max_tries ?? 0) + 1;
+    }
+
+    public function username(): string
     {
         return 'email';
-    }
-
-    public function broker()
-    {
-        return Password::broker();
     }
 }

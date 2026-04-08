@@ -8,12 +8,12 @@
 .select2-selection--single
 .select2-selection__rendered {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 40px;
 }
 .select2-container--default .select2-selection--multiple {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 32px;
     height: auto;
 }
@@ -24,7 +24,7 @@
 .select2-selection--single
 .select2-selection__rendered {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 40px;
 }
 .select2-container--classic
@@ -36,8 +36,8 @@
 .select2-container--default
 .select2-selection--multiple
 .select2-selection__choice__remove {
-    background-color: #081a28;
-    border-color: #081a28;
+    background-color: #b10100;
+    border-color: #b10100;
     color: #fff;
 }
 
@@ -245,7 +245,7 @@
 /* Cursor with blinking animation */
 @keyframes cursorBlink {
     0%, 49% {
-        border-left-color: #081A28 !important;
+        border-left-color: #b10100 !important;
         box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
     }
     50%, 100% {
@@ -255,13 +255,13 @@
 }
 
 .CodeMirror-cursor {
-    border-left: 3px solid #081A28 !important;
+    border-left: 3px solid #b10100 !important;
     height: 100% !important;
     animation: cursorBlink 1s infinite !important;
 }
 
 .CodeMirror.CodeMirror-focused .CodeMirror-cursor {
-    border-left-color: #081A28 !important;
+    border-left-color: #b10100 !important;
     animation: cursorBlink 1s infinite !important;
 }
 
@@ -386,7 +386,7 @@
 
 /* Editor Focus State */
 .CodeMirror-focused {
-    border-color: #081A28;
+    border-color: #b10100;
     box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
 }
 
@@ -453,13 +453,13 @@
 }
 
 #preview-panel .btn-group .btn:hover {
-    border-color: #081A28;
+    border-color: #b10100;
     background-color: rgba(144, 187, 19, 0.05);
 }
 
 #preview-panel .btn-group .btn.active {
-    background-color: #081A28;
-    border-color: #081A28;
+    background-color: #b10100;
+    border-color: #b10100;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
 }
@@ -500,11 +500,11 @@
 }
 
 /* ========================================
-   TOOLTIPS - Green Theme (#081A28)
+   TOOLTIPS - Green Theme (#b10100)
    ======================================== */
 
 .tooltip-inner {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
     font-size: 12px;
     padding: 6px 10px;
@@ -513,27 +513,27 @@
 }
 
 .tooltip .tooltip-arrow::before {
-    border-top-color: #081A28 !important;
+    border-top-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
 .bs-tooltip-top .tooltip-arrow::before {
-    border-top-color: #081A28 !important;
+    border-top-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
 .bs-tooltip-end .tooltip-arrow::before {
-    border-right-color: #081A28 !important;
+    border-right-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
 .bs-tooltip-bottom .tooltip-arrow::before {
-    border-bottom-color: #081A28 !important;
+    border-bottom-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
 .bs-tooltip-start .tooltip-arrow::before {
-    border-left-color: #081A28 !important;
+    border-left-color: #b10100 !important;
 }
 
 /* ========================================
@@ -541,47 +541,47 @@
    ======================================== */
 
 .CodeMirror-selected {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
@@ -625,7 +625,7 @@
 }
 
 .CodeMirror {
-    caret-color: #081A28 !important;
+    caret-color: #b10100 !important;
 }
 
 .CodeMirror span {
@@ -708,7 +708,7 @@ kbd {
 }
 
 .variable-card:hover {
-    border-color: #081A28;
+    border-color: #b10100;
     background: #f6faf0;
     box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
 }
@@ -718,7 +718,7 @@ kbd {
 }
 
 .variable-icon {
-    color: #081A28;
+    color: #b10100;
     font-size: 16px;
     opacity: 0.7;
     transition: all 0.2s ease;
@@ -741,7 +741,7 @@ kbd {
 }
 
 .variable-card:hover .variable-code {
-    color: #081A28;
+    color: #b10100;
 }
 
 @media (max-width: 991px) {
@@ -833,12 +833,12 @@ kbd {
 .select2-selection--single
 .select2-selection__rendered {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 40px;
 }
 .select2-container--default .select2-selection--multiple {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 32px;
     height: auto;
 }
@@ -849,7 +849,7 @@ kbd {
 .select2-selection--single
 .select2-selection__rendered {
     border-color: #ebf1f6;
-    color: #081a28;
+    color: #b10100;
     line-height: 40px;
 }
 .select2-container--classic
@@ -861,8 +861,8 @@ kbd {
 .select2-container--default
 .select2-selection--multiple
 .select2-selection__choice__remove {
-    background-color: #081a28;
-    border-color: #081a28;
+    background-color: #b10100;
+    border-color: #b10100;
     color: #fff;
 }
 
@@ -1070,7 +1070,7 @@ kbd {
 /* Cursor with blinking animation */
 @keyframes cursorBlink {
     0%, 49% {
-        border-left-color: #081A28 !important;
+        border-left-color: #b10100 !important;
         box-shadow: 0 0 8px rgba(144, 187, 19, 0.6) !important;
     }
     50%, 100% {
@@ -1080,13 +1080,13 @@ kbd {
 }
 
 .CodeMirror-cursor {
-    border-left: 3px solid #081A28 !important;
+    border-left: 3px solid #b10100 !important;
     height: 100% !important;
     animation: cursorBlink 1s infinite !important;
 }
 
 .CodeMirror.CodeMirror-focused .CodeMirror-cursor {
-    border-left-color: #081A28 !important;
+    border-left-color: #b10100 !important;
     animation: cursorBlink 1s infinite !important;
 }
 
@@ -1211,7 +1211,7 @@ kbd {
 
 /* Editor Focus State */
 .CodeMirror-focused {
-    border-color: #081A28;
+    border-color: #b10100;
     box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.1);
 }
 
@@ -1278,13 +1278,13 @@ kbd {
 }
 
 #preview-panel .btn-group .btn:hover {
-    border-color: #081A28;
+    border-color: #b10100;
     background-color: rgba(144, 187, 19, 0.05);
 }
 
 #preview-panel .btn-group .btn.active {
-    background-color: #081A28;
-    border-color: #081A28;
+    background-color: #b10100;
+    border-color: #b10100;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(144, 187, 19, 0.3);
 }
@@ -1325,11 +1325,11 @@ kbd {
 }
 
 /* ========================================
-   TOOLTIPS - Green Theme (#081A28)
+   TOOLTIPS - Green Theme (#b10100)
    ======================================== */
 
 .tooltip-inner {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
     font-size: 12px;
     padding: 6px 10px;
@@ -1338,27 +1338,27 @@ kbd {
 }
 
 .tooltip .tooltip-arrow::before {
-    border-top-color: #081A28 !important;
+    border-top-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
 .bs-tooltip-top .tooltip-arrow::before {
-    border-top-color: #081A28 !important;
+    border-top-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
 .bs-tooltip-end .tooltip-arrow::before {
-    border-right-color: #081A28 !important;
+    border-right-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
 .bs-tooltip-bottom .tooltip-arrow::before {
-    border-bottom-color: #081A28 !important;
+    border-bottom-color: #b10100 !important;
 }
 
 .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
 .bs-tooltip-start .tooltip-arrow::before {
-    border-left-color: #081A28 !important;
+    border-left-color: #b10100 !important;
 }
 
 /* ========================================
@@ -1366,47 +1366,47 @@ kbd {
    ======================================== */
 
 .CodeMirror-selected {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror-line > span > span::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
 .CodeMirror ::-moz-selection {
-    background-color: #081A28 !important;
+    background-color: #b10100 !important;
     color: #fff !important;
 }
 
@@ -1450,7 +1450,7 @@ kbd {
 }
 
 .CodeMirror {
-    caret-color: #081A28 !important;
+    caret-color: #b10100 !important;
 }
 
 .CodeMirror span {
@@ -1533,7 +1533,7 @@ kbd {
 }
 
 .variable-card:hover {
-    border-color: #081A28;
+    border-color: #b10100;
     background: #f6faf0;
     box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
 }
@@ -1543,7 +1543,7 @@ kbd {
 }
 
 .variable-icon {
-    color: #081A28;
+    color: #b10100;
     font-size: 16px;
     opacity: 0.7;
     transition: all 0.2s ease;
@@ -1566,7 +1566,7 @@ kbd {
 }
 
 .variable-card:hover .variable-code {
-    color: #081A28;
+    color: #b10100;
 }
 
 @media (max-width: 991px) {
@@ -1692,7 +1692,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 
 /* ========================================
    MINI NAV ITEM - SELECTED STATE (Font Awesome)
-   Green background (#081A28) with white icon when selected
+   Green background (#b10100) with white icon when selected
    ======================================== */
 
 /* Selected mini nav item - Font Awesome icon styling */
@@ -1705,7 +1705,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 /* Green background circle for selected item */
 .side-mini-panel .mini-nav .mini-nav-item.selected > a:before {
     content: "";
-    background: #081A28 !important;
+    background: #b10100 !important;
     width: 48px;
     height: 48px;
     display: block;
@@ -1720,7 +1720,7 @@ body .select2-container--classic .select2-selection--single .select2-selection__
 
 /* Hover state for non-selected items - Font Awesome */
 .side-mini-panel .mini-nav .mini-nav-item:not(.selected) > a:hover i {
-    color: #081A28 !important;
+    color: #b10100 !important;
     transition: color 0.2s ease;
 }
 
@@ -1812,6 +1812,7 @@ ul.small li {
     position: relative;
     padding-left: 1.5rem;
     margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 /* Font Awesome Duotone icon as bullet */
@@ -1827,12 +1828,49 @@ ul.small li:before {
     --fa-secondary-color: #c4db7d;
     --fa-secondary-opacity: 0.4;
     font-size: 20px;
-    top: -6px;
+    /* top: -6px; */
 }
 
 /* Last item no margin */
 .card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
 .modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
 ul.small li:last-child {
-    margin-bottom: 0;
+    /* margin-bottom: 0; */
+}
+
+
+/* ========================================
+   DARK MODE OVERRIDES
+   ======================================== */
+[data-theme="dark"] {
+    --bs-body-bg: #1a1a2e;
+    --bs-body-color: #e0e0e0;
+    --bs-card-bg: #16213e;
+    --bs-border-color: #2d3748;
+    --bs-secondary-bg: #0f3460;
+}
+[data-theme="dark"] .card { background-color: #16213e !important; border-color: #2d3748 !important; }
+[data-theme="dark"] .card-header { background-color: #16213e !important; border-color: #2d3748 !important; color: #e0e0e0 !important; }
+[data-theme="dark"] .table { --bs-table-bg: transparent; color: #e0e0e0; }
+[data-theme="dark"] .table-hover tbody tr:hover { --bs-table-hover-bg: rgba(255,255,255,0.05); }
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select { background-color: #0f3460; border-color: #2d3748; color: #e0e0e0; }
+[data-theme="dark"] .text-muted { color: #9ca3af !important; }
+[data-theme="dark"] .bg-white { background-color: #16213e !important; }
+[data-theme="dark"] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+[data-theme="dark"] .border-bottom { border-color: #2d3748 !important; }
+[data-theme="dark"] .nav-link { color: #9ca3af; }
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link.active { color: #90bb13; }
+[data-theme="dark"] input,
+[data-theme="dark"] textarea { color-scheme: dark; }
+
+/* ========================================
+   GLOBAL SEARCH RESULTS DROPDOWN
+   ======================================== */
+#global-search-results .search-result-item:last-child {
+    border-bottom: none !important;
+}
+#global-search-results .search-result-item:hover {
+    background-color: #f8f9fa;
 }

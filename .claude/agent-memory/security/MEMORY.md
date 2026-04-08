@@ -2,6 +2,18 @@
 
 ## Auditorías Realizadas
 
+### Multi-Module Security Fixes (2026-03-26)
+- **Fixes:** 6 security issues across 7 files
+- **Files modified:**
+  - `app/Providers/AppServiceProvider.php` — try-catch wrapping Helpdesk class_exists (crash fix)
+  - `app/Helpers/Helper.php` + `modules/System/app/Helpers/SettingsHelper.php` — replaced `env()` with `config('app.default_pagination', 20)`
+  - `config/app.php` — added `default_pagination => env('DEFAULT_PAGINATION', 20)`
+  - `modules/Blog/app/Http/Controllers/BlogPostController.php` — bulk action authorization loop before execution
+  - `modules/Reviews/app/Http/Controllers/ReviewController.php` — `export()` authorization + `downloadExport()` path traversal + ownership check
+  - `modules/Reviews/app/Services/ReviewExportService.php` — user ID embedded in CSV filename
+  - `modules/Reviews/app/Jobs/ExportReviewsJob.php` — passes user ID to exportToCsv()
+  - `app/Models/User.php` — removed `created_at`, `updated_at`, `role` from `$fillable`
+
 ### Reviews Module (2026-02-20)
 - **Nivel de Riesgo:** ALTO → MEDIO (después de fixes)
 - **Vulnerabilidades:** 4 críticas, 3 altas, 5 medias
@@ -185,6 +197,34 @@ php artisan route:list --columns=method,uri,middleware
 2. **User Module** - Password reset flow
 3. **Backup Module** - File access controls
 4. **API endpoints** - Global rate limiting y authorization
+
+### Patrones Adicionales Detectados (2026-03-26)
+
+#### 6. env() en helpers fuera de config/
+**Patrón:** `env('KEY')` en `app/Helpers/` o `modules/*/Helpers/` — falla con config:cache.
+**Fix:** Añadir `'key' => env('KEY', default)` en `config/app.php`, luego usar `config('app.key', default)`.
+
+#### 7. $fillable con timestamps y role
+**Patrón:** `created_at`, `updated_at` en `$fillable` permiten forzar fechas de registro.
+`role` en `$fillable` permite sobrescribir columna legacy con mass-assignment.
+**Fix:** Nunca incluir timestamps en `$fillable`. Roles via `assignRole()`, no mass-assignment.
+
+#### 8. Bulk actions sin autorización por-item
+**Patrón:** `bulkAction()` que aplica policy solo al nivel de `viewAny` pero ejecuta acciones sin `$this->authorize($ability, $post)` por recurso.
+**Fix:** Determinar el ability según la acción, luego iterar `$this->authorize($ability, $item)` ANTES de ejecutar cualquier cambio.
+
+#### 9. Export download sin path traversal check ni ownership
+**Patrón:** `downloadExport(string $file)` que usa `basename($file)` pero no valida charset ni ownership.
+**Fix:**
+1. `preg_match('/^[a-zA-Z0-9_\-\.]+$/', $file)` para rechazar separadores.
+2. `realpath()` + `str_starts_with($realPath, $exportsDir.DIRECTORY_SEPARATOR)`.
+3. Incluir user ID en el filename al generar: `reviews_{userId}_timestamp.csv`.
+4. Verificar `str_contains($file, '_'.auth()->id().'_')` en download.
+
+#### 10. class_exists() crasheando con módulos incompletos
+**Patrón:** `class_exists(\Modules\X\Models\Y::class)` en ServiceProvider dispara autoload
+y puede lanzar fatal error si el módulo está parcialmente instalado.
+**Fix:** Envolver en `try { if (class_exists(...)) { ... } } catch (\Throwable) { }`.
 
 ### Falsos Positivos Comunes
 - `DB::raw()` con constantes (no input usuario) → Aceptable pero documentar

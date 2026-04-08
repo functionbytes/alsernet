@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\MailrelaySettings;
 use Modules\Mailrelay\Http\Controllers\Controller;
@@ -84,7 +85,9 @@ class ApiSettingsController extends Controller
                 ->route('settings.mailrelay.api.index')
                 ->with('success', 'Configuración de API guardada correctamente');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', $e->getMessage());
+            Log::error('Mailrelay API settings failed', ['error' => $e->getMessage()]);
+
+            return back()->withInput()->with('error', 'Ha ocurrido un error. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -134,7 +137,7 @@ class ApiSettingsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error de conexión: '.$e->getMessage(),
+                'message' => 'Error de conexión. Por favor, inténtalo de nuevo.',
             ], 400);
         }
     }

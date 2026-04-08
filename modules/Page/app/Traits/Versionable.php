@@ -2,6 +2,7 @@
 
 namespace Modules\Page\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Modules\Page\Models\PageVersion;
 
@@ -104,7 +105,7 @@ trait Versionable
     /**
      * Get the version history for this page.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getVersionHistory(int $limit = 50)
     {
@@ -169,22 +170,22 @@ trait Versionable
 
     /**
      * Get the next version number.
+     *
+     * Uses MAX() aggregate instead of fetching the full row.
      */
     protected function getNextVersionNumber(): int
     {
-        $lastVersion = $this->versions()->latest()->first();
-
-        return $lastVersion ? $lastVersion->version_number + 1 : 1;
+        return ($this->versions()->max('version_number') ?? 0) + 1;
     }
 
     /**
      * Get the current version number.
+     *
+     * Uses MAX() aggregate instead of fetching the full row.
      */
     public function getCurrentVersionNumber(): int
     {
-        $lastVersion = $this->versions()->latest()->first();
-
-        return $lastVersion ? $lastVersion->version_number : 0;
+        return (int) ($this->versions()->max('version_number') ?? 0);
     }
 
     /**
@@ -206,22 +207,23 @@ trait Versionable
     /**
      * Delete old versions, keeping only the most recent N versions.
      *
+     * Fetches only the IDs beyond the keep threshold (not all rows),
+     * then deletes in a single query.
+     *
      * @return int Number of deleted versions
      */
     public function pruneVersions(int $keep = 10): int
     {
-        $versionsToDelete = $this->versions()
-            ->latest()
+        $idsToDelete = PageVersion::where('page_id', $this->id)
+            ->orderByDesc('id')
             ->skip($keep)
             ->pluck('id');
 
-        if ($versionsToDelete->isEmpty()) {
+        if ($idsToDelete->isEmpty()) {
             return 0;
         }
 
-        return $this->versions()
-            ->whereIn('id', $versionsToDelete)
-            ->delete();
+        return PageVersion::whereIn('id', $idsToDelete)->delete();
     }
 
     /**

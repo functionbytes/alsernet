@@ -5,15 +5,20 @@ namespace Modules\System\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Categorie;
 use App\Models\Lang;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Modules\System\Http\Requests\StoreLangRequest;
+use Modules\System\Http\Requests\UpdateLangRequest;
 
 class LangsController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
 
-        $searchKey = null ?? $request->search;
-        $available = null ?? $request->available;
+        $searchKey = $request->search ?? null;
+        $available = $request->available ?? null;
 
         $langs = Lang::descending();
 
@@ -35,7 +40,7 @@ class LangsController extends Controller
 
     }
 
-    public function create()
+    public function create(): View
     {
 
         $categories = Categorie::orderBy('title', 'desc')->pluck('title', 'id');
@@ -46,7 +51,7 @@ class LangsController extends Controller
 
     }
 
-    public function view($uid)
+    public function view(string $uid): View
     {
 
         $lang = Lang::uid($uid);
@@ -57,7 +62,7 @@ class LangsController extends Controller
 
     }
 
-    public function edit($uid)
+    public function edit(string $uid): View
     {
 
         $lang = Lang::uid($uid);
@@ -71,22 +76,23 @@ class LangsController extends Controller
 
     }
 
-    public function store(Request $request)
+    public function store(StoreLangRequest $request): JsonResponse
     {
+        $validated = $request->validated();
 
         $lang = new Lang;
         $lang->uid = $this->generate_uid('langs');
-        $lang->title = $request->title;
-        $lang->iso_code = $request->iso_code;
-        $lang->lenguage_code = $request->lenguage_code;
-        $lang->locate = $request->locate;
-        $lang->date_format_full = $request->date_format_full;
-        $lang->date_format_lite = $request->date_format_lite;
-        $lang->available = $request->available;
+        $lang->title = $validated['title'];
+        $lang->iso_code = $validated['iso_code'];
+        $lang->lenguage_code = $validated['lenguage_code'];
+        $lang->locate = $validated['locate'];
+        $lang->date_format_full = $validated['date_format_full'];
+        $lang->date_format_lite = $validated['date_format_lite'];
+        $lang->available = $validated['available'];
         $lang->save();
 
-        if ($request->has('categories')) {
-            $categoriesIds = array_filter(explode(',', $request->categories));
+        if (! empty($validated['categories'])) {
+            $categoriesIds = array_filter(explode(',', $validated['categories']));
             $lang->categories()->syncWithoutDetaching($categoriesIds);
         }
 
@@ -97,21 +103,22 @@ class LangsController extends Controller
 
     }
 
-    public function update(Request $request)
+    public function update(UpdateLangRequest $request): JsonResponse
     {
+        $validated = $request->validated();
 
-        $lang = Lang::uid($request->uid);
-        $lang->title = $request->title;
-        $lang->iso_code = $request->iso_code;
-        $lang->lenguage_code = $request->lenguage_code;
-        $lang->locate = $request->locate;
-        $lang->date_format_full = $request->date_format_full;
-        $lang->date_format_lite = $request->date_format_lite;
-        $lang->available = $request->available;
+        $lang = Lang::uid($validated['uid']);
+        $lang->title = $validated['title'];
+        $lang->iso_code = $validated['iso_code'];
+        $lang->lenguage_code = $validated['lenguage_code'];
+        $lang->locate = $validated['locate'];
+        $lang->date_format_full = $validated['date_format_full'];
+        $lang->date_format_lite = $validated['date_format_lite'];
+        $lang->available = $validated['available'];
         $lang->update();
 
-        if ($request->has('categories')) {
-            $categoriesIds = array_filter(explode(',', $request->categories));
+        if (! empty($validated['categories'])) {
+            $categoriesIds = array_filter(explode(',', $validated['categories']));
             $lang->categories()->syncWithoutDetaching($categoriesIds);
         }
 
@@ -122,7 +129,7 @@ class LangsController extends Controller
 
     }
 
-    public function destroy($uid)
+    public function destroy(string $uid): RedirectResponse
     {
 
         $lang = Lang::uid($uid);
@@ -132,7 +139,7 @@ class LangsController extends Controller
 
     }
 
-    public static function getCategories(Request $request)
+    public static function getCategories(Request $request): JsonResponse
     {
         $formatted_tags = [];
 

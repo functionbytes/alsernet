@@ -21,7 +21,7 @@ class StoreMenuRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:menus,slug',
+            'slug' => ['nullable', 'string', 'max:255', 'unique:menus,slug', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'location' => 'nullable|string',
             'status' => 'boolean',
         ];
@@ -33,10 +33,10 @@ class StoreMenuRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' => 'menu name',
-            'slug' => 'menu slug',
-            'location' => 'menu location',
-            'status' => 'menu status',
+            'name' => 'nombre',
+            'slug' => 'slug',
+            'location' => 'ubicación',
+            'status' => 'estado',
         ];
     }
 
@@ -46,8 +46,12 @@ class StoreMenuRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The menu name is required.',
-            'slug.unique' => 'This slug is already in use.',
+            'name.required' => 'El nombre del menú es obligatorio.',
+            'name.string' => 'El nombre del menú debe ser texto.',
+            'name.max' => 'El nombre no puede superar los :max caracteres.',
+            'slug.unique' => 'Este slug ya está en uso. Elige otro.',
+            'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones.',
+            'slug.max' => 'El slug no puede superar los :max caracteres.',
         ];
     }
 }

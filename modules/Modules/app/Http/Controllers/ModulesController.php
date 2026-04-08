@@ -4,6 +4,9 @@ namespace Modules\Modules\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+use Modules\Modules\Services\ModuleConfigReader;
 use Nwidart\Modules\Facades\Module;
 use ZipArchive;
 
@@ -14,6 +17,8 @@ class ModulesController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('Modules.manage');
+
         $modules = [];
 
         foreach (Module::all() as $module) {
@@ -60,17 +65,15 @@ class ModulesController extends Controller
 
         $filteredModules = $modulesCollection->values()->all();
 
-        // Calculate stats
-        $enabled = collect($modules)->filter(fn ($m) => $m['enabled'])->all();
-        $disabled = collect($modules)->filter(fn ($m) => $m['disabled'])->all();
+        $allModules = collect($modules);
+        $enabledCount = $allModules->filter(fn ($m) => $m['enabled'])->count();
+        $disabledCount = $allModules->filter(fn ($m) => $m['disabled'])->count();
 
         return view('modules::index', [
             'modules' => $filteredModules,
-            'enabledModules' => $enabled,
-            'disabledModules' => $disabled,
             'totalModules' => count($modules),
-            'enabledCount' => count($enabled),
-            'disabledCount' => count($disabled),
+            'enabledCount' => $enabledCount,
+            'disabledCount' => $disabledCount,
         ]);
     }
 
@@ -79,6 +82,8 @@ class ModulesController extends Controller
      */
     public function show(string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {
@@ -111,6 +116,8 @@ class ModulesController extends Controller
      */
     public function edit(string $moduleAlias)
     {
+        $this->authorize('Modules.manage');
+
         $module = Module::find($moduleAlias);
 
         if (! $module) {
@@ -152,35 +159,32 @@ class ModulesController extends Controller
                 ->with('error', "Module '{$moduleAlias}' not found.");
         }
 
-        // Validate input
         $validated = $request->validate([
             'priority' => 'required|integer|min:0|max:999',
             'description' => 'nullable|string|max:500',
         ]);
 
         try {
-            // Update module.json with new priority and description
             $configPath = $module->getPath().DIRECTORY_SEPARATOR.'module.json';
 
-            if (file_exists($configPath)) {
-                $config = json_decode(file_get_contents($configPath), true);
-
-                $config['priority'] = (int) $validated['priority'];
-                if (! empty($validated['description'])) {
-                    $config['description'] = $validated['description'];
-                }
-
-                file_put_contents($configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-                return redirect()->route('settings.modules.show', $module->getName())
-                    ->with('success', "Module '{$module->getName()}' updated successfully.");
-            } else {
+            if (! file_exists($configPath)) {
                 return redirect()->route('settings.modules.edit', $module->getName())
                     ->with('error', 'Module configuration file not found.');
             }
+
+            $config = json_decode(file_get_contents($configPath), true);
+            $config['priority'] = (int) $validated['priority'];
+            $config['description'] = $validated['description'] ?? '';
+
+            file_put_contents($configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+            return redirect()->route('settings.modules.show', $module->getName())
+                ->with('success', "Module '{$module->getName()}' updated successfully.");
         } catch (\Exception $e) {
+            Log::error('Module update failed', ['module' => $moduleAlias, 'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.']);
+
             return redirect()->route('settings.modules.edit', $module->getName())
-                ->with('error', "Error updating module: {$e->getMessage()}");
+                ->with('error', 'Error al actualizar el módulo.');
         }
     }
 
@@ -200,12 +204,15 @@ class ModulesController extends Controller
 
         try {
             $module->enable();
+            $this->clearApplicationCache();
 
             return redirect()->route('settings.modules.index')
-                ->with('success', "Module '{$module->getName()}' has been enabled successfully.");
+                ->with('success', "Módulo '{$module->getName()}' habilitado correctamente.");
         } catch (\Exception $e) {
+            Log::error('Module enable failed', ['module' => $moduleAlias, 'error' => $e->getMessage()]);
+
             return redirect()->route('settings.modules.index')
-                ->with('error', "Failed to enable module: {$e->getMessage()}");
+                ->with('error', 'No se pudo habilitar el módulo.');
         }
     }
 
@@ -232,12 +239,15 @@ class ModulesController extends Controller
 
         try {
             $module->disable();
+            $this->clearApplicationCache();
 
             return redirect()->route('settings.modules.index')
-                ->with('success', "Module '{$module->getName()}' has been disabled successfully.");
+                ->with('success', "Módulo '{$module->getName()}' deshabilitado correctamente.");
         } catch (\Exception $e) {
+            Log::error('Module disable failed', ['module' => $moduleAlias, 'error' => $e->getMessage()]);
+
             return redirect()->route('settings.modules.index')
-                ->with('error', "Failed to disable module: {$e->getMessage()}");
+                ->with('error', 'No se pudo deshabilitar el módulo.');
         }
     }
 
@@ -246,6 +256,8 @@ class ModulesController extends Controller
      */
     public function uploadForm()
     {
+        $this->authorize('Modules.manage');
+
         return view('modules::upload');
     }
 
@@ -257,16 +269,18 @@ class ModulesController extends Controller
         $this->authorize('Modules.manage');
 
         $request->validate([
-            'module_file' => 'required|file|mimes:zip',
+            'module_file' => 'required|file|mimes:zip|max:51200',
         ], [
             'module_file.required' => 'Please select a module file to upload.',
             'module_file.mimes' => 'The module file must be a ZIP file.',
+            'module_file.max' => 'The module file must not exceed 50 MB.',
         ]);
+
+        $tempPath = storage_path('temp/modules');
 
         try {
             $file = $request->file('module_file');
             $modulesPath = base_path('Modules');
-            $tempPath = storage_path('temp/modules');
 
             // Create temp directory if it doesn't exist
             if (! is_dir($tempPath)) {
@@ -292,7 +306,6 @@ class ModulesController extends Controller
                 $moduleDir = current($extracted);
 
                 if (! is_dir("$tempPath/$moduleDir")) {
-                    // If extracted to subdirectory
                     $subDirs = array_filter(scandir("$tempPath/$moduleDir"), fn ($item) => is_dir("$tempPath/$moduleDir/$item") && ! str_starts_with($item, '.'));
                     if (! empty($subDirs)) {
                         $moduleDir = "$moduleDir/".current($subDirs);
@@ -306,7 +319,11 @@ class ModulesController extends Controller
 
                 // Parse module.json to get module name
                 $moduleConfig = json_decode(file_get_contents("$tempPath/$moduleDir/module.json"), true);
-                $moduleName = $moduleConfig['name'] ?? basename($moduleDir);
+                $moduleName = preg_replace('/[^A-Za-z0-9_-]/', '', $moduleConfig['name'] ?? basename($moduleDir));
+
+                if (empty($moduleName)) {
+                    throw new \Exception('Nombre de módulo inválido en module.json.');
+                }
 
                 // Check if module already exists
                 if (is_dir("$modulesPath/$moduleName")) {
@@ -317,17 +334,25 @@ class ModulesController extends Controller
                 rename("$tempPath/$moduleDir", "$modulesPath/$moduleName");
 
                 // Clean up temp directory
-                array_map('unlink', glob("$tempPath/*.*"));
-                rmdir($tempPath);
+                $this->deleteDirectory($tempPath);
+
+                // Run the module's migrations
+                Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
+
+                $this->clearApplicationCache();
 
                 return redirect()->route('settings.modules.index')
-                    ->with('success', "Module '$moduleName' has been installed successfully.");
+                    ->with('success', "Módulo '$moduleName' instalado correctamente.");
             } else {
                 throw new \Exception('Failed to extract ZIP file.');
             }
         } catch (\Exception $e) {
+            $this->deleteDirectory($tempPath);
+
+            Log::error('Module install failed', ['error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.']);
+
             return redirect()->route('settings.modules.uploadForm')
-                ->with('error', "Installation failed: {$e->getMessage()}");
+                ->with('error', 'La instalación falló. Verifica que el archivo sea un módulo válido.');
         }
     }
 
@@ -353,20 +378,23 @@ class ModulesController extends Controller
         }
 
         try {
-            // First disable the module
+            // Roll back the module's migrations before deleting files
+            Artisan::call('module:migrate-rollback', ['module' => $module->getName(), '--force' => true]);
+
             if ($module->isEnabled()) {
                 $module->disable();
             }
 
-            // Delete the module directory
-            $modulePath = $module->getPath();
-            $this->deleteDirectory($modulePath);
+            $this->deleteDirectory($module->getPath());
+            $this->clearApplicationCache();
 
             return redirect()->route('settings.modules.index')
-                ->with('success', "Module '{$module->getName()}' has been uninstalled successfully.");
+                ->with('success', "Módulo '{$module->getName()}' desinstalado correctamente.");
         } catch (\Exception $e) {
+            Log::error('Module uninstall failed', ['module' => $moduleAlias, 'error' => $e->getMessage()]);
+
             return redirect()->route('settings.modules.index')
-                ->with('error', "Failed to uninstall module: {$e->getMessage()}");
+                ->with('error', 'No se pudo desinstalar el módulo.');
         }
     }
 
@@ -392,20 +420,16 @@ class ModulesController extends Controller
         return @rmdir($path);
     }
 
-    /**
-     * Get module configuration from module.json.
-     */
+    private function clearApplicationCache(): void
+    {
+        Artisan::call('cache:clear');
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        Artisan::call('view:clear');
+    }
+
     private function getModuleConfig($module): array
     {
-        try {
-            $configPath = $module->getPath().DIRECTORY_SEPARATOR.'module.json';
-            if (file_exists($configPath)) {
-                return json_decode(file_get_contents($configPath), true) ?? [];
-            }
-        } catch (\Exception $e) {
-            // Return empty array if config cannot be read
-        }
-
-        return [];
+        return ModuleConfigReader::read($module);
     }
 }

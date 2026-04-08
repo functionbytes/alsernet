@@ -26,6 +26,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiRoutes();
         $this->mapWebRoutes();
+        $this->mapSettingsRoutes();
     }
 
     /**
@@ -35,10 +36,21 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes(): void
     {
-        Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('pulse')
+        Route::middleware(['web', 'auth', 'can:view-pulse'])
+            ->prefix('panel/pulse')
             ->name('pulse.')
             ->group(module_path($this->name, 'routes/web.php'));
+    }
+
+    /**
+     * Define the settings routes for the application.
+     */
+    protected function mapSettingsRoutes(): void
+    {
+        Route::middleware(['web', 'auth', 'settings'])
+            ->prefix('panel/setting/pulse')
+            ->name('settings.pulse.')
+            ->group(module_path($this->name, 'routes/settings.php'));
     }
 
     /**

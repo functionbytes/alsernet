@@ -4,9 +4,18 @@ namespace Modules\Seo\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Modules\Blog\Models\BlogCategory;
+use Modules\Blog\Models\BlogPost;
+use Modules\Blog\Models\BlogTag;
+use Modules\Seo\Builder\SitemapBuilder;
+use Modules\Seo\Models\SeoMeta;
+use Modules\Seo\Models\SeoStaticUrl;
+use Modules\Seo\Services\SitemapPriorityCalculator;
 
 class SitemapAdminController extends Controller
 {
@@ -15,8 +24,8 @@ class SitemapAdminController extends Controller
         $sitemaps = [
             [
                 'name' => 'Sitemap general',
-                'url' => route('sitemap.index'),
-                'route_name' => 'sitemap.index',
+                'url' => route('sitemap'),
+                'route_name' => 'sitemap',
                 'description' => 'Todas las URLs del sitio',
                 'icon' => 'fas fa-globe',
             ],
@@ -41,6 +50,27 @@ class SitemapAdminController extends Controller
                 'description' => 'Índice con todos los sub-sitemaps',
                 'icon' => 'fas fa-list',
             ],
+            [
+                'name' => 'Sitemap de imágenes',
+                'url' => route('sitemap.images'),
+                'route_name' => 'sitemap.images',
+                'description' => 'Imágenes OG indexadas',
+                'icon' => 'fas fa-image',
+            ],
+            [
+                'name' => 'Sitemap de vídeos',
+                'url' => route('sitemap.videos'),
+                'route_name' => 'sitemap.videos',
+                'description' => 'Vídeos para Google Video Search',
+                'icon' => 'fas fa-video',
+            ],
+            [
+                'name' => 'Sitemap de noticias',
+                'url' => route('sitemap.news'),
+                'route_name' => 'sitemap.news',
+                'description' => 'Posts publicados en las últimas 48 horas',
+                'icon' => 'fas fa-newspaper',
+            ],
         ];
 
         $cacheEnabled = config('sitemap.cache_enabled', true);
@@ -49,7 +79,7 @@ class SitemapAdminController extends Controller
         $fileExists = file_exists($sitemapPath);
         $lastModified = $fileExists ? filemtime($sitemapPath) : null;
 
-        return view('Seo::admin.sitemap.index', compact(
+        return view('Seo::settings.sitemap.index', compact(
             'sitemaps',
             'cacheEnabled',
             'cacheDuration',
@@ -58,19 +88,127 @@ class SitemapAdminController extends Controller
         ));
     }
 
-    public function generate(): RedirectResponse
+    public function generate(SitemapBuilder $sitemap): RedirectResponse
     {
         try {
-            Artisan::call('sitemap:generate');
+            $sitemap->clear();
+            $sitemap->add(url('/'), now()->toAtomString(), '1.0', 'daily');
+
+            foreach (config('sitemap.models', []) as $modelClass) {
+                if (class_exists($modelClass)) {
+                    $sitemap->addModel($modelClass);
+                }
+            }
+
+            if (class_exists(BlogPost::class)) {
+                $sitemap->addModel(BlogPost::class);
+            }
+
+            if (class_exists(BlogCategory::class)) {
+                foreach (BlogCategory::published()->get() as $category) {
+                    $sitemap->add($category->url, $category->updated_at->toAtomString(), '0.6', 'weekly');
+                }
+            }
+
+            if (class_exists(BlogTag::class)) {
+                foreach (BlogTag::published()->get() as $tag) {
+                    $sitemap->add($tag->url, $tag->updated_at->toAtomString(), '0.4', 'monthly');
+                }
+            }
+
+            foreach (SeoStaticUrl::active()->get() as $staticUrl) {
+                $sitemap->add($staticUrl->url, null, (string) $staticUrl->priority, $staticUrl->changefreq);
+            }
+
+            $sitemap->generate();
+            Cache::forget('sitemap-xml');
+
+            $sitemapUrl = urlencode(url('/sitemap.xml'));
+            foreach (['https://www.google.com/ping?sitemap='.$sitemapUrl, 'https://www.bing.com/ping?sitemap='.$sitemapUrl] as $pingUrl) {
+                try {
+                    Http::timeout(3)->get($pingUrl);
+                } catch (\Exception) {
+                    // Ping failure is non-critical
+                }
+            }
 
             return redirect()
                 ->back()
                 ->with('success', __('seo::sitemap.generated_successfully'));
         } catch (\Exception $e) {
+            Log::error('Sitemap generation failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', __('seo::sitemap.generation_error').': '.$e->getMessage());
+                ->with('error', __('seo::sitemap.generation_error').'. Por favor, inténtalo de nuevo.');
         }
+    }
+
+    public function verifyUrls(): JsonResponse
+    {
+        $items = collect();
+
+        SeoStaticUrl::active()->each(function ($url) use (&$items) {
+            $items->push(['url' => $url->url, 'source' => 'static']);
+        });
+
+        $results = $items->take(50)->map(function ($item) {
+            try {
+                $response = Http::timeout(5)
+                    ->withoutRedirecting()
+                    ->head($item['url']);
+
+                return [
+                    'url' => $item['url'],
+                    'status' => $response->status(),
+                    'ok' => $response->successful() || in_array($response->status(), [301, 302]),
+                    'source' => $item['source'],
+                ];
+            } catch (\Exception $e) {
+                return [
+                    'url' => $item['url'],
+                    'status' => 0,
+                    'ok' => false,
+                    'source' => $item['source'],
+                    'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
+                ];
+            }
+        });
+
+        return response()->json([
+            'status' => true,
+            'results' => $results->values(),
+            'summary' => [
+                'total' => $results->count(),
+                'ok' => $results->where('ok', true)->count(),
+                'broken' => $results->where('ok', false)->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Calculate and return sitemap priorities for all metas with canonical URLs.
+     */
+    public function calculatePriorities(): JsonResponse
+    {
+        $calculator = new SitemapPriorityCalculator;
+
+        $results = SeoMeta::whereNotNull('canonical_url')
+            ->where('canonical_url', '!=', '')
+            ->get(['id', 'canonical_url', 'updated_at', 'gsc_clicks'])
+            ->map(fn ($meta) => [
+                'id' => $meta->id,
+                'url' => $meta->canonical_url,
+                'priority' => $calculator->calculate(
+                    $meta->canonical_url,
+                    $meta->updated_at,
+                    $meta->gsc_clicks ?? 0
+                ),
+            ])
+            ->sortByDesc('priority')
+            ->values();
+
+        return response()->json(['priorities' => $results]);
     }
 
     public function clearCache(): RedirectResponse
@@ -82,9 +220,11 @@ class SitemapAdminController extends Controller
                 ->back()
                 ->with('success', __('seo::sitemap.cache_cleared'));
         } catch (\Exception $e) {
+            Log::error('Sitemap cache clear failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', __('seo::sitemap.cache_clear_error').': '.$e->getMessage());
+                ->with('error', __('seo::sitemap.cache_clear_error').'. Por favor, inténtalo de nuevo.');
         }
     }
 }

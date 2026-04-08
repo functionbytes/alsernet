@@ -12,7 +12,7 @@
                     {{ $widget->getConfig()['name'] }}
 
                     <button type="button" class="btn btn-sm">
-                        <i class="ti ti-chevron-down"></i>
+                        <i class="fas fa-chevron-down"></i>
                     </button>
                 </div>
             </div>

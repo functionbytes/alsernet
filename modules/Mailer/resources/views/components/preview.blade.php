@@ -32,9 +32,12 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="preview-wrapper" style="background-color: #f5f5f5; min-height: 600px;">
-                            <div class="preview-email-container" id="previewContainer" style="background-color: white; max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; transition: all 0.3s ease;">
-                                {!! $html !!}
-                            </div>
+                            <iframe id="previewContainer" class="preview-email-container"
+                                    srcdoc="{{ $html }}"
+                                    sandbox="allow-same-origin"
+                                    style="width: 100%; min-height: 600px; border: none; background-color: white; max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; transition: all 0.3s ease;"
+                                    onload="this.style.height = this.contentDocument.body.scrollHeight + 'px'">
+                            </iframe>
                         </div>
                     </div>
                     <div class="card-footer bg-light">
@@ -233,14 +236,14 @@
             }
 
             .variable-badge:hover {
-                border-color: #081A28;
+                border-color: #b10100;
                 background: #f6faf0;
                 transform: translateY(-1px);
                 box-shadow: 0 2px 8px rgba(144, 187, 19, 0.15);
             }
 
             .variable-badge i {
-                color: #081A28;
+                color: #b10100;
                 font-size: 12px;
             }
 
@@ -288,8 +291,8 @@
 
             /* Button Group Active State */
             .btn-group .btn.active {
-                background-color: #081A28 !important;
-                border-color: #081A28 !important;
+                background-color: #b10100 !important;
+                border-color: #b10100 !important;
                 color: white !important;
             }
 
@@ -412,7 +415,7 @@
                 }
                 window.PreviewPageActive = true;
             } catch (error) {
-                console.warn('Preview initialization warning:', error);
+                // Preview initialization warning
             }
 
             $(document).ready(function() {

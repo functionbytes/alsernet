@@ -50,8 +50,7 @@
                                                 <li>Ahora copia tu generado <b>Llave secreta</b> desde el campo de
                                                     entrada y péguelo en su URL para acceder a su URL web en modo de
                                                     mantenimiento
-                                                    <b>Ej: {{ getUrl() }}
-                                                        /{{ setting('maintenance_mode_value')!=null ? setting('maintenance_mode_value') :$secret}}</b>
+                                                    <b>Ej: {{ url('/') }}/{{ setting('maintenance_mode_value') ?? $secret }}</b>
                                                 </li>
                                                 <li>Y también puede permitir que otras redes o IP accedan a su sitio web
                                                     al <b>intercambio</b> Tu clave secreta con ellos.
@@ -155,7 +154,7 @@
                                 });
 
                                 setTimeout(function () {
-                                    window.location.href = "{{ route('manager.dashboard') }}";
+                                    window.location.href = "{{ route('core.dashboard') }}";
                                 }, 2000);
 
                             } else {

@@ -2,9 +2,12 @@
 
 namespace Modules\Mailrelay\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\Mailrelay\Contracts\MailProviderInterface;
 use Modules\Mailrelay\Entities\MailProvider;
+use Modules\Mailrelay\Exceptions\ProviderException;
 use Modules\Mailrelay\Providers\Mail\AwsSesProvider;
 use Modules\Mailrelay\Providers\Mail\MailrelayProvider;
 use Modules\Mailrelay\Providers\Mail\MailtrapProvider;
@@ -140,7 +143,7 @@ class ProviderManager
     /**
      * Listar providers configurados y activos
      */
-    public function configured(): \Illuminate\Database\Eloquent\Collection
+    public function configured(): Collection
     {
         return MailProvider::where('is_active', true)
             ->orderBy('priority', 'desc')
@@ -151,7 +154,7 @@ class ProviderManager
     /**
      * Listar todos los providers (activos e inactivos)
      */
-    public function all(): \Illuminate\Database\Eloquent\Collection
+    public function all(): Collection
     {
         return MailProvider::orderBy('is_default', 'desc')
             ->orderBy('priority', 'desc')
@@ -268,6 +271,144 @@ class ProviderManager
                 'message' => 'Error: '.$e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Enviar email con failover automático entre providers
+     *
+     * @param  string  $to  Email destinatario
+     * @param  string  $subject  Asunto
+     * @param  string  $htmlContent  Contenido HTML
+     * @param  array  $options  Opciones adicionales
+     * @param  int|null  $preferredProviderId  ID del provider preferido (se intenta primero)
+     * @return array ['success' => bool, 'message_id' => string|null, 'provider_id' => int, 'provider_name' => string]
+     *
+     * @throws ProviderException Si todos los providers fallan
+     */
+    public function sendWithFailover(
+        string $to,
+        string $subject,
+        string $htmlContent,
+        array $options = [],
+        ?int $preferredProviderId = null,
+    ): array {
+        $providers = $this->getOrderedProviders($preferredProviderId);
+
+        if ($providers->isEmpty()) {
+            throw ProviderException::notConfigured();
+        }
+
+        $errors = [];
+
+        foreach ($providers as $providerConfig) {
+            try {
+                $provider = $this->createProvider($providerConfig->driver, $providerConfig->credentials);
+                $result = $provider->send($to, $subject, $htmlContent, $options);
+
+                if ($result['success']) {
+                    return array_merge($result, [
+                        'provider_id' => $providerConfig->id,
+                        'provider_name' => $provider->getName(),
+                    ]);
+                }
+
+                $errors[$providerConfig->name] = $result['error'] ?? 'Unknown error';
+            } catch (\Throwable $e) {
+                $errors[$providerConfig->name] = $e->getMessage();
+            }
+
+            Log::warning('Provider failover: send failed, trying next', [
+                'provider' => $providerConfig->name,
+                'to' => $to,
+                'error' => $errors[$providerConfig->name],
+            ]);
+        }
+
+        throw ProviderException::allProvidersFailed($errors);
+    }
+
+    /**
+     * Enviar bulk con failover automático entre providers
+     *
+     * @param  array  $recipients  Lista de destinatarios
+     * @param  string  $subject  Asunto
+     * @param  string  $htmlContent  Contenido HTML
+     * @param  array  $options  Opciones adicionales
+     * @param  int|null  $preferredProviderId  ID del provider preferido (se intenta primero)
+     * @return array ['success' => bool, 'campaign_id' => string|null, 'sent_count' => int, 'provider_id' => int, 'provider_name' => string]
+     *
+     * @throws ProviderException Si todos los providers fallan
+     */
+    public function sendBulkWithFailover(
+        array $recipients,
+        string $subject,
+        string $htmlContent,
+        array $options = [],
+        ?int $preferredProviderId = null,
+    ): array {
+        $providers = $this->getOrderedProviders($preferredProviderId);
+
+        if ($providers->isEmpty()) {
+            throw ProviderException::notConfigured();
+        }
+
+        $errors = [];
+
+        foreach ($providers as $providerConfig) {
+            try {
+                $provider = $this->createProvider($providerConfig->driver, $providerConfig->credentials);
+                $result = $provider->sendBulk($recipients, $subject, $htmlContent, $options);
+
+                if ($result['success']) {
+                    return array_merge($result, [
+                        'provider_id' => $providerConfig->id,
+                        'provider_name' => $provider->getName(),
+                    ]);
+                }
+
+                $errors[$providerConfig->name] = $result['error'] ?? 'Unknown error';
+            } catch (\Throwable $e) {
+                $errors[$providerConfig->name] = $e->getMessage();
+            }
+
+            Log::warning('Provider failover: sendBulk failed, trying next', [
+                'provider' => $providerConfig->name,
+                'recipients_count' => count($recipients),
+                'error' => $errors[$providerConfig->name],
+            ]);
+        }
+
+        throw ProviderException::allProvidersFailed($errors);
+    }
+
+    /**
+     * Obtener providers ordenados para failover: preferido primero, luego por prioridad DESC
+     *
+     * @return Collection<int, MailProvider>
+     */
+    private function getOrderedProviders(?int $preferredProviderId): Collection
+    {
+        $providers = MailProvider::query()
+            ->active()
+            ->where('connection_ok', true)
+            ->byPriority()
+            ->get();
+
+        if (! $preferredProviderId) {
+            return $providers;
+        }
+
+        // Move preferred provider to the front
+        $preferred = $providers->firstWhere('id', $preferredProviderId);
+
+        if (! $preferred) {
+            return $providers;
+        }
+
+        return $providers
+            ->reject(fn (MailProvider $p) => $p->id === $preferredProviderId)
+            ->prepend($preferred)
+            ->values();
     }
 
     /**

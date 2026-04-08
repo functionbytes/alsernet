@@ -8,285 +8,276 @@
 
         @include('core::components.alerts')
 
-        <!-- Main Content Card -->
         <div class="card">
-            <!-- Header Section -->
+            {{-- Header --}}
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Registros de acceso del servidor</h5>
-                        <p class="small mb-0 text-muted">Monitorea y gestiona los registros de acceso y actividad del
-                            sistema en tiempo real</p>
+                        <p class="small mb-0 text-muted">Monitorea y gestiona los registros de acceso y actividad del sistema en tiempo real</p>
                     </div>
-                    <div class="d-flex gap-2 align-items-center">
-                        <span class="badge bg-primary-subtle text-primary d-flex align-items-center gap-2">
-                            <i class="fa fa-file-text"></i> {{ $total }} registros
-                        </span>
-                        <span class="badge bg-info-subtle text-info d-flex align-items-center gap-2">
-                            <i class="fa fa-database"></i> {{ $source === 'database' ? 'Base de Datos' : 'Archivos' }}
-                        </span>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ route('settings.system.access.stats') }}">Estadísticas</a>
+                                <a class="dropdown-item" href="{{ route('settings.system.access.download') }}">Descargar</a>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item" type="button" onclick="clearLogs()">Limpiar registros</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Stats -->
-            <div class="card-body border-bottom ">
+            {{-- Stats --}}
+            <div class="card-body border-bottom">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-primary-subtle p-3">
-                                <i class="fa fa-chart-line text-primary fs-6"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold">{{ $total }}</h6>
-                                <p class="text-muted small mb-0">Total de registros</p>
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Total registros</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($total) }}</h4>
+                                <small class="text-muted">Registros almacenados</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-danger-subtle p-3">
-                                <i class="fa fa-exclamation-circle text-danger fs-6"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold">{{ collect($logs)->where('level', 'ERROR')->count() }}</h6>
-                                <p class="text-muted small mb-0">Errores</p>
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Errores</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format(collect($logs)->where('level', 'ERROR')->count()) }}</h4>
+                                <small class="text-muted">Registros de error</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-warning-subtle p-3">
-                                <i class="fa fa-exclamation-triangle text-warning fs-6"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold">{{ collect($logs)->where('level', 'WARNING')->count() }}</h6>
-                                <p class="text-muted small mb-0">Advertencias</p>
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Advertencias</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format(collect($logs)->where('level', 'WARNING')->count()) }}</h4>
+                                <small class="text-muted">Registros de advertencia</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-info-subtle p-3">
-                                <i class="fa fa-info-circle text-info fs-6"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold">{{ collect($logs)->where('level', 'INFO')->count() }}</h6>
-                                <p class="text-muted small mb-0">Informativos</p>
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Informativos</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format(collect($logs)->where('level', 'INFO')->count()) }}</h4>
+                                <small class="text-muted">Registros informativos</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Action Buttons Section -->
-            <div class="p-4 border-bottom">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <div class="d-flex flex-wrap gap-2">
-                            <button class="btn btn-primary d-flex align-items-center gap-2" onclick="clearLogs()"
-                                    title="Limpiar todos los registros">
-                                <i class="fa fa-trash"></i> Limpiar registros
+            {{-- Filters --}}
+            <div class="card-body border-bottom">
+                <form method="GET" action="{{ route('settings.system.access.index') }}" id="filterForm">
+                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                        <div class="flex-fill">
+                            <div class="input-group h-100">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar en mensaje..."
+                                       value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0" style="min-width: 180px;">
+                            <select name="source" class="form-select select2 h-100">
+                                <option value="database" {{ $source === 'database' ? 'selected' : '' }}>Base de datos</option>
+                                <option value="file" {{ $source === 'file' ? 'selected' : '' }}>Archivos</option>
+                            </select>
+                        </div>
+                        @if($source === 'database')
+                            <div class="flex-shrink-0" style="min-width: 150px;">
+                                <select name="level" class="form-select select2 h-100">
+                                    <option value="">Todos los niveles</option>
+                                    <option value="ERROR" {{ $level === 'ERROR' ? 'selected' : '' }}>ERROR</option>
+                                    <option value="WARNING" {{ $level === 'WARNING' ? 'selected' : '' }}>WARNING</option>
+                                    <option value="INFO" {{ $level === 'INFO' ? 'selected' : '' }}>INFO</option>
+                                    <option value="DEBUG" {{ $level === 'DEBUG' ? 'selected' : '' }}>DEBUG</option>
+                                </select>
+                            </div>
+                        @endif
+                        <div class="flex-shrink-0" style="min-width: 130px;">
+                            <select name="limit" class="form-select select2 h-100">
+                                <option value="50" {{ $limit == 50 ? 'selected' : '' }}>50 registros</option>
+                                <option value="100" {{ $limit == 100 ? 'selected' : '' }}>100 registros</option>
+                                <option value="250" {{ $limit == 250 ? 'selected' : '' }}>250 registros</option>
+                                <option value="500" {{ $limit == 500 ? 'selected' : '' }}>500 registros</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>
                             </button>
-                            <a href="{{ route('settings.system.access.stats') }}"
-                               class="btn btn-outline-primary d-flex align-items-center gap-2">
-                                <i class="fa fa-bar-chart"></i> Estadísticas
-                            </a>
-                            <a href="{{ route('settings.system.access.download') }}"
-                               class="btn btn-outline-primary d-flex align-items-center gap-2">
-                                <i class="fa fa-download"></i> Descargar
-                            </a>
+                            @if(request('search') || request('level') || request('limit'))
+                                <a href="{{ route('settings.system.access.index', ['source' => $source]) }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <!-- Filters Form -->
-                        <form method="GET" class="d-flex gap-2 flex-wrap justify-content-end align-items-end"
-                              id="filterForm">
-                            <div style="min-width: 150px;">
-                                <label class="form-label small fw-semibold mb-1">Fuente</label>
-                                <select name="source" class="form-select form-select-sm"
-                                        onchange="document.getElementById('filterForm').submit()">
-                                    <option value="database" {{ $source === 'database' ? 'selected' : '' }}>Base de
-                                        Datos
-                                    </option>
-                                    <option value="file" {{ $source === 'file' ? 'selected' : '' }}>Archivos</option>
-                                </select>
-                            </div>
-
-                            @if($source === 'database')
-                                <div style="min-width: 130px;">
-                                    <label class="form-label small fw-semibold mb-1">Nivel</label>
-                                    <select name="level" class="form-select form-select-sm"
-                                            onchange="document.getElementById('filterForm').submit()">
-                                        <option value="">Todos</option>
-                                        <option value="ERROR" {{ $level === 'ERROR' ? 'selected' : '' }}>ERROR</option>
-                                        <option value="WARNING" {{ $level === 'WARNING' ? 'selected' : '' }}>WARNING
-                                        </option>
-                                        <option value="INFO" {{ $level === 'INFO' ? 'selected' : '' }}>INFO</option>
-                                        <option value="DEBUG" {{ $level === 'DEBUG' ? 'selected' : '' }}>DEBUG</option>
-                                    </select>
-                                </div>
-                            @endif
-
-                            <div style="min-width: 100px;">
-                                <label class="form-label small fw-semibold mb-1">Límite</label>
-                                <select name="limit" class="form-select form-select-sm"
-                                        onchange="document.getElementById('filterForm').submit()">
-                                    <option value="50" {{ $limit == 50 ? 'selected' : '' }}>50</option>
-                                    <option value="100" {{ $limit == 100 ? 'selected' : '' }}>100</option>
-                                    <option value="250" {{ $limit == 250 ? 'selected' : '' }}>250</option>
-                                    <option value="500" {{ $limit == 500 ? 'selected' : '' }}>500</option>
-                                </select>
-                            </div>
-
-                            <a href="{{ route('settings.system.access.index') }}"
-                               class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2">
-                                <i class="fa fa-refresh"></i> Restablecer
-                            </a>
-                        </form>
-                    </div>
-                </div>
+                </form>
             </div>
 
-            <!-- Logs Table -->
-            <div class="card-body p-4">
-                <div class="mb-3">
-                    <h6 class="fw-bold mb-3">Últimos {{ $limit }} Registros</h6>
-
-                    @if(count($logs) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
+            {{-- Table --}}
+            <div class="card-body">
+                @if(count($logs) > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th class="fw-semibold text-muted small">Fecha y Hora</th>
-                                    <th class="fw-semibold text-muted small" style="width: 120px;">Nivel</th>
-                                    <th class="fw-semibold text-muted small">Mensaje</th>
-                                    <th class="fw-semibold text-muted small text-center" style="width: 80px;">Acción
-                                    </th>
+                                    @if($source === 'database')
+                                        <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    @endif
+                                    <th>Fecha y hora</th>
+                                    <th style="width: 120px;">Nivel</th>
+                                    <th>Mensaje</th>
+                                    <th class="text-center" style="width: 80px;">Acciones</th>
                                 </tr>
-                                </thead>
-                                <tbody>
+                            </thead>
+                            <tbody>
                                 @foreach($logs as $log)
                                     <tr>
-                                        <td class="small">
-                                            <span class="fw-semibold text-dark">{{ $log['timestamp'] }}</span>
+                                        @if($source === 'database')
+                                            <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $log['id'] }}"></td>
+                                        @endif
+                                        <td>
+                                            <span class="text-muted">{{ $log['timestamp'] }}</span>
                                         </td>
                                         <td>
                                             @if($log['level'] === 'ERROR')
-                                                <span class="badge bg-danger-subtle text-danger">
-                                                        <i class="fa fa-exclamation-circle"></i> {{ $log['level'] }}
-                                                    </span>
+                                                <span class="badge bg-danger-subtle text-danger">{{ $log['level'] }}</span>
                                             @elseif($log['level'] === 'WARNING')
-                                                <span class="badge bg-warning-subtle text-warning">
-                                                        <i class="fa fa-exclamation-triangle"></i> {{ $log['level'] }}
-                                                    </span>
+                                                <span class="badge bg-warning-subtle text-warning">{{ $log['level'] }}</span>
                                             @elseif($log['level'] === 'INFO')
-                                                <span class="badge bg-info-subtle text-info">
-                                                        <i class="fa fa-info-circle"></i> {{ $log['level'] }}
-                                                    </span>
+                                                <span class="badge bg-info-subtle text-info">{{ $log['level'] }}</span>
                                             @elseif($log['level'] === 'DEBUG')
-                                                <span class="badge bg-secondary-subtle text-secondary">
-                                                        <i class="fa fa-bug"></i> {{ $log['level'] }}
-                                                    </span>
+                                                <span class="badge bg-secondary-subtle text-secondary">{{ $log['level'] }}</span>
                                             @else
-                                                <span class="badge bg-light text-dark">
-                                                        <i class="fa fa-circle-o"></i> {{ $log['level'] }}
-                                                    </span>
+                                                <span class="badge bg-light text-black">{{ $log['level'] }}</span>
                                             @endif
                                         </td>
-                                        <td class="small">
-                                                <span class="text-muted">
-                                                    {{ substr($log['message'], 0, 100) }}{{ strlen($log['message']) > 100 ? '...' : '' }}
-                                                </span>
+                                        <td>
+                                            <span class="text-muted small">{{ Str::limit($log['message'], 100) }}</span>
                                         </td>
                                         <td class="text-center">
-                                            <button type="button" class="btn btn-sm btn-light-primary"
-                                                    onclick="showLogDetail({{ $loop->index }})" title="Ver detalles">
-                                                <i class="fa fa-eye"></i>
-                                            </button>
+                                            <div class="dropdown">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown">
+                                                    <i class="fa fa-ellipsis-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="javascript:void(0)" onclick="showLogDetail({{ $loop->index }})">
+                                                            Ver detalles
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="alert alert-info mb-0" role="alert">
-                            <div class="d-flex align-items-center gap-3">
-                                <i class="fa fa-circle-info fs-4"></i>
-                                <div>
-                                    <strong>No hay registros disponibles</strong>
-                                    <p class="mb-0 small">No se encontraron registros con los filtros seleccionados.</p>
-                                </div>
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-file-alt fs-7"></i>
                             </div>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Footer Info -->
-                <div class="alert alert-light border-start border-4 border-primary mb-0" role="alert">
-                    <i class="fa fa-lightbulb text-primary me-2"></i>
-                    <strong>Tip:</strong> Haz clic en el botón de ver detalles para obtener información completa del
-                    registro. Los registros se muestran en orden descendente (más recientes primero).
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Modal de Confirmación para Limpiar Logs -->
-    <div class="modal fade" id="clearLogsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title fw-bold">
-                        <i class="fa fa-trash text-danger me-2"></i> Limpiar todos los registros
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-warning border-start border-4 border-warning" role="alert">
-                        <div class="d-flex align-items-start gap-3">
-                            <i class="fa fa-triangle-exclamation fs-3"></i>
-                            <div>
-                                <h6 class="mb-2"><strong>¿Estás seguro de que deseas continuar?</strong></h6>
-                                <p class="mb-0 small">Esta acción eliminará permanentemente todos los registros de
-                                    acceso del sistema y no se puede deshacer.</p>
-                            </div>
+                            <h6 class="mb-1">No hay registros disponibles</h6>
+                            <p class="text-muted mb-0">No se encontraron registros con los filtros seleccionados</p>
                         </div>
                     </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal limpiar registros --}}
+    <div id="clearLogsModal" class="modal fade">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-1"></i> Cancelar
-                    </button>
-                    <button type="button" class="btn btn-danger" id="confirmClearBtn">
-                        Confirmar limpieza
-                    </button>
+                <div class="modal-body text-center px-4 pb-4">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                    </div>
+                    <h4 class="mb-2">Limpiar todos los registros</h4>
+                    <p class="text-muted mb-4">Se eliminarán permanentemente todos los registros de acceso del sistema. Esta acción no se puede deshacer.</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-danger w-100" id="confirmClearBtn">
+                            <i class="fas fa-trash me-2"></i> Confirmar y limpiar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Detalles del Log -->
+    @if($source === 'database')
+    {{-- Bulk toolbar --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> registro(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal detalles del log --}}
     <div class="modal fade" id="logDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title fw-bold">
-                        Detalles del registro
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del registro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold mb-1">Fecha y Hora</label>
+                            <label class="form-label text-muted fw-semibold mb-1">Fecha y hora</label>
                             <p class="fw-semibold mb-0" id="modalTimestamp">-</p>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-semibold mb-1">Nivel</label>
+                            <label class="form-label text-muted fw-semibold mb-1">Nivel</label>
                             <div id="modalLevel"></div>
                         </div>
                     </div>
@@ -295,20 +286,20 @@
                         <hr class="my-3">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold mb-1">Dirección IP</label>
+                                <label class="form-label text-muted fw-semibold mb-1">Dirección IP</label>
                                 <p class="fw-semibold small mb-0" id="modalIp">-</p>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-semibold mb-1">Usuario ID</label>
+                                <label class="form-label text-muted fw-semibold mb-1">Usuario ID</label>
                                 <p class="fw-semibold small mb-0" id="modalUser">-</p>
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label class="form-label text-muted small fw-semibold mb-1">URL</label>
+                            <label class="form-label text-muted fw-semibold mb-1">URL</label>
                             <p class="small text-break mb-0" id="modalUrl">-</p>
                         </div>
                         <div class="mt-3">
-                            <label class="form-label text-muted small fw-semibold mb-1">Context (JSON)</label>
+                            <label class="form-label text-muted fw-semibold mb-1">Context (JSON)</label>
                             <pre id="modalContext" class="bg-light p-3 rounded small mb-0"
                                  style="white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto;">-</pre>
                         </div>
@@ -316,21 +307,18 @@
 
                     <hr class="my-3">
                     <div>
-                        <label class="form-label text-muted small fw-semibold mb-2">Mensaje Completo</label>
+                        <label class="form-label text-muted fw-semibold mb-2">Mensaje completo</label>
                         <div class="bg-light p-3 rounded">
                             <pre id="modalMessage" class="mb-0 small"
                                  style="white-space: pre-wrap; word-wrap: break-word;">-</pre>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top">
-
+                <div class="modal-footer">
                     <button type="button" class="btn btn-primary w-100 mb-1" onclick="copyMessageToClipboard()">
-                        <i class="fa fa-copy me-1"></i> Copiar mensaje
+                        Copiar mensaje
                     </button>
-                    <button type="button" class="btn btn-secondary w-100 " data-bs-dismiss="modal">
-                        <i class="fa fa-times me-1"></i> Cerrar
-                    </button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -339,103 +327,120 @@
 @endsection
 
 @push('scripts')
-    <script>
-        $(document).ready(function () {
-            const logsData = @json($logs);
+<script>
+$(document).ready(function () {
+    const logsData = @json($logs);
 
-            // Helper function to get badge HTML based on log level
-            function getLevelBadge(level) {
-                switch (level) {
-                    case 'ERROR':
-                        return '<span class="badge bg-danger-subtle text-danger"><i class="fa fa-exclamation-circle"></i> ERROR</span>';
-                    case 'WARNING':
-                        return '<span class="badge bg-warning-subtle text-warning"><i class="fa fa-exclamation-triangle"></i> WARNING</span>';
-                    case 'INFO':
-                        return '<span class="badge bg-info-subtle text-info"><i class="fa fa-info-circle"></i> INFO</span>';
-                    case 'DEBUG':
-                        return '<span class="badge bg-secondary-subtle text-secondary"><i class="fa fa-bug"></i> DEBUG</span>';
-                    default:
-                        return '<span class="badge bg-light text-dark"><i class="fa fa-circle-o"></i> ' + level + '</span>';
-                }
-            }
+    function getLevelBadge(level) {
+        var map = {
+            'ERROR': '<span class="badge bg-danger-subtle text-danger">ERROR</span>',
+            'WARNING': '<span class="badge bg-warning-subtle text-warning">WARNING</span>',
+            'INFO': '<span class="badge bg-info-subtle text-info">INFO</span>',
+            'DEBUG': '<span class="badge bg-secondary-subtle text-secondary">DEBUG</span>'
+        };
+        return map[level] || '<span class="badge bg-light text-black">' + level + '</span>';
+    }
 
-            // Show log detail modal
-            window.showLogDetail = function (index) {
-                const log = logsData[index];
+    window.showLogDetail = function (index) {
+        var log = logsData[index];
 
-                $('#modalTimestamp').text(log.timestamp);
-                $('#modalLevel').html(getLevelBadge(log.level));
-                $('#modalMessage').text(log.message);
+        $('#modalTimestamp').text(log.timestamp);
+        $('#modalLevel').html(getLevelBadge(log.level));
+        $('#modalMessage').text(log.message);
 
-                // Show database-specific information if available
-                if (log.id) {
-                    $('#databaseInfo').show();
-                    $('#modalIp').text(log.ip_address || '-');
-                    $('#modalUser').text(log.user_id || '-');
-                    $('#modalUrl').text(log.url || '-');
-                    $('#modalContext').text(log.context ? JSON.stringify(log.context, null, 2) : '-');
-                } else {
-                    $('#databaseInfo').hide();
-                }
+        if (log.id) {
+            $('#databaseInfo').show();
+            $('#modalIp').text(log.ip_address || '-');
+            $('#modalUser').text(log.user_id || '-');
+            $('#modalUrl').text(log.url || '-');
+            $('#modalContext').text(log.context ? JSON.stringify(log.context, null, 2) : '-');
+        } else {
+            $('#databaseInfo').hide();
+        }
 
-                var modal = new bootstrap.Modal(document.getElementById('logDetailModal'));
-                modal.show();
-            };
+        new bootstrap.Modal(document.getElementById('logDetailModal')).show();
+    };
 
-            // Copy message to clipboard
-            window.copyMessageToClipboard = function () {
-                const message = $('#modalMessage').text();
-
-                navigator.clipboard.writeText(message).then(() => {
-                    toastr.success('Mensaje copiado al portapapeles', 'Copiado');
-                }).catch(() => {
-                    toastr.error('Error al copiar al portapapeles', 'Error');
-                });
-            };
-
-            // Show clear logs modal
-            window.clearLogs = function () {
-                var modal = new bootstrap.Modal(document.getElementById('clearLogsModal'));
-                modal.show();
-            };
-
-            // Clear logs confirmation
-            $('#confirmClearBtn').on('click', function () {
-                var modal = bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'));
-                modal.hide();
-
-                var btn = $(this);
-                var originalContent = btn.html();
-                btn.prop('disabled', true);
-                btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Limpiando...');
-
-                $.ajax({
-                    url: '{{ route("settings.system.access.clear") }}',
-                    type: 'POST',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        btn.prop('disabled', false);
-                        btn.html(originalContent);
-
-                        if (data.success) {
-                            toastr.success(data.message, 'Registros limpiados');
-                            setTimeout(() => {
-                                location.reload();
-                            }, 1500);
-                        } else {
-                            toastr.error(data.message, 'Error');
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        btn.prop('disabled', false);
-                        btn.html(originalContent);
-                        toastr.error('Error al limpiar los registros', 'Error');
-                    }
-                });
-            });
+    window.copyMessageToClipboard = function () {
+        navigator.clipboard.writeText($('#modalMessage').text()).then(function () {
+            toastr.success('Mensaje copiado al portapapeles', 'Copiado');
+        }).catch(function () {
+            toastr.error('Error al copiar al portapapeles', 'Error');
         });
-    </script>
+    };
+
+    window.clearLogs = function () {
+        new bootstrap.Modal(document.getElementById('clearLogsModal')).show();
+    };
+
+    $('#confirmClearBtn').on('click', function () {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'));
+        modal.hide();
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Limpiando...');
+
+        $.ajax({
+            url: '{{ route("settings.system.access.clear") }}',
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (data) {
+                $btn.prop('disabled', false).html('<i class="fas fa-trash me-2"></i> Confirmar y limpiar');
+                if (data.success) {
+                    toastr.success(data.message, 'Registros limpiados');
+                    setTimeout(function () { location.reload(); }, 1500);
+                } else {
+                    toastr.error(data.message, 'Error');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html('<i class="fas fa-trash me-2"></i> Confirmar y limpiar');
+                toastr.error('Error al limpiar los registros', 'Error');
+            }
+        });
+    });
+
+    // ── Bulk actions (database source only) ──────────────────────────
+    @if($source === 'database')
+    var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        var action = $('#bulk-action-select').val();
+        var ids = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un registro.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' registro(s)?')) { return; }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route("settings.system.access.bulk-action") }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' registro(s) eliminados.');
+                setTimeout(function () { location.reload(); }, 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $btn.prop('disabled', false).text('Aplicar');
+            }
+        });
+    });
+    @endif
+});
+</script>
 @endpush

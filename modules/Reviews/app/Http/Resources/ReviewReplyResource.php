@@ -4,6 +4,7 @@ namespace Modules\Reviews\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Reviews\Models\Review;
 
 class ReviewReplyResource extends JsonResource
 {
@@ -15,12 +16,12 @@ class ReviewReplyResource extends JsonResource
             'status' => $this->status->value,
             'statusLabel' => $this->status->label(),
             'errorMessage' => $this->when(
-                $this->status->value === 'failed' && $request->user()?->can('viewAny', \Modules\Reviews\Models\Review::class),
-                $this->error_message
+                $this->status->value === 'failed' && $request->user()?->can('viewAny', Review::class),
+                fn () => $this->error_message
             ),
             'errorCount' => $this->when(
-                $this->status->value === 'failed' && $request->user()?->can('viewAny', \Modules\Reviews\Models\Review::class),
-                $this->error_count
+                $this->status->value === 'failed' && $request->user()?->can('viewAny', Review::class),
+                fn () => $this->error_count
             ),
             'createdBy' => $this->created_by,
             'approvedBy' => $this->approved_by,

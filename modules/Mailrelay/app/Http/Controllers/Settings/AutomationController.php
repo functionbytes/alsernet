@@ -6,9 +6,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Mailrelay\Entities\Automation;
 use Modules\Mailrelay\Http\Controllers\Controller;
-use Modules\Mailrelay\Models\MailrelayAutomation;
 
 class AutomationController extends Controller
 {
@@ -19,7 +20,7 @@ class AutomationController extends Controller
     {
         Gate::authorize('mailrelay.settings.automations.view');
 
-        $automations = MailrelayAutomation::orderBy('created_at', 'desc')->get();
+        $automations = Automation::orderBy('created_at', 'desc')->get();
 
         return view('mailrelay::settings.automations.index', [
             'automations' => $automations,
@@ -53,16 +54,18 @@ class AutomationController extends Controller
                 'priority' => 'integer|min:0|max:100',
             ]);
 
-            MailrelayAutomation::create($validated);
+            Automation::create($validated);
 
             return redirect()
                 ->route('managers.settings.mailrelay.automations.index')
                 ->with('success', 'Automatización creada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay automation create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear la automatización: '.$e->getMessage());
+                ->with('error', 'Error al crear la automatización. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -73,7 +76,7 @@ class AutomationController extends Controller
     {
         Gate::authorize('mailrelay.settings.automations.edit');
 
-        $automation = MailrelayAutomation::findOrFail($id);
+        $automation = Automation::findOrFail($id);
 
         return view('mailrelay::settings.automations.edit', [
             'automation' => $automation,
@@ -88,7 +91,7 @@ class AutomationController extends Controller
         Gate::authorize('mailrelay.settings.automations.edit');
 
         try {
-            $automation = MailrelayAutomation::findOrFail($id);
+            $automation = Automation::findOrFail($id);
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -105,10 +108,12 @@ class AutomationController extends Controller
                 ->route('managers.settings.mailrelay.automations.index')
                 ->with('success', 'Automatización actualizada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay automation update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la automatización: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la automatización. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -120,16 +125,18 @@ class AutomationController extends Controller
         Gate::authorize('mailrelay.settings.automations.delete');
 
         try {
-            $automation = MailrelayAutomation::findOrFail($id);
+            $automation = Automation::findOrFail($id);
             $automation->delete();
 
             return redirect()
                 ->route('managers.settings.mailrelay.automations.index')
                 ->with('success', 'Automatización eliminada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay automation delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar la automatización: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la automatización. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -141,7 +148,7 @@ class AutomationController extends Controller
         Gate::authorize('mailrelay.settings.automations.edit');
 
         try {
-            $automation = MailrelayAutomation::findOrFail($id);
+            $automation = Automation::findOrFail($id);
             $automation->update([
                 'active' => ! $automation->active,
             ]);
@@ -156,7 +163,7 @@ class AutomationController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cambiar el estado: '.$e->getMessage(),
+                'message' => 'Error al cambiar el estado. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

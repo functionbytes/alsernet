@@ -2,17 +2,17 @@
 
 namespace Modules\Health\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use Modules\Health\Checks\DatabaseCheck;
 use Modules\Health\Checks\RedisCheck;
 use Modules\Health\Checks\StorageCheck;
+use Modules\Health\Console\Commands\HealthCheckAlertCommand;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 use Spatie\Health\Checks\Checks\CacheCheck;
 use Spatie\Health\Checks\Checks\DatabaseConnectionCountCheck;
 use Spatie\Health\Checks\Checks\EnvironmentCheck;
-use Spatie\Health\Checks\Checks\OptimizedAppCheck;
-use Spatie\Health\Checks\Checks\QueueCheck;
-use Spatie\Health\Checks\Checks\ScheduleCheck;
 use Spatie\Health\Checks\Checks\UsedDiskSpaceCheck;
 use Spatie\Health\Facades\Health;
 
@@ -31,6 +31,10 @@ class HealthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (Module::find('Health')?->isDisabled()) {
+            return;
+        }
+
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'health');
 
         // Publish config
@@ -45,6 +49,22 @@ class HealthServiceProvider extends ServiceProvider
 
         // Register Spatie Health Checks
         $this->registerHealthChecks();
+
+        // Register commands
+        $this->commands([HealthCheckAlertCommand::class]);
+
+        // Schedule health checks (saves results to DB via EloquentHealthResultStore)
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('health:check')
+                ->everyFifteenMinutes()
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            $schedule->command('health:check-and-alert')
+                ->everyFifteenMinutes()
+                ->withoutOverlapping()
+                ->onOneServer();
+        });
 
         // Register menus
         $this->registerMenus();

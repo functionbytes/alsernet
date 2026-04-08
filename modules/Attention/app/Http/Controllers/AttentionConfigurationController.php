@@ -95,13 +95,13 @@ class AttentionConfigurationController extends Controller
                 ->with('success', 'Configuracion global actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating attention global settings', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'user_id' => Auth::id(),
             ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la configuracion: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la configuracion. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -113,10 +113,31 @@ class AttentionConfigurationController extends Controller
         $settings = $this->getSettingsGroupedByCategory();
         $attentionStats = $this->calculateAttentionStatistics();
 
-        return view('attention::settings.settings.sections.email', [
+        return view('attention::settings.sections.email', [
             'settings' => $settings,
             'attentionStats' => $attentionStats,
         ]);
+    }
+
+    /**
+     * Display the email templates index.
+     */
+    public function templatesIndex(): View
+    {
+        $availableTemplates = MailerTemplate::module('attention')
+            ->enabled()
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'text' => $t->name,
+                'description' => $t->description ?? null,
+                'is_active' => $t->is_enabled,
+            ])
+            ->toArray();
+
+        return view('attention::settings.templates.index', compact('availableTemplates'));
     }
 
     /**
@@ -146,13 +167,13 @@ class AttentionConfigurationController extends Controller
                 ->with('success', 'Configuracion de email actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating attention email settings', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'user_id' => Auth::id(),
             ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la configuracion: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la configuracion. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -193,13 +214,13 @@ class AttentionConfigurationController extends Controller
                 ->with('success', 'Configuracion de SLA actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating attention SLA settings', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'user_id' => Auth::id(),
             ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la configuracion: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la configuracion. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -240,13 +261,13 @@ class AttentionConfigurationController extends Controller
             DB::rollBack();
 
             Log::error('Error resetting attention settings to defaults', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al restaurar configuraciones: '.$e->getMessage(),
+                'message' => 'Error al restaurar configuraciones. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -293,13 +314,13 @@ class AttentionConfigurationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error searching attention templates', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'query' => $query ?? null,
             ]);
 
             return response()->json([
                 'results' => [],
-                'error' => 'Error al buscar templates: '.$e->getMessage(),
+                'error' => 'Error al buscar templates. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -337,13 +358,13 @@ class AttentionConfigurationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error testing attention email connection', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al enviar email de prueba: '.$e->getMessage(),
+                'message' => 'Error al enviar email de prueba. Por favor, inténtalo de nuevo.',
                 'response_time' => round((microtime(true) - $startTime) * 1000),
             ], 500);
         }
@@ -677,7 +698,7 @@ class AttentionConfigurationController extends Controller
                     : 0,
             ];
         } catch (\Exception $e) {
-            Log::error('Error calculating attention statistics', ['error' => $e->getMessage()]);
+            Log::error('Error calculating attention statistics', ['error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.']);
 
             return [
                 'total_cases' => 0,
@@ -741,11 +762,11 @@ class AttentionConfigurationController extends Controller
                 'resolution_hours_target' => $resolutionHours,
             ];
         } catch (\Exception $e) {
-            Log::error('Error calculating attention SLA statistics', ['error' => $e->getMessage()]);
+            Log::error('Error calculating attention SLA statistics', ['error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.']);
 
             return [
                 'sla_enabled' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ];
         }
     }
@@ -771,7 +792,7 @@ class AttentionConfigurationController extends Controller
                 ->log("Attention setting {$action}: {$key}");
         } catch (\Exception $e) {
             Log::error('Error logging attention setting change', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'key' => $key,
             ]);
         }

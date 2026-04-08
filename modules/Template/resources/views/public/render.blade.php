@@ -4,6 +4,6 @@
 
 @section('content')
 <div class="template-wrapper">
-    {!! $content !!}
+    {!! $renderedContent !!}
 </div>
 @endsection

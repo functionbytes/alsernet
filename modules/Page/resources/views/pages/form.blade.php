@@ -122,145 +122,7 @@
         </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="col-lg-4 d-none">
-        <!-- Status & Publishing -->
-        <div class="card mb-4 border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom">
-                <h6 class="fw-bold mb-0">Publicación</h6>
-            </div>
-            <div class="card-body">
-                <!-- Status -->
-                <div class="mb-3">
-                    <label for="status" class="form-label">Estado <span class="text-danger">*</span></label>
-                    <select class="form-select @error('status') is-invalid @enderror"
-                            id="status" name="status" required>
-                        @foreach($statuses as $key => $label)
-                            <option value="{{ $key }}"
-                                {{ old('status', $page->status ?? 'draft') === $key ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('status')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- Published At -->
-                <div class="mb-3">
-                    <label for="published_at" class="form-label">Fecha de Publicación</label>
-                    <input type="datetime-local" class="form-control @error('published_at') is-invalid @enderror"
-                           id="published_at" name="published_at"
-                           value="{{ old('published_at', $page->published_at ? $page->published_at->format('Y-m-d\TH:i') : '') }}">
-                    <small class="form-text text-muted">Dejar vacío para usar la fecha actual al publicar</small>
-                    @error('published_at')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- Publish At (Scheduled Publishing) -->
-                <div class="mb-3">
-                    <label for="publish_at" class="form-label">Publicar el (Programado)</label>
-                    <input type="datetime-local" class="form-control @error('publish_at') is-invalid @enderror"
-                           id="publish_at" name="publish_at"
-                           value="{{ old('publish_at', $page->publish_at ? $page->publish_at->format('Y-m-d\TH:i') : '') }}">
-                    <small class="form-text text-muted">
-                        Programar la publicación automática de esta página en una fecha futura
-                    </small>
-                    @error('publish_at')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- Unpublish At (Scheduled Unpublishing) -->
-                <div class="mb-3">
-                    <label for="unpublish_at" class="form-label">Despublicar el (Programado)</label>
-                    <input type="datetime-local" class="form-control @error('unpublish_at') is-invalid @enderror"
-                           id="unpublish_at" name="unpublish_at"
-                           value="{{ old('unpublish_at', $page->unpublish_at ? $page->unpublish_at->format('Y-m-d\TH:i') : '') }}">
-                    <small class="form-text text-muted">
-                        Programar la despublicación automática de esta página en una fecha futura
-                    </small>
-                    @error('unpublish_at')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                @if(isset($page) && ($page->willBePublished() || $page->willBeUnpublished()))
-                    <div class="alert alert-info mb-3">
-                        <i class="fas fa-clock"></i> <strong>Estado Programado:</strong>
-                        @if($page->willBePublished())
-                            <br>Esta página se publicará automáticamente el {{ $page->publish_at->format('d/m/Y H:i') }}
-                        @endif
-                        @if($page->willBeUnpublished())
-                            <br>Esta página se despublicará automáticamente el {{ $page->unpublish_at->format('d/m/Y H:i') }}
-                        @endif
-                    </div>
-                @endif
-
-                <!-- Template -->
-                <div class="mb-3">
-                    <label for="template" class="form-label">Plantilla</label>
-                    <select class="form-select @error('template') is-invalid @enderror"
-                            id="template" name="template">
-                        @foreach($templates as $key => $label)
-                            <option value="{{ $key }}"
-                                {{ old('template', $page->template ?? 'default') === $key ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('template')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
-        <!-- Featured Image -->
-        <div class="card mb-4 border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom">
-                <h6 class="fw-bold mb-0">Imagen destacada</h6>
-            </div>
-            <div class="card-body">
-                @if(isset($page) && $page->featured_image)
-                    <div class="mb-3">
-                        <img src="{{ $page->featured_image }}" alt="Featured Image"
-                             class="img-fluid rounded">
-                    </div>
-                @endif
-
-                <div class="mb-3">
-                    <label for="featured_image" class="form-label">Subir Imagen</label>
-                    <input type="file" class="form-control @error('featured_image') is-invalid @enderror"
-                           id="featured_image" name="featured_image"
-                           accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                    <small class="form-text text-muted">Máximo 2MB. Formatos: JPG, PNG, GIF, WebP</small>
-                    @error('featured_image')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
-        <!-- Submit Buttons -->
-        <div class="card border-0 shadow-sm d-none">
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg" style="background-color: #90bb13; border-color: #90bb13;">
-                        <i class="fas fa-save"></i>
-                        {{ isset($page->id) ? 'Actualizar página' : 'Crear página' }}
-                    </button>
-                    <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times"></i> Cancelar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Nueva sección: Estado y publicación en el contenido principal -->
+    <!-- Estado y publicación -->
     <div class="col-lg-12">
         <div class="card mb-4 border-0 shadow-sm">
             <div class="card-header bg-transparent border-bottom">
@@ -271,13 +133,48 @@
                     <!-- Estado y fechas de publicación -->
                     <div class="col-md-6">
                         <!-- Status -->
+
+                        <!-- Imagen destacada -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Imagen destacada</label>
+
+                                @if(isset($page) && $page->featured_image)
+                                    <div class="mb-3 position-relative">
+                                        <img src="{{ $page->featured_image }}" alt="Featured Image"
+                                             class="img-fluid rounded border" style="max-height: 300px; object-fit: cover; width: 100%;">
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Imagen actual
+                                        </span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mb-3 text-center py-5 border border-dashed rounded bg-light">
+                                        <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted mb-0">No hay imagen destacada</p>
+                                    </div>
+                                @endif
+
+                                <label for="featured_image" class="form-label">Subir imagen</label>
+                                <input type="file" class="form-control @error('featured_image') is-invalid @enderror"
+                                       id="featured_image" name="featured_image"
+                                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                <small class="form-text text-muted">Máximo 2MB. Formatos: JPG, PNG, GIF, WebP</small>
+                                @error('featured_image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                         <div class="mb-3">
                             <label for="status" class="form-label">Estado <span class="text-danger">*</span></label>
-                            <select class="form-select @error('status') is-invalid @enderror"
+                            <select class="form-select @error('status') is-invalid @enderror select2"
                                     id="status" name="status" required>
+                                @php
+                                    $currentStatus = old('status', $page->status instanceof \Modules\Page\Enums\PageStatus ? $page->status->value : ($page->status ?? 'draft'));
+                                @endphp
                                 @foreach($statuses as $key => $label)
-                                    <option value="{{ $key }}"
-                                        {{ old('status', $page->status ?? 'draft') === $key ? 'selected' : '' }}>
+                                    <option value="{{ $key }}" {{ $currentStatus === $key ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -339,10 +236,39 @@
                             </div>
                         @endif
 
+                        @if(isset($page->id))
+                            @if($page->pending_approval)
+                                <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Pendiente de revisión</span>
+                                </div>
+                            @elseif($page->isDraft())
+                                <form action="{{ route('pages.approval.request', $page) }}" method="POST" class="d-inline w-100">
+                                    @csrf
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="fas fa-paper-plane me-1"></i>Solicitar aprobación
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+
+                        {{-- Notificar a suscriptores --}}
+                        @if(config('page.notifications.notify_subscribers', false))
+                            <div class="form-check mt-2 mb-3">
+                                <input class="form-check-input" type="checkbox" name="notify_subscribers"
+                                       id="notify-subscribers" value="1"
+                                       @checked(old('notify_subscribers', $page->notify_subscribers ?? false))>
+                                <label class="form-check-label" for="notify-subscribers">
+                                    <i class="fas fa-envelope me-1 text-muted"></i>
+                                    Notificar a suscriptores al publicar
+                                </label>
+                            </div>
+                        @endif
+
                         <!-- Template -->
                         <div class="mb-3">
                             <label for="template" class="form-label">Plantilla</label>
-                            <select class="form-select @error('template') is-invalid @enderror"
+                            <select class="form-select @error('template') is-invalid @enderror select2"
                                     id="template" name="template">
                                 @foreach($templates as $key => $label)
                                     <option value="{{ $key }}"
@@ -357,37 +283,6 @@
                         </div>
                     </div>
 
-                    <!-- Imagen destacada -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Imagen destacada</label>
-
-                            @if(isset($page) && $page->featured_image)
-                                <div class="mb-3 position-relative">
-                                    <img src="{{ $page->featured_image }}" alt="Featured Image"
-                                         class="img-fluid rounded border" style="max-height: 300px; object-fit: cover; width: 100%;">
-                                    <div class="position-absolute top-0 end-0 m-2">
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check"></i> Imagen actual
-                                        </span>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="mb-3 text-center py-5 border border-dashed rounded bg-light">
-                                    <i class="fas fa-image fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted mb-0">No hay imagen destacada</p>
-                                </div>
-                            @endif
-
-                            <label for="featured_image" class="form-label">Subir imagen</label>
-                            <input type="file" class="form-control @error('featured_image') is-invalid @enderror"
-                                   id="featured_image" name="featured_image"
-                                   accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                            <small class="form-text text-muted">Máximo 2MB. Formatos: JPG, PNG, GIF, WebP</small>
-                            @error('featured_image')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
                     </div>
                 </div>
             </div>
@@ -471,5 +366,27 @@
 
     // Inicializar preview al cargar
     updateSlugPreview();
+</script>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+    ClassicEditor
+        .create(document.querySelector('#content'), {
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'link', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'blockQuote', 'code', '|',
+                    'insertTable', '|',
+                    'undo', 'redo',
+                ],
+            },
+            language: 'es',
+            placeholder: 'Escribe el contenido de la página...',
+        })
+        .catch(function (err) { console.error('CKEditor init error:', err); });
 </script>
 @endpush

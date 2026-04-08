@@ -92,19 +92,28 @@
             </div>
 
             {{-- System Actions Bar --}}
-            <div class="card-body border-bottom bg-light">
+            <div class="card-body border-bottom">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h6 class="fw-bold mb-1">Acciones del sistema</h6>
                         <p class="text-muted mb-0">Ejecuta operaciones manuales de mantenimiento</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="runScheduler()" title="Ejecutar scheduler">
-                            <i class="fas fa-play-circle"></i>
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="processQueue()" title="Procesar cola">
-                            <i class="fas fa-forward"></i>
-                        </button>
+                    <div class="dropdown">
+                        <a href="#" class="btn btn-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            Acciones
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button type="button" class="dropdown-item" onclick="runScheduler()">
+                                    Ejecutar scheduler
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" onclick="processQueue()">
+                                    Procesar cola
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
@@ -125,8 +134,8 @@
                         <h6 class="fw-bold mb-1">Tareas programadas</h6>
                         <p class="text-muted mb-0">Comandos que se ejecutan automáticamente según su programación</p>
                     </div>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="showScheduledTasks()" title="Actualizar tareas programadas">
-                        <i class="fas fa-sync"></i>
+                    <button type="button" class="btn btn-primary-subtle text-primary btn-sm" onclick="showScheduledTasks()">
+                        <i class="fas fa-sync me-1"></i>
                     </button>
                 </div>
                 <div class="table-responsive">
@@ -156,26 +165,46 @@
                         <h6 class="fw-bold mb-1">Estado de la cola</h6>
                         <p class="text-muted mb-0">Información sobre workers y trabajos en cola</p>
                     </div>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="checkQueueStatus()" title="Actualizar estado de cola">
-                        <i class="fas fa-sync"></i>
+                    <button type="button" class="btn btn-primary-subtle text-primary btn-sm" onclick="checkQueueStatus()">
+                        <i class="fas fa-sync me-1"></i>
                     </button>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small mb-1">Conexión:</label>
-                        <div class="form-control-plaintext fw-bold" id="queueConnection">-</div>
+                    <div class="col-12 col-md-3">
+                        <div class="card bg-light-secondary stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-2">Conexión</h6>
+                                <h4 class="mb-1 fw-bold" id="queueConnection">—</h4>
+                                <small class="text-muted">Driver activo</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small mb-1">Workers:</label>
-                        <div class="form-control-plaintext fw-bold" id="queueWorkers">-</div>
+                    <div class="col-12 col-md-3">
+                        <div class="card bg-light-secondary stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-2">Workers</h6>
+                                <h4 class="mb-1 fw-bold" id="queueWorkers">—</h4>
+                                <small class="text-muted">Procesos activos</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small mb-1">Trabajos pendientes:</label>
-                        <div class="form-control-plaintext fw-bold" id="queuePending">-</div>
+                    <div class="col-12 col-md-3">
+                        <div class="card bg-light-secondary stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-2">Trabajos pendientes</h6>
+                                <h4 class="mb-1 fw-bold" id="queuePending">—</h4>
+                                <small class="text-muted">En espera de procesarse</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small mb-1">Trabajos fallidos:</label>
-                        <div class="form-control-plaintext fw-bold" id="queueFailed">-</div>
+                    <div class="col-12 col-md-3">
+                        <div class="card bg-light-secondary stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-danger mb-2">Trabajos fallidos</h6>
+                                <h4 class="mb-1 fw-bold text-danger" id="queueFailed">—</h4>
+                                <small class="text-muted">Requieren atención</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="queueWarning" class="alert alert-info mt-3 mb-0" style="display: none;">
@@ -187,7 +216,7 @@
             {{-- Actions Bar --}}
             <div class="card-body border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
+                    <div class="text-muted">
                         Última verificación: <strong id="lastChecked">{{ now()->format('d/m/Y H:i:s') }}</strong>
                     </div>
                     <div class="d-flex gap-2 align-items-center">
@@ -197,7 +226,7 @@
                                 Auto-actualizar (30s)
                             </label>
                         </div>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="refreshHealthChecks()">
+                        <button type="button" class="btn btn-primary-subtle text-primary btn-sm" onclick="refreshHealthChecks()">
                             <i class="fas fa-sync-alt me-1"></i>
                         </button>
                     </div>
@@ -208,67 +237,48 @@
             <div class="card-body">
                 <div class="row g-3" id="healthChecksGrid">
                     @foreach($results as $result)
+                        @php
+                            $isOk      = $result->status->value === 'ok';
+                            $isWarning = $result->status->value === 'warning';
+                            $iconBg    = $isOk ? 'bg-primary' : ($isWarning ? 'bg-warning' : 'bg-danger');
+                            $iconClass = $isOk ? 'fa-check' : ($isWarning ? 'fa-exclamation-triangle' : 'fa-times-circle');
+                        @endphp
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card bg-light-secondary stat-card h-100
-                                @if($result->status->value === 'ok')
-                                @elseif($result->status->value === 'warning')
-                                @else
-                                @endif
-                                shadow-sm h-100">
+                            <div class="card stat-card h-100">
                                 <div class="card-body">
-                                    <div class="d-flex align-items-start">
-                                        <div class="flex-grow-1">
-                                            <h6 class="fw-bold mb-2">
-                                                {{ $result->check->getLabel() }}
-                                            </h6>
-                                            <p class="mb-2  text-muted">
-                                                {{ $result->shortSummary }}
-                                            </p>
+                                    <span class="{{ $iconBg }} rounded-3 p-3 text-white d-inline-block">
+                                        <i class="fas {{ $iconClass }} fs-5"></i>
+                                    </span>
+                                    <h6 class="card-title mt-3 mb-1 fw-semibold">
+                                        {{ $result->check->getLabel() }}
+                                    </h6>
+                                    @if($result->shortSummary)
+                                        <p class="text-muted mb-0" style="font-size:.8rem">{{ $result->shortSummary }}</p>
+                                    @endif
 
-                                            <hr class="my-2">
-                                            @if($result->meta)
-                                                <div class="mt-2">
-                                                    @foreach($result->meta as $key => $value)
-                                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                                            <span class="text-muted small">{{ str_replace('_', ' ', ucfirst($key)) }}:</span>
-                                                            <span class="small fw-bold">
-                                                                @if(is_bool($value))
-                                                                    <span class="badge bg-{{ $value ? 'success' : 'danger' }}-subtle text-{{ $value ? 'success' : 'danger' }}">
-                                                                        {{ $value ? 'Sí' : 'No' }}
-                                                                    </span>
-                                                                @elseif(is_numeric($value))
-                                                                    {{ $value }}
-                                                                @else
-                                                                    {{ $value }}
-                                                                @endif
-                                                            </span>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            @endif
+                                    @if($result->meta)
+                                        <hr class="my-2">
+                                        @foreach($result->meta as $key => $value)
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label text-muted mb-0" style="font-size:.8rem">{{ str_replace('_', ' ', ucfirst($key)) }}:</label>
+                                                <span class="fw-semibold" style="font-size:.8rem">
+                                                    @if(is_bool($value))
+                                                        <span class="badge bg-{{ $value ? 'success' : 'danger' }}-subtle text-{{ $value ? 'success' : 'danger' }}">
+                                                            {{ $value ? 'Sí' : 'No' }}
+                                                        </span>
+                                                    @else
+                                                        {{ $value }}
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    @endif
 
-                                            @if($result->notificationMessage)
-                                                <div class="alert alert-danger mt-2 mb-0 py-2 px-2">
-                                                    <small><i class="fas fa-exclamation-triangle me-1"></i>{{ $result->notificationMessage }}</small>
-                                                </div>
-                                            @endif
+                                    @if($result->notificationMessage)
+                                        <div class="alert alert-danger mt-2 mb-0 py-2 px-2">
+                                            <small><i class="fas fa-exclamation-triangle me-1"></i>{{ $result->notificationMessage }}</small>
                                         </div>
-                                        <div class="ms-2">
-                                            @if($result->status->value === 'ok')
-                                                <span class="badge bg-primary text-success rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="fas fa-check"></i>
-                                                </span>
-                                            @elseif($result->status->value === 'warning')
-                                                <span class="badge bg-warning text-warning rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="fas fa-exclamation"></i>
-                                                </span>
-                                            @else
-                                                <span class="badge bg-danger text-black rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="fas fa-times"></i>
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

@@ -258,8 +258,7 @@
                                 <label for="type" class="form-label">
                                     Tipo de campo <span class="required">*</span>
                                 </label>
-                                <select
-                                    class="form-select @error('type') is-invalid @enderror"
+                                <select class="select2"                                     class="form-select @error('type') is-invalid @enderror"
                                     id="type"
                                     name="type"
                                     required

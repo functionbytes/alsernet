@@ -18,9 +18,9 @@
                         </p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <a href="{{ route('settings.templates.import.page') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-file-import me-1"></i> Importar ZIP
-                        </button>
+                        </a>
                         <a href="{{ route('settings.templates.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> {{ __('template::template.create_new') }}
                         </a>
@@ -30,80 +30,98 @@
 
             <div class="card-body">
                 @if(count($templates) > 0)
-                    <div class="row row-cards g-3">
+                    <div class="row g-4">
                         @foreach($templates as $slug => $template)
                             @php
-                                $isActive = $activeTemplate === $slug;
+                                $isActive    = $activeTemplate === $slug;
                                 $inheritFrom = $template['inherit'] ?? null;
-                                $inDb = isset($template['_in_db']) ? $template['_in_db'] : true;
+                                $inDb        = $template['_in_db'] ?? true;
+                                $screenshot  = app('Modules\Template\Services\TemplateManager')->getScreenshot($slug);
+                                $hasImage    = $screenshot && !str_ends_with($screenshot, 'placeholder');
                             @endphp
 
                             <div class="col-12 col-sm-6 col-lg-4">
-                                <div class="card card-sm h-100 {{ $isActive ? 'border-success border-2' : '' }}">
+                                <div class="card overflow-hidden hover-img">
 
-                                    {{-- Badge activo --}}
-                                    @if($isActive)
-                                        <div class="ribbon ribbon-top bg-success">
-                                            <i class="fas fa-check me-1"></i> Activa
-                                        </div>
-                                    @elseif($inheritFrom)
-                                        <div class="ribbon ribbon-top bg-info">
-                                            <i class="fas fa-code-branch me-1"></i> Hereda: {{ $inheritFrom }}
-                                        </div>
-                                    @endif
-
-                                    {{-- Screenshot --}}
-                                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
-                                         style="height: 180px; overflow: hidden;">
-                                        @php
-                                            $screenshot = app('Modules\Template\Services\TemplateManager')->getScreenshot($slug);
-                                        @endphp
-                                        @if($screenshot && !str_ends_with($screenshot, 'placeholder'))
-                                            <img src="{{ $screenshot }}" alt="{{ $template['name'] }}"
-                                                 class="w-100 h-100" style="object-fit: cover;">
+                                    {{-- Imagen --}}
+                                    <div class="position-relative">
+                                        @if($hasImage)
+                                            <img src="{{ $screenshot }}" class="card-img-top" alt="{{ $template['name'] }}"
+                                                 style="height:200px;object-fit:cover;">
                                         @else
-                                            <div class="text-center text-muted p-3">
-                                                <i class="fas fa-image fa-3x mb-2 opacity-25"></i>
-                                                <p class="small mb-0">Sin previsualización</p>
+                                            <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                                                 style="height:200px;">
+                                                <div class="text-center text-muted">
+                                                    <i class="fas fa-image fa-3x mb-2 opacity-25"></i>
+                                                    <p class="small mb-0">Sin previsualización</p>
+                                                </div>
                                             </div>
+                                        @endif
+
+                                        {{-- Version badge (bottom-right) --}}
+                                        <span class="badge text-bg-light text-dark fs-2 lh-sm position-absolute bottom-0 end-0 mb-2 me-2 py-1 px-2 fw-semibold">
+                                            v{{ $template['version'] ?? '1.0.0' }}
+                                        </span>
+
+                                        {{-- Estado badge (bottom-left) --}}
+                                        @if($isActive)
+                                            <span class="badge bg-success fs-2 lh-sm position-absolute bottom-0 start-0 mb-2 ms-2 py-1 px-2 fw-semibold">
+                                                <i class="fas fa-check me-1"></i> Activa
+                                            </span>
+                                        @elseif($inheritFrom)
+                                            <span class="badge bg-info fs-2 lh-sm position-absolute bottom-0 start-0 mb-2 ms-2 py-1 px-2 fw-semibold">
+                                                <i class="fas fa-code-branch me-1"></i> Hereda
+                                            </span>
                                         @endif
                                     </div>
 
-                                    {{-- Card Body --}}
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-1">{{ $template['name'] }}</h5>
-                                        <p class="card-text text-muted small mb-2">
+                                    {{-- Card body --}}
+                                    <div class="card-body p-4">
+                                        {{-- Categoría / tipo --}}
+                                        @if($inheritFrom)
+                                            <span class="badge text-bg-light fs-2 py-1 px-2 lh-sm">Hereda: {{ $inheritFrom }}</span>
+                                        @elseif(!$inDb)
+                                            <span class="badge text-bg-warning fs-2 py-1 px-2 lh-sm">Sin registrar</span>
+                                        @else
+                                            <span class="badge text-bg-light fs-2 py-1 px-2 lh-sm">Plantilla</span>
+                                        @endif
+
+                                        <h6 class="d-block mt-3 mb-2 fw-semibold text-dark">{{ $template['name'] }}</h6>
+                                        <p class="text-muted small mb-3">
                                             {{ Str::limit($template['description'] ?? 'Sin descripción', 80) }}
                                         </p>
-                                        <div class="d-flex gap-3 text-muted small">
-                                            <span><i class="fas fa-user me-1"></i>{{ $template['author'] ?? 'N/A' }}</span>
-                                            <span><i class="fas fa-tag me-1"></i>v{{ $template['version'] ?? '1.0.0' }}</span>
+
+                                        {{-- Footer row --}}
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="d-flex align-items-center gap-2 text-muted small">
+                                                <i class="fas fa-user"></i>
+                                                {{ $template['author'] ?? 'N/A' }}
+                                            </div>
+                                            <div class="ms-auto">
+                                                @if($isActive)
+                                                    <span class="badge bg-success-subtle text-success px-3 py-2">
+                                                        <i class="fas fa-check me-1"></i> Activa
+                                                    </span>
+                                                @else
+                                                    <div class="d-flex gap-2">
+                                                        <button class="btn btn-sm btn-primary btn-trigger-activate-template"
+                                                                data-url="{{ route('settings.templates.activate') }}"
+                                                                data-template="{{ $slug }}">
+                                                            <i class="fas fa-check me-1"></i> Activar
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger btn-trigger-remove-template"
+                                                                data-url="{{ route('settings.templates.remove') }}"
+                                                                data-template="{{ $slug }}"
+                                                                data-name="{{ $template['name'] }}"
+                                                                title="Eliminar plantilla">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {{-- Card Footer --}}
-                                    <div class="card-footer bg-transparent">
-                                        @if($isActive)
-                                            <button class="btn btn-success w-100" disabled>
-                                                <i class="fas fa-check me-2"></i>Plantilla Activa
-                                            </button>
-                                        @else
-                                            <div class="d-flex gap-2">
-                                                <button class="btn btn-primary flex-grow-1 btn-trigger-activate-template"
-                                                        data-url="{{ route('settings.templates.activate') }}"
-                                                        data-template="{{ $slug }}">
-                                                    <i class="fas fa-check me-1"></i>Activar
-                                                </button>
-                                                <button class="btn btn-outline-danger btn-trigger-remove-template"
-                                                        data-url="{{ route('settings.templates.remove') }}"
-                                                        data-template="{{ $slug }}"
-                                                        data-name="{{ $template['name'] }}"
-                                                        title="Eliminar plantilla">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        @endif
-                                    </div>
                                 </div>
                             </div>
                         @endforeach
@@ -118,48 +136,15 @@
                             Importa una plantilla desde un archivo ZIP o crea una nueva.
                         </p>
                         <div class="empty-action d-flex gap-2 justify-content-center">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+                            <a href="{{ route('settings.templates.import.page') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-file-import me-1"></i> Importar ZIP
-                            </button>
+                            </a>
                             <a href="{{ route('settings.templates.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i> {{ __('template::template.create') }}
                             </a>
                         </div>
                     </div>
                 @endif
-            </div>
-        </div>
-    </div>
-
-    {{-- Modal: Importar ZIP --}}
-    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="importModalLabel">
-                        <i class="fas fa-file-import me-2"></i>Importar plantilla desde ZIP
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <form method="POST" action="{{ route('settings.templates.import') }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="alert alert-info small py-2">
-                            <i class="fas fa-info-circle me-1"></i>
-                            El ZIP debe contener una carpeta con <code>template.json</code> en su raíz con al menos los campos <code>name</code> y <code>slug</code>.
-                        </div>
-                        <div class="mb-0">
-                            <label for="zip_file" class="form-label fw-semibold">Archivo ZIP</label>
-                            <input type="file" class="form-control" id="zip_file" name="zip_file" accept=".zip" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload me-1"></i> Importar
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -172,17 +157,17 @@
                 <div class="modal-body text-center py-4">
                     <i class="fas fa-triangle-exclamation fa-3x text-danger mb-3"></i>
                     <h4 class="mb-1">Eliminar plantilla</h4>
-                    <p id="remove-template-modal-text" class="text-muted small">
+                    <p id="remove-template-modal-text" class="text-muted">
                         ¿Estás seguro de que deseas eliminar esta plantilla?
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn btn-danger" id="confirm-remove-template-button"
+                    <button type="button" class="btn btn-danger w-100 mb-2" id="confirm-remove-template-button"
                             data-template="" data-url="">
                         <i class="fas fa-trash me-1"></i> Eliminar
+                    </button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>

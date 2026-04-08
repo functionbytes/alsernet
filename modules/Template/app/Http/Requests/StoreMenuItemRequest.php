@@ -24,8 +24,8 @@ class StoreMenuItemRequest extends FormRequest
             'title' => 'required|string|max:255',
             'url' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank,_parent,_top',
-            'icon' => 'nullable|string|max:255',
-            'css_class' => 'nullable|string|max:255',
+            'icon' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
+            'css_class' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
             'type' => 'required|string|in:custom,page,post,category,route',
             'reference_id' => 'nullable|integer',
             'reference_type' => 'nullable|string',
@@ -38,15 +38,15 @@ class StoreMenuItemRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'parent_id' => 'parent item',
-            'title' => 'item title',
+            'parent_id' => 'item padre',
+            'title' => 'título',
             'url' => 'URL',
-            'target' => 'link target',
-            'icon' => 'icon class',
-            'css_class' => 'CSS class',
-            'type' => 'item type',
-            'reference_id' => 'reference ID',
-            'reference_type' => 'reference type',
+            'target' => 'destino del enlace',
+            'icon' => 'clase de icono',
+            'css_class' => 'clase CSS',
+            'type' => 'tipo de item',
+            'reference_id' => 'ID de referencia',
+            'reference_type' => 'tipo de referencia',
         ];
     }
 
@@ -56,9 +56,12 @@ class StoreMenuItemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'The item title is required.',
-            'type.required' => 'The item type is required.',
-            'type.in' => 'The selected item type is invalid.',
+            'title.required' => 'El título del item es obligatorio.',
+            'title.max' => 'El título no puede superar los :max caracteres.',
+            'url.url' => 'La URL no tiene un formato válido.',
+            'target.in' => 'El destino de apertura no es válido.',
+            'type.required' => 'El tipo de item es obligatorio.',
+            'type.in' => 'El tipo de item seleccionado no es válido.',
         ];
     }
 }

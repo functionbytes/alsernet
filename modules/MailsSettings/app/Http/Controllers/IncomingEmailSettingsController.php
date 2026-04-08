@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use Google\Client as GoogleClient;
 use Google\Service\Gmail;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 
 class IncomingEmailSettingsController extends Controller
@@ -15,19 +20,19 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Display incoming email backups
      */
-    public function index()
+    public function index(): View
     {
         $settings = Setting::getIncomingEmailSettings();
         $pageTitle = 'Configuración de Correo Entrante';
         $breadcrumb = 'Configuración / Email / Entrante';
 
-        return view('mails-backups::settings.incoming', compact('settings', 'pageTitle', 'breadcrumb'));
+        return view('mails-settings::settings.incoming', compact('settings', 'pageTitle', 'breadcrumb'));
     }
 
     /**
      * Update Pipe handler backups
      */
-    public function updatePipe(Request $request)
+    public function updatePipe(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -37,15 +42,15 @@ class IncomingEmailSettingsController extends Controller
 
             Setting::setIncomingEmailSettings($validated);
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Configuración Pipe actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating Pipe backups', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al actualizar Pipe: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración Pipe. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -53,7 +58,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Update REST API handler backups
      */
-    public function updateApi(Request $request)
+    public function updateApi(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -63,15 +68,15 @@ class IncomingEmailSettingsController extends Controller
 
             Setting::setIncomingEmailSettings($validated);
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Configuración REST API actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating API backups', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al actualizar REST API: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración REST API. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -79,7 +84,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Generate new API key for REST API handler
      */
-    public function generateApiKey()
+    public function generateApiKey(): JsonResponse
     {
         try {
             $apiKey = bin2hex(random_bytes(32)); // Generate 64-char hex string
@@ -93,12 +98,12 @@ class IncomingEmailSettingsController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error generating API key', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al generar API Key: '.$e->getMessage(),
+                'message' => 'Error al generar la API Key. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -106,7 +111,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Update Mailgun handler backups
      */
-    public function updateMailgun(Request $request)
+    public function updateMailgun(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -117,15 +122,15 @@ class IncomingEmailSettingsController extends Controller
 
             Setting::setIncomingEmailSettings($validated);
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Configuración Mailgun actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating Mailgun backups', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al actualizar Mailgun: '.$e->getMessage())
+                ->with('error', 'Error al actualizar Mailgun. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -133,7 +138,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Store IMAP connection
      */
-    public function storeImapConnection(Request $request)
+    public function storeImapConnection(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -168,15 +173,15 @@ class IncomingEmailSettingsController extends Controller
                 'api' => $settings['api'] ?? ['enabled' => false],
             ]));
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Conexión IMAP agregada correctamente');
         } catch (\Exception $e) {
             Log::error('Error storing IMAP connection', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al guardar la conexión IMAP: '.$e->getMessage())
+                ->with('error', 'Error al guardar la conexión IMAP. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -184,7 +189,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Delete IMAP connection
      */
-    public function deleteImapConnection(string $id)
+    public function deleteImapConnection(string $id): RedirectResponse
     {
         try {
             $settings = Setting::getIncomingEmailSettings();
@@ -205,23 +210,23 @@ class IncomingEmailSettingsController extends Controller
                 'api' => $settings['api'] ?? ['enabled' => false],
             ]));
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Conexión IMAP eliminada correctamente');
         } catch (\Exception $e) {
             Log::error('Error deleting IMAP connection', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'connection_id' => $id,
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al eliminar la conexión IMAP: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la conexión IMAP. Por favor, inténtalo de nuevo.');
         }
     }
 
     /**
      * Test IMAP connection
      */
-    public function testImapConnection(Request $request)
+    public function testImapConnection(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -263,12 +268,12 @@ class IncomingEmailSettingsController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('IMAP connection test exception', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al probar la conexión IMAP: '.$e->getMessage(),
+                'message' => 'Error inesperado al probar la conexión IMAP.',
             ], 500);
         }
     }
@@ -276,18 +281,18 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Display REST API documentation
      */
-    public function apiDocumentation()
+    public function apiDocumentation(): View
     {
         $pageTitle = 'Documentación REST API - Incoming Email';
         $breadcrumb = 'Configuración / Email / Entrante / Documentación API';
 
-        return view('mails-backups::settings.api-documentation', compact('pageTitle', 'breadcrumb'));
+        return view('mails-settings::settings.api-documentation', compact('pageTitle', 'breadcrumb'));
     }
 
     /**
      * Update Gmail API handler backups
      */
-    public function updateGmail(Request $request)
+    public function updateGmail(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -299,15 +304,15 @@ class IncomingEmailSettingsController extends Controller
 
             Setting::setIncomingEmailSettings($validated);
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Configuración Gmail actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating Gmail backups', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al actualizar Gmail: '.$e->getMessage())
+                ->with('error', 'Error al actualizar Gmail. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -315,14 +320,14 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Initiate Gmail OAuth2 authorization flow
      */
-    public function gmailAuthorize(Request $request)
+    public function gmailAuthorize(Request $request): RedirectResponse
     {
         try {
             $settings = Setting::getIncomingEmailSettings();
             $gmailSettings = $settings['gmail'] ?? [];
 
             if (empty($gmailSettings['client_id']) || empty($gmailSettings['client_secret'])) {
-                return redirect()->route('settings.incoming.index')
+                return redirect()->route('settings.incoming-email.index')
                     ->with('error', 'Configure primero las credenciales de Gmail (Client ID y Client Secret)');
             }
 
@@ -340,24 +345,24 @@ class IncomingEmailSettingsController extends Controller
             return redirect($authUrl);
         } catch (\Exception $e) {
             Log::error('Error initiating Gmail OAuth2', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
-            return redirect()->route('settings.incoming.index')
-                ->with('error', 'Error al iniciar autorización de Gmail: '.$e->getMessage());
+            return redirect()->route('settings.incoming-email.index')
+                ->with('error', 'Error al iniciar la autorización de Gmail. Por favor, inténtalo de nuevo.');
         }
     }
 
     /**
      * Handle Gmail OAuth2 callback
      */
-    public function gmailCallback(Request $request)
+    public function gmailCallback(Request $request): RedirectResponse
     {
         try {
             $code = $request->input('code');
 
             if (! $code) {
-                return redirect()->route('settings.incoming.index')
+                return redirect()->route('settings.incoming-email.index')
                     ->with('error', 'No se recibió el código de autorización de Google');
             }
 
@@ -403,22 +408,22 @@ class IncomingEmailSettingsController extends Controller
                 'mailgun' => $settings['mailgun'] ?? ['enabled' => false],
             ]));
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', "Cuenta de Gmail {$profile->emailAddress} conectada correctamente");
         } catch (\Exception $e) {
             Log::error('Error handling Gmail OAuth2 callback', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
-            return redirect()->route('settings.incoming.index')
-                ->with('error', 'Error al conectar cuenta de Gmail: '.$e->getMessage());
+            return redirect()->route('settings.incoming-email.index')
+                ->with('error', 'Error al conectar la cuenta de Gmail. Por favor, inténtalo de nuevo.');
         }
     }
 
     /**
      * Delete Gmail connection
      */
-    public function deleteGmailConnection(string $id)
+    public function deleteGmailConnection(string $id): RedirectResponse
     {
         try {
             $settings = Setting::getIncomingEmailSettings();
@@ -440,23 +445,23 @@ class IncomingEmailSettingsController extends Controller
                 'mailgun' => $settings['mailgun'] ?? ['enabled' => false],
             ]));
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Conexión Gmail eliminada correctamente');
         } catch (\Exception $e) {
             Log::error('Error deleting Gmail connection', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'connection_id' => $id,
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al eliminar la conexión Gmail: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la conexión Gmail. Por favor, inténtalo de nuevo.');
         }
     }
 
     /**
      * Update phpList handler backups
      */
-    public function updatePhplist(Request $request)
+    public function updatePhplist(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -468,15 +473,15 @@ class IncomingEmailSettingsController extends Controller
 
             Setting::setIncomingEmailSettings($validated);
 
-            return redirect()->route('settings.incoming.index')
+            return redirect()->route('settings.incoming-email.index')
                 ->with('success', 'Configuración phpList actualizada correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating phpList backups', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error al actualizar phpList: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración phpList. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -484,7 +489,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Test phpList API connection
      */
-    public function testPhplistConnection(Request $request)
+    public function testPhplistConnection(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -520,24 +525,24 @@ class IncomingEmailSettingsController extends Controller
                 'success' => false,
                 'message' => 'No se pudo conectar con phpList. Código de estado: '.$statusCode,
             ], 400);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error de autenticación. Verifique su API Key: '.$e->getMessage(),
+                'message' => 'Error de autenticación. Verifica tu API Key de phpList.',
             ], 401);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error de conexión con phpList: '.$e->getMessage(),
+                'message' => 'No se pudo conectar con phpList. Verifica la URL del servidor.',
             ], 500);
         } catch (\Exception $e) {
             Log::error('Error testing phpList connection', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al probar la conexión: '.$e->getMessage(),
+                'message' => 'Error inesperado al probar la conexión con phpList.',
             ], 500);
         }
     }
@@ -545,7 +550,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Get phpList mailing lists
      */
-    public function getPhplistLists(Request $request)
+    public function getPhplistLists(Request $request): JsonResponse
     {
         try {
             $settings = Setting::getIncomingEmailSettings();
@@ -576,12 +581,12 @@ class IncomingEmailSettingsController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching phpList lists', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener las listas: '.$e->getMessage(),
+                'message' => 'Error al obtener las listas de phpList. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -589,7 +594,7 @@ class IncomingEmailSettingsController extends Controller
     /**
      * Subscribe email to phpList
      */
-    public function phplistSubscribe(Request $request)
+    public function phplistSubscribe(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -631,7 +636,7 @@ class IncomingEmailSettingsController extends Controller
                 'message' => "Email {$validated['email']} suscrito correctamente a la lista",
                 'data' => $result,
             ]);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $response = $e->getResponse();
             $body = json_decode($response->getBody(), true);
 
@@ -641,13 +646,13 @@ class IncomingEmailSettingsController extends Controller
             ], $response->getStatusCode());
         } catch (\Exception $e) {
             Log::error('Error subscribing to phpList', [
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
                 'email' => $validated['email'] ?? null,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al suscribir: '.$e->getMessage(),
+                'message' => 'Error al suscribir el email. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

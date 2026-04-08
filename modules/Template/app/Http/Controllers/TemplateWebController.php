@@ -11,8 +11,7 @@ class TemplateWebController
 {
     public function __construct(
         protected TemplateManager $manager,
-    ) {
-    }
+    ) {}
 
     /**
      * Renderizar un template públicamente
@@ -22,17 +21,25 @@ class TemplateWebController
      */
     public function render(string $slug): View|Response
     {
-        // Obtener el template
         $template = Template::where('slug', $slug)
             ->where('status', 'active')
             ->firstOrFail();
 
-        // Renderizar el template
+        $variables = [
+            '{{ $title }}' => e($template->name),
+            '{{ $description }}' => e($template->description ?? ''),
+            '{{ $content }}' => e($template->content ?? ''),
+            '{{ $keywords }}' => e($template->keywords ?? ''),
+            '{{ $canonical }}' => e(url()->current()),
+        ];
+
+        $renderedContent = str_replace(array_keys($variables), array_values($variables), $template->content ?? '');
+
         return view('template::public.render', [
             'template' => $template,
             'title' => $template->name,
             'description' => $template->description,
-            'content' => $template->content,
+            'renderedContent' => $renderedContent,
             'layout' => $template->template_path ?? "templates/{$template->slug}",
         ]);
     }

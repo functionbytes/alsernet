@@ -3,11 +3,16 @@
 namespace Modules\Notification\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
-use Modules\Notification\Console\Commands\CleanOldNotifications;
+use Modules\Notification\Console\Commands\CleanupNotificationsCommand;
+use Modules\Notification\Console\Commands\SendNotificationDigestCommand;
+use Modules\Notification\Observers\DatabaseNotificationObserver;
+use Modules\Notification\Services\NotificationTypeRegistry;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class NotificationServiceProvider extends ServiceProvider
 {
@@ -23,12 +28,18 @@ class NotificationServiceProvider extends ServiceProvider
             'notification'
         );
 
+        $this->app->singleton(NotificationTypeRegistry::class);
+
         // Register commands
         $this->registerCommands();
     }
 
     public function boot(): void
     {
+        if (Module::find('Notification')?->isDisabled()) {
+            return;
+        }
+
         // Publish config
         $this->publishes([
             __DIR__.'/../../config/notification.php' => config_path('notification.php'),
@@ -46,10 +57,16 @@ class NotificationServiceProvider extends ServiceProvider
         // Load views
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'notification');
 
+        // Observe database notifications to broadcast real-time events
+        DatabaseNotification::observe(DatabaseNotificationObserver::class);
+
         // Configure WebSocket/Pusher settings (deferred to avoid boot issues)
         $this->app->booted(function () {
             $this->configureWebSocketSettings();
         });
+
+        // Register notification types
+        $this->registerNotificationTypes();
 
         // Register scheduled tasks
         $this->registerSchedules();
@@ -70,7 +87,7 @@ class NotificationServiceProvider extends ServiceProvider
 
         // Notification operational routes
         Route::middleware(['web', 'auth:web'])
-            ->prefix('notifications')
+            ->prefix('panel/notifications')
             ->name('notifications.')
             ->group(function () use ($modulePath) {
                 require $modulePath.'/routes/web.php';
@@ -78,7 +95,7 @@ class NotificationServiceProvider extends ServiceProvider
 
         // Notification backups routes
         Route::middleware(['web', 'auth:web', 'settings'])
-            ->prefix('setting/notifications')
+            ->prefix('panel/setting/notifications')
             ->name('settings.notifications.')
             ->group(function () use ($modulePath) {
                 require $modulePath.'/routes/settings.php';
@@ -96,7 +113,8 @@ class NotificationServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            CleanOldNotifications::class,
+            CleanupNotificationsCommand::class,
+            SendNotificationDigestCommand::class,
         ]);
     }
 
@@ -123,7 +141,7 @@ class NotificationServiceProvider extends ServiceProvider
         try {
             return cache()->remember('notification_settings', now()->addMinutes(10), function () {
                 // Use fully qualified class name to ensure correct model resolution
-                $settingClass = \Modules\Core\Models\Setting::class;
+                $settingClass = Setting::class;
 
                 return $settingClass::query()->first();
             });
@@ -140,9 +158,10 @@ class NotificationServiceProvider extends ServiceProvider
     {
         // Mini-nav item para Notifications
         NavService::registerMiniItem('notifications', [
-            'icon' => 'fa-duotone fa-bell',
+            'icon' => 'fas fa-bell',
             'tooltip' => 'Notificaciones',
             'sidebar_id' => 'notifications',
+            'url' => 'notifications.index',
             'order' => 70,
         ]);
 
@@ -156,6 +175,30 @@ class NotificationServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register all known notification types in the registry
+     */
+    protected function registerNotificationTypes(): void
+    {
+        $this->app->booted(function () {
+            $registry = $this->app->make(NotificationTypeRegistry::class);
+
+            $registry->register('reviews.new_review', 'Nueva reseña', 'Cuando se recibe cualquier reseña nueva', ['mail', 'database']);
+            $registry->register('reviews.negative_review', 'Reseña negativa', 'Reseñas con calificación baja (1-3 estrellas)', ['mail', 'database']);
+            $registry->register('reviews.positive_review', 'Reseña positiva', 'Reseñas con calificación alta (4-5 estrellas)', ['database']);
+            $registry->register('reviews.export_ready', 'Exportación lista', 'Cuando una exportación de reseñas está disponible', ['database']);
+            $registry->register('reviews.connection_expiring', 'Conexión expirando', 'Cuando una conexión de Google está por expirar', ['mail', 'database']);
+            $registry->register('reviews.daily_digest', 'Resumen diario de reseñas', 'Resumen diario de actividad de reseñas', ['mail']);
+            $registry->register('attention.status_changed', 'Estado de PQRSF actualizado', 'Cuando cambia el estado de una solicitud de atención', ['database']);
+            $registry->register('backup.success', 'Backup exitoso', 'Cuando un backup del sistema se completa correctamente', ['mail']);
+            $registry->register('backup.failed', 'Backup fallido', 'Cuando un backup del sistema falla', ['mail']);
+            $registry->register('alerts.threshold_triggered', 'Alerta por umbral', 'Cuando se dispara una alerta del sistema', ['database']);
+            $registry->register('blog.new_comment', 'Nuevo comentario en blog', 'Cuando alguien comenta en un post', ['mail', 'database']);
+            $registry->register('forms.new_submission', 'Nueva respuesta de formulario', 'Cuando se envía un formulario del sitio', ['mail', 'database']);
+            $registry->register('page.published', 'Página publicada', 'Cuando una página es publicada en el sistema', ['mail', 'database']);
+        });
+    }
+
+    /**
      * Register scheduled tasks for Notification module
      */
     protected function registerSchedules(): void
@@ -163,8 +206,15 @@ class NotificationServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
 
-            // Auto-delete old notifications - every minute
-            $schedule->command('notification:autodelete')->everyMinute();
+            // Auto-delete old notifications - respects NOTIFICATION_CLEANUP_ENABLED and NOTIFICATION_CLEANUP_DAYS
+            if (config('notification.cleanup.enabled', true)) {
+                $schedule->command('notifications:cleanup', [
+                    '--days' => config('notification.cleanup.days', 30),
+                ])->dailyAt('00:00')->withoutOverlapping();
+            }
+
+            // Daily notification digest - dispatches per-user jobs at 08:00
+            $schedule->command('notifications:send-digest')->dailyAt('08:00')->withoutOverlapping();
         });
     }
 }

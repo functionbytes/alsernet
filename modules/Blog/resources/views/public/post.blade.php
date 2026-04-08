@@ -53,7 +53,7 @@
                     <h1 class="h3 fw-bold mb-3">{{ $post->title }}</h1>
 
                     {{-- Meta --}}
-                    <div class="d-flex flex-wrap gap-3 text-muted small mb-4 pb-3 border-bottom">
+                    <div class="d-flex flex-wrap gap-3 text-muted mb-4 pb-3 border-bottom">
                         @if($post->user)
                             <span><i class="fas fa-user me-1"></i>{{ $post->user->name }}</span>
                         @endif
@@ -70,7 +70,7 @@
                     {{-- Tags --}}
                     @if($post->tags->isNotEmpty())
                         <div class="mt-4 pt-3 border-top">
-                            <span class="text-muted small me-2"><i class="fas fa-tags me-1"></i>Etiquetas:</span>
+                            <span class="text-muted me-2"><i class="fas fa-tags me-1"></i>Etiquetas:</span>
                             @foreach($post->tags as $tag)
                                 <a href="{{ $tag->url }}"
                                    class="badge bg-secondary text-decoration-none me-1">{{ $tag->name }}</a>

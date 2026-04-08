@@ -100,10 +100,11 @@ class MailProviderApiController extends Controller
                 'data' => new MailProviderResource($provider),
             ], 201);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create mail provider',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -159,10 +160,11 @@ class MailProviderApiController extends Controller
                 'data' => new MailProviderResource($provider->fresh()),
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update mail provider',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -184,10 +186,11 @@ class MailProviderApiController extends Controller
                 'message' => 'Mail provider deleted successfully',
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete mail provider',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -206,10 +209,11 @@ class MailProviderApiController extends Controller
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Connection test failed',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -236,10 +240,11 @@ class MailProviderApiController extends Controller
                 'data' => new MailProviderResource($provider->fresh()),
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to set provider as default',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -262,10 +267,11 @@ class MailProviderApiController extends Controller
                 'data' => new MailProviderResource($provider->fresh()),
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to toggle provider status',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }

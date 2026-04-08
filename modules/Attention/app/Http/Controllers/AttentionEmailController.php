@@ -4,6 +4,7 @@ namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,10 +13,15 @@ use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Attention\Exports\EmailHistoryExport;
 use Modules\Attention\Http\Requests\SendCustomEmailRequest;
+use Modules\Attention\Mail\AttentionAssignedMail;
+use Modules\Attention\Mail\AttentionConfirmationMail;
 use Modules\Attention\Mail\AttentionCustomMail;
+use Modules\Attention\Mail\AttentionInProcessMail;
+use Modules\Attention\Mail\AttentionResolutionMail;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionMail;
 use Modules\Attention\Services\AttentionNotificationService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -36,7 +42,7 @@ class AttentionEmailController extends Controller
      * Lista historial de emails de un PQRSF
      * GET /attentions/{uid}/emails
      */
-    public function index(Request $request, string $uid): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function index(Request $request, string $uid): JsonResponse|View|RedirectResponse
     {
         try {
             $attention = Attention::where('uid', $uid)->firstOrFail();
@@ -107,7 +113,7 @@ class AttentionEmailController extends Controller
      * Ver preview de email específico
      * GET /attentions/{uid}/emails/{mailUid}/preview
      */
-    public function preview(Request $request, string $uid, string $mailUid): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function preview(Request $request, string $uid, string $mailUid): JsonResponse|View|RedirectResponse
     {
         try {
             $attention = Attention::where('uid', $uid)->firstOrFail();
@@ -215,7 +221,7 @@ class AttentionEmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'No se pudo reenviar el email: '.$e->getMessage(),
+                'message' => 'No se pudo reenviar el email. Por favor, inténtalo de nuevo.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -275,7 +281,7 @@ class AttentionEmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'No se pudo enviar el email: '.$e->getMessage(),
+                'message' => 'No se pudo enviar el email. Por favor, inténtalo de nuevo.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -435,7 +441,7 @@ class AttentionEmailController extends Controller
      * Historial global de emails (settings)
      * GET /emails/history
      */
-    public function history(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function history(Request $request): JsonResponse|View|RedirectResponse
     {
         try {
             $query = AttentionMail::with(['attention'])
@@ -560,7 +566,7 @@ class AttentionEmailController extends Controller
     /**
      * Export email history to Excel or CSV
      */
-    public function export(Request $request): \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function export(Request $request): JsonResponse|BinaryFileResponse
     {
         try {
             $validated = $request->validate([
@@ -643,7 +649,7 @@ class AttentionEmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al exportar historial de emails: '.$e->getMessage(),
+                'message' => 'Error al exportar historial de emails. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -654,10 +660,10 @@ class AttentionEmailController extends Controller
     private function getMailClass(string $type): ?string
     {
         return match ($type) {
-            'confirmation' => \Modules\Attention\Mail\AttentionConfirmationMail::class,
-            'assigned' => \Modules\Attention\Mail\AttentionAssignedMail::class,
-            'in_process' => \Modules\Attention\Mail\AttentionInProcessMail::class,
-            'resolution' => \Modules\Attention\Mail\AttentionResolutionMail::class,
+            'confirmation' => AttentionConfirmationMail::class,
+            'assigned' => AttentionAssignedMail::class,
+            'in_process' => AttentionInProcessMail::class,
+            'resolution' => AttentionResolutionMail::class,
             default => null,
         };
     }

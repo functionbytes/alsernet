@@ -6,7 +6,8 @@
 - Global key/value pairs stored in `settings` table (`key` unique, `value` longtext)
 - Use `DB::table('settings')->updateOrInsert(['key' => $key], ['value' => $val])` pattern
 - `setting($key)` helper in `modules/System/app/Helpers/SettingsHelper.php`
-- `setting()` does NOT support a default parameter - check source before using
+- `setting($key, $default = '')` DOES support a default parameter (verified in SettingsHelper.php)
+- `setting()` issues a raw DB query each call — no cache. Use `Setting::get($key, $default)` when multiple calls needed (has cache layer)
 
 ### Active Template
 - Active theme slug stored in `settings` where `key = 'template'` (currently `wowy`)

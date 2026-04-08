@@ -4,6 +4,8 @@ namespace Modules\Modules\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as LaravelEventServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Modules\Modules\Console\Commands\ModulesStatusCommand;
+use Modules\Modules\Console\Commands\ToggleModuleCommand;
 use Modules\Theme\Services\NavService;
 
 class EventServiceProvider extends LaravelEventServiceProvider
@@ -48,8 +50,8 @@ class EventServiceProvider extends LaravelEventServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\Modules\Console\Commands\ModulesStatusCommand::class,
-            \Modules\Modules\Console\Commands\ToggleModuleCommand::class,
+            ModulesStatusCommand::class,
+            ToggleModuleCommand::class,
         ]);
     }
 
@@ -76,32 +78,13 @@ class EventServiceProvider extends LaravelEventServiceProvider
 
     protected function registerConfig(): void
     {
-        $configPath = module_path('Modules', config('modules.paths.generator.config.path'));
+        $configFile = module_path('Modules', 'config/config.php');
 
-        if (is_dir($configPath)) {
-            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($configPath));
+        $this->publishes([
+            $configFile => config_path('modules.php'),
+        ], 'config');
 
-            foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'php') {
-                    $config = str_replace($configPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
-                    $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
-                    $segments = explode('.', 'modules.'.$config_key);
-
-                    // Remove duplicated adjacent segments
-                    $normalized = [];
-                    foreach ($segments as $segment) {
-                        if (end($normalized) !== $segment) {
-                            $normalized[] = $segment;
-                        }
-                    }
-
-                    $key = ($config === 'config.php') ? 'modules' : implode('.', $normalized);
-
-                    $this->publishes([$file->getPathname() => config_path($config)], 'config');
-                    $this->mergeConfigFrom($file->getPathname(), $key);
-                }
-            }
-        }
+        $this->mergeConfigFrom($configFile, 'modules');
     }
 
     protected function registerViews(): void
@@ -130,13 +113,11 @@ class EventServiceProvider extends LaravelEventServiceProvider
 
     protected function registerMenus(): void
     {
-        // Register menus for Modules management
-        NavService::registerSidebar('settings', [
-            'title' => 'Módulos',
-            'items' => [
-                ['label' => 'Gestión de módulos', 'route' => 'settings.modules.index'],
-            ],
+
+        NavService::addItemsToSection('settings', 'Configuraciones', [
+            ['label' => 'Gestión de módulos', 'route' => 'settings.modules.index'],
         ]);
+
     }
 
     public function provides(): array

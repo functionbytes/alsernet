@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
+use Modules\Reviews\Database\Factories\ReviewReplyFactory;
 use Modules\Reviews\Enums\ReplyStatus;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -14,7 +16,27 @@ class ReviewReply extends Model
 {
     use HasFactory, LogsActivity;
 
+    public const GOOGLE_MAX_CHARS = 4096;
+
     protected $table = 'review_replies';
+
+    protected static function newFactory()
+    {
+        return ReviewReplyFactory::new();
+    }
+
+    protected static function booted(): void
+    {
+        $flush = static function (): void {
+            if (method_exists(Cache::getStore(), 'tags')) {
+                Cache::tags(['reviews-dashboard'])->flush();
+            }
+        };
+
+        static::created($flush);
+        static::updated($flush);
+        static::deleted($flush);
+    }
 
     protected $fillable = [
         'review_id',
@@ -26,6 +48,11 @@ class ReviewReply extends Model
         'approved_by',
         'approved_at',
         'published_at',
+        'scheduled_at',
+        'approval_requested_at',
+        'approval_requested_by',
+        'approval_note',
+        'rejection_reason',
     ];
 
     protected function casts(): array
@@ -34,6 +61,8 @@ class ReviewReply extends Model
             'status' => ReplyStatus::class,
             'approved_at' => 'datetime',
             'published_at' => 'datetime',
+            'scheduled_at' => 'datetime',
+            'approval_requested_at' => 'datetime',
         ];
     }
 
@@ -58,6 +87,11 @@ class ReviewReply extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function approvalRequestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approval_requested_by');
     }
 
     public function scopeStatus($query, ReplyStatus|string $status)
@@ -85,6 +119,16 @@ class ReviewReply extends Model
         return $query->where('status', ReplyStatus::FAILED);
     }
 
+    public function scopePendingApproval($query)
+    {
+        return $query->where('status', ReplyStatus::PENDING_APPROVAL);
+    }
+
+    public function scopeScheduled($query)
+    {
+        return $query->where('status', ReplyStatus::SCHEDULED);
+    }
+
     public function isDraft(): bool
     {
         return $this->status === ReplyStatus::DRAFT;
@@ -98,6 +142,16 @@ class ReviewReply extends Model
     public function isPublished(): bool
     {
         return $this->status === ReplyStatus::PUBLISHED;
+    }
+
+    public function isScheduled(): bool
+    {
+        return $this->status === ReplyStatus::SCHEDULED;
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === ReplyStatus::PENDING_APPROVAL;
     }
 
     public function isFailed(): bool
@@ -119,6 +173,7 @@ class ReviewReply extends Model
         $this->update([
             'status' => ReplyStatus::PUBLISHED,
             'published_at' => now(),
+            'scheduled_at' => null,
         ]);
     }
 

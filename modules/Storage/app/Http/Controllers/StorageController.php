@@ -3,16 +3,22 @@
 namespace Modules\Storage\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
+use Modules\Storage\Http\Requests\StoreDiskRequest;
+use Modules\Storage\Http\Requests\UpdateDiskRequest;
 
 class StorageController extends Controller
 {
     /**
      * Display storage management page
      */
-    public function index()
+    public function index(): View
     {
         $storageData = $this->getStorageData();
         $statistics = $this->getStorageStatistics($storageData);
@@ -26,83 +32,12 @@ class StorageController extends Controller
     }
 
     /**
-     * Update storage configuration
-     */
-    public function update(Request $request)
-    {
-        $validated = $request->validate([
-            'disks' => 'required|array',
-            'disks.*.name' => 'required|string|max:50',
-            'disks.*.driver' => 'required|string|in:local,ftp,sftp,s3',
-            'disks.*.root' => 'required_if:disks.*.driver,local|string',
-            'disks.*.url' => 'nullable|string',
-            'disks.*.host' => 'required_if:disks.*.driver,ftp,sftp|string',
-            'disks.*.username' => 'required_if:disks.*.driver,ftp,sftp|string',
-            'disks.*.password' => 'nullable|string',
-            'disks.*.port' => 'nullable|integer',
-            'disks.*.bucket' => 'required_if:disks.*.driver,s3|string',
-            'disks.*.key' => 'required_if:disks.*.driver,s3|string',
-            'disks.*.secret' => 'required_if:disks.*.driver,s3|string',
-            'disks.*.region' => 'required_if:disks.*.driver,s3|string',
-        ]);
-
-        try {
-            // Validate disk names are unique
-            $diskNames = array_column($validated['disks'], 'name');
-            if (count($diskNames) !== count(array_unique($diskNames))) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'No pueden existir dos discos con el mismo nombre',
-                    ], 422);
-                }
-
-                return back()
-                    ->withInput()
-                    ->with('error', 'No pueden existir dos discos con el mismo nombre');
-            }
-
-            // Save custom storage disks configuration
-            Setting::set('system.custom_storage_disks', json_encode($validated['disks']));
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Configuración de almacenamiento actualizada correctamente',
-                ]);
-            }
-
-            return redirect()
-                ->back()
-                ->with('success', 'Configuración de almacenamiento actualizada correctamente');
-        } catch (\Exception $e) {
-            \Log::error('Error updating storage configuration', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Error al actualizar la configuración: '.$e->getMessage(),
-                ], 500);
-            }
-
-            return back()
-                ->withInput()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage());
-        }
-    }
-
-    /**
      * Show create storage disk form
      */
-    public function create()
+    public function create(): View
     {
-        $storageData = $this->getStorageData();
-
         return view('storage::create', [
-            'driverOptions' => $storageData['driver_options'],
+            'driverOptions' => $this->driverOptions(),
             'pageTitle' => 'Crear disco de almacenamiento',
             'breadcrumb' => 'Configuración / Almacenamiento / Crear',
         ]);
@@ -111,123 +46,64 @@ class StorageController extends Controller
     /**
      * Store a new storage disk
      */
-    public function store(Request $request)
+    public function store(StoreDiskRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:50',
-            'driver' => 'required|string|in:local,ftp,sftp,s3',
-            'storage_type' => 'required_if:driver,local|nullable|string|in:public,private',
-            'root' => 'nullable|string',
-            'url' => 'nullable|string',
-            'host' => 'required_if:driver,ftp,sftp|nullable|string',
-            'username' => 'required_if:driver,ftp,sftp|nullable|string',
-            'password' => 'nullable|string',
-            'port' => 'nullable|integer',
-            'bucket' => 'required_if:driver,s3|nullable|string',
-            'key' => 'required_if:driver,s3|nullable|string',
-            'secret' => 'required_if:driver,s3|nullable|string',
-            'region' => 'required_if:driver,s3|nullable|string',
-        ]);
+        $validated = $request->validated();
 
         try {
-            $diskData = [
-                'name' => $validated['name'],
-                'driver' => $validated['driver'],
-            ];
+            $diskData = $this->buildDiskData($validated);
 
-            if ($validated['driver'] === 'local') {
-                // Generate path and URL based on storage type
-                $pathInfo = $this->generateStoragePath($validated['name'], $validated['storage_type']);
-
-                if (! $pathInfo['success']) {
-                    return back()
-                        ->withInput()
-                        ->with('error', $pathInfo['message']);
-                }
-
-                $diskData['root'] = $pathInfo['root'];
-                $diskData['url'] = $pathInfo['url'];
-                $diskData['storage_type'] = $validated['storage_type'];
-
-                // Validate and prepare the disk
-                $validation = $this->validateAndPrepareLocalDisk($pathInfo['root']);
-                if (! $validation['success']) {
-                    return back()
-                        ->withInput()
-                        ->with('error', $validation['message']);
-                }
-            } elseif ($validated['driver'] === 'ftp' || $validated['driver'] === 'sftp') {
-                $diskData['host'] = $validated['host'];
-                $diskData['username'] = $validated['username'];
-                $diskData['password'] = isset($validated['password'])
-                    ? Crypt::encryptString($validated['password'])
-                    : null;
-                $diskData['port'] = $validated['port'] ?? null;
-            } elseif ($validated['driver'] === 's3') {
-                $diskData['bucket'] = $validated['bucket'];
-                $diskData['region'] = $validated['region'];
-                $diskData['key'] = $validated['key'];
-                $diskData['secret'] = isset($validated['secret'])
-                    ? Crypt::encryptString($validated['secret'])
-                    : null;
+            if ($diskData === null) {
+                return back()->withInput()->with('error', 'Tipo de almacenamiento no soportado');
             }
 
-            $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
-            $existingDisks = json_decode($customDisksJson, true) ?: [];
-
-            $diskNames = array_column($existingDisks, 'name');
-            if (in_array($validated['name'], $diskNames)) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Ya existe un disco con ese nombre');
+            if (is_array($diskData) && isset($diskData['error'])) {
+                return back()->withInput()->with('error', $diskData['error']);
             }
 
-            $configDisks = config('filesystems.disks', []);
-            if (isset($configDisks[$validated['name']])) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Ya existe un disco del sistema con ese nombre');
+            $existingDisks = $this->loadCustomDisks();
+
+            if (in_array($validated['name'], array_column($existingDisks, 'name'))) {
+                return back()->withInput()->with('error', 'Ya existe un disco con ese nombre');
+            }
+
+            if (array_key_exists($validated['name'], config('filesystems.disks', []))) {
+                return back()->withInput()->with('error', 'Ya existe un disco del sistema con ese nombre');
             }
 
             $existingDisks[] = $diskData;
-            Setting::set('system.custom_storage_disks', json_encode($existingDisks));
+            $this->saveCustomDisks($existingDisks);
 
             return redirect()
                 ->route('settings.storage')
                 ->with('success', 'Disco de almacenamiento creado correctamente');
         } catch (\Exception $e) {
-            \Log::error('Error creating storage disk', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Error creating storage disk', ['error' => $e->getMessage()]);
 
-            return back()
-                ->withInput()
-                ->with('error', 'Error al crear el disco: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Error al crear el disco');
         }
     }
 
     /**
      * Show edit storage disk form
      */
-    public function edit(int $index)
+    public function edit(string $name): View|RedirectResponse
     {
-        $storageData = $this->getStorageData();
+        $rawDisk = $this->findCustomDisk($name);
+        $isFromConfig = $rawDisk === null && array_key_exists($name, config('filesystems.disks', []));
 
-        if (! isset($storageData['custom_disks'][$index])) {
-            return redirect()
-                ->route('settings.storage')
-                ->with('error', 'El disco solicitado no existe');
+        if ($rawDisk === null && ! $isFromConfig) {
+            return redirect()->route('settings.storage')->with('error', 'El disco solicitado no existe');
         }
 
-        $disk = $storageData['custom_disks'][$index];
-        $isFromConfig = $disk['from_config'] ?? false;
+        // For config disks, build a display-safe representation
+        $disk = $rawDisk ?? $this->buildConfigDiskDisplay($name);
 
         return view('storage::edit', [
             'disk' => $disk,
-            'diskIndex' => $index,
+            'diskName' => $name,
             'isFromConfig' => $isFromConfig,
-            'driverOptions' => $storageData['driver_options'],
+            'driverOptions' => $this->driverOptions(),
             'pageTitle' => 'Editar disco de almacenamiento',
             'breadcrumb' => 'Configuración / Almacenamiento / Editar',
         ]);
@@ -236,156 +112,148 @@ class StorageController extends Controller
     /**
      * Update a specific storage disk
      */
-    public function updateDisk(Request $request, int $index)
+    public function updateDisk(UpdateDiskRequest $request, string $name): RedirectResponse
     {
-        $storageData = $this->getStorageData();
+        // Load once — reuse for both the individual disk lookup and the full list update
+        $existingDisks = $this->loadCustomDisks();
+        $rawDisk = collect($existingDisks)->firstWhere('name', $name);
+        $isFromConfig = $rawDisk === null && array_key_exists($name, config('filesystems.disks', []));
 
-        if (! isset($storageData['custom_disks'][$index])) {
-            return redirect()
-                ->route('settings.storage')
-                ->with('error', 'El disco solicitado no existe');
+        if ($rawDisk === null && ! $isFromConfig) {
+            return redirect()->route('settings.storage')->with('error', 'El disco solicitado no existe');
         }
 
-        $disk = $storageData['custom_disks'][$index];
-        $isFromConfig = $disk['from_config'] ?? false;
-
-        // Load raw stored disks to retrieve the existing encrypted credential value
-        $rawStoredDisks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true) ?: [];
-        $rawDisk = collect($rawStoredDisks)->firstWhere('name', $disk['name']) ?? [];
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:50',
-            'driver' => 'required|string|in:local,ftp,sftp,s3',
-            'storage_type' => 'required_if:driver,local|nullable|string|in:public,private',
-            'root' => 'nullable|string',
-            'url' => 'nullable|string',
-            'host' => 'required_if:driver,ftp,sftp|nullable|string',
-            'username' => 'required_if:driver,ftp,sftp|nullable|string',
-            'password' => 'nullable|string',
-            'port' => 'nullable|integer',
-            'bucket' => 'required_if:driver,s3|nullable|string',
-            'key' => 'required_if:driver,s3|nullable|string',
-            'secret' => 'nullable|string',
-            'region' => 'required_if:driver,s3|nullable|string',
-        ]);
+        $validated = $request->validated();
 
         try {
-            $diskData = [
-                'name' => $validated['name'],
-                'driver' => $validated['driver'],
-            ];
+            $diskData = $this->buildDiskData($validated, $rawDisk ?? []);
 
-            if ($validated['driver'] === 'local') {
-                // Generate path and URL based on storage type
-                $pathInfo = $this->generateStoragePath($validated['name'], $validated['storage_type']);
-
-                if (! $pathInfo['success']) {
-                    return back()
-                        ->withInput()
-                        ->with('error', $pathInfo['message']);
-                }
-
-                $diskData['root'] = $pathInfo['root'];
-                $diskData['url'] = $pathInfo['url'];
-                $diskData['storage_type'] = $validated['storage_type'];
-
-                // Validate and prepare the disk
-                $validation = $this->validateAndPrepareLocalDisk($pathInfo['root']);
-                if (! $validation['success']) {
-                    return back()
-                        ->withInput()
-                        ->with('error', $validation['message']);
-                }
-            } elseif ($validated['driver'] === 'ftp' || $validated['driver'] === 'sftp') {
-                $diskData['host'] = $validated['host'];
-                $diskData['username'] = $validated['username'];
-                $diskData['password'] = ! empty($validated['password'])
-                    ? Crypt::encryptString($validated['password'])
-                    : ($rawDisk['password'] ?? null);
-                $diskData['port'] = $validated['port'] ?? null;
-            } elseif ($validated['driver'] === 's3') {
-                $diskData['bucket'] = $validated['bucket'];
-                $diskData['region'] = $validated['region'];
-                $diskData['key'] = $validated['key'];
-                $diskData['secret'] = ! empty($validated['secret'])
-                    ? Crypt::encryptString($validated['secret'])
-                    : ($rawDisk['secret'] ?? null);
+            if ($diskData === null) {
+                return back()->withInput()->with('error', 'Tipo de almacenamiento no soportado');
             }
 
-            $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
-            $existingDisks = json_decode($customDisksJson, true) ?: [];
+            if (is_array($diskData) && isset($diskData['error'])) {
+                return back()->withInput()->with('error', $diskData['error']);
+            }
 
             if ($isFromConfig) {
                 $existingDisks[] = $diskData;
             } else {
-                $realIndex = array_search($disk['name'], array_column($existingDisks, 'name'));
-                if ($realIndex !== false) {
-                    $existingDisks[$realIndex] = $diskData;
-                } else {
-                    $existingDisks[] = $diskData;
+                $realIndex = array_search($name, array_column($existingDisks, 'name'));
+                if ($realIndex === false) {
+                    return back()->withInput()->with('error', 'El disco fue eliminado por otro proceso');
                 }
+                $existingDisks[$realIndex] = $diskData;
             }
 
             $diskNames = array_column($existingDisks, 'name');
             if (count($diskNames) !== count(array_unique($diskNames))) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'No pueden existir dos discos con el mismo nombre');
+                return back()->withInput()->with('error', 'No pueden existir dos discos con el mismo nombre');
             }
 
-            Setting::set('system.custom_storage_disks', json_encode($existingDisks));
+            $this->saveCustomDisks($existingDisks);
 
-            return redirect()
-                ->route('settings.storage')
-                ->with('success', 'Disco actualizado correctamente');
+            return redirect()->route('settings.storage')->with('success', 'Disco actualizado correctamente');
         } catch (\Exception $e) {
-            \Log::error('Error updating storage disk', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Error updating storage disk', ['error' => $e->getMessage()]);
 
-            return back()
-                ->withInput()
-                ->with('error', 'Error al actualizar el disco: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Error al actualizar el disco');
         }
     }
 
     /**
-     * Delete custom storage disk
+     * Delete a custom storage disk
      */
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'disk_name' => 'required|string',
-        ]);
+        $validated = $request->validate(['disk_name' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]+$/']]);
 
         try {
-            $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
-            $customDisks = json_decode($customDisksJson, true) ?: [];
+            $customDisks = $this->loadCustomDisks();
 
-            // Filter out the disk to delete
-            $customDisks = array_filter($customDisks, function ($disk) use ($validated) {
-                return $disk['name'] !== $validated['disk_name'];
-            });
+            if (! collect($customDisks)->contains('name', $validated['disk_name'])) {
+                return back()->with('error', 'El disco no existe o no puede ser eliminado');
+            }
 
-            // Re-index array
-            $customDisks = array_values($customDisks);
+            $customDisks = array_values(array_filter(
+                $customDisks,
+                fn ($disk) => $disk['name'] !== $validated['disk_name']
+            ));
 
-            // Save updated configuration
-            Setting::set('system.custom_storage_disks', json_encode($customDisks));
+            $this->saveCustomDisks($customDisks);
 
-            return redirect()
-                ->back()
-                ->with('success', 'Disco de almacenamiento eliminado correctamente');
+            return redirect()->back()->with('success', 'Disco de almacenamiento eliminado correctamente');
         } catch (\Exception $e) {
-            \Log::error('Error deleting storage disk', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Error deleting storage disk', ['error' => $e->getMessage()]);
 
-            return back()
-                ->with('error', 'Error al eliminar el disco: '.$e->getMessage());
+            return back()->with('error', 'Error al eliminar el disco');
         }
+    }
+
+    /**
+     * Build disk data array from validated input.
+     * Returns array with 'error' key on failure, null for unsupported driver.
+     * Pass $existingRaw to preserve encrypted credentials when fields are left blank (for updates).
+     */
+    private function buildDiskData(array $validated, array $existingRaw = []): ?array
+    {
+        $driver = $validated['driver'];
+
+        $extra = match ($driver) {
+            'local' => $this->buildLocalDiskExtra($validated),
+            'ftp', 'sftp' => [
+                'host' => $validated['host'],
+                'username' => $validated['username'],
+                'password' => ! empty($validated['password'])
+                    ? Crypt::encryptString($validated['password'])
+                    : ($existingRaw['password'] ?? null),
+                'port' => $validated['port'] ?? ($driver === 'ftp' ? 21 : 22),
+            ],
+            's3' => [
+                'bucket' => $validated['bucket'],
+                'region' => $validated['region'],
+                'key' => ! empty($validated['key'])
+                    ? Crypt::encryptString($validated['key'])
+                    : ($existingRaw['key'] ?? null),
+                'secret' => ! empty($validated['secret'])
+                    ? Crypt::encryptString($validated['secret'])
+                    : ($existingRaw['secret'] ?? null),
+            ],
+            default => null,
+        };
+
+        if ($extra === null) {
+            return null;
+        }
+
+        if (isset($extra['error'])) {
+            return $extra;
+        }
+
+        return array_merge(['name' => $validated['name'], 'driver' => $driver], $extra);
+    }
+
+    /**
+     * Build extra config for a local disk, validating the path.
+     * Returns ['error' => ...] on failure.
+     */
+    private function buildLocalDiskExtra(array $validated): array
+    {
+        $pathInfo = $this->generateStoragePath($validated['name'], $validated['storage_type']);
+        if (! $pathInfo['success']) {
+            return ['error' => $pathInfo['message']];
+        }
+
+        $dirCheck = $this->validateAndPrepareLocalDisk($pathInfo['root']);
+        if (! $dirCheck['success']) {
+            return ['error' => $dirCheck['message']];
+        }
+
+        return [
+            'root' => $pathInfo['root'],
+            'url' => $pathInfo['url'],
+            'storage_type' => $validated['storage_type'],
+        ];
     }
 
     /**
@@ -393,162 +261,189 @@ class StorageController extends Controller
      */
     private function generateStoragePath(string $diskName, string $storageType): array
     {
-        try {
-            if ($storageType === 'public') {
-                // Use storage/app/public directly instead of symlink
-                $root = storage_path('app/public/'.$diskName);
-                $url = '/storage/'.$diskName;
-            } elseif ($storageType === 'private') {
-                $root = storage_path($diskName);
-                $url = null;
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Tipo de almacenamiento no válido',
-                ];
-            }
-
+        if ($storageType === 'public') {
             return [
                 'success' => true,
-                'root' => $root,
-                'url' => $url,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Error al generar la ruta: '.$e->getMessage(),
+                'root' => storage_path('app/public/'.$diskName),
+                'url' => '/storage/'.$diskName,
             ];
         }
+
+        if ($storageType === 'private') {
+            return ['success' => true, 'root' => storage_path($diskName), 'url' => null];
+        }
+
+        return ['success' => false, 'message' => 'Tipo de almacenamiento no válido'];
     }
 
     /**
-     * Validate and prepare local storage disk
+     * Validate and prepare a local storage directory
      */
     private function validateAndPrepareLocalDisk(string $rootPath): array
     {
-        // Validate that path is not empty
         if (empty(trim($rootPath))) {
-            return [
-                'success' => false,
-                'message' => 'La ruta no puede estar vacía. Proporciona una ruta absoluta como /mnt/storage',
-            ];
+            return ['success' => false, 'message' => 'La ruta no puede estar vacía.'];
         }
 
-        // Reject dangerous system paths BEFORE trimming
+        if (str_contains($rootPath, '..')) {
+            return ['success' => false, 'message' => 'La ruta no puede contener segmentos relativos (..)'];
+        }
+
         $dangerousPaths = ['/', '/bin', '/boot', '/dev', '/etc', '/lib', '/root', '/sbin', '/sys', '/usr', '/var'];
         if (in_array($rootPath, $dangerousPaths) || in_array(rtrim($rootPath, '/'), $dangerousPaths)) {
             return [
                 'success' => false,
-                'message' => "La ruta '{$rootPath}' no es permitida por razones de seguridad. Usa directorios específicos como /mnt o subdirectorios del proyecto.",
+                'message' => "La ruta '{$rootPath}' no es permitida por razones de seguridad.",
             ];
         }
 
         $rootPath = rtrim($rootPath, '/');
 
-        // Validate absolute path
         if (! str_starts_with($rootPath, '/')) {
-            return [
-                'success' => false,
-                'message' => 'La ruta debe ser absoluta (debe comenzar con /). Ejemplo: /mnt/storage o /var/www/storage',
-            ];
+            return ['success' => false, 'message' => 'La ruta debe ser absoluta (debe comenzar con /).'];
         }
 
-        // Reject paths directly under root (single level like /documents, /uploads, etc)
-        // Paths must be at least 2 levels deep or under specific allowed prefixes
-        $pathParts = array_filter(explode('/', $rootPath));
-        $allowedPrefixes = ['mnt', 'data', 'opt', 'home', 'srv', 'media', 'storage'];
-        $firstPart = $pathParts[0] ?? null;
-
+        $pathParts = array_values(array_filter(explode('/', $rootPath)));
         if (count($pathParts) === 1) {
             return [
                 'success' => false,
-                'message' => "No se permiten directorios directamente bajo raíz como /{$firstPart}. Usa rutas como /mnt/storage, /data/uploads, /opt/storage, etc.",
+                'message' => "No se permiten directorios directamente bajo raíz como /{$pathParts[0]}. Usa rutas como /mnt/storage.",
             ];
         }
 
-        // Validate that path doesn't contain suspicious patterns
         if (preg_match('/\$\{.*\}/', $rootPath) || preg_match('/`.*`/', $rootPath)) {
-            return [
-                'success' => false,
-                'message' => 'La ruta contiene caracteres no permitidos',
-            ];
+            return ['success' => false, 'message' => 'La ruta contiene caracteres no permitidos'];
         }
 
         if (! is_dir($rootPath)) {
             $parentDir = dirname($rootPath);
 
-            // Create parent directory structure if needed
             if (! is_dir($parentDir)) {
-                try {
-                    @mkdir($parentDir, 0755, true);
-                    // Verify parent was created
-                    if (! is_dir($parentDir)) {
-                        return [
-                            'success' => false,
-                            'message' => "No se pudo crear el directorio padre: {$parentDir}",
-                        ];
-                    }
-                    \Log::info('Storage parent directory created', ['path' => $parentDir]);
-                } catch (\Exception $e) {
-                    return [
-                        'success' => false,
-                        'message' => "Error al crear directorio padre: {$e->getMessage()}",
-                    ];
+                @mkdir($parentDir, 0755, true);
+                if (! is_dir($parentDir)) {
+                    return ['success' => false, 'message' => "No se pudo crear el directorio padre: {$parentDir}"];
                 }
+                Log::info('Storage parent directory created', ['path' => $parentDir]);
             }
 
-            // Verify parent directory is writable
             if (! is_writable($parentDir)) {
-                return [
-                    'success' => false,
-                    'message' => "Sin permisos de escritura en: {$parentDir}",
-                ];
+                return ['success' => false, 'message' => "Sin permisos de escritura en: {$parentDir}"];
             }
 
-            // Create the storage directory
-            try {
-                @mkdir($rootPath, 0755, true);
+            @mkdir($rootPath, 0755, true);
+            if (! is_dir($rootPath)) {
+                return ['success' => false, 'message' => "No se pudo crear el directorio: {$rootPath}"];
+            }
 
-                // Verify directory was created
-                if (! is_dir($rootPath)) {
-                    return [
-                        'success' => false,
-                        'message' => "No se pudo crear el directorio: {$rootPath}",
-                    ];
-                }
+            Log::info('Storage directory created', ['path' => $rootPath]);
+        }
 
-                // Create .gitignore and .gitkeep files
-                file_put_contents($rootPath.'/.gitignore', "*\n!.gitignore\n!.gitkeep\n");
-                file_put_contents($rootPath.'/.gitkeep', '');
-
-                \Log::info('Storage directory created', ['path' => $rootPath]);
-            } catch (\Exception $e) {
-                return [
-                    'success' => false,
-                    'message' => "Error al crear directorio: {$e->getMessage()}",
-                ];
+        // Ensure git tracking files exist regardless of whether we just created the directory
+        if (! file_exists($rootPath.'/.gitignore')) {
+            if (file_put_contents($rootPath.'/.gitignore', "*\n!.gitignore\n!.gitkeep\n") === false) {
+                Log::warning('Could not write .gitignore in storage directory', ['path' => $rootPath]);
+            }
+        }
+        if (! file_exists($rootPath.'/.gitkeep')) {
+            if (file_put_contents($rootPath.'/.gitkeep', '') === false) {
+                Log::warning('Could not write .gitkeep in storage directory', ['path' => $rootPath]);
             }
         }
 
         if (! is_readable($rootPath)) {
-            return [
-                'success' => false,
-                'message' => "El directorio no es legible: {$rootPath}. Verifica los permisos.",
-            ];
+            return ['success' => false, 'message' => "El directorio no es legible: {$rootPath}."];
         }
 
         if (! is_writable($rootPath)) {
-            return [
-                'success' => false,
-                'message' => "El directorio no es escribible: {$rootPath}. Contacta al administrador del servidor para cambiar los permisos.",
-            ];
+            return ['success' => false, 'message' => "El directorio no es escribible: {$rootPath}."];
         }
 
-        return [
-            'success' => true,
-            'message' => 'Directorio configurado correctamente',
-            'path' => $rootPath,
-        ];
+        return ['success' => true, 'message' => 'Directorio configurado correctamente', 'path' => $rootPath];
+    }
+
+    /**
+     * Load custom disks from database
+     */
+    private function loadCustomDisks(): array
+    {
+        $raw = Setting::get('system.custom_storage_disks', '[]');
+
+        if (! is_string($raw)) {
+            Log::error('Custom storage disks setting has unexpected type', ['type' => gettype($raw)]);
+
+            return [];
+        }
+
+        if (trim($raw) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('Custom storage disks JSON is malformed', ['error' => json_last_error_msg()]);
+
+            return [];
+        }
+
+        return $decoded ?: [];
+    }
+
+    /**
+     * Find a single custom disk by name (raw, with encrypted credentials)
+     */
+    private function findCustomDisk(string $name): ?array
+    {
+        return collect($this->loadCustomDisks())->firstWhere('name', $name);
+    }
+
+    /**
+     * Build a display-safe representation of a config-file disk for the edit form
+     */
+    private function buildConfigDiskDisplay(string $name): array
+    {
+        return $this->buildDiskFromConfig($name, config("filesystems.disks.{$name}", []), false);
+    }
+
+    /**
+     * Build a display-safe disk array from a config entry.
+     * When $maskCredentials is true, credentials are replaced with placeholders (for the index table).
+     * When false, credential fields are omitted (for the edit form — user must re-enter them).
+     */
+    private function buildDiskFromConfig(string $name, array $config, bool $maskCredentials): array
+    {
+        $driver = $config['driver'] ?? 'unknown';
+        $disk = ['name' => $name, 'driver' => $driver, 'from_config' => true];
+
+        if ($driver === 'local') {
+            $disk['root'] = $config['root'] ?? '';
+            $disk['url'] = $config['url'] ?? '';
+        } elseif (in_array($driver, ['ftp', 'sftp'])) {
+            $disk['host'] = $config['host'] ?? '';
+            $disk['port'] = $config['port'] ?? '';
+            $disk['username'] = $config['username'] ?? '';
+            if ($maskCredentials) {
+                $disk['password'] = '********';
+            }
+        } elseif ($driver === 's3') {
+            $disk['bucket'] = $config['bucket'] ?? '';
+            $disk['region'] = $config['region'] ?? '';
+            $disk['key'] = $maskCredentials ? '••••••••' : '';
+            if ($maskCredentials) {
+                $disk['secret'] = '********';
+            }
+        }
+
+        return $disk;
+    }
+
+    /**
+     * Save custom disks to database and clear cache
+     */
+    private function saveCustomDisks(array $disks): void
+    {
+        Setting::set('system.custom_storage_disks', json_encode($disks));
+        Cache::forget('storage.custom_disks');
     }
 
     /**
@@ -556,48 +451,27 @@ class StorageController extends Controller
      */
     private function getStorageData(): array
     {
-        $systemDisks = $this->getSystemDisks();
         $coreDisks = ['local', 'public'];
-        $configDisks = [];
         $disksConfig = config('filesystems.disks');
+        $configDisks = [];
+
+        // DB disks are registered into config() by the ServiceProvider at boot time.
+        // Exclude them here to avoid showing each DB disk twice (once as "config" and once as "DB").
+        $dbDiskNames = array_column($this->loadCustomDisks(), 'name');
 
         foreach ($disksConfig as $diskName => $diskConfig) {
-            if (in_array($diskName, $coreDisks)) {
+            if (in_array($diskName, $coreDisks) || in_array($diskName, $dbDiskNames)) {
                 continue;
             }
 
-            $driver = $diskConfig['driver'] ?? 'unknown';
-            $configDisk = [
-                'name' => $diskName,
-                'driver' => $driver,
-                'from_config' => true,
-            ];
-
-            if ($driver === 'local') {
-                $configDisk['root'] = $diskConfig['root'] ?? '';
-                $configDisk['url'] = $diskConfig['url'] ?? '';
-            } elseif ($driver === 'ftp' || $driver === 'sftp') {
-                $configDisk['host'] = $diskConfig['host'] ?? '';
-                $configDisk['port'] = $diskConfig['port'] ?? '';
-                $configDisk['username'] = $diskConfig['username'] ?? '';
-                $configDisk['password'] = '********';
-            } elseif ($driver === 's3') {
-                $configDisk['bucket'] = $diskConfig['bucket'] ?? '';
-                $configDisk['region'] = $diskConfig['region'] ?? '';
-                $configDisk['key'] = $diskConfig['key'] ?? '';
-                $configDisk['secret'] = '********';
-            }
-
-            $configDisks[] = $configDisk;
+            $configDisks[] = $this->buildDiskFromConfig($diskName, $diskConfig, true);
         }
 
-        $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
-        $customDisks = json_decode($customDisksJson, true) ?: [];
+        $customDisks = $this->loadCustomDisks();
 
         foreach ($customDisks as &$disk) {
             $disk['from_config'] = false;
 
-            // Mask sensitive credential fields for display purposes
             if (! empty($disk['password'])) {
                 $disk['password'] = '••••••••';
             }
@@ -605,18 +479,12 @@ class StorageController extends Controller
                 $disk['secret'] = '••••••••';
             }
         }
-
-        $allCustomDisks = array_merge($configDisks, $customDisks);
+        unset($disk);
 
         return [
-            'system_disks' => $systemDisks,
-            'custom_disks' => $allCustomDisks,
-            'driver_options' => [
-                'local' => 'Almacenamiento Local',
-                'ftp' => 'FTP',
-                'sftp' => 'SFTP',
-                's3' => 'Amazon S3',
-            ],
+            'system_disks' => $this->getSystemDisks(),
+            'custom_disks' => array_merge($configDisks, $customDisks),
+            'driver_options' => $this->driverOptions(),
         ];
     }
 
@@ -625,18 +493,17 @@ class StorageController extends Controller
      */
     private function getSystemDisks(): array
     {
-        $coreDisks = ['local', 'public'];
         $disksConfig = config('filesystems.disks');
         $systemDisks = [];
 
-        foreach ($disksConfig as $diskName => $diskConfig) {
-            if (! in_array($diskName, $coreDisks)) {
+        foreach (['local', 'public'] as $diskName) {
+            if (! isset($disksConfig[$diskName])) {
                 continue;
             }
 
+            $diskConfig = $disksConfig[$diskName];
             $driver = $diskConfig['driver'] ?? 'unknown';
             $root = $diskConfig['root'] ?? 'N/A';
-            $url = $diskConfig['url'] ?? null;
 
             $description = match ($driver) {
                 'local' => 'Almacenamiento local en: '.$root,
@@ -650,7 +517,7 @@ class StorageController extends Controller
                 'name' => $diskName,
                 'driver' => $driver,
                 'root' => $root,
-                'url' => $url,
+                'url' => $diskConfig['url'] ?? null,
                 'description' => $description,
                 'editable' => false,
             ];
@@ -667,14 +534,7 @@ class StorageController extends Controller
         $systemCount = count($storageData['system_disks']);
         $customCount = count($storageData['custom_disks']);
         $customConfigCount = count(array_filter($storageData['custom_disks'], fn ($disk) => $disk['from_config'] ?? false));
-        $customDbCount = $customCount - $customConfigCount;
-
-        $driverCounts = [
-            'local' => 0,
-            'ftp' => 0,
-            'sftp' => 0,
-            's3' => 0,
-        ];
+        $driverCounts = ['local' => 0, 'ftp' => 0, 'sftp' => 0, 's3' => 0];
 
         foreach ($storageData['custom_disks'] as $disk) {
             $driver = $disk['driver'] ?? 'unknown';
@@ -688,8 +548,21 @@ class StorageController extends Controller
             'system_disks' => $systemCount,
             'custom_disks_total' => $customCount,
             'custom_config' => $customConfigCount,
-            'custom_db' => $customDbCount,
+            'custom_db' => $customCount - $customConfigCount,
             'driver_counts' => $driverCounts,
+        ];
+    }
+
+    /**
+     * Available driver options for the UI
+     */
+    private function driverOptions(): array
+    {
+        return [
+            'local' => 'Almacenamiento Local',
+            'ftp' => 'FTP',
+            'sftp' => 'SFTP',
+            's3' => 'Amazon S3',
         ];
     }
 }

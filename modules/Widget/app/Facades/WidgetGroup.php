@@ -3,6 +3,7 @@
 namespace Modules\Widget\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Modules\Widget\WidgetGroupCollection;
 
 /**
  * @method static \Modules\Widget\WidgetGroup group(string $name, string|null $title = null, string|null $description = null)
@@ -11,12 +12,14 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Modules\Widget\WidgetGroup|null getGroup(string $name)
  * @method static \Illuminate\Support\Collection getGroups()
  * @method static bool hasGroup(string $name)
+ * @method static \Modules\Widget\WidgetGroupCollection setGroup(array $args)
  * @method static \Modules\Widget\WidgetGroupCollection removeGroup(string $name)
  * @method static \Illuminate\Support\Collection getAllWidgets()
  * @method static \Illuminate\Support\Collection getWidgetsByGroup(string $groupName)
  * @method static \Modules\Widget\WidgetGroupCollection clear()
+ * @method static string render(string $sidebarId)
  *
- * @see \Modules\Widget\WidgetGroupCollection
+ * @see WidgetGroupCollection
  */
 class WidgetGroup extends Facade
 {

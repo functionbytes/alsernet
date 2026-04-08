@@ -3,6 +3,7 @@
 namespace Modules\Page\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Page\Enums\PageStatus;
 use Modules\Page\Models\Page;
 use Tests\TestCase;
 
@@ -19,7 +20,7 @@ class PageSearchTest extends TestCase
             'title' => 'Laravel Framework Guide',
             'content' => 'This is a comprehensive guide about Laravel PHP framework.',
             'description' => 'Learn Laravel from scratch',
-            'status' => Page::STATUS_PUBLISHED,
+            'status' => PageStatus::Published->value,
             'published_at' => now()->subDay(),
         ]);
 
@@ -27,14 +28,14 @@ class PageSearchTest extends TestCase
             'title' => 'Vue.js Tutorial',
             'content' => 'A complete tutorial about Vue.js JavaScript framework.',
             'description' => 'Master Vue.js development',
-            'status' => Page::STATUS_PUBLISHED,
+            'status' => PageStatus::Published->value,
             'published_at' => now()->subDay(),
         ]);
 
         Page::factory()->create([
             'title' => 'Draft Page',
             'content' => 'This page is not published yet.',
-            'status' => Page::STATUS_DRAFT,
+            'status' => PageStatus::Draft->value,
         ]);
     }
 

@@ -10,6 +10,7 @@ use Modules\Reviews\Models\ReviewGoogleConnection;
 use Modules\Reviews\Models\ReviewGoogleLocation;
 use Modules\Reviews\Models\ReviewModeration;
 use Modules\Reviews\Models\ReviewReply;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -28,10 +29,11 @@ abstract class TestCase extends BaseTestCase
     {
         $user = User::factory()->create();
 
-        if (! empty($permissions)) {
-            foreach ($permissions as $permission) {
-                $user->givePermissionTo($permission);
-            }
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(
+                ['name' => $permission, 'guard_name' => 'web']
+            );
+            $user->givePermissionTo($permission);
         }
 
         return $user;
@@ -47,14 +49,14 @@ abstract class TestCase extends BaseTestCase
     protected function createLocation(?ReviewGoogleConnection $connection = null): ReviewGoogleLocation
     {
         return ReviewGoogleLocation::factory()
-            ->for($connection ?? $this->createConnection())
+            ->for($connection ?? $this->createConnection(), 'connection')
             ->create();
     }
 
     protected function createReview(?ReviewGoogleLocation $location = null): Review
     {
         return Review::factory()
-            ->for($location ?? $this->createLocation())
+            ->for($location ?? $this->createLocation(), 'location')
             ->create();
     }
 

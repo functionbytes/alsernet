@@ -2,7 +2,11 @@
 
 namespace Modules\Notification\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection as SupportCollection;
+use Modules\Notification\Models\NotificationPreference;
+use Modules\Notification\Models\NotificationPushToken;
 
 /**
  * Trait HasNotificationSystem
@@ -17,7 +21,7 @@ trait HasNotificationSystem
      */
     public function notificationPreferences(): HasMany
     {
-        return $this->hasMany(\App\Models\Notifications\NotificationPreference::class);
+        return $this->hasMany(NotificationPreference::class);
     }
 
     /**
@@ -25,7 +29,7 @@ trait HasNotificationSystem
      */
     public function pushTokens(): HasMany
     {
-        return $this->hasMany(\App\Models\Notifications\NotificationPushToken::class);
+        return $this->hasMany(NotificationPushToken::class);
     }
 
     /**
@@ -33,21 +37,21 @@ trait HasNotificationSystem
      */
     public function canReceiveNotification(string $channel, string $type): bool
     {
-        return \App\Models\Notifications\NotificationPreference::isEnabled($this->id, $channel, $type);
+        return NotificationPreference::isEnabled($this->id, $channel, $type);
     }
 
     /**
      * Obtener tokens activos de push notifications
      */
-    public function getActivePushTokens()
+    public function getActivePushTokens(): Collection
     {
-        return \App\Models\Notifications\NotificationPushToken::activeForUser($this->id);
+        return NotificationPushToken::activeForUser($this->id);
     }
 
     /**
      * Obtener notificaciones no leídas con datos formateados
      */
-    public function getFormattedUnreadNotifications()
+    public function getFormattedUnreadNotifications(): SupportCollection
     {
         return $this->unreadNotifications->map(function ($notification) {
             $data = $notification->data;
@@ -71,7 +75,7 @@ trait HasNotificationSystem
     /**
      * Obtener todas las notificaciones con datos formateados
      */
-    public function getFormattedNotifications(int $limit = 50)
+    public function getFormattedNotifications(int $limit = 50): SupportCollection
     {
         return $this->notifications()
             ->take($limit)
@@ -124,7 +128,7 @@ trait HasNotificationSystem
     /**
      * Rutear notificaciones basado en configuraciones del usuario
      */
-    public function routeNotificationFor($driver, $notification = null)
+    public function routeNotificationFor(string $driver, mixed $notification = null): mixed
     {
         if ($driver === 'vonage') {
             return $this->phone ?? null;

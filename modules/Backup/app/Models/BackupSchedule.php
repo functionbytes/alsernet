@@ -106,7 +106,7 @@ class BackupSchedule extends Model
                 $lastRun = Carbon::parse($this->last_run_at);
                 $hours = (int) ($this->custom_interval_hours ?? 24);
 
-                return $now->diffInHours($lastRun) >= $hours;
+                return $lastRun->diffInHours($now) >= $hours;
 
             default:
                 return false;
@@ -159,6 +159,7 @@ class BackupSchedule extends Model
 
             case 'monthly':
                 $daysOfMonth = $this->days_of_month ?? [];
+                $targetMonth = $now->copy()->addMonth()->month;
                 $nextDate = $now->copy()->addMonth()->startOfMonth();
                 do {
                     if (in_array($nextDate->day, $daysOfMonth)) {
@@ -169,7 +170,7 @@ class BackupSchedule extends Model
                         );
                     }
                     $nextDate->addDay();
-                } while ($nextDate->month == $now->addMonth()->month);
+                } while ($nextDate->month == $targetMonth);
 
                 return $now->copy()->addMonth();
 

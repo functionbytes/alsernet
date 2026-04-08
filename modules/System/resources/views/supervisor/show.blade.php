@@ -160,79 +160,45 @@
 
 @section('js')
     <script>
+        toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-bottom-right', timeOut: 3000 };
+
         // Auto-refresh logs every 10 seconds
         setInterval(refreshLogs, 10000);
 
-        function startProcess(processName) {
-            if (confirm(`¿Deseas iniciar el proceso "${processName}"?`)) {
-                fetch(`{{ route('settings.system.supervisor.start', ['processName' => ':processName']) }}`.replace(':processName', processName), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json'
+        function processAction(processName, action, url) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                dataType: 'json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message, 'Éxito');
+                        setTimeout(function () { location.reload(); }, 1500);
+                    } else {
+                        toastr.error(data.message || 'Error al ejecutar la acción', 'Error');
                     }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Proceso iniciado correctamente');
-                            location.reload();
-                        } else {
-                            alert('Error: ' + (data.message || 'Error al iniciar el proceso'));
-                        }
-                    })
-                    .catch(error => {
-                        alert('Error: ' + error.message);
-                    });
-            }
+                },
+                error: function (xhr) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error de conexión';
+                    toastr.error(msg, 'Error');
+                }
+            });
+        }
+
+        function startProcess(processName) {
+            processAction(processName, 'start',
+                '{{ route('settings.system.supervisor.start', ['processName' => ':p']) }}'.replace(':p', processName));
         }
 
         function stopProcess(processName) {
-            if (confirm(`¿Deseas detener el proceso "${processName}"?`)) {
-                fetch(`{{ route('settings.system.supervisor.stop', ['processName' => ':processName']) }}`.replace(':processName', processName), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Proceso detenido correctamente');
-                            location.reload();
-                        } else {
-                            alert('Error: ' + (data.message || 'Error al detener el proceso'));
-                        }
-                    })
-                    .catch(error => {
-                        alert('Error: ' + error.message);
-                    });
-            }
+            processAction(processName, 'stop',
+                '{{ route('settings.system.supervisor.stop', ['processName' => ':p']) }}'.replace(':p', processName));
         }
 
         function restartProcess(processName) {
-            if (confirm(`¿Deseas reiniciar el proceso "${processName}"?`)) {
-                fetch(`{{ route('settings.system.supervisor.restart', ['processName' => ':processName']) }}`.replace(':processName', processName), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Proceso reiniciado correctamente');
-                            location.reload();
-                        } else {
-                            alert('Error: ' + (data.message || 'Error al reiniciar el proceso'));
-                        }
-                    })
-                    .catch(error => {
-                        alert('Error: ' + error.message);
-                    });
-            }
+            processAction(processName, 'restart',
+                '{{ route('settings.system.supervisor.restart', ['processName' => ':p']) }}'.replace(':p', processName));
         }
 
         function refreshLogs() {

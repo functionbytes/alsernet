@@ -33,21 +33,10 @@
                             </ul>
                         </div>
 
-                        <div class="card  bg-light-secondary -secondaryborder-0 mt-4">
-                            <div class="card-body">
-                                <h6 class="mb-3">Para habilitar, añade en el archivo <code>.env</code>:</h6>
-                                <div class="bg-white p-3 rounded border" style="font-family: 'Courier New', monospace;">
-                                    <code class="text-black">CMS_ENABLED_CLEANUP_DATABASE=true</code>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 text-muted small">
-                            <p>
-                                <i class="fa fa-circle-info"></i>
-                                Después de realizar el cambio, recarga esta página para acceder a la limpieza de base de
-                                datos.
-                            </p>
+                        <div class="mt-4">
+                            <a href="{{ route('settings.database.edit') }}" class="btn btn-primary">
+                                <i class="fa fa-gear"></i> Ir a configuración de base de datos
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -2,13 +2,14 @@
 
 namespace Modules\Cache\Http\Requests\Settings;
 
+use App\Helpers\ModuleStatusHelper;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CacheRequest extends FormRequest
+class CacheSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('Cache.settings.update') ?? false;
     }
 
     public function rules(): array
@@ -22,7 +23,7 @@ class CacheRequest extends FormRequest
         ];
 
         // Only validate pages fields if Page module is active
-        if (module_exists('Page')) {
+        if (ModuleStatusHelper::isModuleEnabled('Page')) {
             $rules['pages_enabled'] = 'nullable|in:1';
             $rules['pages_ttl'] = 'required|integer|min:1|max:10080';
         }

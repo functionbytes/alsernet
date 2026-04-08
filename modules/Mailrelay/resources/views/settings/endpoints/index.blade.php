@@ -26,7 +26,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Estado</label>
-                            <select name="status" class="form-select">
+                            <select class="select2" name="status" class="form-select">
                                 <option value="">Todos</option>
                                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activo</option>
                                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivo</option>
@@ -225,12 +225,14 @@ $(document).ready(function() {
                     $('#test-result').html('<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Prueba ejecutada correctamente</div>');
                     toastr.success('Endpoint ejecutado correctamente');
                 } else {
-                    $('#test-result').html('<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i>' + (response.error || 'Error desconocido') + '</div>');
+                    const msg = $('<span>').text(response.error || 'Error desconocido');
+                    $('#test-result').html($('<div class="alert alert-danger">').append('<i class="fas fa-times-circle me-2"></i>').append(msg));
                 }
             },
             error: function(xhr) {
-                const error = xhr.responseJSON?.error || 'Error al ejecutar el endpoint';
-                $('#test-result').html('<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i>' + error + '</div>');
+                const errorText = xhr.responseJSON?.error || 'Error al ejecutar el endpoint';
+                const msg = $('<span>').text(errorText);
+                $('#test-result').html($('<div class="alert alert-danger">').append('<i class="fas fa-times-circle me-2"></i>').append(msg));
             },
             complete: function() {
                 $('#execute-test').prop('disabled', false).html('<i class="fas fa-play me-2"></i>Ejecutar');

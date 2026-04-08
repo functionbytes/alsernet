@@ -67,7 +67,15 @@
             {{-- Filters --}}
             <div class="card-body border-bottom">
                 <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                    <div class="flex-shrink-0" style="min-width:160px;">
+                    <div class="flex-fill">
+                        <div class="input-group h-100">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="search" class="form-control border-start-0 ps-0" id="filterSearch" placeholder="Buscar en descripción...">
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0" style="min-width: 180px;">
                         <select class="form-select select2 h-100" id="filterEvent">
                             <option value="">Todos los eventos</option>
                             <option value="created">Creado</option>
@@ -77,28 +85,23 @@
                             <option value="logout">Logout</option>
                         </select>
                     </div>
-                    <div class="flex-shrink-0" style="min-width:160px;">
+                    <div class="flex-shrink-0" style="min-width: 180px;">
                         <select class="form-select select2 h-100" id="filterLogName">
                             <option value="">Todos los módulos</option>
-                            <option value="reviews">Reviews</option>
-                            <option value="pages">Páginas</option>
-                            <option value="users">Usuarios</option>
-                            <option value="seo">SEO</option>
-                            <option value="settings">Configuración</option>
+                            @foreach($logNames as $logName)
+                                <option value="{{ $logName }}">{{ ucfirst($logName) }}</option>
+                            @endforeach
                         </select>
                     </div>
-                    <div class="flex-shrink-0" style="min-width:140px;">
-                        <input type="date" class="form-control h-100" id="filterDateFrom" placeholder="Desde">
+                    <div class="flex-shrink-0" style="min-width: 150px;">
+                        <input type="date" class="form-control h-100" id="filterDateFrom">
                     </div>
-                    <div class="flex-shrink-0" style="min-width:140px;">
-                        <input type="date" class="form-control h-100" id="filterDateTo" placeholder="Hasta">
+                    <div class="flex-shrink-0" style="min-width: 150px;">
+                        <input type="date" class="form-control h-100" id="filterDateTo">
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
-                        <button class="btn btn-primary px-4" id="applyFilters">
-                            <i class="fas fa-filter me-1"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" id="clearFilters" title="Limpiar filtros">
-                            <i class="fas fa-times"></i>
+                        <button type="button" class="btn btn-primary" id="applyFilters">
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
@@ -109,32 +112,35 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Historial de actividad</h6>
-                        <p class="text-muted small mb-0" id="total-count">Cargando...</p>
+                        <p class="text-muted mb-0" id="total-count">Cargando...</p>
                     </div>
                 </div>
 
                 <div id="activity-table-container">
                     <div class="text-center py-5">
                         <div class="spinner-border text-primary mb-2"></div>
-                        <p class="text-muted small mb-0">Cargando actividad...</p>
+                        <p class="text-muted mb-0">Cargando actividad...</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card-footer bg-white py-2" id="pagination-container"></div>
+            <div class="card-footer bg-white px-4" id="pagination-container"></div>
 
         </div>
     </div>
 
     {{-- Detail modal --}}
     <div class="modal fade" id="activityDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalle de actividad</h5>
+                    <h5 class="modal-title fw-bold" id="activity-detail-title">Detalle de actividad</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="activity-detail-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100 mb-2" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -168,12 +174,13 @@
 
         $.get('{{ route("activity.audit.data") }}', {
             page: page,
+            search: $('#filterSearch').val(),
             event: $('#filterEvent').val(),
             log_name: $('#filterLogName').val(),
             date_from: $('#filterDateFrom').val(),
             date_to: $('#filterDateTo').val()
         }, function (res) {
-            if (!res.status) { return; }
+            if (!res.success) { return; }
 
             $('#total-count').text(res.pagination.total + ' registros encontrados');
 
@@ -223,40 +230,138 @@
     }
 
     function renderPagination(p) {
-        if (p.last_page <= 1) { $('#pagination-container').html(''); return; }
-
-        var html = '<nav><ul class="pagination pagination-sm mb-0 justify-content-center">';
-        html += '<li class="page-item' + (p.current_page === 1 ? ' disabled' : '') + '">' +
-            '<a class="page-link" href="#" data-page="' + (p.current_page - 1) + '">&#8249;</a></li>';
-        var start = Math.max(1, p.current_page - 2);
-        var end = Math.min(p.last_page, p.current_page + 2);
-        for (var i = start; i <= end; i++) {
-            html += '<li class="page-item' + (i === p.current_page ? ' active' : '') + '">' +
-                '<a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+        if (p.last_page <= 1) {
+            $('#pagination-container').html(
+                '<div class="d-flex justify-content-center py-2">' +
+                '<small class="text-muted">Mostrando ' + p.total + ' registro(s)</small>' +
+                '</div>'
+            );
+            return;
         }
-        html += '<li class="page-item' + (p.current_page === p.last_page ? ' disabled' : '') + '">' +
-            '<a class="page-link" href="#" data-page="' + (p.current_page + 1) + '">&#8250;</a></li>';
-        html += '</ul></nav>';
-        $('#pagination-container').html(html);
+
+        var from = (p.current_page - 1) * p.per_page + 1;
+        var to = Math.min(p.current_page * p.per_page, p.total);
+
+        var info = '<small class="text-muted">Mostrando ' + from + '-' + to + ' de ' + p.total + ' registros</small>';
+
+        var pages = [];
+        pages.push(1);
+        if (p.current_page > 3) { pages.push('...'); }
+        for (var i = Math.max(2, p.current_page - 1); i <= Math.min(p.last_page - 1, p.current_page + 1); i++) {
+            pages.push(i);
+        }
+        if (p.current_page < p.last_page - 2) { pages.push('...'); }
+        if (p.last_page > 1) { pages.push(p.last_page); }
+
+        var nav = '<ul class="pagination pagination-sm mb-0">';
+        nav += '<li class="page-item' + (p.current_page === 1 ? ' disabled' : '') + '">' +
+            '<a class="page-link" href="#" data-page="' + (p.current_page - 1) + '">&lsaquo;</a></li>';
+        for (var j = 0; j < pages.length; j++) {
+            if (pages[j] === '...') {
+                nav += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
+            } else {
+                nav += '<li class="page-item' + (pages[j] === p.current_page ? ' active' : '') + '">' +
+                    '<a class="page-link" href="#" data-page="' + pages[j] + '">' + pages[j] + '</a></li>';
+            }
+        }
+        nav += '<li class="page-item' + (p.current_page === p.last_page ? ' disabled' : '') + '">' +
+            '<a class="page-link" href="#" data-page="' + (p.current_page + 1) + '">&rsaquo;</a></li>';
+        nav += '</ul>';
+
+        $('#pagination-container').html(
+            '<div class="d-flex justify-content-between align-items-center py-2">' +
+            info + '<nav>' + nav + '</nav></div>'
+        );
+    }
+
+    function formatValue(val) {
+        if (val === null || val === undefined) return '<span class="text-muted fst-italic">vacío</span>';
+        if (typeof val === 'object') return JSON.stringify(val);
+        return String(val);
+    }
+
+    function renderChangesTable(props) {
+        var attrs = props.attributes || {};
+        var old = props.old || {};
+        var keys = Object.keys(attrs);
+        if (!keys.length) return '';
+
+        var rows = keys.map(function (key) {
+            var oldVal = old.hasOwnProperty(key) ? old[key] : null;
+            var newVal = attrs[key];
+            return '<tr>' +
+                '<td class="fw-semibold">' + key + '</td>' +
+                '<td class="text-danger">' + formatValue(oldVal) + '</td>' +
+                '<td class="text-success fw-semibold">' + formatValue(newVal) + '</td>' +
+                '</tr>';
+        }).join('');
+
+        return '<label class="form-label fw-semibold text-muted mb-2">Cambios realizados</label>' +
+            '<div class="table-responsive">' +
+            '<table class="table table-striped table-bordered w-100 text-nowrap">' +
+            '<thead><tr><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th></tr>' +
+            '</thead><tbody>' + rows + '</tbody></table></div>';
+    }
+
+    function renderFlatProperties(props) {
+        var exclude = ['attributes', 'old'];
+        var keys = Object.keys(props).filter(function (k) { return exclude.indexOf(k) === -1; });
+        if (!keys.length) return '';
+
+        var rows = keys.map(function (key) {
+            var val = props[key];
+            var display = (typeof val === 'object' && val !== null) ? JSON.stringify(val) : formatValue(val);
+            return '<tr>' +
+                '<td class="fw-semibold">' + key + '</td>' +
+                '<td>' + display + '</td>' +
+                '</tr>';
+        }).join('');
+
+        return '<label class="form-label fw-semibold text-muted mb-2">Propiedades</label>' +
+            '<div class="table-responsive">' +
+            '<table class="table table-striped table-bordered w-100 text-nowrap">' +
+            '<thead><tr><th>Campo</th><th>Valor</th></tr>' +
+            '</thead><tbody>' + rows + '</tbody></table></div>';
     }
 
     window.showDetail = function (a) {
-        var hasProps = a.properties && Object.keys(a.properties).length > 0;
-        var propsHtml = hasProps
-            ? '<pre class="bg-light p-3 rounded small mb-0">' + JSON.stringify(a.properties, null, 2) + '</pre>'
-            : '<p class="text-muted small mb-0">Sin propiedades adicionales</p>';
+        $('#activity-detail-title').text(a.description || 'Detalle de actividad');
 
-        $('#activity-detail-body').html(
-            '<dl class="row mb-0">' +
-            '<dt class="col-4 small">Usuario</dt><dd class="col-8 small">' + a.causer_name + (a.causer_email ? ' (' + a.causer_email + ')' : '') + '</dd>' +
-            '<dt class="col-4 small">Evento</dt><dd class="col-8 small">' + eventBadge(a.event) + '</dd>' +
-            '<dt class="col-4 small">Descripción</dt><dd class="col-8 small">' + (a.description || '-') + '</dd>' +
-            '<dt class="col-4 small">Módulo</dt><dd class="col-8 small">' + (a.log_name || 'default') + '</dd>' +
-            '<dt class="col-4 small">Objeto</dt><dd class="col-8 small">' + (a.subject_type ? a.subject_type + (a.subject_id ? ' #' + a.subject_id : '') : '-') + '</dd>' +
-            '<dt class="col-4 small">Fecha</dt><dd class="col-8 small">' + a.created_at + '</dd>' +
-            '<dt class="col-4 small">Propiedades</dt><dd class="col-8">' + propsHtml + '</dd>' +
-            '</dl>'
-        );
+        var subject = a.subject_type ? a.subject_type + (a.subject_id ? ' #' + a.subject_id : '') : '-';
+
+        var html = '<div class="row g-3 mb-4">' +
+            '<div class="col-md-6">' +
+                '<label class="form-label fw-semibold text-muted mb-1">Usuario</label>' +
+                '<input type="text" class="form-control bg-light" value="' + a.causer_name + (a.causer_email ? ' (' + a.causer_email + ')' : '') + '" readonly>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+                '<label class="form-label fw-semibold text-muted mb-1">Fecha</label>' +
+                '<input type="text" class="form-control bg-light" value="' + a.created_at + ' (' + a.created_at_human + ')" readonly>' +
+            '</div>' +
+            '<div class="col-md-4">' +
+                '<label class="form-label fw-semibold text-muted mb-1">Evento</label>' +
+                '<input type="text" class="form-control bg-light" value="' + (a.event || 'n/a') + '" readonly>' +
+            '</div>' +
+            '<div class="col-md-4">' +
+                '<label class="form-label fw-semibold text-muted mb-1">Modulo</label>' +
+                '<input type="text" class="form-control bg-light" value="' + (a.log_name || 'default') + '" readonly>' +
+            '</div>' +
+            '<div class="col-md-4">' +
+                '<label class="form-label fw-semibold text-muted mb-1">Objeto</label>' +
+                '<input type="text" class="form-control bg-light" value="' + subject + '" readonly>' +
+            '</div>' +
+        '</div>';
+
+        var hasProps = a.properties && Object.keys(a.properties).length > 0;
+        if (hasProps) {
+            var hasChanges = a.properties.attributes && Object.keys(a.properties.attributes).length > 0;
+            if (hasChanges) {
+                html += renderChangesTable(a.properties);
+            }
+            html += renderFlatProperties(a.properties);
+        }
+
+        $('#activity-detail-body').html(html);
 
         new bootstrap.Modal(document.getElementById('activityDetailModal')).show();
     };
@@ -269,10 +374,8 @@
 
     $('#applyFilters').on('click', function () { loadData(1); });
     $('#filterEvent, #filterLogName').on('change', function () { loadData(1); });
-    $('#clearFilters').on('click', function () {
-        $('#filterEvent, #filterLogName').val('').trigger('change');
-        $('#filterDateFrom, #filterDateTo').val('');
-        loadData(1);
+    $('#filterSearch').on('keypress', function (e) {
+        if (e.which === 13) { loadData(1); }
     });
 
     loadData(1);

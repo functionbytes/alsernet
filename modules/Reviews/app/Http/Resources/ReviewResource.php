@@ -4,6 +4,7 @@ namespace Modules\Reviews\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Reviews\Models\Review;
 
 class ReviewResource extends JsonResource
 {
@@ -28,10 +29,11 @@ class ReviewResource extends JsonResource
             'updatedAt' => $this->updated_at->toIso8601String(),
             'location' => ReviewLocationResource::make($this->whenLoaded('location')),
             'moderation' => $this->when(
-                $this->relationLoaded('moderation') && $request->user()?->can('viewAny', \Modules\Reviews\Models\Review::class),
+                $this->relationLoaded('moderation') && $request->user()?->can('viewAny', Review::class),
                 fn () => ReviewModerationResource::make($this->moderation)
             ),
             'replies' => ReviewReplyResource::collection($this->whenLoaded('replies')),
+            'replies_count' => $this->whenCounted('replies'),
         ];
     }
 }

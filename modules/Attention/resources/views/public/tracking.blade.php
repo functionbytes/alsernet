@@ -102,7 +102,7 @@
                                     </div>
                                     <div class="timeline-body">
                                         <h6 class="mb-1">Recibido</h6>
-                                        <p class="text-muted mb-0 small">
+                                        <p class="text-muted mb-0">
                                             Su PQRSF ha sido radicado exitosamente
                                             <br>{{ $attention->created_at->format('d/m/Y H:i') }}
                                         </p>
@@ -116,7 +116,7 @@
                                     </div>
                                     <div class="timeline-body">
                                         <h6 class="mb-1">En proceso</h6>
-                                        <p class="text-muted mb-0 small">
+                                        <p class="text-muted mb-0">
                                             @if($isInProcess)
                                                 Su solicitud esta siendo atendida
                                                 @if($attention->department)
@@ -136,7 +136,7 @@
                                     </div>
                                     <div class="timeline-body">
                                         <h6 class="mb-1">Resuelto</h6>
-                                        <p class="text-muted mb-0 small">
+                                        <p class="text-muted mb-0">
                                             @if($isResolved)
                                                 Su PQRSF ha sido resuelto
                                                 @if($attention->resolved_at)
@@ -155,7 +155,7 @@
                                     </div>
                                     <div class="timeline-body">
                                         <h6 class="mb-1">Cerrado</h6>
-                                        <p class="text-muted mb-0 small">
+                                        <p class="text-muted mb-0">
                                             @if($isClosed)
                                                 El caso ha sido cerrado
                                                 @if($attention->closed_at)
@@ -210,7 +210,7 @@
                             </p>
                             <div class="alert alert-light border text-start">
                                 <p class="mb-2"><strong>Verifique que:</strong></p>
-                                <ul class="mb-0 text-muted small">
+                                <ul class="mb-0 text-muted">
                                     <li>El numero de radicado este escrito correctamente</li>
                                     <li>Incluya los guiones (Ej: PQRSF-2026-000001)</li>
                                     <li>El radicado haya sido generado en nuestro sistema</li>

@@ -1,8 +1,7 @@
-@if(module_exists('Page'))
+@if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
     <div class="card-body border-bottom p-4">
-        <h6 class="fw-bold mb-3">
-            <i class="fas fa-file-alt me-2 text-info"></i>Estadísticas de caché de páginas
-        </h6>
+        <h6 class="fw-bold mb-1">Estadísticas de caché de páginas</h6>
+        <p class="small text-muted mb-3">Resumen del rendimiento del caché para las páginas del sitio</p>
 
         <div id="page-cache-stats-container">
             <div class="text-center py-3">
@@ -26,38 +25,46 @@
     <script>
     $(document).ready(function() {
         // Load page cache stats
-        $.get('/api/v1/cache/stats', function(stats) {
-            const html = `
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <div class="bg-light p-2 rounded">
-                            <small class="text-muted d-block">Hit Ratio</small>
-                            <h5 class="mb-0 fw-bold">${stats.hit_ratio}%</h5>
+        $.ajax({
+            url: '{{ route('settings.cache.stats') }}',
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(stats) {
+                const html = `
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="bg-light p-2 rounded">
+                                <small class="text-muted d-block">Hit Ratio</small>
+                                <h5 class="mb-0 fw-bold">${stats.hit_ratio}%</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-2 rounded">
+                                <small class="text-muted d-block">Páginas Cacheadas</small>
+                                <h5 class="mb-0 fw-bold">${stats.cached_pages_count}</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-2 rounded">
+                                <small class="text-muted d-block">Hits</small>
+                                <h5 class="mb-0 fw-bold">${stats.total_hits}</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-2 rounded">
+                                <small class="text-muted d-block">Tamaño</small>
+                                <h5 class="mb-0 fw-bold">${formatBytes(stats.size_bytes)}</h5>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="bg-light p-2 rounded">
-                            <small class="text-muted d-block">Páginas Cacheadas</small>
-                            <h5 class="mb-0 fw-bold">${stats.cached_pages_count}</h5>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="bg-light p-2 rounded">
-                            <small class="text-muted d-block">Hits</small>
-                            <h5 class="mb-0 fw-bold">${stats.total_hits}</h5>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="bg-light p-2 rounded">
-                            <small class="text-muted d-block">Tamaño</small>
-                            <h5 class="mb-0 fw-bold">${formatBytes(stats.size_bytes)}</h5>
-                        </div>
-                    </div>
-                </div>
-            `;
-            $('#page-cache-stats-container').html(html);
-        }).fail(function() {
-            $('#page-cache-stats-container').html('<small class="text-muted">Error al cargar estadísticas</small>');
+                `;
+                $('#page-cache-stats-container').html(html);
+            },
+            error: function() {
+                $('#page-cache-stats-container').html('<small class="text-muted">Error al cargar estadísticas</small>');
+            }
         });
 
         function formatBytes(bytes) {

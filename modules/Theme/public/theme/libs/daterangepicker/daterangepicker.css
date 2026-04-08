@@ -210,7 +210,7 @@
 }
 
 .daterangepicker td.active, .daterangepicker td.active:hover {
-  background-color: #081A28;
+  background-color: #b10100;
   border-color: transparent;
   color: #fff;
 }
@@ -235,7 +235,7 @@
 }
 
 .daterangepicker .btn-default {
-    background-color: #081A28;
+    background-color: #b10100;
     color: #fff;
 }
 
@@ -342,7 +342,7 @@
 }
 
 .daterangepicker .ranges li.active {
-  background-color: #081A28;
+  background-color: #b10100;
   color: #fff;
 }
 

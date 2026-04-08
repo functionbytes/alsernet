@@ -3,30 +3,51 @@
 namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Modules\Activity\Models\ApplicationLog;
+use Modules\System\Traits\FormatsBytes;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ServerAccessController extends Controller
 {
+    use FormatsBytes;
+
     /**
      * Show server access logs
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $limit = $request->get('limit', 100);
         $level = $request->get('level', null);
+        $search = $request->get('search', null);
         $source = $request->get('source', 'database'); // 'database' or 'file'
 
         if ($source === 'file') {
-            $logs = $this->getAccessLogsFromFiles($limit);
-            $total = count($this->getAccessLogsFromFiles(null));
+            $allLogs = $this->getAccessLogsFromFiles(null);
+
+            if ($search) {
+                $allLogs = array_filter($allLogs, fn ($log) => str_contains(strtolower($log['message'] ?? ''), strtolower($search)));
+                $allLogs = array_values($allLogs);
+            }
+
+            $total = count($allLogs);
+            $logs = array_slice($allLogs, 0, $limit);
         } else {
             $query = ApplicationLog::query()->orderBy('created_at', 'desc');
 
             if ($level) {
                 $query->where('level', $level);
+            }
+
+            if ($search) {
+                $query->where('message', 'like', "%{$search}%");
             }
 
             $total = $query->count();
@@ -50,13 +71,14 @@ class ServerAccessController extends Controller
             'total' => $total,
             'source' => $source,
             'level' => $level,
+            'search' => $search,
         ]);
     }
 
     /**
      * Get access logs from database
      */
-    private function getAccessLogsFromDatabase($limit = 100)
+    private function getAccessLogsFromDatabase(int $limit = 100): Collection
     {
         return ApplicationLog::orderBy('created_at', 'desc')
             ->limit($limit)
@@ -66,7 +88,7 @@ class ServerAccessController extends Controller
     /**
      * Get access logs from Laravel log files (organized by date)
      */
-    private function getAccessLogsFromFiles($limit = 100)
+    private function getAccessLogsFromFiles(?int $limit = 100): array
     {
         $logsPath = storage_path('logs');
         $logs = [];
@@ -150,7 +172,7 @@ class ServerAccessController extends Controller
     /**
      * Get server info and statistics
      */
-    public function stats()
+    public function stats(): View
     {
         $stats = [
             'server_ip' => $_SERVER['SERVER_ADDR'] ?? 'N/A',
@@ -161,8 +183,8 @@ class ServerAccessController extends Controller
             'max_execution_time' => ini_get('max_execution_time'),
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
-            'disk_total' => $this->formatBytes(disk_total_space('/')),
-            'disk_free' => $this->formatBytes(disk_free_space('/')),
+            'disk_total' => $this->formatBytes((int) disk_total_space('/')),
+            'disk_free' => $this->formatBytes((int) disk_free_space('/')),
             'disk_usage_percent' => round(((disk_total_space('/') - disk_free_space('/')) / disk_total_space('/')) * 100, 2),
             'uptime' => $this->getServerUptime(),
         ];
@@ -175,7 +197,7 @@ class ServerAccessController extends Controller
     /**
      * Get server uptime
      */
-    private function getServerUptime()
+    private function getServerUptime(): string
     {
         if (PHP_OS_FAMILY === 'Windows') {
             return 'N/A (Windows)';
@@ -187,23 +209,9 @@ class ServerAccessController extends Controller
     }
 
     /**
-     * Format bytes to human readable format
-     */
-    private function formatBytes($bytes)
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-        $bytes /= (1 << (10 * $pow));
-
-        return round($bytes, 2).' '.$units[$pow];
-    }
-
-    /**
      * Clear logs
      */
-    public function clearLogs(Request $request)
+    public function clearLogs(Request $request): JsonResponse
     {
         try {
             $logPath = storage_path('logs/laravel.log');
@@ -227,9 +235,25 @@ class ServerAccessController extends Controller
     }
 
     /**
+     * Perform a bulk action on selected log entries.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'string', Rule::in(['delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = ApplicationLog::whereIn('id', $request->input('ids'))->delete();
+
+        return response()->json(['success' => true, 'count' => $count]);
+    }
+
+    /**
      * Download logs
      */
-    public function downloadLogs()
+    public function downloadLogs(): RedirectResponse|BinaryFileResponse
     {
         $logPath = storage_path('logs/laravel.log');
 

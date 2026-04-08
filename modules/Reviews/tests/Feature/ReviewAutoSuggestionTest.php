@@ -21,7 +21,7 @@ class ReviewAutoSuggestionTest extends TestCase
         parent::setUp();
 
         $this->user = $this->createUser(['reviews.reviews.view']);
-        $this->location = $this->createLocation();
+        $this->location = $this->createLocation($this->createConnection($this->user));
     }
 
     public function test_suggests_positive_template_for_high_rating_with_positive_keywords(): void
@@ -52,23 +52,27 @@ class ReviewAutoSuggestionTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure([
-                'review_id',
-                'star_rating',
-                'has_comment',
-                'suggestions' => [
-                    '*' => [
-                        'template_id',
-                        'template_name',
-                        'template_body',
-                        'category',
-                        'relevance_score',
-                        'matched_keywords',
-                        'usage_count',
+                'success',
+                'message',
+                'data' => [
+                    'review_id',
+                    'star_rating',
+                    'has_comment',
+                    'suggestions' => [
+                        '*' => [
+                            'template_id',
+                            'template_name',
+                            'template_body',
+                            'category',
+                            'relevance_score',
+                            'matched_keywords',
+                            'usage_count',
+                        ],
                     ],
                 ],
             ])
-            ->assertJsonPath('suggestions.0.template_id', $positiveTemplate->id)
-            ->assertJsonPath('suggestions.0.matched_keywords', ['excellent']);
+            ->assertJsonPath('data.suggestions.0.template_id', $positiveTemplate->id)
+            ->assertJsonPath('data.suggestions.0.matched_keywords', ['excellent']);
     }
 
     public function test_suggests_negative_template_for_low_rating(): void
@@ -98,8 +102,8 @@ class ReviewAutoSuggestionTest extends TestCase
             ->getJson("/api/reviews/{$review->id}/suggestions");
 
         $response->assertOk()
-            ->assertJsonPath('suggestions.0.template_id', $negativeTemplate->id)
-            ->assertJsonPath('suggestions.0.category', 'negative');
+            ->assertJsonPath('data.suggestions.0.template_id', $negativeTemplate->id)
+            ->assertJsonPath('data.suggestions.0.category', 'negative');
     }
 
     public function test_suggests_neutral_template_for_mid_rating(): void
@@ -129,7 +133,7 @@ class ReviewAutoSuggestionTest extends TestCase
             ->getJson("/api/reviews/{$review->id}/suggestions");
 
         $response->assertOk()
-            ->assertJsonPath('suggestions.0.template_id', $neutralTemplate->id);
+            ->assertJsonPath('data.suggestions.0.template_id', $neutralTemplate->id);
     }
 
     public function test_orders_suggestions_by_relevance_score(): void
@@ -172,7 +176,7 @@ class ReviewAutoSuggestionTest extends TestCase
             ->getJson("/api/reviews/{$review->id}/suggestions");
 
         $response->assertOk();
-        $suggestions = $response->json('suggestions');
+        $suggestions = $response->json('data.suggestions');
 
         $this->assertGreaterThan(
             $suggestions[1]['relevance_score'] ?? 0,
@@ -218,7 +222,7 @@ class ReviewAutoSuggestionTest extends TestCase
             ->getJson("/api/reviews/{$review->id}/suggestions");
 
         $response->assertOk();
-        $suggestions = $response->json('suggestions');
+        $suggestions = $response->json('data.suggestions');
 
         $this->assertCount(1, $suggestions);
         $this->assertEquals($activeTemplate->id, $suggestions[0]['template_id']);
@@ -268,6 +272,6 @@ class ReviewAutoSuggestionTest extends TestCase
             ->getJson("/api/reviews/{$review->id}/suggestions");
 
         $response->assertOk()
-            ->assertJsonPath('suggestions.0.category', 'positive');
+            ->assertJsonPath('data.suggestions.0.category', 'positive');
     }
 }

@@ -16,12 +16,14 @@ use Modules\Health\Http\Controllers\HealthController;
 */
 
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('setting/health')
+    ->prefix('panel/setting/health')
     ->name('settings.health.')
     ->group(function () {
         Route::get('/', [HealthController::class, 'index'])->name('index');
         Route::get('/check', [HealthController::class, 'check'])->name('check');
         Route::get('/history', [HealthController::class, 'history'])->name('history');
+        Route::delete('/history/{id}', [HealthController::class, 'destroyHistoryRecord'])->name('history.destroy');
+        Route::post('/history/bulk', [HealthController::class, 'bulkDestroyHistory'])->name('history.bulk');
 
         // System management actions
         Route::post('/schedule/run', [HealthController::class, 'runSchedule'])->name('schedule.run');

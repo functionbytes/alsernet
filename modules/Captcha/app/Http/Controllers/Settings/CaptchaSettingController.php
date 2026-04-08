@@ -3,6 +3,7 @@
 namespace Modules\Captcha\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Modules\Captcha\Facades\Captcha;
 use Modules\Captcha\Http\Requests\Settings\CaptchaSettingRequest;
 use Modules\Core\Models\Setting;
@@ -23,15 +24,12 @@ class CaptchaSettingController extends Controller
         ]);
     }
 
-    public function update(CaptchaSettingRequest $request): \Illuminate\Http\RedirectResponse
+    public function update(CaptchaSettingRequest $request): RedirectResponse
     {
         foreach ($request->validated() as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
+            Setting::set($key, $value);
         }
 
-        return redirect()->back()->with('success', trans('captcha::captcha.settings.saved'));
+        return redirect()->back()->with('success', 'Configuracion de captcha guardada correctamente.');
     }
 }

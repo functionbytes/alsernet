@@ -2,18 +2,28 @@
 
 namespace Modules\Reviews\Listeners;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Modules\Reviews\Events\NewReviewReceivedEvent;
 use Modules\Reviews\Events\ReviewSynced;
 use Modules\Reviews\Notifications\NewNegativeReviewNotification;
 
-class NotifyOnNewReview
+class NotifyOnNewReview implements ShouldQueue
 {
+    use InteractsWithQueue;
+
+    public $queue = 'notifications';
+
     public function handle(ReviewSynced $event): void
     {
         $review = $event->review;
         $rating = $review->star_rating->value();
 
-        // Only notify for negative reviews (1-3 stars)
+        // Broadcast to the public reviews channel for real-time stats
+        NewReviewReceivedEvent::dispatch($review);
+
+        // Only notify staff for negative reviews (1-3 stars)
         if ($rating > 3) {
             return;
         }

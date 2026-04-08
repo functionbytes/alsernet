@@ -13,7 +13,7 @@ class CreatePermissionsCommand extends Command
 
     protected $description = 'Create permissions based on synced routes and optionally assign to roles';
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('🔐 Creating permissions from synced routes...\n');
 

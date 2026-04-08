@@ -2,6 +2,8 @@
 
 namespace Modules\Mailer\Services;
 
+use Illuminate\Support\Facades\Cache;
+use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerVariable;
 
 class MailerVariableValueService
@@ -29,7 +31,7 @@ class MailerVariableValueService
         }
 
         // 2. Revisar caché de Laravel (Redis/File) - se limpia automáticamente al guardar/editar
-        $result = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($langId, $module) {
+        $result = Cache::remember($cacheKey, 3600, function () use ($langId, $module) {
             $query = MailerVariable::query()
                 ->where('is_enabled', true)
                 ->with(['translations' => function ($q) use ($langId) {
@@ -71,9 +73,16 @@ class MailerVariableValueService
      */
     public static function clearCache(): void
     {
-        // Limpiar caché de Laravel para todas las combinaciones posibles
-        // Patrón: mailer_vars_*
-        \Illuminate\Support\Facades\Cache::flush(); // Si usas tags, puedes ser más específico
+        $langIds = MailerLang::pluck('id')->toArray();
+        // Get all unique modules from database + 'all' for the null module case
+        $modules = MailerVariable::distinct('module')->pluck('module')->toArray();
+        $modules[] = 'all';
+
+        foreach ($modules as $module) {
+            foreach ($langIds as $langId) {
+                Cache::forget("mailer_vars_{$langId}_{$module}");
+            }
+        }
     }
 
     /**

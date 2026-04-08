@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="green" data-layout="vertical" data-boxed-layout="boxed" data-card="shadow">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr" data-bs-theme="light" data-color-theme="green" data-layout="vertical" data-boxed-layout="boxed" data-card="shadow">
 
 <head>
 
-    <meta http-equiv="content-type" content="text/html;charset=UTF-8"/>
     <meta charset="utf-8"/>
     <title>{{ getSiteTitle() }}</title>
     <meta name="viewport"
@@ -23,6 +22,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-id" content="{{ auth()->id() ?? '' }}">
 
+    @stack('meta')
+
     <!-- Library CSS -->
     <link rel="stylesheet" href="{{ themeAsset('images/taginput/bootstrap-tagsinput.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('libs/owl.carousel/dist/assets/owl.carousel.min.css') }}">
@@ -31,13 +32,12 @@
     <link rel="stylesheet" href="{{ themeAsset('libs/toastr/toastr.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('libs/dropzone/dist/min/dropzone.min.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('libs/daterangepicker/daterangepicker.css') }}">
-
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="{{ themeAsset('libs/fontawesome/fontawesome.css') }}">
 
     <!-- Theme CSS -->
     <link rel="stylesheet" href="{{ themeAsset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
@@ -48,14 +48,27 @@
 
     @stack('css')
     @stack('scripts-head')
+    <script>
+        (function () {
+            var saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {!! \Modules\Core\Models\Setting::get('theme.custom_header_html') !!}
     {!! \Modules\Core\Models\Setting::get('theme.custom_header_js') !!}
 
+    @includeIf('analytics::partials._gtag')
+
 </head>
 
 <body class="" data-sidebartype="full" >
+
+<!-- Global loading indicator -->
+<div id="global-loader" class="d-none position-fixed top-0 start-0 w-100" style="z-index:9999; height:3px;">
+    <div id="loader-bar" class="h-100" style="width:0%; background:#b10100; transition: width 0.3s ease;"></div>
+</div>
 
 <div id="main-wrapper">
 
@@ -87,6 +100,7 @@
 <!-- Form/Input Libraries -->
 <script src="{{ themeAsset('libs/taginput/bootstrap-tagsinput.js') }}"></script>
 <script src="{{ themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}"></script>
+<script src="{{ themeAsset('libs/daterangepicker/daterangepicker.js') }}"></script>
 <script src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
 <script src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
 <script src="{{ themeAsset('libs/dropzone/dist/dropzone.js') }}"></script>
@@ -102,6 +116,41 @@
 <!-- Form Initializers -->
 <script src="{{ themeAsset('js/forms/select2.init.js') }}"></script>
 <script src="{{ themeAsset('js/forms/quill-init.js') }}"></script>
+<script>
+$(document).ready(function () {
+    if ($.fn.daterangepicker && $('.daterange').length) {
+        $('.daterange').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                cancelLabel: 'Limpiar',
+                applyLabel: 'Aplicar',
+                format: 'DD/MM/YYYY',
+                separator: ' - ',
+                daysOfWeek: ['Do','Lu','Ma','Mi','Ju','Vi','Sa'],
+                monthNames: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+                firstDay: 1,
+            },
+            ranges: {
+                'Hoy':            [moment(), moment()],
+                'Ayer':           [moment().subtract(1,'days'), moment().subtract(1,'days')],
+                'Últimos 7 días': [moment().subtract(6,'days'), moment()],
+                'Últimos 30 días':[moment().subtract(29,'days'), moment()],
+                'Este mes':       [moment().startOf('month'), moment().endOf('month')],
+                'Mes anterior':   [moment().subtract(1,'month').startOf('month'), moment().subtract(1,'month').endOf('month')],
+            },
+        });
+
+        $('.daterange').on('apply.daterangepicker', function (ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            $(this).trigger('daterange:applied', [picker.startDate, picker.endDate]);
+        });
+
+        $('.daterange').on('cancel.daterangepicker', function () {
+            $(this).val('').trigger('daterange:cleared');
+        });
+    }
+});
+</script>
 
 <!-- Core App Scripts -->
 <script src="{{ url('core/tooltipster/js/tooltipster.bundle.min.js') }}"></script>
@@ -116,6 +165,8 @@
 <script src="{{ url('core/js/search.js') }}"></script>
 <script src="{{ url('core/js/image_popup.js') }}"></script>
 <script src="{{ url('core/js/app.js') }}"></script>
+<script src="{{ url('core/js/bulk.js') }}"></script>
+<script src="{{ url('modules/Media/js/media-picker.js') }}"></script>
 
 
 <script>
@@ -218,7 +269,59 @@
     });
 </script>
 
+<script>
+(function () {
+    // Dark mode toggle
+    var saved = localStorage.getItem('theme') || 'light';
+    var icon = document.getElementById('darkModeIcon');
+    if (icon) {
+        icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    var btn = document.getElementById('darkModeToggle');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.getElementById('darkModeIcon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+    }
+
+    // Global loading indicator
+    var loader = document.getElementById('global-loader');
+    var bar = document.getElementById('loader-bar');
+
+    function showLoader() {
+        loader.classList.remove('d-none');
+        bar.style.width = '70%';
+    }
+
+    function hideLoader() {
+        bar.style.width = '100%';
+        setTimeout(function () {
+            loader.classList.add('d-none');
+            bar.style.width = '0%';
+        }, 300);
+    }
+
+    if (typeof $ !== 'undefined') {
+        $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+    }
+
+    document.addEventListener('submit', showLoader);
+})();
+</script>
+
 @stack('scripts')
+
+@include('media::partials.picker-modal')
+
+@if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1' && !request()->is('setting/*', 'managers/*'))
+    @include('cookie::index')
+    <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
+    <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
+@endif
 
 {!! \Modules\Core\Models\Setting::get('theme.custom_footer_html') !!}
 {!! \Modules\Core\Models\Setting::get('theme.custom_footer_js') !!}

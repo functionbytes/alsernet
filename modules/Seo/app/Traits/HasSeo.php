@@ -120,14 +120,25 @@ trait HasSeo
     }
 
     /**
-     * Create or update SEO meta data for this model.
+     * Get the SEO meta for a specific locale (or the global/default one when null).
      */
-    public function updateSeoMeta(array $data): SeoMeta
+    public function seoMetaForLocale(?string $locale = null): ?SeoMeta
+    {
+        return $this->morphOne(SeoMeta::class, 'seoable')
+            ->where('locale', $locale)
+            ->first();
+    }
+
+    /**
+     * Create or update SEO meta data for this model, scoped by locale.
+     */
+    public function updateSeoMeta(array $data, ?string $locale = null): SeoMeta
     {
         return $this->seoMeta()->updateOrCreate(
             [
                 'seoable_id' => $this->id,
                 'seoable_type' => get_class($this),
+                'locale' => $locale,
             ],
             $data
         );

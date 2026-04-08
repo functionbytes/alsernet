@@ -2,10 +2,14 @@
 
 namespace Modules\Mailer\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
+use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 
 /**
  * TemplateRendererService
@@ -15,6 +19,21 @@ use Modules\Mailer\Models\MailerTemplate;
  */
 class MailerTemplateRendererService
 {
+    private static ?Environment $twigEnv = null;
+
+    private static function getTwigEnvironment(): Environment
+    {
+        if (self::$twigEnv === null) {
+            $loader = new ArrayLoader;
+            self::$twigEnv = new Environment($loader, [
+                'autoescape' => false,
+                'strict_variables' => false,
+            ]);
+        }
+
+        return self::$twigEnv;
+    }
+
     /**
      * Renderizar plantilla de email transaccional (EmailTemplate)
      */
@@ -122,7 +141,7 @@ class MailerTemplateRendererService
         }
 
         // 2. Revisar caché de Laravel - se limpia automáticamente al guardar/editar
-        $content = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        $content = Cache::get($cacheKey);
 
         // 3. Si no está en cache, buscar en la base de datos directamente (fallback)
         if ($content === null) {
@@ -134,7 +153,7 @@ class MailerTemplateRendererService
 
                 // Guardar en cache para siguiente vez
                 if ($content !== null) {
-                    \Illuminate\Support\Facades\Cache::put($cacheKey, $content, 3600);
+                    Cache::put($cacheKey, $content, 3600);
                 }
             }
         }
@@ -151,34 +170,33 @@ class MailerTemplateRendererService
      */
     public static function clearCache(): void
     {
-        // Limpiar caché de Laravel para layouts y templates
-        \Illuminate\Support\Facades\Cache::flush();
+        // Limpiar claves de cache conocidas del mailer
+        $aliases = config('mailer-module.cache_layout_aliases', ['email_template_header', 'email_template_footer', 'email_template_wrapper']);
+        $langIds = MailerLang::pluck('id')->toArray();
+
+        foreach ($aliases as $alias) {
+            foreach ($langIds as $langId) {
+                Cache::forget("layout_{$alias}_{$langId}");
+            }
+        }
     }
 
     /**
      * Reemplazar variables {TAG} con valores
      * Detecta automáticamente si usa sintaxis Twig ({% o {{) y renderiza apropiadamente
+     * Para reemplazo simple delega a MailerVariableReplacementService
      */
     public static function replaceVariables(string $content, array $variables = []): string
     {
         // Detectar si la plantilla usa sintaxis Twig
-        $usesTwig = self::usesTwigSyntax($content);
-
-        Log::info('MailerTemplateRenderer: Detecting Twig syntax', [
-            'uses_twig' => $usesTwig,
-            'content_preview' => substr($content, 0, 200),
-        ]);
-
-        if ($usesTwig) {
+        if (self::usesTwigSyntax($content)) {
             return self::renderWithTwig($content, $variables);
         }
 
-        // Método clásico: reemplazo simple con str_replace
+        // Reemplazo simple de variables {KEY}
         foreach ($variables as $key => $value) {
-            // Manejar tanto claves con y sin llaves
             $placeholder = str_starts_with($key, '{') ? $key : '{'.$key.'}';
 
-            // Reemplazar solo si valor no es array/object
             if (! is_array($value) && ! is_object($value)) {
                 $content = str_replace($placeholder, (string) $value, $content);
             }
@@ -201,8 +219,6 @@ class MailerTemplateRendererService
      */
     private static function renderWithTwig(string $content, array $variables = []): string
     {
-        Log::info('MailerTemplateRenderer: Starting Twig rendering');
-
         try {
             // Convertir sintaxis clásica {VAR} a sintaxis Twig {{ VAR }} para compatibilidad
             // Solo convertir variables que NO estén ya en sintaxis Twig
@@ -215,15 +231,9 @@ class MailerTemplateRendererService
                 $content
             );
 
-            // Crear instancia de Twig con loader desde string
-            $loader = new \Twig\Loader\ArrayLoader([
-                'template' => $content,
-            ]);
-
-            $twig = new \Twig\Environment($loader, [
-                'autoescape' => false, // No escapar HTML (ya viene escapado si es necesario)
-                'strict_variables' => false, // No fallar si variable no existe
-            ]);
+            // Reuse cached Twig environment, just update the template content
+            $twig = self::getTwigEnvironment();
+            $twig->getLoader()->setTemplate('template', $content);
 
             // Normalizar nombres de variables (sin llaves)
             $normalizedVars = [];
@@ -232,15 +242,8 @@ class MailerTemplateRendererService
                 $normalizedVars[$cleanKey] = $value;
             }
 
-            Log::info('MailerTemplateRenderer: Twig variables', [
-                'variables_count' => count($normalizedVars),
-                'variables' => array_keys($normalizedVars),
-            ]);
-
             // Renderizar con Twig
             $rendered = $twig->render('template', $normalizedVars);
-
-            Log::info('MailerTemplateRenderer: Twig rendered successfully');
 
             return $rendered;
         } catch (\Exception $e) {
@@ -249,15 +252,8 @@ class MailerTemplateRendererService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            // Fallback a método clásico si Twig falla
-            foreach ($variables as $key => $value) {
-                $placeholder = str_starts_with($key, '{') ? $key : '{'.$key.'}';
-                if (! is_array($value) && ! is_object($value)) {
-                    $content = str_replace($placeholder, (string) $value, $content);
-                }
-            }
-
-            return $content;
+            // Fallback a reemplazo simple si Twig falla
+            return MailerVariableReplacementService::replaceVariables($content, $variables);
         }
     }
 
@@ -443,5 +439,24 @@ class MailerTemplateRendererService
         $text = trim(preg_replace('/\s+/', ' ', $text));
 
         return $text;
+    }
+
+    /**
+     * Formatear HTML con indentacion legible
+     */
+    public static function beautifyHtml(string $html): string
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+
+        $formatted = $dom->saveHTML();
+        $formatted = str_replace('<?xml encoding="UTF-8">', '', $formatted);
+
+        return trim($formatted);
     }
 }

@@ -18,6 +18,7 @@ use Modules\Mailer\Policies\MailerSettingsPolicy;
 use Modules\Mailer\Policies\MailerTemplatePolicy;
 use Modules\Mailer\Policies\MailerVariablePolicy;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class MailerServiceProvider extends ServiceProvider
 {
@@ -38,10 +39,19 @@ class MailerServiceProvider extends ServiceProvider
             __DIR__.'/../../config/mailer.php',
             'mailer'
         );
+
+        $this->mergeConfigFrom(
+            __DIR__.'/../../config/mailer-module.php',
+            'mailer-module'
+        );
     }
 
     public function boot(): void
     {
+        if (Module::find('Mailer')?->isDisabled()) {
+            return;
+        }
+
         // Register authorization policies
         $this->registerPolicies();
 
@@ -111,7 +121,7 @@ class MailerServiceProvider extends ServiceProvider
     {
         // Mini-nav item for Mailers
         NavService::registerMiniItem('mailers', [
-            'icon' => 'fa-duotone fa-thin fa-envelopes-bulk',
+            'icon' => 'fas fa-envelopes-bulk',
             'tooltip' => 'Emails',
             'sidebar_id' => 'mailers',
             'order' => 25,

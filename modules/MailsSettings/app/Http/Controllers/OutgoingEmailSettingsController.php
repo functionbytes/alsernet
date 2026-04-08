@@ -3,9 +3,12 @@
 namespace Modules\MailsSettings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
@@ -14,7 +17,7 @@ class OutgoingEmailSettingsController extends Controller
     /**
      * Display outgoing email backups
      */
-    public function index()
+    public function index(): View
     {
         $settings = Setting::getEmailSettings();
         $pageTitle = 'Configuración de Correo Saliente';
@@ -26,7 +29,7 @@ class OutgoingEmailSettingsController extends Controller
     /**
      * Show email edit form
      */
-    public function edit()
+    public function edit(): View
     {
         $settings = Setting::getEmailSettings();
         $rules = Setting::getEmailRules();
@@ -39,18 +42,20 @@ class OutgoingEmailSettingsController extends Controller
     /**
      * Update outgoing email backups
      */
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         try {
             $validated = $request->validate(Setting::getEmailRules());
 
             Setting::setEmailSettings($validated);
 
-            return redirect()->route('settings.outgoing.index')
+            return redirect()->route('settings.outgoing-email.index')
                 ->with('success', 'Configuración de correo saliente actualizada correctamente');
         } catch (\Exception $e) {
+            Log::error('Outgoing email settings update failed', ['error' => $e->getMessage()]);
+
             return redirect()->back()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -58,7 +63,7 @@ class OutgoingEmailSettingsController extends Controller
     /**
      * Test SMTP connection
      */
-    public function testConnection()
+    public function testConnection(): JsonResponse
     {
         try {
             $settings = Setting::getEmailSettings();
@@ -115,7 +120,7 @@ class OutgoingEmailSettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => 'Error en la conexión: '.$e->getMessage(),
+                'message' => 'Error inesperado al probar la conexión SMTP.',
             ], 500);
         }
     }
@@ -123,7 +128,7 @@ class OutgoingEmailSettingsController extends Controller
     /**
      * Send test email
      */
-    public function sendTestEmail(Request $request)
+    public function sendTestEmail(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -186,7 +191,7 @@ class OutgoingEmailSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error de transporte SMTP: '.$e->getMessage(),
+                'message' => 'Error de transporte SMTP. Verifica la configuración del servidor.',
             ], 500);
         } catch (\Exception $e) {
             Log::error('Error sending test email', [
@@ -196,7 +201,7 @@ class OutgoingEmailSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al enviar correo: '.$e->getMessage(),
+                'message' => 'Error al enviar el correo de prueba. Verifica la configuración SMTP.',
             ], 500);
         }
     }

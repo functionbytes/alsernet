@@ -3,10 +3,14 @@
 namespace Modules\Seo\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SeoRedirect extends Model
 {
+    use HasFactory;
+
     /**
      * The table associated with the model.
      *
@@ -25,6 +29,10 @@ class SeoRedirect extends Model
         'status_code',
         'hits_count',
         'is_active',
+        'is_regex',
+        'is_wildcard',
+        'active_from',
+        'active_until',
     ];
 
     /**
@@ -36,24 +44,27 @@ class SeoRedirect extends Model
         'status_code' => 'integer',
         'hits_count' => 'integer',
         'is_active' => 'boolean',
+        'is_regex' => 'boolean',
+        'is_wildcard' => 'boolean',
+        'active_from' => 'datetime',
+        'active_until' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     /**
-     * Boot the model.
+     * Bootstrap the model.
      */
-    protected static function boot()
+    protected static function booted(): void
     {
-        parent::boot();
-
-        // Normalize paths to lowercase before saving for case-insensitive matching
         static::saving(function ($redirect) {
-            $redirect->source_path = strtolower(trim($redirect->source_path));
+            // Skip path normalization for regex and wildcard patterns — they have their own syntax
+            if (! $redirect->is_regex && ! $redirect->is_wildcard) {
+                $redirect->source_path = strtolower(trim($redirect->source_path));
 
-            // Ensure paths start with /
-            if (! str_starts_with($redirect->source_path, '/')) {
-                $redirect->source_path = '/'.$redirect->source_path;
+                if (! str_starts_with($redirect->source_path, '/')) {
+                    $redirect->source_path = '/'.$redirect->source_path;
+                }
             }
 
             if (! str_starts_with($redirect->target_path, '/') && ! filter_var($redirect->target_path, FILTER_VALIDATE_URL)) {
@@ -68,6 +79,16 @@ class SeoRedirect extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to filter redirects that are currently active (respects date range).
+     */
+    public function scopeCurrentlyActive(Builder $query): void
+    {
+        $query->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('active_from')->orWhere('active_from', '<=', now()))
+            ->where(fn ($q) => $q->whereNull('active_until')->orWhere('active_until', '>=', now()));
     }
 
     /**
@@ -109,9 +130,27 @@ class SeoRedirect extends Model
             $normalizedPath = '/'.$normalizedPath;
         }
 
-        return static::active()
+        return static::currentlyActive()
+            ->where('is_regex', false)
             ->where('source_path', $normalizedPath)
             ->first();
+    }
+
+    /**
+     * All daily hit records for this redirect.
+     */
+    public function hits(): HasMany
+    {
+        return $this->hasMany(SeoRedirectHit::class);
+    }
+
+    /**
+     * Daily hit records for the last 30 days.
+     */
+    public function hitsLast30Days(): HasMany
+    {
+        return $this->hasMany(SeoRedirectHit::class)
+            ->where('hit_date', '>=', now()->subDays(30)->toDateString());
     }
 
     /**
@@ -139,13 +178,23 @@ class SeoRedirect extends Model
     }
 
     /**
+     * Generate a consistent cache key for a redirect path.
+     */
+    public static function cacheKey(string $path): string
+    {
+        return 'seo_redirect_'.md5(strtolower($path));
+    }
+
+    /**
      * Get status code label.
      */
     public function getStatusCodeLabelAttribute(): string
     {
         return match ($this->status_code) {
-            301 => '301 - Permanent',
-            302 => '302 - Temporary',
+            301 => '301 - Permanente',
+            302 => '302 - Temporal',
+            307 => '307 - Temporal (preserva método)',
+            308 => '308 - Permanente (preserva método)',
             default => (string) $this->status_code,
         };
     }

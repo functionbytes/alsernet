@@ -2,8 +2,11 @@
 
 namespace Modules\Template\View\Components;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\Component;
+use Illuminate\View\View;
 use Modules\Template\Models\Menu as MenuModel;
+use Modules\Template\Models\MenuItem;
 
 class Menu extends Component
 {
@@ -14,6 +17,11 @@ class Menu extends Component
     public ?MenuModel $menu;
 
     /**
+     * @var Collection<int, MenuItem>
+     */
+    public $items;
+
+    /**
      * Create a new component instance.
      */
     public function __construct(string $location, string $class = '')
@@ -21,18 +29,22 @@ class Menu extends Component
         $this->location = $location;
         $this->class = $class;
 
-        $this->menu = MenuModel::where('location', $location)
+        $this->menu = MenuModel::query()
+            ->with([
+                'items' => fn ($q) => $q->orderBy('order'),
+                'items.children' => fn ($q) => $q->orderBy('order'),
+            ])
+            ->where('location', $location)
             ->where('status', true)
-            ->with(['items' => function ($query) {
-                $query->with('children');
-            }])
             ->first();
+
+        $this->items = $this->menu?->items ?? collect();
     }
 
     /**
      * Get the view / contents that represent the component.
      */
-    public function render()
+    public function render(): View
     {
         return view('template::components.menu');
     }

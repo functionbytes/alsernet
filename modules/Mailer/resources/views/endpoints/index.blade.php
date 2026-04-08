@@ -36,7 +36,7 @@
                                         <h6 class="card-title text-primary mb-2">
                                             Total endpoints
                                         </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $endpoints->total() }}</h4>
+                                        <h4 class="mb-1 fw-bold">{{ $totalEndpoints }}</h4>
                                         <small class="text-muted">Configurados</small>
                                     </div>
                                 </div>
@@ -51,7 +51,7 @@
                                         <h6 class="card-title mb-2">
                                             Activos
                                         </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $endpoints->where('is_active', true)->count() }}</h4>
+                                        <h4 class="mb-1 fw-bold">{{ $activeCount }}</h4>
                                         <small class="text-muted">En funcionamiento</small>
                                     </div>
                                 </div>
@@ -66,7 +66,7 @@
                                         <h6 class="card-title text-warning mb-2">
                                             Inactivos
                                         </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $endpoints->where('is_active', false)->count() }}</h4>
+                                        <h4 class="mb-1 fw-bold">{{ $inactiveCount }}</h4>
                                         <small class="text-muted">Desactivados</small>
                                     </div>
                                 </div>
@@ -81,7 +81,7 @@
                                         <h6 class="card-title text-info mb-2">
                                             Total requests
                                         </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $endpoints->sum('requests_count') }}</h4>
+                                        <h4 class="mb-1 fw-bold">{{ number_format($totalRequests) }}</h4>
                                         <small class="text-muted">Enviados</small>
                                     </div>
                                 </div>
@@ -146,10 +146,8 @@
                             <tbody>
                                 @foreach($endpoints as $endpoint)
                                     @php
-                                        $successCount = $endpoint->successLogs()->count();
-                                        $failedCount = $endpoint->failedLogs()->count();
                                         $total = $endpoint->requests_count;
-                                        $successRate = $total > 0 ? round(($successCount / $total) * 100, 1) : 0;
+                                        $successRate = $total > 0 ? round(($endpoint->success_logs_count / $total) * 100, 1) : 0;
                                     @endphp
                                     <tr class="search-items">
                                         <td>
@@ -190,8 +188,8 @@
                                         </td>
                                         <td>
                                             <div class="dropdown dropstart">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Acciones">
+                                                    <i class="fas fa-ellipsis"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
                                                     <li>

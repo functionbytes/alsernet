@@ -1,0 +1,3 @@
+<?php
+
+// Helpdesk settings routes

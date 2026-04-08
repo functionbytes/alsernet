@@ -95,10 +95,11 @@ class CampaignApiController extends Controller
                 'data' => new CampaignResource($campaign),
             ], 201);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -149,10 +150,11 @@ class CampaignApiController extends Controller
                 'data' => new CampaignResource($campaign->fresh()),
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -174,10 +176,11 @@ class CampaignApiController extends Controller
                 'message' => 'Campaign deleted successfully',
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -200,10 +203,11 @@ class CampaignApiController extends Controller
                 'data' => new CampaignResource($newCampaign),
             ], 201);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to duplicate campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -227,10 +231,11 @@ class CampaignApiController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to generate preview',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -253,10 +258,11 @@ class CampaignApiController extends Controller
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send test email',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -291,10 +297,11 @@ class CampaignApiController extends Controller
                 return response()->json($result);
             }
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -325,10 +332,11 @@ class CampaignApiController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to schedule campaign',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -350,10 +358,11 @@ class CampaignApiController extends Controller
                 'data' => $stats,
             ]);
         } catch (\Exception $e) {
+            Log::error(get_class($e).': '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve campaign stats',
-                'error' => $e->getMessage(),
             ], 422);
         }
     }

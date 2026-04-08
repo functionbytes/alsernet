@@ -5,8 +5,9 @@ namespace Modules\Reviews\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Modules\Reviews\Http\Resources\ApiResponse;
 use Modules\Reviews\Http\Resources\ReviewResource;
 use Modules\Reviews\Http\Resources\ReviewStatsResource;
 use Modules\Reviews\Models\Review;
@@ -18,12 +19,13 @@ class ReviewController extends Controller
         private readonly ReviewAutoSuggestionService $suggestionService
     ) {}
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Review::class);
 
         $query = Review::query()
-            ->with(['location', 'moderation', 'replies']);
+            ->with(['location', 'moderation'])
+            ->withCount('replies');
 
         if ($request->filled('location_id')) {
             $query->where('location_id', $request->integer('location_id'));
@@ -63,21 +65,40 @@ class ReviewController extends Controller
 
         $reviews = $query
             ->latest('review_time')
-            ->paginate($request->integer('per_page', 20));
+            ->paginate(min($request->integer('per_page', 20), 100));
 
-        return ReviewResource::collection($reviews);
+        Log::info('API request: reviews.index', [
+            'user_id' => $request->user()?->id,
+            'filters' => $request->only(['location_id', 'rating', 'is_visible', 'is_featured', 'has_reply', 'has_comment']),
+            'total_results' => $reviews->total(),
+            'request_id' => $request->header('X-Request-ID'),
+        ]);
+
+        return ApiResponse::paginated(
+            ReviewResource::collection($reviews),
+            'Reviews retrieved successfully'
+        );
     }
 
-    public function show(Review $review): ReviewResource
+    public function show(Review $review, Request $request): JsonResponse
     {
         $this->authorize('view', $review);
 
         $review->load(['location', 'moderation', 'replies.createdBy']);
 
-        return ReviewResource::make($review);
+        Log::info('API request: reviews.show', [
+            'user_id' => $request->user()?->id,
+            'review_id' => $review->id,
+            'request_id' => $request->header('X-Request-ID'),
+        ]);
+
+        return ApiResponse::resource(
+            ReviewResource::make($review),
+            'Review retrieved successfully'
+        );
     }
 
-    public function stats(Request $request): ReviewStatsResource
+    public function stats(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Review::class);
 
@@ -107,12 +128,12 @@ class ReviewController extends Controller
                     COUNT(CASE WHEN google_reply_text IS NOT NULL THEN 1 END) as with_reply,
                     CAST(
                         (
-                            COUNT(CASE WHEN star_rating = "FIVE" THEN 1 END) * 5 +
-                            COUNT(CASE WHEN star_rating = "FOUR" THEN 1 END) * 4 +
-                            COUNT(CASE WHEN star_rating = "THREE" THEN 1 END) * 3 +
-                            COUNT(CASE WHEN star_rating = "TWO" THEN 1 END) * 2 +
-                            COUNT(CASE WHEN star_rating = "ONE" THEN 1 END) * 1
-                        ) AS DECIMAL(5, 2)
+                            COUNT(CASE WHEN star_rating = "FIVE" THEN 1 END) * 5.0 +
+                            COUNT(CASE WHEN star_rating = "FOUR" THEN 1 END) * 4.0 +
+                            COUNT(CASE WHEN star_rating = "THREE" THEN 1 END) * 3.0 +
+                            COUNT(CASE WHEN star_rating = "TWO" THEN 1 END) * 2.0 +
+                            COUNT(CASE WHEN star_rating = "ONE" THEN 1 END) * 1.0
+                        ) AS REAL
                     ) / NULLIF(COUNT(*), 0) as average_rating
                 ')
                 ->first();
@@ -147,20 +168,40 @@ class ReviewController extends Controller
             ];
         });
 
-        return ReviewStatsResource::make($stats);
+        Log::info('API request: reviews.stats', [
+            'user_id' => $request->user()?->id,
+            'filters' => $request->only(['location_id', 'days']),
+            'cache_hit' => Cache::has($cacheKey),
+            'request_id' => $request->header('X-Request-ID'),
+        ]);
+
+        return ApiResponse::resource(
+            ReviewStatsResource::make($stats),
+            'Statistics retrieved successfully'
+        );
     }
 
-    public function suggestions(Review $review): JsonResponse
+    public function suggestions(Review $review, Request $request): JsonResponse
     {
         $this->authorize('view', $review);
 
         $suggestions = $this->suggestionService->suggestTemplates($review);
 
-        return response()->json([
+        Log::info('API request: reviews.suggestions', [
+            'user_id' => $request->user()?->id,
             'review_id' => $review->id,
-            'star_rating' => $review->star_rating_value,
-            'has_comment' => ! empty($review->comment),
-            'suggestions' => $suggestions,
+            'suggestions_count' => count($suggestions),
+            'request_id' => $request->header('X-Request-ID'),
         ]);
+
+        return ApiResponse::success(
+            data: [
+                'review_id' => $review->id,
+                'star_rating' => $review->star_rating_value,
+                'has_comment' => ! empty($review->comment),
+                'suggestions' => $suggestions,
+            ],
+            message: 'Reply suggestions generated successfully'
+        );
     }
 }

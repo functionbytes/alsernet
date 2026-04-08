@@ -72,7 +72,7 @@
                                 <div class="card-body text-center">
                                     <i class="bi bi-check-circle text-success display-6"></i>
                                     <h3 class="mt-2 mb-0">{{ number_format($import->successful_rows) }}</h3>
-                                    <p class="text-muted mb-0 small">Successful</p>
+                                    <p class="text-muted mb-0">Successful</p>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                                 <div class="card-body text-center">
                                     <i class="bi bi-x-circle text-danger display-6"></i>
                                     <h3 class="mt-2 mb-0">{{ number_format($import->failed_rows) }}</h3>
-                                    <p class="text-muted mb-0 small">Failed</p>
+                                    <p class="text-muted mb-0">Failed</p>
                                 </div>
                             </div>
                         </div>
@@ -90,7 +90,7 @@
                                 <div class="card-body text-center">
                                     <i class="bi bi-hourglass-split text-warning display-6"></i>
                                     <h3 class="mt-2 mb-0">{{ number_format($import->total_rows - $import->processed_rows) }}</h3>
-                                    <p class="text-muted mb-0 small">Remaining</p>
+                                    <p class="text-muted mb-0">Remaining</p>
                                 </div>
                             </div>
                         </div>

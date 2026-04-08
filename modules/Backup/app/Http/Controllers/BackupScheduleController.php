@@ -3,7 +3,9 @@
 namespace Modules\Backup\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Modules\Backup\Models\BackupSchedule;
 
 class BackupScheduleController extends Controller
@@ -137,7 +139,7 @@ class BackupScheduleController extends Controller
     /**
      * Show form to edit schedule
      */
-    public function edit(BackupSchedule $schedule): \Illuminate\View\View
+    public function edit(BackupSchedule $schedule): View
     {
         $pageTitle = 'Editar Backup Programado';
         $breadcrumb = 'Configuración / Backups Programados / Editar';
@@ -241,9 +243,42 @@ class BackupScheduleController extends Controller
     }
 
     /**
+     * Bulk action on schedules
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $schedules = BackupSchedule::whereIn('id', $request->ids)->get();
+
+        $count = 0;
+
+        foreach ($schedules as $schedule) {
+            match ($request->action) {
+                'activate' => $schedule->update(['enabled' => true]),
+                'deactivate' => $schedule->update(['enabled' => false]),
+                'delete' => $schedule->delete(),
+            };
+            $count++;
+        }
+
+        $messages = [
+            'activate' => "{$count} programación(es) activada(s) correctamente.",
+            'deactivate' => "{$count} programación(es) desactivada(s) correctamente.",
+            'delete' => "{$count} programación(es) eliminada(s) correctamente.",
+        ];
+
+        return response()->json(['message' => $messages[$request->action]]);
+    }
+
+    /**
      * Get schedule details via AJAX
      */
-    public function getScheduleDetails(BackupSchedule $schedule): \Illuminate\Http\JsonResponse
+    public function getScheduleDetails(BackupSchedule $schedule): JsonResponse
     {
         return response()->json([
             'success' => true,

@@ -2,13 +2,20 @@
 
 namespace Modules\Template\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Template\Database\Factories\MenuFactory;
 
 class Menu extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function newFactory(): MenuFactory
+    {
+        return MenuFactory::new();
+    }
 
     protected $fillable = [
         'name',
@@ -26,7 +33,7 @@ class Menu extends Model
      */
     public function items()
     {
-        return $this->hasMany(MenuItem::class)->whereNull('parent_id')->orderBy('order');
+        return $this->hasMany(MenuItem::class)->whereNull('parent_id')->orderBy('order')->orderBy('id');
     }
 
     /**
@@ -34,13 +41,13 @@ class Menu extends Model
      */
     public function allItems()
     {
-        return $this->hasMany(MenuItem::class)->orderBy('order');
+        return $this->hasMany(MenuItem::class)->orderBy('order')->orderBy('id');
     }
 
     /**
      * Scope a query to only include active menus.
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', true);
     }
@@ -48,7 +55,7 @@ class Menu extends Model
     /**
      * Scope a query to filter by location.
      */
-    public function scopeByLocation($query, string $location)
+    public function scopeByLocation(Builder $query, string $location): Builder
     {
         return $query->where('location', $location);
     }

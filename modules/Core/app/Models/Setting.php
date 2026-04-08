@@ -3,6 +3,7 @@
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Campaign\Library\Facades\Hook;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -259,7 +260,7 @@ class Setting extends Model implements HasMedia
                 'cat' => 'general',
                 'value' => 'en',
                 'type' => 'select',
-                'options' => \Modules\Core\Models\Lang::getSelectOptions(),
+                'options' => Lang::getSelectOptions(),
             ],
             'frontend_scheme' => [
                 'cat' => 'general',
@@ -279,7 +280,7 @@ class Setting extends Model implements HasMedia
                 'type' => 'select',
                 'options' => array_map(function ($cap) {
                     return ['value' => $cap['id'], 'text' => $cap['title']];
-                }, class_exists(\Modules\Campaign\Library\Facades\Hook::class) ? \Modules\Campaign\Library\Facades\Hook::execute('captcha_method') : []),
+                }, class_exists(Hook::class) ? Hook::execute('captcha_method') : []),
             ],
             'login_recaptcha' => [
                 'cat' => 'general',
@@ -940,7 +941,7 @@ class Setting extends Model implements HasMedia
                 function ($cap) {
                     return $cap['id'];
                 },
-                class_exists(\Modules\Campaign\Library\Facades\Hook::class) ? \Modules\Campaign\Library\Facades\Hook::execute('captcha_method') : []
+                class_exists(Hook::class) ? Hook::execute('captcha_method') : []
             )
         )
         ) {
@@ -1484,6 +1485,7 @@ class Setting extends Model implements HasMedia
             'db_password' => self::get('db_password', env('DB_PASSWORD', '')),
             'db_charset' => self::get('db_charset', 'utf8mb4'),
             'db_collation' => self::get('db_collation', 'utf8mb4_unicode_ci'),
+            'cleanup_enabled' => (bool) self::get('cleanup_enabled', env('CMS_ENABLED_CLEANUP_DATABASE', false)),
         ];
     }
 
@@ -1493,7 +1495,7 @@ class Setting extends Model implements HasMedia
     public static function setDatabaseSettings(array $data): void
     {
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, 'db_')) {
+            if (str_starts_with($key, 'db_') || $key === 'cleanup_enabled') {
                 self::set($key, $value);
             }
         }
@@ -1511,6 +1513,7 @@ class Setting extends Model implements HasMedia
             'db_database' => 'required|string',
             'db_username' => 'required|string',
             'db_password' => 'nullable|string',
+            'cleanup_enabled' => 'nullable|boolean',
         ];
     }
 

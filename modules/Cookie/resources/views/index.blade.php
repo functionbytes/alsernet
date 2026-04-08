@@ -21,11 +21,11 @@
     $fbPixelEnabled = cookie_option('facebook_pixel_enabled') === '1';
     $fbPixelId      = cookie_option('facebook_pixel_id');
     $cookieName     = config('Cookie.general.cookie_name', 'cookie_for_consent');
-    $cookieLifetime = config('Cookie.general.cookie_lifetime', 36000);
+    $cookieLifetime = config('Cookie.general.cookie_lifetime', 7300);
 
-    $positionStyle = match($position) {
-        'top'    => 'top:0; bottom:auto; transform:translateY(-100%);',
-        'center' => 'top:50%; bottom:auto; transform:translateY(-50%); left:50%; right:auto; transform:translate(-50%,-50%);',
+    $positionClass = match($position) {
+        'top'    => 'cookie-consent--position-top',
+        'center' => 'cookie-consent--position-center',
         default  => '',
     };
 @endphp
@@ -39,32 +39,38 @@
     color: #fff;
 }
 </style>
-<div class="js-cookie-consent cookie-consent {{ $styleClass }}"
-     style="color: {{ $textColor }}; {{ $positionStyle }}"
+<div id="cookie-banner"
+     class="js-cookie-consent cookie-consent {{ $styleClass }} {{ $positionClass }} d-none"
+     style="color: {{ $textColor }};"
      dir="{{ $direction }}"
      data-cookie-name="{{ $cookieName }}"
      data-cookie-lifetime="{{ $cookieLifetime }}"
      data-cookie-domain="{{ config('session.domain') ?? request()->getHost() }}"
-     data-session-secure="{{ config('session.secure') ? ';secure' : '' }}"
+     data-cookie-secure="{{ config('session.secure') ? '1' : '0' }}"
+     role="dialog"
+     aria-live="polite"
+     aria-label="Aviso de cookies"
+     aria-modal="false"
 >
     <div class="cookie-consent-body" style="max-width: {{ $maxWidth }}px;">
         <div class="cookie-consent__inner">
 
             <div class="cookie-consent__message">
-                {!! $message !!}
+                {{ $message }}
                 @if ($learnMoreUrl && $learnMoreText)
                     <a href="{{ $learnMoreUrl }}">{{ $learnMoreText }}</a>
                 @endif
             </div>
 
             <div class="cookie-consent__actions">
-                <button class="js-cookie-consent-reject cookie-consent__reject">{{ $rejectText }}</button>
+                <button class="js-cookie-reject cookie-consent__reject">{{ $rejectText }}</button>
 
                 @if (!empty($categories) && count($categories) > 1)
-                    <button class="js-cookie-consent-customize cookie-consent__customize">{{ $customText }}</button>
+                    <button class="js-cookie-customize cookie-consent__customize"
+                            data-bs-toggle="modal" data-bs-target="#cookie-preferences-modal">{{ $customText }}</button>
                 @endif
 
-                <button class="js-cookie-consent-agree cookie-consent__agree">{{ $acceptText }}</button>
+                <button class="js-cookie-accept cookie-consent__agree">{{ $acceptText }}</button>
             </div>
 
             @if (!empty($categories))
@@ -72,7 +78,7 @@
                     @foreach ($categories as $key => $category)
                         <div class="cookie-category">
                             <label class="cookie-category__label">
-                                <input type="checkbox" class="js-cookie-category" value="{{ $key }}"
+                                <input type="checkbox" class="cookie-category-toggle" data-category="{{ $key }}" value="{{ $key }}"
                                     {{ !empty($category['required']) ? 'checked disabled' : 'checked' }}>
                                 <span class="cookie-category__name">{{ $category['name'] }}</span>
                             </label>
@@ -81,7 +87,7 @@
                     @endforeach
 
                     <div class="cookie-consent__save">
-                        <button class="js-cookie-consent-save cookie-consent__save-button">
+                        <button class="js-cookie-save-preferences cookie-consent__save-button">
                             {{ $saveText }}
                         </button>
                     </div>
@@ -91,9 +97,11 @@
         </div>
     </div>
 </div>
+
+@include('cookie::components.preferences-modal')
 @endif
 
-@if ($gaEnabled && $gaId)
+@if ($enabled && $gaEnabled && $gaId)
 <!-- Google Analytics Global Site Tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
 <script>
@@ -109,22 +117,10 @@
         'security_storage': 'granted'
     });
 
-    gtag('config', '{{ $gaId }}');
+    window._cookieGaId = {!! \Illuminate\Support\Js::from($gaId) !!};
 </script>
 @endif
 
-@if ($fbPixelEnabled && $fbPixelId)
-<!-- Facebook Pixel Code -->
-<script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '{{ $fbPixelId }}');
-    fbq('track', 'PageView');
-</script>
+@if ($enabled && $fbPixelEnabled && $fbPixelId)
+<script>window._cookieFbPixelId = {!! \Illuminate\Support\Js::from($fbPixelId) !!};</script>
 @endif

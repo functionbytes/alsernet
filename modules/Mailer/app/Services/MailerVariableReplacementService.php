@@ -81,42 +81,29 @@ class MailerVariableReplacementService
      */
     private static function getDocumentModuleVariables(): array
     {
+        $documentList = '<ul style="margin:10px 0;padding-left:20px"><li style="margin:5px 0">DNI o Pasaporte</li><li style="margin:5px 0">Comprobante de domicilio</li><li style="margin:5px 0">Justificante de ingresos</li></ul>';
+        $notesText = 'La foto del DNI esta borrosa. Por favor, asegurese de que todos los datos sean legibles.';
+
         return [
-            'MISSING_DOCUMENTS' => '<ul style="margin: 10px 0; padding-left: 20px;"><li style="margin: 5px 0;">DNI o Pasaporte</li><li style="margin: 5px 0;">Comprobante de domicilio</li><li style="margin: 5px 0;">Justificante de ingresos</li></ul>',
-            'MISSING_DOCUMENTS_LIST' => '<ul style="margin: 10px 0; padding-left: 20px;"><li style="margin: 5px 0;">DNI o Pasaporte</li><li style="margin: 5px 0;">Comprobante de domicilio</li><li style="margin: 5px 0;">Justificante de ingresos</li></ul>',
-            'REQUIRED_DOCUMENTS_LIST' => '<ul style="margin: 10px 0; padding-left: 20px;"><li style="margin: 5px 0;">DNI o Pasaporte</li><li style="margin: 5px 0;">Comprobante de domicilio</li><li style="margin: 5px 0;">Justificante de ingresos</li></ul>',
+            'MISSING_DOCUMENTS' => $documentList,
+            'MISSING_DOCUMENTS_LIST' => $documentList,
+            'REQUIRED_DOCUMENTS_LIST' => $documentList,
             'DOCUMENT_INSTRUCTIONS' => 'Por favor, cargue los documentos solicitados en formato PDF o imagen.',
-            'NOTES_SECTION' => '<div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ff0049;">
-                <p style="margin: 0; font-weight: bold; color: #374151;">Nota adicional:</p>
-                <p style="margin-top: 10px; font-style: italic; color: #555;">"La foto del DNI está borrosa. Por favor, asegúrese de que todos los datos sean legibles. También necesitamos que el comprobante de domicilio no tenga más de 3 meses de antigüedad."</p>
-            </div>',
-            'NOTES' => 'La foto del DNI está borrosa. Por favor, asegúrese de que todos los datos sean legibles.',
-            'REQUEST_REASON' => 'La foto del DNI está borrosa. Por favor, asegúrese de que todos los datos sean legibles.',
+            'NOTES_SECTION' => '<div style="background-color:#f3f4f6;padding:15px;border-radius:6px;margin:20px 0;border-left:4px solid #ff0049"><p style="margin:0;font-weight:bold;color:#374151">Nota adicional:</p><p style="margin-top:10px;font-style:italic;color:#555">"'.$notesText.'"</p></div>',
+            'NOTES' => $notesText,
+            'REQUEST_REASON' => $notesText,
             'DAYS_SINCE_REQUEST' => '5',
-            'REMINDER_MESSAGE' => 'Han pasado <strong>5 días</strong> desde que solicitamos su documentación y aún no hemos recibido respuesta. Le recordamos que es importante que nos envíe los documentos lo antes posible para poder continuar con el procesamiento de su pedido.',
+            'REMINDER_MESSAGE' => 'Han pasado <strong>5 dias</strong> desde que solicitamos su documentacion y aun no hemos recibido respuesta.',
         ];
     }
 
     /**
      * Reemplazar variables en una cadena de contenido
-     *
-     * @param  string  $content  Contenido con placeholders {VARIABLE_NAME}
-     * @param  array  $variables  Array de variables para reemplazar
-     * @return string Contenido con variables reemplazadas
+     * Delega al servicio centralizado MailerTemplateRendererService
      */
     public static function replaceVariables(string $content, array $variables = []): string
     {
-        foreach ($variables as $key => $value) {
-            // Normalizar la clave para que siempre tenga formato {KEY}
-            $placeholder = str_starts_with($key, '{') ? $key : '{'.$key.'}';
-
-            // Reemplazar solo si el valor no es array/object
-            if (! is_array($value) && ! is_object($value)) {
-                $content = str_replace($placeholder, (string) $value, $content);
-            }
-        }
-
-        return $content;
+        return MailerTemplateRendererService::replaceVariables($content, $variables);
     }
 
     /**

@@ -133,6 +133,13 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'failed_jobs' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/failed-jobs.log'),
+            'level' => 'error',
+            'days' => 30,
+        ],
+
     ],
 
 ];

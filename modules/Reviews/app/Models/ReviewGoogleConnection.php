@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Reviews\Database\Factories\ReviewGoogleConnectionFactory;
 use Modules\Reviews\Enums\ConnectionStatus;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -17,6 +18,11 @@ class ReviewGoogleConnection extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $table = 'review_google_connections';
+
+    protected static function newFactory()
+    {
+        return ReviewGoogleConnectionFactory::new();
+    }
 
     protected $fillable = [
         'user_id',

@@ -1,9 +1,0 @@
-{
-    "name": "Landing Page Template",
-    "namespace": "Template\\Landing\\",
-    "description": "Plantilla optimizada para landing pages y conversión",
-    "author": "Alsernet",
-    "version": "1.0.0",
-    "inherit": "default",
-    "required_plugins": []
-}

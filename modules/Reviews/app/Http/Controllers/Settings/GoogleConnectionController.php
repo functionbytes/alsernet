@@ -3,8 +3,10 @@
 namespace Modules\Reviews\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -13,6 +15,7 @@ use Modules\Reviews\Events\ConnectionRevoked;
 use Modules\Reviews\Http\Requests\StoreReviewGoogleConnectionRequest;
 use Modules\Reviews\Jobs\SyncGoogleLocationsJob;
 use Modules\Reviews\Models\ReviewGoogleConnection;
+use Modules\Reviews\Models\ReviewGoogleLocation;
 use Modules\Reviews\Services\GoogleAccountService;
 use Modules\Reviews\Services\GoogleAuthService;
 
@@ -51,9 +54,7 @@ class GoogleConnectionController extends Controller
             'expired' => ReviewGoogleConnection::whereDate('token_expires_at', '<=', now())
                 ->orWhereNull('token_expires_at')
                 ->count(),
-            'locations' => ReviewGoogleConnection::withCount('locations')
-                ->get()
-                ->sum('locations_count'),
+            'locations' => ReviewGoogleLocation::count(),
         ];
 
         return view('reviews::settings.connections.index', compact('connections', 'stats'));
@@ -153,6 +154,14 @@ class GoogleConnectionController extends Controller
                 ->route('settings.reviews.connections.index')
                 ->with('success', 'Conexión establecida correctamente. Sincronizando ubicaciones...');
         } catch (\Exception $e) {
+            session()->forget('google_connection_id');
+
+            Log::error('Error completing Google OAuth callback', [
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
             if (isset($connection)) {
                 $connection->update([
                     'status' => ConnectionStatus::ERROR,
@@ -162,7 +171,7 @@ class GoogleConnectionController extends Controller
 
             return redirect()
                 ->route('settings.reviews.connections.index')
-                ->with('error', 'Error al conectar: '.$e->getMessage());
+                ->with('error', 'Ha ocurrido un error al conectar con Google. Por favor intenta más tarde.');
         }
     }
 
@@ -179,10 +188,39 @@ class GoogleConnectionController extends Controller
                 ->route('settings.reviews.connections.index')
                 ->with('success', 'Conexión revocada correctamente');
         } catch (\Exception $e) {
+            Log::error('Error revoking Google connection', [
+                'connection_id' => $connection->id,
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
             return redirect()
                 ->route('settings.reviews.connections.index')
-                ->with('error', 'Error al revocar conexión: '.$e->getMessage());
+                ->with('error', 'Ha ocurrido un error al revocar la conexión. Por favor intenta más tarde.');
         }
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:revoke'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $connections = ReviewGoogleConnection::query()->whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($connections as $connection) {
+            $this->authorize('delete', $connection);
+            $this->authService->revokeToken($connection);
+            event(new ConnectionRevoked($connection));
+            $connection->delete();
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     public function bulkRevoke(Request $request): RedirectResponse
@@ -220,9 +258,15 @@ class GoogleConnectionController extends Controller
                 ->route('settings.reviews.connections.index')
                 ->with('success', "Se revocaron {$revokedCount} conexiones correctamente");
         } catch (\Exception $e) {
+            Log::error('Error bulk revoking Google connections', [
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
             return redirect()
                 ->route('settings.reviews.connections.index')
-                ->with('error', 'Error al revocar conexiones: '.$e->getMessage());
+                ->with('error', 'Ha ocurrido un error al revocar las conexiones. Por favor intenta más tarde.');
         }
     }
 }

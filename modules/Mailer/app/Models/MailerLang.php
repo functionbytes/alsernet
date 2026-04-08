@@ -36,22 +36,22 @@ class MailerLang extends Model
 
     public function scopeId($query, $id)
     {
-        return $query->where('id', $id)->first();
+        return $query->where('id', $id);
     }
 
     public function scopeUid($query, $uid)
     {
-        return $query->where('uid', $uid)->first();
+        return $query->where('uid', $uid);
     }
 
     public function scopeIso($query, $iso)
     {
-        return $query->where('iso_code', $iso)->first();
+        return $query->where('iso_code', $iso);
     }
 
     public function scopeLocate($query, $iso)
     {
-        return $query->where('locate', $iso)->first();
+        return $query->where('locate', $iso);
     }
 
     public function scopeAvailable($query)

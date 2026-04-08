@@ -2,10 +2,12 @@
 
 namespace Modules\Role\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckRolesAndPermissions
 {
@@ -33,7 +35,7 @@ class CheckRolesAndPermissions
         'export' => 'export',
     ];
 
-    public function handle(Request $request, Closure $next, $roleType = null)
+    public function handle(Request $request, Closure $next, ?string $roleType = null): Response
     {
         $user = Auth::user();
 
@@ -62,7 +64,7 @@ class CheckRolesAndPermissions
      * Verify that the user has specific permissions for the requested route
      * Uses Spatie Laravel Permission to check permissions
      */
-    private function checkSpecificPermissions(Request $request, $user, ?string $role): void
+    private function checkSpecificPermissions(Request $request, User $user, ?string $role): void
     {
         $routeName = $request->route()?->getName();
         if (! $routeName) {
@@ -95,7 +97,7 @@ class CheckRolesAndPermissions
     /**
      * Log access denial attempts for auditing purposes
      */
-    private function logAccessDenial(Request $request, $user, string $reason): void
+    private function logAccessDenial(Request $request, User $user, string $reason): void
     {
         Log::warning('Access Denied', [
             'user_id' => $user->id ?? null,

@@ -5,6 +5,7 @@ namespace Modules\Reviews\Console\Commands;
 use Illuminate\Console\Command;
 use Modules\Reviews\Enums\ConnectionStatus;
 use Modules\Reviews\Models\ReviewGoogleConnection;
+use Modules\Reviews\Notifications\ConnectionExpiringNotification;
 
 class CleanupExpiredConnectionsCommand extends Command
 {
@@ -60,8 +61,12 @@ class CleanupExpiredConnectionsCommand extends Command
 
     private function notifyOwner(ReviewGoogleConnection $connection): void
     {
-        // Aquí se puede implementar notificación por email/notificación
-        // Por ahora solo se registra el cambio de estado
+        $connection->loadMissing('user');
+
+        if ($connection->user) {
+            $connection->user->notify(new ConnectionExpiringNotification($connection, 0));
+        }
+
         $this->line("Conexión '{$connection->name}' marcada como expirada");
     }
 }

@@ -16,13 +16,13 @@ return new class extends Migration
         Schema::create('push_notification_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('token')->unique();
-            $table->string('device_type');  // web, ios, android
-            $table->string('device_name')->nullable();
-            $table->timestamp('last_used_at')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('token');
+            $table->string('device_type')->nullable();
+            $table->string('device_id')->nullable();
+            $table->boolean('active')->default(true);
+            $table->dateTime('last_used_at')->nullable();
             $table->timestamps();
-            $table->index('user_id');
+            $table->unique(['user_id', 'token']);
         });
     }
 

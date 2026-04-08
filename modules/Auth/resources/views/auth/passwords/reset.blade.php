@@ -17,8 +17,9 @@
                             </div>
                             <!-- account form -->
 
-                            {!! Form::open(['route' => 'password.reset', 'class' => 'account__form', 'method' => 'POST', 'id' => 'formPassword']) !!}
+                            {!! Form::open(['route' => 'auth.password.update', 'class' => 'account__form', 'method' => 'POST', 'id' => 'formPassword']) !!}
 
+                            <input type="hidden" name="token" value="{{ $token }}">
                             <input type="hidden" name="email" value="{{ $email }}">
                             @csrf
                             <div class="row g-4">
@@ -29,7 +30,13 @@
                                 </div>
                                 <div class="col-lg-12">
                                     <div class="input-group">
-                                        <input class="form-control" type="password" autocomplete="new-password" name="password" id="password" placeholder="Contraseña" >
+                                        <input class="form-control" type="password" autocomplete="new-password" name="password" id="password" placeholder="Contraseña (mínimo 8 caracteres)">
+                                    </div>
+                                    <div class="mt-2" id="password-strength-wrapper" style="display:none">
+                                        <div class="progress" style="height:5px">
+                                            <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                        </div>
+                                        <small id="password-strength-text" class="text-muted mt-1 d-block"></small>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
@@ -66,30 +73,54 @@
     <script type="text/javascript">
         $(document).ready(function() {
 
+            // Password strength meter
+            function passwordStrength(pw) {
+                let score = 0;
+                if (pw.length >= 8)  { score++; }
+                if (pw.length >= 12) { score++; }
+                if (/[A-Z]/.test(pw))  { score++; }
+                if (/[0-9]/.test(pw))  { score++; }
+                if (/[^A-Za-z0-9]/.test(pw)) { score++; }
+                return score;
+            }
+            const strengthLabels = ['', 'Muy débil', 'Débil', 'Regular', 'Fuerte', 'Muy fuerte'];
+            const strengthClasses = ['', 'bg-danger', 'bg-warning', 'bg-info', 'bg-primary', 'bg-success'];
+
+            $('#password').on('input', function () {
+                const val = $(this).val();
+                const $wrapper = $('#password-strength-wrapper');
+                if (!val) { $wrapper.hide(); return; }
+                $wrapper.show();
+                const score = passwordStrength(val);
+                $('#password-strength-bar')
+                    .css('width', (score / 5 * 100) + '%')
+                    .removeClass('bg-danger bg-warning bg-info bg-primary bg-success')
+                    .addClass(strengthClasses[score] || 'bg-danger');
+                $('#password-strength-text').text(strengthLabels[score] || '');
+            });
+
             $("#formPassword").validate({
                 submit: true,
                 rules: {
                     password: {
                         required: true,
-                        minlength: 3
+                        minlength: 8
                     },
                     password_confirmation: {
                         required: true,
-                        minlength: 3,
+                        minlength: 8,
                         equalTo: "#password"
                     },
                 },
                 messages: {
                     password: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 3 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
+                        required: "La contraseña es obligatoria.",
+                        minlength: "Debe contener al menos 8 caracteres.",
                     },
                     password_confirmation: {
-                        required: "El parametro es necesario.",
-                        minlength: "Debe contener al menos 3 caracter",
-                        maxlength: "Debe contener al menos 100 caracter",
-                        equalTo: "Por favor, introduzca el mismo valor de nuevo."
+                        required: "La confirmación es obligatoria.",
+                        minlength: "Debe contener al menos 8 caracteres.",
+                        equalTo: "Las contraseñas no coinciden."
                     },
                 }
             });

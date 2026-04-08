@@ -11,38 +11,83 @@
         @include('core::components.alerts')
 
         <div class="card">
+
+            {{-- Header --}}
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Versiones de "{{ $page->title }}"</h5>
                         <p class="small mb-0 text-muted">Historial de cambios y snapshots de la página</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('pages.edit', $page->id) }}" class="btn btn-secondary">
-                            Volver
-                        </a>
-                        @if($versions->count() >= 2)
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#compareModal">
-                                Comparar versiones
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
                             </button>
-                        @endif
-                        <form method="POST" action="{{ route('pages.versions.create', $page->id) }}" class="d-inline">
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('create-snapshot-form').submit();">Crear snapshot</a>
+                                @if($versions->count() >= 2)
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#compareModal">Comparar versiones</a>
+                                @endif
+                                <li><hr class="dropdown-divider"></li>
+                                <a class="dropdown-item" href="{{ route('pages.edit', $page->id) }}">Volver a la página</a>
+                            </div>
+                        </div>
+                        <form id="create-snapshot-form" method="POST" action="{{ route('pages.versions.create', $page->id) }}" class="d-none">
                             @csrf
-                            <button type="submit" class="btn btn-primary">
-                                Crear snapshot
-                            </button>
                         </form>
                     </div>
                 </div>
             </div>
 
+            {{-- Stats --}}
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ $versions->count() }}</h4>
+                                <small class="text-muted">Versiones guardadas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Publicadas</h6>
+                                <h4 class="mb-1 fw-bold">{{ $versions->where('status', 'published')->count() }}</h4>
+                                <small class="text-muted">Con estado publicado</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Borradores</h6>
+                                <h4 class="mb-1 fw-bold">{{ $versions->where('status', 'draft')->count() }}</h4>
+                                <small class="text-muted">En estado borrador</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Última versión</h6>
+                                <h4 class="mb-1 fw-bold">{{ $versions->isNotEmpty() ? 'v'.$versions->first()->version_number : '-' }}</h4>
+                                <small class="text-muted">Versión más reciente</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Table --}}
             <div class="card-body">
                 @if($versions->isEmpty())
                     <div class="text-center py-5">
                         <div class="d-flex flex-column align-items-center">
-                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-history fs-7"></i>
-                            </div>
                             <h6 class="mb-1">No hay versiones disponibles</h6>
                             <p class="text-muted mb-3">Crea un snapshot para guardar el estado actual de la página</p>
                             <form method="POST" action="{{ route('pages.versions.create', $page->id) }}">
@@ -55,9 +100,10 @@
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Versión</th>
                                     <th>Título</th>
                                     <th class="text-center">Estado</th>
@@ -71,10 +117,13 @@
                                 @foreach($versions as $version)
                                     <tr>
                                         <td>
+                                            @if(!$loop->first)
+                                                <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $version->id }}">
+                                            @endif
+                                        </td>
+                                        <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-primary-subtle text-primary">
-                                                    v{{ $version->version_number }}
-                                                </span>
+                                                <span class="badge bg-primary-subtle text-primary">v{{ $version->version_number }}</span>
                                                 @if($loop->first)
                                                     <span class="badge bg-success-subtle text-success">Actual</span>
                                                 @endif
@@ -106,13 +155,13 @@
                                             <small class="d-block text-muted">{{ $version->created_at->diffForHumans() }}</small>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-light-subtle text-black">
+                                            <span class="badge bg-light text-dark">
                                                 {{ number_format($version->getContentSize() / 1024, 2) }} KB
                                             </span>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-boundary="viewport">
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -148,6 +197,7 @@
                     </div>
                 @endif
             </div>
+
         </div>
 
     </div>
@@ -160,6 +210,39 @@
         @csrf
         @method('DELETE')
     </form>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> versión(es)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Modal comparar versiones --}}
     @if($versions->count() >= 2)
@@ -196,10 +279,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Comparar</button>
                         <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary  w-100">
-                            Comparar
-                        </button>
                     </div>
                 </form>
             </div>
@@ -237,6 +318,45 @@ $(document).ready(function () {
         const version = $(this).data('version');
         if (!confirm('¿Eliminar ' + version + '? Esta acción no se puede deshacer.')) return;
         $('#delete-version-form').attr('action', url).submit();
+    });
+
+    // Bulk actions
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una versión.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' versión(es) seleccionadas?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('pages.versions.bulk-action', $page->id) }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.message || res.count + ' versión(es) eliminadas.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
     });
 
     @if(session('success'))

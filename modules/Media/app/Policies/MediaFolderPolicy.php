@@ -3,7 +3,7 @@
 namespace Modules\Media\Policies;
 
 use App\Models\User;
-use Modules\Media\Entities\MediaFolder;
+use Modules\Media\Models\MediaFolder;
 
 class MediaFolderPolicy
 {

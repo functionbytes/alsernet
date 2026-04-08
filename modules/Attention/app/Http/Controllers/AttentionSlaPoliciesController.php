@@ -3,7 +3,9 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Attention\Http\Requests\StoreSlaPolicyRequest;
@@ -112,6 +114,32 @@ class AttentionSlaPoliciesController extends Controller
         return redirect()
             ->route('settings.attention.sla-policies.index')
             ->with('success', 'Política SLA actualizada exitosamente');
+    }
+
+    /**
+     * Bulk action on multiple SLA policies.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $policies = AttentionSlaPolicy::whereIn('id', $validated['ids'])
+            ->where('is_default', false)
+            ->get();
+        $count = 0;
+
+        foreach ($policies as $policy) {
+            if ($policy->attentions()->count() === 0) {
+                $policy->delete();
+                $count++;
+            }
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     /**

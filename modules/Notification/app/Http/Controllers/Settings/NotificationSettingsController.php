@@ -5,7 +5,6 @@ namespace Modules\Notification\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class NotificationSettingsController extends Controller
@@ -29,12 +28,12 @@ class NotificationSettingsController extends Controller
             'retention_days' => config('notification.retention_days', 30),
         ];
 
-        return view('notification::theme.backups.index', compact('config'));
+        return view('notification::managers.settings.index', compact('config'));
     }
 
     public function update(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'cleanup_enabled' => 'required|boolean',
             'cleanup_days' => 'required|integer|min:1|max:365',
             'push_enabled' => 'required|boolean',
@@ -52,11 +51,6 @@ class NotificationSettingsController extends Controller
             'retention_days.max' => 'Los días de retención no pueden exceder 365',
         ]);
 
-        if ($validator->fails()) {
-            return $this->error($validator->errors()->first());
-        }
-
-        // Update environment file
         $this->updateEnvFile([
             'NOTIFICATION_CLEANUP_ENABLED' => $request->cleanup_enabled ? 'true' : 'false',
             'NOTIFICATION_CLEANUP_DAYS' => $request->cleanup_days,
@@ -69,5 +63,26 @@ class NotificationSettingsController extends Controller
         ]);
 
         return $this->success('Configuración actualizada correctamente');
+    }
+
+    protected function updateEnvFile(array $values): void
+    {
+        $path = base_path('.env');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        $content = file_get_contents($path);
+
+        foreach ($values as $key => $value) {
+            if (env($key) === null) {
+                $content .= "\n{$key}={$value}";
+            } else {
+                $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
+            }
+        }
+
+        file_put_contents($path, $content);
     }
 }

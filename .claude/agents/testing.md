@@ -1,7 +1,7 @@
 ---
 name: testing
 description: "Testing specialist for PHPUnit tests, browser testing, and quality assurance. Use proactively after writing code, when bugs are found, or when test coverage is needed. For fixing bugs found during testing, delegate to the backend or frontend agent."
-model: sonnet
+model: haiku
 tools: Read, Edit, Write, Bash, Grep, Glob
 mcpServers:
   - laravel-boost

@@ -7,6 +7,7 @@ use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableReplacementService;
 use Modules\Mailrelay\Contracts\CampaignRendererInterface;
 use Modules\Mailrelay\Entities\Campaign;
+use Modules\Mailrelay\Exceptions\CampaignRenderException;
 
 /**
  * Servicio para renderizar campaigns usando templates de Mailer
@@ -33,7 +34,7 @@ class CampaignRendererService implements CampaignRendererInterface
             return $this->renderWithMailerTemplate($campaign, $variables);
         }
 
-        throw new \Exception('Campaign no tiene contenido HTML ni template asignado');
+        throw CampaignRenderException::noHtmlContent($campaign->id);
     }
 
     /**
@@ -44,7 +45,7 @@ class CampaignRendererService implements CampaignRendererInterface
         $template = MailerTemplate::find($campaign->mailer_template_id);
 
         if (! $template) {
-            throw new \Exception("Template ID {$campaign->mailer_template_id} no encontrado");
+            throw CampaignRenderException::templateNotFound($campaign->mailer_template_id);
         }
 
         // Obtener idioma (default a 1 si no está especificado)

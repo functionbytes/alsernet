@@ -73,6 +73,31 @@
                                 </div>
                             </div>
 
+                            <!-- Ubicación específica -->
+                            @if(isset($locations) && $locations->count() > 0)
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="review_google_location_id" class="control-label col-form-label">Ubicación</label>
+                                    <select class="form-select select2 @error('review_google_location_id') is-invalid @enderror"
+                                            id="review_google_location_id"
+                                            name="review_google_location_id"
+                                            data-placeholder="Global (todas las ubicaciones)">
+                                        <option value="">Global (todas las ubicaciones)</option>
+                                        @foreach($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ old('review_google_location_id') == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">Si no se selecciona, la plantilla estará disponible para todas las ubicaciones</small>
+                                    @error('review_google_location_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            @endif
+
                             <!-- Estado activo -->
                             <div class="col-12">
                                 <div class="mb-3">
@@ -196,8 +221,13 @@
 $(document).ready(function() {
     // Inicializar Select2
     $('#category, #is_active').select2({
-        minimumResultsForSearch: Infinity, // Ocultar buscador para pocas opciones
+        minimumResultsForSearch: Infinity,
         width: '100%'
+    });
+
+    $('#review_google_location_id').select2({
+        width: '100%',
+        allowClear: true
     });
 
     // Auto-focus primer campo

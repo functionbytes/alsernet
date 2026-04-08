@@ -36,7 +36,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapManagerSettingsRoutes(): void
     {
         Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('setting/modules')
+            ->prefix('panel/setting/modules')
             ->name('settings.modules.')
             ->group(function (): void {
                 // Load view routes (GET)

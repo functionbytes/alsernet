@@ -3,6 +3,7 @@
 namespace Modules\Mailrelay\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -123,7 +124,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to retrieve campaigns',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -211,7 +212,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to create campaign',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -259,7 +260,7 @@ class CampaignApiController extends Controller
                 'data' => $campaign,
             ], 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Campaign not found',
                 'message' => "Campaign with ID {$id} does not exist",
@@ -274,7 +275,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to retrieve campaign',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -363,7 +364,7 @@ class CampaignApiController extends Controller
                 'message' => 'Campaign updated successfully',
             ], 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Campaign not found',
                 'message' => "Campaign with ID {$id} does not exist",
@@ -378,7 +379,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to update campaign',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -418,7 +419,7 @@ class CampaignApiController extends Controller
                 'message' => 'Campaign deleted successfully',
             ], 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Campaign not found',
                 'message' => "Campaign with ID {$id} does not exist",
@@ -433,7 +434,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to delete campaign',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -541,7 +542,7 @@ class CampaignApiController extends Controller
                 'message' => 'Campaign sent successfully',
             ], 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Campaign not found',
                 'message' => "Campaign with ID {$id} does not exist",
@@ -556,7 +557,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to send campaign',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -640,7 +641,7 @@ class CampaignApiController extends Controller
                 ],
             ], 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Campaign not found',
                 'message' => "Campaign with ID {$id} does not exist",
@@ -655,7 +656,7 @@ class CampaignApiController extends Controller
 
             return response()->json([
                 'error' => 'Failed to retrieve campaign analytics',
-                'message' => $e->getMessage(),
+                'message' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

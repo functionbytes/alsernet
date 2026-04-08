@@ -39,7 +39,7 @@
 
                         <div class="mb-4">
                             <label for="import_type" class="form-label">Import Type</label>
-                            <select class="form-select" id="import_type" name="import_type" required>
+                            <select class="form-select select2" id="import_type" name="import_type" required>
                                 <option value="">Select import type...</option>
                                 <option value="contacts" {{ old('import_type') === 'contacts' ? 'selected' : '' }}>Contacts</option>
                                 <option value="subscribers" {{ old('import_type') === 'subscribers' ? 'selected' : '' }}>Subscribers</option>

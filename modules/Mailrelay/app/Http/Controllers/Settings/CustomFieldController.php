@@ -5,9 +5,10 @@ namespace Modules\Mailrelay\Http\Controllers\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Mailrelay\Entities\CustomField;
 use Modules\Mailrelay\Http\Controllers\Controller;
-use Modules\Mailrelay\Models\MailrelayCustomField;
 
 class CustomFieldController extends Controller
 {
@@ -18,7 +19,7 @@ class CustomFieldController extends Controller
     {
         Gate::authorize('mailrelay.settings.custom-fields.view');
 
-        $customFields = MailrelayCustomField::orderBy('name')->get();
+        $customFields = CustomField::orderBy('name')->get();
 
         return view('mailrelay::settings.custom-fields.index', [
             'customFields' => $customFields,
@@ -52,16 +53,18 @@ class CustomFieldController extends Controller
                 'required' => 'boolean',
             ]);
 
-            MailrelayCustomField::create($validated);
+            CustomField::create($validated);
 
             return redirect()
                 ->route('managers.settings.mailrelay.custom-fields.index')
                 ->with('success', 'Campo personalizado creado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay custom field create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear el campo: '.$e->getMessage());
+                ->with('error', 'Error al crear el campo. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -72,7 +75,7 @@ class CustomFieldController extends Controller
     {
         Gate::authorize('mailrelay.settings.custom-fields.edit');
 
-        $customField = MailrelayCustomField::findOrFail($id);
+        $customField = CustomField::findOrFail($id);
 
         return view('mailrelay::settings.custom-fields.edit', [
             'customField' => $customField,
@@ -87,7 +90,7 @@ class CustomFieldController extends Controller
         Gate::authorize('mailrelay.settings.custom-fields.edit');
 
         try {
-            $customField = MailrelayCustomField::findOrFail($id);
+            $customField = CustomField::findOrFail($id);
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -104,10 +107,12 @@ class CustomFieldController extends Controller
                 ->route('managers.settings.mailrelay.custom-fields.index')
                 ->with('success', 'Campo personalizado actualizado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay custom field update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el campo: '.$e->getMessage());
+                ->with('error', 'Error al actualizar el campo. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -119,16 +124,18 @@ class CustomFieldController extends Controller
         Gate::authorize('mailrelay.settings.custom-fields.delete');
 
         try {
-            $customField = MailrelayCustomField::findOrFail($id);
+            $customField = CustomField::findOrFail($id);
             $customField->delete();
 
             return redirect()
                 ->route('managers.settings.mailrelay.custom-fields.index')
                 ->with('success', 'Campo personalizado eliminado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay custom field delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar el campo: '.$e->getMessage());
+                ->with('error', 'Error al eliminar el campo. Por favor, inténtalo de nuevo.');
         }
     }
 }

@@ -4,6 +4,7 @@ namespace Modules\Mailrelay\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailrelay\Entities\Campaign;
@@ -121,10 +122,12 @@ class CampaignManagerController extends Controller
                 ->route('managers.mailrelay.campaigns.edit', $campaign->id)
                 ->with('success', "Campaign '{$campaign->name}' creada exitosamente");
         } catch (\Exception $e) {
+            Log::error('Mailrelay campaign create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear campaign: '.$e->getMessage());
+                ->with('error', 'Error al crear campaign. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -204,10 +207,12 @@ class CampaignManagerController extends Controller
                 ->route('managers.mailrelay.campaigns.edit', $id)
                 ->with('success', 'Campaign actualizada exitosamente');
         } catch (\Exception $e) {
+            Log::error('Mailrelay campaign update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar: '.$e->getMessage());
+                ->with('error', 'Error al actualizar. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -226,9 +231,11 @@ class CampaignManagerController extends Controller
                 ->route('managers.mailrelay.campaigns.index')
                 ->with('success', "Campaign '{$name}' eliminada exitosamente");
         } catch (\Exception $e) {
+            Log::error('Mailrelay campaign delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar: '.$e->getMessage());
+                ->with('error', 'Error al eliminar. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -246,9 +253,11 @@ class CampaignManagerController extends Controller
                 ->route('managers.mailrelay.campaigns.edit', $newCampaign->id)
                 ->with('success', "Campaign duplicada como '{$newCampaign->name}'");
         } catch (\Exception $e) {
+            Log::error('Mailrelay campaign duplicate failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al duplicar: '.$e->getMessage());
+                ->with('error', 'Error al duplicar. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -267,9 +276,11 @@ class CampaignManagerController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
+            Log::error('Mailrelay campaign preview failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error generando preview: '.$e->getMessage());
+                ->with('error', 'Error generando preview. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -291,7 +302,7 @@ class CampaignManagerController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -328,7 +339,7 @@ class CampaignManagerController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -357,7 +368,7 @@ class CampaignManagerController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

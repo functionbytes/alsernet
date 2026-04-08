@@ -92,7 +92,7 @@
                             </select>
                         </div>
                         <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary px-4">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request('search') || request('status'))
@@ -249,7 +249,7 @@
                     <p class="mb-0">
                         ¿Estás seguro de que deseas deshabilitar el módulo <strong id="disable-module-name"></strong>?
                     </p>
-                    <p class="text-muted small mb-0 mt-2">
+                    <p class="text-muted mb-0 mt-2">
                         El módulo dejará de estar disponible hasta que lo vuelvas a habilitar.
                     </p>
                 </div>
@@ -309,11 +309,11 @@
     <script>
         $(document).ready(function() {
             @if (session('success'))
-            toastr.success('{{ session('success') }}', 'Éxito');
+            toastr.success(@json(session('success')), 'Éxito');
             @endif
 
             @if (session('error'))
-            toastr.error('{{ session('error') }}', 'Error');
+            toastr.error(@json(session('error')), 'Error');
             @endif
 
             // Modal para deshabilitar módulo

@@ -7,182 +7,219 @@
 
     @include('core::components.alerts')
 
-    <form method="POST" action="{{ route('settings.optimize.update') }}">
-        @csrf
+    <div class="widget-content searchable-container list">
 
-        <div class="card">
-            {{-- Header --}}
-            <div class="card-header p-4 border-bottom">
-                <h5 class="mb-1 fw-bold">Optimizar rendimiento</h5>
-                <p class="small mb-0 text-muted">Configura las opciones de minificación y optimización del HTML generado por la aplicación</p>
+        <div class="row g-4 align-items-start">
+
+            {{-- Formulario (izquierda) --}}
+            <div class="col-lg-8">
+                <form method="POST" action="{{ route('settings.optimize.update') }}">
+                    @csrf
+
+                    <div class="card">
+
+                        {{-- Estado del servicio --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-1">Estado del servicio</h6>
+                            <p class="text-muted mb-3">Habilita o deshabilita la optimización automática del HTML generado por la aplicación.</p>
+
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enabled"
+                                       name="enabled" value="1"
+                                       {{ $get('enabled') === '1' ? 'checked' : '' }}>
+                                <label class="form-check-label fw-semibold" for="enabled">
+                                    Activar optimización
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mb-3">Cuando está habilitado, el HTML de las páginas públicas se optimiza automáticamente</small>
+
+                            @if($stats['requests'] > 0)
+                            <div class="alert alert-info border-0 mb-0">
+                                <small>
+                                    <strong>Rendimiento:</strong>
+                                    {{ number_format($stats['requests']) }} páginas optimizadas
+                                    &middot;
+                                    @php
+                                        $kb = $stats['bytes_saved'] / 1024;
+                                        $display = $kb >= 1024
+                                            ? number_format($kb / 1024, 2) . ' MB'
+                                            : number_format($kb, 1) . ' KB';
+                                    @endphp
+                                    {{ $display }} ahorrados
+                                    <form method="POST" action="{{ route('settings.optimize.reset-stats') }}" class="d-inline ms-2">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link btn-sm p-0 text-decoration-none">
+                                            <i class="fas fa-redo me-1"></i>Reiniciar
+                                        </button>
+                                    </form>
+                                </small>
+                            </div>
+                            @endif
+                        </div>
+
+                        <div id="optimize-settings" class="{{ $get('enabled') === '1' ? '' : 'd-none' }}">
+
+                            <hr class="my-0">
+
+                            {{-- Opciones de minificación --}}
+                            <div class="card-body">
+                                <h6 class="fw-bold text-dark mb-1">Opciones de minificación</h6>
+                                <p class="text-muted mb-3">Selecciona qué transformaciones aplicar al HTML de las páginas públicas.</p>
+
+                                @php
+                                $options = [
+                                    ['id' => 'collapse_whitespace', 'icon' => 'fa-compress',      'label' => 'Colapsar espacios en blanco',     'desc' => 'Elimina espacios y saltos de línea innecesarios del HTML'],
+                                    ['id' => 'elide_attributes',    'icon' => 'fa-tag',            'label' => 'Eliminar atributos por defecto',  'desc' => 'Elimina valores de atributos HTML que coinciden con el valor por defecto'],
+                                    ['id' => 'inline_css',          'icon' => 'fa-paint-brush',    'label' => 'CSS en línea',                    'desc' => 'Mueve los estilos inline a una clase CSS en el head'],
+                                    ['id' => 'insert_dns_prefetch', 'icon' => 'fa-server',         'label' => 'Insertar DNS prefetch',           'desc' => 'Inyecta etiquetas de prefetch para acelerar recursos externos'],
+                                    ['id' => 'remove_comments',     'icon' => 'fa-comment-slash',  'label' => 'Eliminar comentarios HTML',       'desc' => 'Elimina comentarios del código fuente'],
+                                    ['id' => 'remove_quotes',       'icon' => 'fa-quote-left',     'label' => 'Eliminar comillas innecesarias',  'desc' => 'Elimina comillas en atributos HTML cuando es seguro'],
+                                    ['id' => 'defer_javascript',    'icon' => 'fa-clock',          'label' => 'Diferir JavaScript',              'desc' => 'Agrega defer a scripts externos para no bloquear renderizado'],
+                                    ['id' => 'add_loading_lazy',    'icon' => 'fa-images',         'label' => 'Carga diferida de imágenes',      'desc' => 'Agrega loading="lazy" a imágenes e iframes'],
+                                    ['id' => 'minify_inline_styles','icon' => 'fa-file-code',      'label' => 'Minificar estilos en línea',      'desc' => 'Minifica el contenido de los bloques <style>'],
+                                    ['id' => 'minify_inline_scripts','icon' => 'fa-code',          'label' => 'Minificar scripts en línea',      'desc' => 'Minifica el contenido de los bloques <script>'],
+                                ];
+                                @endphp
+
+                                <div class="row g-3">
+                                    @foreach($options as $opt)
+                                    <div class="col-md-6">
+                                        <div class="card bg-light border-0 h-100">
+                                            <div class="card-body p-3 d-flex gap-3 align-items-center">
+                                                <div class="rounded-circle bg-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;">
+                                                    <i class="fas {{ $opt['icon'] }} fa-fw text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <label class="fw-semibold mb-0 d-block" for="{{ $opt['id'] }}">{{ $opt['label'] }}</label>
+                                                    <small class="text-muted">{{ $opt['desc'] }}</small>
+                                                </div>
+                                                <div class="form-check form-switch mb-0 flex-shrink-0">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           name="{{ $opt['id'] }}" id="{{ $opt['id'] }}"
+                                                           value="1" {{ $get($opt['id']) === '1' ? 'checked' : '' }}
+                                                           style="width:3em;height:1.5em;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <hr class="my-0">
+
+                            {{-- Caché de respuestas --}}
+                            <div class="card-body">
+                                <h6 class="fw-bold text-dark mb-1">Caché de respuestas</h6>
+                                <p class="text-muted mb-3">Almacena el HTML optimizado en Redis para no repetir las transformaciones en cada peticion.</p>
+
+                                <label for="response_cache" class="form-label fw-semibold">Activar caché de respuestas</label>
+                                <select class="form-select select2" id="response_cache" name="response_cache">
+                                    <option value="1" {{ $get('response_cache') === '1' ? 'selected' : '' }}>Habilitado</option>
+                                    <option value="0" {{ $get('response_cache') !== '1' ? 'selected' : '' }}>Deshabilitado</option>
+                                </select>
+                                <small class="text-muted d-block mt-1">Cuando esta habilitado, el HTML se sirve desde caché sin repetir las optimizaciones</small>
+
+                                <div id="response-cache-ttl" class="{{ $get('response_cache') === '1' ? '' : 'd-none' }} mt-3">
+                                    <label for="response_cache_ttl" class="form-label fw-semibold">Tiempo de vida del caché (minutos)</label>
+                                    <input type="number" name="response_cache_ttl" id="response_cache_ttl"
+                                           class="form-control" value="{{ $ttl }}" min="1" max="1440">
+                                    <small class="text-muted d-block mt-1">Tiempo que se mantiene el HTML en caché antes de regenerarlo. Maximo: 1440 (24 horas)</small>
+                                </div>
+                            </div>
+
+                            <hr class="my-0">
+
+                            {{-- Patrones de exclusión --}}
+                            <div class="card-body">
+                                <h6 class="fw-bold text-dark mb-1">Patrones de exclusión</h6>
+                                <p class="text-muted mb-3">Define rutas que no deben ser optimizadas. Un patrón por línea.</p>
+
+                                <textarea name="skip_patterns" id="skip_patterns" rows="4"
+                                          class="form-control"
+                                          placeholder="admin/*&#10;api/*&#10;perfil/*">{{ $skipPatterns }}</textarea>
+                                <small class="text-muted d-block mt-1">Soporta wildcards: <code>admin/*</code>, <code>api/v*</code></small>
+                            </div>
+
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary w-100">
+                                Guardar configuración
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
             </div>
 
-            {{-- Master toggle --}}
-            <div class="card-body border-bottom p-4">
-                <div class="mb-0">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="enabled" id="enabled"
-                               value="1" {{ $get('enabled') === '1' ? 'checked' : '' }}>
-                        <label class="form-check-label fw-semibold" for="enabled">
-                            Activar optimización
-                        </label>
+            {{-- Panel informativo (derecha) --}}
+            <div class="col-lg-4">
+
+                <div class="card mb-3">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Qué hace la optimización</h6>
                     </div>
-                    <small class="text-muted d-block mt-1">
-                        Cuando está habilitado, el HTML de las páginas públicas se optimiza automáticamente.
-                    </small>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">La optimización procesa el HTML de las páginas públicas aplicando transformaciones que reducen el tamaño del documento:</p>
+                        <ul class="text-muted ps-3 mb-0">
+                            <li class="mb-2">Elimina espacios y comentarios innecesarios</li>
+                            <li class="mb-2">Difiere la carga de scripts e imágenes</li>
+                            <li class="mb-2">Minifica CSS y JS inline</li>
+                            <li>Agrega DNS prefetch para recursos externos</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Options grid --}}
-            <div class="card-body p-4" id="optimize-options">
-                <div class="row g-3">
-
-                    {{-- collapse_whitespace --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-compress fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="collapse_whitespace">Colapsar espacios en blanco</label>
-                                    <p class="text-muted mb-0">Elimina espacios y saltos de línea innecesarios del HTML</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="collapse_whitespace" id="collapse_whitespace"
-                                           value="1" {{ $get('collapse_whitespace') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
+                <div class="card mb-3">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Caché de respuestas</h6>
                     </div>
+                    <div class="card-body">
+                        <h6 class="fw-semibold mb-2">Cómo funciona</h6>
+                        <p class="text-muted mb-3">El HTML optimizado se almacena en Redis. Las siguientes peticiones a la misma URL reciben el HTML cacheado sin repetir el proceso.</p>
 
-                    {{-- elide_attributes --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-tag fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="elide_attributes">Eliminar atributos por defecto</label>
-                                    <p class="text-muted mb-0">Elimina valores de atributos HTML que coinciden con el valor por defecto</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="elide_attributes" id="elide_attributes"
-                                           value="1" {{ $get('elide_attributes') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
+                        <hr class="my-3">
+
+                        <h6 class="fw-semibold mb-2">Cuándo usar</h6>
+                        <p class="text-muted mb-0">Ideal para sitios con contenido que cambia poco. No recomendado para páginas con contenido dinámico personalizado por usuario.</p>
                     </div>
-
-                    {{-- inline_css --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-paint-brush fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="inline_css">CSS en línea</label>
-                                    <p class="text-muted mb-0">Mueve los estilos inline a una clase CSS en el head del documento</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="inline_css" id="inline_css"
-                                           value="1" {{ $get('inline_css') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- insert_dns_prefetch --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-server fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="insert_dns_prefetch">Insertar DNS prefetch</label>
-                                    <p class="text-muted mb-0">Inyecta etiquetas de prefetch de DNS para acelerar la carga de recursos externos</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="insert_dns_prefetch" id="insert_dns_prefetch"
-                                           value="1" {{ $get('insert_dns_prefetch') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- remove_comments --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-comment-slash fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="remove_comments">Eliminar comentarios HTML</label>
-                                    <p class="text-muted mb-0">Elimina comentarios HTML, JS y CSS del código fuente</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="remove_comments" id="remove_comments"
-                                           value="1" {{ $get('remove_comments') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- remove_quotes --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-quote-left fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="remove_quotes">Eliminar comillas innecesarias</label>
-                                    <p class="text-muted mb-0">Elimina comillas innecesarias en atributos HTML</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="remove_quotes" id="remove_quotes"
-                                           value="1" {{ $get('remove_quotes') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- defer_javascript --}}
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body d-flex gap-3 align-items-start">
-                                <i class="fas fa-clock fa-fw text-muted mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <label class="fw-semibold mb-0" for="defer_javascript">Diferir JavaScript</label>
-                                    <p class="text-muted mb-0">Agrega el atributo defer a los scripts externos para no bloquear el renderizado</p>
-                                </div>
-                                <div class="form-check form-switch mb-0 flex-shrink-0">
-                                    <input class="form-check-input" type="checkbox" name="defer_javascript" id="defer_javascript"
-                                           value="1" {{ $get('defer_javascript') === '1' ? 'checked' : '' }}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
+
+                <div class="card">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Recomendaciones</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="text-muted mb-0">
+                            <li class="mb-2">Excluye rutas del panel de administración (<code>admin/*</code>).</li>
+                            <li class="mb-2">Excluye rutas de API (<code>api/*</code>).</li>
+                            <li class="mb-2">Si usas AJAX en el frontend, verifica que <em>Diferir JavaScript</em> no rompa la funcionalidad.</li>
+                            <li>Monitorea las estadísticas para verificar el impacto real.</li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
 
-            {{-- Footer --}}
-            <div class="card-footer p-4 border-top d-flex justify-content-end gap-2">
-                <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Guardar cambios
-                </button>
-            </div>
         </div>
-    </form>
+
+    </div>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function () {
-    var $options = $('#optimize-options');
-    var $toggle  = $('#enabled');
+    $('.select2').select2({ width: '100%' });
 
-    function syncOptions() {
-        $options.toggleClass('opacity-50', !$toggle.is(':checked'));
-        $options.find('input[type="checkbox"]').prop('disabled', !$toggle.is(':checked'));
-    }
+    $('#enabled').on('change', function () {
+        $('#optimize-settings').toggleClass('d-none', !$(this).is(':checked'));
+    });
 
-    syncOptions();
-    $toggle.on('change', syncOptions);
+    $('#response_cache').on('change', function () {
+        $('#response-cache-ttl').toggleClass('d-none', $(this).val() !== '1');
+    });
 });
 </script>
 @endpush

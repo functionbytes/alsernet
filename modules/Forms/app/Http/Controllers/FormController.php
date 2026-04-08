@@ -8,11 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Forms\Http\Requests\StoreFormRequest;
 use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Models\Form;
+use Modules\Forms\Models\FormCategory;
 use Modules\Forms\Models\FormField;
 use Modules\Forms\Models\FormVersion;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -40,12 +42,15 @@ class FormController extends Controller
             SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_forms
         ')->first();
 
-        $totalSubmissions = DB::table('form_submissions')->count();
-        $submissionsToday = DB::table('form_submissions')
-            ->whereDate('created_at', today())
-            ->count();
+        $submissionStats = DB::table('form_submissions')->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today
+        ')->first();
 
-        $categories = \Modules\Forms\Models\FormCategory::query()->active()->ordered()->get();
+        $totalSubmissions = (int) $submissionStats->total;
+        $submissionsToday = (int) $submissionStats->today;
+
+        $categories = FormCategory::query()->active()->ordered()->get();
 
         return view('forms::forms.index', compact('forms', 'stats', 'totalSubmissions', 'submissionsToday', 'categories'));
     }
@@ -54,7 +59,7 @@ class FormController extends Controller
     {
         $this->authorize('Forms.forms.create');
 
-        $categories = \Modules\Forms\Models\FormCategory::query()->active()->ordered()->get();
+        $categories = FormCategory::query()->active()->ordered()->get();
 
         return view('forms::forms.create', compact('categories'));
     }
@@ -89,7 +94,7 @@ class FormController extends Controller
 
         $form->load(['category', 'fields' => fn ($q) => $q->ordered()]);
 
-        $categories = \Modules\Forms\Models\FormCategory::query()->active()->ordered()->get();
+        $categories = FormCategory::query()->active()->ordered()->get();
 
         return view('forms::forms.edit', compact('form', 'categories'));
     }
@@ -110,6 +115,29 @@ class FormController extends Controller
         session()->flash('success', 'Formulario actualizado correctamente.');
 
         return redirect()->route('settings.forms.edit', $form);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $forms = Form::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($forms as $form) {
+            match ($validated['action']) {
+                'activate' => $form->update(['is_active' => true]),
+                'deactivate' => $form->update(['is_active' => false]),
+                'delete' => $form->delete(),
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     public function destroy(Form $form): RedirectResponse
@@ -156,9 +184,11 @@ class FormController extends Controller
                 'redirect' => route('settings.forms.edit', $cloned),
             ]);
         } catch (\Throwable $e) {
+            Log::error('Form clone failed', ['form_id' => $form->id, 'error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al clonar el formulario: '.$e->getMessage(),
+                'message' => 'Error al clonar el formulario. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -184,7 +214,7 @@ class FormController extends Controller
 
         $form->load(['fields' => fn ($q) => $q->visible()->ordered(), 'category']);
 
-        return view('forms::forms.preview', compact('form'));
+        return view('forms::public.preview', compact('form'));
     }
 
     public function qrcode(Form $form): Response
@@ -267,7 +297,9 @@ class FormController extends Controller
         } catch (\JsonException $e) {
             return redirect()->back()->with('error', 'El archivo no contiene JSON válido.');
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Error al importar el formulario: '.$e->getMessage());
+            Log::error('Form import failed', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Error al importar el formulario. Por favor, verifica el archivo e inténtalo de nuevo.');
         }
     }
 

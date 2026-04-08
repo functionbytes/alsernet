@@ -137,6 +137,12 @@ class LoginController extends Controller
             ])->onlyInput('email');
         }
 
+        // Update last login metadata
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
+
         // If 2FA is enabled, don't fully log in yet — redirect to challenge
         if ($user->hasTwoFactorEnabled()) {
             Auth::logout();

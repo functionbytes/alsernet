@@ -4,6 +4,7 @@ namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,6 +29,13 @@ class AttentionDepartmentsController extends Controller
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             });
+        }
+
+        // Status filter
+        if ($request->status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($request->status === 'inactive') {
+            $query->where('is_active', false);
         }
 
         $departments = $query->withCount(['users', 'attentions'])->orderBy('name')->paginate(paginationNumber());
@@ -142,6 +150,32 @@ class AttentionDepartmentsController extends Controller
         $department->update(['is_active' => ! $department->is_active]);
 
         return back()->with('success', 'Estado del departamento actualizado exitosamente.');
+    }
+
+    /**
+     * Bulk action on multiple departments.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $departments = AttentionDepartment::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($departments as $department) {
+            match ($validated['action']) {
+                'activate' => $department->update(['is_active' => true]),
+                'deactivate' => $department->update(['is_active' => false]),
+                'delete' => $department->attentions()->count() === 0 ? $department->delete() : null,
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     /**

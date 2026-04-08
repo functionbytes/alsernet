@@ -3,6 +3,7 @@
 namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -128,6 +129,32 @@ class AttentionCategoriesController extends Controller
         $status = $category->is_active ? 'activada' : 'desactivada';
 
         return back()->with('success', "Categoría {$status} exitosamente.");
+    }
+
+    /**
+     * Bulk action on multiple categories.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $categories = AttentionCategory::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($categories as $category) {
+            match ($validated['action']) {
+                'activate' => $category->update(['is_active' => true]),
+                'deactivate' => $category->update(['is_active' => false]),
+                'delete' => $category->attentions()->count() === 0 ? $category->delete() : null,
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     /**

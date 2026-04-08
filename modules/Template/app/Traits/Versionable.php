@@ -2,19 +2,12 @@
 
 namespace Modules\Template\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Modules\Template\Models\TemplateVersion;
 
 trait Versionable
 {
-    /**
-     * Boot the versionable trait for a model.
-     */
-    public static function bootVersionable()
-    {
-        // This method is called when the trait is booted
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Relationships
@@ -72,16 +65,20 @@ trait Versionable
     /**
      * Restore a specific version.
      *
+     * Creates a backup snapshot of the current state, then restores the given
+     * version's content. The observer is bypassed for the restore save so that
+     * only the explicit pre-restore snapshot is recorded — not a second one.
+     *
      * @throws \Exception
      */
     public function restoreVersion(int $versionId): bool
     {
         $version = $this->versions()->findOrFail($versionId);
 
-        // Create a version before restoring (backup current state)
+        // Backup the current state before overwriting
         $this->createVersion(Auth::id());
 
-        // Restore the version data
+        // Restore without triggering the observer (avoids a duplicate version)
         $this->fill([
             'name' => $version->name,
             'content' => $version->content,
@@ -90,13 +87,15 @@ trait Versionable
             'author' => $version->author,
         ]);
 
-        return $this->save();
+        $this->saveQuietly();
+
+        return true;
     }
 
     /**
      * Get the version history for this template.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getVersionHistory(int $limit = 50)
     {
@@ -157,12 +156,15 @@ trait Versionable
 
     /**
      * Get the next version number.
+     *
+     * Uses MAX(version) to avoid ties when multiple versions share the same
+     * created_at timestamp (e.g. in tests or rapid saves).
      */
     protected function getNextVersionNumber(): int
     {
-        $lastVersion = $this->versions()->latest()->first();
+        $max = $this->versions()->max('version');
 
-        return $lastVersion ? $lastVersion->version + 1 : 1;
+        return $max ? $max + 1 : 1;
     }
 
     /**
@@ -170,9 +172,7 @@ trait Versionable
      */
     public function getCurrentVersionNumber(): int
     {
-        $lastVersion = $this->versions()->latest()->first();
-
-        return $lastVersion ? $lastVersion->version : 0;
+        return $this->versions()->max('version') ?? 0;
     }
 
     /**
@@ -198,18 +198,16 @@ trait Versionable
      */
     public function pruneVersions(int $keep = 10): int
     {
-        $versionsToDelete = $this->versions()
-            ->latest()
+        $ids = $this->versions()
+            ->orderByDesc('created_at')
             ->skip($keep)
             ->pluck('id');
 
-        if ($versionsToDelete->isEmpty()) {
+        if ($ids->isEmpty()) {
             return 0;
         }
 
-        return $this->versions()
-            ->whereIn('id', $versionsToDelete)
-            ->delete();
+        return TemplateVersion::whereIn('id', $ids)->delete();
     }
 
     /**

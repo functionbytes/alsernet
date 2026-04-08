@@ -10,7 +10,7 @@ class GoogleLocationTest extends TestCase
 {
     public function test_user_can_view_locations(): void
     {
-        $user = $this->createUser(['reviews.manage-connections']);
+        $user = $this->createUser(['reviews.connections.manage']);
         $connection = $this->createConnection($user);
         $location = $this->createLocation($connection);
 
@@ -24,7 +24,7 @@ class GoogleLocationTest extends TestCase
 
     public function test_user_can_toggle_location_active(): void
     {
-        $user = $this->createUser(['reviews.manage-connections']);
+        $user = $this->createUser(['reviews.connections.manage']);
         $connection = $this->createConnection($user);
         $location = $this->createLocation($connection);
 
@@ -49,7 +49,7 @@ class GoogleLocationTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->createUser(['reviews.manage-connections']);
+        $user = $this->createUser(['reviews.connections.manage']);
         $connection = $this->createConnection($user);
         $location = $this->createLocation($connection);
 
@@ -68,7 +68,7 @@ class GoogleLocationTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->createUser(['reviews.manage-connections']);
+        $user = $this->createUser(['reviews.connections.manage']);
         $connection = $this->createConnection($user);
         $location = $this->createLocation($connection);
         $location->update(['is_active' => false]);

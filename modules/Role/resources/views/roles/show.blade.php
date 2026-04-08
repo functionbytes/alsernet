@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #081A28 0%, #6d8f0f 100%);">
+                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #b10100 0%, #6d8f0f 100%);">
                             <i class="fas fa-user-shield fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
@@ -123,7 +123,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1">Permisos asignados</h5>
-                            <p class="text-muted small mb-0">Desglose de permisos por módulo</p>
+                            <p class="text-muted mb-0">Desglose de permisos por módulo</p>
                         </div>
                         <a href="{{ route('settings.roles.show.permissions', $role) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit me-1"></i> Gestionar
@@ -195,7 +195,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1">Usuarios recientes</h5>
-                                <p class="text-muted small mb-0">Últimos usuarios asignados a este rol</p>
+                                <p class="text-muted mb-0">Últimos usuarios asignados a este rol</p>
                             </div>
                             <a href="{{ route('settings.roles.show.users', $role) }}" class="btn btn-sm btn-outline-info">
                                 Ver todos
@@ -208,7 +208,7 @@
                                 <div class="list-group-item border-0 px-0">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                             style="width: 40px; height: 40px; background-color: #081A28; color: white; font-weight: bold;">
+                                             style="width: 40px; height: 40px; background-color: #b10100; color: white; font-weight: bold;">
                                             {{ strtoupper(substr($user->firstname ?? $user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->lastname ?? $user->last_name ?? 'S', 0, 1)) }}
                                         </div>
                                         <div class="flex-grow-1">
@@ -241,19 +241,19 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label text-muted small mb-1">Nombre</label>
+                        <label class="form-label text-muted mb-1">Nombre</label>
                         <p class="mb-0 fw-semibold">{{ $role->name }}</p>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small mb-1">Slug</label>
+                        <label class="form-label text-muted mb-1">Slug</label>
                         <p class="mb-0">
                             <code class="bg-light px-2 py-1 rounded">{{ $role->slug ?? 'N/A' }}</code>
                         </p>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small mb-1">Guard</label>
+                        <label class="form-label text-muted mb-1">Guard</label>
                         <p class="mb-0">
                             @if($role->guard_name === 'web')
                                 <span class="badge bg-success">Web (Navegador)</span>
@@ -266,7 +266,7 @@
                     </div>
 
                     <div class="mb-0">
-                        <label class="form-label text-muted small mb-1">Estado</label>
+                        <label class="form-label text-muted mb-1">Estado</label>
                         <p class="mb-0">
                             @if($role->is_default)
                                 <span class="badge bg-success">
@@ -296,7 +296,7 @@
                             </div>
                             <div class="timeline-desc fs-3 text-dark ms-3">
                                 <h6 class="mb-1">Creado</h6>
-                                <p class="text-muted mb-0 small">{{ $role->created_at->format('d/m/Y H:i') }}</p>
+                                <p class="text-muted mb-0">{{ $role->created_at->format('d/m/Y H:i') }}</p>
                                 <small class="text-muted">{{ $role->created_at->diffForHumans() }}</small>
                             </div>
                         </div>
@@ -311,7 +311,7 @@
                                 </div>
                                 <div class="timeline-desc fs-3 text-dark ms-3">
                                     <h6 class="mb-1">Última actualización</h6>
-                                    <p class="text-muted mb-0 small">{{ $role->updated_at->format('d/m/Y H:i') }}</p>
+                                    <p class="text-muted mb-0">{{ $role->updated_at->format('d/m/Y H:i') }}</p>
                                     <small class="text-muted">{{ $role->updated_at->diffForHumans() }}</small>
                                 </div>
                             </div>
@@ -381,7 +381,7 @@
     }
 
     .permission-list::-webkit-scrollbar-thumb {
-        background: #081A28;
+        background: #b10100;
         border-radius: 10px;
     }
 </style>

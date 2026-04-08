@@ -21,7 +21,7 @@
 
                 <div class="mb-3">
                     <label for="type" class="form-label">Tipo <span class="text-danger">*</span></label>
-                    <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
+                    <select class="form-select @error('type') is-invalid @enderror select2" id="type" name="type" required>
                         <option value="">Selecciona un tipo...</option>
                         <option value="layout" {{ old('type', $component->type ?? '') === 'layout' ? 'selected' : '' }}>Layout</option>
                         <option value="partial" {{ old('type', $component->type ?? '') === 'partial' ? 'selected' : '' }}>Partial</option>
@@ -85,7 +85,7 @@
 
                 <div class="mb-3">
                     <label for="status" class="form-label">Estado</label>
-                    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
+                    <select class="form-select @error('status') is-invalid @enderror select2" id="status" name="status">
                         <option value="active" {{ old('status', $component->status ?? 'active') === 'active' ? 'selected' : '' }}>Activo</option>
                         <option value="inactive" {{ old('status', $component->status ?? 'active') === 'inactive' ? 'selected' : '' }}>Inactivo</option>
                     </select>

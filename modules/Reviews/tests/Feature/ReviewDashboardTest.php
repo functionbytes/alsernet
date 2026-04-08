@@ -28,7 +28,7 @@ class ReviewDashboardTest extends TestCase
             ->for($location, 'location')
             ->count(5)
             ->create([
-                'star_rating' => '5_STAR',
+                'star_rating' => 'FIVE',
                 'comment' => 'Great service!',
             ]);
 
@@ -62,14 +62,14 @@ class ReviewDashboardTest extends TestCase
         Review::factory()
             ->for($location, 'location')
             ->create([
-                'star_rating' => '5_STAR',
+                'star_rating' => 'FIVE',
                 'review_time' => now()->subMonth(),
             ]);
 
         Review::factory()
             ->for($location, 'location')
             ->create([
-                'star_rating' => '4_STAR',
+                'star_rating' => 'FOUR',
                 'review_time' => now(),
             ]);
 
@@ -138,11 +138,11 @@ class ReviewDashboardTest extends TestCase
         $user = $this->createUser(['reviews.view']);
         $location = ReviewGoogleLocation::factory()->create();
 
-        Review::factory()->for($location, 'location')->count(5)->create(['star_rating' => '5_STAR']);
-        Review::factory()->for($location, 'location')->count(3)->create(['star_rating' => '4_STAR']);
-        Review::factory()->for($location, 'location')->count(2)->create(['star_rating' => '3_STAR']);
-        Review::factory()->for($location, 'location')->count(1)->create(['star_rating' => '2_STAR']);
-        Review::factory()->for($location, 'location')->count(1)->create(['star_rating' => '1_STAR']);
+        Review::factory()->for($location, 'location')->count(5)->create(['star_rating' => 'FIVE']);
+        Review::factory()->for($location, 'location')->count(3)->create(['star_rating' => 'FOUR']);
+        Review::factory()->for($location, 'location')->count(2)->create(['star_rating' => 'THREE']);
+        Review::factory()->for($location, 'location')->count(1)->create(['star_rating' => 'TWO']);
+        Review::factory()->for($location, 'location')->count(1)->create(['star_rating' => 'ONE']);
 
         $response = $this->actingAs($user)
             ->getJson(route('reviews.dashboard.data'));

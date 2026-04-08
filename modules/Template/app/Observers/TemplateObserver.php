@@ -2,6 +2,7 @@
 
 namespace Modules\Template\Observers;
 
+use Illuminate\Support\Facades\File;
 use Modules\Template\Models\Template;
 use Modules\Template\Models\TemplateVersion;
 
@@ -29,8 +30,7 @@ class TemplateObserver
     {
         // Crear snapshot de cambios
         if ($template->isDirty('content')) {
-            $lastVersion = $template->versions()->latest()->first();
-            $nextVersion = ($lastVersion ? $lastVersion->version : 0) + 1;
+            $nextVersion = ($template->versions()->max('version') ?? 0) + 1;
 
             $changedFields = [];
             foreach ($template->getDirty() as $field => $newValue) {
@@ -73,6 +73,10 @@ class TemplateObserver
      */
     public function forceDeleted(Template $template): void
     {
-        //
+        $path = base_path($template->template_path ?? "platform/themes/{$template->slug}");
+
+        if (is_dir($path)) {
+            File::deleteDirectory($path);
+        }
     }
 }

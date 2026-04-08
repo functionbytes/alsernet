@@ -3,10 +3,16 @@
 namespace Modules\Mailer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerLayoutLang;
+use Modules\Mailer\Models\MailerVariable;
+use Modules\Mailer\Services\MailerTemplateRendererService;
+use Modules\Mailer\Services\MailerVariableReplacementService;
 use Modules\Mailer\Traits\AuthorizesMailerActions;
 
 class MailerComponentController extends Controller
@@ -16,8 +22,10 @@ class MailerComponentController extends Controller
     /**
      * Listar todos los componentes de email (header, footer, etc.)
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
+        $this->authorizeMailerAction('mailer.components.view');
+
         $search = $request->input('search');
         $type = $request->input('type');
         $langId = $request->input('lang_id', 1); // Default to first language
@@ -46,7 +54,7 @@ class MailerComponentController extends Controller
             $q->with('lang')->orderBy('lang_id');
         }]);
 
-        $components = $query->orderByDesc('updated_at')->paginate(15);
+        $components = $query->orderByDesc('updated_at')->paginate(paginationNumber());
 
         // Obtener tipos únicos para filtro
         $types = MailerLayout::where('group_name', 'mail_templates')
@@ -70,8 +78,10 @@ class MailerComponentController extends Controller
     /**
      * Mostrar formulario para crear nuevo componente
      */
-    public function create(Request $request)
+    public function create(Request $request): View
     {
+        $this->authorizeMailerAction('mailer.components.create');
+
         // Obtener idioma del request (default: primer idioma disponible)
         $langId = $request->input('lang_id');
         if (! $langId) {
@@ -91,8 +101,10 @@ class MailerComponentController extends Controller
     /**
      * Guardar nuevo componente
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.components.create');
+
         $validated = $request->validate([
             'alias' => 'required|string',
             'subject' => 'required|string|max:255',
@@ -160,7 +172,7 @@ class MailerComponentController extends Controller
 
             return redirect()
                 ->back()
-                ->with('error', 'Error al crear el componente: '.$e->getMessage())
+                ->with('error', 'Error al crear el componente. Revise los datos e intente nuevamente.')
                 ->withInput();
         }
     }
@@ -168,8 +180,10 @@ class MailerComponentController extends Controller
     /**
      * Mostrar formulario para editar componente
      */
-    public function edit(Request $request, $uid)
+    public function edit(Request $request, $uid): View
     {
+        $this->authorizeMailerAction('mailer.components.view');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         // Verificar que sea un componente de email
@@ -203,12 +217,11 @@ class MailerComponentController extends Controller
             ->get();
 
         return view('mailer::components.edit', [
-            'component' => $layout, // Keep 'component' for backwards compatibility with view
+            'component' => $layout,
             'layout' => $layout,
             'translation' => $translation,
             'currentLangId' => $langId,
             'langs' => $langs,
-            'otherLangs' => $otherTranslations, // Keep 'otherLangs' for backwards compatibility
             'otherTranslations' => $otherTranslations,
         ]);
     }
@@ -216,8 +229,10 @@ class MailerComponentController extends Controller
     /**
      * Actualizar componente
      */
-    public function update(Request $request, $uid)
+    public function update(Request $request, $uid): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.components.update');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         $validated = $request->validate([
@@ -229,14 +244,6 @@ class MailerComponentController extends Controller
         ]);
 
         try {
-            \Log::info('MailerComponentController::update', [
-                'uid' => $uid,
-                'lang_id' => $validated['lang_id'],
-                'subject_length' => strlen($validated['subject'] ?? ''),
-                'content_length' => strlen($validated['content'] ?? ''),
-                'has_content' => ! empty($validated['content']),
-            ]);
-
             // Actualizar el tipo y protección del layout (metadata)
             $layout->update([
                 'type' => $validated['type'],
@@ -252,11 +259,6 @@ class MailerComponentController extends Controller
                     'subject' => $validated['subject'] ?? '',
                     'content' => $validated['content'] ?? '',  // Force update even if empty
                 ]);
-
-                \Log::info('Translation updated', [
-                    'translation_id' => $translation->id,
-                    'new_content_length' => strlen($translation->content ?? ''),
-                ]);
             } else {
                 // Crear nueva traducción si no existe
                 $translation = MailerLayoutLang::create([
@@ -264,11 +266,6 @@ class MailerComponentController extends Controller
                     'lang_id' => $validated['lang_id'],
                     'subject' => $validated['subject'] ?? '',
                     'content' => $validated['content'] ?? '',
-                ]);
-
-                \Log::info('Translation created', [
-                    'translation_id' => $translation->id,
-                    'content_length' => strlen($translation->content ?? ''),
                 ]);
             }
 
@@ -288,7 +285,7 @@ class MailerComponentController extends Controller
 
             return redirect()
                 ->back()
-                ->with('error', 'Error al actualizar: '.$e->getMessage())
+                ->with('error', 'Error al actualizar el componente. Intente nuevamente.')
                 ->withInput();
         }
     }
@@ -296,8 +293,10 @@ class MailerComponentController extends Controller
     /**
      * Vista previa del componente
      */
-    public function preview(Request $request, $uid)
+    public function preview(Request $request, $uid): View
     {
+        $this->authorizeMailerAction('mailer.components.view');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         // Obtener idioma actual (del request o default a 1)
@@ -324,8 +323,10 @@ class MailerComponentController extends Controller
     /**
      * Vista previa AJAX
      */
-    public function previewAjax(Request $request, $uid)
+    public function previewAjax(Request $request, $uid): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.components.view');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         // Obtener idioma actual (del request o default a 1)
@@ -353,8 +354,10 @@ class MailerComponentController extends Controller
     /**
      * Eliminar componente
      */
-    public function destroy($uid)
+    public function destroy(string $uid): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.components.delete');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         // Verificar si el componente está protegido
@@ -365,7 +368,7 @@ class MailerComponentController extends Controller
         }
 
         // Verificar que no sea un componente crítico del sistema (legacy check)
-        $criticalComponents = ['mail_template_header', 'mail_template_footer', 'mail_template_wrapper'];
+        $criticalComponents = config('mailer-module.critical_components', []);
 
         if (in_array($layout->alias, $criticalComponents)) {
             return redirect()
@@ -389,15 +392,17 @@ class MailerComponentController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar: '.$e->getMessage());
+                ->with('error', 'Error al eliminar el componente. Intente nuevamente.');
         }
     }
 
     /**
      * Duplicar componente
      */
-    public function duplicate(Request $request, $uid)
+    public function duplicate(Request $request, $uid): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.components.create');
+
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
         try {
@@ -427,49 +432,36 @@ class MailerComponentController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', 'Error al duplicar: '.$e->getMessage());
+                ->with('error', 'Error al duplicar el componente. Intente nuevamente.');
         }
     }
 
     /**
-     * Reemplazar variables con valores de ejemplo
+     * Reemplazar variables con valores de ejemplo usando el servicio centralizado
      */
     private function replaceExampleVariables(string $content): string
     {
-        $variables = [
-            'LOGO_URL' => config('app.url').'/images/logo.png',
-            'SITE_NAME' => config('app.name', 'Alsernet'),
-            'SITE_URL' => config('app.url'),
-            'SITE_EMAIL' => 'soporte@Alsernet.com',
-            'COMPANY_ADDRESS' => 'Calle Principal 123',
-            'COMPANY_CITY' => 'Ciudad',
-            'COMPANY_COUNTRY' => 'Colombia',
-            'COMPANY_PHONE' => '+57 300 123 4567',
-            'COMPANY_EMAIL' => 'info@Alsernet.com',
-            'CURRENT_YEAR' => date('Y'),
-            'CURRENT_MONTH' => date('m'),
-            'CURRENT_DAY' => date('d'),
-            'RECIPIENT_EMAIL' => 'ejemplo@email.com',
-            'mail_SUBJECT' => 'Email de Ejemplo',
-            'CUSTOMER_NAME' => 'Juan García',
-            'RESET_LINK' => 'https://example.com/reset-password',
-        ];
+        // Extraer variables del contenido
+        preg_match_all('/\{([A-Z_][A-Z0-9_]*)\}/', $content, $matches);
 
-        foreach ($variables as $key => $value) {
-            $content = str_replace('{'.$key.'}', $value, $content);
+        $variables = [];
+        foreach ($matches[1] as $varName) {
+            $variables[$varName] = MailerTemplateRendererService::getExampleValue($varName);
         }
 
-        return $content;
+        return MailerVariableReplacementService::replaceVariables($content, $variables);
     }
 
     /**
      * Listar variables disponibles para componentes (desde la base de datos)
      */
-    public function variables()
+    public function variables(): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.components.view');
+
         try {
             // Obtener todas las variables habilitadas desde la base de datos
-            $dbVariables = \Modules\Mailer\Models\MailerVariable::enabled()
+            $dbVariables = MailerVariable::enabled()
                 ->orderBy('category')
                 ->orderBy('module')
                 ->orderBy('key')
@@ -481,13 +473,7 @@ class MailerComponentController extends Controller
             $variables = [];
             foreach ($grouped as $category => $items) {
                 $categoryLabel = ucfirst($category);
-                $categoryLabels = [
-                    'system' => 'Sistema',
-                    'customer' => 'Cliente',
-                    'order' => 'Pedido',
-                    'document' => 'Documento',
-                    'general' => 'General',
-                ];
+                $categoryLabels = config('mailer-module.category_labels', []);
 
                 $variables[] = [
                     'group' => $categoryLabels[$category] ?? $categoryLabel,

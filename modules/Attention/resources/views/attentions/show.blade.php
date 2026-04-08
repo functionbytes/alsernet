@@ -112,6 +112,48 @@
                 </div>
             </div>
 
+            <!-- Información de gestión -->
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Información de gestión</h5>
+                    <p class="small mb-0 text-muted">Datos internos de la solicitud gestionada</p>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Estado</label>
+                            <p class="mb-0">
+                                <span class="badge bg-{{ $attention->status->color() }}">{{ $attention->status->label() }}</span>
+                            </p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Departamento</label>
+                            <p class="mb-0">{{ $attention->department->name ?? '-' }}</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Usuario asignado</label>
+                            <p class="mb-0">{{ $attention->assignedUser->name ?? '-' }}</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Días transcurridos</label>
+                            <p class="mb-0">{{ $attention->created_at->diffInDays(now()) }} días</p>
+                        </div>
+                        @if($attention->resolved_at)
+                            <div class="col-sm-12 col-md-6">
+                                <label class="form-label fw-semibold text-muted">Fecha de resolución</label>
+                                <p class="mb-0">{{ $attention->resolved_at->format('d/m/Y H:i:s') }}</p>
+                            </div>
+                        @endif
+                        @if($attention->closed_at)
+                            <div class="col-sm-12 col-md-6">
+                                <label class="form-label fw-semibold text-muted">Fecha de cierre</label>
+                                <p class="mb-0">{{ $attention->closed_at->format('d/m/Y H:i:s') }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <!-- Contenido de la Solicitud -->
             <div class="card mb-3">
                 <div class="card-header p-3 bg-white border-bottom">

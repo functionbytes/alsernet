@@ -21,17 +21,8 @@
         "chrome-devtools-mcp",
         "--browserUrl",
         "http://127.0.0.1:9222"
-      ]
-    },
-    "redis": {
-      "command": "npx",
-      "args": [
-        "--yes",
-        "@anthropic/mcp-redis"
       ],
-      "env": {
-        "REDIS_URL": "redis://localhost:6379"
-      }
+      "_isolation_note": "Para sesiones independientes usar isolatedContext en new_page, ej: {url, isolatedContext: 'testing-users'} — cada contexto tiene cookies/storage propios"
     }
   }
 }

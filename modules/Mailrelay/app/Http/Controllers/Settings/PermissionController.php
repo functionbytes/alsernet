@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
@@ -139,9 +140,11 @@ class PermissionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error('Mailrelay permissions sync failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al sincronizar permisos: '.$e->getMessage());
+                ->with('error', 'Error al sincronizar permisos. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -187,9 +190,11 @@ class PermissionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            Log::error('Mailrelay permissions assign failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al asignar permisos: '.$e->getMessage());
+                ->with('error', 'Error al asignar permisos. Por favor, inténtalo de nuevo.');
         }
     }
 }

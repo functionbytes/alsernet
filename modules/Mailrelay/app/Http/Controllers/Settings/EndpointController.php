@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\EmailTemplate;
 use Modules\Mailrelay\Entities\MailrelayEndpoint;
@@ -110,10 +111,12 @@ class EndpointController extends Controller
                 ->with('success', 'Endpoint creado correctamente.')
                 ->with('api_key', $apiKey); // Show API key once
         } catch (\Exception $e) {
+            Log::error('Mailrelay endpoint create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear el endpoint: '.$e->getMessage());
+                ->with('error', 'Error al crear el endpoint. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -172,10 +175,12 @@ class EndpointController extends Controller
                 ->route('managers.settings.mailrelay.endpoints.index')
                 ->with('success', 'Endpoint actualizado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay endpoint update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el endpoint: '.$e->getMessage());
+                ->with('error', 'Error al actualizar el endpoint. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -194,9 +199,11 @@ class EndpointController extends Controller
                 ->route('managers.settings.mailrelay.endpoints.index')
                 ->with('success', 'Endpoint eliminado correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay endpoint delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar el endpoint: '.$e->getMessage());
+                ->with('error', 'Error al eliminar el endpoint. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -219,7 +226,7 @@ class EndpointController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -278,9 +285,11 @@ class EndpointController extends Controller
                 ->back()
                 ->with('success', "{$count} registros de log eliminados correctamente.");
         } catch (\Exception $e) {
+            Log::error('Mailrelay endpoint logs delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar los logs: '.$e->getMessage());
+                ->with('error', 'Error al eliminar los logs. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -308,7 +317,7 @@ class EndpointController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -345,7 +354,7 @@ class EndpointController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

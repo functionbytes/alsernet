@@ -94,7 +94,7 @@ class HealthController extends Controller
             return [
                 'status' => 'unhealthy',
                 'message' => 'Application check failed',
-                'error' => $e->getMessage(),
+                'error' => 'Check failed',
             ];
         }
     }
@@ -124,7 +124,7 @@ class HealthController extends Controller
                 'status' => 'unhealthy',
                 'message' => 'Database connection failed',
                 'connection' => config('database.default'),
-                'error' => $e->getMessage(),
+                'error' => 'Check failed',
             ];
         }
     }
@@ -165,7 +165,7 @@ class HealthController extends Controller
                 'status' => 'unhealthy',
                 'message' => 'Cache check failed',
                 'driver' => config('cache.default'),
-                'error' => $e->getMessage(),
+                'error' => 'Check failed',
             ];
         }
     }
@@ -203,7 +203,7 @@ class HealthController extends Controller
             return [
                 'status' => 'unhealthy',
                 'message' => 'Storage check failed',
-                'error' => $e->getMessage(),
+                'error' => 'Check failed',
             ];
         }
     }

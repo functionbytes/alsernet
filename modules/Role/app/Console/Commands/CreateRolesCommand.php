@@ -11,7 +11,7 @@ class CreateRolesCommand extends Command
 
     protected $description = 'Create all application roles from roleMapping configuration';
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('🔐 Creating application roles...\n');
 
@@ -118,12 +118,14 @@ class CreateRolesCommand extends Command
 
         // Optional: Show role hierarchy
         $this->showRoleHierarchy();
+
+        return self::SUCCESS;
     }
 
     /**
      * Show which roles have access to which profiles
      */
-    protected function showRoleHierarchy()
+    protected function showRoleHierarchy(): void
     {
         $this->newLine();
         $this->info('📋 Role Access Hierarchy:');

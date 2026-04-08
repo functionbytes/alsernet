@@ -47,21 +47,17 @@
                                         </p>
                                     </div>
 
-
-                                    <div class="ms-auto d-flex gap-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <div class="btn-group" role="group">
-                                                <button type="button" id="selectAllBtn"
-                                                        class="btn btn-sm btn-outline-secondary">
-                                                    Todos
-                                                </button>
-                                                <button type="button" id="deselectAllBtn"
-                                                        class="btn btn-sm btn-outline-secondary">
-                                                    Ninguno
-                                                </button>
-                                            </div>
+                                    <div class="ms-auto d-flex gap-2 align-items-center">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" id="selectAllBtn"
+                                                    class="btn btn-sm btn-outline-secondary">
+                                                Todos
+                                            </button>
+                                            <button type="button" id="deselectAllBtn"
+                                                    class="btn btn-sm btn-outline-secondary">
+                                                Ninguno
+                                            </button>
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -75,8 +71,7 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="card-title mb-2">Total de tablas</h6>
-                                                    <h2 class="text-success"
-                                                        style="font-weight: 700;">{{ count($tables) }}</h2>
+                                                    <h2 >{{ count($tables) }}</h2>
                                                 </div>
                                             </div>
                                         </div>
@@ -88,8 +83,7 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="card-title mb-2">Registros totales</h6>
-                                                    <h2 class="text-success"
-                                                        id="totalRecords">{{ array_sum(array_column($tables, 'records')) }}</h2>
+                                                    <h2 id="totalRecords">{{ array_sum(array_column($tables, 'records')) }}</h2>
                                                 </div>
                                             </div>
                                         </div>
@@ -101,7 +95,7 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="card-title mb-2">Seleccionadas</h6>
-                                                    <h2 class="text-success" id="selectedCount">0</h2>
+                                                    <h2 id="selectedCount">0</h2>
                                                 </div>
                                             </div>
                                         </div>
@@ -113,7 +107,7 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="card-title mb-2">A eliminar</h6>
-                                                    <h2 class="text-success" id="recordsToDelete">0</h2>
+                                                    <h2  id="recordsToDelete">0</h2>
                                                 </div>
                                             </div>
                                         </div>
@@ -163,7 +157,7 @@
 
                             <div class="row">
                                 <div class="border-top pt-1 mt-4 pt-2">
-                                    <button type="submit" class="btn btn-primary w-100 mb-2" id="cleanupBtn" disabled>
+                                    <button type="submit" class="btn btn-primary w-100 mb-1" id="cleanupBtn" disabled>
                                         Limpiar tablas seleccionadas
                                     </button>
                                     <a href="{{ route('settings.database.index') }}"
@@ -195,19 +189,17 @@
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel"
          aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content ">
+                <div class="modal-header">
                     <h5 class="modal-title" id="confirmationModalLabel">
-                        <i class="fa fa-triangle-exclamation"></i> Confirmación de limpieza
+                        Confirmación de limpieza
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"  aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-danger mb-3">
-                        <strong>Esta acción es irreversible.</strong> Se eliminarán todos los registros de las
-                        siguientes tablas:
+                    <p class="mb-3">
+                        <strong>Esta acción es irreversible.</strong> Se eliminarán todos los registros de las siguientes tablas:
                     </p>
                     <div class="bg-light-secondary p-3 rounded mb-3" style="max-height: 300px; overflow-y: auto;">
                         <ul id="tablesToDeleteList" class="mb-0">
@@ -225,11 +217,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-xmark"></i> Cancelar
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="confirmCleanupBtn" disabled>
+                        Sí, limpiar ahora
                     </button>
-                    <button type="button" class="btn btn-danger" id="confirmCleanupBtn" disabled>
-                        <i class="fa fa-trash"></i> Sí, limpiar ahora
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -239,18 +231,22 @@
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel"
          aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header">
                     <h5 class="modal-title" id="successModalLabel">
-                        <i class="fa fa-circle-check"></i> Limpieza completada
+                        Limpieza completada
                     </h5>
                 </div>
                 <div class="modal-body">
-                    <p id="successMessage"></p>
+                    <p id="successMessage" class="mb-2"></p>
+                    <p class="text-muted mb-0">
+                        Los registros de las tablas seleccionadas han sido eliminados permanentemente.
+                        Esta operación no se puede deshacer.
+                    </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">
                         Aceptar
                     </button>
                 </div>
@@ -290,173 +286,113 @@
         }
     </style>
 
+@endsection
+
+@push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('cleanupForm');
-            const cleanupBtn = document.getElementById('cleanupBtn');
-            const selectAllBtn = document.getElementById('selectAllBtn');
-            const deselectAllBtn = document.getElementById('deselectAllBtn');
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            const tableCheckboxes = document.querySelectorAll('.table-checkbox');
-            const tableSearch = document.getElementById('tableSearch');
-            const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-            const confirmCheckbox = document.getElementById('confirmCheckbox');
-            const confirmCleanupBtn = document.getElementById('confirmCleanupBtn');
+        $(function () {
+            var confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
 
-            // Update counts when checkbox changes
             function updateCounts() {
-                const selectedCount = document.querySelectorAll('.table-checkbox:checked').length;
-                let recordsToDelete = 0;
+                var selected = $('.table-checkbox:checked');
+                var recordsToDelete = 0;
 
-                document.querySelectorAll('.table-checkbox:checked').forEach(checkbox => {
-                    const row = checkbox.closest('.table-row');
-                    recordsToDelete += parseInt(row.getAttribute('data-records'));
+                selected.each(function () {
+                    recordsToDelete += parseInt($(this).closest('.table-row').data('records'));
                 });
 
-                document.getElementById('selectedCount').textContent = selectedCount;
-                document.getElementById('recordsToDelete').textContent = recordsToDelete.toLocaleString();
-                cleanupBtn.disabled = selectedCount === 0;
-                selectAllCheckbox.checked = selectedCount === tableCheckboxes.length;
+                $('#selectedCount').text(selected.length);
+                $('#recordsToDelete').text(recordsToDelete.toLocaleString());
+                $('#cleanupBtn').prop('disabled', selected.length === 0);
+                $('#selectAllCheckbox').prop('checked', selected.length === $('.table-checkbox').length);
             }
 
-            // Select all tables
-            selectAllBtn.addEventListener('click', function () {
-                tableCheckboxes.forEach(checkbox => {
-                    checkbox.checked = true;
-                });
+            $('#selectAllBtn').on('click', function () {
+                $('.table-checkbox').prop('checked', true);
                 updateCounts();
             });
 
-            // Deselect all tables
-            deselectAllBtn.addEventListener('click', function () {
-                tableCheckboxes.forEach(checkbox => {
-                    checkbox.checked = false;
-                });
+            $('#deselectAllBtn').on('click', function () {
+                $('.table-checkbox').prop('checked', false);
                 updateCounts();
             });
 
-            // Select all via checkbox
-            selectAllCheckbox.addEventListener('change', function () {
-                tableCheckboxes.forEach(checkbox => {
-                    if (!checkbox.closest('.table-row').style.display === 'none') {
-                        checkbox.checked = this.checked;
-                    }
-                });
+            $('#selectAllCheckbox').on('change', function () {
+                var checked = $(this).is(':checked');
+                $('.table-row:visible .table-checkbox').prop('checked', checked);
                 updateCounts();
             });
 
-            // Update counts on individual checkbox change
-            tableCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateCounts);
-            });
+            $(document).on('change', '.table-checkbox', updateCounts);
 
-            // Search/Filter functionality
-            tableSearch.addEventListener('input', function () {
-                const searchTerm = this.value.toLowerCase();
-                const rows = document.querySelectorAll('.table-row');
-
-                rows.forEach(row => {
-                    const tableName = row.getAttribute('data-table-name').toLowerCase();
-                    if (tableName.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+            $('#tableSearch').on('input', function () {
+                var term = $(this).val().toLowerCase();
+                $('.table-row').each(function () {
+                    $(this).toggle($(this).data('table-name').toLowerCase().indexOf(term) !== -1);
                 });
             });
 
-            // Form submission
-            form.addEventListener('submit', function (e) {
+            $('#cleanupForm').on('submit', function (e) {
                 e.preventDefault();
 
-                const selectedTables = [];
-                let totalRecords = 0;
+                var selectedTables = [];
+                var totalRecords = 0;
 
-                document.querySelectorAll('.table-checkbox:checked').forEach(checkbox => {
-                    const row = checkbox.closest('.table-row');
-                    selectedTables.push({
-                        name: checkbox.value,
-                        records: parseInt(row.getAttribute('data-records'))
-                    });
-                    totalRecords += parseInt(row.getAttribute('data-records'));
+                $('.table-checkbox:checked').each(function () {
+                    var records = parseInt($(this).closest('.table-row').data('records'));
+                    selectedTables.push({ name: $(this).val(), records: records });
+                    totalRecords += records;
                 });
 
-                if (selectedTables.length === 0) {
-                    alert('Por favor selecciona al menos una tabla');
-                    return;
-                }
-
-                // Populate confirmation modal
-                const tableList = document.getElementById('tablesToDeleteList');
-                tableList.innerHTML = '';
-                selectedTables.forEach(table => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>${table.name}</strong> - <span class="text-muted">${table.records} registros</span>`;
-                    tableList.appendChild(li);
+                var $list = $('#tablesToDeleteList').empty();
+                $.each(selectedTables, function (i, table) {
+                    $list.append('<li><strong>' + table.name + '</strong> - <span class="text-muted">' + table.records + ' registros</span></li>');
                 });
 
-                document.getElementById('totalToDelete').textContent = totalRecords.toLocaleString();
-                confirmCheckbox.checked = false;
-                confirmCleanupBtn.disabled = true;
+                $('#totalToDelete').text(totalRecords.toLocaleString());
+                $('#confirmCheckbox').prop('checked', false);
+                $('#confirmCleanupBtn').prop('disabled', true);
 
                 confirmationModal.show();
             });
 
-            // Confirmation checkbox
-            confirmCheckbox.addEventListener('change', function () {
-                confirmCleanupBtn.disabled = !this.checked;
+            $('#confirmCheckbox').on('change', function () {
+                $('#confirmCleanupBtn').prop('disabled', !$(this).is(':checked'));
             });
 
-            // Confirm cleanup
-            confirmCleanupBtn.addEventListener('click', function () {
-                const tablesToTruncate = Array.from(document.querySelectorAll('.table-checkbox:checked')).map(cb => cb.value);
+            $('#confirmCleanupBtn').on('click', function () {
+                var tables = $('.table-checkbox:checked').map(function () { return $(this).val(); }).get();
 
-                confirmCleanupBtn.disabled = true;
-                confirmCleanupBtn.innerHTML = '<i class="fa fa-spinner animate-spin"></i> Limpiando...';
+                $('#confirmCleanupBtn').prop('disabled', true).html('Limpiando...');
 
-                fetch('{{ route('settings.database.cleanup.truncate") }}', {
+                $.ajax({
+                    url: '{{ route("settings.database.cleanup.truncate") }}',
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/json'
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    contentType: 'application/json',
+                    data: JSON.stringify({ tables: tables }),
+                    success: function (data) {
+                        confirmationModal.hide();
+                        $('#successMessage').text(data.message);
+                        successModal.show();
+
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
                     },
-                    body: JSON.stringify({
-                        tables: tablesToTruncate
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
+                    error: function (xhr) {
                         confirmationModal.hide();
-
-                        if (data.success) {
-                            document.getElementById('successMessage').textContent = data.message;
-                            successModal.show();
-
-                            // Reset form
-                            setTimeout(() => {
-                                form.reset();
-                                updateCounts();
-                            }, 2000);
-                        } else {
-                            alert('Error: ' + data.message);
-                            if (data.errors) {
-                                console.error('Detailed errors:', data.errors);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        confirmationModal.hide();
-                        alert('Error en la solicitud: ' + error.message);
-                    })
-                    .finally(() => {
-                        confirmCleanupBtn.disabled = false;
-                        confirmCleanupBtn.innerHTML = '<i class="fa fa-trash"></i> Sí, limpiar ahora';
-                    });
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Error en la solicitud';
+                        toastr.error(msg);
+                    },
+                    complete: function () {
+                        $('#confirmCleanupBtn').prop('disabled', false).html('Sí, limpiar ahora');
+                    }
+                });
             });
 
-            // Initialize counts
             updateCounts();
         });
     </script>
-@endsection
+@endpush

@@ -105,14 +105,14 @@
                             </select>
                         </div>
                         <div class="flex-shrink-0" style="min-width: 160px;">
-                            <select name="status" class="form-select h-100">
+                            <select name="status" class="form-select select2 h-100">
                                 <option value="">Todos los estados</option>
                                 <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Activos</option>
                                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivos</option>
                             </select>
                         </div>
                         <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary px-4">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request('search') || request('category_id') || request('status'))
@@ -156,9 +156,10 @@
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover mb-0" id="forms-table">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Categoría</th>
                                     <th class="text-center">Campos</th>
@@ -171,6 +172,7 @@
                             <tbody>
                                 @foreach ($forms as $form)
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $form->id }}"></td>
                                         <td>
                                             <div class="fw-semibold">{{ $form->name }}</div>
                                             <div class="d-flex align-items-center gap-1 mt-1">
@@ -187,7 +189,7 @@
                                             @if ($form->category)
                                                 <span class="badge bg-light text-dark">{{ $form->category->name }}</span>
                                             @else
-                                                <span class="text-muted small">—</span>
+                                                <span class="text-muted">—</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -208,7 +210,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <small class="text-muted">{{ $form->created_at->format('d/m/Y') }}</small>
+                                            <span class="text-muted">{{ $form->created_at->format('d/m/Y') }}</span>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
@@ -273,9 +275,44 @@
         </div>
     </div>
 
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> formulario(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal importar JSON --}}
     <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="importModalLabel">Importar formulario desde JSON</h5>
@@ -291,10 +328,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="importSubmitBtn">
-                            <i class="fas fa-file-import me-1"></i> Importar
-                        </button>
+                        <button type="submit" class="btn btn-primary w-100 mb-1" id="importSubmitBtn">Importar</button>
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -308,6 +343,44 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un formulario.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' formulario(s) seleccionados?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('settings.forms.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' formulario(s) actualizados.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
+    });
+
     $('.delete-btn').on('click', function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));

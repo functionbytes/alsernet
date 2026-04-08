@@ -3,50 +3,153 @@
 @section('title', 'Categorías')
 
 @section('content')
+
     @include('core::components.card', ['title' => 'Categorías de PQRSF'])
+
     <div class="widget-content searchable-container list">
+
         @include('core::components.alerts')
+
         <div class="card">
+
+            {{-- Header --}}
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Categorías</h5>
+                        <h5 class="mb-1 fw-bold">Categorías de PQRSF</h5>
                         <p class="small mb-0 text-muted">Clasifica las solicitudes por temas (Servicios, Infraestructura, Salud, etc.)</p>
                     </div>
-                    <a href="{{ route('settings.attention.categories.create') }}" class="btn btn-primary">Nueva categoría</a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('settings.attention.categories.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Nueva categoría
+                        </a>
+                    </div>
                 </div>
             </div>
+
+            {{-- Stats --}}
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ $stats['total'] }}</h4>
+                                <small class="text-muted">Categorías registradas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Activas</h6>
+                                <h4 class="mb-1 fw-bold">{{ $stats['active'] }}</h4>
+                                <small class="text-muted">Categorías activas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Inactivas</h6>
+                                <h4 class="mb-1 fw-bold">{{ $stats['inactive'] }}</h4>
+                                <small class="text-muted">Categorías inactivas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Search --}}
+            <div class="card-body border-bottom">
+                <form method="GET" action="{{ route('settings.attention.categories.index') }}">
+                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                        <div class="flex-fill">
+                            <div class="input-group h-100">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar por nombre o descripción..."
+                                       value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0" style="min-width: 180px;">
+                            <select name="status" class="form-select select2 h-100">
+                                <option value="">Todos los estados</option>
+                                <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Activas</option>
+                                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivas</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>
+                            </button>
+                            @if(request('search') || request('status'))
+                                <a href="{{ route('settings.attention.categories.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Table --}}
             <div class="card-body">
                 @if($categories->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
+                                    <th class="text-center">PQRSF</th>
                                     <th class="text-center">Estado</th>
+                                    <th>Fecha</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($categories as $category)
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $category->id }}"></td>
                                         <td><strong>{{ $category->name }}</strong></td>
                                         <td><small class="text-muted">{{ Str::limit($category->description, 60) }}</small></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ $category->attentions_count ?? 0 }}</span>
+                                        </td>
                                         <td class="text-center">
                                             @if($category->is_active)
                                                 <span class="badge bg-success-subtle text-success">Activo</span>
                                             @else
-                                                <span class="badge bg-secondary-subtle text-secondary">Inactivo</span>
+                                                <span class="badge bg-light text-black">Inactivo</span>
                                             @endif
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">{{ $category->created_at->format('d/m/Y') }}</span>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown"><i class="fa fa-ellipsis-vertical"></i></a>
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li><a class="dropdown-item" href="{{ route('settings.attention.categories.edit', $category->id) }}">Editar</a></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('settings.attention.categories.edit', $category->id) }}">
+                                                            Editar
+                                                        </a>
+                                                    </li>
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item delete-btn" data-bs-toggle="modal" data-bs-target="#delete-modal" data-url="{{ route('settings.attention.categories.destroy', $category->id) }}" data-title="Eliminar: {{ $category->name }}">Eliminar</a></li>
+                                                    <li>
+                                                        <a class="dropdown-item delete-btn"
+                                                           data-bs-toggle="modal" data-bs-target="#delete-modal"
+                                                           data-url="{{ route('settings.attention.categories.destroy', $category->id) }}"
+                                                           data-title="Eliminar: {{ $category->name }}">
+                                                            Eliminar
+                                                        </a>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -57,26 +160,129 @@
                     </div>
                 @else
                     <div class="text-center py-5">
-                        <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">No hay categorías creadas aún</p>
-                        <a href="{{ route('settings.attention.categories.create') }}" class="btn btn-sm btn-primary">Crear primera categoría</a>
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-tags fs-7"></i>
+                            </div>
+                            <h6 class="mb-1">
+                                @if(request('search') || request('status'))
+                                    No se encontraron categorías
+                                @else
+                                    No hay categorías creadas
+                                @endif
+                            </h6>
+                            <p class="text-muted mb-3">
+                                @if(request('search') || request('status'))
+                                    No hay resultados para los criterios de búsqueda
+                                @else
+                                    Crea la primera categoría para clasificar las PQRSF
+                                @endif
+                            </p>
+                            @if(!request('search') && !request('status'))
+                                <a href="{{ route('settings.attention.categories.create') }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Nueva categoría
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 @endif
+
+                @if($categories->hasPages())
+                    <div class="mt-4">{{ $categories->links() }}</div>
+                @endif
             </div>
-            @if($categories->hasPages())
-                <div class="card-footer">{{ $categories->links() }}</div>
-            @endif
+
         </div>
     </div>
+
     @include('core::components.delete')
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> elemento(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-2">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    $('.delete-btn').on('click', function() {
+$(document).ready(function () {
+    $('.delete-btn').on('click', function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
+    });
+
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Éxito');
+    @endif
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
+    @endif
+
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un elemento.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' elemento(s) seleccionados?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('settings.attention.categories.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' elemento(s) actualizados.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
     });
 });
 </script>

@@ -60,7 +60,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Estas configuraciones afectan el comportamiento global del módulo Mailrelay.
                         </p>
                     </div>
@@ -112,7 +112,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             La conexión API es esencial para usar todas las funcionalidades del módulo.
                         </p>
                     </div>
@@ -164,7 +164,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Las plantillas permiten enviar emails profesionales y consistentes en todas tus campañas.
                         </p>
                     </div>
@@ -216,7 +216,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             La segmentación mejora la efectividad de tus campañas al enviar contenido relevante.
                         </p>
                     </div>
@@ -268,7 +268,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Los campos personalizados permiten segmentación avanzada y personalización de mensajes.
                         </p>
                     </div>
@@ -320,7 +320,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Las automatizaciones ahorran tiempo y mejoran la comunicación con tus suscriptores.
                         </p>
                     </div>
@@ -372,7 +372,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Los webhooks permiten integración en tiempo real con otros sistemas y automatizaciones.
                         </p>
                     </div>
@@ -424,7 +424,7 @@
                             </li>
                         </ul>
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             El control de permisos asegura que solo usuarios autorizados gestionen campañas y suscriptores.
                         </p>
                     </div>

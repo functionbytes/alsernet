@@ -3,6 +3,7 @@
 namespace Modules\Reviews\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Reviews\Rules\ValidJsonArray;
 
 class UpdateModerationRequest extends FormRequest
 {
@@ -16,8 +17,7 @@ class UpdateModerationRequest extends FormRequest
         return [
             'is_visible' => ['sometimes', 'boolean'],
             'is_featured' => ['sometimes', 'boolean'],
-            'tags' => ['sometimes', 'array'],
-            'tags.*' => ['string', 'max:50'],
+            'tags' => ['sometimes', new ValidJsonArray(maxItems: 50, maxStringLength: 50)],
             'internal_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -25,8 +25,6 @@ class UpdateModerationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tags.array' => 'Las etiquetas deben ser un array',
-            'tags.*.max' => 'Cada etiqueta no puede exceder 50 caracteres',
             'internal_notes.max' => 'Las notas internas no pueden exceder 1000 caracteres',
         ];
     }

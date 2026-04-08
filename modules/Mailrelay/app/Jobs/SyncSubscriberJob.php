@@ -9,7 +9,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Modules\Mailrelay\Entities\Subscriber;
+use Modules\Mailrelay\Notifications\SyncFailedNotification;
 use Modules\Mailrelay\Services\MailRelayService;
 
 /**
@@ -380,9 +382,9 @@ class SyncSubscriberJob implements ShouldQueue
                 'attempts' => $this->attempts(),
             ]);
 
-            // Optionally notify administrators
+            // Notify administrators about the sync failure
             if (config('mailrelay.error_handling.notify_on_error', false)) {
-                // TODO: Send notification to administrators
+                $this->notifyAdministrators($exception);
             }
 
             $this->fail($exception);
@@ -430,6 +432,40 @@ class SyncSubscriberJob implements ShouldQueue
             $this->subscriber->update([
                 'metadata' => $metadata,
             ]);
+        }
+
+        // Notify administrators about the permanent failure
+        if (config('mailrelay.error_handling.notify_on_error', false)) {
+            $this->notifyAdministrators($exception);
+        }
+    }
+
+    /**
+     * Send failure notification to configured administrator emails.
+     */
+    protected function notifyAdministrators(\Exception $exception): void
+    {
+        $recipients = config('mailrelay.error_handling.notification_recipients', []);
+
+        if (empty($recipients)) {
+            return;
+        }
+
+        $subscriberInfo = [
+            'id' => $this->subscriber->id,
+            'email' => $this->subscriber->email,
+        ];
+
+        foreach ($recipients as $email) {
+            try {
+                Notification::route('mail', $email)
+                    ->notify(new SyncFailedNotification($subscriberInfo, $exception->getMessage()));
+            } catch (\Exception $e) {
+                Log::error('Failed to send sync failure notification', [
+                    'recipient' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 }

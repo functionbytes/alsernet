@@ -116,7 +116,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Detalles técnicos</h6>
-                        <p class="text-muted small mb-0">Parámetros de configuración de la base de datos</p>
+                        <p class="text-muted mb-0">Parámetros de configuración de la base de datos</p>
                     </div>
                 </div>
 

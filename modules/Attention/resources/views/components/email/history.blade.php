@@ -53,7 +53,7 @@
                                     @endif
                                 </div>
 
-                                <p class="email-subject text-muted small mb-1" title="{{ $mail->subject }}">
+                                <p class="email-subject text-muted mb-1" title="{{ $mail->subject }}">
                                     {{ Str::limit($mail->subject, 45) }}
                                 </p>
 
@@ -84,7 +84,7 @@
             <div class="mb-3">
                 <i class="fas fa-envelope text-muted" style="font-size: 2rem;"></i>
             </div>
-            <p class="text-muted small mb-0">
+            <p class="text-muted mb-0">
                 <strong>Sin emails enviados</strong>
             </p>
         </div>

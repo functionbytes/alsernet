@@ -44,11 +44,11 @@ class MigrateMailingNamespaces extends Command
             return Command::FAILURE;
         }
 
-        // Validate target classes exist
-        if (! $this->option('dry-run')) {
+        // Validate target classes exist (skip if dry-run or force)
+        if (! $this->option('dry-run') && ! $this->option('force')) {
             $this->info('🔍 Validating target classes...');
             if (! $this->validateTargetClasses()) {
-                $this->error('❌ Validation failed. Run with --dry-run to see what would change.');
+                $this->error('❌ Validation failed. Run with --dry-run to see what would change, or --force to skip validation.');
 
                 return Command::FAILURE;
             }
@@ -269,7 +269,8 @@ class MigrateMailingNamespaces extends Command
                 $replacements += $count1;
 
                 // Pattern 2: Inline fully qualified - \Acelle\Model\Campaign or Acelle\Model\Campaign
-                $pattern2 = "/\\\\?{$oldEscaped}(?=\\s|::|;|,|\)|'|\"|\\[|\\]|<|>|\\.)/";
+                $pattern2 = "/\\\\?{$oldEscaped}(?=\\s|::|;|,|\(|\)|'|\"|\\[|\\]|<|>|\\.)/";
+
                 $replacement2 = "\\{$newEscaped}";
                 $modifiedContent = preg_replace($pattern2, $replacement2, $modifiedContent, -1, $count2);
                 $replacements += $count2;

@@ -99,7 +99,7 @@
                 <p class="mb-0">
                     <strong>¿Estás seguro de que deseas eliminar este archivo?</strong>
                 </p>
-                <p class="text-muted small mt-2 mb-0">
+                <p class="text-muted mt-2 mb-0">
                     Esta acción no se puede deshacer.
                 </p>
             </div>

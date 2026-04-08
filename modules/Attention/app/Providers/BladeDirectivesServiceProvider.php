@@ -1,9 +1,10 @@
 <?php
 
-namespace Modules\Attention\App\Providers;
+namespace Modules\Attention\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Attention\Models\Attention;
 
 class BladeDirectivesServiceProvider extends ServiceProvider
 {
@@ -69,7 +70,7 @@ class BladeDirectivesServiceProvider extends ServiceProvider
 
         // Check if user can view all attentions
         Blade::if('canViewAllAttentions', function () {
-            return auth()->check() && auth()->user()->can('viewAll', \Modules\Attention\App\Models\Attention::class);
+            return auth()->check() && auth()->user()->can('viewAll', Attention::class);
         });
 
         // Check if user is assigned to attention

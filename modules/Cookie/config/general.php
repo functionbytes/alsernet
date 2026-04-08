@@ -18,6 +18,11 @@ return [
     'cookie_lifetime' => env('COOKIE_CONSENT_LIFETIME', 365 * 20),
 
     /*
+     * Cookie consent version (stored in consent logs)
+     */
+    'version' => '1.0',
+
+    /*
      * Cookie consent style: 'full-width' or 'minimal'
      */
     'style' => env('COOKIE_CONSENT_STYLE', 'full-width'),
@@ -58,29 +63,9 @@ return [
     'learn_more_text' => 'Learn more',
 
     /*
-     * Background color for the cookie consent banner
-     */
-    'background_color' => '#000000',
-
-    /*
-     * Text color for the cookie consent banner
-     */
-    'text_color' => '#ffffff',
-
-    /*
      * Maximum width of the cookie consent banner (in pixels)
      */
     'max_width' => 1170,
-
-    /*
-     * Show reject button
-     */
-    'show_reject_button' => env('COOKIE_CONSENT_SHOW_REJECT', false),
-
-    /*
-     * Show customize button
-     */
-    'show_customize_button' => env('COOKIE_CONSENT_SHOW_CUSTOMIZE', false),
 
     /*
      * Cookie categories for GDPR compliance
@@ -103,19 +88,4 @@ return [
         ],
     ],
 
-    /*
-     * Google Analytics integration
-     */
-    'google_analytics' => [
-        'enabled' => env('COOKIE_CONSENT_GA_ENABLED', false),
-        'tracking_id' => env('GOOGLE_ANALYTICS_TRACKING_ID', null),
-    ],
-
-    /*
-     * Facebook Pixel integration
-     */
-    'facebook_pixel' => [
-        'enabled' => env('COOKIE_CONSENT_FB_PIXEL_ENABLED', false),
-        'pixel_id' => env('FACEBOOK_PIXEL_ID', null),
-    ],
 ];

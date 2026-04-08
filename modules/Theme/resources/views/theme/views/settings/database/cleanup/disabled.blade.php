@@ -42,7 +42,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 text-muted small">
+                        <div class="mt-4 text-muted">
                             <p>
                                 <i class="fa fa-circle-info"></i>
                                 Después de realizar el cambio, recarga esta página para acceder a la limpieza de base de

@@ -2,6 +2,7 @@
 
 namespace Modules\Mailrelay\Services;
 
+use App\Services\CircuitBreaker;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -13,15 +14,22 @@ class SubscriberService
 
     protected $apiUrl;
 
+    private CircuitBreaker $circuitBreaker;
+
     public function __construct()
     {
-        $this->apiKey = env('MAILRELAY_API_KEY');
-        $this->apiUrl = env('MAILRELAY_URL', 'https://app.mailrelay.com/api');
+        $this->apiKey = config('mailrelay.api_key');
+        $this->apiUrl = config('mailrelay.api_url');
         $this->client = new Client;
+        $this->circuitBreaker = new CircuitBreaker('mailrelay', 5, 60);
     }
 
     public function getSubscribersList()
     {
+        if (! $this->circuitBreaker->isAvailable()) {
+            return ['error' => 'Mailrelay circuit breaker is open'];
+        }
+
         try {
             $response = $this->client->get("{$this->apiUrl}/subscribers", [
                 'headers' => [
@@ -29,14 +37,22 @@ class SubscriberService
                 ],
             ]);
 
+            $this->circuitBreaker->recordSuccess();
+
             return json_decode($response->getBody()->getContents(), true);
         } catch (RequestException $e) {
+            $this->circuitBreaker->recordFailure();
+
             return ['error' => $e->getMessage()];
         }
     }
 
     public function addSubscriberToMailRelay($name, $email, $listId)
     {
+        if (! $this->circuitBreaker->isAvailable()) {
+            return ['error' => 'Mailrelay circuit breaker is open'];
+        }
+
         $url = $this->apiUrl.'/subscribers';
 
         try {
@@ -51,8 +67,12 @@ class SubscriberService
                 ],
             ]);
 
+            $this->circuitBreaker->recordSuccess();
+
             return json_decode($response->getBody()->getContents(), true); // Devuelve la respuesta de MailRelay
         } catch (\Exception $e) {
+            $this->circuitBreaker->recordFailure();
+
             return ['error' => $e->getMessage()]; // Devuelve el error si la API falla
         }
     }

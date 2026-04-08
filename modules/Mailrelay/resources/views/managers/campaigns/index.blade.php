@@ -98,7 +98,7 @@
                                 </div>
 
                                 {{-- Subject --}}
-                                <p class="card-text text-muted small mb-3">
+                                <p class="card-text text-muted mb-3">
                                     <i class="fas fa-envelope me-1"></i>
                                     {{ Str::limit($campaign->subject, 60) }}
                                 </p>

@@ -16,7 +16,10 @@
     "autoload": {
         "psr-4": {
             "Modules\\Widget\\": "app/"
-        }
+        },
+        "files": [
+            "helpers/helpers.php"
+        ]
     },
     "extra": {
         "laravel": {

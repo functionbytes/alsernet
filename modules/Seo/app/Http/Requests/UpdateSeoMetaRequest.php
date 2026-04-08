@@ -21,8 +21,12 @@ class UpdateSeoMetaRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string|max:255',
+            'title_b' => 'nullable|string|max:60',
             'description' => 'nullable|string|max:500',
+            'description_b' => 'nullable|string|max:160',
+            'ab_winner' => 'nullable|in:a,b',
             'keywords' => 'nullable|string|max:500',
+            'target_keyword' => 'nullable|string|max:100',
             'og_title' => 'nullable|string|max:255',
             'og_description' => 'nullable|string|max:500',
             'og_image' => 'nullable|url|max:500',

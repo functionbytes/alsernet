@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Models\Lang;
 use Modules\Mailer\Enums\EndpointLogStatus;
 
 class MailerEndpoint extends Model
@@ -46,7 +47,7 @@ class MailerEndpoint extends Model
      */
     public static function generateToken(): string
     {
-        return hash('sha256', uniqid(mt_rand(), true));
+        return bin2hex(random_bytes(32));
     }
 
     /**
@@ -74,7 +75,7 @@ class MailerEndpoint extends Model
      */
     public function language(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
+        return $this->belongsTo(Lang::class, 'lang_id');
     }
 
     /**
@@ -82,7 +83,7 @@ class MailerEndpoint extends Model
      */
     public function lang(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
+        return $this->belongsTo(Lang::class, 'lang_id');
     }
 
     /**
@@ -107,5 +108,29 @@ class MailerEndpoint extends Model
     public function failedLogs(): HasMany
     {
         return $this->logs()->where('status', EndpointLogStatus::Failed);
+    }
+
+    /**
+     * Scope: only active endpoints
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: only inactive endpoints
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope: filter by source
+     */
+    public function scopeBySource($query, string $source)
+    {
+        return $query->where('source', $source);
     }
 }

@@ -94,7 +94,7 @@
                                     @endif
                                 </div>
 
-                                <p class="card-text text-muted small mb-3">
+                                <p class="card-text text-muted mb-3">
                                     {{ Str::limit($campaign->subject, 60) }}
                                 </p>
 
@@ -137,7 +137,7 @@
                                 </div>
                                 @endif
 
-                                <div class="text-muted small mb-3">
+                                <div class="text-muted mb-3">
                                     <i class="fas fa-calendar"></i> Creada {{ $campaign->created_at->diffForHumans() }}
                                 </div>
 

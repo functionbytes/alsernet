@@ -4,6 +4,8 @@ namespace Modules\Page\Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+use Modules\Page\Enums\PageStatus;
 use Modules\Page\Models\Page;
 
 class PageFactory extends Factory
@@ -26,7 +28,7 @@ class PageFactory extends Factory
 
         return [
             'title' => $title,
-            'slug' => \Illuminate\Support\Str::slug($title),
+            'slug' => Str::slug($title),
             'content' => $this->faker->paragraphs(5, true),
             'description' => $this->faker->sentence(15),
             'template' => $this->faker->randomElement(['default', 'full-width', 'no-sidebar']),
@@ -42,13 +44,13 @@ class PageFactory extends Factory
     /**
      * Indicate that the page is published.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function published()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => Page::STATUS_PUBLISHED,
+                'status' => PageStatus::Published->value,
                 'published_at' => now()->subDays(rand(1, 30)),
             ];
         });
@@ -57,13 +59,13 @@ class PageFactory extends Factory
     /**
      * Indicate that the page is draft.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function draft()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
                 'published_at' => null,
             ];
         });
@@ -72,13 +74,13 @@ class PageFactory extends Factory
     /**
      * Indicate that the page is pending.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function pending()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => Page::STATUS_PENDING,
+                'status' => PageStatus::Pending->value,
                 'published_at' => null,
             ];
         });

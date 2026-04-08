@@ -5,9 +5,14 @@ namespace Modules\Shortcode\Compiler;
 class ShortcodeCompiler
 {
     /**
-     * Registered shortcodes
+     * Registered shortcodes (name => callable)
      */
     protected array $shortcodes = [];
+
+    /**
+     * Shortcode metadata (name => array)
+     */
+    protected array $metadata = [];
 
     /**
      * Cache for compiled shortcodes
@@ -15,11 +20,14 @@ class ShortcodeCompiler
     protected array $cache = [];
 
     /**
-     * Register a new shortcode
+     * Register a new shortcode with optional metadata
+     *
+     * @param  array{description?: string, example?: string, attributes?: array<string, string>}  $meta
      */
-    public function register(string $name, callable $callback): void
+    public function register(string $name, callable $callback, array $meta = []): void
     {
         $this->shortcodes[$name] = $callback;
+        $this->metadata[$name] = $meta;
     }
 
     /**
@@ -31,7 +39,14 @@ class ShortcodeCompiler
             return $content;
         }
 
-        // Check cache if enabled
+        // Fast-path: skip expensive regex if no shortcode brackets present
+        if (! str_contains($content, '[')) {
+            return $content;
+        }
+
+        // Declare before any conditional to avoid undefined variable in PHP 8
+        $cacheKey = null;
+
         if (config('shortcode.cache', true)) {
             $cacheKey = md5($content);
             if (isset($this->cache[$cacheKey])) {
@@ -40,7 +55,8 @@ class ShortcodeCompiler
         }
 
         // Regex para shortcodes con contenido: [nombre param="value"]content[/nombre]
-        $pattern = '/\[(\w+)([^\]]*)\](.*?)\[\/\1\]/s';
+        // [\w-]+ permite guiones en nombres como contact-form, accordion-item
+        $pattern = '/\[([\w-]+)([^\]]*)\](.*?)\[\/\1\]/s';
 
         $compiled = preg_replace_callback($pattern, function ($matches) {
             $name = $matches[1];
@@ -80,8 +96,30 @@ class ShortcodeCompiler
             return $matches[0];
         }, $compiled);
 
-        // Cache result
-        if (config('shortcode.cache', true)) {
+        // Regex para shortcodes sin cierre explícito: [nombre param="value"]
+        // Solo actúa sobre shortcodes registrados para no afectar HTML ni otros corchetes
+        $barePattern = '/\[([\w-]+)([^\]]*)\]/';
+
+        $compiled = preg_replace_callback($barePattern, function ($matches) {
+            $name = $matches[1];
+
+            if (! isset($this->shortcodes[$name])) {
+                return $matches[0];
+            }
+
+            $attributes = $this->parseAttributes($matches[2]);
+
+            try {
+                return call_user_func($this->shortcodes[$name], $attributes, '');
+            } catch (\Exception $e) {
+                \Log::error("Shortcode compilation error for [{$name}]: ".$e->getMessage());
+
+                return $matches[0];
+            }
+        }, $compiled);
+
+        // Cache result only if caching was enabled (cacheKey is not null)
+        if ($cacheKey !== null) {
             $this->cache[$cacheKey] = $compiled;
         }
 
@@ -128,11 +166,33 @@ class ShortcodeCompiler
     }
 
     /**
-     * Get all registered shortcodes
+     * Get all registered shortcode names
      */
     public function all(): array
     {
         return array_keys($this->shortcodes);
+    }
+
+    /**
+     * Get metadata for all registered shortcodes
+     *
+     * @return array<string, array{name: string, description: string, example: string, attributes: array<string, string>}>
+     */
+    public function getRegistered(): array
+    {
+        $result = [];
+
+        foreach ($this->shortcodes as $name => $_callback) {
+            $meta = $this->metadata[$name] ?? [];
+            $result[] = [
+                'name' => $name,
+                'description' => $meta['description'] ?? '',
+                'example' => $meta['example'] ?? "[{$name}][/{$name}]",
+                'attributes' => $meta['attributes'] ?? [],
+            ];
+        }
+
+        return $result;
     }
 
     /**

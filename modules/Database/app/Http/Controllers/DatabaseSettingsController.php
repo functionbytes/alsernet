@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\Database\Services\DatabaseConnectionTester;
@@ -48,14 +49,17 @@ class DatabaseSettingsController extends Controller
     {
         try {
             $validated = $request->validate(Setting::getDatabaseRules());
+            $validated['cleanup_enabled'] = $request->boolean('cleanup_enabled');
 
             Setting::setDatabaseSettings($validated);
 
-            return redirect()->route('backups.database.index')
+            return redirect()->route('settings.database.index')
                 ->with('success', 'Configuración de base de datos actualizada correctamente');
         } catch (\Exception $e) {
+            Log::error('Database settings update failed', ['error' => $e->getMessage()]);
+
             return redirect()->back()
-                ->with('error', 'Error al actualizar la configuración: '.$e->getMessage())
+                ->with('error', 'Error al actualizar la configuración. Por favor, inténtalo de nuevo.')
                 ->withInput();
         }
     }
@@ -86,7 +90,7 @@ class DatabaseSettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => 'Error en la conexión: '.$e->getMessage(),
+                'message' => 'Error en la conexión. Por favor, inténtalo de nuevo.',
             ], 422);
         }
     }

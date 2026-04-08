@@ -20,11 +20,11 @@ class UpdateMenuItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
             'url' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank,_parent,_top',
-            'icon' => 'nullable|string|max:255',
-            'css_class' => 'nullable|string|max:255',
+            'icon' => ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
+            'css_class' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-_]*$/'],
             'type' => 'nullable|string|in:custom,page,post,category,route',
             'reference_id' => 'nullable|integer',
             'reference_type' => 'nullable|string',
@@ -37,14 +37,25 @@ class UpdateMenuItemRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'title' => 'item title',
+            'title' => 'título',
             'url' => 'URL',
-            'target' => 'link target',
-            'icon' => 'icon class',
-            'css_class' => 'CSS class',
-            'type' => 'item type',
-            'reference_id' => 'reference ID',
-            'reference_type' => 'reference type',
+            'target' => 'destino del enlace',
+            'icon' => 'clase de icono',
+            'css_class' => 'clase CSS',
+            'type' => 'tipo de item',
+            'reference_id' => 'ID de referencia',
+            'reference_type' => 'tipo de referencia',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'El título del item es obligatorio.',
+            'title.max' => 'El título no puede superar los :max caracteres.',
         ];
     }
 }

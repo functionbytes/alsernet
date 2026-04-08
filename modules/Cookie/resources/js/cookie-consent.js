@@ -1,27 +1,27 @@
 'use strict'
 
 $(() => {
-    window.Cookie = (function () {
+    window.CookieConsent = (function () {
 
-        const $banner     = $('.js-cookie-consent')
-        const $categories = $('.cookie-consent__categories')
+        const $banner = $('#cookie-banner')
 
-        const COOKIE_NAME     = $banner.data('cookie-name') || 'cookie_for_consent'
-        const COOKIE_DOMAIN   = $banner.data('cookie-domain') || window.location.hostname
-        const COOKIE_LIFETIME = parseInt($banner.data('cookie-lifetime') || 36000, 10)
-        const SESSION_SECURE  = $banner.data('session-secure') || ''
+        if (!$banner.length) { return {} }
+
+        const COOKIE_NAME   = $banner.data('cookie-name') || 'cookie_for_consent'
+        const COOKIE_DOMAIN = $banner.data('cookie-domain') || window.location.hostname
+        const COOKIE_SECURE = $banner.data('cookie-secure') === '1' ? ';secure' : ''
+        const COOKIE_DAYS   = parseInt($banner.data('cookie-lifetime'), 10) || 365
 
         // ── Cookie helpers ──────────────────────────────────────
 
         function setCookie(name, value, days) {
-            const date = new Date()
-            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
+            const expires = new Date()
+            expires.setDate(expires.getDate() + days)
             document.cookie =
                 name + '=' + encodeURIComponent(value) +
-                ';expires=' + date.toUTCString() +
+                ';expires=' + expires.toUTCString() +
                 ';domain=' + COOKIE_DOMAIN +
-                ';path=/' + SESSION_SECURE +
-                ';SameSite=Lax'
+                ';path=/;SameSite=Lax' + COOKIE_SECURE
         }
 
         function getCookie(name) {
@@ -33,133 +33,137 @@ $(() => {
             return null
         }
 
-        function cookieExists(name) {
-            return getCookie(name) !== null
+        // ── GA consent ──────────────────────────────────────────
+
+        function updateGtagConsent(categories) {
+            if (typeof gtag !== 'function') { return }
+
+            gtag('consent', 'update', {
+                ad_storage: categories.includes('marketing') ? 'granted' : 'denied',
+                analytics_storage: categories.includes('analytics') ? 'granted' : 'denied',
+                personalization_storage: categories.includes('preferences') ? 'granted' : 'denied',
+                functionality_storage: 'granted',
+                security_storage: 'granted',
+            })
+
+            if (categories.includes('analytics') && window._cookieGaId) {
+                gtag('config', window._cookieGaId)
+            }
         }
 
-        // ── Banner visibility ───────────────────────────────────
+        // ── Facebook Pixel (lazy init) ───────────────────────────
+
+        function initFacebookPixel() {
+            if (!window._cookieFbPixelId || window.fbq) { return }
+            ;(function (f, b, e, v, n, t, s) {
+                n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments) }
+                if (!f._fbq) { f._fbq = n }
+                n.push = n; n.loaded = true; n.version = '2.0'; n.queue = []
+                t = b.createElement(e); t.async = true; t.src = v
+                s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s)
+            }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js'))
+            fbq('init', window._cookieFbPixelId)
+            fbq('track', 'PageView')
+        }
+
+        // ── Log to server ────────────────────────────────────────
+
+        function logConsent(action, categories, isUpdate) {
+            const csrfToken = $('meta[name="csrf-token"]').attr('content')
+            if (!csrfToken) { return }
+
+            $.ajax({
+                url: '/cookie/consent',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': csrfToken },
+                data: JSON.stringify({ action, accepted_categories: categories, is_update: isUpdate }),
+            })
+        }
+
+        // ── Save consent ─────────────────────────────────────────
+
+        function saveConsent(action, categories, isUpdate) {
+            setCookie(COOKIE_NAME, JSON.stringify({ action, categories }), COOKIE_DAYS)
+            logConsent(action, categories, isUpdate)
+            updateGtagConsent(categories)
+
+            if (categories.includes('marketing')) {
+                initFacebookPixel()
+            }
+
+            hideBanner()
+
+            const modal = document.getElementById('cookie-preferences-modal')
+            if (modal) {
+                const instance = bootstrap.Modal.getInstance(modal)
+                if (instance) { instance.hide() }
+            }
+        }
+
+        // ── Banner visibility ────────────────────────────────────
 
         function showBanner() {
-            $banner.show()
-            setTimeout(() => $banner.addClass('cookie-consent--visible'), 10)
+            $banner.removeClass('d-none')
         }
 
         function hideBanner() {
-            $banner.removeClass('cookie-consent--visible')
-            setTimeout(() => $banner.hide(), 300)
+            $banner.addClass('d-none')
         }
 
-        // ── Customize view ──────────────────────────────────────
+        // ── Actions ──────────────────────────────────────────────
 
-        function toggleCustomizeView() {
-            $categories.slideToggle(250)
-        }
-
-        // ── Google Analytics consent update ─────────────────────
-
-        function updateGtagConsent(categories) {
-            if (typeof gtag !== 'function') {
-                return
-            }
-
-            gtag('consent', 'update', {
-                ad_storage: categories.marketing ? 'granted' : 'denied',
-                analytics_storage: categories.analytics ? 'granted' : 'denied',
-                functionality_storage: categories.essential ? 'granted' : 'denied',
-                personalization_storage: categories.marketing ? 'granted' : 'denied',
-                security_storage: 'granted'
+        function acceptAll(isUpdate) {
+            const allCategories = []
+            $('.cookie-category-toggle').each(function () {
+                allCategories.push($(this).data('category'))
             })
+            saveConsent('accept_all', allCategories, isUpdate || false)
         }
 
-        // ── Facebook Pixel consent update ────────────────────────
-
-        function updateFbqConsent(categories) {
-            if (typeof fbq !== 'function') {
-                return
-            }
-
-            if (categories.marketing) {
-                fbq('consent', 'grant')
-            } else {
-                fbq('consent', 'revoke')
-            }
-        }
-
-        // ── Consent actions ─────────────────────────────────────
-
-        function acceptAllCookies() {
-            const categories = { essential: true }
-            $('.js-cookie-category').each(function () {
-                categories[$(this).val()] = true
-            })
-            setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
-            updateGtagConsent(categories)
-            updateFbqConsent(categories)
-            hideBanner()
-        }
-
-        function rejectAllCookies() {
-            const categories = { essential: true }
-            setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
-            updateGtagConsent(categories)
-            updateFbqConsent(categories)
-            hideBanner()
+        function rejectAll() {
+            saveConsent('reject_all', [], false)
         }
 
         function savePreferences() {
-            const categories = { essential: true }
-            $('.js-cookie-category:checked').each(function () {
-                categories[$(this).val()] = true
+            const selected = []
+            $('.cookie-category-toggle:checked:not(:disabled)').each(function () {
+                selected.push($(this).data('category'))
             })
-            setCookie(COOKIE_NAME, JSON.stringify(categories), COOKIE_LIFETIME)
-            updateGtagConsent(categories)
-            updateFbqConsent(categories)
-            hideBanner()
+            saveConsent('custom', selected, !!getCookie(COOKIE_NAME))
         }
 
-        // ── Init ────────────────────────────────────────────────
+        // ── Init ─────────────────────────────────────────────────
 
-        if (cookieExists(COOKIE_NAME)) {
-            $banner.hide()
-        } else {
+        if (!getCookie(COOKIE_NAME)) {
             showBanner()
         }
 
-        // ── Event listeners ─────────────────────────────────────
+        // ── Events ───────────────────────────────────────────────
 
-        $(document).on('click', '.js-cookie-consent-agree', function (e) {
+        $(document).on('click', '.js-cookie-accept', function (e) {
             e.preventDefault()
-            acceptAllCookies()
+            acceptAll()
         })
 
-        $(document).on('click', '.js-cookie-consent-reject', function (e) {
+        $(document).on('click', '.js-cookie-reject', function (e) {
             e.preventDefault()
-            rejectAllCookies()
+            rejectAll()
         })
 
-        $(document).on('click', '.js-cookie-consent-customize', function (e) {
+        $(document).on('click', '.js-cookie-accept-modal', function (e) {
             e.preventDefault()
-            toggleCustomizeView()
+            acceptAll(!!getCookie(COOKIE_NAME))
         })
 
-        $(document).on('click', '.js-cookie-consent-save', function (e) {
+        $(document).on('click', '.js-cookie-save-preferences', function (e) {
             e.preventDefault()
             savePreferences()
         })
 
-        // ── Public API ──────────────────────────────────────────
+        // ── Public API ───────────────────────────────────────────
 
-        return {
-            acceptAllCookies,
-            rejectAllCookies,
-            savePreferences,
-            hideBanner,
-            showBanner,
-            toggleCustomizeView,
-            getCookie,
-            setCookie,
-            cookieExists,
-        }
+        return { acceptAll, rejectAll, savePreferences, showBanner, hideBanner, getCookie, setCookie }
 
     })()
 })

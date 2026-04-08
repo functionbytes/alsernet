@@ -32,8 +32,8 @@ class ReviewReplyTest extends TestCase
     {
         $user = User::factory()->create();
         $reply = ReviewReply::factory()
-            ->approved()
             ->for($user, 'approvedBy')
+            ->state(['status' => 'approved', 'approved_at' => now()])
             ->create();
 
         $this->assertInstanceOf(User::class, $reply->approvedBy);

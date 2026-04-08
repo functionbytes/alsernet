@@ -17,7 +17,7 @@
 
         .field-input:focus,
         .field-textarea:focus {
-            border-color: #081A28;
+            border-color: #b10100;
             background-color: #fafbfc;
             box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.08);
         }
@@ -38,12 +38,12 @@
 
         .translation-field:hover {
             background-color: #fafbfc;
-            border-left: 3px solid #081A28;
+            border-left: 3px solid #b10100;
             padding-left: calc(1rem - 3px);
         }
 
         .section-group {
-            border-left: 4px solid #081A28 !important;
+            border-left: 4px solid #b10100 !important;
         }
 
         .section-group .card-header {

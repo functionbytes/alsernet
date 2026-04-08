@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Reviews\Database\Factories\ReviewSavedFilterFactory;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -17,7 +18,7 @@ class ReviewSavedFilter extends Model
 
     protected static function newFactory()
     {
-        return \Modules\Reviews\Database\Factories\ReviewSavedFilterFactory::new();
+        return ReviewSavedFilterFactory::new();
     }
 
     protected $fillable = [
@@ -25,6 +26,8 @@ class ReviewSavedFilter extends Model
         'name',
         'filters_json',
         'is_default',
+        'is_shared',
+        'shared_by',
     ];
 
     protected function casts(): array
@@ -32,6 +35,7 @@ class ReviewSavedFilter extends Model
         return [
             'filters_json' => 'array',
             'is_default' => 'boolean',
+            'is_shared' => 'boolean',
         ];
     }
 
@@ -48,9 +52,29 @@ class ReviewSavedFilter extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function sharedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shared_by');
+    }
+
     public function scopeForUser($query, int $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeShared($query)
+    {
+        return $query->where('is_shared', true);
+    }
+
+    public function scopeAvailableFor($query, int $userId)
+    {
+        return $query->where(function ($q) use ($userId) {
+            $q->where('user_id', $userId)
+                ->orWhere(function ($q2) use ($userId) {
+                    $q2->where('is_shared', true)->where('user_id', '!=', $userId);
+                });
+        });
     }
 
     public function scopeDefaults($query)
@@ -133,7 +157,14 @@ class ReviewSavedFilter extends Model
             $query->where('location_id', $filters['location_id']);
         }
 
-        if (isset($filters['sort_by']) && isset($filters['sort_order'])) {
+        $allowedColumns = ['review_time', 'star_rating', 'reviewer_name', 'location_id'];
+        $allowedOrders = ['asc', 'desc'];
+
+        if (
+            isset($filters['sort_by'], $filters['sort_order']) &&
+            in_array($filters['sort_by'], $allowedColumns, true) &&
+            in_array(strtolower($filters['sort_order']), $allowedOrders, true)
+        ) {
             $query->orderBy($filters['sort_by'], $filters['sort_order']);
         }
 

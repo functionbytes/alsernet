@@ -80,7 +80,7 @@
             <div class="card-body">
                 <div class="mb-3">
                     <h6 class="mb-1 fw-bold">Listado de shortcodes</h6>
-                    <p class="text-muted small mb-0">Usalos en el contenido con la sintaxis <code>[nombre]...[/nombre]</code></p>
+                    <p class="text-muted mb-0">Usalos en el contenido con la sintaxis <code>[nombre]...[/nombre]</code></p>
                 </div>
 
                 <div class="alert alert-info border-0 bg-info-subtle mb-3">
@@ -152,7 +152,7 @@
                             <i class="fas fa-code fa-4x text-muted opacity-50"></i>
                         </div>
                         <h5 class="text-muted mb-2">No hay shortcodes registrados</h5>
-                        <p class="text-muted small mb-0">Registra shortcodes en tu aplicacion para verlos aqui</p>
+                        <p class="text-muted mb-0">Registra shortcodes en tu aplicacion para verlos aqui</p>
                     </div>
                 @endif
             </div>

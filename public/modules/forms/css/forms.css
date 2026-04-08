@@ -1,0 +1,52 @@
+/* Forms Module - Base Styles */
+.forms-wrapper { font-family: inherit; }
+.forms-section-header { color: #333; font-size: 1rem; font-weight: 600; }
+.forms-rating { font-size: 1.5rem; cursor: pointer; }
+.forms-star { color: #ccc; transition: color 0.15s; }
+.forms-star.active, .forms-star:hover { color: #FEC90F; }
+.forms-nps-btn { min-width: 38px; font-weight: 600; }
+.forms-nps-btn.selected { color: #fff; }
+.forms-signature-canvas { cursor: crosshair; touch-action: none; width: 100%; }
+.forms-image-choice-item { transition: border-color 0.15s, transform 0.1s; }
+.forms-image-choice-item:hover { border-color: #90bb13 !important; transform: scale(1.02); }
+.forms-image-choice-item.selected { border-color: #90bb13 !important; background: #f0f8d8; }
+.forms-step-dot { width: 12px; height: 12px; border-radius: 50%; background: #dee2e6; transition: background 0.2s; }
+.forms-step-dot.active { background: #90bb13; }
+.forms-step-label { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; gap: 6px; }
+.forms-step-label.active { color: #90bb13; font-weight: 600; }
+.forms-step-number { width: 22px; height: 22px; border-radius: 50%; background: #dee2e6; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+.forms-step-label.active .forms-step-number { background: #90bb13; color: #fff; }
+.forms-slide-in { position: fixed; bottom: 20px; right: 20px; width: 380px; max-width: calc(100vw - 40px); background: #fff; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 9999; max-height: 90vh; overflow-y: auto; }
+.forms-slide-in-header { background: #90bb13; color: #fff; border-radius: 12px 12px 0 0; }
+.forms-slide-in-header .btn-close { filter: invert(1); }
+.forms-success-message .fa-check-circle { animation: forms-bounce 0.4s ease; }
+@keyframes forms-bounce { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+/* Theme: flat */
+.forms-theme-flat .form-control,
+.forms-theme-flat .form-select { border: none; border-bottom: 2px solid #dee2e6; border-radius: 0; background: transparent; padding-left: 0; }
+.forms-theme-flat .form-control:focus,
+.forms-theme-flat .form-select:focus { border-bottom-color: #90bb13; box-shadow: none; }
+
+/* Theme: dark */
+.forms-theme-dark { background: #1e1e2e; color: #e0e0e0; padding: 1.5rem; border-radius: 12px; }
+.forms-theme-dark .form-control,
+.forms-theme-dark .form-select { background: #2a2a3e; border-color: #444; color: #e0e0e0; }
+.forms-theme-dark .form-label { color: #ccc; }
+.forms-theme-dark .btn-primary { background: #90bb13; border-color: #90bb13; }
+
+/* Theme: rounded */
+.forms-theme-rounded .form-control,
+.forms-theme-rounded .form-select,
+.forms-theme-rounded .btn { border-radius: 50px !important; }
+
+/* Theme: card */
+.forms-theme-card .col-12, .forms-theme-card .col-md-6, .forms-theme-card .col-md-4, .forms-theme-card .col-md-3 { padding: 0.5rem; }
+.forms-theme-card .form-control, .forms-theme-card .form-select { box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: none; }
+
+/* Theme: bordered */
+.forms-theme-bordered { border: 2px solid #90bb13; border-radius: 12px; padding: 2rem; }
+
+/* Theme: minimal */
+.forms-theme-minimal .form-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; }
+.forms-theme-minimal .form-control, .forms-theme-minimal .form-select { border-color: transparent; background: #f8f9fa; }

@@ -124,7 +124,7 @@
 
                     <div class="mb-3">
                         <label for="type" class="form-label required-field">Tipo de plantilla</label>
-                        <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
+                        <select class="form-select @error('type') is-invalid @enderror select2" id="type" name="type" required>
                             <option value="">Selecciona un tipo</option>
                             <option value="welcome" {{ old('type', $template->type) == 'welcome' ? 'selected' : '' }}>Bienvenida</option>
                             <option value="newsletter" {{ old('type', $template->type) == 'newsletter' ? 'selected' : '' }}>Newsletter</option>

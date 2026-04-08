@@ -6,10 +6,11 @@ use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
-use Modules\Captcha\Captcha;
-use Modules\Captcha\CaptchaV3;
+use Illuminate\Validation\Factory;
 use Modules\Captcha\Facades\Captcha as CaptchaFacade;
-use Modules\Captcha\MathCaptcha;
+use Modules\Captcha\Services\Captcha;
+use Modules\Captcha\Services\CaptchaV3;
+use Modules\Captcha\Services\MathCaptcha;
 use Modules\Theme\Services\NavService;
 
 class CaptchaServiceProvider extends ServiceProvider
@@ -122,7 +123,7 @@ class CaptchaServiceProvider extends ServiceProvider
         $app = $this->app;
 
         /**
-         * @var \Illuminate\Validation\Factory $validator
+         * @var Factory $validator
          */
         $validator = $app['validator'];
 
@@ -183,11 +184,8 @@ class CaptchaServiceProvider extends ServiceProvider
      */
     protected function registerMenus(): void
     {
-        NavService::registerSidebar('settings', [
-            'title' => 'Captcha',
-            'items' => [
-                ['label' => 'Configuracion', 'route' => 'captcha.settings'],
-            ],
+        NavService::addItemsToSection('settings', 'Configuraciones', [
+            ['label' => 'Captcha', 'route' => 'captcha.settings'],
         ]);
     }
 

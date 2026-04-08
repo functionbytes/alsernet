@@ -4,14 +4,16 @@ namespace Modules\Notification\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class NotificationsController extends Controller
 {
     /**
      * Display a listing of notifications.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $user = $request->user();
 
@@ -37,7 +39,7 @@ class NotificationsController extends Controller
     /**
      * Mark a notification as read.
      */
-    public function markAsRead(Request $request, string $id)
+    public function markAsRead(Request $request, string $id): JsonResponse|RedirectResponse
     {
         $user = $request->user();
 
@@ -54,16 +56,20 @@ class NotificationsController extends Controller
             ]);
         }
 
-        // Redirigir a la URL de acción si existe
-        $actionUrl = $notification->data['action_url'] ?? route('notifications.index');
+        // Redirigir a la URL de acción si existe (solo URLs internas)
+        $actionUrl = $notification->data['action_url'] ?? null;
 
-        return redirect($actionUrl)->with('success', 'Notificación marcada como leída');
+        if ($actionUrl && str_starts_with($actionUrl, config('app.url'))) {
+            return redirect($actionUrl)->with('success', 'Notificación marcada como leída');
+        }
+
+        return redirect()->route('notifications.index')->with('success', 'Notificación marcada como leída');
     }
 
     /**
      * Mark all notifications as read.
      */
-    public function markAllAsRead(Request $request)
+    public function markAllAsRead(Request $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         $user->markAllNotificationsAsRead();
@@ -81,7 +87,7 @@ class NotificationsController extends Controller
     /**
      * Delete a notification.
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id): JsonResponse|RedirectResponse
     {
         $user = $request->user();
 
@@ -99,6 +105,35 @@ class NotificationsController extends Controller
         }
 
         return redirect()->route('notifications.index')->with('success', 'Notificación eliminada');
+    }
+
+    /**
+     * Execute a bulk action on selected notifications.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|string|in:mark_read,delete',
+            'ids' => 'required|array',
+            'ids.*' => 'string',
+        ]);
+
+        $user = $request->user();
+        $query = $user->notifications()->whereIn('id', $request->ids);
+
+        if ($request->action === 'mark_read') {
+            $count = $query->clone()->whereNull('read_at')->count();
+            $query->whereNull('read_at')->get()->each->markAsRead();
+        } else {
+            $count = $query->count();
+            $query->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'unread_count' => $user->unreadNotificationsCount(),
+        ]);
     }
 
     /**

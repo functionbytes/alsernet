@@ -16,7 +16,7 @@ class AssignPermissionCommand extends Command
 
     protected $description = 'Assign a permission to a user or role';
 
-    public function handle()
+    public function handle(): int
     {
         $targetId = $this->argument('target_id');
         $permissionName = $this->argument('permission');
@@ -43,7 +43,7 @@ class AssignPermissionCommand extends Command
     /**
      * Assign permission to user
      */
-    protected function assignToUser($userId, $permission)
+    protected function assignToUser(string $userId, Permission $permission): int
     {
         $user = User::find($userId);
         if (! $user) {
@@ -71,7 +71,7 @@ class AssignPermissionCommand extends Command
     /**
      * Assign permission to role
      */
-    protected function assignToRole($roleId, $permission)
+    protected function assignToRole(string $roleId, Permission $permission): int
     {
         $role = Role::find($roleId);
         if (! $role) {

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -24,6 +25,10 @@ class DatabaseServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Database')?->isDisabled()) {
+            return;
+        }
+
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
@@ -56,7 +61,7 @@ class DatabaseServiceProvider extends ServiceProvider
 
         // Database backups and cleanup routes
         Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('setting/database')
+            ->prefix('panel/setting/database')
             ->name('settings.database.')
             ->group(function () use ($webPath) {
                 require $webPath;

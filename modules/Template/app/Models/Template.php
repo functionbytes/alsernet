@@ -2,14 +2,24 @@
 
 namespace Modules\Template\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Template\Database\Factories\TemplateFactory;
 use Modules\Template\Traits\Versionable;
 
 class Template extends Model
 {
-    use HasFactory, Versionable;
+    use HasFactory, SoftDeletes, Versionable;
+
+    protected static function newFactory(): TemplateFactory
+    {
+        return TemplateFactory::new();
+    }
 
     protected $table = 'templates';
 
@@ -34,15 +44,15 @@ class Template extends Model
     /**
      * Relación: Usuario creador
      */
-    public function user()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
      * Relación: Template padre (herencia)
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'inherit', 'slug');
     }
@@ -50,7 +60,7 @@ class Template extends Model
     /**
      * Relación: Templates hijos que heredan de este
      */
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(self::class, 'inherit', 'slug');
     }
@@ -94,9 +104,14 @@ class Template extends Model
     public function getInheritanceChain(): array
     {
         $chain = [];
+        $visited = [];
         $current = $this;
 
         while ($current && $current->inherit) {
+            if (in_array($current->slug, $visited, true)) {
+                break;
+            }
+            $visited[] = $current->slug;
             $current = $current->parent;
             if ($current) {
                 $chain[] = $current;

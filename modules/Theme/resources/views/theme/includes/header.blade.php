@@ -40,25 +40,17 @@
                             </div>
                         </li>
 
-                        <li class="nav-item d-flex align-items-center me-1">
-                            <button id="darkModeToggle" class="btn btn-sm btn-outline-secondary rounded-circle p-1"
-                                    title="Cambiar tema" style="width:32px;height:32px;line-height:1;">
-                                <i class="fas fa-moon" id="darkModeIcon" style="font-size:0.8rem;"></i>
-                            </button>
-                        </li>
+
 
                         @include('notification::components.notifications')
 
                         <li class="nav-item dropdown">
+                            @php
+                                $initials = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
+                            @endphp
                             <a class="nav-link" href="javascript:void(0)" id="drop1" aria-expanded="false">
                                 <div class="d-flex align-items-center gap-2 lh-base">
-                                    @php
-                                        $initials = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
-                                        $colors = ['#cfcfcf', '#cfcfcf', '#cfcfcf', '#cfcfcf', '#cfcfcf'];
-                                        $colorIndex = ord($initials[0]) % count($colors);
-                                        $bgColor = $colors[$colorIndex];
-                                    @endphp
-                                    <div class="rounded-circle rounded-profile  d-flex align-items-center justify-content-center text-white fw-bold bg-light">
+                                    <div class="rounded-circle rounded-profile d-flex align-items-center justify-content-center text-white fw-bold bg-light">
                                         {{ $initials }}
                                     </div>
                                 </div>
@@ -66,20 +58,14 @@
                             <div class="dropdown-menu profile-dropdown dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop1">
                                 <div class="position-relative px-4 pt-3 pb-2">
                                     <div class="d-flex align-items-center mb-3 pb-3 border-bottom gap-6">
-                                        <a class="nav-link" href="javascript:void(0)" id="drop1" aria-expanded="false">
-                                            @php
-                                                $initials = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
-                                                $colors = ['#cfcfcf', '#cfcfcf', '#cfcfcf', '#cfcfcf', '#cfcfcf'];
-                                                $colorIndex = ord($initials[0]) % count($colors);
-                                                $bgColor = $colors[$colorIndex];
-                                            @endphp
+                                        <a class="nav-link" href="javascript:void(0)" aria-expanded="false">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold bg-light rounded-profile">
                                                 {{ $initials }}
                                             </div>
                                         </a>
                                         <div>
                                             <h5 class="mb-1 fs-3">{{ Auth::user()->firstname }} {{ Auth::user()->lastname }}</h5>
-                                            <span class="mb-0 d-block text-muted small">
+                                            <span class="mb-0 d-block text-muted">
                                                 {{ Auth::user()->email }}
                                             </span>
                                         </div>
@@ -104,15 +90,6 @@
 
     </div>
 </header>
-
-<style>
-#global-search-results .search-result-item:last-child {
-    border-bottom: none !important;
-}
-#global-search-results .search-result-item:hover {
-    background-color: #f8f9fa;
-}
-</style>
 
 <script>
 (function () {
@@ -140,13 +117,19 @@
             return;
         }
 
+        function esc(str) {
+            const d = document.createElement('span');
+            d.textContent = str ?? '';
+            return d.innerHTML;
+        }
+
         resultsBox.innerHTML = results.map(function (r) {
             const colorClass = colorMap[r.color] || 'text-secondary';
-            const subtitle = r.subtitle ? '<div class="text-muted" style="font-size:.75rem">' + r.subtitle + '</div>' : '';
-            return '<a href="' + r.url + '" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark border-bottom search-result-item">'
-                + '<div class="flex-shrink-0"><i class="' + r.icon + ' ' + colorClass + '"></i></div>'
-                + '<div class="flex-grow-1 min-w-0"><div class="fw-semibold small text-truncate">' + r.title + '</div>' + subtitle + '</div>'
-                + '<div class="flex-shrink-0"><span class="badge bg-light text-dark" style="font-size:.65rem">' + r.type_label + '</span></div>'
+            const subtitle = r.subtitle ? '<div class="text-muted" style="font-size:.75rem">' + esc(r.subtitle) + '</div>' : '';
+            return '<a href="' + esc(r.url) + '" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark border-bottom search-result-item">'
+                + '<div class="flex-shrink-0"><i class="' + esc(r.icon) + ' ' + colorClass + '"></i></div>'
+                + '<div class="flex-grow-1 min-w-0"><div class="fw-semibold small text-truncate">' + esc(r.title) + '</div>' + subtitle + '</div>'
+                + '<div class="flex-shrink-0"><span class="badge bg-light text-dark" style="font-size:.65rem">' + esc(r.type_label) + '</span></div>'
                 + '</a>';
         }).join('');
     }

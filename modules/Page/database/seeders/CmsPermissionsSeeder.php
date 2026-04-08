@@ -5,6 +5,7 @@ namespace Modules\Page\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class CmsPermissionsSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class CmsPermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->createPermissions();
         $this->createRoles();
@@ -35,6 +36,14 @@ class CmsPermissionsSeeder extends Seeder
             'page.delete' => 'Eliminar páginas',
             'page.publish' => 'Publicar páginas',
             'page.manage' => 'Gestionar páginas',
+            'page.approve' => 'Aprobar o rechazar páginas en revisión',
+            'page.manage-categories' => 'Gestionar categorías de páginas',
+            'page.manage-webhooks' => 'Gestionar webhooks de páginas',
+            'page.bulk-action' => 'Ejecutar acciones masivas en páginas',
+            'page.import' => 'Importar páginas',
+            'page.export' => 'Exportar páginas',
+            'page.view-analytics' => 'Ver analíticas de páginas',
+            'page.manage-performance' => 'Gestionar análisis de rendimiento PageSpeed',
 
             // Menu Module Permissions
             'menu.view' => 'Ver menús',
@@ -116,6 +125,14 @@ class CmsPermissionsSeeder extends Seeder
             'page.delete',
             'page.publish',
             'page.manage',
+            'page.approve',
+            'page.manage-categories',
+            'page.manage-webhooks',
+            'page.bulk-action',
+            'page.import',
+            'page.export',
+            'page.view-analytics',
+            'page.manage-performance',
             // Menus
             'menu.view',
             'menu.create',
@@ -147,6 +164,9 @@ class CmsPermissionsSeeder extends Seeder
             'page.create',
             'page.update',
             'page.publish',
+            'page.bulk-action',
+            'page.export',
+            'page.view-analytics',
             'menu.view',
             'menu.update',
             'menu.manage-items',

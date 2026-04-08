@@ -495,28 +495,26 @@
             if (window.Echo) {
                 const userId = $('meta[name="user-id"]').attr('content');
                 if (userId) {
-                    console.log('📧 Listening for real-time notifications on public channel');
-                    // Use public channel instead of private to avoid WebSocket auth issues
-                    // Public channel: no session cookies needed for WebSocket auth
-                    window.Echo.channel(`public-notifications.${userId}`)
-                        .notification((notification) => {
-                            console.log('🔔 Real-time notification received:', notification);
-
-                            // Show desktop notification (if permission granted)
-                            showDesktopNotification(notification);
-
-                            // Play sound for real-time notifications
+                    // Private channel: NewNotificationEvent broadcasts on user.{id}
+                    window.Echo.private(`user.${userId}`)
+                        .listen('.notification.new', (data) => {
+                            showDesktopNotification({
+                                title: data.title,
+                                message: data.message,
+                                action_url: data.action_url,
+                            });
                             playNotificationSound();
-
-                            // Refresh notifications dropdown
                             window.NotificationManager.refresh();
                         })
                         .error((error) => {
-                            console.warn('⚠️  Notification channel error:', error);
+                            // Private channel auth failed — fall back to public channel polling
+                            console.warn('Private channel unavailable, using public channel fallback');
+                            window.Echo.channel(`public-notifications.${userId}`)
+                                .notification(() => {
+                                    window.NotificationManager.refresh();
+                                });
                         });
                 }
-            } else {
-                console.warn('⚠️  Laravel Echo not initialized');
             }
         }
     });

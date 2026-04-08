@@ -3,6 +3,7 @@
 namespace Modules\Modules\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Nwidart\Modules\Facades\Module;
 
 class ToggleModuleCommand extends Command
@@ -60,6 +61,10 @@ class ToggleModuleCommand extends Command
 
                 return self::FAILURE;
             }
+
+            Artisan::call('config:clear');
+            Artisan::call('route:clear');
+            Artisan::call('view:clear');
 
             return self::SUCCESS;
         } catch (\Exception $e) {

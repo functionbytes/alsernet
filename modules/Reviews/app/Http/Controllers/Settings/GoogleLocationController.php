@@ -29,7 +29,7 @@ class GoogleLocationController extends Controller
             });
         }
 
-        $locations = $query->latest('last_synced_at')->paginate(20)->withQueryString();
+        $locations = $query->latest('synced_at')->paginate(20)->withQueryString();
 
         // Calculate stats
         $stats = [
@@ -119,6 +119,29 @@ class GoogleLocationController extends Controller
             'success' => true,
             'message' => "Sincronización iniciada para {$count} ubicaciones. Los cambios aparecerán en unos momentos.",
         ]);
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,sync'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $locations = ReviewGoogleLocation::query()->whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($locations as $location) {
+            match ($validated['action']) {
+                'activate' => $location->update(['is_active' => true]),
+                'deactivate' => $location->update(['is_active' => false]),
+                'sync' => SyncGoogleReviewsJob::dispatch($location),
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     public function bulkSync(Request $request): JsonResponse

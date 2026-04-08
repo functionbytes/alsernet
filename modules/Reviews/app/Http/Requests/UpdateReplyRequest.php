@@ -9,7 +9,11 @@ class UpdateReplyRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $reply = ReviewReply::findOrFail($this->route('reply'));
+        $reply = $this->route('reply');
+
+        if (! $reply instanceof ReviewReply) {
+            $reply = ReviewReply::findOrFail($reply);
+        }
 
         return $this->user()?->id === $reply->created_by || $this->user()->can('reviews.replies.update');
     }

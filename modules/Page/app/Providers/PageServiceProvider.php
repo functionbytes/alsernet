@@ -2,11 +2,30 @@
 
 namespace Modules\Page\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Page\Console\Commands\CleanOldPageViewsCommand;
+use Modules\Page\Console\Commands\CleanPageAutoSavesCommand;
+use Modules\Page\Console\Commands\CleanPageLocksCommand;
+use Modules\Page\Console\Commands\CleanupPreviewTokensCommand;
+use Modules\Page\Console\Commands\PageCacheClearCommand;
+use Modules\Page\Console\Commands\PageCacheStatsCommand;
+use Modules\Page\Console\Commands\PageCacheWarmCommand;
+use Modules\Page\Console\Commands\SeedErrorPages;
+use Modules\Page\Console\Commands\WarmPageCacheCommand;
+use Modules\Page\Console\InstallCmsCommand;
+use Modules\Page\Console\InstallPageCommand;
+use Modules\Page\Console\PublishScheduledPagesCommand;
+use Modules\Page\Console\ReindexPagesCommand;
 use Modules\Page\Models\Page;
 use Modules\Page\Policies\PagePolicy;
+use Modules\Page\Services\PageAutoSaveService;
+use Modules\Page\Services\PageCacheService;
+use Modules\Page\Services\PageLockService;
+use Modules\Page\Services\PageService;
+use Modules\Page\Services\PageWebhookService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -44,25 +63,12 @@ class PageServiceProvider extends ServiceProvider
         $this->app->register(RouteServiceProvider::class);
 
         // Register services
-        $this->app->singleton(\Modules\Page\Services\PageService::class);
-        $this->app->singleton(\Modules\Page\Services\PageCacheService::class);
-        $this->app->singleton(\Modules\Page\Services\PageAutoSaveService::class);
-        $this->app->singleton(\Modules\Page\Services\PageLockService::class);
+        $this->app->singleton(PageService::class);
+        $this->app->singleton(PageCacheService::class);
+        $this->app->singleton(PageAutoSaveService::class);
+        $this->app->singleton(PageLockService::class);
+        $this->app->singleton(PageWebhookService::class);
 
-        // Register factories
-        $this->registerFactories();
-    }
-
-    /**
-     * Register factories.
-     *
-     * Note: Laravel 8+ uses class-based factories that are auto-discovered.
-     * No manual registration needed.
-     */
-    protected function registerFactories(): void
-    {
-        // Laravel 8+ factories are auto-discovered from database/factories
-        // No manual registration required
     }
 
     /**
@@ -71,16 +77,19 @@ class PageServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\Page\Console\InstallPageCommand::class,
-            \Modules\Page\Console\InstallCmsCommand::class,
-            \Modules\Page\Console\PublishScheduledPagesCommand::class,
-            \Modules\Page\Console\Commands\CleanupPreviewTokensCommand::class,
-            \Modules\Page\Console\ReindexPagesCommand::class,
-            \Modules\Page\Console\Commands\PageCacheWarmCommand::class,
-            \Modules\Page\Console\Commands\PageCacheClearCommand::class,
-            \Modules\Page\Console\Commands\PageCacheStatsCommand::class,
-            \Modules\Page\Console\Commands\CleanPageAutoSavesCommand::class,
-            \Modules\Page\Console\Commands\CleanPageLocksCommand::class,
+            InstallPageCommand::class,
+            InstallCmsCommand::class,
+            PublishScheduledPagesCommand::class,
+            CleanupPreviewTokensCommand::class,
+            ReindexPagesCommand::class,
+            PageCacheWarmCommand::class,
+            PageCacheClearCommand::class,
+            PageCacheStatsCommand::class,
+            CleanPageAutoSavesCommand::class,
+            CleanPageLocksCommand::class,
+            CleanOldPageViewsCommand::class,
+            WarmPageCacheCommand::class,
+            SeedErrorPages::class,
         ]);
     }
 
@@ -90,7 +99,7 @@ class PageServiceProvider extends ServiceProvider
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
-            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            $schedule = $this->app->make(Schedule::class);
 
             // Run scheduled page publishing every hour
             $schedule->command('page:publish-scheduled --type=all')
@@ -122,6 +131,13 @@ class PageServiceProvider extends ServiceProvider
             // Clean expired page locks every 10 minutes
             $schedule->command('page:clean-locks')
                 ->everyTenMinutes()
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            // Clean old page_views records weekly
+            $schedule->command('page:clean-views')
+                ->weekly()
+                ->at('04:00')
                 ->withoutOverlapping()
                 ->onOneServer();
         });
@@ -216,7 +232,7 @@ class PageServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem('pages', [
-            'icon' => 'fa-duotone fa-file-lines',
+            'icon' => 'fas fa-file-lines',
             'tooltip' => 'Paginas',
             'sidebar_id' => 'pages',
             'order' => 50,
@@ -225,8 +241,12 @@ class PageServiceProvider extends ServiceProvider
         NavService::registerSidebar('pages', [
             'title' => 'Paginas',
             'items' => [
-                ['label' => 'Listado de paginas', 'route' => 'pages.index'],
-                ['label' => 'Crear pagina', 'route' => 'pages.create'],
+                ['label' => 'Listado de paginas', 'route' => 'pages.index', 'permission' => 'page.view'],
+                ['label' => 'Aprobaciones', 'route' => 'pages.approvals.index', 'permission' => 'page.approve'],
+                ['label' => 'Categorias', 'route' => 'pages.categories.index', 'permission' => 'page.manage-categories'],
+                ['label' => 'Webhooks', 'route' => 'pages.webhooks.index', 'permission' => 'page.manage-webhooks'],
+                ['label' => 'Importar', 'route' => 'pages.import', 'permission' => 'page.import'],
+                ['label' => 'Exportar', 'route' => 'pages.export', 'permission' => 'page.export'],
                 ['label' => 'Configuracion', 'route' => 'settings.pages'],
             ],
         ]);

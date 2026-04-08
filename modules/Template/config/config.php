@@ -102,10 +102,13 @@ return [
     */
     'menu' => [
         'locations' => [
-            'header' => 'Header Menu',
-            'footer' => 'Footer Menu',
-            'sidebar' => 'Sidebar Menu',
-            'mobile' => 'Mobile Menu',
+            'main-menu' => 'Menú principal',
+            'header' => 'Menú cabecera',
+            'footer' => 'Menú pie de página',
+            'footer-services' => 'Footer - Servicios',
+            'footer-links' => 'Footer - Enlaces rápidos',
+            'sidebar' => 'Menú lateral',
+            'mobile' => 'Menú móvil',
         ],
         'max_depth' => 3,
         'cache_duration' => 3600,

@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class BackupServiceProvider extends ServiceProvider
 {
@@ -19,12 +20,19 @@ class BackupServiceProvider extends ServiceProvider
             'backup'
         );
 
+        // Load module helper functions
+        require_once __DIR__.'/../Helpers/BackupHelper.php';
+
         // Register backup settings singleton
         $this->app->singleton('app.backups', fn () => $this->getBackupSettings());
     }
 
     public function boot(): void
     {
+        if (Module::find('Backup')?->isDisabled()) {
+            return;
+        }
+
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'backup');
 
         $this->publishes([
@@ -59,6 +67,7 @@ class BackupServiceProvider extends ServiceProvider
             'title' => 'Copias de seguridad',
             'items' => [
                 ['label' => 'Todas las copias', 'route' => 'settings.backups.index'],
+                ['label' => 'Notificaciones', 'route' => 'settings.backups.notifications'],
                 ['label' => 'Programación', 'route' => 'settings.backup.schedules.index'],
             ],
         ]);

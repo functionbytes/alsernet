@@ -4,8 +4,10 @@ namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lang;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 
 class LocalizationSettingsController extends Controller
@@ -13,7 +15,7 @@ class LocalizationSettingsController extends Controller
     /**
      * Display localization backups page
      */
-    public function index()
+    public function index(): View
     {
         $pageTitle = 'Configuración de localización';
         $breadcrumb = 'Configuración / Localización';
@@ -39,7 +41,7 @@ class LocalizationSettingsController extends Controller
     /**
      * Update localization backups
      */
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'default_language' => 'required|string|exists:langs,code',
@@ -54,8 +56,8 @@ class LocalizationSettingsController extends Controller
             Setting::setLocalizationSettings($validated);
 
             // Update environment variable for default locale
-            $this->updateEnvVariable('APP_LOCALE', $validated['default_language']);
-            $this->updateEnvVariable('APP_TIMEZONE', $validated['timezone']);
+            write_env('APP_LOCALE', $validated['default_language']);
+            write_env('APP_TIMEZONE', $validated['timezone']);
 
             return redirect()->route('manager.backups.localization.index')
                 ->with('success', 'Configuración de localización actualizada correctamente');
@@ -66,36 +68,5 @@ class LocalizationSettingsController extends Controller
                 ->with('error', 'Error al actualizar la configuración.')
                 ->withInput();
         }
-    }
-
-    /**
-     * Update environment variable in .env file
-     */
-    private function updateEnvVariable($key, $value)
-    {
-        $path = base_path('.env');
-
-        if (! file_exists($path)) {
-            return false;
-        }
-
-        $content = file_get_contents($path);
-        $oldValue = env($key);
-
-        if ($oldValue === null) {
-            // Variable doesn't exist, add it
-            $content .= "\n{$key}={$value}";
-        } else {
-            // Variable exists, replace it
-            $content = preg_replace(
-                "/^{$key}=.*/m",
-                "{$key}={$value}",
-                $content
-            );
-        }
-
-        file_put_contents($path, $content);
-
-        return true;
     }
 }

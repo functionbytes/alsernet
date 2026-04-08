@@ -15,6 +15,11 @@ class DashboardStatsResource extends JsonResource
             'locationStats' => $this->formatLocationStats(),
             'reviewsByDay' => $this->formatReviewsByDay(),
             'ratingDistribution' => $this->formatRatingDistribution(),
+            'recentReviews' => $this->resource['recent_reviews'] ?? [],
+            'attentionNeeded' => $this->resource['attention_needed'] ?? [],
+            'avgResponseTime' => $this->resource['avg_response_time'] ?? ['hours' => 0, 'formatted' => '0 horas'],
+            'topReviewers' => $this->resource['top_reviewers'] ?? [],
+            'sentimentTrend' => $this->formatSentimentTrend(),
         ];
     }
 
@@ -102,31 +107,36 @@ class DashboardStatsResource extends JsonResource
     private function formatReviewsByDay(): array
     {
         if (! isset($this->resource['reviews_by_day'])) {
-            return [
-                'labels' => [],
-                'datasets' => [],
-            ];
+            return ['labels' => [], 'datasets' => [], 'dailyData' => [], 'currTotal' => 0, 'prevTotal' => 0, 'currUnanswered' => 0, 'prevUnanswered' => 0];
         }
 
+        $days = $this->resource['reviews_by_day'];
+        $half = (int) ceil(count($days) / 2);
         $labels = [];
         $counts = [];
 
-        foreach ($this->resource['reviews_by_day'] as $day) {
+        foreach ($days as $day) {
             $labels[] = $day['date'];
             $counts[] = $day['count'];
         }
 
+        $currTotal = array_sum(array_slice($counts, -$half));
+        $prevTotal = array_sum(array_slice($counts, 0, $half));
+
         return [
             'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'Reseñas recibidas',
-                    'data' => $counts,
-                    'borderColor' => '#90bb13',
-                    'backgroundColor' => 'rgba(144, 187, 19, 0.2)',
-                    'fill' => true,
-                ],
-            ],
+            'datasets' => [[
+                'label' => 'Reseñas recibidas',
+                'data' => $counts,
+                'borderColor' => '#b10100',
+                'backgroundColor' => 'rgba(177,1,0,0.1)',
+                'fill' => true,
+            ]],
+            'dailyData' => array_map(fn ($d) => ['count' => $d['count'], 'unanswered' => 0], $days),
+            'currTotal' => $currTotal,
+            'prevTotal' => $prevTotal,
+            'currUnanswered' => $this->resource['kpis']['unanswered'] ?? 0,
+            'prevUnanswered' => 0,
         ];
     }
 
@@ -158,6 +168,55 @@ class DashboardStatsResource extends JsonResource
                         '#FA896B',
                         '#d32f2f',
                     ],
+                ],
+            ],
+        ];
+    }
+
+    private function formatSentimentTrend(): array
+    {
+        if (! isset($this->resource['sentiment_trend'])) {
+            return [
+                'labels' => [],
+                'datasets' => [],
+            ];
+        }
+
+        $labels = [];
+        $positive = [];
+        $neutral = [];
+        $negative = [];
+
+        foreach ($this->resource['sentiment_trend'] as $day) {
+            $labels[] = $day['date'];
+            $positive[] = $day['positive'];
+            $neutral[] = $day['neutral'];
+            $negative[] = $day['negative'];
+        }
+
+        return [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Positivas (4-5★)',
+                    'data' => $positive,
+                    'borderColor' => '#13C672',
+                    'backgroundColor' => 'rgba(19, 198, 114, 0.2)',
+                    'fill' => true,
+                ],
+                [
+                    'label' => 'Neutrales (3★)',
+                    'data' => $neutral,
+                    'borderColor' => '#FEC90F',
+                    'backgroundColor' => 'rgba(254, 201, 15, 0.2)',
+                    'fill' => true,
+                ],
+                [
+                    'label' => 'Negativas (1-2★)',
+                    'data' => $negative,
+                    'borderColor' => '#FA896B',
+                    'backgroundColor' => 'rgba(250, 137, 107, 0.2)',
+                    'fill' => true,
                 ],
             ],
         ];

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Reviews\Database\Factories\ReviewGoogleLocationFactory;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -15,6 +16,11 @@ class ReviewGoogleLocation extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $table = 'review_google_locations';
+
+    protected static function newFactory()
+    {
+        return ReviewGoogleLocationFactory::new();
+    }
 
     protected $fillable = [
         'connection_id',
@@ -30,6 +36,7 @@ class ReviewGoogleLocation extends Model
         'is_active',
         'metadata_json',
         'synced_at',
+        'sla_hours',
     ];
 
     protected function casts(): array
@@ -41,6 +48,7 @@ class ReviewGoogleLocation extends Model
             'is_active' => 'boolean',
             'metadata_json' => 'array',
             'synced_at' => 'datetime',
+            'sla_hours' => 'integer',
         ];
     }
 

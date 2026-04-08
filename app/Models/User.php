@@ -51,8 +51,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
-    protected $quotaTracker;
-
     /*
     |--------------------------------------------------------------------------
     | Constants
@@ -69,7 +67,10 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
-    protected static $recordEvents = ['deleted', 'updated', 'created'];
+    protected static function recordEvents(): array
+    {
+        return ['created', 'updated', 'deleted'];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -100,7 +101,7 @@ class User extends Authenticatable
         'validation',
         'page',
         'setting',
-        'role',
+        // 'role' excluded: Spatie roles are managed via assignRole()/syncRoles(), not mass-assignment
         'company',
         'detail',
         'user_img',
@@ -109,12 +110,14 @@ class User extends Authenticatable
         'mail_verified_at',
         'remember_token',
         'timezone',
+        'locale',
         'voilated',
         'last_login_at',
         'last_login_ip',
         'last_logins_at',
-        'created_at',
-        'updated_at',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /*
@@ -126,6 +129,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /*
@@ -150,6 +155,14 @@ class User extends Authenticatable
             'deleted_at' => 'datetime',
             'active' => 'boolean',
             'confirmed' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_secret' => 'encrypted',
         ];
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return ! is_null($this->two_factor_confirmed_at);
     }
 }

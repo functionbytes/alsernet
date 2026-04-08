@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Core\Models\Setting;
+use Modules\Reviews\Models\ReviewGoogleLocation;
 
 class ReviewSettingsController extends Controller
 {
@@ -40,9 +42,8 @@ class ReviewSettingsController extends Controller
         // Save general settings
         foreach (['sync_interval_minutes', 'auto_publish_replies', 'default_moderation_visible', 'rate_limit_per_minute'] as $key) {
             if (isset($validated[$key])) {
-                setting([
-                    "reviews.{$key}" => $validated[$key],
-                ]);
+                $value = is_bool($validated[$key]) ? (int) $validated[$key] : $validated[$key];
+                Setting::set("reviews.{$key}", $value);
             }
         }
 
@@ -62,6 +63,16 @@ class ReviewSettingsController extends Controller
         return redirect()
             ->route('settings.reviews.config.index')
             ->with('success', 'Configuración actualizada correctamente');
+    }
+
+    public function widget(): View
+    {
+        $locations = ReviewGoogleLocation::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('reviews::settings.widget', compact('locations'));
     }
 
     /**

@@ -26,7 +26,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Categoría</label>
-                            <select name="category" class="form-select">
+                            <select class="select2" name="category" class="form-select">
                                 <option value="">Todas</option>
                                 <option value="system" {{ request('category') === 'system' ? 'selected' : '' }}>Sistema</option>
                                 <option value="customer" {{ request('category') === 'customer' ? 'selected' : '' }}>Cliente</option>
@@ -41,7 +41,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Estado</label>
-                            <select name="status" class="form-select">
+                            <select class="select2" name="status" class="form-select">
                                 <option value="">Todos</option>
                                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activo</option>
                                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivo</option>
@@ -49,7 +49,7 @@
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Sistema</label>
-                            <select name="is_system" class="form-select">
+                            <select class="select2" name="is_system" class="form-select">
                                 <option value="">Todos</option>
                                 <option value="1" {{ request('is_system') === '1' ? 'selected' : '' }}>Sí</option>
                                 <option value="0" {{ request('is_system') === '0' ? 'selected' : '' }}>No</option>

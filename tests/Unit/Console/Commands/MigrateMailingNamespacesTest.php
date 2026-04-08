@@ -69,7 +69,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $content = File::get($testFile);
@@ -97,7 +97,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $content = File::get($testFile);
@@ -122,7 +122,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $content = File::get($testFile);
@@ -144,6 +144,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
+            '--force' => true,
         ])->assertSuccessful();
 
         $backupFile = $testFile.'.bak-namespace';
@@ -161,7 +162,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $this->assertFileDoesNotExist($testFile.'.bak-namespace');
@@ -180,7 +181,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => $files,
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])
             ->expectsOutputToContain('Files Processed')
             ->expectsOutputToContain('Files Modified')
@@ -197,7 +198,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $logPath = storage_path('logs/namespace-migration.log');
@@ -228,7 +229,7 @@ class MigrateMailingNamespacesTest extends TestCase
 
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $content = File::get($testFile);
@@ -249,7 +250,7 @@ class MigrateMailingNamespacesTest extends TestCase
         // First migration
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $contentAfterFirst = File::get($testFile);
@@ -257,7 +258,7 @@ class MigrateMailingNamespacesTest extends TestCase
         // Second migration (should make no changes)
         $this->artisan('mailing:migrate-namespaces', [
             '--files' => str_replace(base_path().'/', '', $testFile),
-            '--no-backup' => true,
+            '--no-backup' => true, '--force' => true,
         ])->assertSuccessful();
 
         $contentAfterSecond = File::get($testFile);

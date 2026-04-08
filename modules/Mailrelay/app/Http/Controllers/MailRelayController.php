@@ -2,7 +2,10 @@
 
 namespace Modules\Mailrelay\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Modules\Mailrelay\Entities\Subscriber;
 use Modules\Mailrelay\Services\MailRelayService;
 
@@ -18,7 +21,7 @@ class MailRelayController extends Controller
     /**
      * Muestra el formulario para agregar un suscriptor.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function showAddSubscriberForm()
     {
@@ -28,7 +31,7 @@ class MailRelayController extends Controller
     /**
      * Muestra el formulario para eliminar un suscriptor.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function showRemoveSubscriberForm()
     {
@@ -38,7 +41,7 @@ class MailRelayController extends Controller
     /**
      * Muestra el formulario para crear una nueva campaña.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function showCreateCampaignForm()
     {
@@ -48,8 +51,8 @@ class MailRelayController extends Controller
     /**
      * Agrega un nuevo suscriptor.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  Request  $request
+     * @return RedirectResponse
      */
     public function showCreateListForm()
     {
@@ -111,15 +114,17 @@ class MailRelayController extends Controller
 
         } catch (\Exception $e) {
             // Manejo de excepciones, por si ocurre algún error en el proceso
+            Log::error('Mailrelay add subscriber failed', ['error' => $e->getMessage()]);
+
             return redirect()->route('mailrelay.add-subscriber')
-                ->with('error', 'Ocurrió un error al agregar el suscriptor: '.$e->getMessage());
+                ->with('error', 'Ocurrió un error al agregar el suscriptor. Por favor, inténtalo de nuevo.');
         }
     }
 
     /**
      * Elimina un suscriptor.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function removeSubscriber(Request $request)
     {
@@ -139,7 +144,7 @@ class MailRelayController extends Controller
     /**
      * Crea una campaña.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function createCampaign(Request $request)
     {
@@ -174,7 +179,7 @@ class MailRelayController extends Controller
     /**
      * Envía una campaña.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function sendCampaign(Request $request)
     {

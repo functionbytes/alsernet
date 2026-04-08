@@ -106,7 +106,7 @@
                         {{-- Selector de plantilla Mailer --}}
                         <div id="template-section" class="mb-4" style="display: {{ old('content_type', $campaign->mailer_template_id ? 'template' : 'html') === 'template' ? 'block' : 'none' }}">
                             <label for="mailer_template_id" class="form-label fw-semibold">Plantilla Mailer</label>
-                            <select class="form-select @error('mailer_template_id') is-invalid @enderror"
+                            <select class="form-select @error('mailer_template_id') is-invalid @enderror select2"
                                     id="mailer_template_id" name="mailer_template_id">
                                 <option value="">Selecciona una plantilla...</option>
                                 @foreach($templates as $template)
@@ -138,7 +138,7 @@
                         {{-- Idioma --}}
                         <div class="mb-4">
                             <label for="lang_id" class="form-label fw-semibold">Idioma</label>
-                            <select class="form-select @error('lang_id') is-invalid @enderror"
+                            <select class="form-select @error('lang_id') is-invalid @enderror select2"
                                     id="lang_id" name="lang_id">
                                 <option value="">Idioma por defecto</option>
                                 @foreach($languages as $language)
@@ -218,7 +218,7 @@
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <label for="mail_provider_id" class="form-label fw-semibold">Provider <span class="text-danger">*</span></label>
-                            <select class="form-select @error('mail_provider_id') is-invalid @enderror"
+                            <select class="form-select @error('mail_provider_id') is-invalid @enderror select2"
                                     id="mail_provider_id" name="mail_provider_id" required>
                                 <option value="">Selecciona un provider...</option>
                                 @foreach($providers as $provider)
@@ -308,7 +308,7 @@
                 {{-- Actions --}}
                 <div class="card">
                     <div class="card-body p-3">
-                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">
                             <i class="fas fa-save me-2"></i>Actualizar campaign
                         </button>
                         <a href="{{ route('managers.mailrelay.campaigns.show', $campaign->id) }}" class="btn btn-light w-100">

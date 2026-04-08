@@ -32,10 +32,15 @@ class AnalyticsSettingRequest extends FormRequest
                 'regex:/^[0-9]+$/',
                 'required_if:google_analytics_enable,true',
             ],
+            'google_analytics_measurement_id' => [
+                'nullable',
+                'string',
+                'max:30',
+                'regex:/^G-[A-Z0-9]+$/',
+            ],
             'google_analytics_credentials' => [
                 'nullable',
                 'string',
-                'required_if:google_analytics_enable,true',
                 new AnalyticsCredentialRule,
             ],
             'analytics_cache_lifetime' => [
@@ -44,6 +49,18 @@ class AnalyticsSettingRequest extends FormRequest
                 'min:1',
                 'max:1440', // Max 24 hours in minutes
             ],
+            'analytics_reports_daily_enabled' => [
+                'nullable',
+                'boolean',
+            ],
+            'analytics_reports_weekly_enabled' => [
+                'nullable',
+                'boolean',
+            ],
+            'analytics_reports_monthly_enabled' => [
+                'nullable',
+                'boolean',
+            ],
             'analytics_dashboard_widgets' => [
                 'nullable',
                 'array',
@@ -51,6 +68,11 @@ class AnalyticsSettingRequest extends FormRequest
             'analytics_dashboard_widgets.*' => [
                 'string',
                 'in:general,top_pages,top_browsers,top_referrers',
+            ],
+            'analytics_report_email' => [
+                'nullable',
+                'email',
+                'max:255',
             ],
         ];
     }
@@ -63,9 +85,14 @@ class AnalyticsSettingRequest extends FormRequest
         return [
             'google_analytics_enable' => 'habilitar Google Analytics',
             'google_analytics_property_id' => 'ID de propiedad',
+            'google_analytics_measurement_id' => 'Measurement ID',
             'google_analytics_credentials' => 'credenciales de Google Analytics',
             'analytics_cache_lifetime' => 'tiempo de vida de caché',
+            'analytics_reports_daily_enabled' => 'reporte diario',
+            'analytics_reports_weekly_enabled' => 'reporte semanal',
+            'analytics_reports_monthly_enabled' => 'reporte mensual',
             'analytics_dashboard_widgets' => 'widgets del dashboard',
+            'analytics_report_email' => 'Email de reportes',
         ];
     }
 
@@ -78,6 +105,7 @@ class AnalyticsSettingRequest extends FormRequest
             'google_analytics_enable.boolean' => 'El valor para habilitar Google Analytics debe ser verdadero o falso.',
             'google_analytics_property_id.required_if' => 'El ID de propiedad es obligatorio cuando Google Analytics está habilitado.',
             'google_analytics_property_id.regex' => 'El ID de propiedad debe contener solo números.',
+            'google_analytics_measurement_id.regex' => 'El Measurement ID debe tener el formato G-XXXXXXXXXX.',
             'google_analytics_credentials.required_if' => 'Las credenciales son obligatorias cuando Google Analytics está habilitado.',
             'analytics_cache_lifetime.min' => 'El tiempo de vida de caché debe ser al menos :min minuto.',
             'analytics_cache_lifetime.max' => 'El tiempo de vida de caché no puede exceder :max minutos (24 horas).',
@@ -90,12 +118,23 @@ class AnalyticsSettingRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Convert checkbox value to boolean
-        if ($this->has('google_analytics_enable')) {
-            $this->merge([
-                'google_analytics_enable' => filter_var($this->google_analytics_enable, FILTER_VALIDATE_BOOLEAN),
-            ]);
+        // Convert checkbox values to boolean
+        $boolFields = [
+            'google_analytics_enable',
+            'analytics_reports_daily_enabled',
+            'analytics_reports_weekly_enabled',
+            'analytics_reports_monthly_enabled',
+        ];
+
+        $merge = [];
+        foreach ($boolFields as $field) {
+            if ($this->has($field)) {
+                $merge[$field] = filter_var($this->input($field), FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $merge[$field] = false;
+            }
         }
+        $this->merge($merge);
 
         // Set default cache lifetime if not provided
         if (! $this->has('analytics_cache_lifetime') || empty($this->analytics_cache_lifetime)) {

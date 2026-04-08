@@ -18,14 +18,14 @@
     @case('section_header')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         <h5 class="forms-section-header mt-2 mb-1">{{ $field->label }}</h5>
-        @if($field->default_value)<p class="text-muted small">{{ $field->default_value }}</p>@endif
+        @if($field->default_value)<p class="text-muted">{{ $field->default_value }}</p>@endif
         <hr class="mt-1">
     </div>
     @break
 
     @case('html_block')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
-        {!! $field->html_content !!}
+        {!! clean_html($field->html_content) !!}
     </div>
     @break
 
@@ -320,7 +320,7 @@
                 class="form-control form-control-color"
                 value="{{ $field->default_value ?: '#000000' }}"
                 {{ $field->is_required ? 'required' : '' }}>
-            <span class="text-muted small color-picker-value">{{ $field->default_value ?: '#000000' }}</span>
+            <span class="text-muted color-picker-value">{{ $field->default_value ?: '#000000' }}</span>
         </div>
         @if($field->help_text)
             <div class="form-text">{{ $field->help_text }}</div>

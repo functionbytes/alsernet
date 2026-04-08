@@ -47,10 +47,10 @@
                                 </div>
                                 <div class="col-md-7">
                                     <h6 class="mb-1">{{ $mail->subject }}</h6>
-                                    <p class="mb-1 text-muted small">
+                                    <p class="mb-1 text-muted">
                                         <i class="fa-duotone fa-envelope me-1"></i> Para: {{ $mail->to }}
                                     </p>
-                                    <p class="mb-0 text-muted small">
+                                    <p class="mb-0 text-muted">
                                         <i class="fa-duotone fa-calendar me-1"></i>
                                         {{ $mail->created_at->format('d/m/Y H:i:s') }}
                                         ({{ $mail->created_at->diffForHumans() }})

@@ -18,26 +18,31 @@
         <!-- System Settings Card -->
         <div class="card">
             <!-- Header Section -->
-            <div class="card-header p-4 border-bottom border-light text-light">
+            <div class="card-header p-4 border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Panel de Control - Supervisor</h5>
+                        <h5 class="mb-1 fw-bold">Panel de control - supervisor</h5>
                         <p class="small mb-0 text-black">Gestiona procesos de Supervisor, configuraciones, backups y
                             logs de servicios.</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary"
-                                onclick="restartSupervisor()" title="Reinicia el servicio Supervisor completo">
-                            <i class="fa fa-arrows-rotate me-1"></i> Reiniciar supervisor
-                        </button>
-                        <button type="button" class="btn btn-secondary"
-                                onclick="reloadSupervisor()" title="Recarga la configuración sin detener servicios">
-                            <i class="fa fa-repeat me-1"></i> Recargar config
-                        </button>
-                        <button type="button" class="btn btn-primary"
-                                onclick="refreshStatus()" title="Actualiza el estado en tiempo real">
-                            <i class="fa fa-arrows-rotate me-1"></i> Actualizar
-                        </button>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="#" onclick="restartSupervisor(); return false;">
+                                    Reiniciar supervisor
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="reloadSupervisor(); return false;">
+                                    Recargar config
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" onclick="refreshStatus(); return false;">
+                                    Actualizar
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,8 +56,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title mb-2">Total de procesos</h6>
-                                        <h2 id="totalProcesses" class="text-success"
-                                            style="font-weight: 700;">{{ count($processes) }}</h2>
+                                        <h2 id="totalProcesses">{{ count($processes) }}</h2>
                                         <small class="text-muted">Procesos registrados en Supervisor</small>
                                     </div>
                                 </div>
@@ -65,8 +69,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title mb-2">Procesos activos</h6>
-                                        <h2 id="runningProcesses" class="text-success"
-                                            style="font-weight: 700;">{{ collect($processes)->filter(fn($p) => ($p['state'] ?? '') === 'RUNNING')->count() }}</h2>
+                                        <h2 id="runningProcesses" >{{ collect($processes)->filter(fn($p) => ($p['state'] ?? '') === 'RUNNING')->count() }}</h2>
                                         <small class="text-muted">Procesos en estado RUNNING</small>
                                     </div>
                                 </div>
@@ -79,8 +82,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title mb-2">Procesos detenidos</h6>
-                                        <h2 id="stoppedProcesses" class="text-success"
-                                            style="font-weight: 700;">{{ collect($processes)->filter(fn($p) => ($p['state'] ?? '') === 'STOPPED')->count() }}</h2>
+                                        <h2 id="stoppedProcesses" >{{ collect($processes)->filter(fn($p) => ($p['state'] ?? '') === 'STOPPED')->count() }}</h2>
                                         <small class="text-muted">Procesos detenidos o parados</small>
                                     </div>
                                 </div>
@@ -93,8 +95,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title mb-2">Procesos Alsernet</h6>
-                                        <h2 id="alsarnetCount" class="text-success"
-                                            style="font-weight: 700;">{{ count($alsarnetProcesses) }}</h2>
+                                        <h2 id="alsarnetCount" >{{ count($alsarnetProcesses) }}</h2>
                                         <small class="text-muted">Procesos de la aplicación</small>
                                     </div>
                                 </div>
@@ -105,7 +106,7 @@
             </div>
 
             <!-- Navigation Pills -->
-            <ul class="nav nav-pills user-profile-tab" id="supervisor-settings-tab" role="tablist">
+            <ul class="nav nav-tabs border-0 user-profile-tab" id="supervisor-settings-tab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 active"
                             id="processes-tab"
@@ -115,7 +116,7 @@
                             role="tab"
                             aria-controls="processes"
                             aria-selected="true">
-                        <i class="fa fa-person-running me-2"></i>
+
                         <span class="d-none d-md-block">Procesos</span>
                     </button>
                 </li>
@@ -128,7 +129,7 @@
                             role="tab"
                             aria-controls="backups"
                             aria-selected="false">
-                        <i class="fa fa-database me-2"></i>
+
                         <span class="d-none d-md-block">Backups</span>
                     </button>
                 </li>
@@ -141,7 +142,7 @@
                             role="tab"
                             aria-controls="config"
                             aria-selected="false">
-                        <i class="fa fa-gear me-2"></i>
+
                         <span class="d-none d-md-block">Configuración</span>
                     </button>
                 </li>
@@ -154,7 +155,7 @@
                             role="tab"
                             aria-controls="logs"
                             aria-selected="false">
-                        <i class="fa fa-list me-2"></i>
+                       
                         <span class="d-none d-md-block">Logs</span>
                     </button>
                 </li>
@@ -171,17 +172,21 @@
                                 <div class="mb-4 d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1 fw-bold">Gestión de procesos</h6>
-                                        <p class="text-muted small mb-0">Administra todos los procesos de Supervisor en
+                                        <p class="text-muted mb-0">Administra todos los procesos de Supervisor en
                                             una lista unificada</p>
                                     </div>
                                     <div class="d-flex gap-2 align-items-center">
-                                        <label class="text-muted small mb-0 me-2">Filtrar:</label>
-                                        <select class="form-select form-select-sm" id="processTypeFilter"
+                                        <label class="text-muted mb-0 me-2">Filtrar:</label>
+                                        <select class="form-select form-select-sm select2" id="processTypeFilter"
                                                 onchange="filterProcesses()" style="width: auto;">
                                             <option value="all">Todos los procesos</option>
                                             <option value="alsernet">Solo Alsernet</option>
                                             <option value="system">Solo Sistema</option>
                                         </select>
+                                        <button type="button" class="btn btn-info ms-1"
+                                                onclick="restartAllProcesses()" title="Reinicia todos los procesos">
+                                            <i class="fa fa-arrows-rotate me-1"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -192,15 +197,14 @@
                                             <span class="badge bg-white text-primary me-2">
                                                 <i class="fa fa-person-running me-1"></i> Alsernet
                                             </span>
-                                            <small class="text-muted">Puedes iniciar, detener y reiniciar estos
-                                                procesos</small>
+                                            <small class="text-muted">Procesos de la aplicación</small>
                                         </div>
                                         <div class="vr"></div>
                                         <div>
                                             <span class="badge bg-white text-secondary me-2">
                                                 <i class="fa fa-gear me-1"></i> Sistema
                                             </span>
-                                            <small class="text-muted">Solo lectura</small>
+                                            <small class="text-muted">Procesos del sistema</small>
                                         </div>
                                     </div>
                                     <div>
@@ -260,11 +264,14 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($isAlsernet)
-                                                        <strong>{{ $process['name'] }}</strong>
-                                                    @else
-                                                        {{ $process['name'] }}
-                                                    @endif
+                                                    <a href="{{ route('settings.system.supervisor.show', ['processName' => $process['name']]) }}"
+                                                       class="text-decoration-none text-reset">
+                                                        @if($isAlsernet)
+                                                            <strong>{{ $process['name'] }}</strong>
+                                                        @else
+                                                            {{ $process['name'] }}
+                                                        @endif
+                                                    </a>
                                                 </td>
                                                 <td>
                                                     <span class="badge {{ $badgeClass }}">{{ $state }}</span>
@@ -272,38 +279,42 @@
                                                 <td>{{ $pid }}</td>
                                                 <td>{{ $uptime }}</td>
                                                 <td>
-                                                    @if($isAlsernet)
-                                                        <!-- Acciones para procesos Alsernet -->
-                                                        <div class="btn-group" role="group">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-light" type="button"
+                                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fa fa-ellipsis-vertical"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                   href="{{ route('settings.system.supervisor.show', ['processName' => $process['name']]) }}">
+                                                                    Ver detalles
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
                                                             @if($state === 'RUNNING')
-                                                                <button type="button"
-                                                                        class="btn btn-sm btn-warning waves-effect"
-                                                                        onclick="stopProcess('{{ $process['name'] }}')">
-                                                                    <i class="fa fa-stop"></i> Detener
-                                                                </button>
-                                                                <button type="button"
-                                                                        class="btn btn-sm btn-info waves-effect"
-                                                                        onclick="restartProcess('{{ $process['name'] }}')">
-                                                                    <i class="fa fa-arrows-rotate"></i> Reiniciar
-                                                                </button>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="javascript:void(0)"
+                                                                       onclick="stopProcess('{{ $process['name'] }}')">
+                                                                        Detener
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="javascript:void(0)"
+                                                                       onclick="restartProcess('{{ $process['name'] }}')">
+                                                                        Reiniciar
+                                                                    </a>
+                                                                </li>
                                                             @else
-                                                                <button type="button"
-                                                                        class="btn btn-sm btn-success waves-effect"
-                                                                        onclick="startProcess('{{ $process['name'] }}')">
-                                                                    <i class="fa fa-play"></i> Iniciar
-                                                                </button>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="javascript:void(0)"
+                                                                       onclick="startProcess('{{ $process['name'] }}')">
+                                                                        Iniciar
+                                                                    </a>
+                                                                </li>
                                                             @endif
-                                                            <a href="{{ route('settings.system.supervisor.show', ['processName' => $process['name']]) }}"
-                                                               class="btn btn-sm btn-outline-primary waves-effect">
-                                                                <i class="fa fa-eye"></i> Detalles
-                                                            </a>
-                                                        </div>
-                                                    @else
-                                                        <!-- Solo lectura para procesos del sistema -->
-                                                        <small class="text-muted">
-                                                            <i class="fa fa-lock me-1"></i> Solo lectura
-                                                        </small>
-                                                    @endif
+                                                        </ul>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
@@ -325,82 +336,24 @@
                             <div class="col-12">
                                 <div class="mb-4">
                                     <h6 class="mb-1 fw-bold">Gestión de backups</h6>
-                                    <p class="text-muted small">Crea y administra backups de configuraciones de
+                                    <p class="text-muted">Crea y administra backups de configuraciones de
                                         Supervisor para restauración rápida.</p>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h6 class="mb-3 fw-semibold">Crear nuevo backup</h6>
-                                                <form id="backupForm" onsubmit="createBackup(event)">
-                                                    @csrf
-                                                    <div class="mb-3">
-                                                        <label for="backupName" class="form-label fw-semibold">Nombre
-                                                            del backup <span class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control" id="backupName"
-                                                               name="name" required
-                                                               placeholder="ej: Backup Producción 2024">
-                                                        <small class="text-muted">Nombre descriptivo para identificar el
-                                                            backup</small>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label for="backupDesc" class="form-label fw-semibold">Descripción</label>
-                                                        <textarea class="form-control" id="backupDesc"
-                                                                  name="description" rows="2"
-                                                                  placeholder="Notas sobre este backup..."></textarea>
-                                                        <small class="text-muted">Opcional: Detalles adicionales sobre
-                                                            este backup</small>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label for="backupEnv" class="form-label fw-semibold">Ambiente
-                                                            <span class="text-danger">*</span></label>
-                                                        <select class="form-select" id="backupEnv" name="environment"
-                                                                required>
-                                                            <option value="dev">Desarrollo</option>
-                                                            <option value="prod" selected>Producción</option>
-                                                            <option value="staging">Staging</option>
-                                                        </select>
-                                                        <small class="text-muted">Ambiente al que pertenece este
-                                                            backup</small>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary w-100">
-                                                        Crear backup
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label for="filterEnv" class="form-label mb-0 fw-semibold text-nowrap">Filtrar por ambiente</label>
+                                        <select class="form-select form-select-sm select2" id="filterEnv" style="width:200px" onchange="loadBackups()">
+                                            <option value="">Todos los ambientes</option>
+                                            <option value="dev">Desarrollo</option>
+                                            <option value="prod">Producción</option>
+                                            <option value="staging">Staging</option>
+                                        </select>
                                     </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h6 class="mb-3 fw-semibold">Filtros de búsqueda</h6>
-                                                <div class="mb-3">
-                                                    <label for="filterEnv" class="form-label fw-semibold">Filtrar por
-                                                        ambiente</label>
-                                                    <select class="form-select" id="filterEnv" onchange="loadBackups()">
-                                                        <option value="">Todos los ambientes</option>
-                                                        <option value="dev">Desarrollo</option>
-                                                        <option value="prod">Producción</option>
-                                                        <option value="staging">Staging</option>
-                                                    </select>
-                                                    <small class="text-muted">Filtra los backups por ambiente</small>
-                                                </div>
-
-                                                <div class="alert alert-info border-0 bg-info-subtle text-info mb-0">
-                                                    <div class="d-flex align-items-start gap-2">
-                                                        <i class="fa fa-circle-info fs-5"></i>
-                                                        <div>
-                                                            <strong>Importante:</strong> Los backups se almacenan en el
-                                                            servidor. Descarga copias locales periódicamente.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <button type="button" class="btn btn-primary ms-auto"
+                                            data-bs-toggle="modal" data-bs-target="#modal-create-backup">
+                                        <i class="fas fa-plus me-1"></i>Crear backup
+                                    </button>
                                 </div>
 
                                 <h6 class="mb-3 mt-4 fw-semibold">Backups disponibles</h6>
@@ -435,7 +388,7 @@
                             <div class="col-12">
                                 <div class="mb-4">
                                     <h6 class="mb-1 fw-bold">Editor de configuración</h6>
-                                    <p class="text-muted small">Edita los archivos de configuración de Supervisor
+                                    <p class="text-muted">Edita los archivos de configuración de Supervisor
                                         directamente desde el panel de administración.</p>
                                 </div>
 
@@ -480,7 +433,7 @@
                                                                 cambios</small>
                                                         </div>
                                                         <div class="row">
-                                                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                                            <button type="submit" class="btn btn-primary w-100 mb-1">
                                                                 Guardar
                                                             </button>
                                                             <button type="button" class="btn btn-secondary w-100"
@@ -504,7 +457,7 @@
                             <div class="col-12">
                                 <div class="mb-4">
                                     <h6 class="mb-1 fw-bold">Visualizador de logs</h6>
-                                    <p class="text-muted small">Consulta los registros de actividad de los procesos de
+                                    <p class="text-muted">Consulta los registros de actividad de los procesos de
                                         Supervisor en tiempo real.</p>
                                 </div>
 
@@ -519,7 +472,7 @@
                                                 <div class="mb-3">
                                                     <label for="processSelect" class="form-label fw-semibold">Proceso
                                                         <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="processSelect"
+                                                    <select class="form-select select2" id="processSelect"
                                                             onchange="loadProcessLogs()">
                                                         <option value="">Selecciona un proceso</option>
                                                         @foreach($alsarnetProcesses as $process)
@@ -532,7 +485,7 @@
                                                 <!-- Lines limit -->
                                                 <div class="mb-3">
                                                     <label for="logLines" class="form-label fw-semibold">Líneas</label>
-                                                    <select class="form-select" id="logLines"
+                                                    <select class="form-select select2" id="logLines"
                                                             onchange="loadProcessLogs()">
                                                         <option value="50" selected>50 líneas</option>
                                                         <option value="100">100 líneas</option>
@@ -636,7 +589,114 @@
 
     </div>
 
-@endsection
+<!-- Create Backup Modal -->
+<div class="modal fade" id="modal-create-backup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold">Crear nuevo backup</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="backupForm" onsubmit="createBackup(event)">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="backupName" class="form-label fw-semibold">Nombre del backup <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="backupName" name="name" required
+                               placeholder="ej: Backup Producción 2024">
+                        <small class="text-muted">Nombre descriptivo para identificar el backup</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="backupDesc" class="form-label fw-semibold">Descripción</label>
+                        <textarea class="form-control" id="backupDesc" name="description" rows="2"
+                                  placeholder="Notas sobre este backup..."></textarea>
+                        <small class="text-muted">Opcional: Detalles adicionales sobre este backup</small>
+                    </div>
+                    <div class="mb-0">
+                        <label for="backupEnv" class="form-label fw-semibold">Ambiente <span class="text-danger">*</span></label>
+                        <select class="form-select" id="backupEnv" name="environment" required>
+                            <option value="dev">Desarrollo</option>
+                            <option value="prod" selected>Producción</option>
+                            <option value="staging">Staging</option>
+                        </select>
+                        <small class="text-muted">Ambiente al que pertenece este backup</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100 mb-1 ">
+                        Crear backup
+                    </button>
+                    <button type="button" class="btn btn-light w-100 " data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Process Action Confirmation Modal -->
+<div class="modal fade" id="modal-process-confirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold" id="modal-process-confirm-title">Confirmar acción</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="modal-process-confirm-body"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100 mb-1" id="btn-confirm-process-action">
+                    Confirmar
+                </button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Backup Modal -->
+<div class="modal fade" id="modal-delete-backup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold">Eliminar backup</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold mb-2">¿Eliminar este backup?</h6>
+                <p class="text-muted mb-0">Esta acción no se puede deshacer. El backup será eliminado permanentemente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger w-100 mb-1" id="btn-confirm-delete-backup">
+                    <i class="fas fa-trash me-1"></i>Sí, eliminar
+                </button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Backup Modal -->
+<div class="modal fade" id="modal-restore-backup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold">Restaurar backup</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold mb-2">¿Restaurar esta configuración?</h6>
+                <p class="text-muted mb-0">La configuración actual de Supervisor será sobrescrita con los datos de este backup.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100 mb-1" id="btn-confirm-restore-backup">
+                    Sí, restaurar
+                </button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Reload Supervisor Modal -->
 <div class="modal fade" id="reloadSupervisorModal" tabindex="-1" aria-hidden="true">
@@ -719,6 +779,8 @@
     </div>
 </div>
 
+@endsection
+
 @push('scripts')
     <script>
         // Global variable to control auto-refresh
@@ -751,6 +813,21 @@
 
             // Initial load
             refreshStatus();
+
+            // Process action modal
+            modalProcessConfirm = new bootstrap.Modal(document.getElementById('modal-process-confirm'));
+            $('#btn-confirm-process-action').on('click', function () {
+                var action = pendingProcessAction;
+                var name = pendingProcessName;
+                pendingProcessAction = null;
+                pendingProcessName = null;
+                modalProcessConfirm.hide();
+                if (action === 'restart-all') {
+                    executeRestartAll();
+                } else {
+                    executeProcessAction(name, action);
+                }
+            });
         });
 
         function startAutoRefresh() {
@@ -804,7 +881,6 @@
                     alertHtml += '    <div class="col-12">';
                     alertHtml += '        <div class="alert alert-dismissible fade show border-0 bg-warning-subtle" role="alert">';
                     alertHtml += '            <div class="d-flex align-items-center gap-3">';
-                    alertHtml += '                <i class="fa fa-triangle-exclamation text-warning fs-9"></i>';
                     alertHtml += '                <div class="flex-grow-1">';
                     alertHtml += '                    <h6 class="alert-heading fw-bold text-warning mb-0">Configuración de Supervisor requerida</h6>';
                     alertHtml += '                    <p class="mb-2 text-warning small mb-0 ">El servidor necesita configuración de passwordless sudo para ejecutar comandos de Supervisor.</p>';
@@ -935,91 +1011,101 @@
             $('#alsarnetCount').text(alsarnetProcesses.length);
         }
 
+        var pendingProcessAction = null;
+        var pendingProcessName = null;
+        var modalProcessConfirm = null;
+
         function startProcess(processName) {
-            if (confirm('¿Iniciar el proceso "' + processName + '"?')) {
-                $.ajax({
-                    url: '{{ route("settings.system.supervisor.start", ["processName" => ":processName"]) }}'.replace(':processName', processName),
-                    type: 'POST',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        if (data.success) {
-                            toastr.success(data.message, 'Proceso iniciado');
-                            refreshStatus();
-                        } else {
-                            if (!handleSudoError(data.message)) {
-                                toastr.error(data.message, 'Error');
-                            }
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        var errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : error;
-                        if (!handleSudoError(errorMsg)) {
-                            toastr.error('Error: ' + error, 'Error');
-                        }
-                    }
-                });
-            }
+            pendingProcessName = processName;
+            pendingProcessAction = 'start';
+            $('#modal-process-confirm-title').text('Iniciar proceso');
+            $('#modal-process-confirm-body').text('¿Iniciar el proceso "' + processName + '"?');
+            $('#btn-confirm-process-action').removeClass().addClass('btn btn-success w-100 mb-1')
+                .html('<i class="fa fa-play me-1"></i>Sí, iniciar');
+            modalProcessConfirm.show();
         }
 
         function stopProcess(processName) {
-            if (confirm('¿Detener el proceso "' + processName + '"?')) {
-                $.ajax({
-                    url: '{{ route("settings.system.supervisor.stop", ["processName" => ":processName"]) }}'.replace(':processName', processName),
-                    type: 'POST',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        if (data.success) {
-                            toastr.success(data.message, 'Proceso detenido');
-                            refreshStatus();
-                        } else {
-                            if (!handleSudoError(data.message)) {
-                                toastr.error(data.message, 'Error');
-                            }
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        var errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : error;
-                        if (!handleSudoError(errorMsg)) {
-                            toastr.error('Error: ' + error, 'Error');
-                        }
-                    }
-                });
-            }
+            pendingProcessName = processName;
+            pendingProcessAction = 'stop';
+            $('#modal-process-confirm-title').text('Detener proceso');
+            $('#modal-process-confirm-body').text('¿Detener el proceso "' + processName + '"?');
+            $('#btn-confirm-process-action').removeClass().addClass('btn btn-warning w-100 mb-1')
+                .html('<i class="fa fa-stop me-1"></i>Sí, detener');
+            modalProcessConfirm.show();
         }
 
         function restartProcess(processName) {
-            if (confirm('¿Reiniciar el proceso "' + processName + '"?')) {
-                $.ajax({
-                    url: '{{ route("settings.system.supervisor.restart", ["processName" => ":processName"]) }}'.replace(':processName', processName),
-                    type: 'POST',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        if (data.success) {
-                            toastr.success(data.message, 'Proceso reiniciado');
-                            refreshStatus();
-                        } else {
-                            if (!handleSudoError(data.message)) {
-                                toastr.error(data.message, 'Error');
-                            }
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        var errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : error;
-                        if (!handleSudoError(errorMsg)) {
-                            toastr.error('Error: ' + error, 'Error');
-                        }
+            pendingProcessName = processName;
+            pendingProcessAction = 'restart';
+            $('#modal-process-confirm-title').text('Reiniciar proceso');
+            $('#modal-process-confirm-body').text('¿Reiniciar el proceso "' + processName + '"?');
+            $('#btn-confirm-process-action').removeClass().addClass('btn btn-info w-100 mb-1')
+                .html('<i class="fa fa-arrows-rotate me-1"></i>Sí, reiniciar');
+            modalProcessConfirm.show();
+        }
+
+        function restartAllProcesses() {
+            pendingProcessName = null;
+            pendingProcessAction = 'restart-all';
+            $('#modal-process-confirm-title').text('Reiniciar todos los procesos');
+            $('#modal-process-confirm-body').text('¿Reiniciar todos los procesos de Supervisor? Cada proceso será reiniciado individualmente.');
+            $('#btn-confirm-process-action').removeClass().addClass('btn btn-warning w-100 mb-1')
+                .html('<i class="fa fa-arrows-rotate me-1"></i>Sí, reiniciar todos');
+            modalProcessConfirm.show();
+        }
+
+        function executeProcessAction(processName, action) {
+            var urls = {
+                start: '{{ route("settings.system.supervisor.start", ["processName" => ":p"]) }}'.replace(':p', processName),
+                stop: '{{ route("settings.system.supervisor.stop", ["processName" => ":p"]) }}'.replace(':p', processName),
+                restart: '{{ route("settings.system.supervisor.restart", ["processName" => ":p"]) }}'.replace(':p', processName)
+            };
+            var labels = { start: 'Proceso iniciado', stop: 'Proceso detenido', restart: 'Proceso reiniciado' };
+
+            $.ajax({
+                url: urls[action],
+                type: 'POST',
+                dataType: 'json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message, labels[action]);
+                        refreshStatus();
+                    } else if (!handleSudoError(data.message)) {
+                        toastr.error(data.message, 'Error');
                     }
-                });
-            }
+                },
+                error: function (xhr, status, error) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : error;
+                    if (!handleSudoError(msg)) {
+                        toastr.error('Error: ' + error, 'Error');
+                    }
+                }
+            });
+        }
+
+        function executeRestartAll() {
+            $.ajax({
+                url: '{{ route("settings.system.supervisor.restart-all") }}',
+                type: 'POST',
+                dataType: 'json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message, 'Procesos reiniciados');
+                        setTimeout(refreshStatus, 2000);
+                    } else if (!handleSudoError(data.message)) {
+                        toastr.error(data.message, 'Error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : error;
+                    if (!handleSudoError(msg)) {
+                        toastr.error('Error: ' + error, 'Error');
+                    }
+                }
+            });
         }
 
         function reloadSupervisor() {
@@ -1113,6 +1199,7 @@
                     if (data.success) {
                         toastr.success(data.message, 'Backup creado');
                         $('#backupForm')[0].reset();
+                        bootstrap.Modal.getInstance(document.getElementById('modal-create-backup'))?.hide();
                         loadBackups();
                     } else {
                         toastr.error(data.message, 'Error');
@@ -1184,52 +1271,71 @@
             });
         }
 
-        function restoreBackup(backupId) {
-            if (confirm('⚠️ Restaurar un backup sobrescribirá la configuración actual. ¿Continuar?')) {
-                $.ajax({
-                    url: '{{ route("settings.system.supervisor.backup-restore", ["backupId" => ":id"]) }}'.replace(':id', backupId),
-                    type: 'POST',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        if (data.success) {
-                            toastr.success(data.message, 'Backup restaurado');
-                            loadBackups();
-                        } else {
-                            toastr.error(data.message, 'Error');
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        toastr.error('Error: ' + error, 'Error');
+        var pendingRestoreId = null;
+        var pendingDeleteId = null;
+        var modalRestoreBackup = new bootstrap.Modal(document.getElementById('modal-restore-backup'));
+        var modalDeleteBackup  = new bootstrap.Modal(document.getElementById('modal-delete-backup'));
+
+        $('#btn-confirm-restore-backup').on('click', function () {
+            if (!pendingRestoreId) { return; }
+            var backupId = pendingRestoreId;
+            pendingRestoreId = null;
+            modalRestoreBackup.hide();
+            $.ajax({
+                url: '{{ route("settings.system.supervisor.backup-restore", ["backupId" => ":id"]) }}'.replace(':id', backupId),
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message, 'Backup restaurado');
+                        loadBackups();
+                    } else {
+                        toastr.error(data.message, 'Error');
                     }
-                });
-            }
+                },
+                error: function (xhr, status, error) {
+                    toastr.error('Error: ' + error, 'Error');
+                }
+            });
+        });
+
+        $('#btn-confirm-delete-backup').on('click', function () {
+            if (!pendingDeleteId) { return; }
+            var backupId = pendingDeleteId;
+            pendingDeleteId = null;
+            modalDeleteBackup.hide();
+            $.ajax({
+                url: '{{ route("settings.system.supervisor.backup-delete", ["backupId" => ":id"]) }}'.replace(':id', backupId),
+                type: 'DELETE',
+                dataType: 'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message, 'Backup eliminado');
+                        loadBackups();
+                    } else {
+                        toastr.error(data.message, 'Error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    toastr.error('Error: ' + error, 'Error');
+                }
+            });
+        });
+
+        function restoreBackup(backupId) {
+            pendingRestoreId = backupId;
+            modalRestoreBackup.show();
         }
 
         function deleteBackup(backupId) {
-            if (confirm('¿Eliminar este backup?')) {
-                $.ajax({
-                    url: '{{ route("settings.system.supervisor.backup-delete", ["backupId" => ":id"]) }}'.replace(':id', backupId),
-                    type: 'DELETE',
-                    dataType: 'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        if (data.success) {
-                            toastr.success(data.message, 'Backup eliminado');
-                            loadBackups();
-                        } else {
-                            toastr.error(data.message, 'Error');
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        toastr.error('Error: ' + error, 'Error');
-                    }
-                });
-            }
+            pendingDeleteId = backupId;
+            modalDeleteBackup.show();
         }
 
         function loadConfigFiles() {

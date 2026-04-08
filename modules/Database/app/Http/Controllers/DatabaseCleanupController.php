@@ -7,7 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Modules\Core\Models\Setting;
 
 class DatabaseCleanupController extends Controller
 {
@@ -17,7 +20,7 @@ class DatabaseCleanupController extends Controller
     public function index(): View|RedirectResponse
     {
         // Check if cleanup is enabled
-        $cleanupEnabled = config('database.cleanup.enabled', false);
+        $cleanupEnabled = (bool) Setting::get('cleanup_enabled', env('CMS_ENABLED_CLEANUP_DATABASE', false));
 
         if (! $cleanupEnabled) {
             return view('database::cleanup.disabled', [
@@ -38,8 +41,10 @@ class DatabaseCleanupController extends Controller
                 'cleanupEnabled'
             ));
         } catch (\Exception $e) {
+            Log::error('Database cleanup index failed: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Error al obtener las tablas: '.$e->getMessage());
+                ->with('error', 'Error al obtener la lista de tablas. Por favor, revisa los logs del sistema.');
         }
     }
 
@@ -79,7 +84,7 @@ class DatabaseCleanupController extends Controller
     public function truncate(Request $request): JsonResponse
     {
         // Check if cleanup is enabled
-        if (! config('database.cleanup.enabled', false)) {
+        if (! (bool) Setting::get('cleanup_enabled', env('CMS_ENABLED_CLEANUP_DATABASE', false))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Esta característica no está habilitada. Configura DATABASE_CLEANUP_ENABLED=true en el archivo .env',
@@ -143,25 +148,31 @@ class DatabaseCleanupController extends Controller
             }
 
             // Log the cleanup action
-            activity()
-                ->causedBy(auth()->user())
-                ->log("Limpieza de base de datos: Se vaciaron $truncatedCount tabla(s)");
+            try {
+                activity()
+                    ->causedBy(auth()->user())
+                    ->log("Limpieza de base de datos: Se vaciaron $truncatedCount tabla(s)");
+            } catch (\Exception $activityException) {
+                Log::warning('Failed to log cleanup activity: '.$activityException->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => "Se limpiaron correctamente $truncatedCount tabla(s)",
                 'truncated_count' => $truncatedCount,
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validación fallida',
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Database truncate failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al limpiar la base de datos: '.$e->getMessage(),
+                'message' => 'Error al limpiar la base de datos. Por favor, revisa los logs del sistema.',
             ], 500);
         }
     }
@@ -195,9 +206,11 @@ class DatabaseCleanupController extends Controller
                 'count' => $count,
             ]);
         } catch (\Exception $e) {
+            Log::error('Database table count failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$e->getMessage(),
+                'message' => 'Error al obtener el conteo de registros.',
             ], 500);
         }
     }

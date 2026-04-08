@@ -186,12 +186,10 @@ class ReviewReplyServiceTest extends TestCase
 
         $user = $this->createUser();
         $template = ReviewReplyTemplate::factory()->create([
-            'content' => 'Thank you {reviewer_name} for your {rating}-star review at {business_name}!',
+            'body' => 'Thank you {reviewer_name} for your review at {location_name}!',
         ]);
 
         $reply = $this->service->createFromTemplate($review, $template, $user);
-
-        $expectedText = "Thank you John Doe for your {$review->star_rating->value()}-star review at Test Business!";
 
         $this->assertStringContainsString('John Doe', $reply->reply_text);
         $this->assertStringContainsString('Test Business', $reply->reply_text);
@@ -202,7 +200,7 @@ class ReviewReplyServiceTest extends TestCase
         $review = $this->createReview();
         $user = $this->createUser();
         $template = ReviewReplyTemplate::factory()->create([
-            'content' => 'Thank you!',
+            'body' => 'Thank you!',
         ]);
 
         $reply = $this->service->createFromTemplate($review, $template, $user);

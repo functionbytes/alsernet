@@ -145,7 +145,7 @@
 
                             <div class="mb-3">
                                 <label for="og_type" class="form-label">OG Type</label>
-                                <select class="form-select" id="og_type" name="og_type">
+                                <select class="form-select select2" id="og_type" name="og_type">
                                     <option value="website" {{ old('og_type', $seo?->og_type) === 'website' ? 'selected' : '' }}>Website</option>
                                     <option value="article" {{ old('og_type', $seo?->og_type) === 'article' ? 'selected' : '' }}>Article</option>
                                     <option value="product" {{ old('og_type', $seo?->og_type) === 'product' ? 'selected' : '' }}>Product</option>
@@ -167,7 +167,7 @@
                         <div class="accordion-body">
                             <div class="mb-3">
                                 <label for="twitter_card" class="form-label">Card Type</label>
-                                <select class="form-select" id="twitter_card" name="twitter_card">
+                                <select class="form-select select2" id="twitter_card" name="twitter_card">
                                     <option value="summary" {{ old('twitter_card', $seo?->twitter_card) === 'summary' ? 'selected' : '' }}>Summary</option>
                                     <option value="summary_large_image" {{ old('twitter_card', $seo?->twitter_card) === 'summary_large_image' ? 'selected' : '' }}>Summary Large Image</option>
                                 </select>
@@ -257,7 +257,7 @@
 
                             <div class="mb-3">
                                 <label for="robots" class="form-label">Robots Directive</label>
-                                <select class="form-select" id="robots" name="robots">
+                                <select class="form-select select2" id="robots" name="robots">
                                     <option value="index,follow" {{ old('robots', $seo?->robots) === 'index,follow' ? 'selected' : '' }}>Index, Follow (Default)</option>
                                     <option value="noindex,nofollow" {{ old('robots', $seo?->robots) === 'noindex,nofollow' ? 'selected' : '' }}>No Index, No Follow</option>
                                     <option value="noindex,follow" {{ old('robots', $seo?->robots) === 'noindex,follow' ? 'selected' : '' }}>No Index, Follow</option>
@@ -285,7 +285,7 @@
             <div class="seo-preview-google mb-4">
                 <div class="preview-url text-success small" id="preview_google_url">{{ url()->current() }}</div>
                 <div class="preview-title text-primary fs-5" id="preview_google_title">{{ $seo?->title ?? $model->title ?? 'Page Title' }}</div>
-                <div class="preview-description text-muted small" id="preview_google_description">{{ $seo?->description ?? $model->description ?? 'Page description will appear here' }}</div>
+                <div class="preview-description text-muted" id="preview_google_description">{{ $seo?->description ?? $model->description ?? 'Page description will appear here' }}</div>
             </div>
 
             {{-- Facebook Preview --}}
@@ -300,9 +300,9 @@
                     @else
                     <div class="col-md-12">
                     @endif
-                        <div class="preview-url text-muted small mb-1" id="preview_facebook_url">{{ parse_url(url()->current(), PHP_URL_HOST) }}</div>
+                        <div class="preview-url text-muted mb-1" id="preview_facebook_url">{{ parse_url(url()->current(), PHP_URL_HOST) }}</div>
                         <div class="preview-title fw-bold" id="preview_facebook_title">{{ $seo?->og_title ?? $seo?->title ?? $model->title ?? 'Page Title' }}</div>
-                        <div class="preview-description text-muted small" id="preview_facebook_description">{{ $seo?->og_description ?? $seo?->description ?? $model->description ?? 'Page description' }}</div>
+                        <div class="preview-description text-muted" id="preview_facebook_description">{{ $seo?->og_description ?? $seo?->description ?? $model->description ?? 'Page description' }}</div>
                     </div>
                 </div>
             </div>
@@ -314,8 +314,8 @@
                 <img src="{{ $seo?->twitter_image ?? $seo?->og_image ?? config('Seo.default_og_image') }}" alt="Preview" class="img-fluid rounded mb-2" id="preview_twitter_image">
                 @endif
                 <div class="preview-title fw-bold" id="preview_twitter_title">{{ $seo?->twitter_title ?? $seo?->title ?? $model->title ?? 'Page Title' }}</div>
-                <div class="preview-description text-muted small mb-1" id="preview_twitter_description">{{ $seo?->twitter_description ?? $seo?->description ?? $model->description ?? 'Page description' }}</div>
-                <div class="preview-url text-muted small" id="preview_twitter_url">{{ parse_url(url()->current(), PHP_URL_HOST) }}</div>
+                <div class="preview-description text-muted mb-1" id="preview_twitter_description">{{ $seo?->twitter_description ?? $seo?->description ?? $model->description ?? 'Page description' }}</div>
+                <div class="preview-url text-muted" id="preview_twitter_url">{{ parse_url(url()->current(), PHP_URL_HOST) }}</div>
             </div>
         </div>
     </div>

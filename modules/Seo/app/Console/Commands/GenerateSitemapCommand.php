@@ -3,6 +3,7 @@
 namespace Modules\Seo\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 
 class GenerateSitemapCommand extends Command
 {
@@ -45,6 +46,25 @@ class GenerateSitemapCommand extends Command
         cache()->forget('sitemap-xml');
         $this->info('🗑️  Cache cleared');
 
+        $this->pingSitemapToSearchEngines(url('/sitemap.xml'));
+
         return self::SUCCESS;
+    }
+
+    protected function pingSitemapToSearchEngines(string $sitemapUrl): void
+    {
+        $engines = [
+            'Google' => "https://www.google.com/ping?sitemap={$sitemapUrl}",
+            'Bing' => "https://www.bing.com/ping?sitemap={$sitemapUrl}",
+        ];
+
+        foreach ($engines as $name => $url) {
+            try {
+                Http::timeout(5)->get($url);
+                $this->info("Notificado: {$name}");
+            } catch (\Exception) {
+                $this->warn("No se pudo notificar a {$name}");
+            }
+        }
     }
 }

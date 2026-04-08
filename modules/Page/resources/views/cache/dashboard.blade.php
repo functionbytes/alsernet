@@ -1,49 +1,105 @@
 @extends('layouts.theme')
 
-@section('title', 'Page Cache Dashboard')
+@section('title', 'Dashboard de caché de páginas')
 
 @section('content')
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header p-4 border-bottom">
-                    <h5 class="mb-1 fw-bold">Page Cache Dashboard</h5>
-                    <p class="small mb-0 text-muted">Monitor cache performance and statistics</p>
-                </div>
+    @include('core::components.card', ['title' => 'Dashboard de caché de páginas'])
 
-                <div id="cache-stats" class="card-body">
-                    <div class="text-center py-5">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
+    @include('core::components.alerts')
+
+    {{-- Stat Cards --}}
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 zoom-in bg-primary-subtle shadow-none h-100">
+                <div class="card-body text-center p-4">
+                    <div class="round-60 d-flex align-items-center justify-content-center rounded-circle bg-primary-subtle mx-auto mb-3">
+                        <i class="fas fa-chart-pie fs-4 text-primary"></i>
                     </div>
+                    <p class="fw-semibold fs-6 text-primary mb-1">Hit Ratio</p>
+                    <h4 class="fw-bold text-primary mb-1" id="stat-hit-ratio">—</h4>
+                    <small class="text-muted" id="stat-requests">— solicitudes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 zoom-in bg-success-subtle shadow-none h-100">
+                <div class="card-body text-center p-4">
+                    <div class="round-60 d-flex align-items-center justify-content-center rounded-circle bg-success-subtle mx-auto mb-3">
+                        <i class="fas fa-bolt fs-4 text-success"></i>
+                    </div>
+                    <p class="fw-semibold fs-6 text-success mb-1">Cache Hits</p>
+                    <h4 class="fw-bold text-success mb-1" id="stat-hits">—</h4>
+                    <small class="text-muted">del total de solicitudes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 zoom-in bg-info-subtle shadow-none h-100">
+                <div class="card-body text-center p-4">
+                    <div class="round-60 d-flex align-items-center justify-content-center rounded-circle bg-info-subtle mx-auto mb-3">
+                        <i class="fas fa-file-alt fs-4 text-info"></i>
+                    </div>
+                    <p class="fw-semibold fs-6 text-info mb-1">Páginas cacheadas</p>
+                    <h4 class="fw-bold text-info mb-1" id="stat-pages">—</h4>
+                    <small class="text-muted">páginas en total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 zoom-in bg-warning-subtle shadow-none h-100">
+                <div class="card-body text-center p-4">
+                    <div class="round-60 d-flex align-items-center justify-content-center rounded-circle bg-warning-subtle mx-auto mb-3">
+                        <i class="fas fa-database fs-4 text-warning"></i>
+                    </div>
+                    <p class="fw-semibold fs-6 text-warning mb-1">Tamaño</p>
+                    <h4 class="fw-bold text-warning mb-1" id="stat-size">—</h4>
+                    <small class="text-muted">tamaño total</small>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Controls --}}
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">Cache Controls</h6>
-                    <button class="btn btn-primary w-100 mb-2" id="warm-btn">
-                        <i class="fas fa-fire me-1"></i> Warm Cache
-                    </button>
-                    <button class="btn btn-warning w-100" id="clear-btn">
-                        <i class="fas fa-trash me-1"></i> Clear Cache
-                    </button>
+    {{-- Controls + Activity --}}
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="card h-100">
+                <div class="card-header p-4 border-bottom">
+                    <h6 class="fw-bold mb-1">Controles de caché</h6>
+                    <p class="small text-muted mb-0">Acciones sobre el caché de páginas</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-3" id="warm-btn">
+                            <i class="fas fa-fire"></i>
+                            <span>Calentar caché</span>
+                        </button>
+                        <button class="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2 py-3" id="clear-btn">
+                            <i class="fas fa-trash"></i>
+                            <span>Limpiar caché</span>
+                        </button>
+                    </div>
+                    <div class="mt-4 p-3 bg-info-subtle rounded">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle text-info me-1"></i>
+                            <strong>Calentar caché</strong> precarga las páginas activas. <strong>Limpiar caché</strong> elimina todo el contenido almacenado.
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">Recent Activity</h6>
-                    <div id="audits-list" style="max-height: 200px; overflow-y: auto;">
-                        <small class="text-muted">Loading...</small>
+        <div class="col-md-7">
+            <div class="card h-100">
+                <div class="card-header p-4 border-bottom">
+                    <h6 class="fw-bold mb-1">Actividad reciente</h6>
+                    <p class="small text-muted mb-0">Últimas operaciones de caché</p>
+                </div>
+                <div class="card-body p-0">
+                    <div id="audits-list" style="max-height: 280px; overflow-y: auto;">
+                        <div class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-muted" role="status"></div>
+                            <small class="text-muted d-block mt-2">Cargando actividad...</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,87 +107,28 @@
     </div>
 @endsection
 
+@push('css')
+<style>
+.zoom-in {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: default;
+}
+.zoom-in:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+}
+.round-60 {
+    width: 60px;
+    height: 60px;
+}
+</style>
+@endpush
+
 @push('scripts')
 <script>
 $(document).ready(function() {
-    const apiUrl = '{{ route('api.v1.cache.stats') }}';
-
-    function loadStats() {
-        $.get(apiUrl, function(stats) {
-            const html = `
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="card bg-light-primary h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted small mb-2">Hit Ratio</h6>
-                                <h3 class="mb-1 fw-bold">${stats.hit_ratio}%</h3>
-                                <small class="text-muted">${stats.total_requests} requests</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-light-success h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted small mb-2">Cache Hits</h6>
-                                <h3 class="mb-1 fw-bold">${stats.total_hits}</h3>
-                                <small class="text-muted">from total requests</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-light-info h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted small mb-2">Cached Pages</h6>
-                                <h3 class="mb-1 fw-bold">${stats.cached_pages_count}</h3>
-                                <small class="text-muted">total pages</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-light-warning h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted small mb-2">Cache Size</h6>
-                                <h3 class="mb-1 fw-bold">${formatBytes(stats.size_bytes)}</h3>
-                                <small class="text-muted">total size</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            $('#cache-stats').html(html);
-        });
-    }
-
-    function loadAudits() {
-        $.get('{{ route('api.v1.cache.audits') }}', function(audits) {
-            const html = audits.map(a => `
-                <div class="mb-2 pb-2 border-bottom">
-                    <small class="text-muted">${a.created_at}</small><br>
-                    <strong>${a.action}</strong> ${a.slug ? ' - ' + a.slug : ''}
-                </div>
-            `).join('');
-            $('#audits-list').html(html || '<small class="text-muted">No activity</small>');
-        });
-    }
-
-    $('#warm-btn').click(function() {
-        $(this).prop('disabled', true);
-        $.post('{{ route('api.v1.cache.warm') }}', function() {
-            toastr.success('Cache warming started');
-            loadStats();
-            setTimeout(() => $('#warm-btn').prop('disabled', false), 2000);
-        });
-    });
-
-    $('#clear-btn').click(function() {
-        if (confirm('Clear all page cache?')) {
-            $(this).prop('disabled', true);
-            $.post('{{ route('api.v1.cache.clear') }}', function() {
-                toastr.success('Cache cleared');
-                loadStats();
-                setTimeout(() => $('#clear-btn').prop('disabled', false), 2000);
-            });
-        }
+    $.ajaxSetup({
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
     function formatBytes(bytes) {
@@ -144,6 +141,80 @@ $(document).ready(function() {
         size /= Math.pow(1024, pow);
         return Math.round(size * 100) / 100 + ' ' + units[pow];
     }
+
+    function loadStats() {
+        $.get('{{ route('pages.cache.stats') }}', function(stats) {
+            $('#stat-hit-ratio').text(stats.hit_ratio + '%');
+            $('#stat-requests').text(stats.total_requests + ' solicitudes');
+            $('#stat-hits').text(stats.total_hits);
+            $('#stat-pages').text(stats.cached_pages_count);
+            $('#stat-size').text(formatBytes(stats.size_bytes));
+        }).fail(function() {
+            $('#stat-hit-ratio, #stat-hits, #stat-pages, #stat-size').text('—');
+        });
+    }
+
+    function actionBadge(action) {
+        const map = {
+            cached:   { cls: 'bg-success-subtle text-success', icon: 'fa-check-circle' },
+            cleared:  { cls: 'bg-danger-subtle text-danger',   icon: 'fa-trash' },
+            warmed:   { cls: 'bg-primary-subtle text-primary', icon: 'fa-fire' },
+            expired:  { cls: 'bg-warning-subtle text-warning', icon: 'fa-clock' },
+        };
+        const m = map[action] || { cls: 'bg-secondary-subtle text-secondary', icon: 'fa-circle' };
+        return `<span class="badge ${m.cls} me-2"><i class="fas ${m.icon} me-1"></i>${action}</span>`;
+    }
+
+    function loadAudits() {
+        $.get('{{ route('pages.cache.audits') }}', function(audits) {
+            if (!audits.length) {
+                $('#audits-list').html('<div class="text-center py-4"><small class="text-muted">Sin actividad reciente</small></div>');
+                return;
+            }
+            const html = audits.map(a => `
+                <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom">
+                    <div class="flex-shrink-0">
+                        ${actionBadge(a.action)}
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <span class="fw-semibold text-truncate d-block small">${a.slug || '—'}</span>
+                    </div>
+                    <div class="flex-shrink-0 text-end">
+                        <small class="text-muted">${a.created_at}</small>
+                    </div>
+                </div>
+            `).join('');
+            $('#audits-list').html(html);
+        }).fail(function() {
+            $('#audits-list').html('<div class="text-center py-4"><small class="text-muted">Error al cargar actividad</small></div>');
+        });
+    }
+
+    $('#warm-btn').on('click', function() {
+        const $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Calentando...');
+        $.post('{{ route('pages.cache.warm') }}', function() {
+            toastr.success('Caché calentado correctamente');
+            loadStats();
+        }).fail(function() {
+            toastr.error('Error al calentar el caché');
+        }).always(function() {
+            $btn.prop('disabled', false).html('<i class="fas fa-fire"></i> <span>Calentar caché</span>');
+        });
+    });
+
+    $('#clear-btn').on('click', function() {
+        if (!confirm('¿Limpiar todo el caché de páginas?')) return;
+        const $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Limpiando...');
+        $.post('{{ route('pages.cache.clear') }}', function() {
+            toastr.success('Caché limpiado correctamente');
+            loadStats();
+            loadAudits();
+        }).fail(function() {
+            toastr.error('Error al limpiar el caché');
+        }).always(function() {
+            $btn.prop('disabled', false).html('<i class="fas fa-trash"></i> <span>Limpiar caché</span>');
+        });
+    });
 
     loadStats();
     loadAudits();

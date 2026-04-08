@@ -161,7 +161,7 @@
                     <div class="stat-value text-success">
                         {{ number_format($campaign->opens ?? 0) }}
                     </div>
-                    <div class="text-muted small">
+                    <div class="text-muted">
                         {{ $campaign->recipients_count > 0 ? number_format(($campaign->opens / $campaign->recipients_count) * 100, 2) : 0 }}% rate
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                     <div class="stat-value text-info">
                         {{ number_format($campaign->clicks ?? 0) }}
                     </div>
-                    <div class="text-muted small">
+                    <div class="text-muted">
                         {{ $campaign->recipients_count > 0 ? number_format(($campaign->clicks / $campaign->recipients_count) * 100, 2) : 0 }}% rate
                     </div>
                 </div>
@@ -191,7 +191,7 @@
                     <div class="stat-value text-warning">
                         {{ number_format($campaign->bounces ?? 0) }}
                     </div>
-                    <div class="text-muted small">
+                    <div class="text-muted">
                         {{ $campaign->recipients_count > 0 ? number_format(($campaign->bounces / $campaign->recipients_count) * 100, 2) : 0 }}% rate
                     </div>
                 </div>
@@ -313,7 +313,11 @@
                     <hr>
                     <strong>Email Body:</strong>
                     <div class="content-preview mt-2">
-                        {!! $campaign->content !!}
+                        <iframe srcdoc="{{ $campaign->content ?? '' }}"
+                                sandbox="allow-same-origin"
+                                style="width: 100%; min-height: 300px; border: none;"
+                                onload="this.style.height = this.contentDocument.body.scrollHeight + 'px'">
+                        </iframe>
                     </div>
                 </div>
             </div>

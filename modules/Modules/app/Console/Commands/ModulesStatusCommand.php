@@ -3,6 +3,7 @@
 namespace Modules\Modules\Console\Commands;
 
 use Illuminate\Console\Command;
+use Modules\Modules\Services\ModuleConfigReader;
 use Nwidart\Modules\Facades\Module;
 
 class ModulesStatusCommand extends Command
@@ -28,7 +29,7 @@ class ModulesStatusCommand extends Command
                 $disabledCount++;
             }
 
-            $moduleConfig = $this->getModuleConfig($module);
+            $moduleConfig = ModuleConfigReader::read($module);
             $version = $moduleConfig['version'] ?? '1.0.0';
             $priority = $moduleConfig['priority'] ?? 0;
 
@@ -52,22 +53,5 @@ class ModulesStatusCommand extends Command
         $this->line("  <fg=yellow>Disabled:</> {$disabledCount}");
 
         return self::SUCCESS;
-    }
-
-    /**
-     * Get module configuration from module.json.
-     */
-    private function getModuleConfig($module): array
-    {
-        try {
-            $configPath = $module->getPath().DIRECTORY_SEPARATOR.'module.json';
-            if (file_exists($configPath)) {
-                return json_decode(file_get_contents($configPath), true) ?? [];
-            }
-        } catch (\Exception $e) {
-            // Return empty array if config cannot be read
-        }
-
-        return [];
     }
 }

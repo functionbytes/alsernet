@@ -3,6 +3,8 @@
 namespace Modules\Notification\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,17 +14,15 @@ class NotificationPushToken extends Model
         'user_id',
         'token',
         'device_type',
-        'browser',
-        'platform',
-        'is_active',
+        'device_id',
+        'active',
         'last_used_at',
-        'ip_address',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'active' => 'boolean',
             'last_used_at' => 'datetime',
         ];
     }
@@ -41,10 +41,8 @@ class NotificationPushToken extends Model
             ],
             [
                 'device_type' => $metadata['device_type'] ?? null,
-                'browser' => $metadata['browser'] ?? null,
-                'platform' => $metadata['platform'] ?? null,
-                'ip_address' => $metadata['ip_address'] ?? request()->ip(),
-                'is_active' => true,
+                'device_id' => $metadata['device_id'] ?? null,
+                'active' => true,
                 'last_used_at' => now(),
             ]
         );
@@ -53,41 +51,41 @@ class NotificationPushToken extends Model
     public function activate(): void
     {
         $this->update([
-            'is_active' => true,
+            'active' => true,
             'last_used_at' => now(),
         ]);
     }
 
     public function deactivate(): void
     {
-        $this->update(['is_active' => false]);
+        $this->update(['active' => false]);
     }
 
-    public static function activeForUser(int $userId)
+    public static function activeForUser(int $userId): Collection
     {
         return static::where('user_id', $userId)
-            ->where('is_active', true)
+            ->where('active', true)
             ->get();
     }
 
     public static function cleanup(int $daysInactive = 90): int
     {
-        return static::where('is_active', false)
+        return static::where('active', false)
             ->orWhere('last_used_at', '<', now()->subDays($daysInactive))
             ->delete();
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
-        return $query->where('is_active', true);
+        return $query->where('active', true);
     }
 
-    public function scopeInactive($query)
+    public function scopeInactive(Builder $query): Builder
     {
-        return $query->where('is_active', false);
+        return $query->where('active', false);
     }
 
-    public function scopeRecentlyUsed($query, int $days = 30)
+    public function scopeRecentlyUsed(Builder $query, int $days = 30): Builder
     {
         return $query->where('last_used_at', '>=', now()->subDays($days));
     }

@@ -25,7 +25,7 @@ class MailtrapProvider extends AbstractMailProvider
             $preparedOptions = $this->prepareOptions($options);
 
             // Mailtrap API v1 - Sending
-            $response = $this->client->post('https://send.api.mailtrap.io/api/send', [
+            $response = $this->client->post(config('mailrelay.providers.mailtrap.send_url'), [
                 'headers' => [
                     'Authorization' => "Bearer {$this->getConfig('api_token')}",
                     'Content-Type' => 'application/json',
@@ -181,7 +181,7 @@ class MailtrapProvider extends AbstractMailProvider
     {
         try {
             // Test usando API de account info
-            $response = $this->client->get('https://mailtrap.io/api/v1/inboxes', [
+            $response = $this->client->get(config('mailrelay.providers.mailtrap.inboxes_url'), [
                 'headers' => [
                     'Api-Token' => $this->getConfig('api_token'),
                 ],

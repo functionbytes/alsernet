@@ -8,7 +8,7 @@ class UpdateMailerTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->user()?->hasPermissionTo('mailer.templates.update') ?? false;
     }
 
     /**

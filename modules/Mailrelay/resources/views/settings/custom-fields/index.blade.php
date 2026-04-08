@@ -125,7 +125,7 @@
                         <label for="type" class="form-label">
                             <i class="fas fa-filter me-1"></i> Tipo de campo
                         </label>
-                        <select class="form-select" id="type" name="type">
+                        <select class="form-select select2" id="type" name="type">
                             <option value="">Todos los tipos</option>
                             <option value="text" {{ request('type') == 'text' ? 'selected' : '' }}>Text</option>
                             <option value="email" {{ request('type') == 'email' ? 'selected' : '' }}>Email</option>
@@ -253,7 +253,7 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <p>¿Estás seguro de eliminar el campo personalizado <strong>{{ $field->name }}</strong>?</p>
-                                                    <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+                                                    <p class="text-muted mb-0">Esta acción no se puede deshacer.</p>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

@@ -116,7 +116,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Listado de conexiones</h6>
-                        <p class="text-muted small mb-0">Administra todas las conexiones configuradas</p>
+                        <p class="text-muted mb-0">Administra todas las conexiones configuradas</p>
                     </div>
                 </div>
 
@@ -130,21 +130,11 @@
                 </div>
 
                 @if(isset($connections) && $connections->count() > 0)
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="select-all">
-                            <label class="form-check-label  text-muted" for="select-all">Seleccionar todo</label>
-                        </div>
-                        <button type="button" class="btn btn-outline-danger d-none" id="bulk-revoke-btn" data-bs-toggle="modal" data-bs-target="#bulk-revoke-modal">
-                            <i class="fas fa-ban me-1"></i> (<span id="selected-count">0</span>)
-                        </button>
-                    </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="30"></th>
+                                    <th width="30"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Email Google</th>
                                     <th class="text-center">Estado</th>
@@ -158,7 +148,7 @@
                                 @foreach($connections as $connection)
                                     <tr>
                                         <td>
-                                            <input type="checkbox" class="form-check-input connection-checkbox" value="{{ $connection->id }}">
+                                            <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $connection->id }}">
                                         </td>
                                         <td>
                                             <strong>{{ $connection->name }}</strong>
@@ -167,7 +157,7 @@
                                             <small class="text-muted">{{ $connection->google_email }}</small>
                                         </td>
                                         <td class="text-center">
-                                            @if($connection->status->name === 'ACTIVE' && !$connection->isExpired())
+                                            @if($connection->status === \Modules\Reviews\Enums\ConnectionStatus::ACTIVE && !$connection->isExpired())
                                                 <span class="badge bg-success-subtle text-white">Activa</span>
                                             @elseif($connection->isExpired())
                                                 <span class="badge bg-danger-subtle text-white">Expirada</span>
@@ -183,7 +173,7 @@
                                         </td>
                                         <td>
                                             @if($connection->token_expires_at)
-                                                <small class="{{ $connection->isExpired() ? 'text-muted' : 'text-muted' }}">
+                                                <small class="text-muted">
                                                     {{ $connection->token_expires_at->format('d/m/Y H:i') }}
                                                 </small>
                                             @else
@@ -240,7 +230,7 @@
                             <i class="fas fa-plug fa-4x text-muted opacity-50"></i>
                         </div>
                         <h5 class="text-muted mb-2">No hay conexiones configuradas</h5>
-                        <p class="text-muted small mb-4">Comienza creando tu primera conexion para sincronizar reseñas de Google</p>
+                        <p class="text-muted mb-4">Comienza creando tu primera conexion para sincronizar reseñas de Google</p>
                         <a href="{{ route('settings.reviews.connections.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Crear primera conexion
                         </a>
@@ -281,30 +271,35 @@
         </div>
     </div>
 
-    {{-- Modal revocacion masiva --}}
-    <div id="bulk-revoke-modal" class="modal fade">
-        <div class="modal-dialog modal-md modal-dialog-centered">
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="bulk-revoke-form" method="POST" action="{{ route('settings.reviews.connections.bulk-revoke') }}">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="ids" id="bulk-revoke-ids">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Revocacion masiva</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> conexión(es)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="revoke">Revocar acceso</option>
+                        </select>
                     </div>
-                    <div class="modal-body text-center">
-                        <div class="display-4 text-warning mb-3">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <h4 class="my-0">Revocar conexiones seleccionadas?</h4>
-                        <p>Se revocaran <strong id="bulk-count">0</strong> conexiones. Esta accion no se puede deshacer.</p>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">Confirmar revocacion</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
-                    </div>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -352,29 +347,43 @@ $(document).ready(function() {
     });
 
     // Bulk selection
-    const $selectAll = $('#select-all');
-    const $checkboxes = $('.connection-checkbox');
-    const $bulkBtn = $('#bulk-revoke-btn');
-    const $selectedCount = $('#selected-count');
-    const $bulkCount = $('#bulk-count');
-    const $bulkIds = $('#bulk-revoke-ids');
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-    function updateBulkState() {
-        const selected = $checkboxes.filter(':checked');
-        const count = selected.length;
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
-        $bulkBtn.toggleClass('d-none', count === 0);
-        $selectedCount.text(count);
-        $bulkCount.text(count);
-        $bulkIds.val(JSON.stringify(selected.map(function() { return $(this).val(); }).get()));
-    }
-
-    $selectAll.on('change', function() {
-        $checkboxes.prop('checked', $(this).is(':checked'));
-        updateBulkState();
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
     });
 
-    $checkboxes.on('change', updateBulkState);
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una conexión.'); return; }
+        if (action === 'revoke' && !confirm('¿Revocar las ' + ids.length + ' conexión(es) seleccionadas? Esta acción no se puede deshacer.')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('settings.reviews.connections.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.count + ' conexión(es) revocadas.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
+    });
 });
 </script>
 @endpush

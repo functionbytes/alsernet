@@ -4,25 +4,52 @@ namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\Models\Setting;
+use Illuminate\View\View;
+use Modules\Backup\Models\SupervisorBackup;
 use Modules\System\Services\SupervisorService;
 
 class SupervisorController extends Controller
 {
     /**
-     * Display the Supervisor dashboard with all processes
+     * Artisan commands that may be executed via the run-command endpoint.
+     * All other commands are rejected with 422.
      */
-    public function index()
+    private const ALLOWED_COMMANDS = [
+        'cache:clear',
+        'config:cache',
+        'config:clear',
+        'route:cache',
+        'route:clear',
+        'view:cache',
+        'view:clear',
+        'optimize',
+        'optimize:clear',
+        'queue:restart',
+        'schedule:run',
+        'schedule:list',
+        'horizon:terminate',
+        'horizon:pause',
+        'horizon:continue',
+    ];
+
+    public function __construct(
+        private readonly SupervisorService $supervisor
+    ) {}
+
+    /**
+     * Display the Supervisor dashboard with all processes.
+     */
+    public function index(): View
     {
         try {
-            $supervisorStatus = SupervisorService::getStatus();
+            $supervisorStatus = $this->supervisor->getStatus();
             $processes = $supervisorStatus['processes'] ?? [];
-
-            // Filter only Alsernet processes
-            $alsarnetProcesses = SupervisorService::getAlsernetProcesses();
+            $alsarnetProcesses = $this->supervisor->getAlsernetProcesses();
 
             $pageTitle = 'Panel de Control - Supervisor';
             $breadcrumb = 'Configuración / Sistema / Supervisor';
@@ -47,21 +74,22 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Show detailed view for a specific process
+     * Show detailed view for a specific process.
      */
-    public function show($processName)
+    public function show(Request $request, string $processName): View|RedirectResponse
     {
         try {
-            $processStatus = SupervisorService::getProcessStatus($processName);
+            $this->supervisor->validateProcessName($processName);
+            $processStatus = $this->supervisor->getProcessStatus($processName);
 
             if (isset($processStatus['error'])) {
                 return redirect()->route('settings.system.supervisor.index')
                     ->with('error', 'Proceso no encontrado: '.$processStatus['error']);
             }
 
-            $logs = SupervisorService::getProcessLogs($processName, 100);
-            $pid = SupervisorService::getPid($processName);
-            $uptime = SupervisorService::getUptime($processName);
+            $logs = $this->supervisor->getProcessLogs($processName, 100);
+            $pid = $this->supervisor->getPid($processName);
+            $uptime = $this->supervisor->getUptime($processName);
 
             $pageTitle = 'Detalles del Proceso - '.$processName;
             $breadcrumb = 'Configuración / Sistema / Supervisor / '.$processName;
@@ -75,6 +103,9 @@ class SupervisorController extends Controller
                 'pageTitle',
                 'breadcrumb'
             ));
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('settings.system.supervisor.index')
+                ->with('error', 'Nombre de proceso no válido.');
         } catch (\Exception $e) {
             Log::error('Supervisor process details failed', ['error' => $e->getMessage(), 'process' => $processName]);
 
@@ -84,12 +115,14 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Start a process via AJAX
+     * Start a process via AJAX.
      */
-    public function start(Request $request, $processName)
+    public function start(Request $request, string $processName): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::startProcess($processName);
+            $request->validate(['processName' => 'regex:/^[a-zA-Z0-9_\-:.]+$/']);
+            $this->supervisor->validateProcessName($processName);
+            $result = $this->supervisor->startProcess($processName);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -101,14 +134,15 @@ class SupervisorController extends Controller
 
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso iniciado correctamente');
+        } catch (\InvalidArgumentException $e) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'Nombre de proceso no válido.'], 422)
+                : redirect()->route('settings.system.supervisor.index')->with('error', 'Nombre de proceso no válido.');
         } catch (\Exception $e) {
             Log::error('Supervisor process start failed', ['error' => $e->getMessage(), 'process' => $processName]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al iniciar el proceso.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al iniciar el proceso.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -117,12 +151,14 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Stop a process via AJAX
+     * Stop a process via AJAX.
      */
-    public function stop(Request $request, $processName)
+    public function stop(Request $request, string $processName): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::stopProcess($processName);
+            $request->validate(['processName' => 'regex:/^[a-zA-Z0-9_\-:.]+$/']);
+            $this->supervisor->validateProcessName($processName);
+            $result = $this->supervisor->stopProcess($processName);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -134,14 +170,15 @@ class SupervisorController extends Controller
 
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso detenido correctamente');
+        } catch (\InvalidArgumentException $e) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'Nombre de proceso no válido.'], 422)
+                : redirect()->route('settings.system.supervisor.index')->with('error', 'Nombre de proceso no válido.');
         } catch (\Exception $e) {
             Log::error('Supervisor process stop failed', ['error' => $e->getMessage(), 'process' => $processName]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al detener el proceso.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al detener el proceso.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -150,12 +187,14 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Restart a process via AJAX
+     * Restart a process via AJAX.
      */
-    public function restart(Request $request, $processName)
+    public function restart(Request $request, string $processName): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::restartProcess($processName);
+            $request->validate(['processName' => 'regex:/^[a-zA-Z0-9_\-:.]+$/']);
+            $this->supervisor->validateProcessName($processName);
+            $result = $this->supervisor->restartProcess($processName);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -167,14 +206,15 @@ class SupervisorController extends Controller
 
             return redirect()->route('settings.system.supervisor.index')
                 ->with('success', 'Proceso reiniciado correctamente');
+        } catch (\InvalidArgumentException $e) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'Nombre de proceso no válido.'], 422)
+                : redirect()->route('settings.system.supervisor.index')->with('error', 'Nombre de proceso no válido.');
         } catch (\Exception $e) {
             Log::error('Supervisor process restart failed', ['error' => $e->getMessage(), 'process' => $processName]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al reiniciar el proceso.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al reiniciar el proceso.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -183,12 +223,12 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Reload Supervisor configuration via AJAX
+     * Reload Supervisor configuration via AJAX.
      */
-    public function reload(Request $request)
+    public function reload(Request $request): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::reload();
+            $result = $this->supervisor->reload();
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -204,10 +244,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor reload failed', ['error' => $e->getMessage()]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al recargar la configuración.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al recargar la configuración.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -216,13 +253,14 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Get process logs via AJAX
+     * Get process logs via AJAX.
      */
-    public function getLogs(Request $request, $processName)
+    public function getLogs(Request $request, string $processName): JsonResponse
     {
         try {
-            $lines = $request->input('lines', 50);
-            $logs = SupervisorService::getProcessLogs($processName, $lines);
+            $this->supervisor->validateProcessName($processName);
+            $lines = min((int) $request->input('lines', 50), 500);
+            $logs = $this->supervisor->getProcessLogs($processName, $lines);
 
             if (isset($logs['error'])) {
                 return response()->json([
@@ -235,58 +273,48 @@ class SupervisorController extends Controller
                 'success' => true,
                 'logs' => $logs['logs'] ?? '',
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => 'Nombre de proceso no válido.'], 422);
         } catch (\Exception $e) {
             Log::error('Supervisor get logs failed', ['error' => $e->getMessage(), 'process' => $processName]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener logs.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener logs.'], 500);
         }
     }
 
     /**
-     * Get status of all processes via AJAX (for real-time updates)
+     * Get status of all processes via AJAX (for real-time updates).
      */
-    public function getStatusAjax(Request $request)
+    public function getStatusAjax(Request $request): JsonResponse
     {
         try {
-            $supervisorStatus = SupervisorService::getStatus();
+            $supervisorStatus = $this->supervisor->getStatus();
 
-            // Check if there's an error from the service
             if (isset($supervisorStatus['error'])) {
-                \Log::warning('Supervisor Service Error: '.$supervisorStatus['error']);
+                Log::warning('Supervisor Service Error: '.$supervisorStatus['error']);
 
                 return response()->json([
                     'success' => false,
                     'message' => $supervisorStatus['error'],
-                ], 200); // Return 200 so JavaScript success block handles it
+                ], 503);
             }
-
-            $processes = $supervisorStatus['processes'] ?? [];
-
-            // Filter only Alsernet processes
-            $alsarnetProcesses = SupervisorService::getAlsernetProcesses();
 
             return response()->json([
                 'success' => true,
-                'processes' => $processes,
-                'alsarnetProcesses' => $alsarnetProcesses,
+                'processes' => $supervisorStatus['processes'] ?? [],
+                'alsarnetProcesses' => $this->supervisor->getAlsernetProcesses(),
             ]);
         } catch (\Exception $e) {
             Log::error('Supervisor get status failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener estado.',
-            ], 200); // Return 200 so JavaScript success block handles it
+            return response()->json(['success' => false, 'message' => 'Error al obtener estado.'], 503);
         }
     }
 
     /**
-     * Get all scheduled jobs (Laravel Scheduler)
+     * Get all scheduled jobs (Laravel Scheduler).
      */
-    public function getScheduledJobs()
+    public function getScheduledJobs(): JsonResponse
     {
         try {
             $schedule = app(Schedule::class);
@@ -309,79 +337,63 @@ class SupervisorController extends Controller
         } catch (\Exception $e) {
             Log::error('Supervisor get scheduled jobs failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener scheduled jobs.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener scheduled jobs.'], 500);
         }
     }
 
     /**
-     * Run scheduler manually
+     * Run scheduler manually.
      */
-    public function runScheduler(Request $request)
+    public function runScheduler(Request $request): JsonResponse
     {
         try {
             Artisan::call('schedule:run');
-            $output = Artisan::output();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Scheduler ejecutado correctamente',
-                'output' => $output,
+                'output' => Artisan::output(),
             ]);
         } catch (\Exception $e) {
             Log::error('Supervisor run scheduler failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al ejecutar scheduler.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al ejecutar scheduler.'], 500);
         }
     }
 
     /**
-     * Run arbitrary Artisan command
+     * Run an Artisan command from the explicit allowlist.
+     * Any command not in ALLOWED_COMMANDS is rejected with 422.
      */
-    public function runCommand(Request $request)
+    public function runCommand(Request $request): JsonResponse
     {
-        $command = $request->input('command');
-
-        if (empty($command)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'El comando es requerido',
-            ], 400);
-        }
+        $validated = $request->validate([
+            'command' => ['required', 'string', 'in:'.implode(',', self::ALLOWED_COMMANDS)],
+        ]);
 
         try {
-            Artisan::call($command);
-            $output = Artisan::output();
+            Artisan::call($validated['command']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Comando ejecutado correctamente',
-                'output' => $output,
+                'output' => Artisan::output(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Supervisor run command failed', ['error' => $e->getMessage(), 'command' => $command]);
+            Log::error('Supervisor run command failed', ['error' => $e->getMessage(), 'command' => $validated['command']]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al ejecutar comando.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al ejecutar comando.'], 503);
         }
     }
 
     /**
-     * List available Artisan commands
+     * List available Artisan commands.
      */
-    public function listCommands()
+    public function listCommands(): JsonResponse
     {
         try {
             Artisan::call('list', ['--format' => 'json']);
-            $output = Artisan::output();
-            $data = json_decode($output, true);
+            $data = json_decode(Artisan::output(), true);
             $commands = [];
 
             if (isset($data['commands'])) {
@@ -399,7 +411,6 @@ class SupervisorController extends Controller
                 'commands' => $commands,
             ]);
         } catch (\Exception $e) {
-            // Fallback with common commands
             $commands = [
                 ['name' => 'cache:clear', 'description' => 'Limpiar la caché de la aplicación'],
                 ['name' => 'config:cache', 'description' => 'Crear un archivo de caché de configuración'],
@@ -419,12 +430,12 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Restart Supervisor service
+     * Restart Supervisor service.
      */
-    public function restartSupervisor(Request $request)
+    public function restartSupervisor(Request $request): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::restartSupervisor();
+            $result = $this->supervisor->restartSupervisor();
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -440,10 +451,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor restart failed', ['error' => $e->getMessage()]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al reiniciar supervisor.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al reiniciar supervisor.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -452,31 +460,58 @@ class SupervisorController extends Controller
     }
 
     /**
-     * List all backups
+     * Restart all Supervisor processes.
      */
-    public function listBackups(Request $request)
+    public function restartAll(Request $request): JsonResponse|RedirectResponse
     {
         try {
-            $environment = $request->input('environment');
-            $backups = SupervisorService::getBackups($environment);
+            $result = $this->supervisor->restartAllProcesses();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => $result['success'] ?? false,
+                    'message' => $result['success'] ?? false ? 'Todos los procesos reiniciados correctamente' : 'Error al reiniciar los procesos',
+                    'output' => $result['output'] ?? '',
+                ]);
+            }
+
+            return redirect()->route('settings.system.supervisor.index')
+                ->with('success', 'Todos los procesos reiniciados correctamente');
+        } catch (\Exception $e) {
+            Log::error('Supervisor restart all failed', ['error' => $e->getMessage()]);
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error al reiniciar los procesos.'], 500);
+            }
+
+            return redirect()->route('settings.system.supervisor.index')
+                ->with('error', 'Error al reiniciar los procesos.');
+        }
+    }
+
+    /**
+     * List all backups.
+     */
+    public function listBackups(Request $request): JsonResponse|RedirectResponse
+    {
+        try {
+            $backups = $this->supervisor->getBackups($request->input('environment'));
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'total_backups' => $backups->count(),
-                    'backups' => $backups->map(function ($backup) {
-                        return [
-                            'id' => $backup->id,
-                            'name' => $backup->name,
-                            'description' => $backup->description,
-                            'environment' => $backup->environment,
-                            'backup_size' => $backup->formatted_size,
-                            'backed_up_at' => $backup->backed_up_at?->format('Y-m-d H:i:s'),
-                            'relative_time' => $backup->relative_time,
-                            'restored_at' => $backup->restored_at?->format('Y-m-d H:i:s'),
-                            'is_auto' => $backup->is_auto,
-                        ];
-                    })->all(),
+                    'backups' => $backups->map(fn ($backup) => [
+                        'id' => $backup->id,
+                        'name' => $backup->name,
+                        'description' => $backup->description,
+                        'environment' => $backup->environment,
+                        'backup_size' => $backup->formatted_size,
+                        'backed_up_at' => $backup->backed_up_at?->format('Y-m-d H:i:s'),
+                        'relative_time' => $backup->relative_time,
+                        'restored_at' => $backup->restored_at?->format('Y-m-d H:i:s'),
+                        'is_auto' => $backup->is_auto,
+                    ])->all(),
                 ]);
             }
 
@@ -484,17 +519,14 @@ class SupervisorController extends Controller
         } catch (\Exception $e) {
             Log::error('Supervisor list backups failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener backups.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener backups.'], 500);
         }
     }
 
     /**
-     * Create a backup
+     * Create a backup.
      */
-    public function createBackup(Request $request)
+    public function createBackup(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -503,7 +535,7 @@ class SupervisorController extends Controller
         ]);
 
         try {
-            $result = SupervisorService::createBackup(
+            $result = $this->supervisor->createBackup(
                 $validated['name'],
                 $validated['description'] ?? null,
                 $validated['environment']
@@ -519,10 +551,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor create backup failed', ['error' => $e->getMessage()]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al crear backup.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al crear backup.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -531,12 +560,12 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Restore a backup
+     * Restore a backup.
      */
-    public function restoreBackup(Request $request, $backupId)
+    public function restoreBackup(Request $request, int|string $backupId): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::restoreBackup($backupId, auth()->id());
+            $result = $this->supervisor->restoreBackup($backupId, auth()->id());
 
             if ($request->expectsJson()) {
                 return response()->json($result);
@@ -548,10 +577,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor restore backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al restaurar backup.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al restaurar backup.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -560,12 +586,12 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Delete a backup
+     * Delete a backup.
      */
-    public function deleteBackup(Request $request, $backupId)
+    public function deleteBackup(Request $request, int|string $backupId): JsonResponse|RedirectResponse
     {
         try {
-            $result = SupervisorService::deleteBackup($backupId);
+            $result = $this->supervisor->deleteBackup($backupId);
 
             if ($request->expectsJson()) {
                 return response()->json($result);
@@ -577,10 +603,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor delete backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al eliminar backup.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al eliminar backup.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')
@@ -589,13 +612,12 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Download a backup
+     * Download a backup.
      */
-    public function downloadBackup($backupId)
+    public function downloadBackup(int|string $backupId): JsonResponse
     {
         try {
-            $backup = Setting\Backup\SupervisorBackup::findOrFail($backupId);
-
+            $backup = SupervisorBackup::findOrFail($backupId);
             $filename = 'supervisor-backup-'.$backup->environment.'-'.$backup->backed_up_at->format('Y-m-d-His').'.json';
 
             return response()->json($backup->toArray())
@@ -604,73 +626,50 @@ class SupervisorController extends Controller
         } catch (\Exception $e) {
             Log::error('Supervisor download backup failed', ['error' => $e->getMessage(), 'backup_id' => $backupId]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al descargar backup.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al descargar backup.'], 500);
         }
     }
 
     /**
-     * List configuration files
+     * List configuration files from the supervisor conf.d directory.
      */
-    public function listConfigFiles()
+    public function listConfigFiles(): JsonResponse
     {
         try {
-            $configFiles = SupervisorService::getBackups(null, 1);
+            $files = $this->supervisor->listConfDirFiles();
 
-            if ($configFiles->count() > 0) {
-                $files = array_keys($configFiles[0]->config_files ?? []);
-            } else {
-                $files = [];
-            }
-
-            return response()->json([
-                'success' => true,
-                'files' => $files,
-            ]);
+            return response()->json(['success' => true, 'files' => $files]);
         } catch (\Exception $e) {
             Log::error('Supervisor list config files failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener archivos de configuración.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener archivos de configuración.'], 500);
         }
     }
 
     /**
-     * Get a specific configuration file
+     * Get a specific configuration file.
      */
-    public function getConfigFile(Request $request)
+    public function getConfigFile(Request $request): JsonResponse
     {
         $filePath = $request->input('file');
 
         if (! $filePath) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ruta del archivo requerida',
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Ruta del archivo requerida'], 400);
         }
 
         try {
-            $result = SupervisorService::getConfigFile($filePath);
-
-            return response()->json($result);
+            return response()->json($this->supervisor->getConfigFile($filePath));
         } catch (\Exception $e) {
             Log::error('Supervisor get config file failed', ['error' => $e->getMessage(), 'file' => $filePath]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener archivo.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener archivo.'], 500);
         }
     }
 
     /**
-     * Update a configuration file
+     * Update a configuration file.
      */
-    public function updateConfigFile(Request $request)
+    public function updateConfigFile(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'file' => 'required|string',
@@ -678,7 +677,7 @@ class SupervisorController extends Controller
         ]);
 
         try {
-            $result = SupervisorService::updateConfigFile($validated['file'], $validated['content']);
+            $result = $this->supervisor->updateConfigFile($validated['file'], $validated['content']);
 
             if ($request->expectsJson()) {
                 return response()->json($result);
@@ -690,10 +689,7 @@ class SupervisorController extends Controller
             Log::error('Supervisor update config file failed', ['error' => $e->getMessage(), 'file' => $validated['file']]);
 
             if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al actualizar archivo.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Error al actualizar archivo.'], 500);
             }
 
             return redirect()->route('settings.system.supervisor.index')

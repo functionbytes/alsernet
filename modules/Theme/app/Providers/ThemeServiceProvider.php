@@ -29,6 +29,9 @@ class ThemeServiceProvider extends ServiceProvider
         // to the 334+ files that use it
         View::addLocation(__DIR__.'/../../resources/views');
 
+        // Register theme:: namespace for modules that reference views with the prefix
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'theme');
+
         // Register helper functions
         $this->registerHelpers();
 

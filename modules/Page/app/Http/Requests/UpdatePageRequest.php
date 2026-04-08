@@ -2,9 +2,11 @@
 
 namespace Modules\Page\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Page\Models\Page;
+use Modules\Page\Enums\PageStatus;
+use Modules\Page\Models\PageTranslation;
 
 class UpdatePageRequest extends FormRequest
 {
@@ -13,7 +15,9 @@ class UpdatePageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Ajustar según políticas de autorización
+        $page = $this->route('page');
+
+        return $this->user()->can('update', $page);
     }
 
     /**
@@ -24,17 +28,14 @@ class UpdatePageRequest extends FormRequest
         $pageId = $this->route('page') ? $this->route('page')->id : $this->route('id');
 
         return [
-            'title' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+            'parent_id' => ['nullable', 'integer', 'exists:pages,id'],
+            'title' => ['nullable', 'string', 'max:255'],
             'slug' => [
                 'nullable',
                 'string',
                 'max:255',
                 Rule::unique('pages', 'slug')->ignore($pageId),
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                'regex:/^[\p{L}0-9]+(?:[\/\-][\p{L}0-9]+)*$/u',
             ],
             'content' => [
                 'nullable',
@@ -53,9 +54,9 @@ class UpdatePageRequest extends FormRequest
             'status' => [
                 'required',
                 Rule::in([
-                    Page::STATUS_DRAFT,
-                    Page::STATUS_PUBLISHED,
-                    Page::STATUS_PENDING,
+                    PageStatus::Draft->value,
+                    PageStatus::Published->value,
+                    PageStatus::Pending->value,
                 ]),
             ],
             'published_at' => [
@@ -70,31 +71,12 @@ class UpdatePageRequest extends FormRequest
             'unpublish_at' => [
                 'nullable',
                 'date',
-                'after:publish_at',
-            ],
-            'seo_title' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-            'seo_description' => [
-                'nullable',
-                'string',
-                'max:500',
-            ],
-            'seo_keywords' => [
-                'nullable',
-                'string',
-                'max:500',
+                $this->filled('publish_at') ? 'after:publish_at' : 'after_or_equal:now',
             ],
             'header_style' => [
                 'nullable',
                 'string',
                 Rule::in(['header-style-1', 'header-style-2', 'header-style-3', 'header-style-4']),
-            ],
-            'seo_noindex' => [
-                'nullable',
-                'boolean',
             ],
             'featured_image' => [
                 'nullable',
@@ -102,11 +84,17 @@ class UpdatePageRequest extends FormRequest
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
             ],
-            'seo_image_url' => [
-                'nullable',
-                'string',
-                'max:500',
-            ],
+            'featured_image_url' => ['nullable', 'string', 'max:500'],
+            'categories' => ['nullable', 'array'],
+            'categories.*' => ['integer', 'exists:page_categories,id'],
+            'tags_input' => ['nullable', 'string', 'max:500'],
+            'translations' => ['nullable', 'array'],
+            'translations.*.title' => ['nullable', 'string', 'max:255'],
+            'translations.*.slug' => ['nullable', 'string', 'max:255', 'regex:/^[\p{L}0-9]+(?:[\/\-][\p{L}0-9]+)*$/u'],
+            'translations.*.content' => ['nullable', 'string'],
+            'translations.*.description' => ['nullable', 'string', 'max:500'],
+            'translations.*.status' => ['nullable', Rule::in([PageStatus::Draft->value, PageStatus::Published->value, PageStatus::Pending->value])],
+            'translations.*.published_at' => ['nullable', 'date'],
         ];
     }
 
@@ -125,13 +113,8 @@ class UpdatePageRequest extends FormRequest
             'published_at' => 'fecha de publicación',
             'publish_at' => 'fecha de publicación programada',
             'unpublish_at' => 'fecha de despublicación programada',
-            'seo_title' => 'título SEO',
-            'seo_description' => 'descripción SEO',
-            'seo_keywords' => 'palabras clave SEO',
             'header_style' => 'estilo de encabezado',
-            'seo_noindex' => 'noindex',
             'featured_image' => 'imagen destacada',
-            'seo_image_url' => 'URL imagen SEO',
         ];
     }
 
@@ -144,7 +127,7 @@ class UpdatePageRequest extends FormRequest
             'title.required' => 'El título es obligatorio.',
             'title.max' => 'El título no puede exceder :max caracteres.',
             'slug.unique' => 'Este slug ya está en uso.',
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones.',
+            'slug.regex' => 'El slug solo puede contener letras, números, guiones (-) y barras (/).',
             'status.required' => 'El estado es obligatorio.',
             'status.in' => 'El estado seleccionado no es válido.',
             'template.in' => 'La plantilla seleccionada no es válida.',
@@ -159,15 +142,8 @@ class UpdatePageRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Auto-generate slug from title if not provided
-        if (! $this->has('slug') || empty($this->slug)) {
-            $this->merge([
-                'slug' => \Illuminate\Support\Str::slug($this->title),
-            ]);
-        }
-
         // Set published_at to now if publishing and not already set
-        if ($this->status === Page::STATUS_PUBLISHED && ! $this->has('published_at')) {
+        if ($this->status === PageStatus::Published->value && ! $this->has('published_at')) {
             $page = $this->route('page');
             if (! $page || ! $page->published_at) {
                 $this->merge([
@@ -175,5 +151,31 @@ class UpdatePageRequest extends FormRequest
                 ]);
             }
         }
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($v) {
+            $pageId = $this->route('page')?->id;
+
+            foreach ($this->input('translations', []) as $locale => $data) {
+                $slug = $data['slug'] ?? null;
+                if (! $slug) {
+                    continue;
+                }
+
+                $exists = PageTranslation::forLocale($locale)
+                    ->where('slug', $slug)
+                    ->where('page_id', '!=', $pageId)
+                    ->exists();
+
+                if ($exists) {
+                    $v->errors()->add(
+                        "translations.{$locale}.slug",
+                        "El slug '{$slug}' ya está en uso para el idioma {$locale}."
+                    );
+                }
+            }
+        });
     }
 }

@@ -2,8 +2,13 @@
 
 namespace Modules\System\Services;
 
+use Illuminate\Support\Facades\Cache;
+use Modules\System\Traits\FormatsBytes;
+
 class SystemInfoService
 {
+    use FormatsBytes;
+
     /**
      * Get all system information
      */
@@ -81,52 +86,55 @@ class SystemInfoService
     }
 
     /**
-     * Get Composer packages and their versions
+     * Get Composer packages and their versions.
+     * Cached for 6 hours — composer.lock rarely changes at runtime.
      */
     public function getComposerPackages(): array
     {
-        try {
-            $composerFile = base_path('composer.lock');
+        return Cache::remember('system.composer_packages', now()->addHours(6), function (): array {
+            try {
+                $composerFile = base_path('composer.lock');
 
-            if (! file_exists($composerFile)) {
-                return [];
-            }
-
-            $composer = json_decode(file_get_contents($composerFile), true);
-
-            if (! isset($composer['packages']) && ! isset($composer['packages-dev'])) {
-                return [];
-            }
-
-            $packages = array_merge(
-                $composer['packages'] ?? [],
-                $composer['packages-dev'] ?? []
-            );
-
-            $result = [];
-            foreach ($packages as $package) {
-                $name = $package['name'] ?? 'unknown';
-                $version = $package['version'] ?? 'unknown';
-
-                // Group packages by vendor
-                [$vendor, $packageName] = explode('/', $name, 2);
-
-                if (! isset($result[$vendor])) {
-                    $result[$vendor] = [];
+                if (! file_exists($composerFile)) {
+                    return [];
                 }
 
-                $result[$vendor][$packageName] = [
-                    'full_name' => $name,
-                    'version' => $version,
-                    'description' => $package['description'] ?? '',
-                    'require' => $package['require'] ?? [],
-                ];
-            }
+                $composer = json_decode(file_get_contents($composerFile), true);
 
-            return $result;
-        } catch (\Exception $e) {
-            return [];
-        }
+                if (! isset($composer['packages']) && ! isset($composer['packages-dev'])) {
+                    return [];
+                }
+
+                $packages = array_merge(
+                    $composer['packages'] ?? [],
+                    $composer['packages-dev'] ?? []
+                );
+
+                $result = [];
+                foreach ($packages as $package) {
+                    $name = $package['name'] ?? 'unknown';
+                    $version = $package['version'] ?? 'unknown';
+
+                    // Group packages by vendor
+                    [$vendor, $packageName] = explode('/', $name, 2);
+
+                    if (! isset($result[$vendor])) {
+                        $result[$vendor] = [];
+                    }
+
+                    $result[$vendor][$packageName] = [
+                        'full_name' => $name,
+                        'version' => $version,
+                        'description' => $package['description'] ?? '',
+                        'require' => $package['require'] ?? [],
+                    ];
+                }
+
+                return $result;
+            } catch (\Exception $e) {
+                return [];
+            }
+        });
     }
 
     /**
@@ -134,65 +142,40 @@ class SystemInfoService
      */
     private function getServerIP(): string
     {
-        // Try to get from various sources
         if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
             return $_SERVER['HTTP_CF_CONNECTING_IP'];
-        } elseif (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            // Handle multiple IPs in X-Forwarded-For
+        }
+
+        if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
 
             return trim($ips[0]);
-        } elseif (! empty($_SERVER['REMOTE_ADDR'])) {
-            return $_SERVER['REMOTE_ADDR'];
-        } else {
-            return 'Unknown';
         }
+
+        return $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
     }
 
     /**
-     * Get directory size in a human-readable format
+     * Get directory size in a human-readable format.
+     * Limits recursion to 3 levels deep to avoid timeouts on large trees.
      */
-    private function getDirectorySize(string $path): string
+    private function getDirectorySize(string $path, int $depth = 0): string
     {
-        $size = 0;
-        $files = scandir($path);
-
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
-
-            $filePath = $path.DIRECTORY_SEPARATOR.$file;
-
-            if (is_dir($filePath)) {
-                // Limit recursion depth to avoid timeout
-                static $depth = 0;
-                if ($depth < 3) {
-                    $depth++;
-                    $size += $this->getDirectorySizeRecursive($filePath);
-                    $depth--;
-                }
-            } else {
-                if (file_exists($filePath)) {
-                    $size += filesize($filePath);
-                }
-            }
-        }
-
-        return $this->formatBytes($size);
+        return $this->formatBytes($this->getDirectorySizeBytes($path, $depth));
     }
 
     /**
-     * Recursively get directory size
+     * Recursively sum file sizes up to a maximum depth.
      */
-    private function getDirectorySizeRecursive(string $path): int
+    private function getDirectorySizeBytes(string $path, int $depth = 0): int
     {
-        $size = 0;
         $files = @scandir($path);
 
         if ($files === false) {
             return 0;
         }
+
+        $size = 0;
 
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') {
@@ -202,26 +185,14 @@ class SystemInfoService
             $filePath = $path.DIRECTORY_SEPARATOR.$file;
 
             if (@is_dir($filePath)) {
-                $size += $this->getDirectorySizeRecursive($filePath);
-            } else {
+                if ($depth < 3) {
+                    $size += $this->getDirectorySizeBytes($filePath, $depth + 1);
+                }
+            } elseif (file_exists($filePath)) {
                 $size += @filesize($filePath);
             }
         }
 
         return $size;
-    }
-
-    /**
-     * Format bytes to human-readable format
-     */
-    private function formatBytes(int $bytes): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-        $bytes /= (1 << (10 * $pow));
-
-        return round($bytes, 2).' '.$units[$pow];
     }
 }

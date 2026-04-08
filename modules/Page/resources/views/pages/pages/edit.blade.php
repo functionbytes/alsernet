@@ -27,6 +27,441 @@
         <div class="row">
 
 
+            @php
+                $sidebarPrefix = setting('permalink-modules-page-models-page', '');
+                $translationData = [];
+                foreach ($locales as $localeObj) {
+                    $code = $localeObj->code;
+                    $t = $translations->get($code);
+                    $translationData[$code] = [
+                        'slug'         => $t?->slug ?? '',
+                        'status'       => old('translations.'.$code.'.status', $t?->status ?? 'draft'),
+                        'published_at' => old('translations.'.$code.'.published_at', $t?->published_at?->format('Y-m-d\TH:i') ?? ''),
+                        'url'          => $t?->slug ? ($sidebarPrefix ? url($sidebarPrefix.'/'.$t->slug) : url($t->slug)) : '',
+                    ];
+                }
+            @endphp
+
+
+            {{-- COLUMNA PRINCIPAL --}}
+            <div class="col-lg-8 order-lg-1">
+
+                {{-- Tabs de idiomas --}}
+                <div class="card mb-3">
+                    <div class="card-header border-bottom px-4 pt-3 pb-0">
+                        <ul class="nav nav-tabs card-header-tabs" id="langTabs" role="tablist">
+                            @foreach($locales as $localeObj)
+                                @php $locale = $localeObj->code; $t = $translations->get($locale); @endphp
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }}"
+                                            id="tab-btn-{{ $locale }}"
+                                            data-bs-toggle="tab"
+                                            data-bs-target="#pane-{{ $locale }}"
+                                            data-locale="{{ $locale }}"
+                                            type="button" role="tab">
+                                        {{ $localeObj->name }}
+                                        @php
+                                            $hasTitle   = !empty($t?->title);
+                                            $hasContent = !empty($t?->content);
+                                            $isPublished = $t?->status === 'published';
+                                            $isComplete  = $hasTitle && $hasContent;
+                                            if ($t && $isPublished && $isComplete) {
+                                                $badge = '<span class="badge bg-success ms-1" style="font-size:.6rem" title="Publicado y completo">●</span>';
+                                            } elseif ($t && $isComplete) {
+                                                $badge = '<span class="badge bg-info ms-1" style="font-size:.6rem" title="Completo, pendiente de publicar">●</span>';
+                                            } elseif ($t && ($hasTitle || $hasContent)) {
+                                                $badge = '<span class="badge bg-warning ms-1" style="font-size:.6rem" title="Incompleto: falta título o contenido">◐</span>';
+                                            } elseif ($t) {
+                                                $badge = '<span class="badge bg-secondary ms-1" style="font-size:.6rem" title="Borrador sin contenido">○</span>';
+                                            } else {
+                                                $badge = '<span class="badge bg-danger ms-1" style="font-size:.6rem" title="Sin traducción">✗</span>';
+                                            }
+                                        @endphp
+                                        {!! $badge !!}
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    <div class="tab-content" id="langTabsContent">
+                        @foreach($locales as $localeObj)
+                            @php $locale = $localeObj->code; $t = $translations->get($locale); @endphp
+                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-3"
+                                 id="pane-{{ $locale }}" role="tabpanel">
+
+                                {{-- Nombre --}}
+                                <div class="mb-3">
+                                    <label for="title-{{ $locale }}" class="form-label fw-semibold">Nombre</label>
+                                    <input type="text"
+                                           class="form-control @error('translations.'.$locale.'.title') is-invalid @enderror"
+                                           id="title-{{ $locale }}"
+                                           name="translations[{{ $locale }}][title]"
+                                           value="{{ old('translations.'.$locale.'.title', $t?->title) }}"
+                                           maxlength="255">
+                                    @error('translations.'.$locale.'.title')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Enlace permanente --}}
+                                @php $prefix = setting('permalink-modules-page-models-page', ''); @endphp
+                                <div class="mb-3">
+                                    <label for="slug-{{ $locale }}" class="form-label fw-semibold">Enlace permanente</label>
+                                    <div class="input-group">
+                                <span class="input-group-text text-muted">
+                                    {{ $prefix ? url($prefix) . '/' : url('/') . '/' }}
+                                </span>
+                                        <input type="text"
+                                               class="form-control @error('translations.'.$locale.'.slug') is-invalid @enderror"
+                                               id="slug-{{ $locale }}"
+                                               name="translations[{{ $locale }}][slug]"
+                                               value="{{ old('translations.'.$locale.'.slug', $t?->slug) }}"
+                                               placeholder="slug-de-la-pagina">
+                                        <button type="button" class="btn btn-outline-secondary"
+                                                onclick="regenerateSlugForLocale('{{ $locale }}')">
+                                            Regenerar
+                                        </button>
+                                    </div>
+                                    @error('translations.'.$locale.'.slug')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @php $slugVal = old('translations.'.$locale.'.slug', $translations[$locale]?->slug ?? null); @endphp
+                                    @if($slugVal)
+                                        <div class="mt-1">
+                                            <a href="{{ $prefix ? url($prefix.'/'.$slugVal) : url($slugVal) }}"
+                                               target="_blank"
+                                               class="text-decoration-none small text-muted"
+                                               id="view-link-{{ $locale }}">
+                                                <i class="fas fa-external-link-alt me-1"></i>{{ $prefix ? url($prefix.'/'.$slugVal) : url($slugVal) }}
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Descripción --}}
+                                <div class="mb-3">
+                                    <label for="description-{{ $locale }}" class="form-label fw-semibold">Descripción</label>
+                                    <textarea class="form-control @error('translations.'.$locale.'.description') is-invalid @enderror"
+                                              id="description-{{ $locale }}"
+                                              name="translations[{{ $locale }}][description]"
+                                              rows="3" maxlength="500"
+                                              placeholder="Descripción corta">{{ old('translations.'.$locale.'.description', $t?->description) }}</textarea>
+                                    @error('translations.'.$locale.'.description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <hr class="my-3">
+
+                                {{-- Contenido --}}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Contenido</label>
+                                    <div class="d-grid gap-2 mb-2">
+                                        <button type="button" class="btn btn-outline-secondary"
+                                                onclick="toggleEditor('{{ $locale }}')">
+                                            Mostrar/Ocultar Editor
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary add-media-btn"
+                                                data-locale="{{ $locale }}">
+                                            <i class="fas fa-image me-1"></i> Agregar
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ui-blocks-btn"
+                                                data-locale="{{ $locale }}"
+                                                data-bs-toggle="modal" data-bs-target="#uiBlocksModal">
+                                            <i class="fas fa-th-large me-1"></i> Bloques de interfaz de usuario
+                                        </button>
+                                    </div>
+                                    @include('page::pages.partials.shortcode-help', ['locale' => $locale])
+                                    <div id="editorWrapper-{{ $locale }}">
+                                <textarea id="content-{{ $locale }}"
+                                          name="translations[{{ $locale }}][content]"
+                                          class="@error('translations.'.$locale.'.content') is-invalid @enderror">{{ old('translations.'.$locale.'.content', $t?->content) }}</textarea>
+                                    </div>
+                                    @error('translations.'.$locale.'.content')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <hr class="my-0">
+
+                    {{-- Configuración general (siempre visible) --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Configuración general</h6>
+                        <p class="text-muted mb-3 small">Opciones que aplican a todos los idiomas.</p>
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+                                <select class="form-select" id="main-status-select">
+                                    <option value="draft">Borrador</option>
+                                    <option value="published">Publicado</option>
+                                    <option value="pending">Pendiente</option>
+                                </select>
+                            </div>
+
+
+                            {{-- Hidden inputs para todas las traducciones (valores reales del form) --}}
+                            @foreach($locales as $localeObj)
+                                @php $locale = $localeObj->code; $tData = $translationData[$locale]; @endphp
+                                <input type="hidden" class="trans-status-hidden" id="trans-status-{{ $locale }}"
+                                       name="translations[{{ $locale }}][status]" data-locale="{{ $locale }}"
+                                       value="{{ $tData['status'] }}">
+                                <input type="hidden" class="trans-published-at-hidden" id="trans-published-at-{{ $locale }}"
+                                       name="translations[{{ $locale }}][published_at]" data-locale="{{ $locale }}"
+                                       value="{{ $tData['published_at'] }}">
+                            @endforeach
+
+                            <div class="col-md-12">
+                                <hr class="my-2">
+                            </div>
+
+                            {{-- Estilo de encabezado --}}
+                            <div class="col-md-12">
+                                <label for="header_style" class="form-label fw-semibold">Header</label>
+                                <select class="form-select @error('header_style') is-invalid @enderror select2"
+                                        id="header_style" name="header_style">
+                                    <option value="header-style-1" {{ old('header_style', $page->header_style) === 'header-style-1' ? 'selected' : '' }}>Por defecto</option>
+                                    <option value="header-style-2" {{ old('header_style', $page->header_style) === 'header-style-2' ? 'selected' : '' }}>Estilo de encabezado 2</option>
+                                    <option value="header-style-3" {{ old('header_style', $page->header_style) === 'header-style-3' ? 'selected' : '' }}>Estilo de encabezado 3</option>
+                                    <option value="header-style-4" {{ old('header_style', $page->header_style) === 'header-style-4' ? 'selected' : '' }}>Estilo de encabezado 4</option>
+                                </select>
+                                @error('header_style')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
+                            {{-- Plantilla --}}
+                            <div class="col-md-12">
+                                <label for="template" class="form-label fw-semibold">Plantilla <span class="text-danger">*</span></label>
+                                <select class="form-select @error('template') is-invalid @enderror select2" id="template" name="template">
+                                    @foreach($templates as $key => $label)
+                                        <option value="{{ $key }}" {{ old('template', $page->template) === $key ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('template')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
+
+                            <div class="col-md-12" id="main-published-at-wrap" style="display:none;">
+                                <label class="form-label fw-semibold">Fecha de publicación</label>
+                                <input type="datetime-local" class="form-control" id="main-published-at">
+                                <small class="text-muted d-block mt-1">Dejar vacío para usar la fecha actual</small>
+                            </div>
+
+                            {{-- Publicar el (programado) --}}
+                            <div class="col-md-12">
+                                <label for="publish_at" class="form-label fw-semibold">Publicar el (programado)</label>
+                                <input type="datetime-local" class="form-control @error('publish_at') is-invalid @enderror"
+                                       id="publish_at" name="publish_at"
+                                       value="{{ old('publish_at', $page->publish_at?->format('Y-m-d\TH:i')) }}">
+                                @error('publish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
+                            {{-- Despublicar el --}}
+                            <div class="col-md-12">
+                                <label for="unpublish_at" class="form-label fw-semibold">Despublicar el</label>
+                                <input type="datetime-local" class="form-control @error('unpublish_at') is-invalid @enderror"
+                                       id="unpublish_at" name="unpublish_at"
+                                       value="{{ old('unpublish_at', $page->unpublish_at?->format('Y-m-d\TH:i')) }}">
+                                @error('unpublish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
+                            @if($page->willBePublished() || $page->willBeUnpublished())
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0 py-2">
+                                    <small>
+                                        @if($page->willBePublished())
+                                            <i class="fas fa-clock me-1"></i> Se publica el {{ $page->publish_at->format('d/m/Y H:i') }}<br>
+                                        @endif
+                                        @if($page->willBeUnpublished())
+                                            <i class="fas fa-clock me-1"></i> Se despublica el {{ $page->unpublish_at->format('d/m/Y H:i') }}
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
+                            @endif
+
+                            <div class="col-md-12">
+                                <hr class="my-2">
+                            </div>
+
+                            {{-- Página padre --}}
+                            @php $selectedCategories = old('categories', $page->categories->pluck('id')->toArray()); @endphp
+                            <input type="hidden" name="status" value="{{ $page->status?->value ?? $page->status }}">
+                            <div class="col-md-12">
+                                <label for="parent_id" class="form-label fw-semibold">Página padre</label>
+                                <select class="form-select select2 @error('parent_id') is-invalid @enderror"
+                                        id="parent_id" name="parent_id">
+                                    <option value="">Sin padre (página raíz)</option>
+                                    @foreach(\Modules\Page\Models\Page::root()->where('id', '!=', $page->id)->orderBy('title')->get(['id', 'title']) as $parentPage)
+                                        <option value="{{ $parentPage->id }}"
+                                                {{ old('parent_id', $page->parent_id) == $parentPage->id ? 'selected' : '' }}>
+                                            {{ $parentPage->title }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('parent_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Si seleccionas una página padre, la URL será: /padre/esta-pagina</div>
+                            </div>
+
+                            {{-- Categorías --}}
+                            <div class="col-md-12">
+                                <label for="categories-select" class="form-label fw-semibold">Categorías</label>
+                                <select id="categories-select" name="categories[]"
+                                        class="form-select select2 @error('categories') is-invalid @enderror"
+                                        multiple>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}"
+                                                {{ in_array($category->id, $selectedCategories) ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('categories')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+
+                            {{-- Tags --}}
+                            <div class="col-md-12">
+                                <label for="tags-input-edit" class="form-label fw-semibold">Tags</label>
+                                <input type="text" class="form-control @error('tags_input') is-invalid @enderror"
+                                       name="tags_input" id="tags-input-edit"
+                                       placeholder="Agregar tags..."
+                                       value="{{ old('tags_input', $page->tags->pluck('name')->join(', ')) }}">
+                                <small class="form-text text-muted">Separa los tags con comas</small>
+                                @error('tags_input')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Imagen destacada --}}
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Imagen destacada</label>
+                                <input type="hidden" id="featured_image_url" name="featured_image_url"
+                                       value="{{ old('featured_image_url', $page->featured_image_url ?? $page->featured_image) }}">
+                                <div id="imagePreviewContainer" class="mb-2">
+                                    @if($page->featured_image)
+                                        <div class="position-relative">
+                                            <img src="{{ $page->featured_image }}" alt="Imagen destacada" id="featuredImagePreview"
+                                                 class="img-fluid rounded" style="max-height:180px;object-fit:cover;width:100%;">
+                                            <button type="button" id="btn-remove-featured-image"
+                                                    class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                    title="Quitar imagen">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div id="featuredImageEmpty" class="text-center py-3 border border-2 border-dashed rounded bg-light">
+                                            <i class="fas fa-image fa-2x text-muted mb-1"></i>
+                                            <p class="text-muted mb-0 small">Sin imagen</p>
+                                        </div>
+                                    @endif
+                                </div>
+                                <button type="button" id="btn-featured-image-picker" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-photo-video me-1"></i> Seleccionar imagen
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>{{-- /card tabs idiomas --}}
+
+                {{-- Analytics de vistas --}}
+                <div class="card mb-3 d-none" id="analytics-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title fw-semibold mb-0">Analytics de vistas</h4>
+                                <p class="card-subtitle mt-1">Tendencia diaria de visitas</p>
+                            </div>
+                            <select class="form-select w-auto" id="analytics-days">
+                                <option value="7">Últimos 7 días</option>
+                                <option value="30" selected>Últimos 30 días</option>
+                                <option value="90">Últimos 90 días</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+
+                            <div class="col-4">
+                                <div class="card w-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <h5 class="card-title fw-semibold mb-3">Vistas totales</h5>
+                                                <h4 class="fw-semibold mb-2" id="stat-total-views">
+                                                    <span class="spinner-border spinner-border-sm text-muted"></span>
+                                                </h4>
+                                                <div id="cmp-total-views"></div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="d-flex justify-content-center">
+                                                    <div id="spark-total-views"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="card w-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <h5 class="card-title fw-semibold mb-3">Visitantes únicos</h5>
+                                                <h4 class="fw-semibold mb-2" id="stat-unique-visitors">
+                                                    <span class="spinner-border spinner-border-sm text-muted"></span>
+                                                </h4>
+                                                <div id="cmp-unique-visitors"></div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="d-flex justify-content-center">
+                                                    <div id="spark-unique-visitors"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="card w-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <h5 class="card-title fw-semibold mb-3">Promedio diario</h5>
+                                                <h4 class="fw-semibold mb-2" id="stat-avg-daily">
+                                                    <span class="spinner-border spinner-border-sm text-muted"></span>
+                                                </h4>
+                                                <div id="cmp-avg-daily"></div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="d-flex justify-content-center">
+                                                    <div id="spark-avg-daily"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div id="chart-views-by-day" style="height:295px;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            
             {{-- SIDEBAR --}}
             <div class="col-lg-4 order-lg-2">
 
@@ -39,11 +474,15 @@
                         <button type="submit" form="pageForm" class="btn btn-primary">
                             Guardar
                         </button>
+                        <a href="{{ route('pages.visual-editor', $page) }}?locale={{ $locales->first()?->code }}"
+                           class="btn btn-outline-primary" id="btn-editor-visual">
+                            <i class="fas fa-paint-brush me-1"></i> Abrir editor visual
+                        </a>
                         <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
                             Cancelar
                         </a>
                         <hr class="my-1">
-                        <a href="{{ $page->url }}" class="btn btn-outline-secondary" target="_blank">
+                        <a href="#" class="btn btn-outline-secondary" id="btn-ver-pagina" target="_blank">
                             Ver página
                         </a>
                         @if($page->hasVersions())
@@ -51,24 +490,26 @@
                                 Ver versiones ({{ $page->getTotalVersions() }})
                             </a>
                         @endif
-                        @if($page->isPublished())
+                        @php $firstLocaleCode = $locales->first()?->code ?? ''; @endphp
+                        <div id="form-unpublish-action" style="{{ ($translationData[$firstLocaleCode]['status'] ?? '') !== 'published' ? 'display:none;' : '' }}">
                             <form action="{{ route('pages.unpublish', $page->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-secondary w-100">Despublicar</button>
                             </form>
-                        @else
+                        </div>
+                        <div id="form-publish-action" style="{{ ($translationData[$firstLocaleCode]['status'] ?? '') === 'published' ? 'display:none;' : '' }}">
                             <form action="{{ route('pages.publish', $page->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-secondary w-100">Publicar ahora</button>
                             </form>
-                        @endif
+                        </div>
                         <form action="{{ route('pages.duplicate', $page->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary w-100">Duplicar página</button>
                         </form>
-                        <button type="button" class="btn btn-outline-secondary" id="generatePreviewBtn">Generar preview</button>
-                        <button type="button" class="btn btn-outline-secondary" id="revokePreviewBtn">Revocar previews</button>
-                        <hr class="my-1">
+                        <button type="button" class="btn btn-outline-info" id="btn-preview">
+                            <i class="fas fa-eye me-1"></i>Vista previa
+                        </button>
                         <button type="button" class="btn btn-outline-danger" id="deleteBtn">Eliminar página</button>
                         <form action="{{ route('pages.destroy', $page->id) }}" method="POST" id="deleteForm">
                             @csrf
@@ -77,115 +518,75 @@
                     </div>
                 </div>
 
-                {{-- Apariencia --}}
+                {{-- SEO --}}
                 <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Apariencia</h5>
-                    </div>
-                    <div class="card-body">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold mb-1">SEO</h5>
+                        <p class="card-subtitle mb-4">Optimización para buscadores</p>
 
-                        <div class="mb-3">
-                            <label for="header_style" class="form-label fw-semibold">Estilo de encabezado</label>
-                            <select class="form-select @error('header_style') is-invalid @enderror"
-                                    id="header_style" name="header_style">
-                                <option value="header-style-1" {{ old('header_style', $page->header_style) === 'header-style-1' ? 'selected' : '' }}>Por defecto</option>
-                                <option value="header-style-2" {{ old('header_style', $page->header_style) === 'header-style-2' ? 'selected' : '' }}>Estilo de encabezado 2</option>
-                                <option value="header-style-3" {{ old('header_style', $page->header_style) === 'header-style-3' ? 'selected' : '' }}>Estilo de encabezado 3</option>
-                                <option value="header-style-4" {{ old('header_style', $page->header_style) === 'header-style-4' ? 'selected' : '' }}>Estilo de encabezado 4</option>
-                            </select>
-                            @error('header_style')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
+                        @if($seoMeta)
+                            @php
+                                $seoScore = $seoMeta->seo_score;
+                                $seoGrade = $seoMeta->seo_grade;
+                                if ($seoScore >= 80) {
+                                    $sBg = 'bg-success-subtle'; $sTxt = 'text-success'; $sIbg = 'text-bg-success';
+                                    $sLabel = 'Excelente';
+                                } elseif ($seoScore >= 60) {
+                                    $sBg = 'bg-primary-subtle'; $sTxt = 'text-primary'; $sIbg = 'text-bg-primary';
+                                    $sLabel = 'Bueno';
+                                } elseif ($seoScore >= 40) {
+                                    $sBg = 'bg-warning-subtle'; $sTxt = 'text-warning'; $sIbg = 'text-bg-warning';
+                                    $sLabel = 'Mejorable';
+                                } else {
+                                    $sBg = 'bg-danger-subtle'; $sTxt = 'text-danger'; $sIbg = 'text-bg-danger';
+                                    $sLabel = 'Bajo';
+                                }
+                            @endphp
 
-                        <div class="mb-3">
-                            <label for="status" class="form-label fw-semibold">Estatus <span class="text-danger">*</span></label>
-                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                                @foreach($statuses as $key => $label)
-                                    <option value="{{ $key }}" {{ old('status', $page->status) === $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-0">
-                            <label for="template" class="form-label fw-semibold">Plantilla <span class="text-danger">*</span></label>
-                            <select class="form-select @error('template') is-invalid @enderror" id="template" name="template">
-                                @foreach($templates as $key => $label)
-                                    <option value="{{ $key }}" {{ old('template', $page->template) === $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('template')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <hr class="my-3">
-
-                        <div class="mb-3">
-                            <label for="published_at" class="form-label fw-semibold small">Fecha de publicación</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('published_at') is-invalid @enderror"
-                                   id="published_at" name="published_at"
-                                   value="{{ old('published_at', $page->published_at?->format('Y-m-d\TH:i')) }}">
-                            @error('published_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="publish_at" class="form-label fw-semibold small">Publicar el (programado)</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('publish_at') is-invalid @enderror"
-                                   id="publish_at" name="publish_at"
-                                   value="{{ old('publish_at', $page->publish_at?->format('Y-m-d\TH:i')) }}">
-                            @error('publish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-0">
-                            <label for="unpublish_at" class="form-label fw-semibold small">Despublicar el</label>
-                            <input type="datetime-local" class="form-control form-control-sm @error('unpublish_at') is-invalid @enderror"
-                                   id="unpublish_at" name="unpublish_at"
-                                   value="{{ old('unpublish_at', $page->unpublish_at?->format('Y-m-d\TH:i')) }}">
-                            @error('unpublish_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        @if($page->willBePublished() || $page->willBeUnpublished())
-                            <div class="alert alert-info mt-3 mb-0 py-2">
-                                <small>
-                                    @if($page->willBePublished())
-                                        <i class="fas fa-clock me-1"></i> Se publica el {{ $page->publish_at->format('d/m/Y H:i') }}<br>
-                                    @endif
-                                    @if($page->willBeUnpublished())
-                                        <i class="fas fa-clock me-1"></i> Se despublica el {{ $page->unpublish_at->format('d/m/Y H:i') }}
-                                    @endif
-                                </small>
-                            </div>
-                        @endif
-
-                    </div>
-                </div>
-
-                {{-- Imagen destacada --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Imagen</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="imagePreviewContainer" class="mb-3">
-                            @if($page->featured_image)
-                                <img src="{{ $page->featured_image }}" alt="Imagen destacada"
-                                     class="img-fluid rounded" style="max-height:180px; object-fit:cover; width:100%">
-                            @else
-                                <div class="text-center py-3 border border-2 border-dashed rounded bg-light">
-                                    <i class="fas fa-image fa-2x text-muted mb-1"></i>
-                                    <p class="text-muted small mb-0">Sin imagen</p>
+                            @if($seoScore)
+                            <div class="card {{ $sBg }} shadow-none mb-3">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded d-flex align-items-center justify-content-center {{ $sIbg }}"
+                                             style="width:40px;height:40px;flex-shrink:0;">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <h6 class="mb-0 ms-3 fw-semibold">Score SEO</h6>
+                                        <div class="ms-auto d-flex align-items-center {{ $sTxt }}">
+                                            <i class="fas {{ $seoScore >= 60 ? 'fa-arrow-up' : 'fa-arrow-down' }} me-1" style="font-size:0.8rem;"></i>
+                                            <span class="fw-bold fs-5">{{ $seoScore }}/100</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between mt-3">
+                                        <h4 class="mb-0 fw-semibold">Grado {{ $seoGrade }}</h4>
+                                        <span class="badge {{ $sIbg }}">{{ $sLabel }}</span>
+                                    </div>
                                 </div>
+                            </div>
                             @endif
-                        </div>
-                        <input type="file" class="form-control form-control-sm @error('featured_image') is-invalid @enderror"
-                               id="featured_image" name="featured_image"
-                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                        <small class="form-text text-muted">Máx. 2MB. JPG, PNG, GIF, WebP</small>
-                        @error('featured_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                            <div class="card shadow-none mb-0">
+                                <div class="card-body p-0">
+                                    <dl class="mb-3 small">
+                                        <dt class="text-muted fw-normal mb-1">Título SEO</dt>
+                                        <dd class="fw-semibold mb-3 text-truncate">{{ $seoMeta->title ?: '—' }}</dd>
+                                        <dt class="text-muted fw-normal mb-1">Descripción</dt>
+                                        <dd class="text-muted mb-0" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ $seoMeta->description ?: '—' }}</dd>
+                                    </dl>
+                                    <a href="{{ route('setting.seo.metas.edit', $seoMeta) }}"
+                                       class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-edit me-1"></i>Editar SEO
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            <p class="text-muted small mb-2">Esta página no tiene configuración SEO todavía.</p>
+                            <small class="text-muted">Guarda la página para que se cree automáticamente.</small>
+                        @endif
                     </div>
                 </div>
+
+
 
                 {{-- Información --}}
                 <div class="card mb-3">
@@ -219,236 +620,73 @@
                         @endphp
                         <div>
                             <small class="text-muted d-block mb-1">Estado</small>
-                            <span class="badge {{ $badges[$page->status] ?? 'bg-secondary-subtle text-secondary' }}">
-                                {{ $labels[$page->status] ?? $page->status }}
+                            @php $statusVal = $page->status instanceof \Modules\Page\Enums\PageStatus ? $page->status->value : $page->status; @endphp
+                            <span class="badge {{ $badges[$statusVal] ?? 'bg-secondary-subtle text-secondary' }}">
+                                {{ $labels[$statusVal] ?? $statusVal }}
                             </span>
                         </div>
                     </div>
                 </div>
 
+                {{-- DeepL Traducción automática --}}
+                @if(count($locales) > 1)
+                    <div class="card mb-3">
+                        <div class="card-header p-3 bg-white border-bottom">
+                            <h5 class="mb-0 fw-bold">
+                                Traducción automática
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">Traduce el contenido de la página al idioma seleccionado usando DeepL.</p>
+                            <div class="mb-2">
+                                <label for="page-deepl-target-lang" class="form-label small">Idioma destino</label>
+                                <select id="page-deepl-target-lang" class="form-select select2">
+                                    @foreach($locales as $localeObj)
+                                        <option value="{{ $localeObj->code }}">{{ $localeObj->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-            </div>
-
-
-            {{-- COLUMNA PRINCIPAL --}}
-            <div class="col-lg-8 order-lg-1">
-
-                {{-- Información principal --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Información principal</h5>
-                    </div>
-                    <div class="card-body">
-
-                        <div class="mb-3">
-                            <label for="title" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('title') is-invalid @enderror"
-                                   id="title" name="title" value="{{ old('title', $page->title) }}"
-                                   required maxlength="255">
-                            @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        @php $prefix = setting('permalink-modules-page-models-page', ''); @endphp
-                        <div class="mb-3">
-                            <label for="slug" class="form-label fw-semibold">Enlace permanente <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text text-muted small">
-                                    {{ $prefix ? url($prefix) . '/' : url('/') . '/' }}
-                                </span>
-                                <input type="text" class="form-control @error('slug') is-invalid @enderror"
-                                       id="slug" name="slug"
-                                       value="{{ old('slug', $page->slug) }}"
-                                       placeholder="slug-de-la-pagina" required>
-                                <button type="button" class="btn btn-outline-secondary"
-                                        onclick="regenerateSlug(document.getElementById('title').value)">
-                                    Regenerar
+                        <div class="card-footer"> <div class="d-grid gap-2">
+                                <button type="button" id="btn-page-deepl-translate" class="btn btn-outline-primary">
+                                    Traducir idioma seleccionado
+                                    <span id="page-deepl-spinner" class="spinner-border spinner-border-sm ms-1 d-none"></span>
+                                </button>
+                                <button type="button" id="btn-page-deepl-auto-translate" class="btn btn-outline-secondary">
+                                    Traducir todos los idiomas
+                                    <span id="page-deepl-auto-spinner" class="spinner-border spinner-border-sm ms-1 d-none"></span>
                                 </button>
                             </div>
-                            <small class="form-text text-muted">
-                                Vista: <a href="#" id="slug-preview-link" target="_blank" class="text-primary">
-                                    <span id="slug-preview"></span>
-                                </a>
-                            </small>
-                            @error('slug')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
-
-                        <div class="mb-0">
-                            <label for="description" class="form-label fw-semibold">Descripción</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror"
-                                      id="description" name="description" rows="3"
-                                      maxlength="500" placeholder="Descripción corta">{{ old('description', $page->description) }}</textarea>
-                            <small class="form-text text-muted" id="description-counter">0 / 500 caracteres</small>
-                            @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
                     </div>
-                </div>
+                @endif
 
-                {{-- Editor de contenido --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Contenido</h5>
-                    </div>
-                    <div class="card-body pb-0">
-
-                        <div class="d-grid gap-2 mb-2">
-                            <button type="button" class="btn btn-outline-secondary" id="toggleEditorBtn">
-                                Mostrar/Ocultar Editor
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="addMediaBtn">
-                                <i class="fas fa-image me-1"></i> Agregar
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="uiBlocksBtn"
-                                    data-bs-toggle="modal" data-bs-target="#uiBlocksModal">
-                                <i class="fas fa-th-large me-1"></i> Bloques de interfaz de usuario
-                            </button>
-                        </div>
-
-                        <div id="editorWrapper">
-                            <textarea id="content" name="content" class="@error('content') is-invalid @enderror">{{ old('content', $page->content) }}</textarea>
-                        </div>
-                        @error('content')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-
-
-                    </div>
-                </div>
-
-                {{-- SEO --}}
+                {{-- Rendimiento PageSpeed --}}
                 <div class="card mb-3">
                     <div class="card-header p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold">Optimizar para motores de búsqueda (SEO)</h5>
-                        <a href="#" id="seoEditToggle" class="text-primary small fw-semibold">Editar</a>
+                        <h5 class="mb-0 fw-bold">Rendimiento</h5>
                     </div>
-                    <div class="card-body">
-
-                        {{-- Preview estilo Google (modo colapsado) --}}
-                        <div id="seoPreview">
-                            <div class="p-3 border rounded bg-white">
-                                <div id="seoPreviewTitle"
-                                     style="color:#1a0dab; font-size:18px; font-weight:400; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                    {{ $page->seo_title ?: $page->title }}
-                                </div>
-                                <div style="color:#006621; font-size:13px;">
-                                    {{ $page->url }}
-                                </div>
-                                <div style="color:#545454; font-size:13px; margin-top:2px;">
-                                    <span>{{ $page->updated_at->format('M d, Y') }} — </span>
-                                    <span id="seoPreviewDesc">{{ $page->seo_description ?: $page->getExcerpt(160) }}</span>
-                                </div>
-                            </div>
-                            @if(old('seo_noindex', $page->seo_noindex))
-                                <div class="mt-2 small text-warning">
-                                    <i class="fas fa-search me-1"></i> Esta página está marcada como <strong>noindex</strong>
-                                </div>
-                            @endif
+                    <div class="card-body" id="performance-results">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-tachometer-alt fa-2x mb-2 d-block"></i>
+                            <small>Haz clic en "Analizar" para obtener métricas de Google PageSpeed</small>
                         </div>
-
-                        {{-- Campos SEO editables (ocultos por defecto) --}}
-                        <div id="seoEditSection" style="display:none;">
-                            <hr class="my-3">
-
-                            <div class="mb-3">
-                                <label for="seo_title" class="form-label fw-semibold">Título SEO</label>
-                                <input type="text" class="form-control @error('seo_title') is-invalid @enderror"
-                                       id="seo_title" name="seo_title"
-                                       value="{{ old('seo_title', $page->seo_title) }}" maxlength="70">
-                                <small class="form-text text-muted" id="seo_title-counter">0 / 70 · Recomendado: 50-60</small>
-                                @error('seo_title')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="seo_description" class="form-label fw-semibold">Descripción SEO</label>
-                                <textarea class="form-control @error('seo_description') is-invalid @enderror"
-                                          id="seo_description" name="seo_description" rows="3"
-                                          maxlength="160">{{ old('seo_description', $page->seo_description) }}</textarea>
-                                <small class="form-text text-muted" id="seo_description-counter">0 / 160 · Recomendado: 150-160</small>
-                                @error('seo_description')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="seo_keywords" class="form-label fw-semibold">Palabras clave</label>
-                                <input type="text" class="form-control @error('seo_keywords') is-invalid @enderror"
-                                       id="seo_keywords" name="seo_keywords"
-                                       value="{{ old('seo_keywords', $page->seo_keywords) }}" maxlength="500"
-                                       placeholder="palabra1, palabra2, ...">
-                                <small class="form-text text-warning"><i class="fas fa-info-circle me-1"></i>Google ya no usa meta keywords, pero pueden ser útiles para búsqueda interna.</small>
-                                @error('seo_keywords')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Imagen SEO (Open Graph)</label>
-                                <div id="seoImagePreviewContainer" class="mb-2" style="cursor:pointer">
-                                    @if(old('seo_image_url', $page->seo_image_url))
-                                        <img src="{{ old('seo_image_url', $page->seo_image_url) }}"
-                                             class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">
-                                    @else
-                                        <div class="text-center py-3 border border-dashed rounded bg-light">
-                                            <i class="fas fa-image fa-2x text-muted mb-1"></i>
-                                            <p class="text-muted small mb-0">Haz clic para elegir</p>
-                                        </div>
-                                    @endif
-                                </div>
-                                <input type="hidden" id="seo_image_url" name="seo_image_url"
-                                       value="{{ old('seo_image_url', $page->seo_image_url) }}">
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1"
-                                            id="seoPickerBtn">
-                                        <i class="fas fa-images me-1"></i> Elegir imagen
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" id="seoImageClearBtn"
-                                            {{ old('seo_image_url', $page->seo_image_url) ? '' : 'style="display:none"' }}>
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <small class="form-text text-muted">Recomendado: 1200×630px. Máx. 2MB.</small>
-                                @error('seo_image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="mb-0">
-                                <label class="form-label fw-semibold">Índice</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="seo_noindex" id="seo_index"
-                                               value="0" {{ old('seo_noindex', $page->seo_noindex ? '1' : '0') == '0' ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="seo_index">Índice</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="seo_noindex" id="seo_noindex_radio"
-                                               value="1" {{ old('seo_noindex', $page->seo_noindex ? '1' : '0') == '1' ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="seo_noindex_radio">Sin índice</label>
-                                    </div>
-                                </div>
-                            </div>
-
+                    </div>
+                    <div class="card-footer" >
+                     
+                            <a href="{{ route('pages.analytics.view', $page->id) }}" class="btn btn-outline-primary w-100 mb-1">
+                                <i class="fas fa-chart-bar me-1"></i>Analytics
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary w-100" id="btn-scan-performance">
+                                <i class="fas fa-sync-alt me-1"></i>Analizar
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {{-- Vista previa de preview token --}}
-                <div class="card mb-3" id="previewTokenCard">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Vista previa</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-3">Genera un enlace temporal para compartir antes de publicar. Expira en 24h.</p>
-                        <div id="previewUrlSection" style="display:none;" class="mb-3">
-                            <div class="alert alert-success py-2 mb-0">
-                                <strong class="d-block mb-2 small">Enlace generado:</strong>
-                                <div class="input-group input-group-sm">
-                                    <input type="text" class="form-control" id="previewUrl" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" id="copyPreviewBtn">Copiar</button>
-                                    <a href="#" class="btn btn-outline-primary" id="openPreviewBtn" target="_blank">Abrir</a>
-                                </div>
-                                <small class="text-muted d-block mt-1">
-                                    <i class="fas fa-clock"></i> Expira: <span id="previewExpires"></span>
-                                    <span class="ms-2"><i class="fas fa-eye"></i> Vistas: <span id="previewViews">0</span></span>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-            </div>
 
         </div>
     </form>
@@ -530,28 +768,48 @@
         </div>
     </div>
 
-    {{-- MODAL: Selector de imagen SEO --}}
-    <div class="modal fade" id="seoImagePickerModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    {{-- Modal de vista previa responsive --}}
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-images me-2"></i>Elegir imagen SEO</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <input type="text" class="form-control" id="seoImageSearch" placeholder="Buscar imágenes...">
+
+                <div class="modal-header py-2 bg-dark text-white border-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        <span class="fw-semibold">Vista previa</span>
+                        <small class="text-secondary ms-1" id="preview-resolution">1920 × 1080</small>
                     </div>
-                    <div class="row g-2" id="seoImageGrid">
-                        <div class="col-12 text-center py-4">
-                            <div class="spinner-border text-secondary" role="status"></div>
-                        </div>
+
+                    <div class="btn-group mx-auto" role="group" aria-label="Selector de dispositivo" id="device-selector">
+                        <button type="button" class="btn btn-sm btn-outline-light active"
+                                data-device="desktop" data-width="100%" title="Escritorio">
+                            <i class="fas fa-desktop"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light"
+                                data-device="tablet" data-width="768px" title="Tablet">
+                            <i class="fas fa-tablet-alt"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light"
+                                data-device="mobile" data-width="375px" title="Móvil">
+                            <i class="fas fa-mobile-alt"></i>
+                        </button>
                     </div>
-                    <div class="d-flex justify-content-center gap-2 mt-3" id="seoImagePagination"></div>
+
+                    <a href="#" target="_blank" class="btn btn-sm btn-outline-light" id="preview-open-tab">
+                        <i class="fas fa-external-link-alt me-1"></i>Nueva pestaña
+                    </a>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                <div class="modal-body p-0 bg-secondary d-flex justify-content-center align-items-start overflow-auto">
+                    <div id="preview-frame-wrapper" class="bg-white" style="width:100%; height:100vh;">
+                        <iframe id="preview-iframe"
+                                src="about:blank"
+                                style="width:100%; height:100%; border:none; display:block;"
+                                title="Vista previa de la página">
+                        </iframe>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -563,16 +821,19 @@
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js"></script>
 <script>
 $(document).ready(function () {
 
     // =========================================================
-    // TINYMCE
+    // TINYMCE - multi-locale
     // =========================================================
-    var editorActive = true;
-    var editorId = 'content';
-    var mediaUploadUrl = '{{ route('media.upload') }}';
+    var mediaUploadUrl = '{{ route('media.files.upload') }}';
     var mediaBaseUrl = '{{ url('media') }}';
+    var initializedEditors = {};
+    var activeLocale = '{{ $locales->first()?->code ?? '' }}';
+    var translationData = @json($translationData);
+    var visualEditorBaseUrl = '{{ route("pages.visual-editor", $page) }}';
 
     function mediaUpload(formData, onSuccess, onError) {
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
@@ -593,9 +854,9 @@ $(document).ready(function () {
         });
     }
 
-    function initTinyMCE() {
-        tinymce.init({
-            selector: '#' + editorId,
+    function tinyMCEConfig(locale) {
+        return {
+            selector: '#content-' + locale,
             language: 'es',
             height: 500,
             plugins: [
@@ -622,46 +883,130 @@ $(document).ready(function () {
             setup: function (editor) {
                 editor.on('change input keyup', function () {
                     editor.save();
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(performAutoSave, 2000);
                 });
             }
-        });
-        editorActive = true;
+        };
     }
 
-    function destroyTinyMCE() {
-        if (tinymce.get(editorId)) {
-            tinymce.get(editorId).remove();
-        }
-        editorActive = false;
+    function initEditorForLocale(locale) {
+        if (initializedEditors[locale]) return;
+        initializedEditors[locale] = true;
+        tinymce.init(tinyMCEConfig(locale));
     }
 
-    // Inicializar al cargar
-    initTinyMCE();
+    // Inicializar primer locale al cargar
+    @if($locales->isNotEmpty())
+    initEditorForLocale('{{ $locales->first()->code }}');
+    @endif
 
-    // Toggle editor
-    $('#toggleEditorBtn').on('click', function () {
-        if (editorActive) {
-            destroyTinyMCE();
-            $('#' + editorId).show();
+    // Inicializar al cambiar de tab
+    $('#langTabs button').on('shown.bs.tab', function (e) {
+        var locale = $(e.target).data('locale');
+        activeLocale = locale;
+        initEditorForLocale(locale);
+        updateSidebarForLocale(locale);
+    });
+
+    // =========================================================
+    // SIDEBAR REACTIVO POR LOCALE
+    // =========================================================
+    function updateSidebarForLocale(locale) {
+        var d = translationData[locale] || {};
+        var status = $('#trans-status-' + locale).val() || d.status || 'draft';
+        var pubAt = $('#trans-published-at-' + locale).val() || d.published_at || '';
+
+        // Ver página
+        var $verBtn = $('#btn-ver-pagina');
+        if (d.url) {
+            $verBtn.attr('href', d.url).removeClass('disabled');
         } else {
-            initTinyMCE();
+            $verBtn.attr('href', '#').addClass('disabled');
+        }
+
+        // Editor visual
+        $('#btn-editor-visual').attr('href', visualEditorBaseUrl + '?locale=' + locale);
+
+        // Status select
+        $('#main-status-select').val(status);
+
+        // Published at
+        $('#main-published-at').val(pubAt);
+        $('#main-published-at-wrap').toggle(status === 'published');
+
+        // Publish/unpublish buttons
+        if (status === 'published') {
+            $('#form-unpublish-action').show();
+            $('#form-publish-action').hide();
+        } else {
+            $('#form-unpublish-action').hide();
+            $('#form-publish-action').show();
+        }
+    }
+
+    $('#main-status-select').on('change', function () {
+        var status = $(this).val();
+        $('#trans-status-' + activeLocale).val(status);
+        $('#main-published-at-wrap').toggle(status === 'published');
+        if (status === 'published') {
+            $('#form-unpublish-action').show();
+            $('#form-publish-action').hide();
+        } else {
+            $('#form-unpublish-action').hide();
+            $('#form-publish-action').show();
         }
     });
 
-    $('#addMediaBtn').on('click', function () {
-        mediaPickerCallback = function (url, fullUrl) {
-            var tag = '<img src="' + fullUrl + '" alt="" style="max-width:100%">';
-            var editor = tinymce.get(editorId);
-            if (editor) {
-                editor.insertContent(tag);
-            } else {
-                var ta = document.getElementById(editorId);
-                var pos = ta.selectionStart || ta.value.length;
-                ta.value = ta.value.substring(0, pos) + tag + ta.value.substring(pos);
+    $('#main-published-at').on('change', function () {
+        $('#trans-published-at-' + activeLocale).val($(this).val());
+    });
+
+    // Botón Agregar media - abre el Gestor de medios vía MediaPicker
+    $(document).on('click', '.add-media-btn', function () {
+        var locale = $(this).data('locale');
+        window.MediaPicker.open({
+            urls: {
+                list:   '{{ route("media.list") }}',
+                upload: '{{ route("media.files.upload") }}',
+                base:   '{{ url("media") }}',
+            },
+            title: 'Gestor de medios',
+            onSelect: function (fullUrl, file) {
+                var tag = file && file.type === 'image'
+                    ? '<img src="' + fullUrl + '" alt="' + (file.name || '') + '" style="max-width:100%">'
+                    : '<a href="' + fullUrl + '" target="_blank">' + (file ? file.name : fullUrl) + '</a>';
+                var editor = tinymce.get('content-' + locale);
+                if (editor) {
+                    editor.insertContent(tag);
+                } else {
+                    var ta = document.getElementById('content-' + locale);
+                    if (ta) {
+                        var pos = ta.selectionStart || ta.value.length;
+                        ta.value = ta.value.substring(0, pos) + tag + ta.value.substring(pos);
+                    }
+                }
             }
-            $('#seoImagePickerModal').modal('hide');
-        };
-        $('#seoImagePickerModal').modal('show');
+        });
+    });
+
+    // Botón UI Blocks - rastrear locale activo al abrir modal
+    $(document).on('click', '.ui-blocks-btn', function () {
+        activeLocale = $(this).data('locale');
+    });
+
+    // Botón insertar shortcode desde panel de ayuda
+    $(document).on('click', '.shortcode-insert-btn', function () {
+        var locale = $(this).data('locale');
+        var text = $(this).data('shortcode');
+        var editor = tinymce.get('content-' + locale);
+        if (editor) {
+            editor.insertContent(text);
+        } else {
+            var ta = document.getElementById('content-' + locale);
+            var pos = ta.selectionStart || ta.value.length;
+            ta.value = ta.value.substring(0, pos) + text + ta.value.substring(pos);
+        }
     });
 
     // =========================================================
@@ -734,7 +1079,7 @@ $(document).ready(function () {
         block.config_fields.forEach(function (field) {
             html += '<div class="mb-3"><label class="form-label fw-semibold">' + field.label + '</label>';
             if (field.type === 'select' && field.options) {
-                html += '<select class="form-select" id="' + field.id + '">';
+                html += '<select class="form-select select2" id="' + field.id + '">';
                 Object.entries(field.options).forEach(function (entry) {
                     html += '<option value="' + entry[0] + '">' + entry[1] + '</option>';
                 });
@@ -751,11 +1096,11 @@ $(document).ready(function () {
 
     function insertBlock(key) {
         var shortcode = buildShortcode(key);
-        var editor = tinymce.get(editorId);
+        var editor = tinymce.get('content-' + activeLocale);
         if (editor) {
             editor.insertContent(shortcode + '\n');
         } else {
-            var ta = document.getElementById(editorId);
+            var ta = document.getElementById('content-' + activeLocale);
             var pos = ta.selectionStart || ta.value.length;
             ta.value = ta.value.substring(0, pos) + shortcode + '\n' + ta.value.substring(pos);
         }
@@ -774,166 +1119,54 @@ $(document).ready(function () {
     }
 
     // =========================================================
-    // SEO TOGGLE
+    // IMAGEN DESTACADA — Media Picker
     // =========================================================
-    $('#seoEditToggle').on('click', function (e) {
-        e.preventDefault();
-        var $section = $('#seoEditSection');
-        $section.toggle();
-        $(this).text($section.is(':visible') ? 'Cerrar' : 'Editar');
-    });
-
-    // Preview SEO en tiempo real
-    $('#title').on('input', function () {
-        var val = $(this).val();
-        var seoTitle = $('#seo_title').val();
-        if (!seoTitle) {
-            $('#seoPreviewTitle').text(val || 'Título de la página');
-        }
-        var $slug = $('#slug');
-        if (!$slug.data('manual')) {
-            $slug.val(generateSlugFromTitle(val));
-            updateSlugPreview();
-        }
-    });
-    $('#seo_title').on('input', function () {
-        var val = $(this).val();
-        $('#seoPreviewTitle').text(val || $('#title').val() || 'Título de la página');
-    });
-    $('#seo_description').on('input', function () {
-        var val = $(this).val();
-        $('#seoPreviewDesc').text(val || $('#description').val() || '');
-    });
-
-    // Contadores
-    function setupCounter(id, max, recMin, recMax) {
-        var $field = $('#' + id), $counter = $('#' + id + '-counter');
-        if (!$field.length) return;
-        $field.on('input', function () {
-            var len = $(this).val().length;
-            var text = len + ' / ' + max;
-            var cls = 'text-muted';
-            if (recMin && recMax) {
-                if (len >= recMin && len <= recMax) { cls = 'text-success'; text += ' ✓ óptimo'; }
-                else if (len > 0) { cls = 'text-warning'; text += ' · Recomendado: ' + recMin + '-' + recMax; }
-                else { text += ' · Recomendado: ' + recMin + '-' + recMax; }
-            }
-            $counter.attr('class', 'form-text ' + cls).text(text);
-        }).trigger('input');
-    }
-    setupCounter('description', 500);
-    setupCounter('seo_title', 70, 50, 60);
-    setupCounter('seo_description', 160, 150, 160);
-
-    // =========================================================
-    // SLUG
-    // =========================================================
-    $('#slug').on('input', function () {
-        $(this).data('manual', true);
-        updateSlugPreview();
-    });
-
-    updateSlugPreview();
-
-    function generateSlugFromTitle(title) {
-        return title.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-    }
-
-    // =========================================================
-    // IMAGEN DESTACADA
-    // =========================================================
-    $('#featured_image').on('change', function () {
-        var file = this.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            $('#imagePreviewContainer').html(
-                '<img src="' + e.target.result + '" class="img-fluid rounded mb-2" style="max-height:180px; object-fit:cover; width:100%">'
-            );
-        };
-        reader.readAsDataURL(file);
-    });
-
-    // =========================================================
-    // MEDIA PICKER - compartido por Agregar + Imagen SEO
-    // =========================================================
-    var mediaBaseUrl = '{{ url('media') }}';
-    var mediaListUrl = '{{ url('/media/list') }}';
-    var mediaPickerCallback = null;
-    var uiBlocksData = @json($uiBlocks->toArray());
-
-    function openSeoImagePicker() {
-        mediaPickerCallback = function (url, fullUrl) {
-            $('#seo_image_url').val(fullUrl);
-            $('#seoImagePreviewContainer').html(
-                '<img src="' + fullUrl + '" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">'
-            );
-            $('#seoImageClearBtn').show();
-            $('#seoImagePickerModal').modal('hide');
-        };
-        $('#seoImagePickerModal').modal('show');
-    }
-
-    $('#seoImagePreviewContainer').on('click', function () { openSeoImagePicker(); });
-    $('#seoPickerBtn').on('click', function () { openSeoImagePicker(); });
-
-    $('#seoImageClearBtn').on('click', function () {
-        $('#seo_image_url').val('');
-        $('#seoImagePreviewContainer').html(
-            '<div class="text-center py-3 border border-dashed rounded bg-light">' +
-            '<i class="fas fa-image fa-2x text-muted mb-1"></i>' +
-            '<p class="text-muted small mb-0">Haz clic para elegir</p></div>'
+    function setFeaturedImage(url) {
+        $('#featured_image_url').val(url);
+        $('#imagePreviewContainer').html(
+            '<div class="position-relative">' +
+                '<img src="' + url + '" alt="Imagen destacada" id="featuredImagePreview"' +
+                     ' class="img-fluid rounded" style="max-height:180px;object-fit:cover;width:100%;">' +
+                '<button type="button" id="btn-remove-featured-image"' +
+                        ' class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" title="Quitar imagen">' +
+                    '<i class="fas fa-times"></i>' +
+                '</button>' +
+            '</div>'
         );
-        $(this).hide();
-    });
-
-    function loadSeoImages(page, search) {
-        $('#seoImageGrid').html('<div class="col-12 text-center py-4"><div class="spinner-border text-secondary" role="status"></div></div>');
-        $.get(mediaListUrl, { page: page, search: search, filter: 'image', per_page: 24 }, function (data) {
-            var html = '';
-            var files = (data.files || []).filter(function (f) { return f.type === 'image'; });
-            if (files.length > 0) {
-                $.each(files, function (i, file) {
-                    var fullUrl = mediaBaseUrl + '/' + file.url.replace(/^media\//, '');
-                    html += '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
-                        '<div class="card h-100 border media-picker-item" style="cursor:pointer" data-url="' + file.url + '" data-full-url="' + fullUrl + '">' +
-                        '<img src="' + fullUrl + '" class="card-img-top" style="height:90px; object-fit:cover" loading="lazy">' +
-                        '<div class="card-body p-1"><p class="card-text x-small text-truncate text-muted mb-0" style="font-size:11px">' + file.name + '</p></div>' +
-                        '</div></div>';
-                });
-            } else {
-                html = '<div class="col-12 text-center py-4 text-muted"><i class="fas fa-image fa-2x mb-2 d-block"></i>No hay imágenes</div>';
-            }
-            $('#seoImageGrid').html(html);
-            var p = data.pagination || {};
-            var pager = '';
-            if (p.last_page > 1) {
-                if (page > 1) pager += '<button class="btn btn-sm btn-outline-secondary" onclick="loadSeoImages(' + (page - 1) + ',\'' + search + '\')">Anterior</button>';
-                pager += '<span class="btn btn-sm disabled">' + page + ' / ' + p.last_page + '</span>';
-                if (page < p.last_page) pager += '<button class="btn btn-sm btn-outline-secondary" onclick="loadSeoImages(' + (page + 1) + ',\'' + search + '\')">Siguiente</button>';
-            }
-            $('#seoImagePagination').html(pager);
-        });
     }
 
-    var seoSearchTimer;
-    $('#seoImagePickerModal').on('show.bs.modal', function () { loadSeoImages(1, ''); });
-    $('#seoImageSearch').on('input', function () {
-        var q = $(this).val();
-        clearTimeout(seoSearchTimer);
-        seoSearchTimer = setTimeout(function () { loadSeoImages(1, q); }, 400);
+    function clearFeaturedImage() {
+        $('#featured_image_url').val('');
+        $('#imagePreviewContainer').html(
+            '<div id="featuredImageEmpty" class="text-center py-3 border border-2 border-dashed rounded bg-light">' +
+                '<i class="fas fa-image fa-2x text-muted mb-1"></i>' +
+                '<p class="text-muted mb-0 small">Sin imagen</p>' +
+            '</div>'
+        );
+    }
+
+    $('#btn-featured-image-picker').on('click', function () {
+        window.MediaPicker.open({
+            urls: {
+                list:   '{{ route("media.list") }}',
+                upload: '{{ route("media.files.upload") }}',
+                base:   '{{ url("media") }}',
+            },
+            title: 'Seleccionar imagen destacada',
+            onSelect: function (fullUrl) {
+                setFeaturedImage(fullUrl);
+            }
+        });
     });
-    $(document).on('click', '.media-picker-item', function () {
-        if (mediaPickerCallback) {
-            mediaPickerCallback($(this).data('url'), $(this).data('full-url'));
-            mediaPickerCallback = null;
-        }
+
+    $(document).on('click', '#btn-remove-featured-image', function () {
+        clearFeaturedImage();
     });
+
+    // =========================================================
+    // UI BLOCKS DATA
+    // =========================================================
+    var uiBlocksData = @json($uiBlocks->toArray());
 
     // =========================================================
     // PREVIEW TOKEN
@@ -1020,45 +1253,32 @@ $(document).ready(function () {
     var autoSaveIndicator = '<span id="autoSaveIndicator" class="ms-2 badge bg-info"><i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...</span>';
     var lastSavedData = {};
 
-    // Crear indicador en la barra de guardar si no existe
     if ($('#autoSaveIndicator').length === 0) {
         $('#pageForm .btn-primary:first').after(autoSaveIndicator);
     }
 
-    function hasChanges() {
-        var currentData = {
-            title: $('#title').val(),
-            slug: $('#slug').val(),
-            description: $('#description').val(),
-            content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
+    function collectAutoSaveData() {
+        var data = {
             status: $('#status').val(),
             template: $('#template').val(),
-            seo_title: $('#seo_title').val(),
-            seo_description: $('#seo_description').val(),
-            seo_keywords: $('#seo_keywords').val(),
             header_style: $('#header_style').val(),
-            seo_noindex: $('input[name="seo_noindex"]:checked').val(),
+            translations: {}
         };
-
-        return JSON.stringify(currentData) !== JSON.stringify(lastSavedData);
+        @foreach($locales as $localeObj)
+        @php $locale = $localeObj->code; @endphp
+        data.translations['{{ $locale }}'] = {
+            title: $('#title-{{ $locale }}').val(),
+            slug: $('#slug-{{ $locale }}').val(),
+            description: $('#description-{{ $locale }}').val(),
+            content: tinymce.get('content-{{ $locale }}') ? tinymce.get('content-{{ $locale }}').getContent() : $('#content-{{ $locale }}').val(),
+        };
+        @endforeach
+        return data;
     }
 
     function performAutoSave() {
-        var currentData = {
-            title: $('#title').val(),
-            slug: $('#slug').val(),
-            description: $('#description').val(),
-            content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
-            status: $('#status').val(),
-            template: $('#template').val(),
-            seo_title: $('#seo_title').val(),
-            seo_description: $('#seo_description').val(),
-            seo_keywords: $('#seo_keywords').val(),
-            header_style: $('#header_style').val(),
-            seo_noindex: $('input[name="seo_noindex"]:checked').val(),
-        };
+        var currentData = collectAutoSaveData();
 
-        // No guardar si no hay cambios
         if (JSON.stringify(currentData) === JSON.stringify(lastSavedData)) {
             return;
         }
@@ -1075,24 +1295,20 @@ $(document).ready(function () {
                 'Accept': 'application/json'
             },
             data: JSON.stringify(currentData),
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     lastSavedData = currentData;
                     $indicator.html('<i class="fas fa-check me-1"></i>Guardado ' + (new Date().toLocaleTimeString())).removeClass('bg-info').addClass('bg-success');
-
-                    // Desaparecer después de 3 segundos
-                    setTimeout(function() {
-                        $indicator.fadeOut(300, function() { $(this).html('').fadeIn(); });
+                    setTimeout(function () {
+                        $indicator.fadeOut(300, function () { $(this).html('').fadeIn(); });
                     }, 3000);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error en auto-save:', xhr);
                 $indicator.html('<i class="fas fa-exclamation-triangle me-1"></i>Error al guardar').removeClass('bg-info').addClass('bg-danger');
-
-                // Mostrar el error por más tiempo
-                setTimeout(function() {
-                    $indicator.fadeOut(300, function() {
+                setTimeout(function () {
+                    $indicator.fadeOut(300, function () {
                         $(this).html('<i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...').removeClass('bg-danger').addClass('bg-info').fadeIn();
                     });
                 }, 5000);
@@ -1100,45 +1316,20 @@ $(document).ready(function () {
         });
     }
 
-    // Detectar cambios en campos
-    $('#title, #slug, #description, #status, #template, #header_style, #seo_title, #seo_description, #seo_keywords').on('input change', function() {
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(performAutoSave, 2000); // 2 segundos de debounce
-    });
-
-    // Detectar cambios en checkboxes de SEO
-    $('input[name="seo_noindex"]').on('change', function() {
+    // Detectar cambios en campos del sidebar
+    $('#status, #template, #header_style').on('input change', function () {
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(performAutoSave, 2000);
     });
 
-    // Detectar cambios en TinyMCE
-    if (tinymce.get(editorId)) {
-        tinymce.get(editorId).on('change', function() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(performAutoSave, 2000);
-        });
+    // Detectar cambios en campos traducibles (delegado)
+    $(document).on('input change', '[name^="translations"]', function () {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(performAutoSave, 2000);
+    });
 
-        tinymce.get(editorId).on('keyup', function() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(performAutoSave, 2000);
-        });
-    }
-
-    // Inicializar lastSavedData con datos actuales
-    lastSavedData = {
-        title: $('#title').val(),
-        slug: $('#slug').val(),
-        description: $('#description').val(),
-        content: tinymce.get(editorId) ? tinymce.get(editorId).getContent() : $('#' + editorId).val(),
-        status: $('#status').val(),
-        template: $('#template').val(),
-        seo_title: $('#seo_title').val(),
-        seo_description: $('#seo_description').val(),
-        seo_keywords: $('#seo_keywords').val(),
-        header_style: $('#header_style').val(),
-        seo_noindex: $('input[name="seo_noindex"]:checked').val(),
-    };
+    // Inicializar lastSavedData
+    lastSavedData = collectAutoSaveData();
 
     // =========================================================
     // PAGE LOCKS
@@ -1287,6 +1478,9 @@ $(document).ready(function () {
         toastr.warning('Esta página está siendo editada por otro usuario. No puedes hacer cambios.');
     }
 
+    // Inicializar sidebar para el locale activo
+    updateSidebarForLocale(activeLocale || '{{ $locales->first()?->code ?? '' }}');
+
     // Verificar lock al cargar la página
     checkAndAcquireLock();
 
@@ -1342,8 +1536,28 @@ $(document).ready(function () {
 
 });
 
-function regenerateSlug(title) {
+function updateViewLink(locale) {
+    var baseUrl = '{{ $prefix ? url($prefix) . "/" : url("/") . "/" }}';
+    var slug = $('#slug-' + locale).val();
+    var $link = $('#view-link-' + locale);
+    if (slug) {
+        var fullUrl = baseUrl + slug;
+        $link.attr('href', fullUrl).text('').html('<i class="fas fa-external-link-alt me-1"></i>' + fullUrl).closest('div').show();
+    } else {
+        $link.closest('div').hide();
+    }
+}
+
+// Actualizar links al cambiar slug
+$(document).on('input', '[id^="slug-"]', function() {
+    var locale = this.id.replace('slug-', '');
+    updateViewLink(locale);
+});
+
+function regenerateSlugForLocale(locale) {
+    var title = $('#title-' + locale).val();
     if (!title) return;
+
     @php
         $slugAjaxUrl = \Illuminate\Support\Facades\Route::has('pages.ajax.slug') ? route('pages.ajax.slug') : null;
     @endphp
@@ -1353,22 +1567,429 @@ function regenerateSlug(title) {
         ignoreId: {{ $page->id }},
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (data) {
-        $('#slug').val(data.slug).data('manual', true);
-        updateSlugPreview();
+        $('#slug-' + locale).val(data.slug);
     });
     @else
-    $('#slug').val(title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').trim());
-    updateSlugPreview();
+    var slug = title.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    $('#slug-' + locale).val(slug);
     @endif
 }
 
-function updateSlugPreview() {
-    var slug = document.getElementById('slug').value;
-    var prefix = '{{ $prefix }}';
-    var path = prefix ? prefix + '/' + slug : slug;
-    var url = '{{ url('/') }}/' + path;
-    document.getElementById('slug-preview').textContent = url;
-    document.getElementById('slug-preview-link').href = url;
+function toggleEditor(locale) {
+    $('#editorWrapper-' + locale).toggle();
 }
+
+// =========================================================
+// MODAL DE VISTA PREVIA RESPONSIVE
+// =========================================================
+var previewResolutions = {
+    desktop: '1920 × 1080',
+    tablet:  '768 × 1024',
+    mobile:  '375 × 812'
+};
+
+function openPreviewModal(url) {
+    var iframe = document.getElementById('preview-iframe');
+    if (iframe.src !== url) {
+        iframe.src = url;
+    }
+    $('#preview-open-tab').attr('href', url);
+    var modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+$('#btn-preview').on('click', function () {
+    var existingUrl = $('#previewUrl').val();
+    if (existingUrl) {
+        var previewUrl = existingUrl + (existingUrl.indexOf('?') === -1 ? '?' : '&') + 'locale=' + activeLocale;
+        openPreviewModal(previewUrl);
+        return;
+    }
+
+    var $btn = $(this).prop('disabled', true);
+    $.ajax({
+        url: '{{ route("pages.preview.generate", $page->id) }}',
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        success: function (data) {
+            if (data.success) {
+                var url = data.data.url;
+                $('#previewUrl').val(url);
+                $('#openPreviewBtn').attr('href', url);
+                $('#previewExpires').text(data.data.expires_in_human);
+                $('#previewUrlSection').fadeIn();
+                openPreviewModal(url + (url.indexOf('?') === -1 ? '?' : '&') + 'locale=' + activeLocale);
+            } else {
+                toastr.error('No se pudo generar la vista previa');
+            }
+        },
+        error: function () { toastr.error('Error al generar la vista previa'); },
+        complete: function () { $btn.prop('disabled', false); }
+    });
+});
+
+// Selector de dispositivo
+$('#device-selector .btn').on('click', function () {
+    var $btn = $(this);
+    var device = $btn.data('device');
+    var width  = $btn.data('width');
+
+    $('#device-selector .btn').removeClass('active');
+    $btn.addClass('active');
+    $('#preview-resolution').text(previewResolutions[device]);
+
+    var $wrapper = $('#preview-frame-wrapper');
+    var $iframe  = $('#preview-iframe');
+
+    if (device === 'desktop') {
+        $wrapper.css({ width: '100%', 'max-width': '', 'box-shadow': 'none', margin: '0', height: '100vh' });
+        $iframe.css({ width: '100%', height: '100%', transform: 'none', 'transform-origin': '' });
+        return;
+    }
+
+    var targetWidth  = parseInt(width);
+    var targetHeight = device === 'mobile' ? 812 : 1024;
+    var containerWidth = document.getElementById('previewModal').offsetWidth - 40;
+    var scale = Math.min(1, containerWidth / targetWidth);
+
+    $wrapper.css({
+        width:       targetWidth + 'px',
+        'max-width': targetWidth + 'px',
+        height:      (targetHeight * scale) + 'px',
+        'box-shadow': '0 0 30px rgba(0,0,0,0.4)',
+        margin:      '20px auto'
+    });
+
+    if (scale < 1) {
+        $iframe.css({
+            width:              targetWidth + 'px',
+            height:             targetHeight + 'px',
+            transform:          'scale(' + scale + ')',
+            'transform-origin': 'top left'
+        });
+    } else {
+        $iframe.css({ width: '100%', height: targetHeight + 'px', transform: 'none', 'transform-origin': '' });
+    }
+});
+
+// Restablecer dispositivo al cerrar el modal
+$('#previewModal').on('hidden.bs.modal', function () {
+    $('#device-selector .btn').removeClass('active').first().addClass('active');
+    $('#preview-resolution').text(previewResolutions.desktop);
+    var $wrapper = $('#preview-frame-wrapper');
+    var $iframe  = $('#preview-iframe');
+    $wrapper.css({ width: '100%', 'max-width': '', 'box-shadow': 'none', margin: '0', height: '100vh' });
+    $iframe.css({ width: '100%', height: '100%', transform: 'none', 'transform-origin': '' });
+});
+
+// =========================================================
+// PAGESPEED PERFORMANCE
+// =========================================================
+var perfScanUrl  = '{{ route("pages.performance.scan", $page->id) }}';
+var perfShowUrl  = '{{ route("pages.performance.show", $page->id) }}';
+var perfPollInterval = null;
+var perfPollAttempts = 0;
+
+function scoreCircle(score, label, color) {
+    if (score === null || score === undefined) {
+        return '<div class="text-center"><div class="display-6 fw-bold text-muted">—</div><small class="text-muted">' + label + '</small></div>';
+    }
+    return '<div class="text-center">'
+        + '<div class="display-6 fw-bold text-' + color + '">' + Math.round(score) + '</div>'
+        + '<small class="text-muted">' + label + '</small>'
+        + '</div>';
+}
+
+function metricBadge(value, unit) {
+    if (value === null || value === undefined) return '<span class="text-muted">—</span>';
+    return '<strong>' + value + '</strong><small class="text-muted ms-1">' + unit + '</small>';
+}
+
+function renderPerformanceResults(data) {
+    var strategies = [
+        { key: 'mobile',   label: 'Móvil',    icon: 'fa-mobile-alt' },
+        { key: 'desktop',  label: 'Escritorio', icon: 'fa-desktop' }
+    ];
+
+    var html = '<div class="row g-3">';
+
+    strategies.forEach(function(s) {
+        var m = data[s.key];
+        html += '<div class="col-12"><h6 class="fw-semibold mb-2"><i class="fas ' + s.icon + ' me-1 text-muted"></i>' + s.label + '</h6>';
+
+        if (!m) {
+            html += '<p class="text-muted">Sin datos aún.</p></div>';
+            return;
+        }
+
+        var perfColor = m.performance_color || 'secondary';
+        html += '<div class="row g-2 mb-2">'
+            + '<div class="col-3">' + scoreCircle(m.performance_score, 'Rendimiento', perfColor) + '</div>'
+            + '<div class="col-3">' + scoreCircle(m.accessibility_score, 'Accesibilidad', 'info') + '</div>'
+            + '<div class="col-3">' + scoreCircle(m.seo_score, 'SEO', 'primary') + '</div>'
+            + '<div class="col-3">' + scoreCircle(m.best_practices_score, 'Prácticas', 'secondary') + '</div>'
+            + '</div>';
+
+        html += '<ul class="list-unstyled small mb-0 ps-1">'
+            + '<li><span class="text-muted">LCP:</span> ' + metricBadge(m.lcp, 'ms') + '</li>'
+            + '<li><span class="text-muted">FCP:</span> ' + metricBadge(m.fcp, 'ms') + '</li>'
+            + '<li><span class="text-muted">TBT:</span> ' + metricBadge(m.tbt, 'ms') + '</li>'
+            + '<li><span class="text-muted">TTFB:</span> ' + metricBadge(m.ttfb, 'ms') + '</li>'
+            + '</ul>';
+
+        if (m.opportunities && m.opportunities.length) {
+            html += '<div class="mt-2"><small class="text-muted fw-semibold">Oportunidades de mejora:</small><ul class="list-unstyled small mt-1">';
+            m.opportunities.forEach(function(o) {
+                html += '<li class="text-truncate"><i class="fas fa-lightbulb text-warning me-1"></i>' + o.title + '</li>';
+            });
+            html += '</ul></div>';
+        }
+
+        html += '<small class="text-muted d-block mt-1"><i class="fas fa-clock me-1"></i>' + (m.created_at || '') + '</small>';
+        html += '</div>';
+    });
+
+    html += '</div>';
+    $('#performance-results').html(html);
+}
+
+$('#btn-scan-performance').on('click', function () {
+    var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Analizando...');
+
+    clearInterval(perfPollInterval);
+    perfPollAttempts = 0;
+
+    $.post(perfScanUrl, { _token: $('meta[name="csrf-token"]').attr('content') })
+        .done(function (resp) {
+            toastr.success(resp.message);
+            $('#performance-results').html(
+                '<div class="text-center py-3">'
+                + '<span class="spinner-border spinner-border-sm text-primary me-2"></span>'
+                + '<small class="text-muted">Procesando análisis...</small>'
+                + '</div>'
+            );
+
+            perfPollInterval = setInterval(function () {
+                perfPollAttempts++;
+                $.get(perfShowUrl)
+                    .done(function (d) {
+                        if (d.mobile || d.desktop) {
+                            clearInterval(perfPollInterval);
+                            renderPerformanceResults(d);
+                        }
+                    });
+                if (perfPollAttempts >= 12) {
+                    clearInterval(perfPollInterval);
+                }
+            }, 5000);
+        })
+        .fail(function () {
+            toastr.error('Error al iniciar el análisis');
+        })
+        .always(function () {
+            $btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Analizar');
+        });
+});
+
+// Cargar métricas existentes al abrir la página
+$.get(perfShowUrl).done(function (d) {
+    if (d.mobile || d.desktop) {
+        renderPerformanceResults(d);
+    }
+});
+
+// =========================================================
+// ANALYTICS DE VISTAS
+// =========================================================
+var analyticsUrl = '{{ route("pages.analytics.show", $page->id) }}';
+var analyticsChart = null;
+var pageSparkCharts = {};
+
+function fmtNum(n) { return parseInt(n || 0).toLocaleString('es-ES'); }
+
+function cmpBadge(current, previous) {
+    if (!previous || previous === 0) return '';
+    var pct  = ((current - previous) / previous * 100).toFixed(1);
+    var up   = parseFloat(pct) > 0;
+    var icon = up ? 'fa-arrow-up' : 'fa-arrow-down';
+    var bg   = up ? 'bg-success-subtle' : 'bg-danger-subtle';
+    var txt  = up ? 'text-success'      : 'text-danger';
+    var sign = parseFloat(pct) > 0 ? '+' : '';
+    return '<div class="d-flex align-items-center">' +
+        '<span class="me-1 rounded-circle ' + bg + ' d-flex align-items-center justify-content-center" style="width:20px;height:20px;">' +
+            '<i class="fas ' + icon + ' ' + txt + '" style="font-size:0.6rem;"></i>' +
+        '</span>' +
+        '<p class="text-dark me-1 fs-3 mb-0">' + sign + Math.abs(pct) + '%</p>' +
+        '<p class="fs-3 mb-0 text-muted">vs anterior</p>' +
+        '</div>';
+}
+
+function pageSparkCfg(data, color, type) {
+    return {
+        series: [{ data: data }],
+        chart: { type: type, height: 70, width: 70, sparkline: { enabled: true }, animations: { enabled: false }, fontFamily: 'inherit' },
+        colors: [color],
+        stroke: { curve: 'smooth', width: 2 },
+        fill: type === 'area'
+            ? { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } }
+            : { type: 'solid' },
+        tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: function() { return ''; } } } },
+        plotOptions: { bar: { borderRadius: 2, columnWidth: '60%' } },
+    };
+}
+
+function renderPageSparklines(viewsData) {
+    var sparks = {
+        '#spark-total-views':      { data: viewsData, color: '#b10100', type: 'bar'  },
+        '#spark-unique-visitors':  { data: viewsData, color: '#333333', type: 'bar'  },
+        '#spark-avg-daily':        { data: viewsData, color: '#7b0000', type: 'area' },
+    };
+    $.each(sparks, function(sel, cfg) {
+        var el = document.querySelector(sel);
+        if (!el) return;
+        if (pageSparkCharts[sel]) { pageSparkCharts[sel].destroy(); }
+        pageSparkCharts[sel] = new ApexCharts(el, pageSparkCfg(cfg.data, cfg.color, cfg.type));
+        pageSparkCharts[sel].render();
+    });
+}
+
+function loadAnalytics(days) {
+    $('#stat-total-views, #stat-unique-visitors, #stat-avg-daily')
+        .html('<span class="spinner-border spinner-border-sm text-muted"></span>');
+    $('#cmp-total-views, #cmp-unique-visitors, #cmp-avg-daily').html('');
+
+    var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var fmtDate = function(d) {
+        if (!d || d.length < 8) return d;
+        return months[parseInt(d.slice(5,7)) - 1] + ' ' + parseInt(d.slice(8,10));
+    };
+
+    $.get(analyticsUrl, { days: days })
+        .done(function (data) {
+            var s = data.summary;
+            var p = data.previous_summary;
+
+            if (!s.total_views) {
+                $('#analytics-card').addClass('d-none');
+                return;
+            }
+            $('#analytics-card').removeClass('d-none');
+
+            $('#stat-total-views').text(fmtNum(s.total_views));
+            $('#stat-unique-visitors').text(fmtNum(s.unique_visitors));
+            $('#stat-avg-daily').text(parseFloat(s.avg_daily).toFixed(1));
+
+            if (p) {
+                $('#cmp-total-views').html(cmpBadge(s.total_views, p.total_views));
+                $('#cmp-unique-visitors').html(cmpBadge(s.unique_visitors, p.unique_visitors));
+                $('#cmp-avg-daily').html(cmpBadge(s.avg_daily, p.avg_daily));
+            }
+
+            var viewsData = $.map(data.views_by_day, function(r) { return r.views; });
+            renderPageSparklines(viewsData);
+
+            var dates = $.map(data.views_by_day, function(r) { return fmtDate(r.date); });
+
+            if (analyticsChart) { analyticsChart.destroy(); analyticsChart = null; }
+            $('#chart-views-by-day').html('');
+
+            analyticsChart = new ApexCharts(document.querySelector('#chart-views-by-day'), {
+                series: [{ name: 'Vistas', data: viewsData }],
+                chart: { type: 'area', height: 295, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+                colors: ['#b10100'],
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.15, opacityTo: 0.02, stops: [0, 100] } },
+                xaxis: { categories: dates, labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { style: { fontSize: '11px', colors: '#adb5bd' }, formatter: function(v) { return Math.round(v); } } },
+                grid: { borderColor: '#f0f0f0', strokeDashArray: 4 },
+                tooltip: { theme: 'light', shared: true, intersect: false },
+                legend: { show: false },
+                markers: { size: 0 },
+                dataLabels: { enabled: false }
+            });
+            analyticsChart.render();
+        })
+        .fail(function () {
+            $('#analytics-card').addClass('d-none');
+        });
+}
+
+$('#analytics-days').on('change', function () {
+    loadAnalytics($(this).val());
+});
+
+loadAnalytics(30);
+
+// =========================================================
+// DEEPL TRANSLATION
+// =========================================================
+var pageDeeplTranslateUrl     = '{{ route("pages.translate", $page->id) }}';
+var pageDeeplAutoTranslateUrl = '{{ route("pages.auto-translate", $page->id) }}';
+
+$('#btn-page-deepl-translate').on('click', function () {
+    var targetLocale = $('#page-deepl-target-lang').val();
+    if (!targetLocale) { toastr.warning('Selecciona un idioma de destino'); return; }
+
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $('#page-deepl-spinner').removeClass('d-none');
+
+    $.ajax({
+        url: pageDeeplTranslateUrl,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: { target_locale: targetLocale },
+        success: function (res) {
+            toastr.success('Traducción al ' + targetLocale.toUpperCase() + ' completada. Recarga para ver los cambios.');
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON && xhr.responseJSON.error
+                ? xhr.responseJSON.error
+                : 'Error al traducir con DeepL';
+            toastr.error(msg);
+        },
+        complete: function () {
+            $btn.prop('disabled', false);
+            $('#page-deepl-spinner').addClass('d-none');
+        }
+    });
+});
+
+$('#btn-page-deepl-auto-translate').on('click', function () {
+    if (!confirm('¿Traducir automáticamente a todos los idiomas soportados?')) return;
+
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $('#page-deepl-auto-spinner').removeClass('d-none');
+
+    $.ajax({
+        url: pageDeeplAutoTranslateUrl,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: {},
+        success: function (res) {
+            if (res.success) {
+                toastr.success(res.message + ' Recarga para ver los cambios.');
+            } else {
+                toastr.warning(res.message);
+            }
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON && xhr.responseJSON.error
+                ? xhr.responseJSON.error
+                : 'Error al traducir con DeepL';
+            toastr.error(msg);
+        },
+        complete: function () {
+            $btn.prop('disabled', false);
+            $('#page-deepl-auto-spinner').addClass('d-none');
+        }
+    });
+});
 </script>
 @endpush

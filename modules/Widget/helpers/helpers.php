@@ -8,7 +8,7 @@ use Modules\Widget\WidgetGroupCollection;
 if (! function_exists('register_widget')) {
     function register_widget(string $widgetId): WidgetFactory
     {
-        return Widget::registerWidget($widgetId);
+        return Widget::register($widgetId);
     }
 }
 

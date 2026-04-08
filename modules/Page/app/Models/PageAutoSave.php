@@ -70,26 +70,22 @@ class PageAutoSave extends Model
             ->latest('saved_at')
             ->first();
 
-        if ($draft && $draft->expires_at && $draft->expires_at->isFuture()) {
-            $draft->update([
-                'data' => $data,
-                'content' => $data['content'] ?? null,
-                'status' => $data['status'] ?? $page->status,
-                'saved_at' => now(),
-                'expires_at' => now()->addHours(24),
-            ]);
-
-            return $draft;
+        if ($draft && ! $draft->expires_at?->isFuture()) {
+            $draft->delete();
+            $draft = null;
         }
 
-        return static::create([
-            'page_id' => $page->id,
-            'user_id' => $user->id,
+        $attributes = [
             'data' => $data,
             'content' => $data['content'] ?? null,
             'status' => $data['status'] ?? $page->status,
             'saved_at' => now(),
             'expires_at' => now()->addHours(24),
-        ]);
+        ];
+
+        return static::updateOrCreate(
+            ['page_id' => $page->id, 'user_id' => $user->id],
+            $attributes,
+        );
     }
 }

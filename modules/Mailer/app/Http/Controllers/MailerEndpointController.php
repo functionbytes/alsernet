@@ -4,48 +4,71 @@ namespace Modules\Mailer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Modules\Mailer\Enums\EndpointLogStatus;
 use Modules\Mailer\Jobs\SendEndpointEmailJob;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerEndpointLog;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerTemplate;
+use Modules\Mailer\Traits\AuthorizesMailerActions;
 
 class MailerEndpointController extends Controller
 {
+    use AuthorizesMailerActions;
+
     /**
      * Display documentation for email endpoints
      * GET /settings/mailers/endpoints/documentation
      */
-    public function documentation()
+    public function documentation(): View
     {
-        return view('mailer::endpoints.documentation');
+        $this->authorizeMailerAction('mailer.endpoints.view');
+
+        $endpoints = MailerEndpoint::with('template', 'language')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $appUrl = config('app.url');
+
+        return view('mailer::endpoints.documentation', compact('endpoints', 'appUrl'));
     }
 
     /**
      * Display a listing of all email endpoints
      * GET /settings/mailers/endpoints
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $query = MailerEndpoint::with('template', 'language');
+        $this->authorizeMailerAction('mailer.endpoints.view');
+
+        $query = MailerEndpoint::with('template', 'language')
+            ->withCount([
+                'logs as success_logs_count' => function ($q) {
+                    $q->where('status', EndpointLogStatus::Success);
+                },
+                'logs as failed_logs_count' => function ($q) {
+                    $q->where('status', EndpointLogStatus::Failed);
+                },
+            ]);
 
         // Filter by status if provided
         $status = $request->input('status');
         if ($status === 'active') {
-            $query->where('is_active', true);
+            $query->active();
         } elseif ($status === 'inactive') {
-            $query->where('is_active', false);
+            $query->inactive();
         }
 
         // Filter by source if provided
         $source = $request->input('source');
         if ($source) {
-            $query->where('source', $source);
+            $query->bySource($source);
         }
 
-        $endpoints = $query->orderBy('name')->paginate(15);
+        $endpoints = $query->orderBy('name')->paginate(paginationNumber());
 
         // Get unique sources from endpoints for filtering
         $sources = MailerEndpoint::distinct('source')
@@ -54,20 +77,31 @@ class MailerEndpointController extends Controller
             ->values()
             ->toArray();
 
-        return view('mailer::endpoints.index', compact('endpoints', 'sources', 'status', 'source'));
+        // Pre-calculate stats for header cards (across ALL endpoints, not just current page)
+        $totalEndpoints = MailerEndpoint::count();
+        $activeCount = MailerEndpoint::active()->count();
+        $inactiveCount = MailerEndpoint::inactive()->count();
+        $totalRequests = MailerEndpoint::sum('requests_count');
+
+        return view('mailer::endpoints.index', compact(
+            'endpoints', 'sources', 'status', 'source',
+            'totalEndpoints', 'activeCount', 'inactiveCount', 'totalRequests',
+        ));
     }
 
     /**
      * Show the form for creating a new email endpoint
      * GET /settings/mailers/endpoints/create
      */
-    public function create()
+    public function create(): View
     {
+        $this->authorizeMailerAction('mailer.endpoints.create');
+
         $templates = MailerTemplate::enabled()
             ->orderBy('name')
             ->get();
 
-        $langs = MailerLang::all();
+        $langs = MailerLang::available()->get();
 
         return view('mailer::endpoints.create', compact('templates', 'langs'));
     }
@@ -76,8 +110,10 @@ class MailerEndpointController extends Controller
      * Store a newly created email endpoint in database
      * POST /settings/mailers/endpoints
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.endpoints.create');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:mailer_endpoints,slug',
@@ -89,6 +125,7 @@ class MailerEndpointController extends Controller
             'expected_variables' => 'nullable|array',
             'required_variables' => 'nullable|array',
             'variable_mappings' => 'nullable|array',
+            'variable_mappings.*' => 'required|string|max:255',
             'is_active' => 'boolean',
         ]);
 
@@ -103,28 +140,43 @@ class MailerEndpointController extends Controller
      * Show the form for editing the specified email endpoint
      * GET /settings/mailers/endpoints/edit/{emailEndpoint}
      */
-    public function edit(MailerEndpoint $emailEndpoint)
+    public function edit(MailerEndpoint $emailEndpoint): View
     {
+        $this->authorizeMailerAction('mailer.endpoints.view');
+
         $templates = MailerTemplate::enabled()
             ->orderBy('name')
             ->get();
 
-        $langs = MailerLang::all();
+        $langs = MailerLang::available()->get();
 
         $logs = $emailEndpoint->logs()
             ->latest()
-            ->limit(50)
+            ->limit(10)
             ->get();
 
-        return view('mailer::endpoints.edit', compact('emailEndpoint', 'templates', 'langs', 'logs'));
+        // Pre-calculate stats
+        $endpoint = $emailEndpoint;
+        $successCount = $emailEndpoint->successLogs()->count();
+        $failedCount = $emailEndpoint->failedLogs()->count();
+        $last24h = $emailEndpoint->logs()->where('created_at', '>=', now()->subDay())->count();
+        $total = $emailEndpoint->requests_count;
+        $successRate = $total > 0 ? round(($successCount / $total) * 100, 1) : 0;
+
+        return view('mailer::endpoints.edit', compact(
+            'emailEndpoint', 'endpoint', 'templates', 'langs', 'logs',
+            'successCount', 'failedCount', 'last24h', 'successRate',
+        ));
     }
 
     /**
      * Update the specified email endpoint in database
      * PATCH /settings/mailers/endpoints/{emailEndpoint}
      */
-    public function update(Request $request, MailerEndpoint $emailEndpoint)
+    public function update(Request $request, MailerEndpoint $emailEndpoint): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.endpoints.update');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:mailer_endpoints,slug,'.$emailEndpoint->id,
@@ -136,6 +188,7 @@ class MailerEndpointController extends Controller
             'expected_variables' => 'nullable|array',
             'required_variables' => 'nullable|array',
             'variable_mappings' => 'nullable|array',
+            'variable_mappings.*' => 'required|string|max:255',
             'is_active' => 'boolean',
         ]);
 
@@ -150,8 +203,10 @@ class MailerEndpointController extends Controller
      * Delete the specified email endpoint
      * DELETE /settings/mailers/endpoints/{emailEndpoint}
      */
-    public function destroy(MailerEndpoint $emailEndpoint)
+    public function destroy(MailerEndpoint $emailEndpoint): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.endpoints.delete');
+
         $emailEndpoint->delete();
 
         return redirect()
@@ -163,21 +218,62 @@ class MailerEndpointController extends Controller
      * Display logs for the specified email endpoint
      * GET /settings/mailers/endpoints/logs/{emailEndpoint}
      */
-    public function logs(MailerEndpoint $emailEndpoint)
+    public function logs(Request $request, MailerEndpoint $emailEndpoint): View
     {
-        $logs = $emailEndpoint->logs()
-            ->latest()
-            ->paginate(20);
+        $this->authorizeMailerAction('mailer.endpoints.view');
 
-        return view('mailer::endpoints.logs', compact('emailEndpoint', 'logs'));
+        $search = $request->input('search');
+        $statusFilter = $request->input('status');
+        $period = $request->input('period');
+
+        $query = $emailEndpoint->logs()->latest();
+
+        if ($search) {
+            $query->searchEmail($search);
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        if ($period) {
+            $query->period($period);
+        }
+
+        $logs = $query->paginate(20)->withQueryString();
+
+        // Pre-calculate statistics to avoid expensive queries in the view
+        $totalCount = $emailEndpoint->logs()->count();
+        $successCount = $emailEndpoint->successLogs()->count();
+        $failedCount = $emailEndpoint->failedLogs()->count();
+        $successRate = $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 0;
+        $last24h = $emailEndpoint->logs()->where('created_at', '>=', now()->subDay())->count();
+
+        $endpoint = $emailEndpoint;
+
+        return view('mailer::endpoints.logs', compact(
+            'endpoint',
+            'emailEndpoint',
+            'logs',
+            'search',
+            'statusFilter',
+            'period',
+            'totalCount',
+            'successCount',
+            'failedCount',
+            'successRate',
+            'last24h',
+        ));
     }
 
     /**
      * Regenerate API token for the specified endpoint
      * POST /settings/mailers/endpoints/regenerate-token/{emailEndpoint}
      */
-    public function regenerateToken(MailerEndpoint $emailEndpoint)
+    public function regenerateToken(MailerEndpoint $emailEndpoint): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.endpoints.regenerate-token');
+
         $emailEndpoint->update([
             'api_token' => MailerEndpoint::generateToken(),
         ]);
@@ -210,9 +306,9 @@ class MailerEndpointController extends Controller
             ], 403);
         }
 
-        // Validate API token if provided in header
+        // Validate API token (constant-time comparison to prevent timing attacks)
         $providedToken = $request->header('X-API-Token');
-        if ($providedToken && $providedToken !== $endpoint->api_token) {
+        if (! $providedToken || ! hash_equals($endpoint->api_token, $providedToken)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid API token',

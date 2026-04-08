@@ -23,7 +23,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapWebRoutes(): void
     {
         Route::middleware(['web', 'auth'])
-            ->prefix('settings/cache')
+            ->prefix('panel/settings/cache')
             ->name('settings.cache.')
             ->namespace($this->moduleNamespace)
             ->group(module_path('Cache', '/routes/web.php'));

@@ -45,7 +45,7 @@
 
                 <div class="mb-3">
                     <label for="template_id" class="form-label">Template asociado <span class="text-danger">*</span></label>
-                    <select class="form-select @error('template_id') is-invalid @enderror" id="template_id" name="template_id" required>
+                    <select class="form-select @error('template_id') is-invalid @enderror select2" id="template_id" name="template_id" required>
                         <option value="">Selecciona un template...</option>
                         @foreach($templates as $template)
                             <option value="{{ $template->id }}" {{ old('template_id', $endpoint->template_id ?? '') == $template->id ? 'selected' : '' }}>
@@ -140,7 +140,7 @@
 
                 <div class="mb-3">
                     <label for="status" class="form-label">Estado</label>
-                    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
+                    <select class="form-select @error('status') is-invalid @enderror select2" id="status" name="status">
                         <option value="active" {{ old('status', $endpoint->status ?? 'active') === 'active' ? 'selected' : '' }}>Activo</option>
                         <option value="inactive" {{ old('status', $endpoint->status ?? 'active') === 'inactive' ? 'selected' : '' }}>Inactivo</option>
                     </select>
@@ -271,8 +271,8 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    // Show new API key in a modal or alert
-                    const modal = `
+                    // Build modal safely using DOM methods (avoid XSS from api_key)
+                    const $modal = $(`
                         <div class="modal fade" id="apiKeyModal" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -281,10 +281,10 @@ $(document).ready(function() {
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="mb-2">Esta es tu nueva API key. <strong>Cópiala ahora</strong>, no podrás verla de nuevo:</p>
+                                        <p class="mb-2">Esta es tu nueva API key. <strong>Copiala ahora</strong>, no podras verla de nuevo:</p>
                                         <div class="input-group">
-                                            <input type="text" class="form-control font-monospace" id="new-api-key" value="${response.api_key}" readonly>
-                                            <button type="button" class="btn btn-warning" onclick="navigator.clipboard.writeText('${response.api_key}'); toastr.success('Copiado');">
+                                            <input type="text" class="form-control font-monospace" id="new-api-key" readonly>
+                                            <button type="button" class="btn btn-warning" id="copy-new-key">
                                                 <i class="fas fa-copy"></i>
                                             </button>
                                         </div>
@@ -295,10 +295,17 @@ $(document).ready(function() {
                                 </div>
                             </div>
                         </div>
-                    `;
-                    $('body').append(modal);
-                    $('#apiKeyModal').modal('show');
-                    $('#apiKeyModal').on('hidden.bs.modal', function() {
+                    `);
+                    // Set value safely via DOM property (not interpolation)
+                    $modal.find('#new-api-key').val(response.api_key);
+                    $modal.find('#copy-new-key').on('click', function() {
+                        navigator.clipboard.writeText(response.api_key).then(function() {
+                            toastr.success('Copiado');
+                        });
+                    });
+                    $('body').append($modal);
+                    $modal.modal('show');
+                    $modal.on('hidden.bs.modal', function() {
                         $(this).remove();
                     });
                     toastr.success(response.message);

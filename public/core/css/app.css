@@ -6531,8 +6531,8 @@ h1, h1 {
     padding-top: 53px;
 }
 .layout-dark .navbar-main {
-    background-color: #081A28 !important;!i;!im;!i;!;
-    border-color: #081A28 !important;
+    background-color: #b10100 !important;!i;!im;!i;!;
+    border-color: #b10100 !important;
 }
 .nav-menu-dark .lvl-1 {
     color: #ccc;
@@ -8224,7 +8224,7 @@ label.checker input:disabled ~ .checker-symbol {
     width: 100%;
     font-size: 12px;
     font-weight: 400;
-    color: #081A28;
+    color: #b10100;
     background-color: #fff;
     background-clip: padding-box;
     border: 1px solid #ebf1f6;
@@ -8267,21 +8267,21 @@ label.checker input:disabled ~ .checker-symbol {
     user-select: none;
     border: var(--bs-btn-border-width) solid var(--bs-btn-border-color);
     border-radius: var(--bs-btn-border-radius);
-    background-color: #081A28;
+    background-color: #b10100;
     box-shadow: var(--bs-btn-box-shadow);
     transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
     --bs-btn-color: #fff;
-    --bs-btn-bg: #081A28;
-    --bs-btn-border-color: #081A28;
+    --bs-btn-bg: #b10100;
+    --bs-btn-border-color: #b10100;
     --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #081A28;
-    --bs-btn-hover-border-color: #081A28;
+    --bs-btn-hover-bg: #b10100;
+    --bs-btn-hover-border-color: #b10100;
     --bs-btn-focus-shadow-rgb: 117, 153, 255;
     --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #081A28;
-    --bs-btn-active-border-color: #081A28;
+    --bs-btn-active-bg: #b10100;
+    --bs-btn-active-border-color: #b10100;
     --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
     --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #081A28;
-    --bs-btn-disabled-border-color: #081A28;
+    --bs-btn-disabled-bg: #b10100;
+    --bs-btn-disabled-border-color: #b10100;
 }

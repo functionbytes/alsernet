@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
+use Modules\Reviews\Database\Factories\ReviewModerationFactory;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -14,6 +16,24 @@ class ReviewModeration extends Model
     use HasFactory, LogsActivity;
 
     protected $table = 'review_moderations';
+
+    protected static function newFactory()
+    {
+        return ReviewModerationFactory::new();
+    }
+
+    protected static function booted(): void
+    {
+        $flush = static function (): void {
+            if (method_exists(Cache::getStore(), 'tags')) {
+                Cache::tags(['reviews-dashboard'])->flush();
+            }
+        };
+
+        static::created($flush);
+        static::updated($flush);
+        static::deleted($flush);
+    }
 
     protected $fillable = [
         'review_id',

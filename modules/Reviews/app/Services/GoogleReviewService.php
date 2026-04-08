@@ -2,16 +2,16 @@
 
 namespace Modules\Reviews\Services;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
+use Modules\Reviews\Enums\ConnectionStatus;
 use Modules\Reviews\Enums\ReviewRating;
 use Modules\Reviews\Events\ReviewSynced;
+use Modules\Reviews\Exceptions\CircuitBreakerOpenException;
+use Modules\Reviews\Exceptions\RateLimitExceededException;
 use Modules\Reviews\Models\Review;
+use Modules\Reviews\Models\ReviewGoogleConnection;
 use Modules\Reviews\Models\ReviewGoogleLocation;
 use Modules\Reviews\Models\ReviewModeration;
 use Modules\Reviews\Models\ReviewReply;
@@ -19,52 +19,20 @@ use Modules\Reviews\Models\ReviewReply;
 class GoogleReviewService
 {
     public function __construct(
-        private GoogleAuthService $authService
+        private readonly GoogleApiClient $apiClient
     ) {}
-
-    /**
-     * SECURITY FIX: Create Guzzle client with secure defaults
-     * Ensures SSL verification, timeouts, and proper error handling
-     */
-    private function createSecureClient(): GuzzleClient
-    {
-        return new GuzzleClient([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-            'verify' => true, // CRITICAL: Verify SSL certificates
-            'http_errors' => false, // Handle errors manually for better control
-        ]);
-    }
-
-    /**
-     * PERFORMANCE FIX: Rate limiting for Google API calls
-     * Prevents exceeding Google API quota (60 requests per minute)
-     */
-    private function checkRateLimit(string $connectionId): void
-    {
-        $key = "google-api:{$connectionId}";
-        $limit = 60; // Requests per minute
-        $decayMinutes = 1;
-
-        if (RateLimiter::tooManyAttempts($key, $limit)) {
-            $seconds = RateLimiter::availableIn($key);
-            throw new \RuntimeException("Google API rate limit exceeded. Try again in {$seconds} seconds.");
-        }
-
-        RateLimiter::hit($key, $decayMinutes);
-    }
 
     public function syncReviews(ReviewGoogleLocation $location): int
     {
+        $location->loadMissing('connection.user');
         $connection = $location->connection;
-        $this->authService->refreshTokenIfNeeded($connection);
-
         $reviews = $this->fetchReviews($connection, $location->google_location_id);
         $syncedCount = 0;
 
         DB::transaction(function () use ($location, $reviews, &$syncedCount) {
             foreach ($reviews as $reviewData) {
                 $review = $this->saveReview($location, $reviewData);
+                $review->setRelation('location', $location);
                 $syncedCount++;
 
                 event(new ReviewSynced($review));
@@ -81,46 +49,34 @@ class GoogleReviewService
     }
 
     public function fetchReviews(
-        \Modules\Reviews\Models\ReviewGoogleConnection $connection,
+        ReviewGoogleConnection $connection,
         string $locationId
     ): array {
-        $this->checkRateLimit($connection->id);
+        $baseUrl = config('reviews.google.api.reviews');
+        $endpoint = "{$baseUrl}/{$locationId}/reviews";
 
         try {
-            $client = $this->createSecureClient();
-            $baseUrl = config('reviews.google.api.reviews');
-
-            $response = $client->get("{$baseUrl}/{$locationId}/reviews", [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$connection->access_token,
-                    'Accept' => 'application/json',
-                ],
+            $data = $this->apiClient->get($connection, $endpoint);
+        } catch (CircuitBreakerOpenException $e) {
+            Log::warning('Google API circuit breaker open — skipping review fetch', [
+                'connection_id' => $connection->id,
+                'service_key' => $e->serviceKey,
             ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
+            $connection->update(['status' => ConnectionStatus::ERROR, 'last_error' => 'Service temporarily unavailable (circuit breaker open)']);
 
-            return $data['reviews'] ?? [];
-        } catch (ConnectException $e) {
-            Log::error('Connection failed while fetching reviews', [
-                'location_id' => $locationId,
-                'error' => $e->getMessage(),
+            return [];
+        } catch (RateLimitExceededException $e) {
+            Log::warning('Google API rate limit exceeded — skipping review fetch', [
+                'connection_id' => $e->connectionId,
+                'limit_type' => $e->limitType,
+                'retry_after' => $e->retryAfterSeconds,
             ]);
-            throw $e;
-        } catch (ServerException $e) {
-            Log::error('Google API server error while fetching reviews', [
-                'location_id' => $locationId,
-                'status_code' => $e->getResponse()->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        } catch (RequestException $e) {
-            Log::error('Google API request error while fetching reviews', [
-                'location_id' => $locationId,
-                'status_code' => $e->getResponse()?->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
+
+            return [];
         }
+
+        return $data['reviews'] ?? [];
     }
 
     private function saveReview(ReviewGoogleLocation $location, array $reviewData): Review
@@ -139,14 +95,14 @@ class GoogleReviewService
                 'star_rating' => $starRating,
                 'comment' => $reviewData['comment'] ?? null,
                 'review_time' => isset($reviewData['createTime'])
-                    ? \Carbon\Carbon::parse($reviewData['createTime'])
+                    ? Carbon::parse($reviewData['createTime'])
                     : now(),
                 'update_time' => isset($reviewData['updateTime'])
-                    ? \Carbon\Carbon::parse($reviewData['updateTime'])
+                    ? Carbon::parse($reviewData['updateTime'])
                     : null,
                 'google_reply_text' => $reviewData['reviewReply']['comment'] ?? null,
                 'google_reply_time' => isset($reviewData['reviewReply']['updateTime'])
-                    ? \Carbon\Carbon::parse($reviewData['reviewReply']['updateTime'])
+                    ? Carbon::parse($reviewData['reviewReply']['updateTime'])
                     : null,
                 'raw_json' => $reviewData,
                 'synced_at' => now(),
@@ -179,27 +135,21 @@ class GoogleReviewService
     public function publishReply(ReviewReply $reply): bool
     {
         $review = $reply->review()->with('location.connection')->first();
+
+        if (! $review?->location?->connection) {
+            throw new \RuntimeException('No se puede publicar la respuesta: la ubicación o conexión no existe.');
+        }
+
         $connection = $review->location->connection;
 
-        $this->checkRateLimit($connection->id);
-
-        $this->authService->refreshTokenIfNeeded($connection);
+        $baseUrl = config('reviews.google.api.reviews');
+        $locationId = $review->location->google_location_id;
+        $reviewId = $review->google_review_id;
+        $endpoint = "{$baseUrl}/{$locationId}/reviews/{$reviewId}/reply";
 
         try {
-            $client = $this->createSecureClient();
-            $baseUrl = config('reviews.google.api.reviews');
-
-            $locationId = $review->location->google_location_id;
-            $reviewId = $review->google_review_id;
-
-            $client->put("{$baseUrl}/{$locationId}/reviews/{$reviewId}/reply", [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$connection->access_token,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'comment' => $reply->reply_text,
-                ],
+            $this->apiClient->put($connection, $endpoint, [
+                'comment' => $reply->reply_text,
             ]);
 
             $review->update([
@@ -212,67 +162,96 @@ class GoogleReviewService
                 ->log('Reply published to Google successfully');
 
             return true;
-        } catch (ConnectException $e) {
-            Log::error('Google API connection failed while publishing reply', [
+        } catch (CircuitBreakerOpenException $e) {
+            Log::warning('Google API circuit breaker open — reply not published', [
+                'connection_id' => $connection->id,
                 'reply_id' => $reply->id,
-                'review_id' => $review->id,
-                'error' => $e->getMessage(),
+                'service_key' => $e->serviceKey,
             ]);
+
+            $connection->update(['status' => ConnectionStatus::ERROR, 'last_error' => 'Service temporarily unavailable (circuit breaker open)']);
 
             activity()
                 ->performedOn($reply)
-                ->log('Reply publication failed: Connection error');
+                ->log('Reply publication skipped: circuit breaker open');
 
             throw $e;
-        } catch (ServerException $e) {
-            Log::error('Google API server error while publishing reply', [
+        } catch (RateLimitExceededException $e) {
+            Log::warning('Google API rate limit exceeded — reply not published', [
+                'connection_id' => $e->connectionId,
                 'reply_id' => $reply->id,
-                'review_id' => $review->id,
-                'status_code' => $e->getResponse()->getStatusCode(),
-                'error' => $e->getMessage(),
+                'limit_type' => $e->limitType,
+                'retry_after' => $e->retryAfterSeconds,
             ]);
 
             activity()
                 ->performedOn($reply)
-                ->log('Reply publication failed: Server error');
+                ->log("Reply publication deferred: rate limit ({$e->limitType}), retry after {$e->retryAfterSeconds}s");
 
             throw $e;
-        } catch (RequestException $e) {
-            Log::error('Google API request error while publishing reply', [
-                'reply_id' => $reply->id,
-                'review_id' => $review->id,
-                'status_code' => $e->getResponse()?->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
-
+        } catch (\Exception $e) {
             activity()
                 ->performedOn($reply)
-                ->log('Reply publication failed: Request error');
+                ->log('Reply publication failed: '.$e->getMessage());
 
             throw $e;
         }
     }
 
-    public function deleteReply(Review $review): bool
+    public function reportReview(Review $review, string $reason): bool
     {
+        $review->loadMissing('location.connection');
+
+        if (! $review->location?->connection) {
+            throw new \RuntimeException('No se puede reportar la reseña: la ubicación o conexión no existe.');
+        }
+
         $connection = $review->location->connection;
 
-        $this->checkRateLimit($connection->id);
-
-        $this->authService->refreshTokenIfNeeded($connection);
+        $baseUrl = config('reviews.google.api.reviews');
+        $locationId = $review->location->google_location_id;
+        $reviewId = $review->google_review_id;
+        $endpoint = "{$baseUrl}/{$locationId}/reviews/{$reviewId}/flag";
 
         try {
-            $client = $this->createSecureClient();
-            $baseUrl = config('reviews.google.api.reviews');
-
-            $locationId = $review->location->google_location_id;
-            $reviewId = $review->google_review_id;
-
-            $client->delete("{$baseUrl}/{$locationId}/reviews/{$reviewId}/reply", [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$connection->access_token,
-                ],
+            $this->apiClient->post($connection, $endpoint, [
+                'flagReason' => $reason,
             ]);
+
+            activity()
+                ->performedOn($review)
+                ->withProperties(['reason' => $reason])
+                ->log('Review reported to Google as inappropriate');
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to report review to Google', [
+                'review_id' => $review->id,
+                'reason' => $reason,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function deleteReply(Review $review): bool
+    {
+        $review->loadMissing('location.connection');
+
+        if (! $review->location?->connection) {
+            throw new \RuntimeException('No se puede eliminar la respuesta: la ubicación o conexión no existe.');
+        }
+
+        $connection = $review->location->connection;
+
+        $baseUrl = config('reviews.google.api.reviews');
+        $locationId = $review->location->google_location_id;
+        $reviewId = $review->google_review_id;
+        $endpoint = "{$baseUrl}/{$locationId}/reviews/{$reviewId}/reply";
+
+        try {
+            $this->apiClient->delete($connection, $endpoint);
 
             $review->update([
                 'google_reply_text' => null,
@@ -284,27 +263,37 @@ class GoogleReviewService
                 ->log('Reply deleted from Google successfully');
 
             return true;
-        } catch (ConnectException $e) {
-            Log::error('Google API connection failed while deleting reply', [
+        } catch (CircuitBreakerOpenException $e) {
+            Log::warning('Google API circuit breaker open — reply not deleted', [
+                'connection_id' => $connection->id,
                 'review_id' => $review->id,
-                'error' => $e->getMessage(),
+                'service_key' => $e->serviceKey,
             ]);
 
-            throw $e;
-        } catch (ServerException $e) {
-            Log::error('Google API server error while deleting reply', [
-                'review_id' => $review->id,
-                'status_code' => $e->getResponse()->getStatusCode(),
-                'error' => $e->getMessage(),
-            ]);
+            $connection->update(['status' => ConnectionStatus::ERROR, 'last_error' => 'Service temporarily unavailable (circuit breaker open)']);
+
+            activity()
+                ->performedOn($review)
+                ->log('Reply deletion skipped: circuit breaker open');
 
             throw $e;
-        } catch (RequestException $e) {
-            Log::error('Google API request error while deleting reply', [
+        } catch (RateLimitExceededException $e) {
+            Log::warning('Google API rate limit exceeded — reply not deleted', [
+                'connection_id' => $e->connectionId,
                 'review_id' => $review->id,
-                'status_code' => $e->getResponse()?->getStatusCode(),
-                'error' => $e->getMessage(),
+                'limit_type' => $e->limitType,
+                'retry_after' => $e->retryAfterSeconds,
             ]);
+
+            activity()
+                ->performedOn($review)
+                ->log("Reply deletion deferred: rate limit ({$e->limitType}), retry after {$e->retryAfterSeconds}s");
+
+            throw $e;
+        } catch (\Exception $e) {
+            activity()
+                ->performedOn($review)
+                ->log('Reply deletion failed: '.$e->getMessage());
 
             throw $e;
         }

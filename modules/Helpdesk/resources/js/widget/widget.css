@@ -1,0 +1,491 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f0f9e8;
+  --color-primary-100: #d9f0c7;
+  --color-primary-200: #bfe6a1;
+  --color-primary-300: #a5db7a;
+  --color-primary-400: #90bb13;
+  --color-primary-500: #7ca30f;
+  --color-primary-600: #698b0c;
+  --color-primary-700: #567309;
+  --color-primary-800: #435b07;
+  --color-primary-900: #2f4305;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body.dark {
+    background: #0f172a;
+    color: #f1f5f9;
+  }
+
+  #widget-root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  .widget-container {
+    width: 360px;
+    height: 560px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .widget-container {
+    background: #1e293b;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Header */
+.widget-header {
+    padding: 16px;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.info-button,
+.back-button,
+.menu-button,
+.close-button,
+.minimize-button,
+.new-button {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.greeting {
+    color: white;
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: normal;
+    font-size: 16px;
+}
+
+.header-title {
+    font-weight: bold;
+}
+
+.header-status {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+}
+
+/* Content */
+.widget-content {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.action-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.action-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.action-text {
+    flex: 1;
+}
+
+.action-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.action-subtitle {
+    color: #666;
+    font-size: 12px;
+}
+
+.search-card {
+    padding: 12px;
+}
+
+.search-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 14px;
+}
+
+.search-button {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    display: flex;
+    border-top: 1px solid #e0e0e0;
+    padding: 8px;
+}
+
+.nav-button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #666;
+    text-decoration: none;
+    padding: 8px;
+}
+
+.nav-button.active {
+    font-weight: 600;
+}
+
+.nav-button i {
+    font-size: 20px;
+}
+
+.nav-button small {
+    font-size: 11px;
+}
+
+/* Messages */
+.messages-area {
+    flex: 1;
+    padding: 16px;
+    background: #f8f9fa;
+    overflow-y: auto;
+}
+
+.message {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.avatar,
+.bot-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ccc;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-bubble {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.message-bubble p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.message-time {
+    color: #666;
+    font-size: 11px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Input Area */
+.input-area {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+    background: white;
+}
+
+.message-input {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 14px;
+    outline: none;
+}
+
+.send-button,
+.attachment-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.attachment-button {
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    color: #666;
+}
+
+/* Forms */
+.form-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: #90bb13;
+}
+
+.form-footer {
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Rating */
+.rating-section {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.rating-section p {
+    margin-bottom: 16px;
+}
+
+.rating-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.rating-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    background: white;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.rating-btn.active {
+    border: none;
+    color: white;
+}
+
+/* Conversations List */
+.conversations-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.conversation-item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+}
+
+.conversation-item.active {
+    background: #f8f9fa;
+}
+
+.conversation-info {
+    flex: 1;
+}
+
+.conversation-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.last-message {
+    color: #666;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Quick Replies */
+.quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.quick-reply-btn {
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.powered-by {
+    text-align: center;
+    padding: 8px;
+    color: #666;
+    font-size: 11px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+    transition: all 0.2s ease;
+}
+
+/* Focus states */
+input:focus, select:focus, textarea:focus {
+    transition: all 0.2s ease;
+}
+
+/* Hover scale effect for clickable items */
+.hover-scale:hover {
+    transform: scale(1.02);
+}

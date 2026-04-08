@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="mb-4">
             <h6 class="mb-1 fw-bold">Historial de actividad</h6>
-            <p class="text-muted small mb-0">Registro de eventos y acciones en tu cuenta</p>
+            <p class="text-muted mb-0">Registro de eventos y acciones en tu cuenta</p>
         </div>
 
         <div class="card border">
@@ -10,7 +10,7 @@
                 <div class="timeline-widget">
                     {{-- Login Event --}}
                     <div class="timeline-item d-flex position-relative pb-4">
-                        <div class="timeline-time text-muted small me-3" style="min-width: 120px;">
+                        <div class="timeline-time text-muted me-3" style="min-width: 120px;">
                             {{ now()->format('d M, H:i') }}
                         </div>
                         <div class="timeline-badge-wrap d-flex flex-column align-items-center">
@@ -41,7 +41,7 @@
                     {{-- Profile Updated Event --}}
                     @if($user->updated_at->diffInDays($user->created_at) > 0)
                     <div class="timeline-item d-flex position-relative pb-4">
-                        <div class="timeline-time text-muted small me-3" style="min-width: 120px;">
+                        <div class="timeline-time text-muted me-3" style="min-width: 120px;">
                             {{ $user->updated_at->format('d M, H:i') }}
                         </div>
                         <div class="timeline-badge-wrap d-flex flex-column align-items-center">
@@ -58,7 +58,7 @@
                     {{-- Email Verified Event --}}
                     @if($user->email_verified_at)
                     <div class="timeline-item d-flex position-relative pb-4">
-                        <div class="timeline-time text-muted small me-3" style="min-width: 120px;">
+                        <div class="timeline-time text-muted me-3" style="min-width: 120px;">
                             {{ $user->email_verified_at->format('d M, H:i') }}
                         </div>
                         <div class="timeline-badge-wrap d-flex flex-column align-items-center">
@@ -74,7 +74,7 @@
 
                     {{-- Account Created Event --}}
                     <div class="timeline-item d-flex position-relative">
-                        <div class="timeline-time text-muted small me-3" style="min-width: 120px;">
+                        <div class="timeline-time text-muted me-3" style="min-width: 120px;">
                             {{ $user->created_at->format('d M, H:i') }}
                         </div>
                         <div class="timeline-badge-wrap d-flex flex-column align-items-center">

@@ -10,7 +10,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1 fw-bold">Crear plantilla de email</h5>
-                                <p class="mb-0 text-muted small">Complete la información para crear una nueva plantilla de email.</p>
+                                <p class="mb-0 text-muted">Complete la información para crear una nueva plantilla de email.</p>
                             </div>
                         </div>
                     </div>
@@ -218,7 +218,7 @@
 
                     {{-- Footer --}}
                     <div class="card-footer border-top">
-                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">
                             <i class="fas fa-save me-2"></i>Guardar plantilla
                         </button>
                         <a href="{{ route('settings.mailrelay.templates.index') }}" class="btn btn-secondary w-100">

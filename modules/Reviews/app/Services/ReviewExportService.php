@@ -2,36 +2,56 @@
 
 namespace Modules\Reviews\Services;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Reviews\Exports\ReviewsExport;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Modules\Reviews\Models\Review;
 
 class ReviewExportService
 {
-    public function exportToExcel(array $filters = []): BinaryFileResponse
+    /**
+     * Queue an Excel export and return the target filepath.
+     * Caller is responsible for chaining a notification job.
+     */
+    public function queueExcelExport(array $filters = [], ?int $userId = null): string
     {
-        $filename = 'reviews_'.now()->format('Y-m-d_His').'.xlsx';
+        $userSegment = $userId !== null ? '_'.$userId.'_' : '_';
+        $filename = 'reviews'.$userSegment.now()->format('Y-m-d_His').'.xlsx';
+        $filepath = 'exports/'.$filename;
 
-        return Excel::download(new ReviewsExport($filters), $filename);
+        Storage::disk('local')->makeDirectory('exports');
+
+        Excel::store(new ReviewsExport($filters), $filepath, 'local');
+
+        return $filepath;
     }
 
-    public function exportToCsv(array $filters = []): string
+    /**
+     * Store a CSV export synchronously within a queued job context and return the relative path.
+     * The user ID is embedded in the filename for ownership verification on download.
+     */
+    public function exportToCsv(array $filters = [], ?int $userId = null): string
     {
-        $filename = 'reviews_'.now()->format('Y-m-d_His').'.csv';
+        $userSegment = $userId !== null ? '_'.$userId.'_' : '_';
+        $filename = 'reviews'.$userSegment.now()->format('Y-m-d_His').'.csv';
+        $filepath = 'exports/'.$filename;
 
-        Excel::store(new ReviewsExport($filters), 'exports/'.$filename, 'local', \Maatwebsite\Excel\Excel::CSV);
+        Storage::disk('local')->makeDirectory('exports');
 
-        return Storage::disk('local')->path('exports/'.$filename);
+        Excel::store(new ReviewsExport($filters), $filepath, 'local', \Maatwebsite\Excel\Excel::CSV);
+
+        return $filepath;
     }
 
     public function exportToArray(array $filters = []): array
     {
-        $reviews = $this->getFilteredReviews($filters);
-
-        return $reviews->map(function ($review) {
-            return [
+        return ReviewQueryBuilder::applyFilters(
+            Review::query()->with(['location', 'moderation']),
+            $filters
+        )
+            ->latest('review_time')
+            ->get()
+            ->map(fn ($review) => [
                 'ID' => $review->id,
                 'Location' => $review->location->name,
                 'Reviewer' => $review->reviewer_name,
@@ -43,49 +63,7 @@ class ReviewExportService
                 'Visible' => $review->isVisible() ? 'Yes' : 'No',
                 'Featured' => $review->isFeatured() ? 'Yes' : 'No',
                 'Synced At' => $review->synced_at?->format('Y-m-d H:i:s'),
-            ];
-        })->toArray();
-    }
-
-    private function getFilteredReviews(array $filters = []): Collection
-    {
-        $query = \Modules\Reviews\Models\Review::query()
-            ->with(['location', 'moderation']);
-
-        if (isset($filters['location_id'])) {
-            $query->where('location_id', $filters['location_id']);
-        }
-
-        if (isset($filters['star_rating'])) {
-            $query->where('star_rating', $filters['star_rating']);
-        }
-
-        if (isset($filters['has_comment'])) {
-            $filters['has_comment']
-                ? $query->whereNotNull('comment')
-                : $query->whereNull('comment');
-        }
-
-        if (isset($filters['has_reply'])) {
-            $filters['has_reply']
-                ? $query->whereNotNull('google_reply_text')
-                : $query->whereNull('google_reply_text');
-        }
-
-        if (isset($filters['is_visible'])) {
-            $query->whereHas('moderation', function ($q) use ($filters) {
-                $q->where('is_visible', $filters['is_visible']);
-            });
-        }
-
-        if (isset($filters['date_from'])) {
-            $query->where('review_time', '>=', $filters['date_from']);
-        }
-
-        if (isset($filters['date_to'])) {
-            $query->where('review_time', '<=', $filters['date_to']);
-        }
-
-        return $query->latest('review_time')->get();
+            ])
+            ->toArray();
     }
 }

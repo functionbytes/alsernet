@@ -3,9 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Attention\Http\Controllers\AttentionCategoriesController;
 use Modules\Attention\Http\Controllers\AttentionConfigurationController;
+use Modules\Attention\Http\Controllers\AttentionDashboardController;
 use Modules\Attention\Http\Controllers\AttentionDepartmentsController;
 use Modules\Attention\Http\Controllers\AttentionEmailController;
 use Modules\Attention\Http\Controllers\AttentionPublicController;
+use Modules\Attention\Http\Controllers\AttentionRoutingRulesController;
 use Modules\Attention\Http\Controllers\AttentionSedesController;
 use Modules\Attention\Http\Controllers\AttentionSlaPoliciesController;
 use Modules\Attention\Http\Controllers\AttentionTypesController;
@@ -26,7 +28,7 @@ use Modules\Attention\Http\Controllers\AttentionWebController;
 // ===== RUTAS PÚBLICAS (pqrsf.*) - Sin autenticación =====
 Route::middleware(['web', 'throttle:30,1'])->prefix('pqrsf')->name('pqrsf.')->group(function () {
     Route::get('/', [AttentionPublicController::class, 'form'])->name('form');
-    Route::post('/', [AttentionPublicController::class, 'submit'])->name('submit');
+    Route::post('/', [AttentionPublicController::class, 'submit'])->name('submit')->middleware('throttle:10,1');
     Route::get('/success/{radicado}', [AttentionPublicController::class, 'showSuccess'])->name('success');
     Route::get('/tracking', [AttentionPublicController::class, 'trackingForm'])->name('tracking');
     Route::get('/tracking/{radicado}', [AttentionPublicController::class, 'trackingResult'])->name('tracking.result');
@@ -35,12 +37,23 @@ Route::middleware(['web', 'throttle:30,1'])->prefix('pqrsf')->name('pqrsf.')->gr
 // ===== RUTAS AUTENTICADAS (panel settings) =====
 Route::middleware(['web', 'auth'])->group(function () {
 
+    // ===== DASHBOARD ANALÍTICO =====
+    Route::get('panel/attentions/dashboard', [AttentionDashboardController::class, 'index'])->name('attention.dashboard');
+    Route::get('panel/attentions/dashboard/chart-data', [AttentionDashboardController::class, 'chartData'])->name('attention.dashboard.chart-data');
+
     // ===== OPERACIONES PQRSF (attention.*) =====
-    Route::prefix('attentions')->name('attention.')->group(function () {
+    Route::prefix('panel/attentions')->name('attention.')->group(function () {
 
         // Listados
         Route::get('/', [AttentionWebController::class, 'pending'])->name('pending');
         Route::get('/pending', [AttentionWebController::class, 'index'])->name('index');
+
+        // Exportación
+        Route::get('/export', [AttentionWebController::class, 'export'])->name('export');
+        Route::get('/export/download', [AttentionWebController::class, 'exportDownload'])->name('export.download');
+
+        // Bulk actions (AJAX)
+        Route::post('/bulk-action', [AttentionWebController::class, 'bulkAction'])->name('bulk-action');
 
         // Crear y guardar
         Route::get('/create', [AttentionWebController::class, 'create'])->name('create');
@@ -84,7 +97,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 
     // ===== CONFIGURACIÓN (settings.attention.*) - ADMIN ONLY =====
-    Route::prefix('settings/attention')->name('settings.attention.')
+    Route::prefix('panel/settings/attention')->name('settings.attention.')
         ->middleware(['settings'])->group(function () {
 
             // HUB
@@ -101,6 +114,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::delete('/{type}', [AttentionTypesController::class, 'destroy'])->name('destroy');
                 Route::post('/{type}/toggle', [AttentionTypesController::class, 'toggle'])->name('toggle');
                 Route::post('/reorder', [AttentionTypesController::class, 'reorder'])->name('reorder');
+                Route::post('/bulk-action', [AttentionTypesController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // CATEGORÍAS
@@ -113,6 +127,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/{category}', [AttentionCategoriesController::class, 'update'])->name('update');
                 Route::delete('/{category}', [AttentionCategoriesController::class, 'destroy'])->name('destroy');
                 Route::post('/{category}/toggle', [AttentionCategoriesController::class, 'toggle'])->name('toggle');
+                Route::post('/bulk-action', [AttentionCategoriesController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // DEPARTAMENTOS
@@ -125,6 +140,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/{department}', [AttentionDepartmentsController::class, 'update'])->name('update');
                 Route::delete('/{department}', [AttentionDepartmentsController::class, 'destroy'])->name('destroy');
                 Route::post('/{department}/toggle', [AttentionDepartmentsController::class, 'toggle'])->name('toggle');
+                Route::post('/bulk-action', [AttentionDepartmentsController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // SEDES
@@ -137,6 +153,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/{sede}', [AttentionSedesController::class, 'update'])->name('update');
                 Route::delete('/{sede}', [AttentionSedesController::class, 'destroy'])->name('destroy');
                 Route::post('/{sede}/toggle', [AttentionSedesController::class, 'toggle'])->name('toggle');
+                Route::post('/bulk-action', [AttentionSedesController::class, 'bulkAction'])->name('bulk-action');
             });
 
             // CONFIGURACIONES GLOBALES
@@ -152,8 +169,20 @@ Route::middleware(['web', 'auth'])->group(function () {
             });
 
             // PLANTILLAS EMAIL
-            Route::get('/templates', [AttentionConfigurationController::class, 'emailSettings'])->name('templates.index');
+            Route::get('/templates', [AttentionConfigurationController::class, 'templatesIndex'])->name('templates.index');
             Route::get('/templates/search', [AttentionConfigurationController::class, 'searchTemplates'])->name('templates.search');
+
+            // REGLAS DE ASIGNACIÓN AUTOMÁTICA
+            Route::prefix('routing-rules')->name('routing-rules.')->group(function () {
+                Route::get('/', [AttentionRoutingRulesController::class, 'index'])->name('index');
+                Route::get('/create', [AttentionRoutingRulesController::class, 'create'])->name('create');
+                Route::post('/', [AttentionRoutingRulesController::class, 'store'])->name('store');
+                Route::post('/bulk-action', [AttentionRoutingRulesController::class, 'bulkAction'])->name('bulk-action');
+                Route::get('/{routingRule}/edit', [AttentionRoutingRulesController::class, 'edit'])->name('edit');
+                Route::put('/{routingRule}', [AttentionRoutingRulesController::class, 'update'])->name('update');
+                Route::delete('/{routingRule}', [AttentionRoutingRulesController::class, 'destroy'])->name('destroy');
+                Route::post('/{routingRule}/toggle', [AttentionRoutingRulesController::class, 'toggle'])->name('toggle');
+            });
 
             // POLÍTICAS SLA
             Route::prefix('sla-policies')->name('sla-policies.')->group(function () {
@@ -164,11 +193,12 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::get('/{policy}/edit', [AttentionSlaPoliciesController::class, 'edit'])->name('edit');
                 Route::patch('/{policy}', [AttentionSlaPoliciesController::class, 'update'])->name('update');
                 Route::delete('/{policy}', [AttentionSlaPoliciesController::class, 'destroy'])->name('destroy');
+                Route::post('/bulk-action', [AttentionSlaPoliciesController::class, 'bulkAction'])->name('bulk-action');
             });
         });
 
     // ===== GESTIÓN GLOBAL DE EMAILS (emails.*) - ADMIN =====
-    Route::prefix('emails')->name('emails.')
+    Route::prefix('panel/emails')->name('emails.')
         ->middleware(['settings'])->group(function () {
             Route::get('/history', [AttentionEmailController::class, 'history'])->name('history');
             Route::get('/stats', [AttentionEmailController::class, 'stats'])->name('stats');

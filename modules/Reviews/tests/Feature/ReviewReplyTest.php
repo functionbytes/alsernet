@@ -8,22 +8,27 @@ use Modules\Reviews\Enums\ReplyStatus;
 use Modules\Reviews\Events\ReplyPublished;
 use Modules\Reviews\Jobs\PublishReviewReplyJob;
 use Modules\Reviews\Models\ReviewReply;
+use Modules\Reviews\Models\ReviewReplyTemplate;
+use Modules\Reviews\Services\ReviewReplyService;
 use Modules\Reviews\Tests\TestCase;
 
 class ReviewReplyTest extends TestCase
 {
     public function test_user_can_create_draft_reply(): void
     {
-        $user = $this->createUser(['reviews.reply']);
-        $review = $this->createReview();
+        $user = $this->createUser(['reviews.replies.create']);
+        $connection = $this->createConnection($user);
+        $location = $this->createLocation($connection);
+        $review = $this->createReview($location);
 
         $response = $this->actingAs($user)
             ->postJson(route('reviews.replies.store'), [
                 'review_id' => $review->id,
                 'reply_text' => 'Thank you for your review!',
+                'status' => 'draft',
             ]);
 
-        $response->assertCreated();
+        $response->assertOk();
 
         $this->assertDatabaseHas('review_replies', [
             'review_id' => $review->id,
@@ -35,8 +40,11 @@ class ReviewReplyTest extends TestCase
 
     public function test_user_can_update_draft_reply(): void
     {
-        $user = $this->createUser(['reviews.reply']);
-        $reply = ReviewReply::factory()->draft()->for($user, 'createdBy')->create();
+        $user = $this->createUser(['reviews.replies.edit']);
+        $connection = $this->createConnection($user);
+        $location = $this->createLocation($connection);
+        $review = $this->createReview($location);
+        $reply = ReviewReply::factory()->draft()->for($review)->for($user, 'createdBy')->create();
 
         $response = $this->actingAs($user)
             ->patchJson(route('reviews.replies.update', $reply), [
@@ -53,17 +61,16 @@ class ReviewReplyTest extends TestCase
 
     public function test_user_can_approve_reply(): void
     {
-        $user = $this->createUser(['reviews.approve-replies']);
-        $reply = ReviewReply::factory()->draft()->create();
+        $user = $this->createUser(['reviews.replies.approve']);
+        $connection = $this->createConnection($user);
+        $location = $this->createLocation($connection);
+        $review = $this->createReview($location);
+        $reply = ReviewReply::factory()->draft()->for($review)->create();
 
         config(['reviews.general.auto_publish_replies' => false]);
 
-        $response = $this->actingAs($user)
-            ->postJson(route('reviews.replies.publish', $reply), [
-                'action' => 'approve',
-            ]);
-
-        $response->assertOk();
+        $service = app(ReviewReplyService::class);
+        $service->approve($reply, $user);
 
         $reply = $reply->fresh();
         $this->assertSame(ReplyStatus::APPROVED, $reply->status);
@@ -75,8 +82,11 @@ class ReviewReplyTest extends TestCase
     {
         $this->fakeGoogleReplySuccess();
 
-        $user = $this->createUser(['reviews.publish-replies']);
-        $reply = ReviewReply::factory()->approved()->create();
+        $user = $this->createUser(['reviews.replies.publish']);
+        $connection = $this->createConnection($user);
+        $location = $this->createLocation($connection);
+        $review = $this->createReview($location);
+        $reply = ReviewReply::factory()->approved()->for($review)->create();
 
         Event::fake([ReplyPublished::class]);
 
@@ -98,10 +108,10 @@ class ReviewReplyTest extends TestCase
 
         Queue::fake();
 
-        $user = $this->createUser(['reviews.approve-replies']);
+        $user = $this->createUser(['reviews.replies.approve']);
         $reply = ReviewReply::factory()->draft()->create();
 
-        $service = app(\Modules\Reviews\Services\ReviewReplyService::class);
+        $service = app(ReviewReplyService::class);
         $service->approve($reply, $user);
 
         Queue::assertPushed(PublishReviewReplyJob::class);
@@ -143,7 +153,7 @@ class ReviewReplyTest extends TestCase
     {
         $this->fakeGoogleReplySuccess();
 
-        $user = $this->createUser(['reviews.publish-replies']);
+        $user = $this->createUser(['reviews.replies.publish']);
         $reply = ReviewReply::factory()->draft()->create();
 
         $this->assertSame(ReplyStatus::DRAFT, $reply->status);
@@ -151,25 +161,24 @@ class ReviewReplyTest extends TestCase
         $reply->markAsApproved($user);
         $this->assertSame(ReplyStatus::APPROVED, $reply->fresh()->status);
 
-        $service = app(\Modules\Reviews\Services\ReviewReplyService::class);
+        $service = app(ReviewReplyService::class);
         $service->publish($reply->fresh(), $user);
         $this->assertSame(ReplyStatus::PUBLISHED, $reply->fresh()->status);
     }
 
     public function test_template_variables_replaced(): void
     {
-        $user = $this->createUser(['reviews.reply']);
+        $user = $this->createUser(['reviews.replies.create']);
         $review = $this->createReview();
-        $review->reviewer_name = 'Jane Doe';
-        $review->location->name = 'My Business';
-        $review->save();
+        $review->update(['reviewer_name' => 'Jane Doe']);
+        $review->location->update(['name' => 'My Business']);
 
-        $template = \Modules\Reviews\Models\ReviewReplyTemplate::factory()->create([
-            'body' => 'Hello {reviewer_name}, thank you for visiting {business_name}!',
+        $template = ReviewReplyTemplate::factory()->create([
+            'body' => 'Hello {reviewer_name}, thank you for visiting {location_name}!',
         ]);
 
-        $service = app(\Modules\Reviews\Services\ReviewReplyService::class);
-        $reply = $service->createFromTemplate($review, $template, $user);
+        $service = app(ReviewReplyService::class);
+        $reply = $service->createFromTemplate($review->fresh(), $template, $user);
 
         $this->assertStringContainsString('Jane Doe', $reply->reply_text);
         $this->assertStringContainsString('My Business', $reply->reply_text);
@@ -188,8 +197,11 @@ class ReviewReplyTest extends TestCase
 
     public function test_user_can_delete_draft_reply(): void
     {
-        $user = $this->createUser(['reviews.reply']);
-        $reply = ReviewReply::factory()->draft()->for($user, 'createdBy')->create();
+        $user = $this->createUser(['reviews.replies.delete']);
+        $connection = $this->createConnection($user);
+        $location = $this->createLocation($connection);
+        $review = $this->createReview($location);
+        $reply = ReviewReply::factory()->draft()->for($review)->for($user, 'createdBy')->create();
 
         $response = $this->actingAs($user)
             ->deleteJson(route('reviews.replies.destroy', $reply));

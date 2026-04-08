@@ -3,24 +3,25 @@
 namespace Modules\Notification\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NotificationPreference extends Model
 {
+    protected $table = 'notification_settings';
+
     protected $fillable = [
         'user_id',
         'channel',
         'notification_type',
-        'is_enabled',
-        'backups',
+        'enabled',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_enabled' => 'boolean',
-            'backups' => 'array',
+            'enabled' => 'boolean',
         ];
     }
 
@@ -36,7 +37,7 @@ class NotificationPreference extends Model
             ->where('notification_type', $type)
             ->first();
 
-        return $preference ? $preference->is_enabled : true;
+        return $preference ? $preference->enabled : true;
     }
 
     public static function toggle(int $userId, string $channel, string $type, bool $enabled): void
@@ -47,7 +48,7 @@ class NotificationPreference extends Model
                 'channel' => $channel,
                 'notification_type' => $type,
             ],
-            ['is_enabled' => $enabled]
+            ['enabled' => $enabled]
         );
     }
 
@@ -56,17 +57,17 @@ class NotificationPreference extends Model
         return static::where('user_id', $userId)->get()->groupBy('channel')->toArray();
     }
 
-    public function scopeEnabled($query)
+    public function scopeEnabled(Builder $query): Builder
     {
-        return $query->where('is_enabled', true);
+        return $query->where('enabled', true);
     }
 
-    public function scopeForChannel($query, string $channel)
+    public function scopeForChannel(Builder $query, string $channel): Builder
     {
         return $query->where('channel', $channel);
     }
 
-    public function scopeForType($query, string $type)
+    public function scopeForType(Builder $query, string $type): Builder
     {
         return $query->where('notification_type', $type);
     }

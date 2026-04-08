@@ -182,5 +182,6 @@ return [
         'timeout' => 30, // seconds
         'retry_attempts' => 3,
         'retry_delay' => 1000, // milliseconds
+        'throttle_per_minute' => env('ANALYTICS_THROTTLE_PER_MINUTE', 60),
     ],
 ];

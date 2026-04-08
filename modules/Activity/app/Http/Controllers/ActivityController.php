@@ -5,6 +5,8 @@ namespace Modules\Activity\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -13,7 +15,7 @@ class ActivityController extends Controller
     /**
      * Display activity logs
      */
-    public function logs(Request $request)
+    public function logs(Request $request): View
     {
         $this->authorize('Activity.logs.index');
         $pageTitle = 'Registro de cambios';
@@ -47,7 +49,7 @@ class ActivityController extends Controller
     /**
      * Display audit information
      */
-    public function audit(Request $request)
+    public function audit(Request $request): View
     {
         $this->authorize('Activity.audit.index');
         $pageTitle = 'Auditoría';
@@ -67,8 +69,9 @@ class ActivityController extends Controller
 
         $activities = $query->paginate(paginationNumber());
         $stats = $this->eventStats();
+        $logNames = Activity::query()->distinct()->pluck('log_name')->filter()->sort()->values();
 
-        return view('activity::settings.audit.index', compact('pageTitle', 'breadcrumb', 'activities', 'stats'));
+        return view('activity::settings.audit.index', compact('pageTitle', 'breadcrumb', 'activities', 'stats', 'logNames'));
     }
 
     public function export(Request $request): StreamedResponse
@@ -113,16 +116,49 @@ class ActivityController extends Controller
     /** @return array{total: int, created: int, updated: int, deleted: int} */
     private function eventStats(): array
     {
-        $row = Activity::query()
-            ->selectRaw("COUNT(*) as total, SUM(event='created') as created, SUM(event='updated') as updated, SUM(event='deleted') as deleted")
-            ->first();
+        return Cache::remember('activity:event_stats', now()->addMinutes(5), function () {
+            $row = Activity::query()
+                ->selectRaw("COUNT(*) as total, SUM(event='created') as created, SUM(event='updated') as updated, SUM(event='deleted') as deleted")
+                ->first();
 
-        return [
-            'total' => (int) $row->total,
-            'created' => (int) $row->created,
-            'updated' => (int) $row->updated,
-            'deleted' => (int) $row->deleted,
-        ];
+            return [
+                'total' => (int) $row->total,
+                'created' => (int) $row->created,
+                'updated' => (int) $row->updated,
+                'deleted' => (int) $row->deleted,
+            ];
+        });
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('Activity.logs.delete');
+
+        $validated = $request->validate([
+            'action' => 'required|in:delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $count = Activity::whereIn('id', $validated['ids'])->delete();
+        Cache::forget('activity:event_stats');
+
+        return response()->json([
+            'message' => $count.' registro(s) eliminados.',
+            'count' => $count,
+        ]);
+    }
+
+    public function show(int $id): View
+    {
+        $this->authorize('Activity.logs.index');
+
+        $activity = Activity::with('causer')->findOrFail($id);
+
+        $pageTitle = 'Detalle del registro';
+        $breadcrumb = 'Historial / Registro de cambios / Detalle';
+
+        return view('activity::settings.logs.show', compact('pageTitle', 'breadcrumb', 'activity'));
     }
 
     public function auditData(Request $request): JsonResponse
@@ -130,6 +166,9 @@ class ActivityController extends Controller
         $this->authorize('Activity.audit.index');
         $query = Activity::with('causer')->latest();
 
+        if ($request->filled('search')) {
+            $query->where('description', 'like', '%'.$request->input('search').'%');
+        }
         if ($request->filled('event')) {
             $query->where('event', $request->input('event'));
         }

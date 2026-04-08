@@ -4,10 +4,12 @@ namespace Modules\Widget\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Widget\Factories\WidgetFactory;
+use Modules\Widget\Models\Widget;
 use Modules\Widget\Repositories\Caches\WidgetCacheDecorator;
 use Modules\Widget\Repositories\Eloquent\WidgetRepository;
 use Modules\Widget\Repositories\Interfaces\WidgetInterface;
 use Modules\Widget\WidgetGroupCollection;
+use Nwidart\Modules\Facades\Module;
 
 class WidgetServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,10 @@ class WidgetServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Widget')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->registerMigrations();
@@ -96,7 +102,7 @@ class WidgetServiceProvider extends ServiceProvider
     protected function registerRepositories(): void
     {
         $this->app->singleton(WidgetInterface::class, function ($app) {
-            $repository = new WidgetRepository($app->make(\Modules\Widget\Models\Widget::class));
+            $repository = new WidgetRepository($app->make(Widget::class));
 
             if (config('widget.cache.enabled', true)) {
                 return new WidgetCacheDecorator($repository);

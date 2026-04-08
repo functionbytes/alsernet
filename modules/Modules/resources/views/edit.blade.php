@@ -4,178 +4,190 @@
 
 @section('content')
 
-<div class="row">
-    <div class="col-lg-8 offset-lg-2 d-flex align-items-stretch">
-        <div class="card w-100">
-            <div class="card-body">
-                <div class="d-flex no-block align-items-center mb-4">
-                    <h5 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>Editar {{ $module['name'] }}
-                    </h5>
-                    <a href="{{ route('settings.modules.show', $module['alias']) }}" class="btn btn-sm btn-outline-secondary ms-auto">
-                        <i class="fas fa-times me-1"></i>Cancelar
-                    </a>
-                </div>
+    @include('core::components.card', ['title' => 'Editar módulo'])
 
-                <p class="card-subtitle mb-4">
-                    Actualiza la configuración del módulo {{ $module['name'] }}.
-                </p>
+    @include('core::components.alerts')
 
-                {{-- Success/Error Messages --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Error de validación:</strong>
-                        <ul class="mb-0 mt-2">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
+    <div class="widget-content searchable-container list">
 
-                {{-- Edit Form --}}
-                <form action="{{ route('settings.modules.update', $module['alias']) }}" method="POST">
+        <div class="row g-4 align-items-start">
+
+            {{-- Columna izquierda --}}
+            <div class="col-lg-8">
+                <form action="{{ route('settings.modules.update', $module['alias']) }}" method="POST" id="moduleForm">
                     @csrf
                     @method('PUT')
 
-                    {{-- Module Information Section --}}
-                    <div class="mb-4">
-                        <h6 class="mb-3 fw-bold border-bottom pb-2">
-                            Información del módulo
-                        </h6>
+                    <div class="card">
 
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">Nombre del módulo</label>
-                                <input type="text" class="form-control bg-light" value="{{ $module['name'] }}" disabled>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>El nombre del módulo no puede ser modificado
+                        {{-- Información del módulo --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-1">Información del módulo</h6>
+                            <p class="text-muted mb-3">Datos principales del módulo. El nombre y alias no pueden ser modificados.</p>
+
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Nombre del módulo</label>
+                                    <input type="text" class="form-control" value="{{ $module['name'] }}" disabled>
                                 </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Alias</label>
-                                <input type="text" class="form-control bg-light" value="{{ $module['alias'] }}" disabled>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>El alias no puede ser modificado
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Alias</label>
+                                    <input type="text" class="form-control font-monospace" value="{{ $module['alias'] }}" disabled>
                                 </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Versión</label>
-                                <input type="text" class="form-control bg-light" value="v{{ $module['version'] }}" disabled>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>Definido en module.json
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Versión</label>
+                                    <input type="text" class="form-control" value="v{{ $module['version'] }}" disabled>
                                 </div>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">
-                                    Descripción
-                                    <span class="text-muted fw-normal">(opcional)</span>
-                                </label>
-                                <textarea class="form-control" name="description" rows="4" maxlength="500"
-                                          placeholder="Describe brevemente la funcionalidad de este módulo...">{{ old('description', $module['description']) }}</textarea>
-                                <div class="form-text">
-                                    Máximo 500 caracteres. Esta descripción aparecerá en la lista de módulos.
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Estado</label>
+                                    <input type="text" class="form-control" value="{{ $module['enabled'] ? 'Activo' : 'Inactivo' }}" disabled>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        Descripción
+                                        <span class="text-muted fw-normal">(opcional)</span>
+                                    </label>
+                                    <textarea class="form-control" name="description" rows="3" maxlength="500"
+                                              placeholder="Describe brevemente la funcionalidad de este módulo...">{{ old('description', $module['description']) }}</textarea>
+                                    <small class="text-muted d-block mt-1">Máximo 500 caracteres.</small>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Configuration Section --}}
-                    <hr class="my-4">
+                        <hr class="my-0">
 
-                    <div class="mb-4">
-                        <h6 class="mb-3 fw-bold border-bottom pb-2">
-                            Configuración avanzada
-                        </h6>
+                        {{-- Configuración avanzada --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-1">Configuración avanzada</h6>
+                            <p class="text-muted mb-3">Controla el orden de carga del módulo en el sistema.</p>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">
-                                    Prioridad de carga
-                                    <span class="badge bg-primary-subtle text-primary ms-1">Importante</span>
-                                </label>
-                                <input type="number" class="form-control @error('priority') is-invalid @enderror"
-                                       name="priority" value="{{ old('priority', $module['priority']) }}"
-                                       min="0" max="999" required>
-                                <div class="form-text">
-                                    <i class="fas fa-arrow-up me-1"></i>Mayor número = se carga primero (Rango: 0-999)
-                                </div>
-                                @error('priority')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Estado actual</label>
-                                <div class="p-3 bg-light rounded">
-                                    @if($module['enabled'])
-                                        <span class="badge bg-success-subtle text-success border border-success fs-6">
-                                            <i class="fas fa-circle fa-2xs me-1"></i>Activo
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary fs-6">
-                                            <i class="fas fa-circle fa-2xs me-1"></i>Inactivo
-                                        </span>
-                                    @endif
-                                </div>
-                                <div class="form-text">
-                                    Para cambiar el estado, use los botones en la página de detalles
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">
+                                        Prioridad de carga
+                                        <span class="badge bg-primary-subtle text-primary ms-1">Importante</span>
+                                    </label>
+                                    <input type="number" class="form-control @error('priority') is-invalid @enderror"
+                                           name="priority" value="{{ old('priority', $module['priority']) }}"
+                                           min="0" max="999" required>
+                                    <small class="text-muted d-block mt-1">Mayor número = se carga primero (rango: 0-999)</small>
+                                    @error('priority')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Technical Information --}}
-                    <hr class="my-4">
+                        <hr class="my-0">
 
-                    <div class="mb-4">
-                        <h6 class="mb-3 fw-bold border-bottom pb-2">
-                            Información técnica
-                            <span class="badge bg-secondary-subtle text-secondary border border-secondary ms-2">Solo lectura</span>
-                        </h6>
+                        {{-- Información técnica --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-1">Información técnica</h6>
+                            <p class="text-muted mb-3">Datos de solo lectura definidos en <code>module.json</code>.</p>
 
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label text-muted small">Namespace del módulo</label>
-                                <div class="p-3 bg-light rounded">
-                                    <code class="text-dark">{{ $module['namespace'] }}</code>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Namespace</label>
+                                    <input type="text" class="form-control font-monospace" value="{{ $module['namespace'] }}" disabled>
                                 </div>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label text-muted small">Ruta en el sistema</label>
-                                <div class="p-3 bg-light rounded text-break">
-                                    <code class="text-dark">{{ $module['path'] }}</code>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Ruta en el sistema</label>
+                                    <input type="text" class="form-control font-monospace" value="{{ $module['path'] }}" disabled>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Action Buttons --}}
-                    <hr class="my-4">
-
-                    <div class="d-flex gap-2 justify-content-between align-items-center">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="fas fa-save me-2"></i>Guardar cambios
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary w-100">
+                                Guardar cambios
                             </button>
-                            <a href="{{ route('settings.modules.show', $module['alias']) }}" class="btn btn-light border">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
                         </div>
-                        <a href="{{ route('settings.modules.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver a módulos
-                        </a>
+
                     </div>
                 </form>
             </div>
+
+            {{-- Columna derecha --}}
+            <div class="col-lg-4">
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-1">Ver detalles</h6>
+                        <p class="text-muted mb-3">Consulta la información completa del módulo, incluyendo providers y keywords.</p>
+                        <a href="{{ route('settings.modules.show', $module['alias']) }}" class="btn btn-outline-secondary w-100">
+                            Ver módulo
+                        </a>
+                    </div>
+                </div>
+
+                @if(!in_array($module['name'], ['Role', 'Modules']))
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1">Estado del módulo</h6>
+                            <p class="text-muted mb-3">
+                                @if($module['enabled'])
+                                    El módulo está activo. Puedes deshabilitarlo temporalmente sin perder la configuración.
+                                @else
+                                    El módulo está inactivo. Habilítalo para que funcione en el sistema.
+                                @endif
+                            </p>
+                            @if($module['enabled'])
+                                <form action="{{ route('settings.modules.disable', $module['alias']) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-info w-100"
+                                            onclick="return confirm('¿Deshabilitar {{ $module['name'] }}?')">
+                                        Deshabilitar módulo
+                                    </button>
+                                </form>
+                            @else
+                                <form action="{{ route('settings.modules.enable', $module['alias']) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        Habilitar módulo
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-1">Desinstalar módulo</h6>
+                            <p class="text-muted mb-3">Elimina el módulo permanentemente del sistema. Esta acción es irreversible.</p>
+                            <form action="{{ route('settings.modules.uninstall', $module['alias']) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-info w-100"
+                                        onclick="return confirm('¿Desinstalar {{ $module['name'] }}? Esta acción es irreversible.')">
+                                    Desinstalar módulo
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Este módulo está protegido y no puede ser deshabilitado ni desinstalado.
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-1">Volver a módulos</h6>
+                        <p class="text-muted mb-3">Regresa al listado completo de módulos del sistema.</p>
+                        <a href="{{ route('settings.modules.index') }}" class="btn btn-secondary w-100">
+                            Ir a módulos
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
+
     </div>
-</div>
 
 @endsection

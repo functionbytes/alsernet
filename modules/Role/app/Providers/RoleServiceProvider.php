@@ -58,7 +58,7 @@ class RoleServiceProvider extends ServiceProvider
 
         // Manager settings routes (GET views + POST/PUT/DELETE API)
         Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('settings')
+            ->prefix('panel/settings')
             ->name('settings.')
             ->group(function () use ($modulePath) {
                 // Load view routes (GET)
@@ -76,16 +76,9 @@ class RoleServiceProvider extends ServiceProvider
      */
     protected function registerMenus(): void
     {
-        // Mini-nav item for Roles & Permissions
-        NavService::registerMiniItem('roles', [
-            'icon' => 'fa-duotone fa-shield',
-            'tooltip' => 'Roles y Permisos',
-            'sidebar_id' => 'roles',
-            'order' => 40,
-        ]);
 
         // Sidebar with menu items
-        NavService::registerSidebar('roles', [
+        NavService::registerSidebar('settings', [
             'title' => 'Roles y Permisos',
             'items' => [
                 ['label' => 'Roles', 'route' => 'settings.roles.index'],

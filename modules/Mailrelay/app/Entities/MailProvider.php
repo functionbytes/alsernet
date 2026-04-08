@@ -2,6 +2,7 @@
 
 namespace Modules\Mailrelay\Entities;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -17,10 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $priority Prioridad para failover (mayor = más prioridad)
  * @property array|null $limits Rate limits personalizados
  * @property array|null $metadata Configuración adicional
- * @property \Carbon\Carbon|null $last_tested_at Última vez que se testeó
+ * @property Carbon|null $last_tested_at Última vez que se testeó
  * @property bool $connection_ok Si la última prueba de conexión fue exitosa
- * @property \Carbon\Carbon|null $created_at
- * @property \Carbon\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class MailProvider extends Model
 {
@@ -132,33 +133,7 @@ class MailProvider extends Model
      */
     public function getDriverInfo(): array
     {
-        $driverInfo = [
-            'mailrelay' => [
-                'name' => 'Mailrelay',
-                'icon' => 'fas fa-envelope-open-text',
-                'color' => 'primary',
-            ],
-            'mailtrap' => [
-                'name' => 'Mailtrap',
-                'icon' => 'fas fa-inbox',
-                'color' => 'success',
-            ],
-            'sendgrid' => [
-                'name' => 'SendGrid',
-                'icon' => 'fas fa-paper-plane',
-                'color' => 'info',
-            ],
-            'aws_ses' => [
-                'name' => 'AWS SES',
-                'icon' => 'fab fa-aws',
-                'color' => 'warning',
-            ],
-            'postmark' => [
-                'name' => 'Postmark',
-                'icon' => 'fas fa-stamp',
-                'color' => 'danger',
-            ],
-        ];
+        $driverInfo = config('mailrelay.providers.driver_info', []);
 
         return $driverInfo[$this->driver] ?? [
             'name' => ucfirst($this->driver),

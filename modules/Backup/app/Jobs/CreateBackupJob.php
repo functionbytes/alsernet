@@ -8,10 +8,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
-use Modules\Backup\Notifications\BackupFailedNotification;
-use Modules\Backup\Notifications\BackupSuccessfulNotification;
+use Illuminate\Support\Facades\Mail;
+use Modules\Backup\Mail\BackupMail;
+use Modules\Core\Models\Setting;
+use Modules\Mailer\Models\MailerTemplate;
+use Modules\Mailer\Services\MailerTemplateRendererService;
 use ZipArchive;
 
 class CreateBackupJob implements ShouldBeUnique, ShouldQueue
@@ -26,6 +29,14 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 3600;
 
+    /**
+     * Backoff strategy: 2min, 10min (backup jobs are resource-heavy, wait longer)
+     */
+    public function backoff(): array
+    {
+        return [120, 600];
+    }
+
     public function uniqueId(): string
     {
         return 'backup-'.implode('-', $this->backupTypes);
@@ -38,8 +49,8 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
      * @param  array<string, mixed>  $backupConfig  File paths and database connection names to include
      */
     public function __construct(
-        private readonly array $backupTypes,
-        private readonly array $backupConfig,
+        private array $backupTypes,
+        private array $backupConfig,
     ) {}
 
     /**
@@ -92,36 +103,145 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
         }
     }
 
-    private function notifySuccess(string $size): void
+    private function getEmailsForEvent(string $event): array
     {
-        $email = config('backup.notifications.mail.to');
+        $enabledKey = $event === 'success' ? 'backup_notification_success_enabled' : 'backup_notification_failed_enabled';
+        $emailsKey = $event === 'success' ? 'backup_notification_success_emails' : 'backup_notification_failed_emails';
 
-        if (empty($email)) {
-            return;
+        if (! Setting::get($enabledKey, $event === 'failed' ? '1' : '0')) {
+            return [];
         }
 
-        try {
-            Notification::route('mail', $email)
-                ->notify(new BackupSuccessfulNotification($size));
-        } catch (\Exception $e) {
-            Log::warning('Could not send backup success notification: '.$e->getMessage());
+        $emails = Setting::get($emailsKey, '[]');
+        $emails = is_string($emails) ? json_decode($emails, true) : $emails;
+
+        return (is_array($emails) && ! empty($emails))
+            ? $emails
+            : array_filter([config('backup.notifications.mail.to')]);
+    }
+
+    private function notifySuccess(string $size): void
+    {
+        $emails = $this->getEmailsForEvent('success');
+
+        if (! empty($emails)) {
+            $variables = [
+                'APP_NAME' => config('app.name'),
+                'BACKUP_SIZE' => $size,
+                'BACKUP_DATE' => now()->format('d/m/Y H:i'),
+                'BACKUP_URL' => route('settings.backups.index'),
+            ];
+
+            [$subject, $html] = $this->renderTemplate('BACKUP_SUCCESS', $variables,
+                'Backup completado: '.config('app.name')
+            );
+
+            foreach ($emails as $email) {
+                try {
+                    Mail::to($email)->send(new BackupMail($subject, $html));
+                    Log::info('Backup success notification sent to: '.$email);
+                } catch (\Exception $e) {
+                    Log::warning('Could not send backup success notification: '.$e->getMessage());
+                }
+            }
+        }
+
+        $slackWebhook = config('backup.notifications.slack.webhook_url');
+        if (! empty($slackWebhook)) {
+            try {
+                Http::post($slackWebhook, [
+                    'text' => "✅ Backup completado: {$size} — ".now()->format('Y-m-d H:i'),
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Slack backup notification failed: '.$e->getMessage());
+            }
+        }
+
+        $discordWebhook = config('backup.notifications.discord.webhook_url');
+        if (! empty($discordWebhook)) {
+            try {
+                Http::post($discordWebhook, [
+                    'content' => "✅ Backup completado: {$size} — ".now()->format('Y-m-d H:i'),
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Discord backup notification failed: '.$e->getMessage());
+            }
         }
     }
 
     private function notifyFailure(string $errorMessage): void
     {
-        $email = config('backup.notifications.mail.to');
+        $emails = $this->getEmailsForEvent('failed');
 
-        if (empty($email)) {
-            return;
+        if (! empty($emails)) {
+            $variables = [
+                'APP_NAME' => config('app.name'),
+                'BACKUP_DATE' => now()->format('d/m/Y H:i'),
+                'BACKUP_URL' => route('settings.backups.index'),
+                'ERROR_MESSAGE' => $errorMessage,
+            ];
+
+            [$subject, $html] = $this->renderTemplate('BACKUP_FAILED', $variables,
+                'Error en backup: '.config('app.name')
+            );
+
+            foreach ($emails as $email) {
+                try {
+                    Mail::to($email)->send(new BackupMail($subject, $html));
+                    Log::info('Backup failure notification sent to: '.$email);
+                } catch (\Exception $e) {
+                    Log::warning('Could not send backup failure notification: '.$e->getMessage());
+                }
+            }
         }
 
-        try {
-            Notification::route('mail', $email)
-                ->notify(new BackupFailedNotification($errorMessage));
-        } catch (\Exception $e) {
-            Log::warning('Could not send backup failure notification: '.$e->getMessage());
+        $slackWebhook = config('backup.notifications.slack.webhook_url');
+        if (! empty($slackWebhook)) {
+            try {
+                Http::post($slackWebhook, [
+                    'text' => "❌ Backup falló: {$errorMessage}",
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Slack backup failure notification failed: '.$e->getMessage());
+            }
         }
+
+        $discordWebhook = config('backup.notifications.discord.webhook_url');
+        if (! empty($discordWebhook)) {
+            try {
+                Http::post($discordWebhook, [
+                    'content' => "❌ Backup falló: {$errorMessage}",
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Discord backup failure notification failed: '.$e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Render a mailer template by key, returning [subject, html].
+     * Falls back to a plain subject + empty HTML if template not found.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function renderTemplate(string $key, array $variables, string $fallbackSubject): array
+    {
+        $template = MailerTemplate::where('key', $key)->where('is_enabled', true)->first();
+
+        if (! $template) {
+            Log::warning("Backup notification template '{$key}' not found, sending plain email.");
+
+            return [$fallbackSubject, ''];
+        }
+
+        $translation = $template->translate(1);
+        $subject = $translation?->subject
+            ? MailerTemplateRendererService::replaceVariables($translation->subject, $variables)
+            : $fallbackSubject;
+
+        $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, 1);
+
+        return [$subject, $html];
     }
 
     /**

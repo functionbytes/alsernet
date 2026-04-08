@@ -19,7 +19,7 @@ class DeleteReviewReplyJob implements ShouldQueue
 
     public int $timeout = 300; // 5 minutes
 
-    public int $backoff = 60;
+    public array $backoff = [30, 60, 120];
 
     public function __construct(
         public Review $review

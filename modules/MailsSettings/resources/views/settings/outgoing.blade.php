@@ -2,164 +2,186 @@
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Configuración de Correo Saliente'])
+    @include('core::components.card', ['title' => 'Configuración de correo saliente'])
 
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')
 
-        <!-- Outgoing Email Settings Card -->
         <div class="card">
-            <div class="card-body">
 
-                <!-- Acciones -->
-                <div class="mb-4 border-bottom pb-3">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <a href="{{ route('settings.outgoing-email.edit') }}" class="btn btn-primary w-100">
-                                Editar configuración
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-outline-primary w-100" id="testConnectionBtn">
-                                Probar conexión
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#sendTestEmailModal">
-                                Enviar prueba
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{{ route('settings.email.index') }}" class="btn btn-outline-primary w-100">
-                                Volver
-                            </a>
-                        </div>
+            {{-- Header --}}
+            <div class="card-header p-4 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 fw-bold">Configuración de correo saliente</h5>
+                        <p class="small mb-0 text-muted">Gestiona el remitente y el servidor SMTP para el envío de correos de la aplicación</p>
+                    </div>
+                    <div class="dropdown">
+                        <a href="#" class="btn bg-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            Acciones
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('settings.outgoing-email.edit') }}">Editar configuración</a>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" id="testConnectionBtn">Probar conexión</button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#sendTestEmailModal">Enviar prueba</button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('settings.email.index') }}">Volver</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-
-                <!-- Connection Status -->
-                <div id="connectionStatus" class="mb-3" style="display: none;">
-                    <div id="connectionMessage"></div>
-                </div>
-
-                <!-- Información del Remitente -->
-                <div class="mb-4">
-                    <h5 class="mb-1">Información del remitente</h5>
-                    <p class="text-muted small mb-3">Configure la información del remitente para todos los correos electrónicos salientes de la aplicación.</p>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card card-body h-100 bg-light-secondary">
-                                <h5 class="text-dark">Email del remitente:</h5>
-                                <p class="text-muted mb-0">{{ $settings['mail_from_address'] ?? 'N/A' }}</p>
-                                <small class="text-muted">Todos los correos salientes se enviarán desde esta dirección</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card card-body h-100 bg-light-secondary">
-                                <h5 class="text-dark">Nombre del remitente:</h5>
-                                <p class="text-muted mb-0">{{ $settings['mail_from_name'] ?? 'N/A' }}</p>
-                                <small class="text-muted">Todos los correos salientes usarán este nombre</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Método de Correo Saliente -->
-                <div class="mb-4">
-                    <h5 class="mb-1">Método de correo saliente</h5>
-                    <p class="text-muted small mb-3">Configure qué método se debe utilizar para enviar correos electrónicos salientes de la aplicación.</p>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card card-body h-100">
-                                <h6 class="mb-3">Configuración del Servidor SMTP</h6>
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">Mailer:</label>
-                                    <p class="text-muted mb-0">{{ $settings['mail_mailer'] ?? 'N/A' }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">Servidor:</label>
-                                    <p class="text-muted mb-0">{{ $settings['mail_host'] ?? 'N/A' }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">Puerto:</label>
-                                    <p class="text-muted mb-0">{{ $settings['mail_port'] ?? 'N/A' }}</p>
-                                </div>
-                                <div class="mb-0">
-                                    <label class="form-label fw-semibold text-dark">Encriptación:</label>
-                                    <p class="text-muted mb-0">{{ strtoupper($settings['mail_encryption'] ?? 'N/A') }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <div class="card card-body h-100">
-                                <h6 class="mb-3">Credenciales SMTP</h6>
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">Usuario:</label>
-                                    <p class="text-muted mb-0">{{ $settings['mail_username'] ?? 'N/A' }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">Contraseña:</label>
-                                    <p class="text-muted mb-0">{{ $settings['mail_password'] ? '••••••••' : 'N/A' }}</p>
-                                </div>
-                                <div class="mb-0">
-                                    <p class="text-muted small">
-                                        <i class="fa fa-circle-info"></i>
-                                        Esta configuración se carga desde la base de datos en tiempo de ejecución.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
-        </div>
 
+            {{-- Connection Status --}}
+            <div id="connectionStatus" class="card-body border-bottom" style="display:none;">
+                <div id="connectionMessage"></div>
+            </div>
+
+            {{-- Stats --}}
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-2">Email remitente</h6>
+                                <h5 class="mb-1 fw-bold text-truncate">{{ $settings['mail_from_address'] ?? 'N/A' }}</h5>
+                                <small class="text-muted">Dirección de envío</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-2">Nombre remitente</h6>
+                                <h5 class="mb-1 fw-bold">{{ $settings['mail_from_name'] ?? 'N/A' }}</h5>
+                                <small class="text-muted">Nombre visible</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-2">Servidor SMTP</h6>
+                                <h5 class="mb-1 fw-bold">{{ $settings['mail_host'] ?? 'N/A' }}</h5>
+                                <small class="text-muted">Host de conexión</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-2">Puerto</h6>
+                                <h5 class="mb-1 fw-bold">{{ $settings['mail_port'] ?? 'N/A' }}</h5>
+                                <small class="text-muted">Puerto SMTP</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Detalles técnicos --}}
+            <div class="card-body">
+                <h6 class="fw-bold mb-1">Detalles técnicos</h6>
+                <p class="text-muted mb-3">Parámetros de configuración del correo saliente</p>
+
+                <div class="alert alert-warning border-0 py-2 mb-3">
+                    <small><i class="fas fa-triangle-exclamation me-1"></i>
+                        <strong>Advertencia:</strong> Cambiar estas configuraciones incorrectamente puede hacer que el envío de correos no funcione.
+                    </small>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="25%">Parámetro</th>
+                                <th width="30%">Valor actual</th>
+                                <th width="45%">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>mail_mailer</code></td>
+                                <td><strong>{{ $settings['mail_mailer'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Driver de envío (smtp, sendmail, mailgun, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_host</code></td>
+                                <td><strong>{{ $settings['mail_host'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Dirección del servidor SMTP</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_port</code></td>
+                                <td><strong>{{ $settings['mail_port'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Puerto de la conexión (25, 465, 587, 2525)</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_encryption</code></td>
+                                <td><strong>{{ strtoupper($settings['mail_encryption'] ?? 'N/A') }}</strong></td>
+                                <td class="text-muted">Protocolo de encriptación (TLS, SSL o ninguno)</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_username</code></td>
+                                <td><strong>{{ $settings['mail_username'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Usuario para autenticación SMTP</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_password</code></td>
+                                <td><strong>{{ $settings['mail_password'] ? '••••••••' : 'N/A' }}</strong></td>
+                                <td class="text-muted">Contraseña para autenticación SMTP</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_from_address</code></td>
+                                <td><strong>{{ $settings['mail_from_address'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Dirección desde la que se envían los correos</td>
+                            </tr>
+                            <tr>
+                                <td><code>mail_from_name</code></td>
+                                <td><strong>{{ $settings['mail_from_name'] ?? 'N/A' }}</strong></td>
+                                <td class="text-muted">Nombre visible del remitente en los correos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- Modal Enviar Email de Prueba -->
-    <div class="modal fade" id="sendTestEmailModal" tabindex="-1" aria-labelledby="sendTestEmailModalLabel" aria-hidden="true">
+    {{-- Modal Enviar Email de Prueba --}}
+    <div class="modal fade" id="sendTestEmailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="sendTestEmailModalLabel">
-                         Enviar correo electrónico de prueba
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Enviar correo de prueba</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="testEmailForm">
                         @csrf
-                        <div class="alert alert-info border-0 bg-info-subtle text-info mb-3">
-                            <div class="d-flex align-items-start gap-2">
-                                <i class="fa fa-circle-info fs-5"></i>
-                                <div>
-                                    <strong>Importante:</strong> Asegúrese de tener la configuración SMTP actualizada antes de enviar el correo de prueba.
-                                </div>
-                            </div>
+                        <div class="alert alert-info border-0 mb-3">
+                            <i class="fas fa-circle-info me-1"></i>
+                            Asegúrate de tener la configuración SMTP actualizada antes de enviar la prueba.
                         </div>
-
                         <div class="mb-3">
                             <label for="testEmail" class="form-label fw-semibold">
-                                Correo electrónico destino <span class="text-danger">*</span>
+                                Correo destino <span class="text-danger">*</span>
                             </label>
-                            <input type="email"
-                                   class="form-control"
-                                   id="testEmail"
-                                   name="test_email"
-                                   required
-                                   placeholder="ejemplo@correo.com">
-                            <small class="text-muted">Ingrese la dirección de correo donde desea recibir el email de prueba</small>
+                            <input type="email" class="form-control" id="testEmail" name="test_email"
+                                   required placeholder="ejemplo@correo.com">
+                            <small class="text-muted">Dirección donde recibirás el correo de prueba</small>
                         </div>
-
                         <div class="bg-light-secondary p-3 rounded">
-                            <h6 class="mb-2">Vista previa</h6>
+                            <h6 class="mb-2 small fw-bold">Vista previa</h6>
                             <small class="text-muted">
-                                <strong>Asunto:</strong>Correo de Prueba - Alsernet<br>
                                 <strong>De:</strong> {{ $settings['mail_from_name'] }} ({{ $settings['mail_from_address'] }})<br>
                                 <strong>Servidor:</strong> {{ $settings['mail_host'] }}:{{ $settings['mail_port'] }}
                             </small>
@@ -167,12 +189,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100 mb-1" id="sendTestEmailBtn">
-                        Enviar
-                    </button>
-                    <button type="button" class="btn btn-secondary w-100 " data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
+                    <button type="button" class="btn btn-primary w-100 mb-2" id="sendTestEmailBtn">Enviar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -180,170 +198,74 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const testConnectionBtn = document.getElementById('testConnectionBtn');
-    const connectionStatus = document.getElementById('connectionStatus');
-    const connectionMessage = document.getElementById('connectionMessage');
+$(function () {
 
-    // Test SMTP Connection
-    if (testConnectionBtn) {
-        testConnectionBtn.addEventListener('click', function() {
-            const btn = this;
-            const originalContent = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Probando...';
-
-            fetch('{{ route("settings.outgoing-email.test-connection") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                connectionStatus.style.display = 'block';
-                if (data.success) {
-                    connectionMessage.innerHTML = `
-                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                            <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-check"></i></div>
-                            <div class="flex-grow-1">
-                                <strong>Conexión exitosa</strong>
-                                <p class="mb-0">${data.message}</p>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `;
-                } else {
-                    connectionMessage.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                            <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-exclamation"></i></div>
-                            <div class="flex-grow-1">
-                                <strong>Error de conexión</strong>
-                                <p class="mb-0">${data.message}</p>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                connectionStatus.style.display = 'block';
-                connectionMessage.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                        <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-exclamation"></i></div>
-                        <div class="flex-grow-1">
-                            <strong>Error</strong>
-                            <p class="mb-0">Error en la solicitud: ${error.message}</p>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = originalContent;
-            });
-        });
+    function showConnectionResult(html) {
+        $('#connectionMessage').html(html);
+        $('#connectionStatus').show();
     }
 
-    // Send Test Email from Modal
-    const sendTestEmailBtn = document.getElementById('sendTestEmailBtn');
-    const sendTestEmailModal = document.getElementById('sendTestEmailModal');
+    // Probar conexión
+    $('#testConnectionBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true).text('Probando...');
 
-    if (sendTestEmailBtn) {
-        sendTestEmailBtn.addEventListener('click', function() {
-            const testEmailInput = document.getElementById('testEmail');
-            const email = testEmailInput.value.trim();
-
-            // Validate email
-            if (!email || !testEmailInput.checkValidity()) {
-                testEmailInput.classList.add('is-invalid');
-                return;
-            }
-
-            testEmailInput.classList.remove('is-invalid');
-
-            const originalContent = sendTestEmailBtn.innerHTML;
-            sendTestEmailBtn.disabled = true;
-            sendTestEmailBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enviando...';
-
-            fetch('{{ route("settings.outgoing-email.send-test") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    test_email: email
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Close modal
-                const modalInstance = bootstrap.Modal.getInstance(sendTestEmailModal);
-                if (modalInstance) {
-                    modalInstance.hide();
-                }
-
-                // Show result in connection status area
-                connectionStatus.style.display = 'block';
-                if (data.success) {
-                    connectionMessage.innerHTML = `
-                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                            <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-check"></i></div>
-                            <div class="flex-grow-1">
-                                <strong>Email enviado</strong>
-                                <p class="mb-0">${data.message}</p>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `;
-                    // Clear form on success
-                    testEmailInput.value = '';
-                } else {
-                    connectionMessage.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                            <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-exclamation"></i></div>
-                            <div class="flex-grow-1">
-                                <strong>Error al enviar</strong>
-                                <p class="mb-0">${data.message}</p>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                connectionStatus.style.display = 'block';
-                connectionMessage.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                        <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-exclamation"></i></div>
-                        <div class="flex-grow-1">
-                            <strong>Error</strong>
-                            <p class="mb-0">Error: ${error.message}</p>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-            })
-            .finally(() => {
-                sendTestEmailBtn.disabled = false;
-                sendTestEmailBtn.innerHTML = originalContent;
-            });
-        });
-    }
-
-    // Reset modal on close
-    if (sendTestEmailModal) {
-        sendTestEmailModal.addEventListener('hidden.bs.modal', function() {
-            const testEmailInput = document.getElementById('testEmail');
-            if (testEmailInput) {
-                testEmailInput.value = '';
-                testEmailInput.classList.remove('is-invalid');
+        $.ajax({
+            url: '{{ route("settings.outgoing-email.test-connection") }}',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (data) {
+                var type = data.success ? 'success' : 'danger';
+                var label = data.success ? 'Conexión exitosa' : 'Error de conexión';
+                showConnectionResult('<div class="alert alert-' + type + ' alert-dismissible mb-0"><strong>' + label + '</strong> ' + data.message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            },
+            error: function () {
+                showConnectionResult('<div class="alert alert-danger alert-dismissible mb-0"><strong>Error</strong> No se pudo conectar al servidor.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('Probar conexión');
             }
         });
-    }
+    });
+
+    // Enviar correo de prueba
+    $('#sendTestEmailBtn').on('click', function () {
+        var $input = $('#testEmail');
+        var email  = $input.val().trim();
+
+        if (!email || !$input[0].checkValidity()) {
+            $input.addClass('is-invalid');
+            return;
+        }
+        $input.removeClass('is-invalid');
+
+        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Enviando...');
+
+        $.ajax({
+            url: '{{ route("settings.outgoing-email.send-test") }}',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: JSON.stringify({ test_email: email }),
+            success: function (data) {
+                bootstrap.Modal.getInstance(document.getElementById('sendTestEmailModal')).hide();
+                var type  = data.success ? 'success' : 'danger';
+                var label = data.success ? 'Email enviado' : 'Error al enviar';
+                showConnectionResult('<div class="alert alert-' + type + ' alert-dismissible mb-0"><strong>' + label + '</strong> ' + data.message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                if (data.success) { $input.val(''); }
+            },
+            error: function () {
+                showConnectionResult('<div class="alert alert-danger alert-dismissible mb-0"><strong>Error</strong> No se pudo enviar el correo.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('Enviar');
+            }
+        });
+    });
+
+    // Reset modal
+    $('#sendTestEmailModal').on('hidden.bs.modal', function () {
+        $('#testEmail').val('').removeClass('is-invalid');
+    });
 });
 </script>
 @endpush

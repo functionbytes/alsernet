@@ -5,7 +5,6 @@ namespace Modules\Backup\Console\Commands;
 use Illuminate\Console\Command;
 use Modules\Backup\Jobs\CreateBackupJob;
 use Modules\Backup\Models\BackupSchedule;
-use Modules\Core\Models\Setting;
 
 class RunScheduledBackups extends Command
 {
@@ -101,13 +100,7 @@ class RunScheduledBackups extends Command
             'databases' => [],
         ];
 
-        // Get database backups if database backup is selected
-        $dbSettings = null;
-        if (in_array('database', $backupTypes)) {
-            $dbSettings = Setting::getDatabaseSettings();
-        }
-
         // Dispatch the backup job
-        CreateBackupJob::dispatch($backupTypes, $backupConfig, $dbSettings);
+        CreateBackupJob::dispatch($backupTypes, $backupConfig);
     }
 }

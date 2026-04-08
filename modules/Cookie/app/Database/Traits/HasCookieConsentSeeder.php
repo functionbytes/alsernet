@@ -2,7 +2,7 @@
 
 namespace Modules\Cookie\Database\Traits;
 
-trait HasCookieSeeder
+trait HasCookieConsentSeeder
 {
     /**
      * Get the cookie consent page name

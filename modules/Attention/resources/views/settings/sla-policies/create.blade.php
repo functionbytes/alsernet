@@ -1,37 +1,29 @@
 @extends('layouts.theme')
 
-@section('title', 'Crear Política SLA')
+@section('title', 'Crear política SLA')
 
 @section('content')
-    <div class="row">
-        <div class="col-lg-12">
+
+    @include('core::components.card', ['title' => 'Crear política SLA'])
+
+    <div class="row g-3">
+
+        {{-- Formulario --}}
+        <div class="col-12 col-lg-8">
             <div class="card">
                 <form action="{{ route('settings.attention.sla-policies.store') }}" method="POST">
                     @csrf
                     <div class="card-header border-bottom p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1 fw-bold">Crear Política SLA</h5>
-                                <p class="mb-0 text-muted small">Configure los tiempos de respuesta, resolución y cierre para PQRSF</p>
-                            </div>
-                            <a href="{{ route('settings.attention.sla-policies.index') }}" class="btn btn-secondary">
-                                <i class="fa fa-arrow-left"></i> Volver
-                            </a>
-                        </div>
+                        <h5 class="mb-0 fw-bold">Nueva política SLA</h5>
+                        <small class="text-muted">Configure los tiempos de respuesta, resolución y cierre para PQRSF.</small>
                     </div>
-
                     <div class="card-body">
                         @include('core::components.alerts')
 
                         <div class="row">
-                            <!-- Basic Information -->
-                            <div class="col-12">
-                                <h6 class="mb-3 fw-bold">Información Básica</h6>
-                            </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Nombre <span class="text-danger">*</span></label>
+                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('name') is-invalid @enderror"
                                            name="name" value="{{ old('name') }}"
                                            placeholder="ej: PQRSF Estándar" required>
@@ -40,11 +32,10 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Zona Horaria <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('timezone') is-invalid @enderror" name="timezone" required>
+                                    <label class="form-label">Zona horaria <span class="text-danger">*</span></label>
+                                    <select class="form-select @error('timezone') is-invalid @enderror select2" name="timezone" required>
                                         <option value="America/Bogota" {{ old('timezone', 'America/Bogota') == 'America/Bogota' ? 'selected' : '' }}>América/Bogotá</option>
                                         <option value="UTC" {{ old('timezone') == 'UTC' ? 'selected' : '' }}>UTC</option>
                                     </select>
@@ -53,10 +44,9 @@
                                     @enderror
                                 </div>
                             </div>
-
                             <div class="col-12">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Descripción</label>
+                                <div class="mb-4">
+                                    <label class="form-label">Descripción</label>
                                     <textarea class="form-control @error('description') is-invalid @enderror"
                                               name="description" rows="2"
                                               placeholder="Descripción de la política">{{ old('description') }}</textarea>
@@ -66,18 +56,20 @@
                                 </div>
                             </div>
 
-                            <!-- SLA Times -->
-                            <div class="col-12 mt-3">
-                                <h6 class="mb-3 fw-bold">Tiempos SLA (en minutos)</h6>
-                                <div class="alert alert-info">
-                                    <i class="fa fa-circle-info me-2"></i>
-                                    <strong>Referencia:</strong> 1 día = 1440 min, 2 días = 2880 min, 10 días = 14400 min
+                            <div class="col-12">
+                                <h6 class="fw-semibold mb-1 text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                                    Tiempos SLA (en minutos)
+                                </h6>
+                                <p class="text-muted mb-3">Define los plazos máximos en minutos para cada etapa de atención de la solicitud.</p>
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-circle-info me-2"></i>
+                                    <strong>Referencia:</strong> 1 día = 1440 min &nbsp;|&nbsp; 2 días = 2880 min &nbsp;|&nbsp; 10 días = 14400 min
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Tiempo de Respuesta <span class="text-danger">*</span></label>
+                                    <label class="form-label">Tiempo de respuesta <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('response_time') is-invalid @enderror"
                                            name="response_time" value="{{ old('response_time', 2880) }}"
                                            min="1" placeholder="2880" required>
@@ -87,10 +79,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Tiempo de Resolución <span class="text-danger">*</span></label>
+                                    <label class="form-label">Tiempo de resolución <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('resolution_time') is-invalid @enderror"
                                            name="resolution_time" value="{{ old('resolution_time', 14400) }}"
                                            min="1" placeholder="14400" required>
@@ -100,10 +91,9 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-4">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Tiempo de Cierre <span class="text-danger">*</span></label>
+                            <div class="col-12 col-md-12">
+                                <div class="mb-4">
+                                    <label class="form-label">Tiempo de cierre <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('closure_time') is-invalid @enderror"
                                            name="closure_time" value="{{ old('closure_time', 21600) }}"
                                            min="1" placeholder="21600" required>
@@ -114,26 +104,27 @@
                                 </div>
                             </div>
 
-                            <!-- Escalation Settings -->
-                            <div class="col-12 mt-3">
-                                <h6 class="mb-3 fw-bold">Configuración de Escalación</h6>
+                            <div class="col-12"><hr class="my-2"></div>
+
+                            <div class="col-12">
+                                <h6 class="fw-semibold mb-1 text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                                    Escalación
+                                </h6>
+                                <p class="text-muted mb-3">Configura el comportamiento automático cuando una solicitud se acerca al límite del tiempo SLA.</p>
                             </div>
 
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-12">
                                 <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="enable_escalation"
-                                               id="enable_escalation" value="1" {{ old('enable_escalation') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="enable_escalation">
-                                            Habilitar escalación automática
-                                        </label>
-                                    </div>
+                                    <label class="form-label">Habilitar escalación automática</label>
+                                    <select class="form-select select2" name="enable_escalation">
+                                        <option value="0" {{ old('enable_escalation', '0') == '0' ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ old('enable_escalation') == '1' ? 'selected' : '' }}>Sí</option>
+                                    </select>
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-6">
-                                <div class="mb-3">
-                                    <label class="control-label col-form-label">Umbral de Escalación (%)</label>
+                            <div class="col-12 col-md-12">
+                                <div class="mb-4">
+                                    <label class="form-label">Umbral de escalación (%)</label>
                                     <input type="number" class="form-control @error('escalation_threshold_percent') is-invalid @enderror"
                                            name="escalation_threshold_percent" value="{{ old('escalation_threshold_percent', 80) }}"
                                            min="1" max="100" placeholder="80">
@@ -144,47 +135,71 @@
                                 </div>
                             </div>
 
-                            <!-- Status Settings -->
-                            <div class="col-12 mt-3">
-                                <h6 class="mb-3 fw-bold">Estado</h6>
+                            <div class="col-12"><hr class="my-2"></div>
+
+                            <div class="col-12">
+                                <h6 class="fw-semibold mb-1 text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                                    Estado
+                                </h6>
+                                <p class="text-muted mb-3">Controla si esta política está activa y si se aplica por defecto a las nuevas solicitudes.</p>
                             </div>
 
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="active"
-                                               id="active" value="1" {{ old('active', true) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="active">
-                                            Política activa
-                                        </label>
-                                    </div>
+                                    <label class="form-label">Estado</label>
+                                    <select class="form-select select2" name="active">
+                                        <option value="1" {{ old('active', '1') == '1' ? 'selected' : '' }}>Activo</option>
+                                        <option value="0" {{ old('active') == '0' ? 'selected' : '' }}>Inactivo</option>
+                                    </select>
                                 </div>
                             </div>
-
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_default"
-                                               id="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_default">
-                                            Establecer como política por defecto
-                                        </label>
-                                    </div>
+                                    <label class="form-label">Política por defecto</label>
+                                    <select class="form-select select2" name="is_default">
+                                        <option value="0" {{ old('is_default', '0') == '0' ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ old('is_default') == '1' ? 'selected' : '' }}>Sí</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="card-footer d-flex justify-content-between">
-                        <a href="{{ route('settings.attention.sla-policies.index') }}" class="btn btn-secondary">
-                            Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-save"></i> Crear Política
-                        </button>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
+                        <a href="{{ route('settings.attention.sla-policies.index') }}" class="btn btn-light w-100">Cancelar</a>
                     </div>
                 </form>
             </div>
         </div>
+
+        {{-- Panel informativo --}}
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">¿Qué es una política SLA?</h6>
+                    <p class="card-text text-muted">
+                        Una política SLA (Acuerdo de Nivel de Servicio) define los tiempos máximos para responder, resolver y cerrar solicitudes PQRSF.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Tiempos en minutos</h6>
+                    <ul class="text-muted ps-3 mb-0">
+                        <li class="mb-2"><strong>Respuesta:</strong> tiempo para dar la primera respuesta al ciudadano</li>
+                        <li class="mb-2"><strong>Resolución:</strong> tiempo para resolver completamente la solicitud</li>
+                        <li><strong>Cierre:</strong> tiempo máximo antes del cierre automático</li>
+                    </ul>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Escalación automática</h6>
+                    <p class="card-text text-muted mb-0">
+                        Cuando se alcanza el umbral configurado (% del tiempo SLA), el sistema escala la solicitud automáticamente para evitar incumplimientos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </div>
+
 @endsection

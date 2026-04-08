@@ -2,8 +2,10 @@
 
 namespace Modules\Seo\Services;
 
+use App\Services\CircuitBreaker;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Modules\Seo\Models\SeoAuditLog;
 use Modules\Seo\Models\SeoMeta;
 
 class SeoAuditService
@@ -13,19 +15,43 @@ class SeoAuditService
      */
     public function auditUrl(string $url): array
     {
+        $circuit = new CircuitBreaker('seo-audit', 3, 120);
+
         try {
             $this->validatePublicUrl($url);
+
+            if (! $circuit->isAvailable()) {
+                return $this->errorResult('El servicio de auditoría no está disponible temporalmente');
+            }
 
             $response = Http::timeout(15)
                 ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; SeoAuditBot/1.0)'])
                 ->get($url);
 
             if (! $response->successful()) {
+                $circuit->recordFailure();
+
                 return $this->errorResult("La URL retornó HTTP {$response->status()}");
             }
 
-            return $this->buildResult($url, $this->runChecks($response->body(), $url));
+            $circuit->recordSuccess();
+
+            $body = $response->body();
+            $checks = $this->runChecks($body, $url);
+
+            if (strlen($body) > 200) {
+                $readability = $this->checkReadability($body);
+                if ($readability['score'] < 30) {
+                    $checks[] = $this->issue('error', 'readability_very_hard', "Contenido muy difícil de leer (score: {$readability['score']}/100)", 'Simplifica el contenido para mejorar la legibilidad', 5);
+                } elseif ($readability['score'] < 50) {
+                    $checks[] = $this->issue('warning', 'readability_hard', "Contenido difícil de leer (score: {$readability['score']}/100 — nivel: {$readability['level']})", 'Reduce la longitud de las oraciones y usa vocabulario más simple', 3);
+                }
+            }
+
+            return $this->buildResult($url, $checks);
         } catch (\Exception $e) {
+            $circuit->recordFailure();
+
             return $this->errorResult('No se pudo acceder a la URL: '.$e->getMessage());
         }
     }
@@ -35,29 +61,53 @@ class SeoAuditService
      */
     public function auditMeta(SeoMeta $meta): array
     {
-        return $this->buildResult(null, $this->runMetaChecks($meta));
+        $result = $this->buildResult(null, $this->runMetaChecks($meta));
+
+        $meta->updateQuietly([
+            'seo_score' => $result['score'],
+            'seo_grade' => $result['grade'],
+            'seo_audited_at' => now(),
+        ]);
+
+        SeoAuditLog::create([
+            'seo_meta_id' => $meta->id,
+            'score' => $result['score'],
+            'grade' => $result['grade'],
+            'issues_count' => count($result['issues']),
+            'issues' => $result['issues'],
+            'passed_count' => count($result['passed']),
+            'audited_at' => now(),
+        ]);
+
+        return $result;
     }
 
     /**
-     * Bulk audit all SeoMeta records.
+     * Bulk audit all SeoMeta records (capped at 1000, processed in chunks of 50).
      */
     public function auditAllMetas(): Collection
     {
-        return SeoMeta::all()
-            ->map(function (SeoMeta $meta) {
-                $audit = $this->auditMeta($meta);
+        $results = collect();
 
-                return [
-                    'id' => $meta->id,
-                    'type' => class_basename($meta->seoable_type ?? ''),
-                    'title' => $meta->title ?? '(sin título)',
-                    'score' => $audit['score'],
-                    'grade' => $audit['grade'],
-                    'issues_count' => count($audit['issues']),
-                    'issues' => $audit['issues'],
-                ];
-            })
-            ->sortBy('score');
+        SeoMeta::query()
+            ->with('seoable')
+            ->limit(1000)
+            ->chunk(50, function ($metas) use (&$results) {
+                foreach ($metas as $meta) {
+                    $audit = $this->auditMeta($meta);
+                    $results->push([
+                        'id' => $meta->id,
+                        'type' => class_basename($meta->seoable_type ?? ''),
+                        'title' => $meta->title ?? '(sin título)',
+                        'score' => $audit['score'],
+                        'grade' => $audit['grade'],
+                        'issues_count' => count($audit['issues']),
+                        'issues' => $audit['issues'],
+                    ]);
+                }
+            });
+
+        return $results->sortBy('score');
     }
 
     private function buildResult(?string $url, array $checks): array
@@ -103,6 +153,9 @@ class SeoAuditService
             $this->checkOpenGraph($html),
             $this->checkHttps($url),
             $this->checkStructuredData($html),
+            $this->checkViewport($html),
+            $this->checkTwitterCard($html),
+            $this->checkH1Length($html),
         ];
     }
 
@@ -216,9 +269,79 @@ class SeoAuditService
 
     private function checkStructuredData(string $html): array
     {
-        return str_contains($html, 'application/ld+json')
-            ? [$this->ok('schema_ok', 'Datos estructurados (Schema.org/JSON-LD) presentes')]
-            : [$this->issue('warning', 'schema_missing', 'No hay datos estructurados', 'Agrega Schema.org markup para mejorar la apariencia en resultados de búsqueda', 5)];
+        preg_match_all('/<script[^>]+type=["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/si', $html, $matches);
+
+        if (empty($matches[1])) {
+            return [$this->issue('warning', 'schema_missing', 'No hay datos estructurados (Schema.org/JSON-LD)',
+                'Agrega Schema.org markup para mejorar la apariencia en resultados de búsqueda', 5)];
+        }
+
+        $invalid = 0;
+        $missingType = 0;
+
+        foreach ($matches[1] as $jsonRaw) {
+            $decoded = json_decode(trim($jsonRaw), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $invalid++;
+
+                continue;
+            }
+
+            if (! isset($decoded['@context'])) {
+                $missingType++;
+            }
+        }
+
+        if ($invalid > 0) {
+            return [$this->issue('error', 'schema_invalid', "{$invalid} bloque(s) JSON-LD con sintaxis inválida",
+                'Verifica que el JSON-LD sea válido usando el Rich Results Test de Google', 10)];
+        }
+
+        if ($missingType > 0) {
+            return [$this->issue('warning', 'schema_no_context', 'JSON-LD sin @context definido',
+                'Agrega "@context": "https://schema.org" a todos los bloques de datos estructurados', 5)];
+        }
+
+        $count = count($matches[1]);
+
+        return [$this->ok('schema_ok', "Datos estructurados presentes ({$count} bloque(s) JSON-LD válido(s))")];
+    }
+
+    private function checkViewport(string $html): array
+    {
+        return stripos($html, '<meta name="viewport"') !== false
+            ? $this->ok('viewport_ok', 'Meta viewport presente')
+            : $this->issue('error', 'viewport_missing', 'Falta meta viewport', "Agrega `<meta name='viewport' content='width=device-width, initial-scale=1'>` para compatibilidad móvil", 10);
+    }
+
+    private function checkTwitterCard(string $html): array
+    {
+        return str_contains($html, 'twitter:card')
+            ? $this->ok('twitter_card_ok', 'Twitter Card presente')
+            : $this->issue('warning', 'twitter_card_missing', 'Faltan etiquetas Twitter Card', 'Agrega twitter:card, twitter:title, twitter:description para mejor apariencia en Twitter/X', 5);
+    }
+
+    private function checkH1Length(string $html): array
+    {
+        preg_match_all('/<h1[^>]*>(.*?)<\/h1>/si', $html, $matches);
+
+        if (count($matches[0]) !== 1) {
+            return $this->ok('h1_length_skip', 'Longitud de H1 no evaluada');
+        }
+
+        $text = strip_tags($matches[1][0]);
+        $len = mb_strlen(trim($text));
+
+        if ($len < 10) {
+            return $this->issue('warning', 'h1_short', 'H1 muy corto', 'El H1 debe describir claramente el contenido de la página', 5);
+        }
+
+        if ($len > 70) {
+            return $this->issue('warning', 'h1_long', "H1 muy largo ({$len} caracteres)", 'Reduce el H1 a menos de 70 caracteres para mayor claridad', 5);
+        }
+
+        return $this->ok('h1_length_ok', "Longitud de H1 correcta ({$len} caracteres)");
     }
 
     private function runMetaChecks(SeoMeta $meta): array
@@ -228,6 +351,9 @@ class SeoAuditService
             ...$this->checkMetaDescription($meta),
             $this->checkMetaOgImage($meta),
             $this->checkMetaRobots($meta),
+            $this->checkMetaKeywords($meta),
+            $this->checkMetaTwitterCard($meta),
+            $this->checkKeywordDensity($meta),
         ];
     }
 
@@ -285,6 +411,61 @@ class SeoAuditService
             : $this->ok('robots_ok', "Robots: {$robots}");
     }
 
+    private function checkMetaKeywords(SeoMeta $meta): array
+    {
+        return ! empty($meta->keywords)
+            ? $this->ok('keywords_ok', 'Palabras clave definidas')
+            : $this->issue('warning', 'keywords_missing', 'Sin palabras clave', 'Agrega keywords relevantes separadas por coma', 3);
+    }
+
+    private function checkMetaTwitterCard(SeoMeta $meta): array
+    {
+        return $meta->twitter_card !== null
+            ? $this->ok('twitter_card_ok', 'Twitter Card configurada')
+            : $this->issue('warning', 'twitter_card_missing', 'Sin Twitter Card configurada', 'Define el tipo de Twitter Card', 3);
+    }
+
+    private function checkKeywordDensity(SeoMeta $meta): array
+    {
+        $keywords = $meta->keywords ?? '';
+        $title = $meta->title ?? '';
+        $description = $meta->description ?? '';
+
+        if (empty($keywords)) {
+            return $this->ok('keyword_density_skip', 'Sin keywords definidas para verificar densidad');
+        }
+
+        $keywordList = array_map('trim', explode(',', strtolower($keywords)));
+        $keywordList = array_filter($keywordList, fn ($k) => mb_strlen($k) > 2);
+
+        if (empty($keywordList)) {
+            return $this->ok('keyword_density_skip', 'Keywords muy cortas para analizar');
+        }
+
+        $searchText = strtolower($title.' '.$description);
+        $missingKeywords = [];
+
+        foreach (array_slice($keywordList, 0, 5) as $keyword) {
+            if (! str_contains($searchText, $keyword)) {
+                $missingKeywords[] = $keyword;
+            }
+        }
+
+        if (count($missingKeywords) > 0) {
+            $missing = implode(', ', $missingKeywords);
+
+            return $this->issue(
+                'warning',
+                'keyword_density',
+                'Keywords no encontradas en título/descripción: '.$missing,
+                'Incluye tus palabras clave principales en el título y la descripción para mejorar la relevancia',
+                5
+            );
+        }
+
+        return $this->ok('keyword_density_ok', 'Keywords presentes en título y/o descripción');
+    }
+
     private function issue(string $status, string $code, string $message, string $recommendation, int $weight): array
     {
         return compact('status', 'code', 'message', 'recommendation', 'weight');
@@ -331,6 +512,39 @@ class SeoAuditService
         if ($isPrivate) {
             throw new \RuntimeException('No se permiten URLs de redes privadas o reservadas');
         }
+    }
+
+    /**
+     * Compute a Spanish-adapted Flesch Reading Ease score for the given text.
+     *
+     * @return array{score: int, level: string, words: int, sentences: int}
+     */
+    private function checkReadability(string $text): array
+    {
+        $text = strip_tags($text);
+        $sentences = max(1, preg_match_all('/[.!?]+/', $text, $m));
+        $words = max(1, str_word_count($text));
+        $syllables = $this->countSyllables($text);
+
+        $score = 206.835 - (1.015 * ($words / $sentences)) - (84.6 * ($syllables / $words));
+        $score = (int) max(0, min(100, round($score)));
+
+        $level = match (true) {
+            $score >= 70 => 'Fácil',
+            $score >= 50 => 'Moderado',
+            $score >= 30 => 'Difícil',
+            default => 'Muy difícil',
+        };
+
+        return ['score' => $score, 'level' => $level, 'words' => $words, 'sentences' => $sentences];
+    }
+
+    private function countSyllables(string $text): int
+    {
+        $text = mb_strtolower($text);
+        $groups = preg_match_all('/[aeiouáéíóúüàèìòùâêîôû]+/u', $text, $m);
+
+        return max(1, $groups);
     }
 
     private function errorResult(string $message): array

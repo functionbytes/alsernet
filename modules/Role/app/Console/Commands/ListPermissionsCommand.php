@@ -2,6 +2,7 @@
 
 namespace Modules\Role\Console\Commands;
 
+use App\Models\User;
 use Illuminate\Console\Command;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -12,7 +13,7 @@ class ListPermissionsCommand extends Command
 
     protected $description = 'List all permissions and their role assignments';
 
-    public function handle()
+    public function handle(): void
     {
         if ($this->option('user')) {
             $this->showUserPermissions($this->option('user'));
@@ -92,7 +93,7 @@ class ListPermissionsCommand extends Command
      */
     protected function showUserPermissions($userId)
     {
-        $user = \App\Models\User::find($userId);
+        $user = User::find($userId);
 
         if (! $user) {
             $this->error("❌ User with ID {$userId} not found");

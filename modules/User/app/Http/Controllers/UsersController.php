@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -16,6 +17,7 @@ use Modules\User\Events\UserDeleted;
 use Modules\User\Events\UserUpdated;
 use Modules\User\Http\Requests\StoreUserRequest;
 use Modules\User\Http\Requests\UpdateUserRequest;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role as SpatieRole;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -48,11 +50,19 @@ class UsersController extends Controller
 
         $users = $users->paginate(paginationNumber());
 
+        $stats = [
+            'total' => User::count(),
+            'active' => User::where('available', 1)->count(),
+            'inactive' => User::where('available', 0)->count(),
+            'new' => User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+        ];
+
         return view('user::users.index')->with([
             'users' => $users,
             'roleFilter' => $roleFilter,
             'searchKey' => $searchKey,
             'availableRoles' => SpatieRole::pluck('name', 'name')->toArray(),
+            'stats' => $stats,
         ]);
     }
 
@@ -111,7 +121,7 @@ class UsersController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear el usuario: '.$e->getMessage(),
+                'message' => 'Error al crear el usuario. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -121,12 +131,29 @@ class UsersController extends Controller
         $user = User::where('uid', $uid)->firstOrFail();
         $this->authorize('view', $user);
 
-        $roles = SpatieRole::orderBy('name')->pluck('name', 'id');
+        $activities = Activity::query()
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->id)
+            ->latest()
+            ->limit(20)
+            ->get();
 
         return view('user::users.view')->with([
             'user' => $user,
-            'roles' => $roles,
-            'userRoles' => $user->getRoleNames()->toArray(),
+            'activities' => $activities,
+        ]);
+    }
+
+    public function toggleStatus($uid): JsonResponse
+    {
+        $user = User::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $user);
+
+        $user->update(['available' => ! $user->available]);
+
+        return response()->json([
+            'available' => (bool) $user->available,
+            'message' => $user->available ? 'Usuario activado.' : 'Usuario desactivado.',
         ]);
     }
 
@@ -202,7 +229,7 @@ class UsersController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar el usuario: '.$e->getMessage(),
+                'message' => 'Error al actualizar el usuario. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -252,10 +279,13 @@ class UsersController extends Controller
             'value' => 'nullable|string|exists:roles,name',
         ]);
 
+        $policyAction = $request->action === 'delete' ? 'delete' : 'update';
+
         $users = User::query()
             ->whereIn('id', $request->ids)
             ->where('id', '!=', auth()->id())
-            ->get();
+            ->get()
+            ->filter(fn (User $target) => Gate::allows($policyAction, $target));
 
         match ($request->action) {
             'activate' => $users->each->update(['available' => 1]),

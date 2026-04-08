@@ -74,7 +74,7 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Estado</label>
-                    <select name="status" class="form-select">
+                    <select class="select2" name="status" class="form-select">
                         <option value="">Todos</option>
                         <option value="success" {{ request('status') === 'success' ? 'selected' : '' }}>Exitoso</option>
                         <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Fallido</option>
@@ -264,16 +264,24 @@ $(document).ready(function() {
         $('#variablesModal').modal('show');
     });
 
+    // Escape text for safe HTML insertion
+    function esc(val) {
+        if (val === null || val === undefined) return 'N/A';
+        const div = document.createElement('div');
+        div.textContent = String(val);
+        return div.innerHTML;
+    }
+
     // View details
     $('.view-details-btn').on('click', function() {
         const log = JSON.parse($(this).data('log'));
 
-        // General info
+        // General info (escaped to prevent XSS from user_agent, IP, etc.)
         const generalHtml = `
-            <div class="mb-2"><strong>ID:</strong> ${log.id}</div>
-            <div class="mb-2"><strong>Fecha:</strong> ${log.created_at}</div>
-            <div class="mb-2"><strong>IP:</strong> <code>${log.ip_address}</code></div>
-            <div class="mb-2"><strong>User Agent:</strong> <small>${log.user_agent || 'N/A'}</small></div>
+            <div class="mb-2"><strong>ID:</strong> ${esc(log.id)}</div>
+            <div class="mb-2"><strong>Fecha:</strong> ${esc(log.created_at)}</div>
+            <div class="mb-2"><strong>IP:</strong> <code>${esc(log.ip_address)}</code></div>
+            <div class="mb-2"><strong>User Agent:</strong> <small>${esc(log.user_agent)}</small></div>
         `;
         $('#general-info').html(generalHtml);
 
@@ -283,15 +291,13 @@ $(document).ready(function() {
             : '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Fallido</span>';
         const statusHtml = `
             <div class="mb-2"><strong>Estado:</strong> ${statusBadge}</div>
-            <div class="mb-2"><strong>Código HTTP:</strong> ${log.http_code || 'N/A'}</div>
-            <div class="mb-2"><strong>Tiempo de ejecución:</strong> ${log.execution_time || 'N/A'}ms</div>
+            <div class="mb-2"><strong>Código HTTP:</strong> ${esc(log.http_code)}</div>
+            <div class="mb-2"><strong>Tiempo de ejecución:</strong> ${esc(log.execution_time)}ms</div>
         `;
         $('#status-info').html(statusHtml);
 
-        // Payload
+        // Payload & Response (already uses .text() which is safe)
         $('#payload-content').text(JSON.stringify(log.payload, null, 2));
-
-        // Response
         $('#response-content').text(JSON.stringify(log.response, null, 2));
 
         $('#detailsModal').modal('show');

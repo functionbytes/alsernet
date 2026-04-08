@@ -2,9 +2,21 @@
 
 return [
     'skip' => [
-        'setting/*', 'setting*', '*.xml', '*.pdf', '*.txt', '*.ico', '*.rss',
-        '*.zip', '*.mp3', '*.rar', '*.exe', '*.wmv', '*.avi', '*.ppt', '*.mpg',
-        '*.mpeg', '*.tif', '*.wav', '*.mov', '*.psd', '*.ai', '*.xls', '*.mp4',
-        '*.m4a', '*.swf', '*.dat', '*.dmg', '*.iso', '*.flv', '*.m4v', '*.torrent',
+        // Settings routes
+        'setting/*', 'setting*',
+        // Documents & data
+        '*.xml', '*.pdf', '*.txt', '*.csv', '*.json', '*.ico', '*.rss',
+        // Archives & executables
+        '*.zip', '*.rar', '*.exe', '*.dmg', '*.iso', '*.torrent', '*.dat',
+        // Media — audio
+        '*.mp3', '*.wav', '*.m4a', '*.ogg', '*.flac',
+        // Media — video
+        '*.mp4', '*.m4v', '*.wmv', '*.avi', '*.mpg', '*.mpeg', '*.mov', '*.flv', '*.swf',
+        // Media — image
+        '*.jpg', '*.jpeg', '*.png', '*.gif', '*.webp', '*.svg', '*.tif', '*.tiff',
+        // Design files
+        '*.psd', '*.ai', '*.xls', '*.ppt',
+        // Web assets (already handled by Content-Type check, but explicit is safer)
+        '*.css', '*.js', '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf', '*.map',
     ],
 ];

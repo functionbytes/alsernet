@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\EmailTemplate;
@@ -103,10 +104,12 @@ class TemplateController extends Controller
                 ->route('managers.settings.mailrelay.templates.index')
                 ->with('success', 'Plantilla creada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay template create failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al crear la plantilla: '.$e->getMessage());
+                ->with('error', 'Error al crear la plantilla. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -154,10 +157,12 @@ class TemplateController extends Controller
                 ->route('managers.settings.mailrelay.templates.index')
                 ->with('success', 'Plantilla actualizada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay template update failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la plantilla: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la plantilla. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -176,9 +181,11 @@ class TemplateController extends Controller
                 ->route('managers.settings.mailrelay.templates.index')
                 ->with('success', 'Plantilla eliminada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay template delete failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar la plantilla: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la plantilla. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -201,9 +208,11 @@ class TemplateController extends Controller
                 ->route('managers.settings.mailrelay.templates.edit', $newTemplate->id)
                 ->with('success', 'Plantilla duplicada correctamente.');
         } catch (\Exception $e) {
+            Log::error('Mailrelay template duplicate failed', ['error' => $e->getMessage()]);
+
             return redirect()
                 ->back()
-                ->with('error', 'Error al duplicar la plantilla: '.$e->getMessage());
+                ->with('error', 'Error al duplicar la plantilla. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -238,7 +247,7 @@ class TemplateController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -269,7 +278,7 @@ class TemplateController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -298,7 +307,7 @@ class TemplateController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -334,7 +343,7 @@ class TemplateController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }
@@ -364,7 +373,7 @@ class TemplateController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
             ], 500);
         }
     }

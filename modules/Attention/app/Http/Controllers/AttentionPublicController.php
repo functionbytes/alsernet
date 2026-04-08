@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
+use Modules\Attention\Events\AttentionCreated;
 use Modules\Attention\Http\Requests\PublicSubmitAttentionRequest;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionCategory;
 use Modules\Attention\Models\AttentionSede;
 use Modules\Attention\Models\AttentionType;
 use Modules\Attention\Services\AttentionNotificationService;
+use Modules\Attention\Services\AttentionRoutingService;
 use Throwable;
 
 /**
@@ -34,7 +36,7 @@ class AttentionPublicController extends Controller
      */
     public function form(): View
     {
-        return view('attention::public.form', [
+        return view('template::views.pqrsf.form', [
             'types' => AttentionType::where('is_active', true)->orderBy('name')->get(),
             'categories' => AttentionCategory::where('is_active', true)->orderBy('name')->get(),
             'sedes' => AttentionSede::where('is_active', true)->orderBy('name')->get(),
@@ -77,18 +79,24 @@ class AttentionPublicController extends Controller
 
             $attention->logAction('created', 'PQRSF creado por el ciudadano via formulario publico', null);
 
+            app(AttentionRoutingService::class)->applyRules($attention);
+
             if (! $attention->is_anonymous && $attention->customer_email) {
                 try {
                     $this->notificationService->sendConfirmation($attention);
                 } catch (Throwable $e) {
                     Log::error('Failed to send confirmation email', [
                         'radicado' => $attention->radicado,
-                        'error' => $e->getMessage(),
+                        'code' => $e->getCode(),
+                        'file' => class_basename($e->getFile()),
+                        'line' => $e->getLine(),
                     ]);
                 }
             }
 
             DB::commit();
+
+            AttentionCreated::dispatch($attention);
 
             return redirect()
                 ->route('pqrsf.success', $attention->radicado)
@@ -98,8 +106,9 @@ class AttentionPublicController extends Controller
             DB::rollBack();
 
             Log::error('Error creating public attention', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'code' => $e->getCode(),
+                'file' => class_basename($e->getFile()),
+                'line' => $e->getLine(),
             ]);
 
             return redirect()
@@ -119,7 +128,7 @@ class AttentionPublicController extends Controller
             ->select(['radicado', 'subject', 'status', 'customer_email', 'is_anonymous', 'created_at'])
             ->firstOrFail();
 
-        return view('attention::public.success', [
+        return view('template::views.pqrsf.success', [
             'attention' => $attention,
         ]);
     }
@@ -134,7 +143,7 @@ class AttentionPublicController extends Controller
             return redirect()->route('pqrsf.tracking.result', $radicado);
         }
 
-        return view('attention::public.tracking');
+        return view('template::views.pqrsf.tracking');
     }
 
     /**
@@ -147,7 +156,7 @@ class AttentionPublicController extends Controller
             ->byRadicado($radicado)
             ->first();
 
-        return view('attention::public.tracking', [
+        return view('template::views.pqrsf.tracking', [
             'attention' => $attention,
             'radicado' => $radicado,
         ]);

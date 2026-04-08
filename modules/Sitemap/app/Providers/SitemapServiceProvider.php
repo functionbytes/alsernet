@@ -2,8 +2,13 @@
 
 namespace Modules\Sitemap\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Sitemap\Builder\SitemapBuilder;
+use Modules\Sitemap\Console\GenerateSitemapCommand;
+use Modules\Sitemap\Console\PingSitemapCommand;
+use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -21,6 +26,10 @@ class SitemapServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Sitemap')?->isDisabled()) {
+            return;
+        }
+
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -39,7 +48,7 @@ class SitemapServiceProvider extends ServiceProvider
 
         // Register the sitemap builder as a singleton
         $this->app->singleton('sitemap', function ($app) {
-            return new \Modules\Sitemap\Builder\SitemapBuilder;
+            return new SitemapBuilder;
         });
     }
 
@@ -49,8 +58,8 @@ class SitemapServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\Sitemap\Console\GenerateSitemapCommand::class,
-            \Modules\Sitemap\Console\PingSitemapCommand::class,
+            GenerateSitemapCommand::class,
+            PingSitemapCommand::class,
         ]);
     }
 
@@ -60,7 +69,7 @@ class SitemapServiceProvider extends ServiceProvider
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
-            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            $schedule = $this->app->make(Schedule::class);
             // Regenerar sitemap diariamente a las 2:00 AM
             $schedule->command('sitemap:generate')->dailyAt('02:00');
         });

@@ -21,7 +21,7 @@ class SendCampaignJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Número máximo de reintentos
+     * Numero maximo de reintentos
      */
     public int $tries = 3;
 
@@ -29,6 +29,13 @@ class SendCampaignJob implements ShouldQueue
      * Timeout del job (30 minutos para campaigns grandes)
      */
     public int $timeout = 1800;
+
+    /**
+     * Backoff entre reintentos (2min, 5min, 10min)
+     *
+     * @var array<int>
+     */
+    public array $backoff = [120, 300, 600];
 
     /**
      * Campaign a enviar
@@ -109,9 +116,10 @@ class SendCampaignJob implements ShouldQueue
                     $errors[] = $result['error'] ?? 'Unknown error in batch';
                 }
 
-                // Respetar rate limits
+                // Respetar rate limits entre batches
                 if ($batchIndex < count($batches) - 1) {
-                    sleep(1); // 1 segundo entre batches
+                    $delay = $provider->getRateLimits()['delay_seconds'] ?? 1;
+                    sleep($delay);
                 }
             }
 
@@ -137,15 +145,14 @@ class SendCampaignJob implements ShouldQueue
                 ]);
             }
         } catch (\Exception $e) {
-            $this->campaign->markAsFailed();
-
-            Log::error('Error en SendCampaignJob', [
+            // No llamar markAsFailed() aqui — el metodo failed() lo maneja tras agotar reintentos.
+            // Si aun quedan intentos, re-lanzar para que Laravel reintente.
+            Log::error('Error en SendCampaignJob (reintentando)', [
                 'campaign_id' => $this->campaign->id,
+                'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
-            // Re-lanzar excepción para que Laravel maneje los reintentos
             throw $e;
         }
     }

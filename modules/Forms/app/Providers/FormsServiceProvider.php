@@ -6,12 +6,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Forms\Console\Commands\CleanupAbandonedFormsCommand;
+use Modules\Forms\Console\Commands\CleanupFormDataCommand;
+use Modules\Forms\Console\Commands\CleanupFormTokensCommand;
+use Modules\Forms\Console\Commands\FormsInstallCommand;
+use Modules\Forms\Console\Commands\ProcessFormFollowUpsCommand;
+use Modules\Forms\Console\Commands\PruneFormVersionsCommand;
+use Modules\Forms\Console\Commands\SendAbandonReminderCommand;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Policies\FormPolicy;
 use Modules\Forms\Services\FormEmailService;
 use Modules\Forms\Services\FormSubmissionService;
 use Modules\Forms\Services\FormWebhookService;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class FormsServiceProvider extends ServiceProvider
 {
@@ -24,6 +32,10 @@ class FormsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Forms')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
@@ -176,13 +188,13 @@ class FormsServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Modules\Forms\Console\Commands\ProcessFormFollowUpsCommand::class,
-                \Modules\Forms\Console\Commands\SendAbandonReminderCommand::class,
-                \Modules\Forms\Console\Commands\CleanupFormDataCommand::class,
-                \Modules\Forms\Console\Commands\FormsInstallCommand::class,
-                \Modules\Forms\Console\Commands\CleanupAbandonedFormsCommand::class,
-                \Modules\Forms\Console\Commands\CleanupFormTokensCommand::class,
-                \Modules\Forms\Console\Commands\PruneFormVersionsCommand::class,
+                ProcessFormFollowUpsCommand::class,
+                SendAbandonReminderCommand::class,
+                CleanupFormDataCommand::class,
+                FormsInstallCommand::class,
+                CleanupAbandonedFormsCommand::class,
+                CleanupFormTokensCommand::class,
+                PruneFormVersionsCommand::class,
             ]);
         }
     }

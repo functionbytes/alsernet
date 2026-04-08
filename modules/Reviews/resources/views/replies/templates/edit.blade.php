@@ -74,6 +74,31 @@
                                 </div>
                             </div>
 
+                            <!-- Ubicación específica -->
+                            @if(isset($locations) && $locations->count() > 0)
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="review_google_location_id" class="control-label col-form-label">Ubicación</label>
+                                    <select class="form-select select2 @error('review_google_location_id') is-invalid @enderror"
+                                            id="review_google_location_id"
+                                            name="review_google_location_id"
+                                            data-placeholder="Global (todas las ubicaciones)">
+                                        <option value="">Global (todas las ubicaciones)</option>
+                                        @foreach($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ old('review_google_location_id', $template->review_google_location_id) == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">Si no se selecciona, la plantilla estará disponible para todas las ubicaciones</small>
+                                    @error('review_google_location_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            @endif
+
                             <!-- Estado activo -->
                             <div class="col-12">
                                 <div class="mb-3">
@@ -98,7 +123,11 @@
                             <a href="{{ route('settings.reviews.templates.index') }}" class="btn btn-secondary  w-100  mb-1">
                                 Cancelar
                             </a>
-                            <button type="button" class="btn btn-secondary ms-auto  w-100  mb-1" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <button type="button" class="btn btn-secondary ms-auto w-100 mb-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delete-modal"
+                                    data-url="{{ route('settings.reviews.templates.destroy', $template) }}"
+                                    data-title="Eliminar plantilla: {{ e($template->name) }}">
                                 Eliminar plantilla
                             </button>
                     </div>
@@ -187,41 +216,6 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación de eliminación -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Está seguro de que desea eliminar esta plantilla?</p>
-                    <p class="text-muted mb-0">
-                        <strong>{{ $template->name }}</strong>
-                    </p>
-                    @if($template->usage_count > 0)
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <i class="fas fa-exclamation-triangle me-1"></i>
-                            Esta plantilla ha sido utilizada {{ $template->usage_count }} {{ $template->usage_count === 1 ? 'vez' : 'veces' }}
-                        </div>
-                    @endif
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form action="{{ route('settings.reviews.templates.destroy', $template) }}" method="POST" style="display: inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash me-1"></i>
-                            Eliminar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
 @endsection
 
 @push('styles')
@@ -243,13 +237,25 @@
 </style>
 @endpush
 
+@include('core::components.delete')
+
 @push('scripts')
 <script>
 $(document).ready(function() {
+    $('#delete-modal').on('show.bs.modal', function (e) {
+        var $trigger = $(e.relatedTarget);
+        $(this).find('.modal-title').text($trigger.data('title'));
+        $('#delete-form').attr('action', $trigger.data('url'));
+    });
     // Inicializar Select2
     $('#category, #is_active').select2({
-        minimumResultsForSearch: Infinity, // Ocultar buscador para pocas opciones
+        minimumResultsForSearch: Infinity,
         width: '100%'
+    });
+
+    $('#review_google_location_id').select2({
+        width: '100%',
+        allowClear: true
     });
 
     // Auto-focus primer campo

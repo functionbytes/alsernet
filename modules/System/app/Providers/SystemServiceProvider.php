@@ -5,6 +5,7 @@ namespace Modules\System\Providers;
 use Illuminate\Support\ServiceProvider;
 use Modules\System\Services\SystemInfoService;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class SystemServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,10 @@ class SystemServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('System')?->isDisabled()) {
+            return;
+        }
+
         // Load routes
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
 
@@ -56,6 +61,7 @@ class SystemServiceProvider extends ServiceProvider
         NavService::registerSidebar('settings', [
             'title' => 'Configuraciones',
             'items' => [
+                ['label' => 'Panel de configuración', 'route' => 'settings.panel'],
                 ['label' => 'Configuración', 'route' => 'settings.system.index'],
                 ['label' => 'Información del sistema', 'route' => 'settings.system.info.index'],
                 ['label' => 'Supervisor', 'route' => 'settings.system.supervisor.index'],

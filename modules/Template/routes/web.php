@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Template\Http\Controllers\CustomCssController;
 use Modules\Template\Http\Controllers\MenuController;
+use Modules\Template\Http\Controllers\ShortcodeCategoryController;
 use Modules\Template\Http\Controllers\ShortcodeController;
 use Modules\Template\Http\Controllers\TemplateController;
 use Modules\Template\Http\Controllers\TemplateWebController;
@@ -21,7 +23,7 @@ use Modules\Template\Http\Controllers\ThemeOptionController;
 */
 
 // Admin Routes - Theme Settings
-Route::prefix('settings/theme')
+Route::prefix('panel/settings/theme')
     ->middleware(['web', 'auth'])
     ->name('settings.theme.')
     ->group(function () {
@@ -48,14 +50,14 @@ Route::prefix('settings/theme')
     });
 
 // Admin Routes - Template Management
-Route::prefix('settings/templates')
+Route::prefix('panel/settings/templates')
     ->middleware(['web', 'auth'])
     ->name('settings.templates.')
     ->group(function () {
         // Custom CSS Management - MUST be before /{template} routes
-        Route::get('/custom/css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'edit'])
+        Route::get('/custom/css', [CustomCssController::class, 'edit'])
             ->name('custom-css.edit');
-        Route::post('/custom/css', [\Modules\Template\Http\Controllers\CustomCssController::class, 'update'])
+        Route::post('/custom/css', [CustomCssController::class, 'update'])
             ->name('custom-css.update');
 
         // Index - Grid de templates
@@ -69,6 +71,17 @@ Route::prefix('settings/templates')
         // Store - Guardar nuevo
         Route::post('', [TemplateController::class, 'store'])
             ->name('store');
+
+        // Vista previa AJAX
+        Route::post('/preview', [TemplateController::class, 'preview'])->name('preview');
+
+        // Import - Página dedicada de importación
+        Route::get('/import', [TemplateController::class, 'importPage'])
+            ->name('import.page');
+
+        // Import - Importar desde ZIP
+        Route::post('/import', [TemplateController::class, 'importZip'])
+            ->name('import');
 
         // Show - Detalles
         Route::get('/{template}', [TemplateController::class, 'show'])
@@ -85,10 +98,6 @@ Route::prefix('settings/templates')
         // Delete - Eliminar
         Route::delete('/{template}', [TemplateController::class, 'destroy'])
             ->name('destroy');
-
-        // Import - Importar desde ZIP
-        Route::post('/import', [TemplateController::class, 'importZip'])
-            ->name('import');
 
         // AJAX Actions - Activar template
         Route::post('/activate', [TemplateController::class, 'postActivateTemplate'])
@@ -116,8 +125,24 @@ Route::prefix('settings/templates')
             });
     });
 
+// Admin Routes - Shortcode Categories Management
+Route::prefix('panel/settings/shortcode-categories')
+    ->middleware(['web', 'auth'])
+    ->name('settings.shortcode-categories.')
+    ->group(function () {
+        Route::get('', [ShortcodeCategoryController::class, 'index'])->name('index');
+        Route::get('/create', [ShortcodeCategoryController::class, 'create'])->name('create');
+        Route::post('', [ShortcodeCategoryController::class, 'store'])->name('store');
+        Route::get('/{shortcodeCategory}/edit', [ShortcodeCategoryController::class, 'edit'])->name('edit');
+        Route::put('/{shortcodeCategory}', [ShortcodeCategoryController::class, 'update'])->name('update');
+        Route::delete('/{shortcodeCategory}', [ShortcodeCategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/{shortcodeCategory}/toggle', [ShortcodeCategoryController::class, 'toggle'])->name('toggle');
+        Route::post('/order', [ShortcodeCategoryController::class, 'updateOrder'])->name('order');
+        Route::post('/bulk-action', [ShortcodeCategoryController::class, 'bulkAction'])->name('bulk-action');
+    });
+
 // Admin Routes - Shortcodes Management
-Route::prefix('settings/shortcodes')
+Route::prefix('panel/settings/shortcodes')
     ->middleware(['web', 'auth'])
     ->name('settings.shortcodes.')
     ->group(function () {
@@ -129,22 +154,24 @@ Route::prefix('settings/shortcodes')
         Route::delete('/{shortcode}', [ShortcodeController::class, 'destroy'])->name('destroy');
         Route::post('/{shortcode}/toggle', [ShortcodeController::class, 'toggle'])->name('toggle');
         Route::post('/order', [ShortcodeController::class, 'updateOrder'])->name('order');
+        Route::post('/bulk-action', [ShortcodeController::class, 'bulkAction'])->name('bulk-action');
     });
 
 // Admin Routes - Menu Management
-Route::prefix('settings/menus')
+Route::prefix('panel/settings/menus')
     ->middleware(['web', 'auth'])
     ->name('settings.menus.')
     ->group(function () {
         Route::get('', [MenuController::class, 'index'])->name('index');
         Route::get('/create', [MenuController::class, 'create'])->name('create');
         Route::post('', [MenuController::class, 'store'])->name('store');
+        Route::post('/bulk-action', [MenuController::class, 'bulkAction'])->name('bulk-action');
         Route::get('/{menu}/edit', [MenuController::class, 'edit'])->name('edit');
         Route::put('/{menu}', [MenuController::class, 'update'])->name('update');
         Route::delete('/{menu}', [MenuController::class, 'destroy'])->name('destroy');
 
         // Resolve node URL and render HTML partial
-        Route::get('/{menu}/node', [MenuController::class, 'getNode'])->name('get-node');
+        Route::post('/{menu}/node', [MenuController::class, 'getNode'])->name('get-node');
 
         // Menu structure update (drag & drop)
         Route::post('/{menu}/structure', [MenuController::class, 'updateStructure'])->name('structure.update');
@@ -155,10 +182,15 @@ Route::prefix('settings/menus')
         Route::delete('/{menu}/items/{item}', [MenuController::class, 'destroyItem'])->name('items.destroy');
     });
 
-// API - Shortcodes para Page editor
+// API - Shortcodes para Page editor (base de datos)
 Route::get('/api/page-shortcodes', [ShortcodeController::class, 'apiIndex'])
-    ->middleware(['web', 'auth'])
+    ->middleware(['web', 'auth', 'throttle:60,1', 'can:viewAny,Modules\Template\Models\Template'])
     ->name('api.page-shortcodes');
+
+// API - Shortcodes registrados en runtime (compilador)
+Route::get('/api/runtime-shortcodes', [ShortcodeController::class, 'apiRuntimeIndex'])
+    ->middleware(['web', 'auth', 'throttle:60,1', 'can:viewAny,Modules\Template\Models\Template'])
+    ->name('api.runtime-shortcodes');
 
 // Public Routes - Frontend Template Rendering
 Route::get('/template/{slug}', [TemplateWebController::class, 'render'])

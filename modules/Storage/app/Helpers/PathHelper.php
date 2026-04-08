@@ -1,7 +1,5 @@
 <?php
 
-use app\Library\StringHelper;
-
 /**
  * Storage Path and URL Helpers
  *
@@ -18,21 +16,16 @@ if (! function_exists('generatePublicPath')) {
      *
      * @throws Exception
      */
-    function generatePublicPath($absPath, $withHost = false)
+    function generatePublicPath(string $absPath, bool $withHost = false): string
     {
         if (empty(trim($absPath))) {
             throw new Exception('Empty path');
         }
 
         $excludeBase = storage_path();
-        $pos = strpos($absPath, $excludeBase);
 
-        if ($pos === false) {
+        if (! str_starts_with($absPath, $excludeBase)) {
             throw new Exception(sprintf("File '%s' cannot be made public, only files under storage/ folder can", $absPath));
-        }
-
-        if ($pos != 0) {
-            throw new Exception(sprintf("Invalid path '%s', cannot make it public", $absPath));
         }
 
         $relativePath = substr($absPath, strlen($excludeBase) + 1);
@@ -43,7 +36,7 @@ if (! function_exists('generatePublicPath')) {
 
         $dirname = dirname($relativePath);
         $basename = basename($relativePath);
-        $encodedDirname = StringHelper::base64UrlEncode($dirname);
+        $encodedDirname = rtrim(strtr(base64_encode($dirname), '+/', '-_'), '=');
 
         $subdirectory = getAppSubdirectory();
 
@@ -66,7 +59,7 @@ if (! function_exists('getAppSubdirectory')) {
      *
      * @return string|null The subdirectory or null if in root
      */
-    function getAppSubdirectory()
+    function getAppSubdirectory(): ?string
     {
         $path = parse_url(config('app.url'), PHP_URL_PATH);
 
@@ -90,7 +83,7 @@ if (! function_exists('getAppHost')) {
      *
      * @throws Exception
      */
-    function getAppHost()
+    function getAppHost(): string
     {
         $fullUrl = config('app.url');
         $meta = parse_url($fullUrl);
@@ -119,22 +112,20 @@ if (! function_exists('join_paths')) {
      *
      * @throws Exception
      */
-    function join_paths()
+    function join_paths(mixed ...$paths): string
     {
-        $paths = [];
-        foreach (func_get_args() as $arg) {
-            if (is_null($arg)) {
+        $segments = [];
+        foreach ($paths as $path) {
+            if ($path === null || $path === '') {
                 continue;
             }
-            if (preg_match('/http:\/\//i', $arg)) {
-                throw new \Exception('Path contains http://! Use `join_url` instead. Error for '.implode('/', func_get_args()));
+            if (preg_match('#https?://#i', $path)) {
+                throw new Exception('Path contains a URL! Use `join_url` instead. Error for '.implode('/', $paths));
             }
 
-            if ($arg !== '') {
-                $paths[] = $arg;
-            }
+            $segments[] = $path;
         }
 
-        return preg_replace('#/+#', '/', implode('/', $paths));
+        return preg_replace('#/+#', '/', implode('/', $segments));
     }
 }

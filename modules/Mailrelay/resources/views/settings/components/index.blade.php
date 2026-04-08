@@ -26,7 +26,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Tipo</label>
-                            <select name="type" class="form-select">
+                            <select class="select2" name="type" class="form-select">
                                 <option value="">Todos los tipos</option>
                                 <option value="layout" {{ request('type') === 'layout' ? 'selected' : '' }}>Layout</option>
                                 <option value="partial" {{ request('type') === 'partial' ? 'selected' : '' }}>Partial</option>
@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Estado</label>
-                            <select name="status" class="form-select">
+                            <select class="select2" name="status" class="form-select">
                                 <option value="">Todos los estados</option>
                                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activo</option>
                                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivo</option>

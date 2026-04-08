@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Modules\Seo\Models\SeoRedirect;
+use Modules\Seo\Models\SeoRedirectHit;
 use Symfony\Component\HttpFoundation\Response;
 
 class RedirectMiddleware
@@ -31,41 +32,77 @@ class RedirectMiddleware
         }
 
         // Check for redirect with caching for better performance
-        $cacheKey = 'seo_redirect_'.md5(strtolower($currentPath));
+        $cacheKey = SeoRedirect::cacheKey($currentPath);
 
         $redirect = Cache::remember($cacheKey, 3600, function () use ($currentPath) {
             return SeoRedirect::findBySourcePath($currentPath);
         });
 
         if ($redirect) {
-            // Increment hits count asynchronously to avoid slowing down the redirect
             $this->incrementHitsAsync($redirect->id);
 
-            // Perform the redirect
             return redirect($redirect->target_path, $redirect->status_code);
+        }
+
+        // Wildcard redirects (not cached — evaluated on each request)
+        $wildcardRedirects = SeoRedirect::currentlyActive()
+            ->where('is_wildcard', true)
+            ->where('is_regex', false)
+            ->get(['id', 'source_path', 'target_path', 'status_code', 'hits_count']);
+
+        foreach ($wildcardRedirects as $wildcardRedirect) {
+            $pattern = '/^'.str_replace(['\*', '\/'], ['(.*)', '\/'], preg_quote($wildcardRedirect->source_path, '/')).'$/';
+            if (@preg_match($pattern, $currentPath, $matches) === 1) {
+                $target = str_replace('*', $matches[1] ?? '', $wildcardRedirect->target_path);
+                $this->incrementHitsAsync($wildcardRedirect->id);
+
+                return redirect($target, $wildcardRedirect->status_code);
+            }
+        }
+
+        // Fall back to regex redirects (not cached — evaluated on each request)
+        $regexRedirects = SeoRedirect::currentlyActive()
+            ->where('is_regex', true)
+            ->get(['id', 'source_path', 'target_path', 'status_code']);
+
+        foreach ($regexRedirects as $regexRedirect) {
+            if (@preg_match($regexRedirect->source_path, $currentPath) === 1) {
+                $target = @preg_replace($regexRedirect->source_path, $regexRedirect->target_path, $currentPath);
+                $this->incrementHitsAsync($regexRedirect->id);
+
+                return redirect($target, $regexRedirect->status_code);
+            }
         }
 
         return $next($request);
     }
 
     /**
-     * Increment hits count asynchronously.
+     * Increment hits count and record daily analytics.
      */
     protected function incrementHitsAsync(int $redirectId): void
     {
-        // Use Laravel's queue if available, otherwise increment directly
         if (config('queue.default') !== 'sync') {
             dispatch(function () use ($redirectId) {
                 SeoRedirect::where('id', $redirectId)->increment('hits_count');
 
-                // Clear cache for this redirect
+                try {
+                    SeoRedirectHit::recordHit($redirectId);
+                } catch (\Throwable) {
+                }
+
                 $redirect = SeoRedirect::find($redirectId);
                 if ($redirect) {
-                    Cache::forget('seo_redirect_'.md5(strtolower($redirect->source_path)));
+                    Cache::forget(SeoRedirect::cacheKey($redirect->source_path));
                 }
             })->afterResponse();
         } else {
             SeoRedirect::where('id', $redirectId)->increment('hits_count');
+
+            try {
+                SeoRedirectHit::recordHit($redirectId);
+            } catch (\Throwable) {
+            }
         }
     }
 }

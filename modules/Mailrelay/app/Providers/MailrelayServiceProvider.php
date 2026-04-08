@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Mailrelay\Console\Commands\ListProvidersCommand;
 use Modules\Mailrelay\Console\Commands\SendCampaigns;
+use Modules\Mailrelay\Console\Commands\SyncCampaignStatsCommand;
 use Modules\Mailrelay\Console\Commands\SyncMailrelayCommand;
 use Modules\Mailrelay\Console\Commands\TestProviderCommand;
 use Modules\Mailrelay\Entities\Campaign;
@@ -152,6 +153,7 @@ class MailrelayServiceProvider extends ServiceProvider
             SendCampaigns::class,
             ListProvidersCommand::class,
             TestProviderCommand::class,
+            SyncCampaignStatsCommand::class,
         ]);
     }
 

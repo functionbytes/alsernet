@@ -222,7 +222,7 @@
                                     @else
                                         <span class="text-muted">Sin asignar</span>
                                     @endif
-                                </td>2
+                                </td>
                                 <td>
                                     {{ $attention->created_at->format('d/m/Y H:i') }}
                                 </td>

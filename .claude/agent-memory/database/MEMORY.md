@@ -121,11 +121,15 @@ Seeds 10 template auto-suggestion rules:
 
 ## Recent Fixes & Updates
 
-1. **ReviewReply Model**: Updated to use `error_message` + `error_count` (not `published_by`)
-2. **ReviewReplyTemplate Model**: Changed from `content`/`rating_filter`/`is_default` to `body`/`category`/`is_active`/`usage_count`
-3. **All Factories**: Normalized fake data generation - removed `rand()` in favor of `fake()->numberBetween()`
-4. **Google IDs**: Standardized format (accounts/*, locations/*, etc.)
-5. **Seeder**: Uses DB::table() instead of Model::create() to bypass activity logging during seed
+1. **Duplicate Migration Cleanup (2026-02-27)**: Removed duplicate `create_review_auto_suggestions_table` migration file
+   - Kept: `2026_02_22_232500_create_review_auto_suggestions_table.php` (better indexing, nullable template_id)
+   - Deleted: `2026_02_22_232444_create_review_auto_suggestions_table.php`
+   - Reason: Kept version matches current DB schema with 4 indexes including `suggested_template_id`
+2. **ReviewReply Model**: Updated to use `error_message` + `error_count` (not `published_by`)
+3. **ReviewReplyTemplate Model**: Changed from `content`/`rating_filter`/`is_default` to `body`/`category`/`is_active`/`usage_count`
+4. **All Factories**: Normalized fake data generation - removed `rand()` in favor of `fake()->numberBetween()`
+5. **Google IDs**: Standardized format (accounts/*, locations/*, etc.)
+6. **Seeder**: Uses DB::table() instead of Model::create() to bypass activity logging during seed
 
 ## Testing Notes
 

@@ -7,10 +7,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Media\Jobs\ConvertToWebpJob;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
+use Symfony\Component\HttpFoundation\File\File;
 
 class MediaFileController extends Controller
 {
@@ -21,7 +23,7 @@ class MediaFileController extends Controller
         $this->authorize('create', MediaFile::class);
 
         $request->validate([
-            'file' => 'required|file|max:102400|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,mp4,mp3,txt,csv',
+            'file' => 'required|file|max:102400|mimes:jpg,jpeg,png,gif,webp,svg,ico,pdf,doc,docx,xls,xlsx,zip,mp4,mp3,txt,csv',
             'folder_id' => 'nullable|exists:media_folders,id',
         ]);
 
@@ -105,10 +107,30 @@ class MediaFileController extends Controller
             $tempPath = sys_get_temp_dir().'/'.bin2hex(random_bytes(8)).'_'.$filename;
             file_put_contents($tempPath, $content);
 
-            $mimeType = mime_content_type($tempPath) ?: 'application/octet-stream';
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tempPath) ?: 'application/octet-stream';
+
+            $allowedMimes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/zip', 'application/x-zip-compressed',
+                'video/mp4', 'audio/mpeg',
+                'text/plain', 'text/csv',
+            ];
+
+            if (! in_array($mimeType, $allowedMimes, true)) {
+                @unlink($tempPath);
+
+                return response()->json(['message' => 'Tipo de archivo no permitido: '.$mimeType], 422);
+            }
+
             $storedPath = Storage::disk($disk)->putFileAs(
                 (string) ($folderId ?? 0),
-                new \Symfony\Component\HttpFoundation\File\File($tempPath),
+                new File($tempPath),
                 $filename
             );
 
@@ -129,7 +151,7 @@ class MediaFileController extends Controller
                 'file' => $this->formatFile($mediaFile),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error: '.$e->getMessage()], 500);
+            return response()->json(['message' => 'Error. Por favor, inténtalo de nuevo.'], 500);
         }
     }
 
@@ -180,7 +202,9 @@ class MediaFileController extends Controller
                 'file' => $this->formatFile($newFile),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error al copiar: '.$e->getMessage()], 500);
+            Log::error('Media file copy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Error al copiar. Por favor, inténtalo de nuevo.'], 500);
         }
     }
 

@@ -2,7 +2,9 @@
 
 namespace Modules\Template\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 /**
  * TemplateManager - Escanea carpeta platform/themes/ y lee metadatos de templates
@@ -37,39 +39,33 @@ class TemplateManager
         $templates = [];
         $templatesPath = base_path($this->templatesPath);
 
-        if (!is_dir($templatesPath)) {
+        if (! is_dir($templatesPath)) {
             return $templates;
         }
 
         $folders = array_diff(scandir($templatesPath), ['.', '..']);
 
         foreach ($folders as $folder) {
-            $folderPath = $templatesPath . '/' . $folder;
+            $folderPath = $templatesPath.'/'.$folder;
 
             // Solo procesar directorios
-            if (!is_dir($folderPath)) {
+            if (! is_dir($folderPath)) {
                 continue;
             }
 
-            $jsonFile = $folderPath . '/template.json';
+            $jsonFile = $folderPath.'/template.json';
 
             // Verificar que existe template.json
-            if (!File::exists($jsonFile)) {
+            if (! File::exists($jsonFile)) {
                 continue;
             }
 
             $template = $this->loadTemplateJson($jsonFile);
 
-            // Cargar y mergear config.php si existe
-            $configPath = $folderPath . '/config.php';
-            if (File::exists($configPath)) {
-                $config = require $configPath;
-                if (is_array($config)) {
-                    $template = array_merge($template, $config);
-                }
-            }
+            // Config.php es cargado lazily por el Theme engine al renderizar, no durante el scan.
+            // No hacer require aquí - puede contener clases del tema que no están disponibles en boot.
 
-            if (!empty($template)) {
+            if (! empty($template)) {
                 $templates[$folder] = $template;
             }
         }
@@ -86,13 +82,13 @@ class TemplateManager
             $content = File::get($jsonPath);
             $data = json_decode($content, true);
 
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 return [];
             }
 
             return $data;
         } catch (\Exception $e) {
-            \Log::warning("Error reading template.json at {$jsonPath}: {$e->getMessage()}");
+            Log::warning("Error reading template.json at {$jsonPath}: {$e->getMessage()}");
 
             return [];
         }
@@ -115,34 +111,42 @@ class TemplateManager
     }
 
     /**
-     * Obtiene la ruta del screenshot de un template
+     * Obtiene el screenshot de un template como data URL base64.
      *
-     * Si existe screenshot.png, retorna como data:// URL base64
+     * Cachea el resultado por 24 horas. El filemtime forma parte del cache key,
+     * por lo que cualquier cambio en el archivo invalida el caché automáticamente
+     * sin necesidad de flush manual.
      */
     public function getScreenshot(string $templateKey): string
     {
-        $screenshotPath = base_path($this->templatesPath . '/' . $templateKey . '/screenshot.png');
+        $screenshotPath = base_path($this->templatesPath.'/'.$templateKey.'/screenshot.png');
 
-        if (!File::exists($screenshotPath)) {
-            // Retornar un placeholder/default image si no existe
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#f0f0f0" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="16" fill="#999">No screenshot</text></svg>'
-            );
+        if (! File::exists($screenshotPath)) {
+            return $this->defaultScreenshot();
         }
 
-        try {
-            $imageData = File::get($screenshotPath);
-            $base64 = base64_encode($imageData);
+        $cacheKey = 'template:screenshot:'.$templateKey.':'.filemtime($screenshotPath);
 
-            return 'data:image/png;base64,' . $base64;
-        } catch (\Exception $e) {
-            \Log::warning("Error reading screenshot for template {$templateKey}: {$e->getMessage()}");
+        return Cache::remember($cacheKey, now()->addDay(), function () use ($screenshotPath) {
+            try {
+                return 'data:image/png;base64,'.base64_encode(File::get($screenshotPath));
+            } catch (\Exception) {
+                return $this->defaultScreenshot();
+            }
+        });
+    }
 
-            // Retornar placeholder en caso de error
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#f0f0f0" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="16" fill="#999">Error loading</text></svg>'
-            );
-        }
+    /**
+     * Retorna un SVG placeholder como data URL para cuando no existe screenshot.
+     */
+    private function defaultScreenshot(): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">'
+            .'<rect fill="#f0f0f0" width="400" height="300"/>'
+            .'<text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="16" fill="#999">No screenshot</text>'
+            .'</svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
     /**
@@ -194,7 +198,7 @@ class TemplateManager
      */
     public function getTemplatePath(string $templateKey): string
     {
-        return base_path($this->templatesPath . '/' . $templateKey);
+        return base_path($this->templatesPath.'/'.$templateKey);
     }
 
     /**
@@ -202,7 +206,7 @@ class TemplateManager
      */
     public function getLayoutPath(string $templateKey, string $layoutName = 'default'): string
     {
-        return $this->getTemplatePath($templateKey) . '/layouts/' . $layoutName . '.blade.php';
+        return $this->getTemplatePath($templateKey).'/layouts/'.$layoutName.'.blade.php';
     }
 
     /**
@@ -211,6 +215,60 @@ class TemplateManager
     public function hasLayout(string $templateKey, string $layoutName = 'default'): bool
     {
         return File::exists($this->getLayoutPath($templateKey, $layoutName));
+    }
+
+    /**
+     * Escanea el directorio views/templates/ del tema activo y retorna un array [slug => label].
+     *
+     * Siempre incluye 'default' y 'homepage' como opciones base.
+     * Si el directorio no existe, retorna solo las opciones base.
+     *
+     * @return array<string, string>
+     */
+    public function getPageTemplates(): array
+    {
+        $base = [
+            'default' => 'Por defecto',
+            'homepage' => 'Página de inicio',
+        ];
+
+        $activeTheme = $this->getActiveTemplateName();
+        $templatesDir = base_path('platform/themes/'.$activeTheme.'/views/templates');
+
+        if (! is_dir($templatesDir)) {
+            return $base;
+        }
+
+        $files = glob($templatesDir.'/*.blade.php') ?: [];
+        $discovered = [];
+
+        foreach ($files as $file) {
+            $slug = basename($file, '.blade.php');
+            $label = ucwords(str_replace(['-', '_'], ' ', $slug));
+            $discovered[$slug] = $label;
+        }
+
+        ksort($discovered);
+
+        return array_merge($base, $discovered);
+    }
+
+    /**
+     * Retorna el namespace de vista de Laravel para un view slug del tema activo.
+     *
+     * El namespace registrado es 'template' (ver TemplateServiceProvider::registerViews()).
+     * La ruta del tema activo se registra como primer path bajo ese namespace.
+     *
+     * Ejemplos:
+     *   'page'              → 'template::views.page'
+     *   'templates.default' → 'template::views.templates.default'
+     *
+     * @param  string  $view  Slug de vista (e.g. 'page', 'templates.default')
+     * @param  string|null  $theme  Nombre del tema (ignorado, reservado para compatibilidad futura)
+     */
+    public function getThemeViewPath(string $view, ?string $theme = null): string
+    {
+        return 'template::views.'.$view;
     }
 
     /**

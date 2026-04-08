@@ -24,4 +24,40 @@ return [
     ],
 
     'retention_days' => env('NOTIFICATION_RETENTION_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Types
+    |--------------------------------------------------------------------------
+    | System-wide notification type identifiers stored in the `type` column
+    | of the `notifications` table. Each type maps to a human-readable label
+    | and a default icon/color for display purposes.
+    */
+    'types' => [
+        'system' => [
+            'label' => 'Sistema',
+            'icon' => 'fas fa-cog',
+            'color' => 'secondary',
+        ],
+        'review' => [
+            'label' => 'Reseña',
+            'icon' => 'fas fa-star',
+            'color' => 'warning',
+        ],
+        'attention' => [
+            'label' => 'Atención / PQRSF',
+            'icon' => 'fas fa-headset',
+            'color' => 'info',
+        ],
+        'blog' => [
+            'label' => 'Blog',
+            'icon' => 'fas fa-newspaper',
+            'color' => 'primary',
+        ],
+        'security' => [
+            'label' => 'Seguridad',
+            'icon' => 'fas fa-shield-alt',
+            'color' => 'danger',
+        ],
+    ],
 ];

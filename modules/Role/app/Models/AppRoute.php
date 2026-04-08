@@ -2,8 +2,10 @@
 
 namespace Modules\Role\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AppRoute extends Model
 {
@@ -36,7 +38,7 @@ class AppRoute extends Model
     /**
      * Scope: Get routes by profile
      */
-    public function scopeByProfile($query, $profile)
+    public function scopeByProfile(Builder $query, string $profile): Builder
     {
         return $query->where('profile', $profile);
     }
@@ -44,7 +46,7 @@ class AppRoute extends Model
     /**
      * Scope: Get active routes
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -52,27 +54,29 @@ class AppRoute extends Model
     /**
      * Scope: Get routes by method
      */
-    public function scopeByMethod($query, $method)
+    public function scopeByMethod(Builder $query, string $method): Builder
     {
         return $query->where('method', strtoupper($method));
     }
 
     /**
      * Get unique route profiles
+     *
+     * @return array<string>
      */
-    public static function getProfiles()
+    public static function getProfiles(): array
     {
         return static::distinct()
             ->pluck('profile')
             ->filter()
             ->values()
-            ->toArray();
+            ->all();
     }
 
     /**
      * Generate hash for route comparison
      */
-    public static function generateHash($routeName, $path, $method, $profile = null)
+    public static function generateHash(string $routeName, string $path, string $method, ?string $profile = null): string
     {
         return md5(json_encode([
             'name' => $routeName,
@@ -85,15 +89,15 @@ class AppRoute extends Model
     /**
      * Relationship: Route has many permissions
      */
-    public function permissions()
+    public function permissions(): HasMany
     {
-        return $this->hasMany('Modules\Role\Models\RoutePermission', 'route_id');
+        return $this->hasMany(RoutePermission::class, 'route_id');
     }
 
     /**
      * Check if route has a specific permission
      */
-    public function hasPermission($permissionId)
+    public function hasPermission(int $permissionId): bool
     {
         return $this->permissions()
             ->where('permission_id', $permissionId)

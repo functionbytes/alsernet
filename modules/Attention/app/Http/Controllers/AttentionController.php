@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
+use Modules\Attention\Http\Requests\BulkActionRequest;
 use Modules\Attention\Http\Requests\ResolveAttentionRequest;
 use Modules\Attention\Http\Requests\SubmitAttentionRequest;
 use Modules\Attention\Http\Requests\UpdateAttentionRequest;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Services\AttentionNotificationService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
@@ -1447,7 +1449,7 @@ class AttentionController extends Controller
      * Bulk assign PQRSF to department or user
      * POST /api/attentions/bulk-assign
      */
-    public function bulkAssign(\Modules\Attention\Http\Requests\BulkActionRequest $request): JsonResponse
+    public function bulkAssign(BulkActionRequest $request): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1560,7 +1562,7 @@ class AttentionController extends Controller
      * Bulk close PQRSF
      * POST /api/attentions/bulk-close
      */
-    public function bulkClose(\Modules\Attention\Http\Requests\BulkActionRequest $request): JsonResponse
+    public function bulkClose(BulkActionRequest $request): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1650,7 +1652,7 @@ class AttentionController extends Controller
      * Bulk delete PQRSF (soft delete)
      * DELETE /api/attentions/bulk-delete
      */
-    public function bulkDelete(\Modules\Attention\Http\Requests\BulkActionRequest $request): JsonResponse
+    public function bulkDelete(BulkActionRequest $request): JsonResponse
     {
         try {
             // Only super-settings can bulk delete
@@ -1801,10 +1803,8 @@ class AttentionController extends Controller
     /**
      * Download exported file
      * GET /api/attentions/export/{token}
-     *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse|JsonResponse
      */
-    public function downloadExport(string $token)
+    public function downloadExport(string $token): JsonResponse|StreamedResponse
     {
         try {
             // Validate token exists in cache

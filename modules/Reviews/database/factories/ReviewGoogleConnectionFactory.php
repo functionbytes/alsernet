@@ -28,6 +28,14 @@ class ReviewGoogleConnectionFactory extends Factory
         ];
     }
 
+    public function active(): static
+    {
+        return $this->state([
+            'status' => 'active',
+            'token_expires_at' => now()->addDays(30),
+        ]);
+    }
+
     public function pending(): static
     {
         return $this->state([

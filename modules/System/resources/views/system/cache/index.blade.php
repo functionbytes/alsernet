@@ -1,360 +1,282 @@
 @extends('layouts.theme')
 
+@section('title', 'Mantenimiento de caché')
+
 @section('content')
 
-    <!-- Notifications Container -->
-    <div id="notifications-container"
-         style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;"></div>
+    @include('core::components.card', ['title' => 'Mantenimiento de caché'])
 
-    <div class="row">
-        <div class="col-lg-12 d-flex align-items-stretch">
+    @include('core::components.alerts')
 
-            <div class="card border shadow-none w-100">
+    <div class="widget-content searchable-container list">
 
-                <div class="card-body p-4">
-                    <h4 class="card-title">Mantenimiento del Sistema</h4>
-                    <p class="card-subtitle mb-4">
-                        Gestiona la limpieza de caché, configuración y optimización de la aplicación para mantener el
-                        mejor rendimiento del sistema.
-                    </p>
+        <div class="row g-4 align-items-start">
 
-                    <div>
-                        <!-- Borrar cache del sistema -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-trash text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
+            {{-- Columna izquierda --}}
+            <div class="col-lg-8">
+                <div class="card">
+
+                    {{-- Caché de aplicación --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Caché de aplicación</h6>
+                        <p class="text-muted mb-3">Limpia los datos almacenados en caché cuando los cambios no se reflejan correctamente.</p>
+
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div>
-                                    <h5 class="fs-4 fw-semibold">Borrar cache del sistema</h5>
-                                    <p class="mb-0">Ejecute cuando no vea cambios después de actualizar datos.</p>
+                                    <div class="fw-semibold">Caché del sistema</div>
+                                    <small class="text-muted">Elimina datos almacenados temporalmente. Ejecuta cuando no veas cambios después de actualizar datos.</small>
                                 </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.clear-cache') }}"
+                                        data-title="Caché del sistema">
+                                    Ejecutar
+                                </button>
                             </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button" data-url="{{ route('settings.system.cache.clear-cache') }}"
-                                    data-title="Cache del sistema" title="Ejecutar" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Actualizar vistas compiladas -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-eyetext-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div>
-                                    <h5 class="fs-4 fw-semibold">Actualizar vistas compiladas</h5>
-                                    <p class="mb-0">Limpiar vistas compiladas para mantenerlas actualizadas.</p>
+                                    <div class="fw-semibold">Vistas compiladas</div>
+                                    <small class="text-muted">Regenera las plantillas Blade compiladas. Necesario si modificaste archivos de vista manualmente.</small>
                                 </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.clear-view-cache') }}"
+                                        data-title="Vistas compiladas">
+                                    Ejecutar
+                                </button>
                             </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button"
-                                    data-url="{{ route('settings.system.cache.clear-view-cache') }}"
-                                    data-title="Vistas compiladas" title="Ejecutar" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Limpiar cache de configuración -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="ti ti-settings text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Limpiar cache de configuración</h5>
-                                    <p class="mb-0">Actualizar caché cuando cambie algo en la configuración.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button"
-                                    data-url="{{ route('settings.system.cache.clear-config-cache') }}"
-                                    data-title="Cache de configuración" title="Ejecutar"
-                                    style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Cachear configuración -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-database text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Cachear configuración</h5>
-                                    <p class="mb-0">Cachear configuración para mejorar el rendimiento.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button" data-url="{{ route('settings.system.cache.cache-config') }}"
-                                    data-title="Caché de configuración" title="Ejecutar"
-                                    style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Limpiar enrutamiento -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-route text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Limpiar enrutamiento</h5>
-                                    <p class="mb-0">Borrar enrutamiento de caché del sistema.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button"
-                                    data-url="{{ route('settings.system.cache.clear-route-cache') }}"
-                                    data-title="Enrutamiento" title="Ejecutar" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Limpiar optimización -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-wand-magic-sparkles text-dark d-block fs-7" width="22"
-                                       height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Limpiar optimización</h5>
-                                    <p class="mb-0">Limpiar todos los archivos de optimización del sistema.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button"
-                                    data-url="{{ route('settings.system.cache.clear-optimization') }}"
-                                    data-title="Optimización" title="Ejecutar" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Composer dump-autoload -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-box text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Composer dump-autoload</h5>
-                                    <p class="mb-0">Regenerar autoload al agregar nuevas clases o cambios.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm btn-clear-cache d-flex align-items-center justify-content-center"
-                                    type="button"
-                                    data-url="{{ route('settings.system.cache.composer-dump-autoload') }}"
-                                    data-title="Composer dump-autoload" title="Ejecutar"
-                                    style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Ejecutar todos los comandos -->
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-bg-light-secondary rounded-1 p-6 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-person-running text-dark d-block fs-7" width="22" height="22"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fs-4 fw-semibold">Ejecutar todos los comandos</h5>
-                                    <p class="mb-0">Ejecuta automáticamente todos los comandos en secuencia.</p>
-                                </div>
-                            </div>
-                            <button class="btn btn-light btn-sm d-flex align-items-center justify-content-center"
-                                    type="button" id="execute-all-btn"
-                                    data-url="{{ route('settings.system.cache.execute-all') }}"
-                                    title="Ejecutar todo" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-play fa-lg"></i>
-                            </button>
                         </div>
                     </div>
 
+                    <hr class="my-0">
+
+                    {{-- Configuración y rutas --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Configuración y rutas</h6>
+                        <p class="text-muted mb-3">Gestiona la caché de archivos de configuración y definiciones de rutas del sistema.</p>
+
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-semibold">Limpiar caché de configuración</div>
+                                    <small class="text-muted">Elimina la configuración cacheada. Ejecuta después de modificar archivos <code>.env</code> o <code>config/</code>.</small>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.clear-config-cache') }}"
+                                        data-title="Caché de configuración">
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-semibold">Cachear configuración</div>
+                                    <small class="text-muted">Compila todos los archivos de configuración en uno solo para mejorar el rendimiento en producción.</small>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.cache-config') }}"
+                                        data-title="Cachear configuración">
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-semibold">Limpiar caché de rutas</div>
+                                    <small class="text-muted">Elimina las rutas cacheadas. Necesario después de agregar o modificar rutas.</small>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.clear-route-cache') }}"
+                                        data-title="Caché de rutas">
+                                    Ejecutar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-0">
+
+                    {{-- Optimización --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Optimización</h6>
+                        <p class="text-muted mb-3">Operaciones avanzadas de mantenimiento y regeneración del sistema.</p>
+
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-semibold">Limpiar optimización</div>
+                                    <small class="text-muted">Elimina todos los archivos de optimización generados por el framework.</small>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.clear-optimization') }}"
+                                        data-title="Optimización">
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-semibold">Composer dump-autoload</div>
+                                    <small class="text-muted">Regenera el mapa de autoload de Composer. Necesario al agregar nuevas clases o mover archivos.</small>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm btn-clear-cache"
+                                        data-url="{{ route('settings.system.cache.composer-dump-autoload') }}"
+                                        data-title="Composer dump-autoload">
+                                    Ejecutar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button class="btn btn-primary w-100" id="execute-all-btn"
+                                data-url="{{ route('settings.system.cache.execute-all') }}">
+                            Ejecutar todos los comandos
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Columna derecha --}}
+            <div class="col-lg-4">
+
+                <div class="card mb-3">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Ejecución rápida</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Ejecuta todos los comandos de limpieza en secuencia con un solo clic desde el botón "Ejecutar todos los comandos".</p>
+
+                        <div class="alert alert-warning border-0 mb-0 py-2">
+                            <small>
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Puede causar una breve lentitud mientras se regeneran las cachés.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Cuándo limpiar caché</h6>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-semibold mb-2">Después de actualizar</h6>
+                        <p class="text-muted mb-3">Siempre limpia la caché después de una actualización del sistema o de modificar archivos de configuración.</p>
+
+                        <hr class="my-3">
+
+                        <h6 class="fw-semibold mb-2">Cambios no visibles</h6>
+                        <p class="text-muted mb-3">Si realizaste cambios que no se reflejan en el sitio, ejecuta "Caché del sistema" y "Vistas compiladas".</p>
+
+                        <hr class="my-3">
+
+                        <h6 class="fw-semibold mb-2">Nuevas rutas o clases</h6>
+                        <p class="text-muted mb-0">Al agregar nuevas funcionalidades, ejecuta "Limpiar caché de rutas" y "Composer dump-autoload".</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Comandos equivalentes</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><code class="small">php artisan cache:clear</code></li>
+                            <li class="mb-2"><code class="small">php artisan view:clear</code></li>
+                            <li class="mb-2"><code class="small">php artisan config:clear</code></li>
+                            <li class="mb-2"><code class="small">php artisan config:cache</code></li>
+                            <li class="mb-2"><code class="small">php artisan route:clear</code></li>
+                            <li class="mb-2"><code class="small">php artisan optimize:clear</code></li>
+                            <li><code class="small">composer dump-autoload</code></li>
+                        </ul>
+                    </div>
                 </div>
 
             </div>
 
         </div>
+
     </div>
 
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Handle individual button clicks
-                document.querySelectorAll('.btn-clear-cache').forEach(button => {
-                    button.addEventListener('click', function () {
-                        executeCommand(
-                            this.dataset.url,
-                            this.dataset.title || 'Comando'
-                        );
-                    });
-                });
-
-                // Handle execute all button
-                document.getElementById('execute-all-btn').addEventListener('click', function () {
-                    executeAll(this.dataset.url);
-                });
-
-                function executeCommand(url, title) {
-                    const btn = event.target.closest('button');
-                    const originalContent = btn.innerHTML;
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fa fa-spinner animate-spin"></i>';
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        }
-                    })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            btn.disabled = false;
-                            btn.innerHTML = originalContent;
-
-                            showNotification(data, title);
-                        })
-                        .catch(error => {
-                            btn.disabled = false;
-                            btn.innerHTML = originalContent;
-                            console.error('Error:', error);
-                            showErrorNotification('Error: ' + error.message, title);
-                        });
-                }
-
-                function executeAll(url) {
-                    const btn = document.getElementById('execute-all-btn');
-                    const originalContent = btn.innerHTML;
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fa fa-spinner animate-spin"></i>';
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        }
-                    })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            btn.disabled = false;
-                            btn.innerHTML = originalContent;
-
-                            displayAllResults(data);
-                        })
-                        .catch(error => {
-                            btn.disabled = false;
-                            btn.innerHTML = originalContent;
-                            console.error('Error:', error);
-                            showErrorNotification('Error: ' + error.message, 'Ejecutar todo');
-                        });
-                }
-
-                function showNotification(data, title) {
-                    const className = data.success ? 'alert-success' : 'alert-danger';
-                    const icon = data.success ? '<i class="fa fa-check></i>' : '<i class="fa fa-circle-exclamation"></i>';
-
-                    const alertHtml = `
-            <div class="alert ${className} alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                <div class="flex-shrink-0 fs-5">${icon}</div>
-                <div class="flex-grow-1">
-                    <strong>${title}</strong>
-                    <p class="mb-0">${data.message}</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-
-                    const container = document.getElementById('notifications-container');
-                    container.innerHTML = alertHtml + container.innerHTML;
-
-                    // Auto-hide after 6 seconds
-                    setTimeout(() => {
-                        const alert = container.querySelector('.alert');
-                        if (alert) {
-                            alert.classList.remove('show');
-                            setTimeout(() => alert.remove(), 150);
-                        }
-                    }, 6000);
-                }
-
-                function showErrorNotification(message, title) {
-                    const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-                <div class="flex-shrink-0 fs-5"><i class="fa fa-circle-exclamation"></i></div>
-                <div class="flex-grow-1">
-                    <strong>${title}</strong>
-                    <p class="mb-0">${message}</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-
-                    const container = document.getElementById('notifications-container');
-                    container.innerHTML = alertHtml + container.innerHTML;
-                }
-
-                function displayAllResults(data) {
-                    const container = document.getElementById('notifications-container');
-
-                    const mainIcon = data.success ? '<i class="fa fa-circle-check"></i>' : '<i class="fa fa-triangle-exclamation"></i>';
-                    let html = `<div class="alert ${data.success ? 'alert-success' : 'alert-warning'} alert-dismissible fade show d-flex align-items-start gap-3" role="alert">
-            <div class="flex-shrink-0 fs-5">${mainIcon}</div>
-            <div class="flex-grow-1">
-                <strong>${data.message}</strong>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>`;
-
-                    if (data.results) {
-                        html += '<div class="mt-4"><h6 class="fw-semibold mb-3">Detalle de Comandos</h6><div class="table-responsive"><table class="table table-hover table-sm"><thead class="table-light"><tr><th>Comando</th><th>Estado</th><th>Mensaje</th></tr></thead><tbody>';
-
-                        const commandNames = {
-                            'composer_dump_autoload': 'Composer dump-autoload',
-                            'cache_clear': 'Limpiar cache',
-                            'config_cache': 'Caché de configuración',
-                            'config_clear': 'Limpiar configuración',
-                            'route_clear': 'Limpiar rutas',
-                            'view_clear': 'Limpiar vistas',
-                            'optimize_clear': 'Limpiar optimización'
-                        };
-
-                        Object.entries(data.results).forEach(([key, result]) => {
-                            const statusBadge = result.success ?
-                                '<span class="badge bg-success"><i class="fa fa-check></i> Éxito</span>' :
-                                '<span class="badge bg-danger"><i class="fa fa-circle-exclamation"></i> Error</span>';
-
-                            html += `<tr>
-                    <td><strong>${commandNames[key] || key}</strong></td>
-                    <td>${statusBadge}</td>
-                    <td><small>${result.message}</small></td>
-                </tr>`;
-                        });
-
-                        html += '</tbody></table></div></div>';
-                    }
-
-                    container.innerHTML = html + container.innerHTML;
-                }
-            });
-        </script>
-    @endpush
-
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    var CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    $('.btn-clear-cache').on('click', function () {
+        var $btn = $(this);
+        var url = $btn.data('url');
+        var title = $btn.data('title');
+        var originalText = $btn.html();
+
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            success: function (data) {
+                $btn.prop('disabled', false).html(originalText);
+                if (data.success) {
+                    toastr.success(data.message, title);
+                } else {
+                    toastr.error(data.message, title);
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html(originalText);
+                toastr.error('Error al ejecutar el comando.', title);
+            }
+        });
+    });
+
+    $('#execute-all-btn').on('click', function () {
+        var $btn = $(this);
+        var url = $btn.data('url');
+        var originalText = $btn.html();
+
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Ejecutando...');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            success: function (data) {
+                $btn.prop('disabled', false).html(originalText);
+
+                if (data.success) {
+                    toastr.success(data.message, 'Ejecución completa');
+                } else {
+                    toastr.warning(data.message, 'Ejecución parcial');
+                }
+
+                if (data.results) {
+                    var names = {
+                        'cache_clear': 'Caché del sistema',
+                        'view_clear': 'Vistas compiladas',
+                        'config_clear': 'Config. limpiada',
+                        'config_cache': 'Config. cacheada',
+                        'route_clear': 'Rutas limpiadas',
+                        'optimize_clear': 'Optimización',
+                        'composer_dump_autoload': 'Composer autoload'
+                    };
+
+                    $.each(data.results, function (key, result) {
+                        var label = names[key] || key;
+                        if (result.success) {
+                            toastr.info(result.message, label);
+                        } else {
+                            toastr.error(result.message, label);
+                        }
+                    });
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html(originalText);
+                toastr.error('Error al ejecutar los comandos.', 'Error');
+            }
+        });
+    });
+});
+</script>
+@endpush

@@ -4,18 +4,23 @@ namespace Modules\Page\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Modules\Locales\Models\Locale;
+use Modules\Page\Enums\PageStatus;
 use Modules\Page\Events\PagePublished;
 use Modules\Page\Http\Requests\CreatePageRequest;
 use Modules\Page\Http\Requests\UpdatePageRequest;
 use Modules\Page\Models\Page;
 use Modules\Page\Models\PageCategory;
 use Modules\Page\Services\PageService;
+use Modules\Seo\Models\SeoMeta;
 use Modules\Template\Services\TemplateManager;
 
 class PageController extends Controller
@@ -71,7 +76,7 @@ class PageController extends Controller
         $page = new Page;
         $templates = $this->templateManager->getPageTemplates();
         $statuses = Page::getStatuses();
-        $locales = PageService::getSupportedLocales();
+        $locales = $this->resolveActiveLocales();
         $categories = PageCategory::ordered()->get();
 
         return view('page::pages.pages.create', compact('page', 'templates', 'statuses', 'locales', 'categories'));
@@ -97,9 +102,11 @@ class PageController extends Controller
                 ->route('pages.edit', $page->id)
                 ->with('success', 'Página creada exitosamente.');
         } catch (Exception $e) {
+            Log::error('Page creation failed', ['error' => $e->getMessage()]);
+
             return back()
                 ->withInput()
-                ->with('error', 'Error al crear la página: '.$e->getMessage());
+                ->with('error', 'Error al crear la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -122,21 +129,25 @@ class PageController extends Controller
     {
         $this->authorize('update', $page);
 
-        $page->load(['translations', 'categories', 'tags']);
+        $page->load(['translations.localeModel', 'categories', 'tags']);
 
         $templates = $this->templateManager->getPageTemplates();
         $statuses = Page::getStatuses();
-        $locales = PageService::getSupportedLocales();
+        $locales = $this->resolveActiveLocales();
         $translations = $page->translations->keyBy('locale');
         $categories = PageCategory::ordered()->get();
+        $seoMeta = SeoMeta::where('seoable_type', Page::class)
+            ->where('seoable_id', $page->id)
+            ->whereNull('locale')
+            ->first();
 
-        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses', 'locales', 'translations', 'categories'));
+        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses', 'locales', 'translations', 'categories', 'seoMeta'));
     }
 
     /**
      * Update the specified page in storage.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse|JsonResponse
     {
@@ -162,16 +173,18 @@ class PageController extends Controller
                 ->route('pages.edit', $page->id)
                 ->with('success', 'Página actualizada exitosamente.');
         } catch (Exception $e) {
+            Log::error('Page update failed', ['page_id' => $page->id ?? null, 'error' => $e->getMessage()]);
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al actualizar la página: '.$e->getMessage(),
+                    'message' => 'Error al actualizar la página. Por favor, inténtalo de nuevo.',
                 ], 500);
             }
 
             return back()
                 ->withInput()
-                ->with('error', 'Error al actualizar la página: '.$e->getMessage());
+                ->with('error', 'Error al actualizar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -189,8 +202,10 @@ class PageController extends Controller
                 ->route('pages.index')
                 ->with('success', 'Página eliminada exitosamente.');
         } catch (Exception $e) {
+            Log::error('Page deletion failed', ['page_id' => $page->id, 'error' => $e->getMessage()]);
+
             return back()
-                ->with('error', 'Error al eliminar la página: '.$e->getMessage());
+                ->with('error', 'Error al eliminar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -209,7 +224,9 @@ class PageController extends Controller
 
             return back()->with('success', 'Página publicada exitosamente.');
         } catch (Exception $e) {
-            return back()->with('error', 'Error al publicar la página: '.$e->getMessage());
+            Log::error('Page publish failed', ['page_id' => $page->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Error al publicar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -225,7 +242,9 @@ class PageController extends Controller
 
             return back()->with('success', 'Página despublicada exitosamente.');
         } catch (Exception $e) {
-            return back()->with('error', 'Error al despublicar la página: '.$e->getMessage());
+            Log::error('Page unpublish failed', ['page_id' => $page->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Error al despublicar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -243,7 +262,9 @@ class PageController extends Controller
                 ->route('pages.edit', $newPage->id)
                 ->with('success', 'Página duplicada exitosamente.');
         } catch (Exception $e) {
-            return back()->with('error', 'Error al duplicar la página: '.$e->getMessage());
+            Log::error('Page duplication failed', ['page_id' => $page->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Error al duplicar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -265,7 +286,9 @@ class PageController extends Controller
                 ->route('pages.index')
                 ->with('success', 'Página restaurada exitosamente.');
         } catch (Exception $e) {
-            return back()->with('error', 'Error al restaurar la página: '.$e->getMessage());
+            Log::error('Page restore failed', ['page_id' => $id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Error al restaurar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -287,7 +310,9 @@ class PageController extends Controller
                 ->route('pages.index')
                 ->with('success', 'Página eliminada permanentemente.');
         } catch (Exception $e) {
-            return back()->with('error', 'Error al eliminar la página: '.$e->getMessage());
+            Log::error('Page force delete failed', ['page_id' => $id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Error al eliminar la página. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -312,6 +337,7 @@ class PageController extends Controller
             : Page::whereIn('id', $ids)->get();
 
         $count = 0;
+        $deniedCount = 0;
 
         foreach ($pages as $page) {
             try {
@@ -329,7 +355,8 @@ class PageController extends Controller
                 };
 
                 $count++;
-            } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            } catch (AuthorizationException $e) {
+                $deniedCount++;
                 Log::warning("Bulk action '{$action}' denied for page {$page->id}: ".$e->getMessage());
             } catch (Exception $e) {
                 Log::warning("Bulk action '{$action}' failed for page {$page->id}: ".$e->getMessage());
@@ -338,6 +365,8 @@ class PageController extends Controller
 
         return response()->json([
             'success' => true,
+            'processed' => $count,
+            'denied' => $deniedCount,
             'message' => "{$count} página(s) procesadas correctamente.",
         ]);
     }
@@ -380,9 +409,9 @@ class PageController extends Controller
                 'id' => $p->id,
                 'title' => $p->title,
                 'slug' => $p->slug,
-                'status' => $p->status instanceof \Modules\Page\Enums\PageStatus ? $p->status->value : $p->status,
+                'status' => $p->status instanceof PageStatus ? $p->status->value : $p->status,
                 'url' => route('pages.edit', $p),
-                'badge' => match ($p->status instanceof \Modules\Page\Enums\PageStatus ? $p->status->value : $p->status) {
+                'badge' => match ($p->status instanceof PageStatus ? $p->status->value : $p->status) {
                     'published' => '<span class="badge bg-success">Publicada</span>',
                     'draft' => '<span class="badge bg-secondary">Borrador</span>',
                     default => '<span class="badge bg-warning">Pendiente</span>',
@@ -407,5 +436,31 @@ class PageController extends Controller
         );
 
         return response()->json(['slug' => $slug]);
+    }
+
+    /**
+     * Return active Locale objects, falling back to code-only collection.
+     */
+    private function resolveActiveLocales(): Collection
+    {
+        if (class_exists(Locale::class)) {
+            try {
+                $locales = Locale::active()->ordered()->get();
+                if ($locales->isNotEmpty()) {
+                    return $locales;
+                }
+            } catch (Exception) {
+            }
+        }
+
+        // Fallback: wrap codes as simple objects so the view receives a uniform collection
+        return collect(PageService::getSupportedLocales())->map(fn ($code) => (object) [
+            'id' => null,
+            'code' => $code,
+            'name' => strtoupper($code),
+            'native_name' => strtoupper($code),
+            'flag' => '',
+            'is_default' => false,
+        ]);
     }
 }

@@ -58,7 +58,116 @@
                         </div>
 
                         <div class="card-footer d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Guardar</button>
+                            <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header p-3 bg-white border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">Idiomas soportados</h5>
+                                    <p class="small mb-0 text-muted">Idiomas activos disponibles para traducir páginas</p>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            @if ($activeLocales->isEmpty())
+                                <div class="alert alert-warning mb-0 py-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    No hay idiomas activos. <a href="{{ route('locales.index') }}">Activa al menos uno</a>.
+                                </div>
+                            @else
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach ($activeLocales as $locale)
+                                        <span class="badge bg-primary-subtle text-primary d-flex align-items-center gap-1 py-2 px-3">
+                                            {{ $locale->native_name }}
+                                            <code class="text-primary ms-1" style="font-size:.7rem">{{ $locale->code }}</code>
+                                            @if ($locale->is_default)
+                                                <span class="badge bg-primary ms-1" style="font-size:.6rem">predeterminado</span>
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </div>
+                                <p class="form-text mt-2 mb-0">
+                                    Los idiomas se gestionan desde
+                                    <a href="{{ route('locales.index') }}">Configuración › Localización › Idiomas</a>.
+                                </p>
+                            @endif
+                        </div>
+
+
+                        @if (Route::has('locales.index'))
+
+                            <div class="card-header p-3 bg-white border-bottom">
+                                <a href="{{ route('locales.index') }}" class="btn btn-sm btn-info w-100">
+                                    <i class="fas fa-globe me-1"></i> Gestionar idiomas
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header p-3 bg-white border-bottom">
+                            <div>
+                                <h5 class="mb-1 fw-bold">Páginas de error</h5>
+                                <p class="small mb-0 text-muted">Asigna una página publicada para cada código de error HTTP</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            @php
+                                $errorGroups = [
+                                    '4xx - Errores del cliente' => [
+                                        '400' => ['label' => '400 - Solicitud incorrecta'],
+                                        '401' => ['label' => '401 - No autenticado'],
+                                        '403' => ['label' => '403 - Acceso denegado'],
+                                        '404' => ['label' => '404 - Página no encontrada'],
+                                        '405' => ['label' => '405 - Método no permitido'],
+                                        '408' => ['label' => '408 - Tiempo de espera agotado'],
+                                        '410' => ['label' => '410 - Recurso eliminado'],
+                                        '419' => ['label' => '419 - Sesión expirada'],
+                                        '422' => ['label' => '422 - Datos inválidos'],
+                                        '429' => ['label' => '429 - Demasiadas solicitudes'],
+                                    ],
+                                    '5xx - Errores del servidor' => [
+                                        '500' => ['label' => '500 - Error interno'],
+                                        '502' => ['label' => '502 - Puerta de enlace fallida'],
+                                        '503' => ['label' => '503 - Servicio no disponible'],
+                                        '504' => ['label' => '504 - Tiempo de espera gateway'],
+                                    ],
+                                ];
+                            @endphp
+
+                            @foreach ($errorGroups as $groupLabel => $errorDefs)
+                                <h3 class="small fw-semibold text-muted text-uppercase mb-5 mt-3">{{ $groupLabel }}</h3>
+
+                                @foreach ($errorDefs as $code => $def)
+                                    <div class="mb-3">
+                                        <label for="error_page_{{ $code }}" class="form-label fw-semibold">
+                                            {{ $def['label'] }}
+                                        </label>
+                                        <select name="error_page_{{ $code }}"
+                                                id="error_page_{{ $code }}"
+                                                class="form-select @error('error_page_'.$code) is-invalid @enderror">
+                                            <option value="">— Usar contenido predeterminado —</option>
+                                            @foreach ($publishedPages as $page)
+                                                <option value="{{ $page->id }}"
+                                                    {{ old("error_page_{$code}", setting("error-page-{$code}")) == $page->id ? 'selected' : '' }}>
+                                                    {{ $page->title }}
+                                                    @if ($page->slug) ({{ $page->slug }}) @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('error_page_'.$code)
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                @endforeach
+                                <hr>
+                            @endforeach
+                        </div>
+                        <div class="card-footer d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary w-100">Guardar</button>
                         </div>
                     </div>
                 </form>
@@ -85,6 +194,41 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card mt-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Páginas de error</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <p class="small mb-1"><strong>¿Cómo funciona?</strong></p>
+                                <p class="text-muted mb-0">Cuando ocurre un error HTTP, el sistema muestra el contenido de la página seleccionada. Puedes editarla desde el panel de páginas.</p>
+                            </div>
+                            <div class="alert alert-info py-2 mb-0">
+                                <small>Si no seleccionas ninguna página, se mostrará el diseño predeterminado del sistema.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Idiomas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <p class="small mb-1"><strong>Traducciones:</strong></p>
+                                <p class="text-muted mb-0">Cada idioma habilitado añade una pestaña de traducción al crear o editar páginas.</p>
+                            </div>
+                            <div>
+                                <p class="small mb-1"><strong>Público:</strong></p>
+                                <p class="text-muted mb-0">Los visitantes verán el contenido en el idioma detectado de su navegador si hay traducción disponible.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -105,6 +249,7 @@
             ? `${baseUrl}/${prefix}/mi-pagina`
             : `${baseUrl}/mi-pagina`;
     });
+
 })();
 </script>
 @endpush

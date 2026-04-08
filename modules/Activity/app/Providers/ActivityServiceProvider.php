@@ -5,11 +5,16 @@ namespace Modules\Activity\Providers;
 use Illuminate\Support\ServiceProvider;
 use Modules\Activity\Console\Commands\PruneActivityLogsCommand;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class ActivityServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        if (Module::find('Activity')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfigurations();
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'activity');

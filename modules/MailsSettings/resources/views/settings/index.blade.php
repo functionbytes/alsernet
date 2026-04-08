@@ -69,7 +69,7 @@
                             </div>
                         @endif
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Esta configuración se aplica a todos los correos electrónicos salientes del sistema.
                         </p>
                     </div>
@@ -135,7 +135,7 @@
                             </div>
                         @endif
 
-                        <p class="text-muted small border-top pt-3">
+                        <p class="text-muted border-top pt-3">
                             Puede habilitar múltiples manejadores simultáneamente según sus necesidades.
                         </p>
                     </div>

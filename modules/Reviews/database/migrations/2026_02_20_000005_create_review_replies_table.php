@@ -31,9 +31,10 @@ return new class extends Migration
 
             // User tracking
             $table->foreignId('created_by')
+                ->nullable()
                 ->constrained('users')
-                ->cascadeOnDelete()
-                ->comment('User who created the reply');
+                ->nullOnDelete()
+                ->comment('User who created the reply; null for system-generated auto-replies');
             $table->foreignId('approved_by')
                 ->nullable()
                 ->constrained('users')

@@ -91,18 +91,42 @@ class SchemaOrgService
     {
         $config = Config::get('Seo.schema.organization', []);
 
+        // Resolve site name: prefer theme option, then config
+        $siteName = function_exists('theme_option')
+            ? (theme_option('site_title') ?: Config::get('app.name'))
+            : Config::get('app.name');
+
+        // Resolve URL dynamically from request to avoid hardcoded APP_URL mismatches
+        $siteUrl = $options['url'] ?? $config['url'] ?? null;
+        if (! $siteUrl || $siteUrl === Config::get('app.url')) {
+            try {
+                $siteUrl = url('/');
+            } catch (\Throwable) {
+                $siteUrl = Config::get('app.url');
+            }
+        }
+
         $schema = [
             '@context' => $this->context,
             '@type' => $options['type'] ?? $config['type'] ?? 'Organization',
-            'name' => $options['name'] ?? $config['name'] ?? Config::get('app.name'),
-            'url' => $options['url'] ?? $config['url'] ?? Config::get('app.url'),
+            'name' => $options['name'] ?? $config['name'] ?? $siteName,
+            'url' => $siteUrl,
         ];
 
-        // Logo
-        if ($logo = $options['logo'] ?? $config['logo'] ?? null) {
+        // Logo — prefer theme option, then config, then env
+        $logoUrl = $options['logo'] ?? null;
+        if (! $logoUrl && function_exists('theme_option')) {
+            $themeLogoRaw = theme_option('logo');
+            if ($themeLogoRaw) {
+                $logoUrl = str_starts_with($themeLogoRaw, 'http') ? $themeLogoRaw : url($themeLogoRaw);
+            }
+        }
+        $logoUrl = $logoUrl ?? $config['logo'] ?? null;
+
+        if ($logoUrl) {
             $schema['logo'] = [
                 '@type' => 'ImageObject',
-                'url' => $logo,
+                'url' => $logoUrl,
             ];
         }
 
@@ -111,32 +135,45 @@ class SchemaOrgService
             $schema['description'] = $description;
         }
 
-        // Contact information
-        if ($email = $options['email'] ?? $config['email'] ?? null) {
+        // Contact information — prefer theme options
+        $email = $options['email'] ?? $config['email']
+            ?? (function_exists('theme_option') ? theme_option('email') : null);
+        $phone = $options['phone'] ?? $config['phone']
+            ?? (function_exists('theme_option') ? theme_option('phone') : null);
+
+        if ($email) {
             $schema['email'] = $email;
         }
-
-        if ($phone = $options['phone'] ?? $config['phone'] ?? null) {
+        if ($phone) {
             $schema['telephone'] = $phone;
         }
 
-        // Address
-        if (isset($options['address']) || isset($config['address'])) {
-            $address = $options['address'] ?? $config['address'];
-            $schema['address'] = [
+        // Address — prefer theme option, then config
+        $themeAddress = function_exists('theme_option') ? theme_option('address') : null;
+        $configAddress = $options['address'] ?? $config['address'] ?? null;
+
+        if ($themeAddress) {
+            $schema['address'] = ['@type' => 'PostalAddress', 'streetAddress' => $themeAddress];
+        } elseif ($configAddress) {
+            $built = array_filter([
                 '@type' => 'PostalAddress',
-                'streetAddress' => $address['street'] ?? null,
-                'addressLocality' => $address['city'] ?? null,
-                'addressRegion' => $address['region'] ?? null,
-                'postalCode' => $address['postal_code'] ?? null,
-                'addressCountry' => $address['country'] ?? null,
-            ];
-            $schema['address'] = array_filter($schema['address']);
+                'streetAddress' => $configAddress['street'] ?? null,
+                'addressLocality' => $configAddress['city'] ?? null,
+                'addressRegion' => $configAddress['region'] ?? null,
+                'postalCode' => $configAddress['postal_code'] ?? null,
+                'addressCountry' => $configAddress['country'] ?? null,
+            ]);
+            if (count($built) > 1) {
+                $schema['address'] = $built;
+            }
         }
 
         // Social media profiles
         if ($socials = $options['social_profiles'] ?? $config['social_profiles'] ?? null) {
-            $schema['sameAs'] = array_values(array_filter($socials));
+            $filtered = array_values(array_filter($socials));
+            if (! empty($filtered)) {
+                $schema['sameAs'] = $filtered;
+            }
         }
 
         return array_filter($schema, fn ($value) => ! is_null($value) && $value !== '');
@@ -376,6 +413,66 @@ class SchemaOrgService
         }
 
         return array_filter($schema, fn ($value) => ! is_null($value) && $value !== '');
+    }
+
+    /**
+     * Generate Event schema.
+     */
+    public function generateEventSchema(array $data): array
+    {
+        $schema = [
+            '@context' => $this->context,
+            '@type' => 'Event',
+            'name' => $data['name'] ?? '',
+            'startDate' => $data['start_date'] ?? '',
+            'description' => $data['description'] ?? '',
+        ];
+
+        if (! empty($data['end_date'])) {
+            $schema['endDate'] = $data['end_date'];
+        }
+
+        if (! empty($data['url'])) {
+            $schema['url'] = $data['url'];
+        }
+
+        if (! empty($data['image'])) {
+            $schema['image'] = $data['image'];
+        }
+
+        if (! empty($data['location_name'])) {
+            $schema['location'] = [
+                '@type' => ! empty($data['location_url']) ? 'VirtualLocation' : 'Place',
+                'name' => $data['location_name'],
+            ];
+            if (! empty($data['location_url'])) {
+                $schema['location']['url'] = $data['location_url'];
+            }
+            if (! empty($data['location_address'])) {
+                $schema['location']['address'] = [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => $data['location_address'],
+                ];
+            }
+        }
+
+        if (! empty($data['organizer_name'])) {
+            $schema['organizer'] = [
+                '@type' => 'Organization',
+                'name' => $data['organizer_name'],
+                'url' => $data['organizer_url'] ?? '',
+            ];
+        }
+
+        if (! empty($data['event_status'])) {
+            $schema['eventStatus'] = $this->context.'/'.$data['event_status'];
+        }
+
+        if (! empty($data['event_attendance_mode'])) {
+            $schema['eventAttendanceMode'] = $this->context.'/'.$data['event_attendance_mode'];
+        }
+
+        return $schema;
     }
 
     /**

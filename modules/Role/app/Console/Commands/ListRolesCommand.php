@@ -12,7 +12,7 @@ class ListRolesCommand extends Command
 
     protected $description = 'List all roles and optionally show users with their roles';
 
-    public function handle()
+    public function handle(): void
     {
         $this->showRoles();
 

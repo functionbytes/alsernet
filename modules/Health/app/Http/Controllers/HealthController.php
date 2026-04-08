@@ -4,10 +4,15 @@ namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\View\View;
 use Spatie\Health\Facades\Health;
+use Spatie\Health\Models\HealthCheckResultHistoryItem;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Process\Process;
 
@@ -99,7 +104,7 @@ class HealthController extends Controller
         $days = $request->input('days', 7);
 
         // Get history from database
-        $history = \Spatie\Health\Models\HealthCheckResultHistoryItem::query()
+        $history = HealthCheckResultHistoryItem::query()
             ->where('created_at', '>=', now()->subDays($days))
             ->orderBy('created_at', 'desc')
             ->get()
@@ -107,6 +112,7 @@ class HealthController extends Controller
             ->map(function ($items) {
                 return $items->map(function ($item) {
                     return [
+                        'id' => $item->id,
                         'status' => $item->status,
                         'created_at' => $item->created_at->toIso8601String(),
                         'short_summary' => $item->short_summary,
@@ -223,13 +229,9 @@ class HealthController extends Controller
                 $overallStatus = 'warning';
             }
 
-            // System information
+            // System information — intentionally omits version/env details to limit fingerprinting
             $systemInfo = [
                 'app_name' => config('app.name'),
-                'environment' => config('app.env'),
-                'debug' => config('app.debug'),
-                'php_version' => phpversion(),
-                'laravel_version' => app()->version(),
                 'server_time' => now()->toIso8601String(),
                 'uptime_seconds' => $this->getServerUptime(),
             ];
@@ -250,14 +252,25 @@ class HealthController extends Controller
     }
 
     /**
-     * Check if valid health token provided
+     * Check if valid health token provided.
+     * Accepts Bearer token in Authorization header (preferred) or query string (legacy).
      */
     private function hasValidHealthToken(): bool
     {
-        $token = request()->query('token');
         $validToken = config('healthcheck.api_token');
 
-        return $token && $validToken && hash_equals($validToken, $token);
+        if (! $validToken) {
+            return false;
+        }
+
+        $authHeader = request()->header('Authorization', '');
+        if (str_starts_with($authHeader, 'Bearer ')) {
+            return hash_equals($validToken, substr($authHeader, 7));
+        }
+
+        $token = request()->query('token');
+
+        return $token && hash_equals($validToken, $token);
     }
 
     /**
@@ -286,15 +299,15 @@ class HealthController extends Controller
     {
         try {
             // Run schedule command
-            \Illuminate\Support\Facades\Artisan::call('schedule:run');
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('schedule:run');
+            $output = Artisan::output();
 
             // Set schedule check heartbeat to mark it as running
-            \Illuminate\Support\Facades\Artisan::call('health:schedule-check-heartbeat');
+            Artisan::call('health:schedule-check-heartbeat');
 
             // Also dispatch queue check jobs if queue is configured
             if (config('queue.default') !== 'sync') {
-                \Illuminate\Support\Facades\Artisan::call('health:queue-check-heartbeat');
+                Artisan::call('health:queue-check-heartbeat');
             }
 
             return response()->json([
@@ -306,7 +319,7 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al ejecutar el scheduler: '.$e->getMessage(),
+                'message' => 'Error al ejecutar el scheduler. Por favor, inténtalo de nuevo.',
                 'timestamp' => now()->toIso8601String(),
             ], 500);
         }
@@ -340,10 +353,10 @@ class HealthController extends Controller
             // Get queue size
             $queueSize = 0;
             if ($queueConnection === 'database') {
-                $queueSize = \Illuminate\Support\Facades\DB::table(config('queue.connections.database.table', 'jobs'))->count();
+                $queueSize = DB::table(config('queue.connections.database.table', 'jobs'))->count();
             } elseif ($queueConnection === 'redis') {
                 try {
-                    $redis = \Illuminate\Support\Facades\Redis::connection(config('queue.connections.redis.connection', 'default'));
+                    $redis = Redis::connection(config('queue.connections.redis.connection', 'default'));
                     $queueSize = $redis->llen('queues:'.config('queue.connections.redis.queue', 'default'));
                 } catch (\Exception $e) {
                     $queueSize = 'N/A';
@@ -351,7 +364,7 @@ class HealthController extends Controller
             }
 
             // Get failed jobs count
-            $failedJobsCount = \Illuminate\Support\Facades\DB::table(config('queue.failed.table', 'failed_jobs'))->count();
+            $failedJobsCount = DB::table(config('queue.failed.table', 'failed_jobs'))->count();
 
             return response()->json([
                 'status' => 'success',
@@ -365,7 +378,7 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to get queue status: '.$e->getMessage(),
+                'message' => 'Failed to get queue status. Please try again.',
                 'timestamp' => now()->toIso8601String(),
             ], 500);
         }
@@ -388,12 +401,12 @@ class HealthController extends Controller
             }
 
             // Process a limited number of jobs
-            \Illuminate\Support\Facades\Artisan::call('queue:work', [
+            Artisan::call('queue:work', [
                 '--once' => true,
                 '--tries' => 3,
             ]);
 
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            $output = Artisan::output();
 
             return response()->json([
                 'status' => 'success',
@@ -404,7 +417,7 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to process queue: '.$e->getMessage(),
+                'message' => 'Failed to process queue. Please try again.',
                 'timestamp' => now()->toIso8601String(),
             ], 500);
         }
@@ -416,8 +429,8 @@ class HealthController extends Controller
     public function scheduleList(): JsonResponse
     {
         try {
-            \Illuminate\Support\Facades\Artisan::call('schedule:list');
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('schedule:list');
+            $output = Artisan::output();
 
             // Parse schedule list output
             $lines = explode("\n", trim($output));
@@ -441,7 +454,7 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to get schedule list: '.$e->getMessage(),
+                'message' => 'Failed to get schedule list. Please try again.',
                 'timestamp' => now()->toIso8601String(),
             ], 500);
         }
@@ -464,14 +477,14 @@ class HealthController extends Controller
             $timeout = $request->input('timeout', 300);
 
             // Run the artisan command
-            \Illuminate\Support\Facades\Artisan::call('health:supervisor-config', [
+            Artisan::call('health:supervisor-config', [
                 '--workers' => $workers,
                 '--tries' => $tries,
                 '--timeout' => $timeout,
                 '--force' => true,
             ]);
 
-            $output = \Illuminate\Support\Facades\Artisan::output();
+            $output = Artisan::output();
 
             // Get the generated file path (dentro del módulo Health)
             $appName = str_replace(' ', '-', strtolower(config('app.name', 'laravel')));
@@ -494,7 +507,7 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al generar configuración: '.$e->getMessage(),
+                'message' => 'Error al generar configuración. Por favor, inténtalo de nuevo.',
                 'timestamp' => now()->toIso8601String(),
             ], 500);
         }
@@ -522,9 +535,35 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al descargar configuración: '.$e->getMessage(),
+                'message' => 'Error al descargar configuración. Por favor, inténtalo de nuevo.',
             ], 500);
         }
+    }
+
+    /**
+     * Delete a single health history record
+     */
+    public function destroyHistoryRecord(int $id): RedirectResponse
+    {
+        HealthCheckResultHistoryItem::findOrFail($id)->delete();
+
+        return redirect()->route('settings.health.history')->with('success', 'Registro eliminado correctamente.');
+    }
+
+    /**
+     * Bulk delete health history records
+     */
+    public function bulkDestroyHistory(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|in:delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $count = HealthCheckResultHistoryItem::whereIn('id', $request->input('ids'))->delete();
+
+        return response()->json(['count' => $count]);
     }
 
     /**

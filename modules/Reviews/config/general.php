@@ -56,4 +56,48 @@ return [
     'cache' => [
         'stats_ttl_minutes' => env('REVIEWS_STATS_CACHE_TTL', 5),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Urgent Review Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Configure urgent notifications for low-star reviews without a reply.
+    | Set slack_webhook to send Slack alerts via incoming webhook URL.
+    | urgent_rating_threshold defines the maximum rating that triggers alerts.
+    |
+    */
+    'notifications' => [
+        'slack_webhook' => env('REVIEWS_SLACK_WEBHOOK', null),
+        'urgent_rating_threshold' => 2,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for receiving push notifications from Google via Cloud Pub/Sub.
+    | Set REVIEWS_GOOGLE_WEBHOOK_TOKEN to a secret shared with the Google
+    | Pub/Sub subscription so incoming requests can be authenticated.
+    |
+    */
+    'webhooks' => [
+        'google_verification_token' => env('REVIEWS_GOOGLE_WEBHOOK_TOKEN', null),
+        'enabled' => env('REVIEWS_WEBHOOKS_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | DeepL Translation
+    |--------------------------------------------------------------------------
+    |
+    | Configure DeepL automatic translation for review comments.
+    | Uses the DeepL free API (api-free.deepl.com) when an API key is provided.
+    |
+    */
+    'deepl' => [
+        'api_key' => env('DEEPL_API_KEY', null),
+        'target_language' => env('DEEPL_TARGET_LANG', 'ES'),
+    ],
 ];

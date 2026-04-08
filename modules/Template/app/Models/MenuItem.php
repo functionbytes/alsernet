@@ -4,11 +4,25 @@ namespace Modules\Template\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Blog\Models\Category;
+use Modules\Blog\Models\Post;
+use Modules\Page\Models\Page;
+use Modules\Template\Database\Factories\MenuItemFactory;
 
 class MenuItem extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /** @var Page|Post|Category|null Cached resolved reference model (per request). */
+    private mixed $resolvedReference = false;
+
+    protected static function newFactory(): MenuItemFactory
+    {
+        return MenuItemFactory::new();
+    }
 
     protected $fillable = [
         'menu_id',
@@ -30,12 +44,12 @@ class MenuItem extends Model
         'has_child' => 'boolean',
     ];
 
-    protected $appends = ['full_url'];
+    protected $appends = [];
 
     /**
      * Get the menu that owns the item.
      */
-    public function menu()
+    public function menu(): BelongsTo
     {
         return $this->belongsTo(Menu::class);
     }
@@ -43,7 +57,7 @@ class MenuItem extends Model
     /**
      * Get the parent menu item.
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(MenuItem::class, 'parent_id');
     }
@@ -51,34 +65,110 @@ class MenuItem extends Model
     /**
      * Get the child menu items.
      */
-    public function children()
+    public function children(): HasMany
     {
-        return $this->hasMany(MenuItem::class, 'parent_id')->orderBy('order');
-    }
-
-    /**
-     * Get the reference (polymorphic relation).
-     */
-    public function reference()
-    {
-        return $this->morphTo();
+        return $this->hasMany(MenuItem::class, 'parent_id')->orderBy('order')->orderBy('id');
     }
 
     /**
      * Get the full URL for the menu item.
+     *
+     * Uses a direct model lookup instead of morphTo() because reference_type
+     * stores a short alias (e.g. 'page') rather than a fully-qualified class name.
      */
-    public function getFullUrlAttribute()
+    /**
+     * Get the locale-aware display title.
+     *
+     * When the item references a Page/Post/Category, returns the translated title
+     * for the current locale. Falls back to the stored title.
+     */
+    public function getDisplayTitleAttribute(): string
     {
-        if ($this->type === 'custom') {
-            return $this->url;
+        $model = $this->resolveReference();
+
+        if ($model instanceof Page) {
+            $locale = app()->getLocale();
+            $translation = $model->translations()
+                ->forLocale($locale)
+                ->whereNotNull('title')
+                ->first();
+
+            $rawTitle = $translation?->title ?? $model->title ?? $this->title;
+
+            // Strip site name suffix (e.g. "Mosquiteiras em Alcobaça | Caixilharia Blanco" → "Mosquiteiras em Alcobaça")
+            return str_contains($rawTitle, ' | ')
+                ? trim(explode(' | ', $rawTitle)[0])
+                : $rawTitle;
         }
 
-        if ($this->reference) {
-            // Asume que los modelos referenciados tienen un atributo 'url'
-            return $this->reference->url ?? $this->url;
+        return $this->title;
+    }
+
+    public function getFullUrlAttribute(): string
+    {
+        $model = $this->resolveReference();
+
+        if ($model) {
+            if ($model instanceof Page) {
+                return $this->resolvePageUrl($model);
+            }
+
+            return $model->url ?? $model->full_url ?? $this->url ?? '#';
         }
 
-        return $this->url;
+        return $this->url ?: '#';
+    }
+
+    /**
+     * Resolve and cache the referenced model (Page, Post, or Category).
+     * Returns null if no reference is set or the model doesn't exist.
+     */
+    private function resolveReference(): mixed
+    {
+        if ($this->resolvedReference !== false) {
+            return $this->resolvedReference;
+        }
+
+        if (! $this->reference_type || ! $this->reference_id) {
+            return $this->resolvedReference = null;
+        }
+
+        return $this->resolvedReference = match ($this->reference_type) {
+            Page::class => Page::with('translations.localeModel')->find($this->reference_id),
+            Post::class => Post::find($this->reference_id),
+            Category::class => Category::find($this->reference_id),
+            default => null,
+        };
+    }
+
+    /**
+     * Resolve the locale-aware URL for a Page reference.
+     *
+     * Prefers the published translation for the current locale.
+     * Falls back to the page's default URL.
+     */
+    private function resolvePageUrl(Page $page): string
+    {
+        if ($page->template === 'homepage') {
+            return url('/');
+        }
+
+        $locale = app()->getLocale();
+        $prefix = setting('permalink-modules-page-models-page', '');
+
+        $translation = $page->translations()
+            ->forLocale($locale)
+            ->where('status', 'published')
+            ->whereNotNull('slug')
+            ->first();
+
+        if ($translation) {
+            $path = $prefix ? "{$prefix}/{$translation->slug}" : $translation->slug;
+
+            return url("/{$path}");
+        }
+
+        return $page->url;
     }
 
     /**
@@ -86,15 +176,30 @@ class MenuItem extends Model
      */
     public function hasChildren(): bool
     {
-        return $this->children()->count() > 0;
+        if ($this->relationLoaded('children')) {
+            return $this->children->isNotEmpty();
+        }
+
+        return $this->children()->exists();
     }
 
     /**
-     * Check if the menu item is active.
+     * Check if the menu item matches the current request URL.
+     * Handles trailing slashes, query params, and http/https differences.
      */
     public function isActive(): bool
     {
-        return request()->url() === $this->full_url;
+        $itemUrl = rtrim($this->full_url, '/');
+        $currentUrl = rtrim(request()->url(), '/');
+        $currentPath = rtrim(request()->path(), '/');
+
+        if ($itemUrl === $currentUrl) {
+            return true;
+        }
+
+        $itemPath = rtrim(parse_url($itemUrl, PHP_URL_PATH) ?? $itemUrl, '/');
+
+        return $itemPath !== '' && $itemPath === '/'.ltrim($currentPath, '/');
     }
 
     /**

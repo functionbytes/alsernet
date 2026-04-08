@@ -2,10 +2,12 @@
 
 namespace Modules\Mailer\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Modules\Mailer\Traits\HasUid;
 
 /**
@@ -19,10 +21,10 @@ use Modules\Mailer\Traits\HasUid;
  * @property array|null $variables
  * @property string $module
  * @property string|null $description
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Modules\Mailer\Models\MailerLayout|null $layout
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Modules\Mailer\Models\MailerTemplateLang> $translations
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read MailerLayout|null $layout
+ * @property-read Collection<int, MailerTemplateLang> $translations
  * @property-read string|null $subject (magic getter - from current translation)
  * @property-read string|null $content (magic getter - from current translation)
  */
@@ -67,6 +69,14 @@ class MailerTemplate extends Model
     }
 
     /**
+     * Historial de versiones (ordenadas de más reciente a más antigua)
+     */
+    public function versions(): HasMany
+    {
+        return $this->hasMany(MailerTemplateVersion::class, 'mailer_template_id')->latest();
+    }
+
+    /**
      * Obtener traducción para un idioma específico con fallback
      * Si no existe la traducción, intenta con lang_id 1 (idioma Por defecto)
      */
@@ -95,36 +105,20 @@ class MailerTemplate extends Model
 
     /**
      * Magic getter para subject (backwards compatibility)
-     * Si existe traducción, devuelve subject de la traducción
+     * Obtiene subject desde la traduccion del idioma por defecto
      */
-    public function getSubjectAttribute()
+    public function getSubjectAttribute(): ?string
     {
-        // Si estamos creando/editando y no tenemos una traducción cargada,
-        // intentar obtenerla del atributo original
-        if (isset($this->attributes['subject'])) {
-            $translation = $this->translate();
-            if ($translation && $translation->subject) {
-                return $translation->subject;
-            }
-        }
-
-        return $this->attributes['subject'] ?? null;
+        return $this->translate()?->subject;
     }
 
     /**
      * Magic getter para content (backwards compatibility)
-     * Si existe traducción, devuelve content de la traducción
+     * Obtiene content desde la traduccion del idioma por defecto
      */
-    public function getContentAttribute()
+    public function getContentAttribute(): ?string
     {
-        if (isset($this->attributes['content'])) {
-            $translation = $this->translate();
-            if ($translation && $translation->content) {
-                return $translation->content;
-            }
-        }
-
-        return $this->attributes['content'] ?? null;
+        return $this->translate()?->content;
     }
 
     /**
@@ -282,34 +276,33 @@ class MailerTemplate extends Model
     /**
      * Obtener próxima estructura de template (para nuevo template)
      */
-    public static function getStructureForModule($module = 'core'): string
+    public static function getStructureForModule(string $module = 'core'): string
     {
         $variables = self::defaultVariables($module);
 
-        $varsList = implode(', ', array_map(function ($var) {
-            return '{'.$var['name'].'}';
-        }, array_filter($variables, fn ($v) => $v['required'])));
+        $varsList = implode(', ', array_map(
+            fn ($var) => '{'.$var['name'].'}',
+            array_filter($variables, fn ($v) => $v['required'])
+        ));
 
-        $baseStructure = <<<HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body { font-family: Arial, sans-serif; }
-                .container { max-width: 600px; margin: 0 auto; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>Hola {CUSTOMER_NAME}</h1>
-                <p>Mensaje del template aquí...</p>
-                <p>Variables disponibles: $varsList</p>
-            </div>
-        </body>
-        </html>
-        HTML;
-
-        return $baseStructure;
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hola {CUSTOMER_NAME}</h1>
+        <p>Mensaje del template aqui...</p>
+        <p>Variables disponibles: {$varsList}</p>
+    </div>
+</body>
+</html>
+HTML;
     }
 }

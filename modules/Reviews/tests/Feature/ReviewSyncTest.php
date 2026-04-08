@@ -50,7 +50,7 @@ class ReviewSyncTest extends TestCase
     public function test_sync_job_updates_existing_reviews(): void
     {
         $location = $this->createLocation();
-        $existingReview = Review::factory()->for($location)->create([
+        $existingReview = Review::factory()->for($location, 'location')->create([
             'google_review_id' => 'review-456',
             'comment' => 'Old comment',
         ]);
@@ -129,7 +129,7 @@ class ReviewSyncTest extends TestCase
     public function test_sync_skips_duplicate_reviews(): void
     {
         $location = $this->createLocation();
-        Review::factory()->for($location)->create([
+        Review::factory()->for($location, 'location')->create([
             'google_review_id' => 'duplicate-review',
         ]);
 

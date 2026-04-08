@@ -4,79 +4,70 @@ namespace Modules\Media\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Media\Console\Commands\PruneOrphanMediaCommand;
+use Modules\Media\Models\MediaFile;
+use Modules\Media\Models\MediaFolder;
+use Modules\Media\Models\MediaSetting;
+use Modules\Media\Policies\MediaFilePolicy;
+use Modules\Media\Policies\MediaFolderPolicy;
+use Modules\Media\Repositories\Eloquent\MediaFileRepository;
+use Modules\Media\Repositories\Eloquent\MediaFolderRepository;
+use Modules\Media\Repositories\Eloquent\MediaSettingRepository;
+use Modules\Media\Repositories\Interfaces\MediaFileInterface;
+use Modules\Media\Repositories\Interfaces\MediaFolderInterface;
+use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class MediaServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Merge module configs
-        $this->mergeConfigFrom(
-            __DIR__.'/../../config/media-library.php',
-            'media-library'
-        );
+        $this->mergeConfigFrom(__DIR__.'/../../config/media.php', 'media');
 
-        $this->mergeConfigFrom(
-            __DIR__.'/../../config/media.php',
-            'media'
-        );
+        $this->app->bind(MediaFileInterface::class, fn () => new MediaFileRepository(new MediaFile));
+        $this->app->bind(MediaFolderInterface::class, fn () => new MediaFolderRepository(new MediaFolder));
+        $this->app->bind(MediaSettingInterface::class, fn () => new MediaSettingRepository(new MediaSetting));
     }
 
     public function boot(): void
     {
-        // Load routes
+        if (Module::find('Media')?->isDisabled()) {
+            return;
+        }
+
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
-
-        // Publish config
-        $this->publishes([
-            __DIR__.'/../../config/media.php' => config_path('media.php'),
-        ], 'media-config');
-
-        // Publish vendor views
-        $this->publishes([
-            __DIR__.'/../../resources/views/vendor/media-library' => resource_path('views/vendor/media-library'),
-        ], 'media-views');
-
-        // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
-
-        // Load views
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'media');
 
-        // Register policies
-        $this->registerPolicies();
+        $this->publishes([
+            __DIR__.'/../../public' => public_path('modules/Media'),
+        ], ['media-assets', 'laravel-assets']);
 
-        // Register menus
+        $this->registerPolicies();
         $this->registerMenus();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([PruneOrphanMediaCommand::class]);
+        }
     }
 
     protected function registerPolicies(): void
     {
-        Gate::policy(
-            \Modules\Media\Entities\MediaFile::class,
-            \Modules\Media\Policies\MediaFilePolicy::class
-        );
-
-        Gate::policy(
-            \Modules\Media\Entities\MediaFolder::class,
-            \Modules\Media\Policies\MediaFolderPolicy::class
-        );
+        Gate::policy(MediaFile::class, MediaFilePolicy::class);
+        Gate::policy(MediaFolder::class, MediaFolderPolicy::class);
     }
 
-    /**
-     * Registrar menús del módulo Media
-     */
     protected function registerMenus(): void
     {
-        // Mini-nav item para Media
         NavService::registerMiniItem('media', [
             'icon' => 'fa-duotone fa-regular fa-subtitles-slash',
             'tooltip' => 'Gestor de Medios',
             'sidebar_id' => 'media',
+            'url' => 'media.index',
             'order' => 30,
         ]);
 
-        // Sidebar con los items del módulo
         NavService::registerSidebar('media', [
             'title' => 'Gestor de Medios',
             'items' => [

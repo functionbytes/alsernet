@@ -4,6 +4,7 @@ namespace Modules\Attention\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
+use Modules\Attention\Jobs\ExportAttentionsJob;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionCategory;
 use Modules\Attention\Models\AttentionDepartment;
@@ -93,11 +95,11 @@ class AttentionWebController extends Controller
             });
         }
 
+        // Calculate stats before paginating (pagination adds LIMIT/OFFSET that breaks COUNT queries)
+        $stats = $this->calculateStats($query);
+
         // Get paginated results
         $attentions = $query->latest()->paginate(config('pagination.attentions'))->withQueryString();
-
-        // Calculate stats
-        $stats = $this->calculateStats($query);
 
         // Get filter options
         $types = AttentionType::orderBy('name')->get();
@@ -429,7 +431,7 @@ class AttentionWebController extends Controller
 
         $format = $validated['format'] ?? 'excel';
 
-        \Modules\Attention\Jobs\ExportAttentionsJob::dispatch(auth()->user(), $validated, $format);
+        ExportAttentionsJob::dispatch(auth()->user(), $validated, $format);
 
         if ($request->expectsJson()) {
             return response()->json(['message' => 'La exportación está en proceso. Recibirás una notificación cuando esté lista.']);
@@ -821,7 +823,7 @@ class AttentionWebController extends Controller
     /**
      * Calculate statistics for pending attentions using a single query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $baseQuery
+     * @param  Builder  $baseQuery
      */
     private function calculateStats($baseQuery): array
     {
@@ -839,10 +841,10 @@ class AttentionWebController extends Controller
             ->first();
 
         return [
-            'total' => (int) $row->total,
-            'today' => (int) $row->today,
-            'assigned_to_me' => (int) $row->assigned_to_me,
-            'overdue' => (int) $row->overdue,
+            'total' => (int) ($row->total ?? 0),
+            'today' => (int) ($row->today ?? 0),
+            'assigned_to_me' => (int) ($row->assigned_to_me ?? 0),
+            'overdue' => (int) ($row->overdue ?? 0),
         ];
     }
 }

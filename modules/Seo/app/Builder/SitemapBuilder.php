@@ -2,6 +2,8 @@
 
 namespace Modules\Seo\Builder;
 
+use Illuminate\Support\Facades\Log;
+
 class SitemapBuilder
 {
     protected array $items = [];
@@ -48,7 +50,7 @@ class SitemapBuilder
 
     public function render(string $format = 'xml'): string
     {
-        return view("Seo::sitemap.formats.{$format}", [
+        return view("Seo::settings.sitemap.formats.{$format}", [
             'items' => $this->items,
             'sitemaps' => $this->sitemaps,
         ])->render();
@@ -56,8 +58,35 @@ class SitemapBuilder
 
     public function generate(): void
     {
+        $this->generateToPath(public_path('sitemap.xml'));
+    }
+
+    /**
+     * Generate the sitemap XML and write it to a custom path.
+     *
+     * @throws \RuntimeException If the file cannot be written.
+     */
+    public function generateToPath(string $path): void
+    {
         $xml = $this->render();
-        file_put_contents(public_path('sitemap.xml'), $xml);
+
+        try {
+            $result = file_put_contents($path, $xml);
+
+            if ($result === false) {
+                throw new \RuntimeException('file_put_contents returned false');
+            }
+        } catch (\Throwable $e) {
+            Log::error('SitemapBuilder: No se pudo escribir el sitemap.', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException(
+                "No se pudo generar el sitemap.xml: {$e->getMessage()}",
+                previous: $e
+            );
+        }
     }
 
     public function getItems(): array

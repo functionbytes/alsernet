@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Analytics\Http\Controllers\AnalyticsController;
 use Modules\Analytics\Http\Controllers\DashboardController;
+use Modules\Analytics\Http\Controllers\Settings\AnalyticsNotificationController;
 use Modules\Analytics\Http\Controllers\Settings\AnalyticsReportScheduleController;
 use Modules\Analytics\Http\Controllers\Settings\AnalyticsSettingController;
 use Modules\Analytics\Http\Controllers\Settings\AnalyticsSettingJsonController;
@@ -11,7 +12,7 @@ Route::middleware(['web', 'module:Analytics'])->group(function () {
 
     // Settings routes
     Route::middleware(['auth'])
-        ->prefix('setting/analytics')
+        ->prefix('panel/setting/analytics')
         ->name('settings.analytics.')
         ->group(function () {
             Route::get('/', [AnalyticsSettingController::class, 'index'])->name('index');
@@ -27,10 +28,18 @@ Route::middleware(['web', 'module:Analytics'])->group(function () {
             Route::post('/format-json', [AnalyticsSettingJsonController::class, 'formatJson'])->name('format-json');
             Route::post('/extract-info', [AnalyticsSettingJsonController::class, 'extractInfo'])->name('extract-info');
 
+            // Notification settings
+            Route::get('/notifications', [AnalyticsNotificationController::class, 'index'])->name('notifications');
+            Route::post('/notifications', [AnalyticsNotificationController::class, 'update'])->name('notifications.update');
+
             // Scheduled reports
             Route::prefix('schedules')->name('schedules.')->group(function () {
                 Route::get('/', [AnalyticsReportScheduleController::class, 'index'])->name('index');
+                Route::get('/create', [AnalyticsReportScheduleController::class, 'create'])->name('create');
                 Route::post('/', [AnalyticsReportScheduleController::class, 'store'])->name('store');
+                Route::get('/{schedule}/edit', [AnalyticsReportScheduleController::class, 'edit'])->name('edit');
+                Route::put('/{schedule}', [AnalyticsReportScheduleController::class, 'update'])->name('update');
+                Route::post('/bulk-action', [AnalyticsReportScheduleController::class, 'bulkAction'])->name('bulk-action');
                 Route::delete('/{schedule}', [AnalyticsReportScheduleController::class, 'destroy'])->name('destroy');
                 Route::post('/{schedule}/toggle', [AnalyticsReportScheduleController::class, 'toggle'])->name('toggle');
             });
@@ -38,14 +47,14 @@ Route::middleware(['web', 'module:Analytics'])->group(function () {
 
     // Dashboard routes
     Route::middleware(['auth'])
-        ->prefix('analytics')
+        ->prefix('panel/analytics')
         ->name('analytics.')
         ->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         });
 
     // Analytics data endpoints (for widgets/dashboard)
-    Route::middleware(['auth', 'throttle:60,1'])
+    Route::middleware(['auth', 'throttle:'.config('analytics.api.throttle_per_minute', 60).',1'])
         ->prefix('api/analytics')
         ->name('api.analytics.')
         ->group(function () {

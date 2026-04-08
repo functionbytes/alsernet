@@ -3,12 +3,14 @@
 namespace Modules\Storage\Providers;
 
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class StorageServiceProvider extends ServiceProvider
 {
@@ -17,18 +19,14 @@ class StorageServiceProvider extends ServiceProvider
     protected string $nameLower = 'storage';
 
     /**
-     * Register services
-     */
-    public function register(): void
-    {
-        // Register storage services if needed
-    }
-
-    /**
      * Bootstrap services
      */
     public function boot(): void
     {
+        if (Module::find('Storage')?->isDisabled()) {
+            return;
+        }
+
         // Load views
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'storage');
 
@@ -56,7 +54,7 @@ class StorageServiceProvider extends ServiceProvider
 
         // Storage manager routes
         Route::middleware(['web', 'auth', 'settings'])
-            ->prefix('settings')
+            ->prefix('panel/settings')
             ->name('settings.')
             ->group(function () use ($webPath) {
                 require $webPath;
@@ -69,12 +67,10 @@ class StorageServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         // Add storage configuration to settings sidebar
-        NavService::registerSidebar('settings', [
-            'title' => 'Configuraciones',
-            'items' => [
-                ['label' => 'Almacenamiento', 'route' => 'settings.storage'],
-            ],
+        NavService::addItemsToSection('settings', 'Configuraciones', [
+            ['label' => 'Almacenamiento', 'route' => 'settings.storage'],
         ]);
+
     }
 
     /**
@@ -104,62 +100,73 @@ class StorageServiceProvider extends ServiceProvider
     private function loadStorageConfig(): void
     {
         try {
-            $customDisksJson = Setting::get('system.custom_storage_disks', '[]');
-            $customDisks = json_decode($customDisksJson, true) ?: [];
+            $customDisks = Cache::remember('storage.custom_disks', 3600, function (): array {
+                $raw = Setting::get('system.custom_storage_disks', '[]');
+                $decoded = json_decode($raw, true);
+
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    Log::error('Custom storage disks JSON is malformed', ['error' => json_last_error_msg()]);
+
+                    return [];
+                }
+
+                return $decoded ?: [];
+            });
 
             foreach ($customDisks as $disk) {
                 $diskName = $disk['name'];
                 $driver = $disk['driver'];
 
-                $diskConfig = ['driver' => $driver];
+                $extra = match ($driver) {
+                    'local' => array_filter([
+                        'root' => $disk['root'] ?? storage_path('app'),
+                        'url' => $disk['url'] ?? null,
+                        'throw' => false,
+                    ], fn ($v) => $v !== null),
 
-                switch ($driver) {
-                    case 'local':
-                        $diskConfig['root'] = $disk['root'] ?? storage_path('app');
-                        if (isset($disk['url'])) {
-                            $diskConfig['url'] = $disk['url'];
-                        }
-                        $diskConfig['throw'] = false;
-                        break;
+                    'ftp' => [
+                        'host' => $disk['host'] ?? '',
+                        'username' => $disk['username'] ?? '',
+                        'password' => $this->decryptCredential($disk['password'] ?? '', $diskName, 'password'),
+                        'port' => (int) ($disk['port'] ?? 21),
+                        'root' => $disk['root'] ?? '/',
+                        'passive' => true,
+                        'ssl' => false,
+                        'timeout' => 30,
+                    ],
 
-                    case 'ftp':
-                        $diskConfig['host'] = $disk['host'] ?? '';
-                        $diskConfig['username'] = $disk['username'] ?? '';
-                        $diskConfig['password'] = $this->decryptCredential($disk['password'] ?? '', $diskName, 'password');
-                        $diskConfig['port'] = (int) ($disk['port'] ?? 21);
-                        $diskConfig['root'] = $disk['root'] ?? '/';
-                        $diskConfig['passive'] = true;
-                        $diskConfig['ssl'] = false;
-                        $diskConfig['timeout'] = 30;
-                        break;
+                    'sftp' => [
+                        'host' => $disk['host'] ?? '',
+                        'username' => $disk['username'] ?? '',
+                        'password' => $this->decryptCredential($disk['password'] ?? '', $diskName, 'password'),
+                        'port' => (int) ($disk['port'] ?? 22),
+                        'root' => $disk['root'] ?? '/',
+                        'timeout' => 30,
+                    ],
 
-                    case 'sftp':
-                        $diskConfig['host'] = $disk['host'] ?? '';
-                        $diskConfig['username'] = $disk['username'] ?? '';
-                        $diskConfig['password'] = $this->decryptCredential($disk['password'] ?? '', $diskName, 'password');
-                        $diskConfig['port'] = (int) ($disk['port'] ?? 22);
-                        $diskConfig['root'] = $disk['root'] ?? '/';
-                        $diskConfig['timeout'] = 30;
-                        break;
+                    's3' => array_filter([
+                        'key' => $this->decryptCredential($disk['key'] ?? '', $diskName, 'key'),
+                        'secret' => $this->decryptCredential($disk['secret'] ?? '', $diskName, 'secret'),
+                        'region' => $disk['region'] ?? '',
+                        'bucket' => $disk['bucket'] ?? '',
+                        'url' => $disk['url'] ?? null,
+                        'endpoint' => $disk['endpoint'] ?? null,
+                        'use_path_style_endpoint' => false,
+                        'throw' => false,
+                    ], fn ($v) => $v !== null),
 
-                    case 's3':
-                        $diskConfig['key'] = $disk['key'] ?? '';
-                        $diskConfig['secret'] = $this->decryptCredential($disk['secret'] ?? '', $diskName, 'secret');
-                        $diskConfig['region'] = $disk['region'] ?? '';
-                        $diskConfig['bucket'] = $disk['bucket'] ?? '';
-                        if (isset($disk['url'])) {
-                            $diskConfig['url'] = $disk['url'];
-                        }
-                        $diskConfig['endpoint'] = $disk['endpoint'] ?? null;
-                        $diskConfig['use_path_style_endpoint'] = false;
-                        $diskConfig['throw'] = false;
-                        break;
+                    default => [],
+                };
+
+                $existingConfig = config("filesystems.disks.{$diskName}");
+                if ($existingConfig !== null && ! in_array($diskName, ['local', 'public'])) {
+                    Log::warning('Custom storage disk overrides existing config disk', ['disk' => $diskName]);
                 }
 
-                config(["filesystems.disks.{$diskName}" => $diskConfig]);
+                config(["filesystems.disks.{$diskName}" => array_merge(['driver' => $driver], $extra)]);
             }
         } catch (\Exception $e) {
-            Log::debug('Storage configuration could not be loaded', [
+            Log::error('Storage configuration could not be loaded', [
                 'error' => $e->getMessage(),
             ]);
         }

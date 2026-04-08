@@ -18,4 +18,6 @@ use Modules\User\Http\Controllers\UsersController;
 
 Route::post('/', [UsersController::class, 'store'])->name('store');
 Route::post('/update', [UsersController::class, 'update'])->name('update');
+Route::post('/bulk-action', [UsersController::class, 'bulkAction'])->name('bulk-action');
+Route::post('{uid}/toggle', [UsersController::class, 'toggleStatus'])->name('toggle');
 Route::delete('{uid}', [UsersController::class, 'destroy'])->name('destroy');

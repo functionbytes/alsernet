@@ -19,16 +19,34 @@ class MailerVariableController extends Controller
     /**
      * Display a listing of email variables
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $this->authorizeMailerAction('mailer.variables.view');
+
         $pageTitle = 'Gestionar Variables de Email';
         $breadcrumb = 'Configuración / Correos / Variables';
 
-        $variables = MailerVariable::with('translations')
+        $query = MailerVariable::with('translations')
             ->orderBy('module')
             ->orderBy('category')
-            ->orderBy('key')
-            ->paginate(paginationNumber());
+            ->orderBy('key');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('key', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($module = $request->input('module')) {
+            $query->where('module', $module);
+        }
+
+        if ($category = $request->input('category')) {
+            $query->where('category', $category);
+        }
+
+        $variables = $query->paginate(paginationNumber())->withQueryString();
 
         return view('mailer::variables.index', compact(
             'pageTitle',
@@ -42,23 +60,14 @@ class MailerVariableController extends Controller
      */
     public function create(): View
     {
+        $this->authorizeMailerAction('mailer.variables.create');
+
         $pageTitle = 'Crear Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Crear';
 
-        $langs = MailerLang::all();
-        $categories = [
-            'system' => 'Sistema',
-            'site' => 'Sitio',
-            'customer' => 'Cliente',
-            'order' => 'Pedido',
-            'document' => 'Documento',
-            'general' => 'General',
-        ];
-        $modules = [
-            'core' => 'Core',
-            'documents' => 'Documentos',
-            'orders' => 'Pedidos',
-        ];
+        $langs = MailerLang::available()->get();
+        $categories = config('mailer-module.category_labels', []);
+        $modules = config('mailer-module.modules', []);
 
         return view('mailer::variables.create', compact(
             'pageTitle',
@@ -74,6 +83,8 @@ class MailerVariableController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.variables.create');
+
         $validated = $request->validate([
             'key' => 'required|string|unique:mailer_variables,key|regex:/^[A-Z_]+$/',
             'name' => 'required|string|max:255',
@@ -109,23 +120,14 @@ class MailerVariableController extends Controller
      */
     public function edit(MailerVariable $variable): View
     {
+        $this->authorizeMailerAction('mailer.variables.view');
+
         $pageTitle = 'Editar Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Editar';
 
-        $langs = MailerLang::all();
-        $categories = [
-            'system' => 'Sistema',
-            'site' => 'Sitio',
-            'customer' => 'Cliente',
-            'order' => 'Pedido',
-            'document' => 'Documento',
-            'general' => 'General',
-        ];
-        $modules = [
-            'core' => 'Core',
-            'documents' => 'Documentos',
-            'orders' => 'Pedidos',
-        ];
+        $langs = MailerLang::available()->get();
+        $categories = config('mailer-module.category_labels', []);
+        $modules = config('mailer-module.modules', []);
 
         $variable->load('translations');
 
@@ -144,6 +146,8 @@ class MailerVariableController extends Controller
      */
     public function update(Request $request, MailerVariable $variable): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.variables.update');
+
         // For system variables, key and category are not validated (they're fixed)
         // For custom variables, they must follow strict validation rules
         $rules = [
@@ -203,6 +207,8 @@ class MailerVariableController extends Controller
      */
     public function destroy(MailerVariable $variable): RedirectResponse
     {
+        $this->authorizeMailerAction('mailer.variables.delete');
+
         if ($variable->is_system) {
             return redirect()
                 ->route('mailers.variables.index')
@@ -222,6 +228,8 @@ class MailerVariableController extends Controller
      */
     public function toggleStatus(MailerVariable $variable): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.variables.update');
+
         $variable->update(['is_enabled' => ! $variable->is_enabled]);
 
         $status = $variable->is_enabled ? 'habilitada' : 'deshabilitada';
@@ -238,6 +246,8 @@ class MailerVariableController extends Controller
      */
     public function getByModule(Request $request): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.variables.view');
+
         $module = $request->get('module', 'core');
         $category = $request->get('category');
 
@@ -258,6 +268,8 @@ class MailerVariableController extends Controller
      */
     public function getGroupedByCategory(Request $request): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.variables.view');
+
         $module = $request->get('module', 'core');
 
         $variables = MailerVariable::where('module', $module)
@@ -288,6 +300,8 @@ class MailerVariableController extends Controller
      */
     public function getAvailableKeys(Request $request): JsonResponse
     {
+        $this->authorizeMailerAction('mailer.variables.view');
+
         $module = $request->get('module', 'core');
 
         $keys = MailerVariable::where('module', $module)

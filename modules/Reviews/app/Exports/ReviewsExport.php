@@ -2,16 +2,18 @@
 
 namespace Modules\Reviews\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Modules\Reviews\Models\Review;
 
-class ReviewsExport implements FromCollection, WithHeadings, WithMapping
+class ReviewsExport implements FromQuery, WithChunkReading, WithHeadings, WithMapping
 {
     public function __construct(private array $filters = []) {}
 
-    public function collection()
+    public function query(): Builder
     {
         $query = Review::query()->with(['location', 'moderation']);
 
@@ -31,7 +33,12 @@ class ReviewsExport implements FromCollection, WithHeadings, WithMapping
             $query->where('review_time', '<=', $this->filters['date_to']);
         }
 
-        return $query->latest('review_time')->get();
+        return $query->latest('review_time');
+    }
+
+    public function chunkSize(): int
+    {
+        return 200;
     }
 
     public function headings(): array

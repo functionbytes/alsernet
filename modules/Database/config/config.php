@@ -13,6 +13,6 @@ return [
     |
     */
     'cleanup' => [
-        'enabled' => env('DATABASE_CLEANUP_ENABLED', false),
+        'enabled' => env('CMS_ENABLED_CLEANUP_DATABASE', false),
     ],
 ];

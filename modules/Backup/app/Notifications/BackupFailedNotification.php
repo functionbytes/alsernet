@@ -2,24 +2,36 @@
 
 namespace Modules\Backup\Notifications;
 
-use Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification as BaseNotification;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
-/**
- * Silent backup failed notification.
- *
- * Handles failed backup events without sending actual notifications.
- */
-class BackupFailedNotification extends BaseNotification
+class BackupFailedNotification extends Notification
 {
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
-    public function via($notifiable)
+    public function __construct(
+        private string $errorMessage
+    ) {}
+
+    /** @return array<int, string> */
+    public function via(mixed $notifiable): array
     {
-        // Return empty array to prevent any notification from being sent
-        return [];
+        return ['mail'];
+    }
+
+    public function toMail(mixed $notifiable): MailMessage
+    {
+        $appName = config('app.name', 'Sistema');
+
+        return (new MailMessage)
+            ->error()
+            ->from(
+                config('backup.notifications.mail.from.address', config('mail.from.address')),
+                config('backup.notifications.mail.from.name', config('mail.from.name'))
+            )
+            ->subject("Error en el backup: {$appName}")
+            ->greeting('Error en el backup')
+            ->line("El backup de \"{$appName}\" ha fallado.")
+            ->line('Error: '.$this->errorMessage)
+            ->line('Revisa los logs del sistema para obtener más detalles.')
+            ->action('Ver logs', url('/settings/activity/logs'));
     }
 }

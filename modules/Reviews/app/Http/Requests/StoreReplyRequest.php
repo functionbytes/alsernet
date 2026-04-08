@@ -3,7 +3,7 @@
 namespace Modules\Reviews\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Reviews\Models\Review;
+use Modules\Reviews\Rules\UniquePublishedReply;
 
 class StoreReplyRequest extends FormRequest
 {
@@ -21,8 +21,14 @@ class StoreReplyRequest extends FormRequest
 
     public function rules(): array
     {
+        $status = $this->input('status', 'draft');
+
         return [
-            'review_id' => ['required', 'exists:reviews,id'],
+            'review_id' => [
+                'required',
+                'exists:reviews,id',
+                new UniquePublishedReply($status),
+            ],
             'reply_text' => ['required', 'string', 'min:10', 'max:4000'],
             'status' => ['required', 'in:draft,approved,published'],
             'template_id' => ['sometimes', 'nullable', 'exists:review_reply_templates,id'],
@@ -41,17 +47,5 @@ class StoreReplyRequest extends FormRequest
             'status.in' => 'Estado no válido',
             'template_id.exists' => 'La plantilla no existe',
         ];
-    }
-
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($validator) {
-            $status = $this->input('status');
-            $review = Review::find($this->input('review_id'));
-
-            if ($status === 'published' && $review && $review->reply && $review->reply->isPublished()) {
-                $validator->errors()->add('review_id', 'Esta reseña ya tiene una respuesta publicada');
-            }
-        });
     }
 }

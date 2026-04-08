@@ -13,7 +13,7 @@ class MailsSettingsServiceProvider extends ServiceProvider
         // Merge module config
         $this->mergeConfigFrom(
             __DIR__.'/../../config/mails-settings.php',
-            'mails-backups'
+            'mails-settings'
         );
     }
 
@@ -30,11 +30,11 @@ class MailsSettingsServiceProvider extends ServiceProvider
 
         // Publish config
         $this->publishes([
-            __DIR__.'/../../config/mails-settings.php' => config_path('mails-backups.php'),
-        ], 'mails-backups-config');
+            __DIR__.'/../../config/mails-settings.php' => config_path('mails-settings.php'),
+        ], 'mails-settings-config');
 
         // Load views
-        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'mails-backups');
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'mails-settings');
     }
 
     protected function registerRoutes(): void

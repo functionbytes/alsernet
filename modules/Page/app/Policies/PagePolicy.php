@@ -107,6 +107,21 @@ class PagePolicy
     }
 
     /**
+     * Determine if the user can perform bulk actions on pages.
+     *
+     * Requires page.update because bulk operations (publish, unpublish, delete, restore)
+     * all modify page state. Users without this permission must not reach bulkAction().
+     */
+    public function bulkAction(User $user): bool
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.update');
+    }
+
+    /**
      * Determine if the user can duplicate a page.
      */
     public function duplicate(User $user, Page $page): bool
@@ -119,7 +134,19 @@ class PagePolicy
     }
 
     /**
-     * Check if the user is a super pages.
+     * Determine if the user can approve or reject page approvals.
+     */
+    public function approve(User $user): bool
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('page.approve');
+    }
+
+    /**
+     * Check if the user is a super admin.
      */
     protected function isSuperAdmin(User $user): bool
     {

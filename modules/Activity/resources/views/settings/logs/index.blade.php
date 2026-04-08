@@ -19,6 +19,17 @@
                         <h5 class="mb-1 fw-bold">Registro de cambios</h5>
                         <p class="small mb-0 text-muted">Historial completo de acciones realizadas sobre los modelos del sistema</p>
                     </div>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ route('activity.export', request()->query()) }}">Exportar CSV</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -64,58 +75,59 @@
                 </div>
             </div>
 
-            {{-- Search --}}
+            {{-- Search & Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('activity.logs') }}">
-                    <div class="d-flex gap-2 align-items-center">
-                        <div class="input-group flex-grow-1">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="search" name="search" class="form-control"
-                                   placeholder="Buscar en descripción..."
-                                   value="{{ request('search') }}">
+                <form method="GET" action="{{ route('activity.logs') }}" id="logs-filter-form">
+                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
+                        <div class="flex-fill">
+                            <div class="input-group h-100">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar en descripción..."
+                                       value="{{ request('search') }}">
+                            </div>
                         </div>
-                        @if(request('search'))
-                            <a href="{{ route('activity.logs') }}" class="btn btn-outline-secondary" title="Limpiar">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        @endif
-                        <button type="submit" class="btn btn-primary" style="min-width:45px;">
-                            <i class="fas fa-search"></i>
-                        </button>
+                        <div class="flex-shrink-0" style="min-width: 150px;">
+                            <input type="date" name="from" class="form-control h-100" value="{{ request('from') }}">
+                        </div>
+                        <div class="flex-shrink-0" style="min-width: 150px;">
+                            <input type="date" name="to" class="form-control h-100" value="{{ request('to') }}">
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            @if(request()->hasAny(['search', 'from', 'to']))
+                                <a href="{{ route('activity.logs') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </form>
             </div>
 
             {{-- Table --}}
             <div class="card-body">
-                <div class="mb-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1 fw-bold">Listado de registros</h6>
-                        <p class="text-muted small mb-0">{{ number_format($activities->total()) }} registros encontrados</p>
-                    </div>
-                </div>
-
                 @if($activities->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Fecha</th>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Usuario</th>
                                     <th>Acción</th>
                                     <th>Modelo</th>
-                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activities as $activity)
                                     <tr>
-                                        <td>
-                                            <div class="small">{{ $activity->created_at->format('d/m/Y H:i') }}</div>
-                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
-                                        </td>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $activity->id }}"></td>
                                         <td>
                                             <div class="small fw-semibold">{{ $activity->causer?->name ?? 'Sistema' }}</div>
                                             @if($activity->causer?->email)
@@ -124,7 +136,7 @@
                                         </td>
                                         <td>
                                             @php
-                                                $eventMap = ['created' => 'success', 'updated' => 'primary', 'deleted' => 'primary'];
+                                                $eventMap = ['created' => 'success', 'updated' => 'primary', 'deleted' => 'danger'];
                                                 $color = $eventMap[$activity->event] ?? 'secondary';
                                             @endphp
                                             <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
@@ -132,10 +144,25 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-light text-dark">{{ class_basename($activity->subject_type ?? '') ?: '-' }}</span>
+                                            <span class="badge bg-light text-dark border">{{ class_basename($activity->subject_type ?? '') ?: '-' }}</span>
                                         </td>
                                         <td>
-                                            <small class="text-truncate d-block" style="max-width:300px;">{{ $activity->description }}</small>
+                                            <div class="small">{{ $activity->created_at->format('d/m/Y H:i') }}</div>
+                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-boundary="viewport">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('activity.logs.show', $activity->id) }}">
+                                                            Ver detalle
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -144,14 +171,25 @@
                     </div>
                 @else
                     <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted opacity-50 mb-3 d-block"></i>
-                        <h6 class="text-muted mb-1">
-                            {{ request('search') ? 'No se encontraron resultados' : 'No hay registros de cambios' }}
-                        </h6>
-                        @if(request('search'))
-                            <p class="text-muted small mb-3">No hay resultados para "{{ request('search') }}"</p>
-                            <a href="{{ route('activity.logs') }}" class="btn btn-sm btn-outline-secondary">Limpiar búsqueda</a>
-                        @endif
+                        <div class="d-flex flex-column align-items-center">
+                            <h6 class="mb-1">
+                                @if(request()->hasAny(['search', 'from', 'to']))
+                                    No se encontraron resultados
+                                @else
+                                    No hay registros de cambios
+                                @endif
+                            </h6>
+                            <p class="text-muted mb-3">
+                                @if(request('search'))
+                                    No hay resultados para "{{ request('search') }}"
+                                @else
+                                    Aún no se han registrado acciones en el sistema
+                                @endif
+                            </p>
+                            @if(request()->hasAny(['search', 'from', 'to']))
+                                <a href="{{ route('activity.logs') }}" class="btn btn-sm btn-outline-secondary">Limpiar filtros</a>
+                            @endif
+                        </div>
                     </div>
                 @endif
             </div>
@@ -160,6 +198,39 @@
                 <div class="card-footer">{{ $activities->links() }}</div>
             @endif
 
+        </div>
+    </div>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> registro(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -174,6 +245,45 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    // Bulk actions
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un registro.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' registro(s) seleccionados?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
+        $.ajax({
+            url: '{{ route('activity.logs.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.message || res.count + ' registro(s) eliminados.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
+    });
 });
 </script>
 @endpush

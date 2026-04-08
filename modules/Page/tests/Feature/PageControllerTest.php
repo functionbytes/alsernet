@@ -4,6 +4,7 @@ namespace Modules\Page\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Page\Enums\PageStatus;
 use Modules\Page\Models\Page;
 use Tests\TestCase;
 
@@ -47,7 +48,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.index'))
             ->assertOk()
-            ->assertViewIs('page::pages.index')
+            ->assertViewIs('page::pages.pages.index')
             ->assertViewHas('pages');
     }
 
@@ -69,7 +70,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.create'))
             ->assertOk()
-            ->assertViewIs('page::pages.create')
+            ->assertViewIs('page::pages.pages.create')
             ->assertViewHas(['page', 'templates', 'statuses']);
     }
 
@@ -81,7 +82,7 @@ class PageControllerTest extends TestCase
     {
         $payload = [
             'title' => 'My New Page',
-            'status' => Page::STATUS_DRAFT,
+            'status' => PageStatus::Draft->value,
         ];
 
         $response = $this->actingAs($this->user)
@@ -96,7 +97,7 @@ class PageControllerTest extends TestCase
 
         $this->assertDatabaseHas('pages', [
             'title' => 'My New Page',
-            'status' => Page::STATUS_DRAFT,
+            'status' => PageStatus::Draft->value,
             'user_id' => $this->user->id,
         ]);
     }
@@ -106,7 +107,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('pages.store'), [
                 'title' => 'Auto Slug Page',
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
             ]);
 
         $this->assertDatabaseHas('pages', ['slug' => 'auto-slug-page']);
@@ -117,14 +118,14 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('pages.store'), [
                 'title' => 'Published Now',
-                'status' => Page::STATUS_PUBLISHED,
+                'status' => PageStatus::Published->value,
             ]);
 
         $page = Page::where('title', 'Published Now')->first();
 
         $this->assertNotNull($page);
         $this->assertNotNull($page->published_at);
-        $this->assertEquals(Page::STATUS_PUBLISHED, $page->status);
+        $this->assertEquals(PageStatus::Published->value, $page->status);
     }
 
     // -------------------------------------------------------------------------
@@ -135,7 +136,7 @@ class PageControllerTest extends TestCase
     {
         $this->actingAs($this->user)
             ->post(route('pages.store'), [
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
             ])
             ->assertSessionHasErrors(['title']);
 
@@ -167,7 +168,7 @@ class PageControllerTest extends TestCase
             ->post(route('pages.store'), [
                 'title' => 'Valid Title',
                 'slug' => 'Invalid Slug With Spaces',
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
             ])
             ->assertSessionHasErrors(['slug']);
     }
@@ -180,7 +181,7 @@ class PageControllerTest extends TestCase
             ->post(route('pages.store'), [
                 'title' => 'Another Page',
                 'slug' => 'duplicate-slug',
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
             ])
             ->assertSessionHasErrors(['slug']);
     }
@@ -196,7 +197,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('pages.edit', $page))
             ->assertOk()
-            ->assertViewIs('page::pages.edit')
+            ->assertViewIs('page::pages.pages.edit')
             ->assertViewHas(['page', 'templates', 'statuses']);
     }
 
@@ -222,7 +223,7 @@ class PageControllerTest extends TestCase
         $this->actingAs($this->user)
             ->put(route('pages.update', $page), [
                 'title' => 'Updated Title',
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
                 'content' => 'Updated content',
             ])
             ->assertRedirect(route('pages.edit', $page->id))
@@ -240,7 +241,7 @@ class PageControllerTest extends TestCase
 
         $this->actingAs($this->user)
             ->put(route('pages.update', $page), [
-                'status' => Page::STATUS_DRAFT,
+                'status' => PageStatus::Draft->value,
             ])
             ->assertSessionHasErrors(['title']);
     }
@@ -308,7 +309,7 @@ class PageControllerTest extends TestCase
 
         $this->assertDatabaseHas('pages', [
             'id' => $page->id,
-            'status' => Page::STATUS_PUBLISHED,
+            'status' => PageStatus::Published->value,
         ]);
 
         $this->assertNotNull($page->fresh()->published_at);
@@ -322,7 +323,7 @@ class PageControllerTest extends TestCase
             ->post(route('pages.publish', $page))
             ->assertSessionHas('success');
 
-        $this->assertEquals(Page::STATUS_PUBLISHED, $page->fresh()->status);
+        $this->assertEquals(PageStatus::Published->value, $page->fresh()->status);
     }
 
     public function test_guest_cannot_publish_a_page(): void
@@ -332,7 +333,7 @@ class PageControllerTest extends TestCase
         $this->post(route('pages.publish', $page))
             ->assertRedirect(route('login'));
 
-        $this->assertEquals(Page::STATUS_DRAFT, $page->fresh()->status);
+        $this->assertEquals(PageStatus::Draft->value, $page->fresh()->status);
     }
 
     // -------------------------------------------------------------------------
@@ -350,7 +351,7 @@ class PageControllerTest extends TestCase
 
         $this->assertDatabaseHas('pages', [
             'id' => $page->id,
-            'status' => Page::STATUS_DRAFT,
+            'status' => PageStatus::Draft->value,
         ]);
     }
 
@@ -362,7 +363,7 @@ class PageControllerTest extends TestCase
             ->post(route('pages.unpublish', $page))
             ->assertSessionHas('success');
 
-        $this->assertEquals(Page::STATUS_DRAFT, $page->fresh()->status);
+        $this->assertEquals(PageStatus::Draft->value, $page->fresh()->status);
     }
 
     public function test_guest_cannot_unpublish_a_page(): void
@@ -372,7 +373,7 @@ class PageControllerTest extends TestCase
         $this->post(route('pages.unpublish', $page))
             ->assertRedirect(route('login'));
 
-        $this->assertEquals(Page::STATUS_PUBLISHED, $page->fresh()->status);
+        $this->assertEquals(PageStatus::Published->value, $page->fresh()->status);
     }
 
     // -------------------------------------------------------------------------
@@ -396,7 +397,7 @@ class PageControllerTest extends TestCase
         $response->assertRedirect(route('pages.edit', $copy->id))
             ->assertSessionHas('success');
 
-        $this->assertEquals(Page::STATUS_DRAFT, $copy->status);
+        $this->assertEquals(PageStatus::Draft->value, $copy->status);
         $this->assertNull($copy->published_at);
         $this->assertNotEquals($page->id, $copy->id);
         $this->assertNotEquals($page->slug, $copy->slug);
@@ -417,7 +418,7 @@ class PageControllerTest extends TestCase
 
         $copy = Page::where('title', 'Source Page (Copy)')->first();
         $this->assertEquals('Some content', $copy->content);
-        $this->assertEquals(Page::STATUS_DRAFT, $copy->status);
+        $this->assertEquals(PageStatus::Draft->value, $copy->status);
     }
 
     public function test_guest_cannot_duplicate_a_page(): void

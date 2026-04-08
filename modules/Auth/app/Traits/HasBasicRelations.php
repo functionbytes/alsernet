@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
+use Modules\Auth\Models\Session;
 
 /**
  * Trait HasBasicRelations
@@ -20,15 +21,15 @@ trait HasBasicRelations
      */
     public function sessions(): HasMany
     {
-        return $this->hasMany('App\Models\Session', 'user_id');
+        return $this->hasMany(Session::class, 'user_id');
     }
 
     /**
-     * Get user's single session
+     * Get user's most recent session
      */
     public function session(): HasOne
     {
-        return $this->hasOne('App\Models\Session');
+        return $this->hasOne(Session::class, 'user_id')->latestOfMany('last_activity');
     }
 
     /**

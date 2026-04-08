@@ -3,13 +3,14 @@
 namespace Modules\Reviews\Tests\Feature;
 
 use Modules\Reviews\Models\ReviewReplyTemplate;
+use Modules\Reviews\Services\ReviewReplyService;
 use Modules\Reviews\Tests\TestCase;
 
 class ReviewTemplateTest extends TestCase
 {
     public function test_user_can_view_templates(): void
     {
-        $user = $this->createUser(['reviews.manage-templates']);
+        $user = $this->createUser(['reviews.templates.view']);
 
         ReviewReplyTemplate::factory()->count(3)->create();
 
@@ -22,12 +23,12 @@ class ReviewTemplateTest extends TestCase
 
     public function test_user_can_create_template(): void
     {
-        $user = $this->createUser(['reviews.manage-templates']);
+        $user = $this->createUser(['reviews.templates.create']);
 
         $response = $this->actingAs($user)
             ->post(route('settings.reviews.templates.store'), [
                 'name' => 'Thank you template',
-                'body' => 'Thank you {reviewer_name} for your {rating}-star review!',
+                'body' => 'Thank you {reviewer_name} for your {star_rating}-star review!',
                 'category' => 'general',
                 'is_active' => true,
             ]);
@@ -36,14 +37,14 @@ class ReviewTemplateTest extends TestCase
 
         $this->assertDatabaseHas('review_reply_templates', [
             'name' => 'Thank you template',
-            'body' => 'Thank you {reviewer_name} for your {rating}-star review!',
+            'body' => 'Thank you {reviewer_name} for your {star_rating}-star review!',
             'is_active' => true,
         ]);
     }
 
     public function test_user_can_update_template(): void
     {
-        $user = $this->createUser(['reviews.manage-templates']);
+        $user = $this->createUser(['reviews.templates.create']);
         $template = ReviewReplyTemplate::factory()->create([
             'body' => 'Original content',
             'created_by' => $user->id,
@@ -67,7 +68,7 @@ class ReviewTemplateTest extends TestCase
 
     public function test_user_can_delete_template(): void
     {
-        $user = $this->createUser(['reviews.manage-templates']);
+        $user = $this->createUser(['reviews.templates.delete']);
         $template = ReviewReplyTemplate::factory()->create([
             'created_by' => $user->id,
         ]);
@@ -77,7 +78,7 @@ class ReviewTemplateTest extends TestCase
 
         $response->assertRedirect(route('settings.reviews.templates.index'));
 
-        $this->assertDatabaseMissing('review_reply_templates', [
+        $this->assertSoftDeleted('review_reply_templates', [
             'id' => $template->id,
         ]);
     }
@@ -85,13 +86,13 @@ class ReviewTemplateTest extends TestCase
     public function test_template_render_replaces_variables(): void
     {
         $template = ReviewReplyTemplate::factory()->create([
-            'body' => 'Hello {reviewer_name}, thanks for {rating} stars at {business_name}!',
+            'body' => 'Hello {reviewer_name}, thanks for {star_rating} stars at {location_name}!',
         ]);
 
         $variables = [
             '{reviewer_name}' => 'John',
-            '{rating}' => 5,
-            '{business_name}' => 'Cafe',
+            '{star_rating}' => 5,
+            '{location_name}' => 'Cafe',
         ];
 
         $rendered = $template->render($variables);
@@ -103,13 +104,13 @@ class ReviewTemplateTest extends TestCase
 
     public function test_template_usage_count_increments(): void
     {
-        $user = $this->createUser(['reviews.reply']);
+        $user = $this->createUser(['reviews.replies.create']);
         $review = $this->createReview();
         $template = ReviewReplyTemplate::factory()->create([
             'usage_count' => 0,
         ]);
 
-        $service = app(\Modules\Reviews\Services\ReviewReplyService::class);
+        $service = app(ReviewReplyService::class);
         $service->createFromTemplate($review, $template, $user);
 
         $this->assertSame(1, $template->fresh()->usage_count);
@@ -120,17 +121,17 @@ class ReviewTemplateTest extends TestCase
         $user = $this->createUser();
 
         $response = $this->actingAs($user)
-            ->get(route('reviews.templates.index'));
+            ->get(route('settings.reviews.templates.index'));
 
         $response->assertForbidden();
     }
 
     public function test_template_validation_requires_name_and_body(): void
     {
-        $user = $this->createUser(['reviews.manage-templates']);
+        $user = $this->createUser(['reviews.templates.create']);
 
         $response = $this->actingAs($user)
-            ->postJson(route('reviews.templates.store'), [
+            ->postJson(route('settings.reviews.templates.store'), [
                 'name' => '',
                 'body' => '',
             ]);

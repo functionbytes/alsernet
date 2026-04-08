@@ -125,7 +125,7 @@
 
                     <div class="col-md-3">
                         <label for="status" class="form-label fw-semibold">Estado</label>
-                        <select class="form-select" id="status" name="status">
+                        <select class="form-select select2" id="status" name="status">
                             <option value="">Todos los estados</option>
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Activas</option>
                             <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Borradores</option>
@@ -201,7 +201,7 @@
                                             {{ $template->subject }}
                                         </code>
                                     @else
-                                        <span class="text-muted small">Sin asunto</span>
+                                        <span class="text-muted">Sin asunto</span>
                                     @endif
                                 </td>
                                 <td>
@@ -273,7 +273,15 @@
                                                 <span class="text-muted">{{ $template->subject ?? 'Sin asunto' }}</span>
                                             </div>
                                             <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
-                                                {!! $template->content ?? '<p class="text-muted">Sin contenido</p>' !!}
+                                                @if($template->content)
+                                                    <iframe srcdoc="{{ $template->content }}"
+                                                            sandbox="allow-same-origin"
+                                                            style="width: 100%; min-height: 300px; border: none;"
+                                                            onload="this.style.height = this.contentDocument.body.scrollHeight + 'px'">
+                                                    </iframe>
+                                                @else
+                                                    <p class="text-muted">Sin contenido</p>
+                                                @endif
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -318,7 +326,7 @@
             @if(isset($templates) && $templates->hasPages())
             <div class="card-footer bg-white border-top">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
+                    <div class="text-muted">
                         Mostrando {{ $templates->firstItem() }} a {{ $templates->lastItem() }} de {{ $templates->total() }} plantillas
                     </div>
                     <div>

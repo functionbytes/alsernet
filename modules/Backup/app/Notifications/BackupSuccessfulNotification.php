@@ -2,24 +2,38 @@
 
 namespace Modules\Backup\Notifications;
 
-use Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification as BaseNotification;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
-/**
- * Silent backup successful notification.
- *
- * Handles successful backup events without sending actual notifications.
- */
-class BackupSuccessfulNotification extends BaseNotification
+class BackupSuccessfulNotification extends Notification
 {
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
-    public function via($notifiable)
+    public function __construct(
+        private ?string $size = null
+    ) {}
+
+    /** @return array<int, string> */
+    public function via(mixed $notifiable): array
     {
-        // Return empty array to prevent any notification from being sent
-        return [];
+        return ['mail'];
+    }
+
+    public function toMail(mixed $notifiable): MailMessage
+    {
+        $appName = config('app.name', 'Sistema');
+
+        $message = (new MailMessage)
+            ->from(
+                config('backup.notifications.mail.from.address', config('mail.from.address')),
+                config('backup.notifications.mail.from.name', config('mail.from.name'))
+            )
+            ->subject("Backup completado: {$appName}")
+            ->greeting('Backup exitoso')
+            ->line("El backup de \"{$appName}\" se completó correctamente.");
+
+        if ($this->size) {
+            $message->line('Tamaño: '.$this->size);
+        }
+
+        return $message->action('Ver backups', route('settings.backups.index'));
     }
 }

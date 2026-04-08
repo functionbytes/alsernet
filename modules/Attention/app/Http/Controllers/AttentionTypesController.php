@@ -157,6 +157,32 @@ class AttentionTypesController extends Controller
     }
 
     /**
+     * Bulk action on multiple types.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $types = AttentionType::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+
+        foreach ($types as $type) {
+            match ($validated['action']) {
+                'activate' => $type->update(['is_active' => true]),
+                'deactivate' => $type->update(['is_active' => false]),
+                'delete' => $type->attentions()->count() === 0 ? $type->delete() : null,
+            };
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
+    }
+
+    /**
      * Remove the specified type.
      */
     public function destroy(AttentionType $type): RedirectResponse

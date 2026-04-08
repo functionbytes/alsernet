@@ -7,33 +7,7 @@
     {{-- Breadcrumb Card --}}
     @include('core::components.card', ['title' => 'Editor de Plantilla de Email'])
 
-    {{-- Alerts --}}
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle fs-4 me-2"></i>
-                <div>{{ session('success') }}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-start">
-                <i class="fas fa-exclamation-circle fs-4 me-2 mt-1"></i>
-                <div>
-                    <h6 class="alert-heading fw-bold mb-2">Errores de Validación</h6>
-                    <ul class="mb-0">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    @include('mailer::partials.alerts')
 
     {{-- Main Form --}}
     <form method="POST" action="{{ route('mailers.templates.update', $template->uid) }}" id="formEdit">
@@ -56,6 +30,10 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
+                                <a href="{{ route('mailers.templates.versions', ['uid' => $template->uid, 'lang_id' => $currentLangId ?? 1]) }}"
+                                   class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-history me-1"></i>Historial
+                                </a>
                                 <span class="badge text-info">
                                     <i class="fas fa-keyboard me-1"></i>Ctrl+S para guardar
                                 </span>
@@ -108,7 +86,7 @@
 
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">
-                                    Descripción <span class="text-muted small">(Opcional)</span>
+                                    Descripción <span class="text-muted">(Opcional)</span>
                                 </label>
                                 <textarea class="form-control @error('description') is-invalid @enderror"
                                           id="description" name="description" rows="2"
@@ -134,7 +112,7 @@
 
                             <div class="col-12 col-md-12">
                                 <label for="preheader" class="form-label fw-semibold">
-                                    Preheader <span class="text-muted small">(Opcional)</span>
+                                    Preheader <span class="text-muted">(Opcional)</span>
                                 </label>
                                 <input type="text" class="form-control @error('preheader') is-invalid @enderror"
                                        id="preheader" name="preheader" value="{{ old('preheader', $translation->preheader ?? '') }}"
@@ -147,8 +125,18 @@
                             </div>
 
                             <div class="col-12 col-md-12">
+                                <label for="change_note" class="form-label fw-semibold">
+                                    Nota del cambio <span class="text-muted">(Opcional)</span>
+                                </label>
+                                <input type="text" class="form-control" id="change_note" name="change_note"
+                                       placeholder="Ej: Actualizado enlace de descarga, corregida ortografía..."
+                                       maxlength="255">
+                                <small class="text-muted">Se guarda en el historial de versiones</small>
+                            </div>
+
+                            <div class="col-12 col-md-12">
                                 <label for="layout_id" class="form-label fw-semibold">
-                                    Plantilla <span class="text-muted small">(Opcional)</span>
+                                    Plantilla <span class="text-muted">(Opcional)</span>
                                 </label>
                                 <select class="form-select select2 @error('layout_id') is-invalid @enderror" id="layout_id" name="layout_id">
                                     <option value="">Sin layout (solo contenido)</option>
@@ -445,31 +433,31 @@
                         <div class="list-group list-group-flush">
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Guardar plantilla</span>
+                                    <span class="text-muted">Guardar plantilla</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+S</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Autocompletar</span>
+                                    <span class="text-muted">Autocompletar</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+Space</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Comentar/Descomentar</span>
+                                    <span class="text-muted">Comentar/Descomentar</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+/</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Expandir Emmet</span>
+                                    <span class="text-muted">Expandir Emmet</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Tab</kbd>
                                 </div>
                             </div>
                             <div class="list-group-item px-3 py-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small">Envolver con Emmet</span>
+                                    <span class="text-muted">Envolver con Emmet</span>
                                     <kbd class="bg-black text-white px-2 py-1 rounded">Ctrl+Alt+Enter</kbd>
                                 </div>
                             </div>
@@ -507,11 +495,11 @@
 <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.9/dist/beautify.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.9/dist/beautify-html.js"></script>
 
-<script>
-console.log('🎨 CodeMirror Email Template Editor Loading...');
+<!-- Shared Mailer Editor utilities -->
+<script src="{{ asset('js/modules/mailer-editor.js') }}"></script>
 
+<script>
 $(document).ready(function() {
-    console.log('✅ DOM Ready - Initializing CodeMirror');
 
     // Initialize Bootstrap Tooltips
     $('[data-bs-toggle="tooltip"]').each(function() {
@@ -520,277 +508,34 @@ $(document).ready(function() {
 
     // Initialize Select2
     if (typeof $.fn.select2 !== 'undefined') {
-        $('.select2').select2({
-            allowClear: false,
-            width: '100%'
-        });
+        $('.select2').select2({ allowClear: false, width: '100%' });
     }
 
-    const $contentTextarea = $('#content');
-    if ($contentTextarea.length === 0) {
-        console.error('❌ Textarea #content not found!');
-        return;
-    }
+    // Initialize CodeMirror via shared utility (templates have extra hint vars)
+    var extraVars = ['ORDER_ID', 'ORDER_NUMBER', 'ORDER_TOTAL', 'ORDER_STATUS', 'ORDER_DATE', 'DOCUMENT_TYPE', 'UPLOAD_LINK', 'EXPIRATION_DATE'];
+    MailerEditor.registerHintHelpers(extraVars);
+    const editor = MailerEditor.initCodeMirror();
+    if (!editor) return;
+    MailerEditor.bindAutocomplete(editor);
 
-    console.log('📝 Textarea found, initializing CodeMirror...');
-
-    // Initialize CodeMirror
-    const editor = CodeMirror.fromTextArea($contentTextarea[0], {
-        mode: 'htmlmixed',
-        theme: 'monokai',
-        lineNumbers: true,
-        lineWrapping: true,
-        indentUnit: 4,
-        tabSize: 4,
-        indentWithTabs: false,
-        autoCloseTags: true,
-        autoCloseBrackets: true,
-        styleActiveLine: true,
-        matchBrackets: true,
-        highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
-        extraKeys: {
-            'Ctrl-Space': 'autocomplete',
-            'Ctrl-/': 'toggleComment',
-            'Tab': 'emmetExpandAbbreviation',
-            'Ctrl-Alt-Enter': 'emmetWrapWithAbbreviation'
-        }
-    });
-
-    console.log('✨ CodeMirror initialized successfully!', editor);
-
-    // Initialize Emmet
-    try {
-        if (typeof emmetCodeMirror !== 'undefined') {
-            emmetCodeMirror(editor);
-            console.log('✅ Emmet initialized successfully!');
-        }
-    } catch (e) {
-        console.warn('⚠️ Emmet not available:', e);
-    }
-
-    // Smart Autocomplete - For email templates
-    CodeMirror.registerHelper('hint', 'smartHints', function(editor) {
-        const cur = editor.getCursor();
-        const token = editor.getTokenAt(cur);
-        const line = editor.getLine(cur.line);
-        const start = token.start;
-        const end = cur.ch;
-        const word = token.string.substring(0, end - start).toLowerCase();
-
-        const beforeCursor = line.substring(0, cur.ch);
-        const insideStyleAttr = beforeCursor.match(/style\s*=\s*["'][^"']*$/);
-        const insideTag = beforeCursor.match(/<[^>]*$/);
-        const afterTagName = beforeCursor.match(/<\w+\s+[\w\s-]*$/);
-        const insideHref = beforeCursor.match(/href\s*=\s*["'][^"']*$/);
-        const insideSrc = beforeCursor.match(/src\s*=\s*["'][^"']*$/);
-        const insideAlt = beforeCursor.match(/alt\s*=\s*["'][^"']*$/);
-
-        let completions = [];
-
-        if (insideStyleAttr) {
-            const cssProperties = [
-                'color', 'background-color', 'background', 'opacity',
-                'width', 'height', 'max-width', 'min-width', 'min-height', 'max-height',
-                'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
-                'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
-                'border', 'border-color', 'border-radius', 'border-width', 'border-style',
-                'border-top', 'border-bottom', 'border-left', 'border-right',
-                'font-size', 'font-weight', 'font-family', 'font-style', 'line-height',
-                'text-align', 'text-decoration', 'text-transform', 'letter-spacing',
-                'text-indent', 'white-space', 'word-break', 'word-wrap',
-                'display', 'position', 'overflow', 'overflow-x', 'overflow-y',
-                'visibility', 'z-index', 'float', 'clear',
-                'flex', 'flex-direction', 'flex-wrap', 'flex-grow', 'flex-shrink',
-                'justify-content', 'align-items', 'align-content', 'gap',
-                'box-shadow', 'text-shadow', 'transform', 'transition', 'animation'
-            ];
-
-            completions = cssProperties
-                .filter(prop => prop.toLowerCase().startsWith(word))
-                .map(prop => ({text: prop + ': ', displayText: `🎨 ${prop}`}));
-        }
-        else if (insideHref) {
-            const urls = [
-                '{SITE_URL}', '{RESET_LINK}', 'https://', 'http://', 'mailto:', 'tel:',
-                '#', 'javascript:void(0)'
-            ];
-
-            completions = urls
-                .filter(url => url.toLowerCase().startsWith(word))
-                .map(url => ({text: url, displayText: `🔗 ${url}`}));
-        }
-        else if (insideSrc) {
-            const images = [
-                '{LOGO_URL}', 'https://', 'http://', 'data:image/png;base64,'
-            ];
-
-            completions = images
-                .filter(img => img.toLowerCase().startsWith(word))
-                .map(img => ({text: img, displayText: `🖼️ ${img}`}));
-        }
-        else if (insideAlt) {
-            const alts = [
-                'Logo', 'Banner', 'Product Image', 'Company Logo', 'Hero Image', 'Icon',
-                'Button Image', 'Social Icon', 'Header Image', 'Footer Image'
-            ];
-
-            completions = alts
-                .filter(alt => alt.toLowerCase().startsWith(word))
-                .map(alt => ({text: alt, displayText: `📝 ${alt}`}));
-        }
-        else if (afterTagName) {
-            const htmlAttributes = [
-                'id', 'class', 'style', 'dir',
-                'href', 'src', 'alt', 'title', 'target',
-                'name', 'value', 'type', 'placeholder', 'required', 'disabled', 'readonly',
-                'cellpadding', 'cellspacing', 'border', 'bordercolor', 'align', 'valign',
-                'colspan', 'rowspan', 'bgcolor', 'width', 'height',
-                'role', 'aria-label', 'aria-describedby',
-                'onclick', 'onload', 'onmouseover', 'onmouseout',
-                'action', 'method', 'enctype', 'tabindex', 'lang'
-            ];
-
-            completions = htmlAttributes
-                .filter(attr => attr.toLowerCase().startsWith(word))
-                .map(attr => ({text: attr + '="', displayText: `🏷️ ${attr}`}));
-        }
-        else if (insideTag) {
-            const classes = [
-                'email-wrapper', 'email-container', 'email-body', 'email-footer',
-                'email-header', 'email-content', 'email-section',
-                'container', 'container-fluid', 'row', 'col', 'col-12', 'col-6', 'col-4', 'col-3',
-                'col-md-6', 'col-lg-6', 'col-xl-6',
-                'mt-1', 'mt-2', 'mt-3', 'mt-4', 'mt-5', 'mb-1', 'mb-2', 'mb-3', 'mb-4', 'mb-5',
-                'p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'px-2', 'py-2', 'pt-2', 'pb-2',
-                'ms-1', 'me-1', 'ms-auto',
-                'd-flex', 'd-block', 'd-none', 'd-inline', 'd-grid',
-                'flex-column', 'flex-row', 'justify-content-center', 'justify-content-between',
-                'justify-content-end', 'align-items-center', 'align-items-start', 'gap-2', 'gap-3',
-                'text-primary', 'text-success', 'text-danger', 'text-warning', 'text-muted',
-                'bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 'bg-light',
-                'text-center', 'text-end', 'text-start', 'fw-bold', 'fw-normal', 'small', 'lead',
-                'btn', 'btn-primary', 'btn-secondary', 'btn-success', 'btn-danger',
-                'btn-outline-primary', 'btn-lg', 'btn-sm',
-                'card', 'card-body', 'card-header', 'card-footer', 'card-title', 'section-block',
-                'table', 'table-striped', 'table-hover', 'table-bordered', 'table-responsive',
-                'form-control', 'form-group', 'form-label', 'input-group',
-                'alert', 'alert-primary', 'alert-success', 'alert-danger', 'alert-warning',
-                'rounded', 'shadow', 'border', 'h-100', 'w-100', 'overflow-hidden',
-                'text-truncate', 'text-uppercase', 'text-lowercase'
-            ];
-
-            completions = classes
-                .filter(cls => cls.toLowerCase().startsWith(word))
-                .map(cls => ({text: cls, displayText: `📦 ${cls}`}));
-        }
-        else {
-            const htmlTags = [
-                'html', 'head', 'body', 'meta', 'title',
-                'div', 'section', 'header', 'footer', 'main', 'article',
-                'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
-                'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'span', 'strong', 'em', 'u', 'code', 'pre', 'blockquote',
-                'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-                'img', 'picture', 'figure', 'figcaption',
-                'a', 'nav', 'menu',
-                'form', 'input', 'button', 'label', 'select', 'textarea', 'fieldset',
-                'br', 'hr', 'small', 'mark', 'del', 'ins', 'sub', 'sup',
-                'aside', 'address', 'time'
-            ];
-
-            completions = htmlTags
-                .filter(tag => tag.toLowerCase().startsWith(word))
-                .map(tag => ({text: tag, displayText: `🏷️ ${tag}`}));
-        }
-
-        return {
-            from: CodeMirror.Pos(cur.line, start),
-            to: CodeMirror.Pos(cur.line, end),
-            list: completions
-        };
-    });
-
-    // Template Variables Hint
-    CodeMirror.registerHelper('hint', 'variables', function(editor) {
-        const cur = editor.getCursor();
-        const token = editor.getTokenAt(cur);
-        const line = editor.getLine(cur.line);
-        const start = token.start;
-        const end = cur.ch;
-
-        const beforeCursor = line.substring(0, cur.ch);
-        if (!beforeCursor.includes('{')) return;
-
-        const word = token.string.substring(0, end - start).toUpperCase();
-
-        const templateVariables = [
-            'SITE_NAME', 'SITE_URL', 'SITE_EMAIL', 'LOGO_URL',
-            'COMPANY_NAME', 'COMPANY_ADDRESS', 'COMPANY_CITY', 'COMPANY_STATE', 'COMPANY_ZIP',
-            'COMPANY_COUNTRY', 'COMPANY_PHONE', 'COMPANY_EMAIL', 'COMPANY_WEBSITE',
-            'CURRENT_YEAR', 'CURRENT_MONTH', 'CURRENT_DAY', 'CURRENT_DATE', 'CURRENT_TIME',
-            'RECIPIENT_EMAIL', 'CUSTOMER_NAME', 'CUSTOMER_FIRST_NAME', 'CUSTOMER_LAST_NAME',
-            'CUSTOMER_PHONE', 'CUSTOMER_ADDRESS',
-            'EMAIL_SUBJECT', 'EMAIL_TITLE', 'CONTENT', 'FOOTER_CONTENT',
-            'RESET_LINK', 'CONFIRM_LINK', 'ACTIVATION_LINK', 'UNSUBSCRIBE_LINK',
-            'ORDER_ID', 'ORDER_NUMBER', 'ORDER_TOTAL', 'ORDER_STATUS', 'ORDER_DATE',
-            'DOCUMENT_TYPE', 'UPLOAD_LINK', 'EXPIRATION_DATE',
-            'CURRENT_YEAR_FULL', 'MONTH_NAME', 'DAY_NAME'
-        ];
-
-        const completions = templateVariables
-            .filter(v => v.startsWith(word))
-            .map(v => ({text: v + '}', displayText: `🔤 {${v}}`}));
-
-        return {
-            from: CodeMirror.Pos(cur.line, start),
-            to: CodeMirror.Pos(cur.line, end),
-            list: completions
-        };
-    });
-
-    // Enable autocomplete on input
-    editor.on('inputRead', function(instance, changeObj) {
-        if (changeObj.text[0] === ' ' || /\w/.test(changeObj.text[0]) || changeObj.text[0] === '-') {
-            CodeMirror.commands.autocomplete(instance, null, {async: true});
-        }
-    });
-
-    console.log('📊 Editor has', editor.lineCount(), 'lines');
-
-    const templateUid = '{{ $template->uid }}';
     const currentLangId = {{ $currentLangId ?? 1 }};
     let previewTimeout;
     let hasChanges = false;
 
-    // Update Editor Status
-    function updateEditorStatus(status, icon = 'check-circle', color = 'success') {
-        $('#editorStatus')
-            .html(`<i class="fas fa-${icon} me-1"></i>${status}`)
-            .attr('class', `badge bg-${color}`);
-    }
+    // Delegate to shared utilities
+    function updateEditorStatus(s, i, c) { MailerEditor.updateEditorStatus(s, i, c); }
+    function updatePreviewStatus(s) { MailerEditor.updatePreviewStatus(s); }
+    function formatCode() { MailerEditor.formatCode(editor); }
+    function insertVariable(name) { MailerEditor.insertVariable(name, editor); }
 
-    // Update Preview Status
-    function updatePreviewStatus(status, icon = 'circle', color = 'success') {
-        $('#previewStatus')
-            .text(status)
-            .attr('class', 'badge bg-primary');
-    }
-
-    // Update Preview
+    // Update Preview (AJAX with layout support)
     function updatePreview() {
-        updatePreviewStatus('Actualizando...', 'spinner', 'warning');
+        updatePreviewStatus('Actualizando...');
         const previewUrl = `{{ route('mailers.templates.preview-ajax', $template->uid) }}`;
-
-        // Obtener el layout_id actual del formulario (para live preview sin guardar)
         const currentLayoutId = $('#layout_id').val();
-
-        // Obtener contenido actual del editor
         const currentContent = editor.getValue();
 
-        const params = {
-            lang_id: currentLangId,
-            content: currentContent
-        };
+        const params = { lang_id: currentLangId, content: currentContent };
         if (currentLayoutId) {
             params.layout_id = currentLayoutId;
         }
@@ -803,36 +548,25 @@ $(document).ready(function() {
             success: function(data) {
                 if (data.success) {
                     const $container = $('#previewContainer');
-                    const $iframe = $('<iframe>')
-                        .css({
-                            'width': '100%',
-                            'border': 'none',
-                            'display': 'block',
-                            'background': 'white',
-                            'overflow': 'hidden'
-                        });
+                    const $iframe = $('<iframe>').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'overflow': 'hidden' });
 
                     $container.empty().append($iframe);
                     $iframe[0].srcdoc = data.html;
 
-                    // Calcular altura dinámicamente cuando el contenido se carga
                     $iframe.on('load', function() {
                         try {
                             const iframeDoc = this.contentDocument || this.contentWindow.document;
-                            const height = iframeDoc.documentElement.scrollHeight;
-                            $(this).css('height', height + 'px');
+                            $(this).css('height', iframeDoc.documentElement.scrollHeight + 'px');
                         } catch (e) {
-                            // Fallback si hay problemas de CORS
                             $(this).css('height', 'auto');
                         }
                     });
 
-                    updatePreviewStatus('En vivo', 'circle-dot-filled', 'success');
+                    updatePreviewStatus('En vivo');
                 }
             },
-            error: function(error) {
-                console.error('Error updating preview:', error);
-                updatePreviewStatus('Error', 'alert-circle', 'danger');
+            error: function() {
+                updatePreviewStatus('Error');
                 $('#previewContainer').html(
                     '<div class="alert alert-danger m-3"><i class="fas fa-exclamation-circle me-2"></i>Error al cargar vista previa</div>'
                 );
@@ -842,10 +576,8 @@ $(document).ready(function() {
 
     // Load Variables
     function loadVariables() {
-        const variablesUrl = '{{ route('mailers.templates.variables', $template->uid) }}';
-
         $.ajax({
-            url: variablesUrl,
+            url: '{{ route('mailers.templates.variables', $template->uid) }}',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -853,8 +585,7 @@ $(document).ready(function() {
                     renderVariables(data.variables);
                 }
             },
-            error: function(error) {
-                console.error('Error loading variables:', error);
+            error: function() {
                 $('#variablesPanel').html(
                     '<div class="alert alert-danger m-2"><i class="fas fa-exclamation-circle me-2"></i>Error al cargar variables</div>'
                 );
@@ -862,137 +593,43 @@ $(document).ready(function() {
         });
     }
 
-    // Render Variables
+    // Render Variables (template style: grid cards + selector dropdown, skip "Cliente")
     function renderVariables(variableGroups) {
-        // Render in panel below editor
         let html = '<div class="row g-1 px-2">';
 
         $.each(variableGroups, function(groupIdx, group) {
-            // Skip "Cliente" category
             if (group.group === 'Cliente') return true;
 
             $.each(group.items, function(idx, variable) {
-                html += `<div class="col-6 col-md-4">`;
-                html += `<div class="variable-card variable-insert" data-variable-name="${variable.name}" data-bs-toggle="tooltip" title="${variable.name}">`;
-                html += `<code class="variable-code">{${variable.name}}</code>`;
-                html += `</div>`;
-                html += `</div>`;
+                html += '<div class="col-6 col-md-4">';
+                html += '<div class="variable-card variable-insert" data-variable-name="' + variable.name + '" data-bs-toggle="tooltip" title="' + variable.name + '">';
+                html += '<code class="variable-code">{' + variable.name + '}</code>';
+                html += '</div></div>';
             });
         });
 
         html += '</div>';
         $('#variablesPanel').html(html);
 
-        // Render in top selector (toolbar)
         let selectorOptions = '<option value="">-- Selecciona una variable --</option>';
         $.each(variableGroups, function(groupIdx, group) {
-            // Skip "Cliente" category
             if (group.group === 'Cliente') return true;
-
-            selectorOptions += `<optgroup label="${group.group}">`;
+            selectorOptions += '<optgroup label="' + group.group + '">';
             $.each(group.items, function(idx, variable) {
-                selectorOptions += `<option value="${variable.name}">{${variable.name}}</option>`;
+                selectorOptions += '<option value="' + variable.name + '">{' + variable.name + '}</option>';
             });
-            selectorOptions += `</optgroup>`;
+            selectorOptions += '</optgroup>';
         });
         $('#variableSelector').html(selectorOptions);
 
-        // Initialize tooltips for new elements
         $('[data-bs-toggle="tooltip"]').each(function() {
-            try {
-                new bootstrap.Tooltip(this);
-            } catch(e) {
-                console.warn('Tooltip error:', e);
-            }
+            try { new bootstrap.Tooltip(this); } catch(e) { /* ignore */ }
         });
 
-        // Add event listeners for variable cards
-        $(document).on('click', '.variable-insert', function(e) {
+        $(document).off('click.tplEditVar').on('click.tplEditVar', '.variable-insert', function(e) {
             e.preventDefault();
-            const variableName = $(this).data('variable-name');
-            insertVariable(variableName);
+            insertVariable($(this).data('variable-name'));
         });
-    }
-
-    // Insert variable at cursor position
-    function insertVariable(variableName) {
-        const variable = `{${variableName}}`;
-        const cursor = editor.getCursor();
-        editor.replaceRange(variable, cursor);
-        editor.focus();
-
-        toastr.success(`Variable ${variable} insertada`, 'Éxito', {
-            timeOut: 2000,
-            progressBar: true
-        });
-    }
-
-    // Format Code
-    function formatCode() {
-        updateEditorStatus('Formateando...', 'spinner', 'info');
-        const code = editor.getValue();
-
-        try {
-            const indentSize = 4;
-            const indent = ' ';
-            let result = [];
-            let indentLevel = 0;
-
-            const selfClosingTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
-
-            let processed = code
-                .replace(/>\s*</g, '>\n<')
-                .replace(/}\s*(?=[a-zA-Z])/g, '}\n')
-                .replace(/{/g, ' {\n')
-                .replace(/;/g, ';\n')
-                .split('\n');
-
-            processed.forEach(function(line) {
-                line = line.trim();
-                if (line.length === 0) return;
-
-                if (line.startsWith('}')) {
-                    indentLevel = Math.max(0, indentLevel - 1);
-                }
-
-                if (line.startsWith('</')) {
-                    indentLevel = Math.max(0, indentLevel - 1);
-                }
-
-                result.push(indent.repeat(indentLevel * indentSize) + line);
-
-                if (line.endsWith('{')) {
-                    indentLevel++;
-                }
-
-                if (line.startsWith('<') && !line.startsWith('</') && !line.startsWith('<!')) {
-                    const tagMatch = line.match(/<(\w+)/);
-                    if (tagMatch) {
-                        const tagName = tagMatch[1].toLowerCase();
-                        const isSelfClosing = selfClosingTags.includes(tagName) || line.endsWith('/>');
-
-                        if (!isSelfClosing) {
-                            indentLevel++;
-                        }
-                    }
-                }
-            });
-
-            let formatted = result.join('\n').trim();
-            formatted = formatted.replace(/\n\s*\n/g, '\n');
-
-            editor.setValue(formatted);
-            updateEditorStatus('Listo', 'circle-check', 'success');
-
-            toastr.success('Código formateado correctamente', 'Éxito', {
-                timeOut: 2000,
-                progressBar: true
-            });
-        } catch (error) {
-            console.error('Format error:', error);
-            updateEditorStatus('Error', 'alert-circle', 'danger');
-            toastr.error('Error al formatear el código', 'Error');
-        }
     }
 
     // Initial load
@@ -1013,7 +650,6 @@ $(document).ready(function() {
     // Update preview when layout changes (live preview sin guardar)
     $('#layout_id').on('change', function(e) {
         e.preventDefault();
-        console.log('📐 Layout changed, updating preview...');
         updatePreview();
         toastr.info('Layout actualizado en la vista previa', 'Información', {
             timeOut: 2000,
@@ -1107,15 +743,26 @@ $(document).ready(function() {
         'Ctrl-/': 'toggleComment'
     });
 
+    // Warn on unsaved changes when navigating away
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            e.preventDefault();
+            return '';
+        }
+    });
+
     // Sync textarea before submit
     $('#formEdit').on('submit', function(e) {
         // Sync CodeMirror content to textarea
         const editorContent = editor.getValue();
         $('#content').val(editorContent);
 
-        console.log('📝 Sincronizando contenido...');
-        console.log('Contenido del editor:', editorContent.substring(0, 100) + '...');
-        console.log('Value del textarea:', $('#content').val().substring(0, 100) + '...');
+        // Clear unsaved changes flag so beforeunload doesn't trigger
+        hasChanges = false;
+
+        // Disable submit button to prevent double-submit
+        const $btn = $(this).find('[type="submit"]');
+        $btn.prop('disabled', true);
 
         // Show saving indicator
         toastr.info('Guardando cambios...', 'Información', {

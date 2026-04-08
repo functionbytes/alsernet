@@ -64,8 +64,10 @@ class GoogleAuthServiceTest extends TestCase
     {
         Http::fake([
             'oauth2.googleapis.com/token' => Http::response([
-                'error' => 'invalid_grant',
-            ], 400),
+                'token_type' => 'Bearer',
+                'expires_in' => 3600,
+                // no access_token field
+            ], 200),
         ]);
 
         $this->expectException(\Exception::class);
@@ -120,7 +122,7 @@ class GoogleAuthServiceTest extends TestCase
         ]);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('No refresh token available');
+        $this->expectExceptionMessageMatches('/No refresh token available/');
 
         $this->service->refreshTokenIfNeeded($connection);
     }

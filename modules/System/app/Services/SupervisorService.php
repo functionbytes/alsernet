@@ -3,23 +3,57 @@
 namespace Modules\System\Services;
 
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\Models\Setting;
+use Modules\Backup\Models\SupervisorBackup;
 use Symfony\Component\Process\Process;
 
 class SupervisorService
 {
-    private static $configPath = '/etc/supervisor/conf.d';
+    /**
+     * Resolve the supervisorctl binary path based on the current OS.
+     * On macOS (Homebrew) the binary is owned by the current user — no sudo needed.
+     */
+    private function supervisorctlBin(): string
+    {
+        if (PHP_OS_FAMILY === 'Darwin') {
+            foreach (['/opt/homebrew/bin/supervisorctl', '/usr/local/bin/supervisorctl'] as $path) {
+                if (is_executable($path)) {
+                    return $path;
+                }
+            }
+        }
 
-    private static $supervisorctlCommand = 'supervisorctl';
+        return 'supervisorctl';
+    }
+
+    /**
+     * Resolve the supervisor conf.d directory based on the current OS.
+     */
+    private function confDir(): string
+    {
+        if (PHP_OS_FAMILY === 'Darwin') {
+            foreach (['/opt/homebrew/etc/supervisor.d', '/usr/local/etc/supervisor.d'] as $path) {
+                if (is_dir($path)) {
+                    return $path;
+                }
+            }
+
+            return '/opt/homebrew/etc/supervisor.d';
+        }
+
+        return '/etc/supervisor/conf.d';
+    }
 
     /**
      * Get status of all Supervisor processes
+     *
+     * @return array<string, mixed>
      */
-    public static function getStatus()
+    public function getStatus(): array
     {
         try {
-            $process = self::executeSupervisorCtl(['status']);
+            $process = $this->executeSupervisorCtl(['status']);
 
             if (! $process['success']) {
                 Log::warning('Supervisor status failed', ['error' => $process['error'] ?? 'Unknown error']);
@@ -27,12 +61,11 @@ class SupervisorService
                 return ['error' => 'Failed to get status: '.($process['error'] ?? 'Unknown error')];
             }
 
-            $output = $process['output'];
-            $lines = array_filter(explode("\n", $output));
-
+            $lines = array_filter(explode("\n", $process['output']));
             $processes = [];
+
             foreach ($lines as $line) {
-                $parsed = self::parseStatusLine($line);
+                $parsed = $this->parseStatusLine($line);
                 if ($parsed) {
                     $processes[] = $parsed;
                 }
@@ -47,15 +80,22 @@ class SupervisorService
     }
 
     /**
-     * Execute supervisorctl command with sudo
-     * Uses sudo -n (non-interactive) to avoid password prompts
-     * Requires passwordless sudo to be configured in /etc/sudoers
+     * Execute a supervisorctl command.
+     * On macOS (Homebrew) runs the binary directly (no sudo needed).
+     * On Linux uses sudo -n (requires passwordless sudo in /etc/sudoers).
+     *
+     * @param  array<int, string>  $args
+     * @return array<string, mixed>
      */
-    private static function executeSupervisorCtl($args = [])
+    private function executeSupervisorCtl(array $args = []): array
     {
         try {
-            // Use sudo -n for non-interactive execution (requires passwordless sudo)
-            $command = array_merge(['sudo', '-n', self::$supervisorctlCommand], $args);
+            $bin = $this->supervisorctlBin();
+
+            $command = PHP_OS_FAMILY === 'Darwin'
+                ? array_merge([$bin], $args)
+                : array_merge(['sudo', '-n', $bin], $args);
+
             $process = new Process($command);
             $process->setTimeout(30);
             $process->run();
@@ -91,9 +131,11 @@ class SupervisorService
     }
 
     /**
-     * Parse a single supervisor status line
+     * Parse a single supervisor status line.
+     *
+     * @return array<string, string>|null
      */
-    private static function parseStatusLine($line)
+    private function parseStatusLine(string $line): ?array
     {
         // Format: program_name:process_name STATE [pid xxx, uptime x:xx:xx] [exitstatus xx]
         if (preg_match('/^(\S+)\s+(\S+)\s+(.+)$/', trim($line), $matches)) {
@@ -108,19 +150,47 @@ class SupervisorService
     }
 
     /**
-     * Get status of a specific process
+     * Validate that a process name is safe to pass to supervisorctl.
+     *
+     * Rejects empty strings, the literal "all" (which would match every process),
+     * and any string containing characters outside [a-zA-Z0-9_\-:.].
+     *
+     * @throws \InvalidArgumentException
      */
-    public static function getProcessStatus($processName)
+    public function validateProcessName(string $processName): void
     {
+        if ($processName === '') {
+            throw new \InvalidArgumentException('Process name cannot be empty.');
+        }
+
+        if (strtolower($processName) === 'all') {
+            throw new \InvalidArgumentException('The process name "all" is not allowed.');
+        }
+
+        if (! preg_match('/^[a-zA-Z0-9_\-:.]+$/', $processName)) {
+            throw new \InvalidArgumentException(
+                'Process name contains invalid characters. Only alphanumerics, underscores, hyphens, colons and dots are allowed.'
+            );
+        }
+    }
+
+    /**
+     * Get status of a specific process.
+     *
+     * @return array<string, mixed>
+     */
+    public function getProcessStatus(string $processName): array
+    {
+        $this->validateProcessName($processName);
+
         try {
-            $result = self::executeSupervisorCtl(['status', $processName]);
+            $result = $this->executeSupervisorCtl(['status', $processName]);
 
             if (! $result['success']) {
                 return ['error' => $result['error']];
             }
 
-            $output = trim($result['output']);
-            $parsed = self::parseStatusLine($output);
+            $parsed = $this->parseStatusLine(trim($result['output']));
 
             return ['success' => true, 'process' => $parsed];
         } catch (Exception $e) {
@@ -129,12 +199,16 @@ class SupervisorService
     }
 
     /**
-     * Start a process
+     * Start a process.
+     *
+     * @return array<string, mixed>
      */
-    public static function startProcess($processName)
+    public function startProcess(string $processName): array
     {
+        $this->validateProcessName($processName);
+
         try {
-            $result = self::executeSupervisorCtl(['start', $processName]);
+            $result = $this->executeSupervisorCtl(['start', $processName]);
 
             return [
                 'success' => $result['success'],
@@ -147,12 +221,16 @@ class SupervisorService
     }
 
     /**
-     * Stop a process
+     * Stop a process.
+     *
+     * @return array<string, mixed>
      */
-    public static function stopProcess($processName)
+    public function stopProcess(string $processName): array
     {
+        $this->validateProcessName($processName);
+
         try {
-            $result = self::executeSupervisorCtl(['stop', $processName]);
+            $result = $this->executeSupervisorCtl(['stop', $processName]);
 
             return [
                 'success' => $result['success'],
@@ -165,12 +243,16 @@ class SupervisorService
     }
 
     /**
-     * Restart a process
+     * Restart a process.
+     *
+     * @return array<string, mixed>
      */
-    public static function restartProcess($processName)
+    public function restartProcess(string $processName): array
     {
+        $this->validateProcessName($processName);
+
         try {
-            $result = self::executeSupervisorCtl(['restart', $processName]);
+            $result = $this->executeSupervisorCtl(['restart', $processName]);
 
             return [
                 'success' => $result['success'],
@@ -183,12 +265,36 @@ class SupervisorService
     }
 
     /**
-     * Get process logs
+     * Restart all Supervisor processes.
+     *
+     * @return array<string, mixed>
      */
-    public static function getProcessLogs($processName, $lines = 50)
+    public function restartAllProcesses(): array
     {
         try {
-            $result = self::executeSupervisorCtl(['tail', '-f', $processName, (string) $lines]);
+            $result = $this->executeSupervisorCtl(['restart', 'all']);
+
+            return [
+                'success' => $result['success'],
+                'output' => $result['output'],
+                'error' => $result['error'],
+            ];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Get process logs.
+     *
+     * @return array<string, mixed>
+     */
+    public function getProcessLogs(string $processName, int $lines = 50): array
+    {
+        $this->validateProcessName($processName);
+
+        try {
+            $result = $this->executeSupervisorCtl(['tail', '-f', $processName, (string) $lines]);
 
             if (! $result['success']) {
                 return ['error' => $result['error']];
@@ -201,19 +307,20 @@ class SupervisorService
     }
 
     /**
-     * Reload supervisor configuration
+     * Reload supervisor configuration.
+     *
+     * @return array<string, mixed>
      */
-    public static function reload()
+    public function reload(): array
     {
         try {
-            // First reread
-            $reread = self::executeSupervisorCtl(['reread']);
+            $reread = $this->executeSupervisorCtl(['reread']);
+
             if (! $reread['success']) {
                 return ['error' => 'Failed to reread configuration: '.$reread['error']];
             }
 
-            // Then update
-            $update = self::executeSupervisorCtl(['update']);
+            $update = $this->executeSupervisorCtl(['update']);
 
             return [
                 'success' => $update['success'],
@@ -226,14 +333,23 @@ class SupervisorService
     }
 
     /**
-     * Restart supervisor service
-     * Uses sudo -n (non-interactive) to avoid password prompts
+     * Restart supervisor service.
+     * On macOS uses `brew services restart supervisor`.
+     * On Linux uses `sudo -n systemctl restart supervisor`.
+     *
+     * @return array<string, mixed>
      */
-    public static function restartSupervisor()
+    public function restartSupervisor(): array
     {
         try {
-            // Use sudo -n for non-interactive execution
-            $process = new Process(['sudo', '-n', 'systemctl', 'restart', 'supervisor']);
+            if (PHP_OS_FAMILY === 'Darwin') {
+                $brew = is_executable('/opt/homebrew/bin/brew') ? '/opt/homebrew/bin/brew' : '/usr/local/bin/brew';
+                $command = [$brew, 'services', 'restart', 'supervisor'];
+            } else {
+                $command = ['sudo', '-n', 'systemctl', 'restart', 'supervisor'];
+            }
+
+            $process = new Process($command);
             $process->setTimeout(30);
             $process->run();
 
@@ -255,11 +371,11 @@ class SupervisorService
     }
 
     /**
-     * Get PID of a process
+     * Get PID of a process.
      */
-    public static function getPid($processName)
+    public function getPid(string $processName): ?string
     {
-        $status = self::getProcessStatus($processName);
+        $status = $this->getProcessStatus($processName);
 
         if (isset($status['process']['details']) && preg_match('/pid (\d+)/', $status['process']['details'], $matches)) {
             return $matches[1];
@@ -269,11 +385,11 @@ class SupervisorService
     }
 
     /**
-     * Get uptime of a process
+     * Get uptime of a process.
      */
-    public static function getUptime($processName)
+    public function getUptime(string $processName): ?string
     {
-        $status = self::getProcessStatus($processName);
+        $status = $this->getProcessStatus($processName);
 
         if (isset($status['process']['details']) && preg_match('/uptime ([\d:]+)/', $status['process']['details'], $matches)) {
             return $matches[1];
@@ -283,37 +399,41 @@ class SupervisorService
     }
 
     /**
-     * Get all Alsernet processes
+     * Get all Alsernet processes.
+     *
+     * @return array<int, array<string, string>>
      */
-    public static function getAlsernetProcesses()
+    public function getAlsernetProcesses(): array
     {
-        $status = self::getStatus();
+        $status = $this->getStatus();
 
         if (! isset($status['processes'])) {
             return [];
         }
 
-        return array_filter($status['processes'], function ($p) {
+        return array_values(array_filter($status['processes'], function ($p) {
             return $p && strpos($p['name'], 'Alsernet') !== false;
-        });
+        }));
     }
 
     /**
-     * Create a backup of supervisor configurations
+     * Create a backup of supervisor configurations.
+     *
+     * @return array<string, mixed>
      */
-    public static function createBackup($name, $description = null, $environment = 'dev')
+    public function createBackup(string $name, ?string $description = null, string $environment = 'dev'): array
     {
         try {
-            $configFiles = self::readConfigFiles();
-            $supervisorStatus = self::getStatus();
+            $configFiles = $this->readConfigFiles();
+            $supervisorStatus = $this->getStatus();
 
-            $backup = Setting\Backup\SupervisorBackup::create([
+            $backup = SupervisorBackup::create([
                 'name' => $name,
                 'description' => $description,
                 'environment' => $environment,
                 'config_files' => $configFiles,
                 'supervisor_status' => $supervisorStatus['processes'] ?? [],
-                'backup_size' => self::calculateConfigSize($configFiles),
+                'backup_size' => $this->calculateConfigSize($configFiles),
                 'backed_up_at' => now(),
             ]);
 
@@ -336,28 +456,27 @@ class SupervisorService
     }
 
     /**
-     * Restore a backup of supervisor configurations
+     * Restore a backup of supervisor configurations.
+     *
+     * @return array<string, mixed>
      */
-    public static function restoreBackup($backupId, $userId = null)
+    public function restoreBackup(int|string $backupId, ?int $userId = null): array
     {
         try {
-            $backup = Setting\Backup\SupervisorBackup::findOrFail($backupId);
+            $backup = SupervisorBackup::findOrFail($backupId);
 
-            // Write config files back
             if ($backup->config_files) {
                 foreach ($backup->config_files as $filePath => $content) {
-                    self::writeConfigFile($filePath, $content);
+                    $this->writeConfigFile($filePath, $content);
                 }
             }
 
-            // Update restore info
             $backup->update([
                 'restored_at' => now(),
                 'restored_by' => $userId ?? auth()->id(),
             ]);
 
-            // Reload supervisor
-            self::reload();
+            $this->reload();
 
             Log::info('Supervisor backup restored', [
                 'backup_id' => $backupId,
@@ -376,12 +495,14 @@ class SupervisorService
     }
 
     /**
-     * Delete a backup
+     * Delete a backup.
+     *
+     * @return array<string, mixed>
      */
-    public static function deleteBackup($backupId)
+    public function deleteBackup(int|string $backupId): array
     {
         try {
-            $backup = Setting\Backup\SupervisorBackup::findOrFail($backupId);
+            $backup = SupervisorBackup::findOrFail($backupId);
             $backup->delete();
 
             Log::info('Supervisor backup deleted', ['backup_id' => $backupId]);
@@ -395,41 +516,58 @@ class SupervisorService
     }
 
     /**
-     * Read all supervisor config files
+     * List all config file paths in the supervisor conf.d directory.
+     *
+     * @return array<int, string>
      */
-    private static function readConfigFiles()
+    public function listConfDirFiles(): array
+    {
+        $confDir = $this->confDir();
+        $glob = PHP_OS_FAMILY === 'Darwin' ? '*.ini' : '*.conf';
+
+        if (! is_dir($confDir)) {
+            return [];
+        }
+
+        return array_values(array_filter(glob($confDir.'/'.$glob), 'is_file'));
+    }
+
+    /**
+     * Read all supervisor config files.
+     *
+     * @return array<string, string>
+     */
+    private function readConfigFiles(): array
     {
         $configFiles = [];
 
         try {
-            // Read from default config path
-            $configDirs = [
-                '/etc/supervisor/conf.d',
-                '/etc/supervisor/supervisord.conf',
-            ];
+            $confDir = $this->confDir();
+            $glob = PHP_OS_FAMILY === 'Darwin' ? '*.ini' : '*.conf';
 
-            foreach ($configDirs as $dir) {
-                if (file_exists($dir)) {
-                    if (is_file($dir)) {
-                        // Single file
-                        $configFiles[$dir] = file_get_contents($dir);
-                    } elseif (is_dir($dir)) {
-                        // Directory with .conf files
-                        $files = glob($dir.'/*.conf');
-                        foreach ($files as $file) {
-                            if (is_file($file)) {
-                                $configFiles[$file] = file_get_contents($file);
-                            }
+            $candidates = PHP_OS_FAMILY === 'Darwin'
+                ? [$confDir]
+                : [$confDir, '/etc/supervisor/supervisord.conf'];
+
+            foreach ($candidates as $dir) {
+                if (! file_exists($dir)) {
+                    continue;
+                }
+
+                if (is_file($dir)) {
+                    $configFiles[$dir] = file_get_contents($dir);
+                } elseif (is_dir($dir)) {
+                    foreach (glob($dir.'/'.$glob) as $file) {
+                        if (is_file($file)) {
+                            $configFiles[$file] = file_get_contents($file);
                         }
                     }
                 }
             }
 
-            // Also get the local project config
             $projectConfig = base_path('config/supervisor');
             if (is_dir($projectConfig)) {
-                $files = glob($projectConfig.'/*.conf');
-                foreach ($files as $file) {
+                foreach (glob($projectConfig.'/*.conf') as $file) {
                     if (is_file($file)) {
                         $configFiles[$file] = file_get_contents($file);
                     }
@@ -443,52 +581,48 @@ class SupervisorService
     }
 
     /**
-     * Write a config file
+     * Write a config file to an allowed path.
+     *
+     * @throws Exception
      */
-    private static function writeConfigFile($filePath, $content)
+    private function writeConfigFile(string $filePath, string $content): bool
     {
-        try {
-            // Only write to /etc/supervisor/conf.d or project config
-            $allowedPaths = [
-                '/etc/supervisor/conf.d',
-                base_path('config/supervisor'),
-            ];
+        $allowedPaths = [
+            '/etc/supervisor/conf.d',
+            '/opt/homebrew/etc/supervisor.d',
+            '/usr/local/etc/supervisor.d',
+            base_path('config/supervisor'),
+        ];
 
-            $isAllowed = false;
-            foreach ($allowedPaths as $allowed) {
-                if (strpos($filePath, $allowed) === 0) {
-                    $isAllowed = true;
-                    break;
-                }
+        $isAllowed = false;
+        foreach ($allowedPaths as $allowed) {
+            if (strpos($filePath, $allowed) === 0) {
+                $isAllowed = true;
+                break;
             }
-
-            if (! $isAllowed) {
-                throw new Exception('Path not allowed: '.$filePath);
-            }
-
-            // Create directory if needed
-            $dir = dirname($filePath);
-            if (! is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-
-            file_put_contents($filePath, $content);
-            Log::info('Config file written', ['file' => $filePath]);
-
-            return true;
-        } catch (Exception $e) {
-            Log::error('Error writing config file', [
-                'file' => $filePath,
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
         }
+
+        if (! $isAllowed) {
+            throw new Exception('Path not allowed: '.$filePath);
+        }
+
+        $dir = dirname($filePath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        file_put_contents($filePath, $content);
+        Log::info('Config file written', ['file' => $filePath]);
+
+        return true;
     }
 
     /**
-     * Calculate total size of config files
+     * Calculate total size of config files.
+     *
+     * @param  array<string, string>  $configFiles
      */
-    private static function calculateConfigSize($configFiles)
+    private function calculateConfigSize(array $configFiles): int
     {
         $size = 0;
         foreach ($configFiles as $content) {
@@ -499,11 +633,13 @@ class SupervisorService
     }
 
     /**
-     * Get all backups
+     * Get all backups.
+     *
+     * @return Collection<int, SupervisorBackup>
      */
-    public static function getBackups($environment = null, $limit = 50)
+    public function getBackups(?string $environment = null, int $limit = 50): Collection
     {
-        $query = Setting\Backup\SupervisorBackup::orderBy('backed_up_at', 'desc');
+        $query = SupervisorBackup::orderBy('backed_up_at', 'desc');
 
         if ($environment) {
             $query->where('environment', $environment);
@@ -513,14 +649,17 @@ class SupervisorService
     }
 
     /**
-     * Get configuration file content for editing
+     * Get configuration file content for editing.
+     *
+     * @return array<string, mixed>
      */
-    public static function getConfigFile($filePath)
+    public function getConfigFile(string $filePath): array
     {
         try {
-            // Security check - only allow reading from allowed paths
             $allowedPaths = [
                 '/etc/supervisor/conf.d',
+                '/opt/homebrew/etc/supervisor.d',
+                '/usr/local/etc/supervisor.d',
                 base_path('config/supervisor'),
             ];
 
@@ -547,14 +686,17 @@ class SupervisorService
     }
 
     /**
-     * Update a configuration file
+     * Update a configuration file.
+     *
+     * @return array<string, mixed>
      */
-    public static function updateConfigFile($filePath, $content)
+    public function updateConfigFile(string $filePath, string $content): array
     {
         try {
-            // Create backup before updating
+            $backup = null;
+
             if (file_exists($filePath)) {
-                $backup = Setting\Backup\SupervisorBackup::create([
+                $backup = SupervisorBackup::create([
                     'name' => 'Auto backup before edit: '.basename($filePath),
                     'environment' => app()->environment() === 'production' ? 'prod' : 'dev',
                     'config_files' => [$filePath => file_get_contents($filePath)],
@@ -563,15 +705,14 @@ class SupervisorService
                 ]);
             }
 
-            // Write new content
-            self::writeConfigFile($filePath, $content);
+            $this->writeConfigFile($filePath, $content);
 
             Log::info('Config file updated', ['file' => $filePath]);
 
             return [
                 'success' => true,
                 'message' => 'Archivo actualizado exitosamente',
-                'backup_id' => $backup->id ?? null,
+                'backup_id' => $backup?->id,
             ];
         } catch (Exception $e) {
             Log::error('Error updating config file', ['error' => $e->getMessage()]);

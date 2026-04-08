@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="mb-4">
             <h6 class="mb-1 fw-bold">Dispositivos conectados</h6>
-            <p class="text-muted small mb-0">Gestiona los dispositivos que han accedido a tu cuenta</p>
+            <p class="text-muted mb-0">Gestiona los dispositivos que han accedido a tu cuenta</p>
         </div>
 
         <div class="card border">
@@ -67,7 +67,7 @@
                 <div class="text-center py-5">
                     <i class="fas fa-mobile-screen fa-3x mb-3 text-muted opacity-50"></i>
                     <h6 class="fw-bold mb-2">Sin dispositivos previos</h6>
-                    <p class="text-muted mb-0 small">
+                    <p class="text-muted mb-0">
                         No se han registrado otros dispositivos. Este es tu único dispositivo activo.
                     </p>
                 </div>

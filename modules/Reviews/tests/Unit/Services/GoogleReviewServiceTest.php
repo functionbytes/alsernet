@@ -78,7 +78,7 @@ class GoogleReviewServiceTest extends TestCase
     public function test_sync_reviews_updates_existing_reviews(): void
     {
         $location = $this->createLocation();
-        $existingReview = Review::factory()->for($location)->create([
+        $existingReview = Review::factory()->for($location, 'location')->create([
             'google_review_id' => 'review-123',
             'comment' => 'Old comment',
         ]);
@@ -132,7 +132,7 @@ class GoogleReviewServiceTest extends TestCase
     public function test_sync_reviews_does_not_duplicate_moderation(): void
     {
         $location = $this->createLocation();
-        $review = Review::factory()->for($location)->create([
+        $review = Review::factory()->for($location, 'location')->create([
             'google_review_id' => 'review-123',
         ]);
 

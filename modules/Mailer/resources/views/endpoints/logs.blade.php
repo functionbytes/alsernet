@@ -3,6 +3,7 @@
 @section('title', 'Logs de Endpoint')
 
 @section('content')
+    @php use Modules\Mailer\Enums\EndpointLogStatus; @endphp
 
     @include('core::components.card', ['title' => 'Logs de Requests'])
 
@@ -119,16 +120,15 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="status" class="form-select">
+                            <select class="select2" name="status" class="form-select">
                                 <option value="">Todos los estados</option>
                                 <option value="pending" {{ $statusFilter === 'pending' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="processing" {{ $statusFilter === 'processing' ? 'selected' : '' }}>Procesando</option>
                                 <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Éxito</option>
                                 <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Fallido</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="period" class="form-select">
+                            <select class="select2" name="period" class="form-select">
                                 <option value="">Todos los períodos</option>
                                 <option value="24h" {{ $period === '24h' ? 'selected' : '' }}>Últimas 24 horas</option>
                                 <option value="7d" {{ $period === '7d' ? 'selected' : '' }}>Últimos 7 días</option>
@@ -172,18 +172,14 @@
                                             <code class="bg-light px-2 py-1 rounded">{{ $log->recipient_email ?? 'N/A' }}</code>
                                         </td>
                                         <td>
-                                            <small>{{ Str::limit($log->email_subject ?? 'Sin asunto', 40) }}</small>
+                                            <small>{{ Str::limit($log->mailer_subject ?? 'Sin asunto', 40) }}</small>
                                         </td>
                                         <td class="text-center">
-                                            @if($log->status === 'success')
+                                            @if($log->status === EndpointLogStatus::Success)
                                                 <span class="badge bg-success-subtle text-success rounded-3 py-2 fw-semibold fs-2">
                                                     <i class="fas fa-check-circle me-1"></i> Éxito
                                                 </span>
-                                            @elseif($log->status === 'processing')
-                                                <span class="badge bg-info-subtle text-info rounded-3 py-2 fw-semibold fs-2">
-                                                    <i class="fas fa-spinner fa-spin me-1"></i> Procesando
-                                                </span>
-                                            @elseif($log->status === 'pending')
+                                            @elseif($log->status === EndpointLogStatus::Pending)
                                                 <span class="badge bg-warning-subtle text-warning rounded-3 py-2 fw-semibold fs-2">
                                                     <i class="fas fa-clock me-1"></i> Pendiente
                                                 </span>
@@ -266,15 +262,11 @@
                                     <div>
                                         <small class="text-muted fw-semibold text-uppercase">Estado</small>
                                         <div class="mt-1">
-                                            @if($log->status === 'success')
+                                            @if($log->status === EndpointLogStatus::Success)
                                                 <span class="badge bg-success-subtle text-success rounded-3 py-2 fw-semibold fs-5">
                                                     <i class="fas fa-check-circle me-1"></i> Éxito
                                                 </span>
-                                            @elseif($log->status === 'processing')
-                                                <span class="badge bg-info-subtle text-info rounded-3 py-2 fw-semibold fs-5">
-                                                    <i class="fas fa-spinner fa-spin me-1"></i> Procesando
-                                                </span>
-                                            @elseif($log->status === 'pending')
+                                            @elseif($log->status === EndpointLogStatus::Pending)
                                                 <span class="badge bg-warning-subtle text-warning rounded-3 py-2 fw-semibold fs-5">
                                                     <i class="fas fa-clock me-1"></i> Pendiente
                                                 </span>
@@ -306,7 +298,7 @@
                                     <div>
                                         <small class="text-muted fw-semibold text-uppercase">Asunto</small>
                                         <div class="mt-1">
-                                            <span>{{ $log->email_subject ?? 'Sin asunto' }}</span>
+                                            <span>{{ $log->mailer_subject ?? 'Sin asunto' }}</span>
                                         </div>
                                     </div>
                                 </div>

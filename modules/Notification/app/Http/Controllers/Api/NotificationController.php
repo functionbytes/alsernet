@@ -156,8 +156,7 @@ class NotificationController extends Controller
         $validated = $request->validate([
             'token' => 'required|string',
             'device_type' => 'nullable|string',
-            'browser' => 'nullable|string',
-            'platform' => 'nullable|string',
+            'device_id' => 'nullable|string',
         ]);
 
         $pushToken = NotificationPushToken::register(
@@ -165,9 +164,7 @@ class NotificationController extends Controller
             $validated['token'],
             [
                 'device_type' => $validated['device_type'] ?? null,
-                'browser' => $validated['browser'] ?? null,
-                'platform' => $validated['platform'] ?? null,
-                'ip_address' => $request->ip(),
+                'device_id' => $validated['device_id'] ?? null,
             ]
         );
 
@@ -201,9 +198,9 @@ class NotificationController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        $weekStart = now()->startOfWeek();
-        $weekEnd = now()->endOfWeek();
-        $today = today();
+        $weekStart = now()->startOfWeek()->toDateTimeString();
+        $weekEnd = now()->endOfWeek()->toDateTimeString();
+        $today = today()->toDateString();
 
         $row = $user->notifications()
             ->selectRaw(

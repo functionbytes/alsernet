@@ -3,13 +3,16 @@
 namespace Modules\Sitemap\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Response;
+use Modules\Page\Models\Page;
+use Modules\Post\Models\Post;
 
 class SitemapController extends Controller
 {
     /**
      * Display the main sitemap
      */
-    public function index()
+    public function index(): Response
     {
         $sitemap = app('sitemap');
         $sitemap->clear();
@@ -30,14 +33,14 @@ class SitemapController extends Controller
     /**
      * Display pages sitemap
      */
-    public function pages()
+    public function pages(): Response
     {
         $sitemap = app('sitemap');
         $sitemap->clear();
 
         // Add only pages
-        if (class_exists(\Modules\Page\Models\Page::class)) {
-            $sitemap->addModel(\Modules\Page\Models\Page::class);
+        if (class_exists(Page::class)) {
+            $sitemap->addModel(Page::class);
         }
 
         return response($sitemap->render(), 200, [
@@ -48,14 +51,14 @@ class SitemapController extends Controller
     /**
      * Display posts sitemap
      */
-    public function posts()
+    public function posts(): Response
     {
         $sitemap = app('sitemap');
         $sitemap->clear();
 
         // Add only posts
-        if (class_exists(\Modules\Post\Models\Post::class)) {
-            $sitemap->addModel(\Modules\Post\Models\Post::class);
+        if (class_exists(Post::class)) {
+            $sitemap->addModel(Post::class);
         }
 
         return response($sitemap->render(), 200, [
@@ -66,7 +69,7 @@ class SitemapController extends Controller
     /**
      * Display sitemap index
      */
-    public function sitemapIndex()
+    public function sitemapIndex(): Response
     {
         $sitemap = app('sitemap');
         $sitemap->clear();
@@ -83,7 +86,7 @@ class SitemapController extends Controller
     /**
      * Generate sitemap with all models
      */
-    protected function generateSitemap($sitemap)
+    protected function generateSitemap(mixed $sitemap): Response
     {
         // Add homepage
         $sitemap->add(url('/'), now()->toAtomString(), '1.0', 'daily');

@@ -2,14 +2,33 @@
 
 namespace Modules\Seo\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
+use Modules\Seo\Builder\SitemapBuilder;
+use Modules\Seo\Console\Commands\CheckBrokenLinksCommand;
 use Modules\Seo\Console\Commands\GenerateSchemasCommand;
+use Modules\Seo\Console\Commands\GenerateSitemapCommand;
+use Modules\Seo\Console\Commands\PingSitemapCommand;
+use Modules\Seo\Console\Commands\SeoCleanupCommand;
+use Modules\Seo\Console\Commands\SeoWeeklyReportCommand;
+use Modules\Seo\Http\Middleware\AutoPaginationMiddleware;
+use Modules\Seo\Http\Middleware\CacheSitemapResponse;
 use Modules\Seo\Http\Middleware\RedirectMiddleware;
+use Modules\Seo\Http\Middleware\Track404Middleware;
+use Modules\Seo\Http\Middleware\XRobotsTagMiddleware;
+use Modules\Seo\Jobs\BulkSeoAuditJob;
+use Modules\Seo\Jobs\CleanupOld404Logs;
+use Modules\Seo\Jobs\CleanupOldAuditLogs;
+use Modules\Seo\Jobs\SendSeoWeeklyReport;
+use Modules\Seo\Models\SeoMeta;
+use Modules\Seo\Observers\SeoMetaObserver;
 use Modules\Seo\Services\SchemaOrgService;
 use Modules\Seo\Services\SeoService;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class SeoServiceProvider extends ServiceProvider
 {
@@ -23,6 +42,12 @@ class SeoServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Seo')?->isDisabled()) {
+            return;
+        }
+
+        SeoMeta::observe(SeoMetaObserver::class);
+
         $this->loadMigrations();
         $this->loadViews();
         $this->loadConfig();
@@ -34,8 +59,12 @@ class SeoServiceProvider extends ServiceProvider
         $this->publishResources();
         $this->loadSitemapConfig();
         $this->registerSitemapMiddleware();
+        $this->registerTrack404Middleware();
+        $this->registerXRobotsTagMiddleware();
+        $this->registerAutoPaginationMiddleware();
         $this->registerSitemapCommands();
         $this->registerSitemapScheduler();
+        $this->registerCleanupScheduler();
         $this->registerMenus();
     }
 
@@ -54,11 +83,13 @@ class SeoServiceProvider extends ServiceProvider
             return new SchemaOrgService;
         });
 
+        $this->app->alias(SchemaOrgService::class, 'schema-org');
+
         $this->app->singleton('sitemap', function ($app) {
-            return new \Modules\Seo\Builder\SitemapBuilder;
+            return new SitemapBuilder;
         });
 
-        $this->app->alias('sitemap', \Modules\Seo\Builder\SitemapBuilder::class);
+        $this->app->alias('sitemap', SitemapBuilder::class);
     }
 
     /**
@@ -129,6 +160,12 @@ class SeoServiceProvider extends ServiceProvider
     protected function registerBladeComponents(): void
     {
         Blade::component('Seo::components.seo-tags', 'seo-tags');
+        Blade::component('Seo::components.seo-badge', 'seo-badge');
+        Blade::component('Seo::components.seo-stats-widget', 'seo-stats-widget');
+
+        Blade::directive('seoBadge', function (string $expression) {
+            return "<?php echo view('Seo::components.seo-badge', ['model' => {$expression}])->render(); ?>";
+        });
 
         // Register directive for rendering SEO tags
         Blade::directive('seoTags', function ($expression) {
@@ -137,6 +174,11 @@ class SeoServiceProvider extends ServiceProvider
 
         // Register directive for rendering schema tags
         Blade::directive('schemaScript', function ($expression) {
+            return "<?php echo app('seo')->renderSchema(); ?>";
+        });
+
+        // Register directive for rendering Schema.org JSON-LD from the SeoService schemas
+        Blade::directive('schemaOrg', function () {
             return "<?php echo app('seo')->renderSchema(); ?>";
         });
 
@@ -154,6 +196,9 @@ class SeoServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 GenerateSchemasCommand::class,
+                CheckBrokenLinksCommand::class,
+                SeoWeeklyReportCommand::class,
+                SeoCleanupCommand::class,
             ]);
         }
     }
@@ -166,10 +211,23 @@ class SeoServiceProvider extends ServiceProvider
         NavService::registerSidebar('settings', [
             'title' => 'SEO',
             'items' => [
+                ['label' => 'Dashboard SEO', 'route' => 'setting.seo.dashboard'],
+                ['label' => 'Analytics SEO', 'route' => 'setting.seo.analytics.index'],
                 ['label' => 'Meta SEO', 'route' => 'setting.seo.metas.index'],
+                ['label' => 'Gestión Hreflang', 'route' => 'setting.seo.metas.hreflang'],
+                ['label' => 'Auditoría SEO', 'route' => 'setting.seo.audit.index'],
+                ['label' => 'Historial auditorías', 'route' => 'setting.seo.audit.history'],
                 ['label' => 'Redirecciones', 'route' => 'setting.seo.redirects.index'],
+                ['label' => 'Errores 404', 'route' => 'setting.seo.404-logs.index'],
+                ['label' => 'Plantillas SEO', 'route' => 'setting.seo.templates.index'],
+                ['label' => 'Contenido sin SEO', 'route' => 'setting.seo.orphans.index'],
+                ['label' => 'URLs del sitio', 'route' => 'setting.seo.page-urls.index'],
+                ['label' => 'URLs estáticas', 'route' => 'setting.seo.static-urls.index'],
                 ['label' => 'Robots.txt', 'route' => 'setting.seo.robots.edit'],
                 ['label' => 'Sitemap XML', 'route' => 'setting.seo.sitemap.index'],
+                ['label' => 'Reporte SEO', 'route' => 'setting.seo.report.index'],
+                ['label' => 'Verificación', 'route' => 'setting.seo.verification.index'],
+                ['label' => 'Search Console', 'route' => 'setting.seo.search-console.import'],
             ],
         ]);
     }
@@ -185,23 +243,70 @@ class SeoServiceProvider extends ServiceProvider
 
     protected function registerSitemapMiddleware(): void
     {
-        $router = $this->app->make(\Illuminate\Routing\Router::class);
-        $router->aliasMiddleware('sitemap.cache', \Modules\Seo\Http\Middleware\CacheSitemapResponse::class);
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('sitemap.cache', CacheSitemapResponse::class);
+    }
+
+    protected function registerTrack404Middleware(): void
+    {
+        $router = $this->app->make(Router::class);
+        $router->pushMiddlewareToGroup('web', Track404Middleware::class);
+    }
+
+    /**
+     * Register X-Robots-Tag middleware alias.
+     * Apply manually with the 'seo.x-robots' alias on routes that need it.
+     */
+    protected function registerXRobotsTagMiddleware(): void
+    {
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('seo.x-robots', XRobotsTagMiddleware::class);
+    }
+
+    /**
+     * Register automatic pagination rel=prev/next middleware.
+     * Pushes to the web group so it applies to all paginated public pages.
+     */
+    protected function registerAutoPaginationMiddleware(): void
+    {
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('seo.pagination', AutoPaginationMiddleware::class);
+        $router->pushMiddlewareToGroup('web', AutoPaginationMiddleware::class);
     }
 
     protected function registerSitemapCommands(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                \Modules\Seo\Console\Commands\GenerateSitemapCommand::class,
-                \Modules\Seo\Console\Commands\PingSitemapCommand::class,
-            ]);
-        }
+        $this->commands([
+            GenerateSitemapCommand::class,
+            PingSitemapCommand::class,
+        ]);
     }
 
     protected function registerSitemapScheduler(): void
     {
-        // Registrar scheduler en bootstrap/app.php o aqui si es posible
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->call(function () {
+                Cache::forget('sitemap.xml');
+            })->daily()->name('sitemap:clear-cache');
+        });
+    }
+
+    protected function registerCleanupScheduler(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->job(new CleanupOld404Logs)->daily()->name('seo:cleanup-404-logs')->withoutOverlapping();
+            $schedule->job(new CleanupOldAuditLogs)->weekly()->name('seo:cleanup-audit-logs')->withoutOverlapping();
+            $schedule->job(new SendSeoWeeklyReport)
+                ->weeklyOn(1, '8:00')
+                ->name('seo:weekly-report')
+                ->withoutOverlapping();
+            $schedule->job(new BulkSeoAuditJob)
+                ->weekly()
+                ->sundays()
+                ->at('02:00')
+                ->name('seo:weekly-audit')
+                ->withoutOverlapping();
+        });
     }
 
     /**

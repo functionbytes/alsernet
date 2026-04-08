@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Mail;
 use Modules\Mailer\Enums\EndpointLogStatus;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerEndpointLog;
+use Modules\Mailer\Models\MailerLang;
+use Modules\Mailer\Services\MailerTemplateRendererService;
 
 class SendEndpointEmailJob implements ShouldQueue
 {
@@ -43,47 +45,46 @@ class SendEndpointEmailJob implements ShouldQueue
             $endpoint = $this->log->endpoint;
             $payload = $this->log->payload;
 
-            // Validate endpoint is active
             if (! $endpoint->is_active) {
                 throw new \Exception('Endpoint is inactive');
             }
 
-            // Get template
             $template = $endpoint->template;
             if (! $template) {
                 throw new \Exception('No template configured for this endpoint');
             }
 
-            // Map variables
             $variables = $this->mapVariables($payload, $endpoint);
 
-            // Get recipient email
             $recipientEmail = $variables['email'] ?? $variables['customer_email'] ?? null;
-            if (! $recipientEmail) {
-                throw new \Exception('No recipient email found in payload');
+            if (! $recipientEmail || ! filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new \Exception('No valid recipient email found in payload');
             }
 
-            // Resolve translation for current locale with fallback to first available
-            $translation = $template->translate(
-                \Modules\Mailer\Models\MailerLang::where('locale', app()->getLocale())->value('id')
-            );
+            // Resolve language: use endpoint's configured lang_id, or fallback to iso_code match, or default 1
+            $langId = $endpoint->lang_id
+                ?? MailerLang::where('iso_code', app()->getLocale())->value('id')
+                ?? 1;
 
-            $subject = $this->replaceVariables(
+            $translation = $template->translate($langId);
+
+            // Use centralized renderer service for variable replacement
+            $subject = MailerTemplateRendererService::replaceVariables(
                 $translation?->subject ?? $template->name,
                 $variables
             );
-            $body = $this->replaceVariables(
-                $translation?->content ?? '',
-                $variables
+            $body = MailerTemplateRendererService::renderEmailTemplate(
+                $template, $variables, $langId
             );
 
-            // Send email
-            Mail::html($body, function ($message) use ($recipientEmail, $subject) {
+            $plainText = MailerTemplateRendererService::htmlToPlainText($body);
+
+            Mail::html($body, function ($message) use ($recipientEmail, $subject, $plainText) {
                 $message->to($recipientEmail)
-                    ->subject($subject);
+                    ->subject($subject)
+                    ->text($plainText);
             });
 
-            // Mark as success
             $this->log->update([
                 'status' => EndpointLogStatus::Success,
                 'sent_at' => now(),
@@ -91,18 +92,12 @@ class SendEndpointEmailJob implements ShouldQueue
                 'mailer_subject' => $subject,
             ]);
 
-            // Update endpoint stats
             $endpoint->update([
                 'last_request_at' => now(),
             ]);
 
-            Log::info('Email sent successfully', [
-                'endpoint' => $endpoint->slug,
-                'recipient' => $recipientEmail,
-            ]);
-
         } catch (\Exception $e) {
-            Log::warning('Endpoint email attempt failed, will retry if attempts remain', [
+            Log::warning('Endpoint email attempt failed', [
                 'endpoint_id' => $this->log->mailer_endpoint_id,
                 'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
@@ -130,6 +125,7 @@ class SendEndpointEmailJob implements ShouldQueue
 
     /**
      * Map incoming JSON variables to template variables
+     * External payload values are HTML-escaped to prevent XSS injection in email content
      */
     private function mapVariables(array $payload, MailerEndpoint $endpoint): array
     {
@@ -144,23 +140,15 @@ class SendEndpointEmailJob implements ShouldQueue
             $variables = $this->flattenArray($payload);
         }
 
-        return $variables;
-    }
-
-    /**
-     * Replace variables in content
-     */
-    private function replaceVariables(string $content, array $variables): string
-    {
+        // Sanitize external values to prevent XSS in email HTML
+        // Skip 'email' keys as they are used for recipient, not rendered in HTML
         foreach ($variables as $key => $value) {
-            $content = str_replace(
-                ['{'.$key.'}', '{{'.$key.'}}'],
-                $value ?? '',
-                $content
-            );
+            if (is_string($value) && ! in_array(strtolower($key), ['email', 'customer_email', 'recipient_email'])) {
+                $variables[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            }
         }
 
-        return $content;
+        return $variables;
     }
 
     /**
