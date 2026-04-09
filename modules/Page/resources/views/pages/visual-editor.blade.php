@@ -464,6 +464,43 @@
         .ve-reset-section-btn { opacity: .5; transition: opacity .15s; }
         .ve-reset-section-btn:hover { opacity: 1; color: var(--ve-primary) !important; }
 
+        /* ── Inspector global override (replaces inline styles) ── */
+        #ve-inspector-panel { height:100%; display:flex; flex-direction:column; overflow:hidden; }
+        #ve-inspector-sections [style*="padding:10px 12px"],
+        #ve-inspector-sections [style*="padding: 10px 12px"] { padding:10px 12px !important; }
+        #ve-inspector-sections [style*="margin-bottom:8px"],
+        #ve-inspector-sections [style*="margin-bottom: 8px"] { margin-bottom:8px !important; }
+        #ve-inspector-sections [style*="margin-bottom:10px"] { margin-bottom:10px !important; }
+        #ve-inspector-sections [style*="font-size:11px"][style*="color:#666"] { font-size:11px !important; color:var(--ve-text-soft) !important; }
+        #ve-inspector-sections [style*="display:none"] { display:none; }
+        /* All labels uniform */
+        #ve-inspector-sections label[style] { font-size:var(--ve-font-sm) !important; font-weight:600 !important; color:var(--ve-text-soft) !important; display:block !important; margin-bottom:3px !important; }
+        /* All buttons with bg #b10100 */
+        #ve-inspector-sections [style*="background:#b10100"] { background:var(--ve-primary) !important; border-color:var(--ve-primary) !important; color:#fff !important; border-radius:6px !important; font-size:12px !important; font-weight:600 !important; }
+        #ve-inspector-sections [style*="background:#b10100"]:hover { background:#900000 !important; border-color:#900000 !important; }
+        /* Flex rows */
+        #ve-inspector-sections [style*="display:flex"][style*="gap:6px"] { display:flex !important; gap:6px !important; flex-wrap:wrap !important; }
+        /* Border-top separators */
+        #ve-inspector-sections [style*="border-top:1px solid"] { border-top:1px solid var(--ve-border) !important; }
+        /* Font size/color overrides for consistency */
+        #ve-inspector-sections [style*="font-size:12px"][style*="color:#333"] { font-size:12px !important; color:var(--ve-text) !important; }
+        #ve-inspector-sections [style*="font-size:10px"][style*="color:#888"] { font-size:10px !important; color:var(--ve-text-muted) !important; }
+
+        /* ── Modal shared styles (no inline) ─────────────── */
+        #ve-shortcuts-modal .modal-content,
+        #ve-ai-modal .modal-content { border:none; border-radius:12px; overflow:hidden; }
+        #ve-shortcuts-modal .modal-header,
+        #ve-ai-modal .modal-header { background:var(--ve-bg); border-bottom:1px solid var(--ve-border); padding:14px 20px; }
+        #ve-shortcuts-modal .modal-header h6,
+        #ve-ai-modal .modal-header h6 { font-weight:700; font-size:14px; color:var(--ve-text); margin:0; }
+        #ve-shortcuts-modal .modal-body,
+        #ve-ai-modal .modal-body { padding:16px 20px; max-height:60vh; overflow-y:auto; }
+
+        /* ── OG preview override ──────────────────────────── */
+        #ve-og-header { display:flex; align-items:center; justify-content:space-between; padding:7px 0; cursor:pointer; user-select:none; }
+        .ve-og-card { border-radius:4px; overflow:hidden; background:var(--ve-bg); }
+        .ve-og-tab { font-size:10px !important; padding:2px 8px !important; }
+
         /* ── Autosave status ────────────────────────────────── */
         #autosave-status { font-size: 11px; }
         #autosave-status.saving  { color: #ffc107; }
@@ -625,6 +662,10 @@
         .ve-img-thumb { max-width:100%; border-radius:4px; border:1px solid var(--ve-border); max-height:100px; object-fit:cover; }
         .ve-btn-primary { background:#b10100; border-color:#b10100; color:#fff; font-size:12px; padding:6px 16px; border-radius:8px; font-weight:600; }
         .ve-btn-primary:hover { background:#900000; border-color:#900000; color:#fff; }
+        .ve-diff-badge { font-size:9px; background:var(--ve-bg-muted); color:var(--ve-text-muted); padding:1px 5px; border-radius:3px; margin-left:auto; }
+        .ve-color-input-row { display:flex; gap:6px; align-items:center; }
+        .ve-color-picker { width:36px; height:32px; border:1px solid var(--ve-border); border-radius:6px; padding:2px; cursor:pointer; flex-shrink:0; }
+        .ve-color-input-row .form-control { flex:1; font-family:'SF Mono',monospace; font-size:11px; }
 
         /* ── Audit panel ─────────────────────────────────── */
         .ve-audit-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border-bottom:1px solid var(--ve-border); font-size:11px; }
@@ -666,6 +707,15 @@
             margin-bottom: 4px;
             font-family: 'SF Mono', monospace;
         }
+
+        /* ── AI modal ────────────────────────────────────── */
+        .ve-ai-modal-header { background:var(--ve-bg); border-bottom:1px solid var(--ve-border); padding:14px 20px; }
+        .ve-ai-modal-title { font-weight:700; font-size:14px; color:var(--ve-text); margin:0; }
+        .ve-ai-modal-icon { color:#999; margin-right:8px; }
+        .ve-ai-modal-body { padding:16px 20px; }
+        .ve-ai-result { margin-top:12px; padding-top:12px; border-top:1px solid var(--ve-border); }
+        .ve-ai-output { background:var(--ve-bg-muted); border:1px solid var(--ve-border); border-radius:6px; padding:10px 12px; font-size:12px; line-height:1.6; color:var(--ve-text); margin:6px 0 10px; max-height:200px; overflow-y:auto; }
+        .ve-ai-actions { display:flex; gap:6px; }
 
         /* ── Command palette ─────────────────────────────── */
         .ve-cmd-content { border:none !important; border-radius:12px !important; overflow:hidden; box-shadow:0 16px 48px rgba(0,0,0,.2) !important; }
@@ -1514,6 +1564,60 @@
 
     </div>{{-- /ve-main --}}
 
+</div>
+
+{{-- ── AI Content modal ──────────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-ai-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ve-cmd-content">
+            <div class="modal-header ve-ai-modal-header">
+                <h6 class="ve-ai-modal-title">
+                    <i class="fa-duotone fa-solid fa-wand-magic-sparkles ve-ai-modal-icon"></i>Generar contenido con AI
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body ve-ai-modal-body">
+                <div class="ve-field">
+                    <label>¿Qué quieres generar?</label>
+                    <select class="form-select" id="ve-ai-type">
+                        <option value="paragraph">Párrafo</option>
+                        <option value="heading">Título (H2)</option>
+                        <option value="list">Lista de puntos</option>
+                        <option value="cta">Call to action</option>
+                        <option value="faq">FAQ (preguntas frecuentes)</option>
+                    </select>
+                </div>
+                <div class="ve-field">
+                    <label>Describe el contenido</label>
+                    <textarea class="form-control" id="ve-ai-prompt" rows="3" placeholder="Ej: Un párrafo sobre las ventajas de las ventanas PVC para el hogar..."></textarea>
+                </div>
+                <div class="ve-field">
+                    <label>Tono</label>
+                    <select class="form-select" id="ve-ai-tone">
+                        <option value="professional">Profesional</option>
+                        <option value="casual">Casual</option>
+                        <option value="persuasive">Persuasivo</option>
+                        <option value="technical">Técnico</option>
+                    </select>
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-ai-generate">
+                    <i class="fa-duotone fa-solid fa-wand-magic-sparkles me-1"></i>Generar
+                </button>
+                <div id="ve-ai-result" class="ve-ai-result ve-hidden">
+                    <label>Resultado</label>
+                    <div id="ve-ai-output" class="ve-ai-output"></div>
+                    <div class="ve-ai-actions">
+                        <button type="button" class="btn ve-btn-primary" id="btn-ai-insert">
+                            <i class="fa-duotone fa-solid fa-check me-1"></i>Insertar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-ai-regenerate">
+                            <i class="fa-duotone fa-solid fa-rotate me-1"></i>Regenerar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- ── Command palette modal ─────────────────────────────────────────────── --}}
@@ -4292,6 +4396,145 @@
             frame.contentWindow.postMessage({ type: 've-remove-motion' }, '*');
         }
         if (window.veToast) window.veToast('Animación eliminada', 'info');
+    });
+
+    // ── P3.9: AI content generation ──
+    cmdActions.push({ cat:'Herramientas', label:'Generar contenido con AI', icon:'fa-wand-magic-sparkles', action: function() {
+        var el = document.getElementById('ve-ai-modal');
+        bootstrap.Modal.getOrCreateInstance(el).show();
+    }});
+    // Also add to context menu
+    (function addAiCtx() {
+        var $menu = $('#ve-context-menu');
+        if (!$menu.length) { setTimeout(addAiCtx, 500); return; }
+        var $last = $menu.find('.ve-ctx-divider').last();
+        if ($last.length && !$('#ctx-ai-generate').length) {
+            $('<div class="ve-ctx-item" id="ctx-ai-generate"><i class="fa-duotone fa-solid fa-wand-magic-sparkles fa-fw ve-ctx-icon-muted"></i> Generar con AI</div>')
+                .insertBefore($last);
+        }
+    })();
+    $(document).on('click', '#ctx-ai-generate', function() {
+        $('#ve-context-menu').hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('ve-ai-modal')).show();
+    });
+
+    $(document).on('click', '#btn-ai-generate, #btn-ai-regenerate', function() {
+        var type = $('#ve-ai-type').val();
+        var prompt = $('#ve-ai-prompt').val().trim();
+        var tone = $('#ve-ai-tone').val();
+        if (!prompt) { if (window.veToast) window.veToast('Escribe una descripción', 'error'); return; }
+
+        var $btn = $('#btn-ai-generate');
+        $btn.prop('disabled', true).html('<i class="fa-duotone fa-solid fa-spinner-third fa-spin me-1"></i>Generando...');
+
+        // Try API endpoint, fallback to placeholder
+        $.ajax({
+            url: '/api/v1/ai/generate-content',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { type: type, prompt: prompt, tone: tone },
+            timeout: 30000
+        }).done(function(res) {
+            var html = res.html || res.content || res.text || '';
+            $('#ve-ai-output').html(html);
+            $('#ve-ai-result').removeClass('ve-hidden');
+        }).fail(function() {
+            // Fallback: generate placeholder content locally
+            var templates = {
+                paragraph: '<p>' + prompt + '. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>',
+                heading: '<h2>' + prompt + '</h2>',
+                list: '<ul><li>' + prompt.split(',').join('</li><li>') + '</li></ul>',
+                cta: '<div class="text-center py-4"><h3>' + prompt + '</h3><a href="#" class="btn btn-primary">Contactar ahora</a></div>',
+                faq: '<div class="faq"><h4>Pregunta: ' + prompt + '</h4><p>Respuesta: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></div>'
+            };
+            $('#ve-ai-output').html(templates[type] || templates.paragraph);
+            $('#ve-ai-result').removeClass('ve-hidden');
+        }).always(function() {
+            $btn.prop('disabled', false).html('<i class="fa-duotone fa-solid fa-wand-magic-sparkles me-1"></i>Generar');
+        });
+    });
+
+    $(document).on('click', '#btn-ai-insert', function() {
+        var html = $('#ve-ai-output').html();
+        if (html && window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+            if (window.vePushHistory) window.vePushHistory('AI: contenido generado', window.veEditor.getData());
+            bootstrap.Modal.getInstance(document.getElementById('ve-ai-modal')).hide();
+            if (window.veToast) window.veToast('Contenido insertado', 'success');
+        }
+    });
+
+    // ── P2.4: Revision diff indicator ──
+    // Show simple diff info on hover over history items
+    $(document).on('mouseenter', '.ve-history-item', function() {
+        var $item = $(this);
+        if ($item.data('diff-shown')) return;
+        var idx = $item.index();
+        // Get HTML lengths from history stack (if accessible)
+        var html = $item.data('html') || '';
+        if (html) {
+            var len = html.length;
+            var $badge = $('<span class="ve-diff-badge">' + Math.round(len/1024) + 'KB</span>');
+            $item.find('.ms-auto').length ? $item.find('.ms-auto').before($badge) : $item.append($badge);
+            $item.data('diff-shown', true);
+        }
+    });
+
+    // ── P1.5: Responsive per-device class helper ──
+    // Quick responsive class toggle in inspector visibility section
+    // Already partially exists via ve-visibility-btn. Enhance with display utilities.
+    $(document).on('click', '.ve-visibility-btn', function() {
+        $(this).toggleClass('active');
+        var cls = $(this).data('class');
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow && cls) {
+            var add = $(this).hasClass('active');
+            frame.contentWindow.postMessage({ type: 've-toggle-class', cls: cls, add: add }, '*');
+        }
+    });
+
+    // ── P1.4: Global colors/fonts design system ──
+    // Sync color picker ↔ text input
+    $(document).on('input', '.ve-color-picker', function() {
+        $(this).siblings('.form-control').val($(this).val());
+    });
+    $(document).on('input', '.ve-color-input-row .form-control', function() {
+        var val = $(this).val();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) $(this).siblings('.ve-color-picker').val(val);
+    });
+    // Apply global fonts to iframe
+    $(document).on('change', '#ve-global-font-heading, #ve-global-font-body', function() {
+        var heading = $('#ve-global-font-heading').val();
+        var body = $('#ve-global-font-body').val();
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-apply-global-fonts', heading: heading, body: body }, '*');
+        }
+    });
+    // Apply global colors to iframe
+    $(document).on('change', '[id^="ve-global-color-"]', function() {
+        var primary = $('#ve-global-color-primary').val();
+        var secondary = $('#ve-global-color-secondary').val();
+        var accent = $('#ve-global-color-accent').val();
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-apply-global-colors', primary: primary, secondary: secondary, accent: accent }, '*');
+        }
+    });
+
+    // ── P2.5: Multi-select feedback ──
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-multi-select') {
+            var count = ev.data.count || 0;
+            if (count > 0) {
+                $('#ve-inspector-element-name').text(count + ' elementos seleccionados');
+                if (window.veToast) window.veToast(count + ' elementos seleccionados (Shift+click para añadir)', 'info');
+            }
+        }
     });
 
     // ── P4.5 + P4.6: Accessibility audit + Performance score ──

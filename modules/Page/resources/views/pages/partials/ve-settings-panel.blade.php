@@ -49,6 +49,58 @@
             </select>
         </div>
 
+        {{-- Global Design System --}}
+        <div class="ve-section-title ve-section-title-bordered">Design system</div>
+
+        <div class="ve-field">
+            <label>Color primario</label>
+            <div class="ve-color-input-row">
+                <input type="color" id="ve-global-color-primary" value="#b10100" class="ve-color-picker">
+                <input type="text" class="form-control" id="ve-global-color-primary-text" value="#b10100" placeholder="#hex">
+            </div>
+        </div>
+        <div class="ve-field">
+            <label>Color secundario</label>
+            <div class="ve-color-input-row">
+                <input type="color" id="ve-global-color-secondary" value="#333333" class="ve-color-picker">
+                <input type="text" class="form-control" id="ve-global-color-secondary-text" value="#333333" placeholder="#hex">
+            </div>
+        </div>
+        <div class="ve-field">
+            <label>Color de acento</label>
+            <div class="ve-color-input-row">
+                <input type="color" id="ve-global-color-accent" value="#90bb13" class="ve-color-picker">
+                <input type="text" class="form-control" id="ve-global-color-accent-text" value="#90bb13" placeholder="#hex">
+            </div>
+        </div>
+        <div class="ve-field">
+            <label>Fuente de títulos</label>
+            <select class="form-select" id="ve-global-font-heading">
+                <option value="">Predeterminada del tema</option>
+                <option value="'Manrope', sans-serif">Manrope</option>
+                <option value="'Inter', sans-serif">Inter</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Playfair Display', serif">Playfair Display</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="'Lato', sans-serif">Lato</option>
+            </select>
+        </div>
+        <div class="ve-field ve-field-last">
+            <label>Fuente de cuerpo</label>
+            <select class="form-select" id="ve-global-font-body">
+                <option value="">Predeterminada del tema</option>
+                <option value="'Inter', sans-serif">Inter</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="'Lato', sans-serif">Lato</option>
+                <option value="'Nunito', sans-serif">Nunito</option>
+                <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                <option value="system-ui, sans-serif">System UI</option>
+            </select>
+        </div>
+
         {{-- SEO --}}
         <div class="ve-section-title ve-section-title-bordered">SEO</div>
 

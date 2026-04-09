@@ -748,6 +748,23 @@ class VisualEditorController extends Controller
                 break;
             }
 
+            case 've-apply-global-fonts': {
+                var gfStyle = document.getElementById('ve-global-fonts-style');
+                if (!gfStyle) { gfStyle = document.createElement('style'); gfStyle.id = 've-global-fonts-style'; document.head.appendChild(gfStyle); }
+                var css = '';
+                if (d.heading) css += 'h1,h2,h3,h4,h5,h6{font-family:' + d.heading + ' !important;}';
+                if (d.body) css += 'body,p,li,td,th,span,a,div{font-family:' + d.body + ' !important;}';
+                gfStyle.textContent = css;
+                window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                break;
+            }
+            case 've-apply-global-colors': {
+                var gcStyle = document.getElementById('ve-global-colors-style');
+                if (!gcStyle) { gcStyle = document.createElement('style'); gcStyle.id = 've-global-colors-style'; document.head.appendChild(gcStyle); }
+                gcStyle.textContent = ':root{--color-primary:' + d.primary + ';--color-secondary:' + d.secondary + ';--color-accent:' + d.accent + ';}';
+                break;
+            }
+
             case 've-apply-motion': {
                 if (selectedEl) {
                     // Inject animation CSS if not already
@@ -894,6 +911,68 @@ class VisualEditorController extends Controller
                 break;
             }
         }
+    });
+
+    // ── Drag reorder sections within preview ─────────────────────────────
+    var dragEl = null, dragPlaceholder = null, dragStartY = 0, isDragging = false;
+
+    document.addEventListener('mousedown', function(e) {
+        if (isEditing || !selectedEl || e.button !== 0) return;
+        // Only allow drag on top-level sections (direct children of ck-content or body sections)
+        var ck = document.querySelector('.ck-content');
+        var parent = ck || document.body;
+        if (selectedEl.parentNode !== parent) return;
+        dragEl = selectedEl;
+        dragStartY = e.clientY;
+        isDragging = false;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragEl) return;
+        var dy = Math.abs(e.clientY - dragStartY);
+        if (dy < 8 && !isDragging) return; // threshold
+
+        if (!isDragging) {
+            isDragging = true;
+            hideQuickBar();
+            dragEl.style.opacity = '0.4';
+            dragPlaceholder = document.createElement('div');
+            dragPlaceholder.className = 've-drag-placeholder';
+            dragPlaceholder.style.cssText = 'height:4px;background:#b10100;border-radius:2px;margin:4px 0;transition:all .1s;';
+        }
+
+        // Find insertion point
+        var ck = document.querySelector('.ck-content') || document.body;
+        var children = Array.from(ck.children).filter(function(c) { return c !== dragPlaceholder && c.nodeType === 1; });
+        var inserted = false;
+        for (var i = 0; i < children.length; i++) {
+            var rect = children[i].getBoundingClientRect();
+            if (e.clientY < rect.top + rect.height / 2) {
+                if (dragPlaceholder.nextSibling !== children[i]) {
+                    ck.insertBefore(dragPlaceholder, children[i]);
+                }
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted) ck.appendChild(dragPlaceholder);
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        if (!dragEl) return;
+        if (isDragging && dragPlaceholder && dragPlaceholder.parentNode) {
+            dragPlaceholder.parentNode.insertBefore(dragEl, dragPlaceholder);
+            dragPlaceholder.remove();
+            dragEl.style.opacity = '';
+            showQuickBar(dragEl);
+            window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+            window.parent.postMessage({ type: 've-section-reordered' }, '*');
+        } else if (dragEl) {
+            dragEl.style.opacity = '';
+        }
+        dragEl = null;
+        dragPlaceholder = null;
+        isDragging = false;
     });
 
     // ── Click to select element ──────────────────────────────────────────
