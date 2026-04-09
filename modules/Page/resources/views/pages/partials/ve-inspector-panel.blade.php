@@ -8,19 +8,19 @@
                 <span id="ve-inspector-element-name" style="font-size:13px; font-weight:700; color:#333;">Ninguno</span>
             </div>
             <div style="display:flex; gap:4px;">
-                <button type="button" class="btn btn btn-outline-secondary" id="btn-copy-styles"
+                <button type="button" class="btn btn-outline-secondary" id="btn-copy-styles"
                         title="Copiar estilos" style="font-size:11px; padding:2px 8px;">
                     <i class="fa-duotone fa-solid fa-copy"></i>
                 </button>
-                <button type="button" class="btn btn btn-outline-secondary" id="btn-paste-styles"
+                <button type="button" class="btn btn-outline-secondary" id="btn-paste-styles"
                         title="Pegar estilos" style="font-size:11px; padding:2px 8px;" disabled>
                     <i class="fa-duotone fa-solid fa-paste"></i>
                 </button>
-                <button type="button" class="btn btn btn-outline-secondary" id="btn-hide-element"
+                <button type="button" class="btn btn-outline-secondary" id="btn-hide-element"
                         title="Ocultar elemento" style="font-size:11px; padding:2px 8px; display:none;">
                     <i class="fa-duotone fa-solid fa-eye-slash"></i>
                 </button>
-                <button type="button" class="btn btn btn-outline-secondary" id="btn-deselect-element"
+                <button type="button" class="btn btn-outline-secondary" id="btn-deselect-element"
                         title="Deseleccionar" style="font-size:11px; padding:2px 8px;">
                     <i class="fa-duotone fa-solid fa-times"></i>
                 </button>
@@ -49,25 +49,25 @@
             <div id="ve-sect-visibility" style="padding:10px 12px;">
                 <div style="font-size:11px; color:#666; margin-bottom:8px;">Ocultar en dispositivos:</div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
-                    <button type="button" class="btn btn btn-outline-secondary ve-visibility-btn"
+                    <button type="button" class="btn btn-outline-secondary ve-visibility-btn"
                             data-class="d-none d-sm-block" title="Ocultar en móvil">
                         Móvil
                     </button>
-                    <button type="button" class="btn btn btn-outline-secondary ve-visibility-btn"
+                    <button type="button" class="btn btn-outline-secondary ve-visibility-btn"
                             data-class="d-sm-none d-md-block" title="Ocultar en tablet">
                         Tablet
                     </button>
-                    <button type="button" class="btn btn btn-outline-secondary ve-visibility-btn"
+                    <button type="button" class="btn btn-outline-secondary ve-visibility-btn"
                             data-class="d-md-none d-lg-block" title="Ocultar en desktop">
                         Desktop
                     </button>
                 </div>
                 <div style="border-top:1px solid #f0f0f0; padding-top:8px;">
-                    <button type="button" class="btn btn btn-outline-secondary w-100" id="btn-toggle-hidden"
+                    <button type="button" class="btn btn-outline-secondary w-100" id="btn-toggle-hidden"
                             style="font-size:12px;">
                         Ocultar elemento
                     </button>
-                    <button type="button" class="btn btn btn-outline-secondary w-100 mt-1" id="btn-toggle-shown"
+                    <button type="button" class="btn btn-outline-secondary w-100 mt-1" id="btn-toggle-shown"
                             style="font-size:12px; display:none;">
                         Mostrar elemento
                     </button>
@@ -84,27 +84,27 @@
             <div id="ve-sect-attrs" style="display:none; padding:10px 12px;">
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">ID</label>
-                    <input type="text" class="form-control form-control" id="ve-attr-id" placeholder="elemento-id">
+                    <input type="text" class="form-control" id="ve-attr-id" placeholder="elemento-id">
                 </div>
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Clases CSS</label>
-                    <input type="text" class="form-control form-control" id="ve-attr-class" placeholder="clase1 clase2">
+                    <input type="text" class="form-control" id="ve-attr-class" placeholder="clase1 clase2">
                 </div>
                 <div id="ve-attr-src-wrap" style="display:none; margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">src</label>
-                    <input type="text" class="form-control form-control" id="ve-attr-src" placeholder="https://...">
+                    <input type="text" class="form-control" id="ve-attr-src" placeholder="https://...">
                 </div>
                 <div id="ve-attr-alt-wrap" style="display:none; margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">alt</label>
-                    <input type="text" class="form-control form-control" id="ve-attr-alt" placeholder="Texto alternativo">
+                    <input type="text" class="form-control" id="ve-attr-alt" placeholder="Texto alternativo">
                 </div>
                 <div id="ve-attr-href-wrap" style="display:none; margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">href</label>
-                    <input type="url" class="form-control form-control" id="ve-attr-href" placeholder="https://...">
+                    <input type="url" class="form-control" id="ve-attr-href" placeholder="https://...">
                 </div>
                 <div id="ve-attr-placeholder-wrap" style="display:none; margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">placeholder</label>
-                    <input type="text" class="form-control form-control" id="ve-attr-placeholder" placeholder="Placeholder...">
+                    <input type="text" class="form-control" id="ve-attr-placeholder" placeholder="Placeholder...">
                 </div>
                 <button type="button" class="btn btn w-100 mt-2" id="btn-apply-attrs"
                         style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;">
@@ -122,7 +122,7 @@
             <div id="ve-sect-link" style="padding:10px 12px;">
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">URL</label>
-                    <input type="url" class="form-control form-control" id="ve-link-href-inspector" placeholder="https://...">
+                    <input type="url" class="form-control" id="ve-link-href-inspector" placeholder="https://...">
                 </div>
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Abrir en</label>
@@ -174,7 +174,7 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Tamaño</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="number" class="form-control ve-css-prop" data-prop="font-size" data-unit="px" placeholder="16" min="8" max="200">
                             <span class="input-group-text" style="font-size:10px;">px</span>
                         </div>
@@ -195,9 +195,9 @@
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Color de texto</label>
                     <div style="display:flex; gap:6px;">
-                        <input type="color" class="form-control form-control form-control-color ve-css-prop"
+                        <input type="color" class="form-control form-control-color ve-css-prop"
                                data-prop="color" value="#000000" style="width:44px; padding:2px;">
-                        <input type="text" class="form-control form-control ve-color-text"
+                        <input type="text" class="form-control ve-color-text"
                                placeholder="#000000" style="font-family:monospace; font-size:11px;">
                     </div>
                 </div>
@@ -261,25 +261,25 @@
                 <div style="font-size:10px; font-weight:600; color:#888; text-align:center; margin-bottom:8px; text-transform:uppercase;">Padding (interior)</div>
                 <div style="display:grid; grid-template-columns:1fr 56px 1fr; grid-template-rows:auto 56px auto; gap:4px; max-width:176px; margin:0 auto 12px;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="padding-top" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-top" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="padding-left" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-left" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
                     <div style="background:#e9ecef; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#aaa;">P</div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="padding-right" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-right" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
                     <div></div>
                 </div>
                 <div style="font-size:10px; font-weight:600; color:#888; text-align:center; margin-bottom:8px; text-transform:uppercase;">Margin (exterior)</div>
                 <div style="display:grid; grid-template-columns:1fr 56px 1fr; grid-template-rows:auto 56px auto; gap:4px; max-width:176px; margin:0 auto;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="margin-top" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-top" data-unit="px" placeholder="0" style="font-size:11px;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="margin-left" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-left" data-unit="px" placeholder="0" style="font-size:11px;">
                     <div style="background:#e9ecef; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#aaa;">M</div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="margin-right" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-right" data-unit="px" placeholder="0" style="font-size:11px;">
                     <div></div>
-                    <input type="number" class="form-control form-control text-center ve-css-prop" data-prop="margin-bottom" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-bottom" data-unit="px" placeholder="0" style="font-size:11px;">
                     <div></div>
                 </div>
             </div>
@@ -301,9 +301,9 @@
                 <div style="margin-bottom:8px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Color de fondo</label>
                     <div style="display:flex; gap:6px;">
-                        <input type="color" class="form-control form-control form-control-color ve-css-prop"
+                        <input type="color" class="form-control form-control-color ve-css-prop"
                                data-prop="background-color" value="#ffffff" style="width:44px; padding:2px;">
-                        <input type="text" class="form-control form-control ve-color-text"
+                        <input type="text" class="form-control ve-color-text"
                                placeholder="transparent" style="font-family:monospace; font-size:11px;">
                     </div>
                 </div>
@@ -363,7 +363,7 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                     <div>
                         <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Grosor</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="number" class="form-control ve-css-prop" data-prop="border-width" data-unit="px" placeholder="0" min="0">
                             <span class="input-group-text" style="font-size:10px;">px</span>
                         </div>
@@ -381,7 +381,7 @@
                 </div>
                 <div style="margin-bottom:8px;">
                     <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Color del borde</label>
-                    <input type="color" class="form-control form-control form-control-color ve-css-prop"
+                    <input type="color" class="form-control form-control-color ve-css-prop"
                            data-prop="border-color" value="#dee2e6" style="width:100%;">
                 </div>
                 <div>
@@ -407,35 +407,35 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
                         <div>
                             <label style="font-size:10px; color:#888;">Offset X</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-x" placeholder="0">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888;">Offset Y</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-y" placeholder="4">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888;">Difuminado</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-blur" placeholder="8" min="0">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888;">Expansión</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-spread" placeholder="0">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                     </div>
                     <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
-                        <input type="color" class="form-control form-control form-control-color ve-shadow-input" id="ve-shadow-color" value="#000000" style="width:44px; padding:2px;">
+                        <input type="color" class="form-control form-control-color ve-shadow-input" id="ve-shadow-color" value="#000000" style="width:44px; padding:2px;">
                         <label style="font-size:10px; color:#888; margin:0;">Color</label>
                         <div class="form-check ms-auto mb-0">
                             <input class="form-check-input ve-shadow-input" type="checkbox" id="ve-shadow-inset">
@@ -443,11 +443,11 @@
                         </div>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button type="button" class="btn btn btn-primary flex-grow-1" id="btn-apply-shadow"
+                        <button type="button" class="btn btn-primary flex-grow-1" id="btn-apply-shadow"
                                 style="background:#b10100;border-color:#b10100;font-size:12px;">
                             Aplicar
                         </button>
-                        <button type="button" class="btn btn btn-outline-secondary" id="btn-clear-shadow"
+                        <button type="button" class="btn btn-outline-secondary" id="btn-clear-shadow"
                                 style="font-size:12px;" title="Quitar sombra">
                             <i class="fa-duotone fa-solid fa-times"></i>
                         </button>
@@ -458,35 +458,35 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
                         <div>
                             <label style="font-size:10px; color:#888;">Offset X</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-x" placeholder="0">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888;">Offset Y</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-y" placeholder="1">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888;">Difuminado</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-blur" placeholder="2" min="0">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div style="display:flex; align-items:flex-end;">
-                            <input type="color" class="form-control form-control form-control-color" id="ve-tshadow-color" value="#000000" style="width:44px; padding:2px;">
+                            <input type="color" class="form-control form-control-color" id="ve-tshadow-color" value="#000000" style="width:44px; padding:2px;">
                         </div>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button type="button" class="btn btn btn-primary flex-grow-1" id="btn-apply-tshadow"
+                        <button type="button" class="btn btn-primary flex-grow-1" id="btn-apply-tshadow"
                                 style="background:#b10100;border-color:#b10100;font-size:12px;">
                             Aplicar
                         </button>
-                        <button type="button" class="btn btn btn-outline-secondary" id="btn-clear-tshadow"
+                        <button type="button" class="btn btn-outline-secondary" id="btn-clear-tshadow"
                                 style="font-size:12px;" title="Quitar sombra">
                             <i class="fa-duotone fa-solid fa-times"></i>
                         </button>
@@ -505,14 +505,14 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <div>
                         <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Ancho</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="text" class="form-control ve-css-prop" data-prop="width" data-unit="" placeholder="auto">
                             <span class="input-group-text" style="font-size:10px;">px/%</span>
                         </div>
                     </div>
                     <div>
                         <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Alto</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="text" class="form-control ve-css-prop" data-prop="height" data-unit="" placeholder="auto">
                             <span class="input-group-text" style="font-size:10px;">px/%</span>
                         </div>
@@ -548,28 +548,28 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
                         <div>
                             <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Top</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="top" data-unit="px" placeholder="auto">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Right</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="right" data-unit="px" placeholder="auto">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Bottom</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="bottom" data-unit="px" placeholder="auto">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
                         </div>
                         <div>
                             <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Left</label>
-                            <div class="input-group input-group">
+                            <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="left" data-unit="px" placeholder="auto">
                                 <span class="input-group-text" style="font-size:10px;">px</span>
                             </div>
@@ -578,7 +578,7 @@
                 </div>
                 <div>
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Z-index</label>
-                    <input type="number" class="form-control form-control ve-css-prop" data-prop="z-index" data-unit="" placeholder="auto" step="1">
+                    <input type="number" class="form-control ve-css-prop" data-prop="z-index" data-unit="" placeholder="auto" step="1">
                 </div>
             </div>
         </div>
@@ -654,7 +654,7 @@
                 </div>
                 <div>
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Gap</label>
-                    <div class="input-group input-group">
+                    <div class="input-group">
                         <input type="number" class="form-control ve-css-prop" data-prop="gap" data-unit="px" placeholder="0" min="0">
                         <span class="input-group-text" style="font-size:10px;">px</span>
                     </div>
@@ -684,14 +684,14 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
                     <div>
                         <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Translate X</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="number" class="form-control" id="ve-transform-tx" placeholder="0">
                             <span class="input-group-text" style="font-size:10px;">px</span>
                         </div>
                     </div>
                     <div>
                         <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Translate Y</label>
-                        <div class="input-group input-group">
+                        <div class="input-group">
                             <input type="number" class="form-control" id="ve-transform-ty" placeholder="0">
                             <span class="input-group-text" style="font-size:10px;">px</span>
                         </div>
@@ -702,7 +702,7 @@
                             style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;">
                         Aplicar
                     </button>
-                    <button type="button" class="btn btn btn-outline-secondary" id="btn-clear-transform" title="Quitar transform">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-clear-transform" title="Quitar transform">
                         <i class="fa-duotone fa-solid fa-times"></i>
                     </button>
                 </div>
@@ -842,7 +842,7 @@
                 <textarea class="form-control" id="ve-custom-css" rows="5"
                           style="font-family:monospace; font-size:11px;"
                           placeholder="color: red;&#10;margin-top: 20px;"></textarea>
-                <button type="button" class="btn btn btn-primary mt-2 w-100" id="btn-apply-custom-css"
+                <button type="button" class="btn btn-primary mt-2 w-100" id="btn-apply-custom-css"
                         style="background:#b10100;border-color:#b10100;font-size:12px;">
                     Aplicar CSS
                 </button>
