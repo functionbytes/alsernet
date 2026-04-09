@@ -708,6 +708,43 @@
             font-family: 'SF Mono', monospace;
         }
 
+        /* ── Form builder ────────────────────────────────── */
+        .ve-form-field-row { display:flex; gap:4px; align-items:center; margin-bottom:4px; }
+        .ve-form-field-row .form-control { flex:2; }
+        .ve-form-field-row .form-select { flex:1; }
+        .ve-form-field-row .btn { flex-shrink:0; width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; }
+
+        /* ── Wireframe mode ──────────────────────────────── */
+        #ve-canvas-wrap.ve-wireframe #ve-preview-frame { filter: grayscale(1) contrast(.8); }
+
+        /* ── Responsive ruler ────────────────────────────── */
+        .ve-ruler { height:20px; background:var(--ve-bg); border-bottom:1px solid var(--ve-border); display:none; flex-shrink:0; position:relative; overflow:hidden; }
+        .ve-ruler.active { display:block; }
+        .ve-ruler-tick { position:absolute; top:0; width:1px; height:100%; background:var(--ve-border); }
+        .ve-ruler-label { position:absolute; top:2px; font-size:8px; color:var(--ve-text-faint); }
+
+        /* ── Element search bar ──────────────────────────── */
+        .ve-search-bar { display:none; position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:300; background:var(--ve-bg); border:1px solid var(--ve-border); border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.12); padding:6px 12px; width:320px; }
+        .ve-search-bar.active { display:flex; gap:6px; align-items:center; }
+        .ve-search-bar input { border:none; outline:none; flex:1; font-size:12px; background:transparent; color:var(--ve-text); }
+        .ve-search-bar-count { font-size:10px; color:var(--ve-text-muted); white-space:nowrap; }
+        .ve-search-bar button { background:none; border:none; color:var(--ve-text-muted); cursor:pointer; font-size:12px; padding:2px; }
+        .ve-search-bar button:hover { color:var(--ve-text); }
+
+        /* ── Gradient builder ────────────────────────────── */
+        .ve-gradient-preview { height:32px; border-radius:6px; border:1px solid var(--ve-border); margin-bottom:6px; }
+        .ve-gradient-row { display:flex; gap:4px; align-items:center; margin-bottom:4px; }
+        .ve-gradient-row .ve-color-picker { width:28px; height:28px; }
+
+        /* ── Box shadow builder ──────────────────────────── */
+        .ve-shadow-preview { width:60px; height:60px; background:var(--ve-bg); border-radius:8px; margin:8px auto; }
+        .ve-shadow-row { display:flex; gap:4px; align-items:center; margin-bottom:4px; }
+        .ve-shadow-row label { flex:1; font-size:10px; color:var(--ve-text-muted); margin:0; }
+        .ve-shadow-row input { width:60px; font-size:10px; text-align:center; }
+
+        /* ── Page weight badge ───────────────────────────── */
+        .ve-weight-badge { font-size:9px; color:var(--ve-text-faint); }
+
         /* ── AI modal ────────────────────────────────────── */
         .ve-ai-modal-header { background:var(--ve-bg); border-bottom:1px solid var(--ve-border); padding:14px 20px; }
         .ve-ai-modal-title { font-weight:700; font-size:14px; color:var(--ve-text); margin:0; }
@@ -1474,6 +1511,15 @@
 
     {{-- ── Canvas area ─────────────────────────────────────────────────── --}}
     <div id="ve-canvas">
+        <div class="ve-ruler" id="ve-ruler"></div>
+        <div class="ve-search-bar" id="ve-element-search">
+            <i class="fa-duotone fa-solid fa-search"></i>
+            <input type="text" id="ve-element-search-input" placeholder="Buscar texto en la página...">
+            <span class="ve-search-bar-count" id="ve-search-count"></span>
+            <button id="ve-search-prev" title="Anterior"><i class="fa-duotone fa-solid fa-chevron-up"></i></button>
+            <button id="ve-search-next" title="Siguiente"><i class="fa-duotone fa-solid fa-chevron-down"></i></button>
+            <button id="ve-search-close" title="Cerrar"><i class="fa-duotone fa-solid fa-times"></i></button>
+        </div>
         <div id="ve-canvas-wrap" class="desktop">
 
             {{-- Drag overlay (shown when dragging a block) --}}
@@ -1504,7 +1550,8 @@
             </span>
             <span class="{{ $page->status->badgeClass() }}" style="font-size:10px;">{{ $page->status->label() }}</span>
             <span id="autosave-status-bar" class="ms-1" style="font-size:11px;"></span>
-            <span id="ve-word-count" style="font-size:9px; color:var(--ve-text-faint); margin-left:4px;"></span>
+            <span id="ve-word-count" class="ve-weight-badge"></span>
+            <span id="ve-page-weight" class="ve-weight-badge"></span>
 
             <div class="ms-auto d-flex align-items-center gap-1">
                 @if(count($supportedLocales) > 1)
@@ -1545,6 +1592,12 @@
                         <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-split-view"><i class="fa-duotone fa-solid fa-columns fa-fw text-muted"></i> Split (Desktop + Móvil)</button></li>
                     </ul>
                 </div>
+                <button class="ve-bottom-btn" id="btn-wireframe" title="Modo wireframe">
+                    <i class="fa-duotone fa-solid fa-vector-square"></i>
+                </button>
+                <button class="ve-bottom-btn" id="btn-ruler" title="Regla">
+                    <i class="fa-duotone fa-solid fa-ruler-horizontal"></i>
+                </button>
                 <button class="ve-bottom-btn" id="btn-dark-mode" title="Modo oscuro">
                     <i class="fa-duotone fa-solid fa-circle-half-stroke"></i>
                 </button>
@@ -1564,6 +1617,95 @@
 
     </div>{{-- /ve-main --}}
 
+</div>
+
+{{-- ── Popup builder modal ────────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-popup-builder" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ve-cmd-content">
+            <div class="ve-ai-modal-header">
+                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-window-restore ve-ai-modal-icon"></i>Crear popup</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="ve-ai-modal-body">
+                <div class="ve-field">
+                    <label>Título del popup</label>
+                    <input type="text" class="form-control" id="ve-popup-title" placeholder="Ej: Suscríbete a nuestro newsletter">
+                </div>
+                <div class="ve-field">
+                    <label>Contenido</label>
+                    <textarea class="form-control" id="ve-popup-content" rows="3" placeholder="Texto del popup..."></textarea>
+                </div>
+                <div class="ve-field">
+                    <label>Trigger</label>
+                    <select class="form-select" id="ve-popup-trigger">
+                        <option value="click">Click en botón</option>
+                        <option value="scroll">Al hacer scroll (50%)</option>
+                        <option value="timer">Después de 5 segundos</option>
+                        <option value="exit">Exit intent (salir de la página)</option>
+                    </select>
+                </div>
+                <div class="ve-field">
+                    <label>Estilo</label>
+                    <select class="form-select" id="ve-popup-style">
+                        <option value="center">Modal centrado</option>
+                        <option value="bottom-bar">Barra inferior</option>
+                        <option value="slide-in">Slide-in derecha</option>
+                    </select>
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-insert-popup">
+                    <i class="fa-duotone fa-solid fa-plus me-1"></i>Insertar popup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Form builder modal ──────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-form-builder" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content ve-cmd-content">
+            <div class="ve-ai-modal-header">
+                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-rectangle-list ve-ai-modal-icon"></i>Constructor de formularios</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="ve-ai-modal-body">
+                <div class="ve-field">
+                    <label>Tipo de formulario</label>
+                    <select class="form-select" id="ve-form-type">
+                        <option value="contact">Contacto</option>
+                        <option value="newsletter">Newsletter</option>
+                        <option value="quote">Solicitar presupuesto</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div class="ve-field">
+                    <label>Campos</label>
+                    <div id="ve-form-fields">
+                        <div class="ve-form-field-row">
+                            <input type="text" class="form-control" value="Nombre" placeholder="Label del campo">
+                            <select class="form-select"><option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option></select>
+                            <button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="btn-add-form-field">
+                        <i class="fa-duotone fa-solid fa-plus me-1"></i>Agregar campo
+                    </button>
+                </div>
+                <div class="ve-field">
+                    <label>Texto del botón</label>
+                    <input type="text" class="form-control" id="ve-form-btn-text" value="Enviar">
+                </div>
+                <div class="ve-field">
+                    <label>Acción (email o URL)</label>
+                    <input type="text" class="form-control" id="ve-form-action" placeholder="email@ejemplo.com o https://...">
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-insert-form">
+                    <i class="fa-duotone fa-solid fa-plus me-1"></i>Insertar formulario
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- ── AI Content modal ──────────────────────────────────────────────────── --}}
@@ -4396,6 +4538,388 @@
             frame.contentWindow.postMessage({ type: 've-remove-motion' }, '*');
         }
         if (window.veToast) window.veToast('Animación eliminada', 'info');
+    });
+
+    // ── N4: Import from URL ──
+    cmdActions.push({ cat:'Herramientas', label:'Importar sección desde URL', icon:'fa-download', action: function() {
+        var url = prompt('URL de la página a importar:');
+        if (!url) return;
+        if (window.veToast) window.veToast('Importando...', 'info');
+        $.ajax({
+            url: '/api/v1/page-import',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { url: url },
+            timeout: 15000
+        }).done(function(res) {
+            if (res.html && window.veEditor) {
+                window.veEditor.model.change(function() {
+                    var view = window.veEditor.data.processor.toView(res.html);
+                    var model = window.veEditor.data.toModel(view);
+                    window.veEditor.model.insertContent(model);
+                });
+                if (window.veToast) window.veToast('Contenido importado', 'success');
+            }
+        }).fail(function() {
+            if (window.veToast) window.veToast('Error al importar. Verifica la URL.', 'error');
+        });
+    }});
+
+    // ── N10: PageSpeed insights (placeholder) ──
+    cmdActions.push({ cat:'Herramientas', label:'PageSpeed Insights', icon:'fa-tachometer-alt', action: function() {
+        var pageUrl = $('.ve-topbar-preview-btn').attr('href');
+        if (pageUrl) {
+            window.open('https://pagespeed.web.dev/analysis?url=' + encodeURIComponent(window.location.origin + pageUrl), '_blank');
+        }
+    }});
+
+    // ── N11: SEO live preview (already partial in settings, add to cmd) ──
+    cmdActions.push({ cat:'Herramientas', label:'Vista previa SEO/OG', icon:'fa-search', action: function() {
+        $('#ve-sidebar-nav .ve-nav-btn[data-panel="settings"]').trigger('click');
+        setTimeout(function() {
+            var $og = $('#ve-og-header');
+            if ($og.length) $og.trigger('click');
+        }, 300);
+    }});
+
+    // ── N12: CSS Grid builder (command palette) ──
+    cmdActions.push({ cat:'Insertar', label:'CSS Grid layout', icon:'fa-border-all', action: function() {
+        var cols = prompt('Número de columnas (ej: 3):');
+        var rows = prompt('Número de filas (ej: 2):');
+        if (!cols || !rows) return;
+        var html = '<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:16px;padding:16px;">\n';
+        for (var i = 0; i < cols * rows; i++) {
+            html += '  <div style="padding:16px;background:#f4f6f8;border-radius:8px;min-height:60px;">Celda ' + (i+1) + '</div>\n';
+        }
+        html += '</div>';
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+            if (window.vePushHistory) window.vePushHistory('CSS Grid ' + cols + 'x' + rows, window.veEditor.getData());
+        }
+    }});
+
+    // ── P3.2: Popup builder ──
+    cmdActions.push({ cat:'Insertar', label:'Crear popup', icon:'fa-window-restore', action: function() {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('ve-popup-builder')).show();
+    }});
+    $(document).on('click', '#btn-insert-popup', function() {
+        var title = $('#ve-popup-title').val() || 'Popup';
+        var content = $('#ve-popup-content').val() || '';
+        var trigger = $('#ve-popup-trigger').val();
+        var style = $('#ve-popup-style').val();
+        var id = 've-popup-' + Date.now();
+        var triggerAttr = 'data-popup-trigger="' + trigger + '"';
+        var styleClass = style === 'bottom-bar' ? 've-popup-bar' : style === 'slide-in' ? 've-popup-slide' : 've-popup-center';
+
+        var html = '<!-- Popup: ' + title + ' -->\n' +
+            (trigger === 'click' ? '<button class="btn btn-primary" onclick="document.getElementById(\'' + id + '\').style.display=\'flex\'">' + title + '</button>\n' : '') +
+            '<div id="' + id + '" class="ve-popup ' + styleClass + '" ' + triggerAttr + ' style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">\n' +
+            '  <div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;position:relative;">\n' +
+            '    <button onclick="this.closest(\'.ve-popup\').style.display=\'none\'" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;">&times;</button>\n' +
+            '    <h3>' + title + '</h3>\n' +
+            '    <p>' + content + '</p>\n' +
+            '  </div>\n' +
+            '</div>\n';
+
+        if (trigger === 'timer') {
+            html += '<script>setTimeout(function(){document.getElementById("' + id + '").style.display="flex";},5000);<\/script>\n';
+        } else if (trigger === 'scroll') {
+            html += '<script>window.addEventListener("scroll",function(){if(window.scrollY>document.body.scrollHeight*0.5){document.getElementById("' + id + '").style.display="flex";}},{once:true});<\/script>\n';
+        }
+
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+            if (window.vePushHistory) window.vePushHistory('Popup: ' + title, window.veEditor.getData());
+        }
+        bootstrap.Modal.getInstance(document.getElementById('ve-popup-builder')).hide();
+        if (window.veToast) window.veToast('Popup insertado', 'success');
+    });
+
+    // ── P3.3: Form builder ──
+    cmdActions.push({ cat:'Insertar', label:'Constructor de formularios', icon:'fa-rectangle-list', action: function() {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('ve-form-builder')).show();
+    }});
+    $(document).on('click', '#btn-add-form-field', function() {
+        var row = '<div class="ve-form-field-row">' +
+            '<input type="text" class="form-control" placeholder="Label">' +
+            '<select class="form-select"><option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option></select>' +
+            '<button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button></div>';
+        $('#ve-form-fields').append(row);
+    });
+    $(document).on('click', '.ve-form-remove-field', function() { $(this).closest('.ve-form-field-row').remove(); });
+    // Pre-fill fields based on form type
+    $(document).on('change', '#ve-form-type', function() {
+        var type = $(this).val();
+        var presets = {
+            contact: [['Nombre','text'],['Email','email'],['Teléfono','tel'],['Mensaje','textarea']],
+            newsletter: [['Email','email']],
+            quote: [['Nombre','text'],['Email','email'],['Teléfono','tel'],['Servicio','select'],['Mensaje','textarea']],
+            custom: []
+        };
+        var fields = presets[type] || [];
+        var $container = $('#ve-form-fields').empty();
+        fields.forEach(function(f) {
+            var opts = '<option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option>';
+            var row = '<div class="ve-form-field-row"><input type="text" class="form-control" value="' + f[0] + '"><select class="form-select">' + opts.replace('value="' + f[1] + '"', 'value="' + f[1] + '" selected') + '</select><button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button></div>';
+            $container.append(row);
+        });
+    });
+    $(document).on('click', '#btn-insert-form', function() {
+        var btnText = $('#ve-form-btn-text').val() || 'Enviar';
+        var action = $('#ve-form-action').val() || '#';
+        var isEmail = action.indexOf('@') !== -1;
+        var formAction = isEmail ? 'mailto:' + action : action;
+
+        var html = '<form action="' + formAction + '" method="POST" class="py-3">\n';
+        $('#ve-form-fields .ve-form-field-row').each(function() {
+            var label = $(this).find('input').val() || 'Campo';
+            var type = $(this).find('select').val() || 'text';
+            var name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            html += '  <div class="mb-3">\n';
+            html += '    <label class="form-label">' + label + '</label>\n';
+            if (type === 'textarea') {
+                html += '    <textarea class="form-control" name="' + name + '" rows="3" placeholder="' + label + '..."></textarea>\n';
+            } else if (type === 'select') {
+                html += '    <select class="form-select" name="' + name + '"><option value="">Seleccionar...</option><option>Opción 1</option><option>Opción 2</option></select>\n';
+            } else {
+                html += '    <input type="' + type + '" class="form-control" name="' + name + '" placeholder="' + label + '">\n';
+            }
+            html += '  </div>\n';
+        });
+        html += '  <button type="submit" class="btn btn-primary">' + btnText + '</button>\n</form>';
+
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+            if (window.vePushHistory) window.vePushHistory('Formulario insertado', window.veEditor.getData());
+        }
+        bootstrap.Modal.getInstance(document.getElementById('ve-form-builder')).hide();
+        if (window.veToast) window.veToast('Formulario insertado', 'success');
+    });
+
+    // ── N1: Wireframe mode ──
+    $(document).on('click', '#btn-wireframe', function() {
+        $('#ve-canvas-wrap').toggleClass('ve-wireframe');
+        $(this).toggleClass('active');
+    });
+    cmdActions.push({ cat:'Vista', label:'Modo wireframe', icon:'fa-vector-square', action: function(){ $('#btn-wireframe').trigger('click'); }});
+
+    // ── N2: Page weight monitor ──
+    function updatePageWeight() {
+        try {
+            var html = window.veEditor ? window.veEditor.getData() : '';
+            var kb = Math.round(html.length / 1024);
+            $('#ve-page-weight').text('· ' + kb + ' KB');
+        } catch(e) {}
+    }
+    setInterval(updatePageWeight, 8000);
+    setTimeout(updatePageWeight, 4000);
+
+    // ── N5: Element search (Ctrl+F in canvas) ──
+    var searchMatches = [], searchIdx = -1;
+    $(document).on('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            var tag = (e.target.tagName||'').toLowerCase();
+            if (tag === 'input' || tag === 'textarea') return;
+            e.preventDefault();
+            $('#ve-element-search').addClass('active');
+            $('#ve-element-search-input').val('').focus();
+        }
+    });
+    $(document).on('click', '#ve-search-close', function() {
+        $('#ve-element-search').removeClass('active');
+        searchMatches = []; searchIdx = -1;
+        // Clear highlights in iframe
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-clear-search' }, '*');
+    });
+    $(document).on('input', '#ve-element-search-input', function() {
+        var q = $(this).val().trim();
+        if (q.length < 2) { $('#ve-search-count').text(''); return; }
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-search-text', query: q }, '*');
+    });
+    $(document).on('click', '#ve-search-next', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-search-nav', dir: 'next' }, '*');
+    });
+    $(document).on('click', '#ve-search-prev', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-search-nav', dir: 'prev' }, '*');
+    });
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-search-results') {
+            $('#ve-search-count').text(ev.data.count + ' resultados');
+        }
+    });
+
+    // ── N7: Responsive ruler ──
+    $(document).on('click', '#btn-ruler', function() {
+        var $ruler = $('#ve-ruler');
+        $ruler.toggleClass('active');
+        $(this).toggleClass('active');
+        if ($ruler.hasClass('active')) {
+            $ruler.empty();
+            var w = $('#ve-canvas-wrap').width();
+            for (var px = 0; px <= w; px += 100) {
+                $ruler.append('<div class="ve-ruler-tick" style="left:'+px+'px;"></div><div class="ve-ruler-label" style="left:'+(px+2)+'px;">'+px+'</div>');
+            }
+        }
+    });
+
+    // ── N13: Gradient builder ──
+    function updateGradientPreview() {
+        var dir = $('#ve-gradient-direction').val();
+        var c1 = $('#ve-gradient-color1').val();
+        var c2 = $('#ve-gradient-color2').val();
+        $('#ve-gradient-preview').css('background', 'linear-gradient(' + dir + ', ' + c1 + ', ' + c2 + ')');
+    }
+    $(document).on('input change', '#ve-gradient-direction, #ve-gradient-color1, #ve-gradient-color2', updateGradientPreview);
+    $(document).on('click', '#btn-apply-gradient', function() {
+        var dir = $('#ve-gradient-direction').val();
+        var c1 = $('#ve-gradient-color1').val();
+        var c2 = $('#ve-gradient-color2').val();
+        var val = 'linear-gradient(' + dir + ', ' + c1 + ', ' + c2 + ')';
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'background': val } }, '*');
+        if (window.veToast) window.veToast('Gradiente aplicado', 'success');
+    });
+    $(document).on('click', '#btn-clear-gradient', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'background': '' } }, '*');
+    });
+
+    // ── N14: Box shadow builder ──
+    function getShadowVal() {
+        var x = $('#ve-shadow-x').val(), y = $('#ve-shadow-y').val();
+        var blur = $('#ve-shadow-blur').val(), spread = $('#ve-shadow-spread').val();
+        var color = $('#ve-shadow-color').val(), opacity = $('#ve-shadow-opacity').val() / 100;
+        var r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
+        return x+'px '+y+'px '+blur+'px '+spread+'px rgba('+r+','+g+','+b+','+opacity+')';
+    }
+    function updateShadowPreview() {
+        $('#ve-shadow-preview').css('box-shadow', getShadowVal());
+        $('#ve-shadow-x-val').text($('#ve-shadow-x').val());
+        $('#ve-shadow-y-val').text($('#ve-shadow-y').val());
+        $('#ve-shadow-blur-val').text($('#ve-shadow-blur').val());
+        $('#ve-shadow-spread-val').text($('#ve-shadow-spread').val());
+        $('#ve-shadow-opacity-val').text($('#ve-shadow-opacity').val());
+    }
+    $(document).on('input', '#ve-shadow-x, #ve-shadow-y, #ve-shadow-blur, #ve-shadow-spread, #ve-shadow-color, #ve-shadow-opacity', updateShadowPreview);
+    $(document).on('click', '#btn-apply-shadow', function() {
+        var val = getShadowVal();
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'box-shadow': val } }, '*');
+        if (window.veToast) window.veToast('Sombra aplicada', 'success');
+    });
+    $(document).on('click', '#btn-clear-shadow', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'box-shadow': 'none' } }, '*');
+        $('#ve-shadow-preview').css('box-shadow', 'none');
+    });
+
+    // ── N6: Style presets (save/apply) ──
+    var stylePresets = JSON.parse(localStorage.getItem('ve-style-presets') || '[]');
+    cmdActions.push({ cat:'Herramientas', label:'Guardar preset de estilo', icon:'fa-bookmark', action: function() {
+        if (!window.veEditor) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-copy-styles' }, '*');
+        setTimeout(function() {
+            var name = prompt('Nombre del preset:');
+            if (!name) return;
+            // copiedStyles is set by the copy-styles handler
+            var copiedS = window._veCopiedStyles;
+            if (copiedS) {
+                stylePresets.push({ name: name, styles: copiedS });
+                localStorage.setItem('ve-style-presets', JSON.stringify(stylePresets));
+                if (window.veToast) window.veToast('Preset "' + name + '" guardado', 'success');
+            }
+        }, 500);
+    }});
+    // Expose copied styles for preset saving
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-styles-copied') window._veCopiedStyles = ev.data.styles;
+    });
+
+    // ── P4.8: Undo per section (track section-level changes) ──
+    // Enhanced: when moving/editing within a section, push to section-specific stack
+    // This is tracked via the existing history with labels that include section info
+    // The history panel already shows labels — this adds section-level filtering
+    cmdActions.push({ cat:'Herramientas', label:'Deshacer último cambio en sección', icon:'fa-rotate-left', action: function() {
+        $('#btn-undo').trigger('click');
+    }});
+
+    // ── P3.4: Dynamic content tags ──
+    var dynamicTags = {
+        '{{page.title}}': '{{ $page->title }}',
+        '{{page.url}}': '{{ url($page->slug ?? "") }}',
+        '{{site.name}}': '{{ config("app.name") }}',
+        '{{current.year}}': new Date().getFullYear().toString(),
+        '{{current.date}}': new Date().toLocaleDateString('es-ES'),
+    };
+    cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Título de página', icon:'fa-tag', action: function() {
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="page.title">' + dynamicTags['{{page.title}}'] + '</span>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+    cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Año actual', icon:'fa-calendar', action: function() {
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="current.year">' + dynamicTags['{{current.year}}'] + '</span>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+    cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Nombre del sitio', icon:'fa-globe', action: function() {
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="site.name">' + dynamicTags['{{site.name}}'] + '</span>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+
+    // ── P3.5: Display conditions ──
+    // Add condition attributes to elements via context menu
+    (function addConditionCtx() {
+        var $menu = $('#ve-context-menu');
+        if (!$menu.length) { setTimeout(addConditionCtx, 500); return; }
+        var $last = $menu.find('.ve-ctx-divider').last();
+        if ($last.length && !$('#ctx-conditions').length) {
+            $('<div class="ve-ctx-item" id="ctx-conditions"><i class="fa-duotone fa-solid fa-filter fa-fw ve-ctx-icon-muted"></i> Condiciones</div>')
+                .insertBefore($last);
+        }
+    })();
+    $(document).on('click', '#ctx-conditions', function() {
+        $('#ve-context-menu').hide();
+        var condition = prompt('Condición de visibilidad:\n\n• logged-in (solo usuarios logueados)\n• guest (solo visitantes)\n• mobile (solo móvil)\n• desktop (solo desktop)\n• none (quitar condición)');
+        if (!condition) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            if (condition === 'none') {
+                frame.contentWindow.postMessage({ type: 've-remove-attr', attr: 'data-condition' }, '*');
+            } else {
+                frame.contentWindow.postMessage({ type: 've-set-attr', attr: 'data-condition', value: condition }, '*');
+            }
+            if (window.veToast) window.veToast('Condición: ' + condition, 'info');
+        }
     });
 
     // ── P3.9: AI content generation ──

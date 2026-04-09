@@ -709,6 +709,77 @@
             </div>
         </div>
 
+        {{-- Gradient builder --}}
+        <div class="ve-inspector-section">
+            <div class="ve-section-header collapsed" data-target="ve-sect-gradient">
+                <span>Gradiente</span>
+                <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
+            </div>
+            <div id="ve-sect-gradient" style="display:none; padding:10px 12px;">
+                <div class="ve-gradient-preview" id="ve-gradient-preview"></div>
+                <div class="ve-field">
+                    <label>Dirección</label>
+                    <select class="form-select" id="ve-gradient-direction">
+                        <option value="to bottom">Arriba → Abajo</option>
+                        <option value="to right">Izquierda → Derecha</option>
+                        <option value="to bottom right">Diagonal ↘</option>
+                        <option value="to top right">Diagonal ↗</option>
+                        <option value="135deg">135°</option>
+                        <option value="45deg">45°</option>
+                    </select>
+                </div>
+                <div class="ve-gradient-row">
+                    <input type="color" class="ve-color-picker" id="ve-gradient-color1" value="#b10100">
+                    <label>Color 1</label>
+                </div>
+                <div class="ve-gradient-row">
+                    <input type="color" class="ve-color-picker" id="ve-gradient-color2" value="#333333">
+                    <label>Color 2</label>
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-gradient">Aplicar gradiente</button>
+                <button type="button" class="btn btn-outline-secondary w-100 mt-1" id="btn-clear-gradient">Quitar</button>
+            </div>
+        </div>
+
+        {{-- Box shadow builder --}}
+        <div class="ve-inspector-section">
+            <div class="ve-section-header collapsed" data-target="ve-sect-shadow-builder">
+                <span>Sombra visual</span>
+                <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
+            </div>
+            <div id="ve-sect-shadow-builder" style="display:none; padding:10px 12px;">
+                <div class="ve-shadow-preview" id="ve-shadow-preview"></div>
+                <div class="ve-shadow-row">
+                    <label>X</label>
+                    <input type="range" id="ve-shadow-x" min="-30" max="30" value="0" class="form-range">
+                    <span id="ve-shadow-x-val">0</span>px
+                </div>
+                <div class="ve-shadow-row">
+                    <label>Y</label>
+                    <input type="range" id="ve-shadow-y" min="-30" max="30" value="4" class="form-range">
+                    <span id="ve-shadow-y-val">4</span>px
+                </div>
+                <div class="ve-shadow-row">
+                    <label>Blur</label>
+                    <input type="range" id="ve-shadow-blur" min="0" max="60" value="12" class="form-range">
+                    <span id="ve-shadow-blur-val">12</span>px
+                </div>
+                <div class="ve-shadow-row">
+                    <label>Spread</label>
+                    <input type="range" id="ve-shadow-spread" min="-20" max="20" value="0" class="form-range">
+                    <span id="ve-shadow-spread-val">0</span>px
+                </div>
+                <div class="ve-gradient-row">
+                    <input type="color" class="ve-color-picker" id="ve-shadow-color" value="#000000">
+                    <label>Color</label>
+                    <input type="range" id="ve-shadow-opacity" min="0" max="100" value="15" class="form-range">
+                    <span id="ve-shadow-opacity-val">15</span>%
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-shadow">Aplicar sombra</button>
+                <button type="button" class="btn btn-outline-secondary w-100 mt-1" id="btn-clear-shadow">Quitar</button>
+            </div>
+        </div>
+
         {{-- Motion Effects --}}
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-motion">

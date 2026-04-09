@@ -748,6 +748,80 @@ class VisualEditorController extends Controller
                 break;
             }
 
+            case 've-search-text': {
+                // Highlight text matches in the page
+                var existingHL = document.querySelectorAll('.ve-search-hl');
+                existingHL.forEach(function(el) {
+                    var parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize();
+                });
+                var query = (d.query || '').toLowerCase();
+                if (!query || query.length < 2) { window.parent.postMessage({ type: 've-search-results', count: 0 }, '*'); break; }
+                var walker = document.createTreeWalker(document.querySelector('.ck-content') || document.body, NodeFilter.SHOW_TEXT, null, false);
+                var count = 0;
+                var textNodes = [];
+                while (walker.nextNode()) textNodes.push(walker.currentNode);
+                textNodes.forEach(function(node) {
+                    var text = node.textContent;
+                    var idx = text.toLowerCase().indexOf(query);
+                    if (idx === -1) return;
+                    var span = document.createElement('span');
+                    span.className = 've-search-hl';
+                    span.style.cssText = 'background:#b10100;color:#fff;border-radius:2px;padding:0 1px;';
+                    span.textContent = text.substring(idx, idx + query.length);
+                    var after = document.createTextNode(text.substring(idx + query.length));
+                    var before = document.createTextNode(text.substring(0, idx));
+                    var parent = node.parentNode;
+                    parent.insertBefore(before, node);
+                    parent.insertBefore(span, node);
+                    parent.insertBefore(after, node);
+                    parent.removeChild(node);
+                    count++;
+                });
+                window.parent.postMessage({ type: 've-search-results', count: count }, '*');
+                if (count > 0) {
+                    var first = document.querySelector('.ve-search-hl');
+                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                break;
+            }
+            case 've-clear-search': {
+                document.querySelectorAll('.ve-search-hl').forEach(function(el) {
+                    var parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize();
+                });
+                break;
+            }
+            case 've-search-nav': {
+                var hls = document.querySelectorAll('.ve-search-hl');
+                if (hls.length === 0) break;
+                var currentHL = document.querySelector('.ve-search-hl-active');
+                var arr = Array.from(hls);
+                var cidx = currentHL ? arr.indexOf(currentHL) : -1;
+                if (currentHL) currentHL.classList.remove('ve-search-hl-active');
+                var nidx = d.dir === 'next' ? (cidx + 1) % arr.length : (cidx - 1 + arr.length) % arr.length;
+                arr[nidx].classList.add('ve-search-hl-active');
+                arr[nidx].style.outline = '2px solid #b10100';
+                arr[nidx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                break;
+            }
+            case 've-set-attr': {
+                if (selectedEl && d.attr) {
+                    selectedEl.setAttribute(d.attr, d.value || '');
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
+            case 've-remove-attr': {
+                if (selectedEl && d.attr) {
+                    selectedEl.removeAttribute(d.attr);
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
+
             case 've-apply-global-fonts': {
                 var gfStyle = document.getElementById('ve-global-fonts-style');
                 if (!gfStyle) { gfStyle = document.createElement('style'); gfStyle.id = 've-global-fonts-style'; document.head.appendChild(gfStyle); }
