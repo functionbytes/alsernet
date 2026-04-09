@@ -474,8 +474,11 @@ class PageService
      */
     private function syncRelations(Page $page, array $data): void
     {
-        $this->syncCategories($page, $data['categories'] ?? null);
-        $this->syncTags($page, $data['tags_input'] ?? null);
+        $this->syncCategories($page, $data['categories'] ?? []);
+
+        if (array_key_exists('tags_input', $data)) {
+            $this->syncTags($page, $data['tags_input']);
+        }
     }
 
     /**
@@ -670,12 +673,8 @@ class PageService
      *
      * @param  array<int>|null  $categoryIds
      */
-    private function syncCategories(Page $page, ?array $categoryIds): void
+    private function syncCategories(Page $page, array $categoryIds): void
     {
-        if ($categoryIds === null) {
-            return;
-        }
-
         $page->categories()->sync(array_filter(array_map('intval', $categoryIds)));
     }
 
@@ -684,11 +683,7 @@ class PageService
      */
     private function syncTags(Page $page, ?string $tagsInput): void
     {
-        if ($tagsInput === null) {
-            return;
-        }
-
-        $tagNames = array_filter(array_map('trim', explode(',', $tagsInput)));
+        $tagNames = array_filter(array_map('trim', explode(',', $tagsInput ?? '')));
 
         $tagIds = collect($tagNames)->map(fn (string $name) => PageTag::firstOrCreate(
             ['slug' => Str::slug($name)],

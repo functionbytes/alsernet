@@ -37,29 +37,41 @@
             <div class="card-body border-bottom">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="card bg-light-secondary h-100">
+                        <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title mb-2">Idiomas activos</h6>
-                                <h4 class="mb-1 fw-bold">{{ $locales->count() }}</h4>
-                                <small class="text-muted">Con traducciones disponibles</small>
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div>
+                                        <h6 class="card-title mb-2">Idiomas activos</h6>
+                                        <h4 class="mb-1 fw-bold">{{ $locales->count() }}</h4>
+                                        <small class="text-muted">Con traducciones disponibles</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light-secondary h-100">
+                        <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title mb-2">Grupos</h6>
-                                <h4 class="mb-1 fw-bold">{{ count($groups) }}</h4>
-                                <small class="text-muted">Archivos de traducción</small>
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div>
+                                        <h6 class="card-title mb-2">Grupos</h6>
+                                        <h4 class="mb-1 fw-bold">{{ count($groups) }}</h4>
+                                        <small class="text-muted">Archivos de traducción</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light-secondary h-100">
+                        <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title mb-2">Entradas totales</h6>
-                                <h4 class="mb-1 fw-bold">{{ $locales->count() * count($groups) }}</h4>
-                                <small class="text-muted">Combinaciones idioma × grupo</small>
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div>
+                                        <h6 class="card-title mb-2">Entradas totales</h6>
+                                        <h4 class="mb-1 fw-bold">{{ $locales->count() * count($groups) }}</h4>
+                                        <small class="text-muted">Combinaciones idioma × grupo</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -90,13 +102,8 @@
                                     @foreach ($groups as $group)
                                         <tr>
                                             <td>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="fs-5">{{ $locale->flag }}</span>
-                                                    <div>
-                                                        <div class="fw-semibold">{{ $locale->name }}</div>
-                                                        <small class="text-muted">{{ $locale->native_name }}</small>
-                                                    </div>
-                                                </div>
+                                                <div class="fw-semibold">{{ $locale->name }}</div>
+                                                <small class="text-muted">{{ $locale->native_name }}</small>
                                             </td>
                                             <td>
                                                 <span class="badge bg-light text-dark border">{{ ucfirst($group['name']) }}</span>

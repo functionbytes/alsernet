@@ -32,3 +32,4 @@ auth.json
 # Claude Code - local files (not shared)
 .claude/settings.local.json
 CLAUDE.local.md
+.aider*

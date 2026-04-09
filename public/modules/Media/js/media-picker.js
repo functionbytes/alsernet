@@ -547,7 +547,7 @@ window.MediaPicker = (function ($) {
             _modal = new bootstrap.Modal(document.getElementById('mp-modal'));
         }
 
-        $('#mp-title').html('<i class="fas fa-images me-2 text-primary"></i>' + _cfg.title);
+        $('#mp-title').html(_cfg.title);
         _breadcrumbs = [{ id: null, name: 'Todos los archivos' }];
         _selected    = null;
         _currentTab  = 'all_media';

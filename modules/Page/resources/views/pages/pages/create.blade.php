@@ -448,9 +448,11 @@
                     </div>
                     <div class="card-body">
                         <div id="imagePreviewContainer" class="mb-3">
-                            <div class="text-center py-3 border border-2 border-dashed rounded bg-light">
-                                <i class="fas fa-image fa-2x text-muted mb-1"></i>
-                                <p class="text-muted mb-0">Sin imagen</p>
+                            <div class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light"
+                                 style="min-height:140px; border:2px dashed #dee2e6; cursor:pointer;"
+                                 onclick="document.getElementById('featured_image').click()">
+                                <i class="fas fa-image fa-3x mb-2" style="color:#adb5bd;"></i>
+                                <p class="mb-0 small" style="color:#6c757d;">Haz clic para seleccionar una imagen</p>
                             </div>
                         </div>
                         <input type="file"
@@ -468,61 +470,39 @@
     </form>
 
     {{-- MODAL: Bloques de interfaz de usuario --}}
-    <div class="modal fade" id="uiBlocksModal" tabindex="-1" aria-labelledby="uiBlocksModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="uiBlocksModalLabel">Bloques de interfaz de usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="uiBlocksSearch" placeholder="Buscar...">
-                            <button class="btn btn-outline-secondary" type="button" id="uiBlocksClearSearch">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="row" id="uiBlocksGrid">
-                        @php $uiBlocks = \Modules\Template\Models\Shortcode::active()->get(); @endphp
-                        @forelse($uiBlocks as $block)
-                            <div class="col-xl-3 col-lg-4 col-sm-6 mb-3 ui-block-item"
-                                 data-name="{{ strtolower($block->name) }}">
-                                <div class="card h-100 ui-block-card border" style="cursor:pointer;"
-                                     data-block-key="{{ $block->key }}"
-                                     data-block-name="{{ $block->name }}">
-                                    <div class="card-body text-center py-3">
-                                        <div class="mb-2" style="font-size:2rem; color:#adb5bd;">
-                                            <i class="{{ $block->icon }}"></i>
-                                        </div>
-                                        <h6 class="card-title mb-1 fw-semibold">{{ $block->name }}</h6>
-                                        <p class="card-text text-muted mb-2">{{ $block->description }}</p>
-                                        <button type="button" class="btn btn-sm btn-outline-primary btn-use-block"
-                                                data-block-key="{{ $block->key }}"
-                                                data-block-name="{{ $block->name }}">
-                                            Usar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12 text-center py-4 text-muted">
-                                <i class="fas fa-puzzle-piece fa-2x mb-2 d-block"></i>
-                                No hay bloques definidos.
-                                <a href="{{ route('settings.shortcodes.create') }}">Crear uno</a>
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="useSelectedBlock" disabled>Usar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @php
+        $uiIconMap = [
+            'button' => 'fa-hand-pointer', 'alert' => 'fa-exclamation-circle',
+            'columns' => 'fa-table-columns', 'column' => 'fa-bars', 'youtube' => 'fa-youtube',
+            'image' => 'fa-image', 'icon' => 'fa-icons', 'badge' => 'fa-tag',
+            'card' => 'fa-id-card', 'accordion' => 'fa-layer-group',
+            'accordion-item' => 'fa-list', 'quote' => 'fa-quote-left',
+            'contact-form' => 'fa-envelope', 'form' => 'fa-file-alt',
+            'our-offices' => 'fa-building', 'site-features' => 'fa-star',
+            'reviews' => 'fa-star-half-alt', 'gallery' => 'fa-images',
+            'spacer' => 'fa-arrows-alt-v', 'raw-html' => 'fa-code',
+            'image-gallery' => 'fa-grip', 'video' => 'fa-video',
+            'faq' => 'fa-question-circle', 'testimonials' => 'fa-comments',
+            'cta' => 'fa-bullhorn', 'map' => 'fa-map-marker-alt',
+            'ticker' => 'fa-scroll', 'slider' => 'fa-sliders',
+        ];
+        $uiCatIconMap = [
+            'estructura'  => 'fa-table-columns',
+            'contenido'   => 'fa-pen-nib',
+            'media'       => 'fa-photo-film',
+            'formularios' => 'fa-file-alt',
+            'tema'        => 'fa-palette',
+            'otros'       => 'fa-cubes',
+        ];
+        $uiCategoryLabels = $shortcodeCategories->pluck('label', 'slug');
+        $uiCategorySlugs  = $shortcodeCategories->pluck('slug');
+        $uiGrouped = collect($shortcodes)->groupBy(fn($sc) => $sc['category'] ?? 'otros');
+        $orderedCats = $uiCategorySlugs->filter(fn($s) => $uiGrouped->has($s))
+            ->concat($uiGrouped->keys()->diff($uiCategorySlugs)->values())
+            ->values();
+        $uiTotalBlocks = collect($shortcodes)->count();
+    @endphp
+    @include('theme::partials.ui-blocks-modal')
 
     {{-- MODAL: Configuración de bloque --}}
     <div class="modal fade" id="blockConfigModal" tabindex="-1" aria-hidden="true">
@@ -794,73 +774,132 @@ $(document).ready(function () {
     // =========================================================
     // UI BLOCKS MODAL
     // =========================================================
-    var uiBlocksData = @json($uiBlocks->toArray());
-    var selectedBlockKey = null, selectedBlockName = null;
 
-    $('#uiBlocksSearch').on('input', function () {
-        var q = $(this).val().toLowerCase();
-        $('.ui-block-item').each(function () { $(this).toggle($(this).data('name').includes(q)); });
-    });
-    $('#uiBlocksClearSearch').on('click', function () {
+    // Categoría activa (sidebar buttons + mobile pills)
+    $(document).on('click', '.ui-cat-btn, .ui-cat-pill', function () {
+        var cat = $(this).data('cat');
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('[data-cat="' + cat + '"]').addClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        $('.ui-blocks-pane[data-pane="' + cat + '"]').removeClass('d-none');
         $('#uiBlocksSearch').val('');
+        $('#uiSearchClear').hide();
+        $('#uiSearchMsg').hide();
+        $('#uiEmptySearch').hide();
+    });
+
+    // Búsqueda
+    $('#uiBlocksSearch').on('input', function () {
+        var q = $(this).val().toLowerCase().trim();
+        var $clear = $('#uiSearchClear');
+        var $msg   = $('#uiSearchMsg');
+        var $empty = $('#uiEmptySearch');
+
+        $clear.toggle(q.length > 0);
+
+        if (!q) {
+            $msg.hide();
+            $empty.hide();
+            var activeCat = $('.ui-cat-btn.active, .ui-cat-pill.active').first().data('cat') || '__all__';
+            $('.ui-blocks-pane').addClass('d-none');
+            $('.ui-blocks-pane[data-pane="' + activeCat + '"]').removeClass('d-none');
+            $('.ui-block-item').show();
+            return;
+        }
+
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        var $allPane = $('.ui-blocks-pane[data-pane="__all__"]');
+        $allPane.removeClass('d-none');
+
+        var count = 0;
+        $allPane.find('.ui-block-item').each(function () {
+            var name = $(this).data('name') || '';
+            var cat  = $(this).data('category') || '';
+            var desc = $(this).find('.sc-desc').text().toLowerCase();
+            var match = name.includes(q) || cat.includes(q) || desc.includes(q);
+            $(this).toggle(match);
+            if (match) { count++; }
+        });
+
+        if (count === 0) {
+            $allPane.addClass('d-none');
+            $empty.css('display', 'flex');
+            $msg.hide();
+        } else {
+            $empty.hide();
+            $msg.text(count + ' resultado' + (count !== 1 ? 's' : '') + ' para "' + q + '"').show();
+        }
+    });
+
+    // Botón limpiar búsqueda
+    $('#uiSearchClear').on('click', function () {
+        $('#uiBlocksSearch').val('').trigger('input');
+    });
+
+    // Clic en card → insertar bloque
+    $(document).on('click', '.ui-block-card', function () {
+        openBlockConfig($(this).data('block-key'), $(this).data('block-name'));
+    });
+
+    // Limpiar búsqueda al abrir el modal
+    $('#uiBlocksModal').on('show.bs.modal', function () {
+        $('#uiBlocksSearch').val('');
+        $('#uiSearchClear').hide();
+        $('#uiSearchMsg').hide();
+        $('#uiEmptySearch').hide();
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('[data-cat="__all__"]').addClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        $('.ui-blocks-pane[data-pane="__all__"]').removeClass('d-none');
         $('.ui-block-item').show();
     });
-    $(document).on('click', '.ui-block-card', function () {
-        $('.ui-block-card').removeClass('border-primary');
-        $(this).addClass('border-primary');
-        selectedBlockKey  = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        $('#useSelectedBlock').prop('disabled', false);
-    });
-    $(document).on('dblclick', '.ui-block-card', function () {
-        selectedBlockKey  = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        openBlockConfig(selectedBlockKey, selectedBlockName);
-    });
-    $(document).on('click', '.btn-use-block', function (e) {
-        e.stopPropagation();
-        selectedBlockKey  = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        openBlockConfig(selectedBlockKey, selectedBlockName);
-    });
-    $('#useSelectedBlock').on('click', function () {
-        if (selectedBlockKey) openBlockConfig(selectedBlockKey, selectedBlockName);
-    });
+
+    var uiBlocksData = @json($shortcodes);
 
     function openBlockConfig(key, name) {
+        var block = uiBlocksData.find(function (b) { return b.name === key; });
+        var hasAttrs = block && block.attributes && block.attributes.length;
+        if (!hasAttrs) {
+            insertBlock(key, block);
+            return;
+        }
         $('#uiBlocksModal').modal('hide');
         $('#blockConfigTitle').text('Configurar: ' + name);
-        $('#blockConfigBody').html(getBlockConfigForm(key));
-        $('#insertBlockBtn').off('click').on('click', function () { insertBlock(key); });
+        $('#blockConfigBody').html(getBlockConfigForm(block));
+        $('#insertBlockBtn').off('click').on('click', function () {
+            insertBlock(key, block);
+            $('#blockConfigModal').modal('hide');
+        });
         setTimeout(function () { $('#blockConfigModal').modal('show'); }, 300);
     }
 
-    function getBlockConfigForm(key) {
-        var block = uiBlocksData.find(function (b) { return b.key === key; });
-        if (!block || !block.config_fields || !block.config_fields.length) {
+    function getBlockConfigForm(block) {
+        if (!block || !block.attributes || !block.attributes.length) {
             return '<p class="text-muted">Este bloque no requiere configuración.</p>';
         }
         var html = '';
-        block.config_fields.forEach(function (field) {
-            html += '<div class="mb-3"><label class="form-label fw-semibold">' + field.label + '</label>';
-            if (field.type === 'select' && field.options) {
-                html += '<select class="form-select select2" id="' + field.id + '">';
-                Object.entries(field.options).forEach(function (entry) {
+        block.attributes.forEach(function (attr) {
+            var id = 'attr-' + attr.name;
+            html += '<div class="mb-3"><label class="form-label fw-semibold">' + (attr.label || attr.name) + '</label>';
+            if (attr.type === 'select' && attr.options) {
+                html += '<select class="form-select" id="' + id + '">';
+                Object.entries(attr.options).forEach(function (entry) {
                     html += '<option value="' + entry[0] + '">' + entry[1] + '</option>';
                 });
                 html += '</select>';
-            } else if (field.type === 'textarea') {
-                html += '<textarea class="form-control" id="' + field.id + '" rows="' + (field.rows || 4) + '" placeholder="' + (field.placeholder || '') + '"></textarea>';
+            } else if (attr.type === 'textarea') {
+                html += '<textarea class="form-control" id="' + id + '" rows="4" placeholder="' + (attr.placeholder || '') + '"></textarea>';
             } else {
-                html += '<input type="' + (field.type || 'text') + '" class="form-control" id="' + field.id + '" placeholder="' + (field.placeholder || '') + '">';
+                html += '<input type="' + (attr.type || 'text') + '" class="form-control" id="' + id + '" placeholder="' + (attr.placeholder || '') + '">';
             }
             html += '</div>';
         });
         return html;
     }
 
-    function insertBlock(key) {
-        var shortcode = buildShortcode(key);
+    function insertBlock(key, block) {
+        var shortcode = buildShortcode(key, block);
         var editor = tinymce.get('content-' + activeLocale);
         if (editor) {
             editor.insertContent(shortcode + '\n');
@@ -869,18 +908,18 @@ $(document).ready(function () {
             var pos = ta.selectionStart || ta.value.length;
             ta.value = ta.value.substring(0, pos) + shortcode + '\n' + ta.value.substring(pos);
         }
-        $('#blockConfigModal').modal('hide');
+        $('#uiBlocksModal').modal('hide');
     }
 
-    function buildShortcode(key) {
-        var block = uiBlocksData.find(function (b) { return b.key === key; });
-        if (!block || !block.shortcode_template) { return '[' + key + '][/' + key + ']'; }
-        var result = block.shortcode_template;
-        (block.config_fields || []).forEach(function (field) {
-            var val = ($('#' + field.id).val() || '').replace(/"/g, '&quot;');
-            result = result.replace(new RegExp('\\{' + field.id + '\\}', 'g'), val);
-        });
-        return result;
+    function buildShortcode(key, block) {
+        if (!block || !block.attributes || !block.attributes.length) {
+            return '[' + key + '][/' + key + ']';
+        }
+        var attrs = block.attributes.map(function (attr) {
+            var val = ($('#attr-' + attr.name).val() || '').replace(/"/g, '&quot;');
+            return val ? attr.name + '="' + val + '"' : '';
+        }).filter(Boolean).join(' ');
+        return attrs ? '[' + key + ' ' + attrs + '][/' + key + ']' : '[' + key + '][/' + key + ']';
     }
 
     // =========================================================

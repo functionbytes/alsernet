@@ -19,6 +19,12 @@ Route::middleware(['auth'])->prefix('panel/settings')->group(function () {
 
         Route::prefix('translations')->name('translations.')->group(function () {
             Route::get('/', [ThemeTranslationController::class, 'index'])->name('index');
+            Route::get('/{locale}/{group}/export', [ThemeTranslationController::class, 'export'])->name('export');
+            Route::post('/{locale}/{group}/import', [ThemeTranslationController::class, 'import'])->name('import');
+            Route::post('/{locale}/{group}/bulk', [ThemeTranslationController::class, 'bulkAction'])->name('bulk-action');
+            Route::post('/{locale}/{group}/key', [ThemeTranslationController::class, 'updateKey'])->name('update-key');
+            Route::post('/{locale}/{group}/rename', [ThemeTranslationController::class, 'renameKey'])->name('rename-key');
+            Route::post('/{locale}/{group}/keys', [ThemeTranslationController::class, 'storeKey'])->name('store-key');
             Route::get('/{locale}/{group}', [ThemeTranslationController::class, 'edit'])->name('edit');
             Route::put('/{locale}/{group}', [ThemeTranslationController::class, 'update'])->name('update');
         });

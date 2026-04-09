@@ -46,6 +46,37 @@ class LocalesServiceProvider extends ServiceProvider
             $this->loadTranslationsFrom(module_path($this->name, 'lang'), $this->nameLower);
             $this->loadJsonTranslationsFrom(module_path($this->name, 'lang'));
         }
+
+        // Register active theme translations so __() works in theme views.
+        // Must run after boot AND clear the translator's JSON cache so already-cached
+        // lines (from other modules) are reloaded including the theme's lang files.
+        $this->app->booted(function () {
+            try {
+                $theme = \DB::table('settings')->where('key', 'template')->value('value') ?? 'caixilhariablanco';
+            } catch (\Throwable) {
+                $theme = 'caixilhariablanco';
+            }
+
+            $themeLangPath = base_path("platform/themes/{$theme}/lang");
+
+            if (! is_dir($themeLangPath)) {
+                return;
+            }
+
+            $translator = $this->app['translator'];
+            $translator->getLoader()->addJsonPath($themeLangPath);
+
+            // Clear cached JSON translation lines (namespace=*, group=*) for all
+            // locales so the next __() call reloads with the theme path included.
+            $reflection = new \ReflectionClass($translator);
+            $loadedProp = $reflection->getProperty('loaded');
+            $loadedProp->setAccessible(true);
+            $loaded = $loadedProp->getValue($translator);
+
+            unset($loaded['*']['*']);
+
+            $loadedProp->setValue($translator, $loaded);
+        });
     }
 
     protected function registerConfig(): void

@@ -44,6 +44,11 @@ class WidgetServiceProvider extends ServiceProvider
         $this->registerRepositories();
         $this->registerFactories();
         $this->registerFacades();
+
+        $helpersFile = module_path('Widget', 'helpers/helpers.php');
+        if (file_exists($helpersFile)) {
+            require_once $helpersFile;
+        }
     }
 
     /**

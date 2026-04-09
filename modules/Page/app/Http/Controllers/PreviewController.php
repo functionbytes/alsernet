@@ -145,7 +145,7 @@ class PreviewController extends Controller
         $this->authorize('update', $page);
 
         $tokens = $page->previewTokens()
-            ->with('creator:id,name,email')
+            ->with('creator:id,firstname,lastname,email')
             ->latest()
             ->get()
             ->map(function ($token) {
@@ -158,7 +158,7 @@ class PreviewController extends Controller
                     'is_active' => $token->isActive(),
                     'viewed_count' => $token->viewed_count,
                     'last_viewed_at' => $token->last_viewed_at?->toIso8601String(),
-                    'created_by' => $token->creator?->name,
+                    'created_by' => $token->creator ? trim($token->creator->firstname.' '.$token->creator->lastname) : null,
                     'created_at' => $token->created_at->toIso8601String(),
                 ];
             });

@@ -108,13 +108,8 @@
                                         </td>
                                         <td class="text-muted">{{ $locale->order }}</td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="fs-5">{{ $locale->flag }}</span>
-                                                <div>
-                                                    <div class="fw-semibold">{{ $locale->name }}</div>
-                                                    <small class="text-muted">{{ $locale->native_name }}</small>
-                                                </div>
-                                            </div>
+                                            <div class="fw-semibold">{{ $locale->name }}</div>
+                                            <small class="text-muted">{{ $locale->native_name }}</small>
                                         </td>
                                         <td><code>{{ $locale->code }}</code></td>
                                         <td class="text-center">
@@ -125,14 +120,11 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <div class="form-check form-switch d-inline-block mb-0">
-                                                <input class="form-check-input toggle-active"
-                                                       type="checkbox"
-                                                       role="switch"
-                                                       data-url="{{ route('locales.toggle', $locale) }}"
-                                                       {{ $locale->is_active ? 'checked' : '' }}
-                                                       {{ $locale->is_default ? 'disabled' : '' }}>
-                                            </div>
+                                            @if ($locale->is_active)
+                                                <span class="badge bg-success-subtle text-success">Activo</span>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary">Inactivo</span>
+                                            @endif
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">

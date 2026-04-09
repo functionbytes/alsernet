@@ -21,6 +21,8 @@ use Modules\Page\Models\Page;
 use Modules\Page\Models\PageCategory;
 use Modules\Page\Services\PageService;
 use Modules\Seo\Models\SeoMeta;
+use Modules\Template\Models\Shortcode;
+use Modules\Template\Models\ShortcodeCategory;
 use Modules\Template\Services\TemplateManager;
 
 class PageController extends Controller
@@ -79,7 +81,9 @@ class PageController extends Controller
         $locales = $this->resolveActiveLocales();
         $categories = PageCategory::ordered()->get();
 
-        return view('page::pages.pages.create', compact('page', 'templates', 'statuses', 'locales', 'categories'));
+        [$shortcodes, $shortcodeCategories] = $this->resolveShortcodes();
+
+        return view('page::pages.pages.create', compact('page', 'templates', 'statuses', 'locales', 'categories', 'shortcodes', 'shortcodeCategories'));
     }
 
     /**
@@ -141,7 +145,9 @@ class PageController extends Controller
             ->whereNull('locale')
             ->first();
 
-        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses', 'locales', 'translations', 'categories', 'seoMeta'));
+        [$shortcodes, $shortcodeCategories] = $this->resolveShortcodes();
+
+        return view('page::pages.pages.edit', compact('page', 'templates', 'statuses', 'locales', 'translations', 'categories', 'seoMeta', 'shortcodes', 'shortcodeCategories'));
     }
 
     /**
@@ -441,6 +447,40 @@ class PageController extends Controller
     /**
      * Return active Locale objects, falling back to code-only collection.
      */
+    /**
+     * Resolve registered shortcodes and their categories for the UI blocks modal.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: \Illuminate\Database\Eloquent\Collection}
+     */
+    private function resolveShortcodes(): array
+    {
+        $shortcodes = [];
+
+        try {
+            $shortcodes = app('shortcode')->getRegistered();
+
+            if ($shortcodes) {
+                $dbCategories = Shortcode::query()
+                    ->whereIn('key', array_column($shortcodes, 'name'))
+                    ->pluck('category', 'key')
+                    ->all();
+
+                $shortcodes = array_map(function (array $sc) use ($dbCategories): array {
+                    if (isset($dbCategories[$sc['name']])) {
+                        $sc['category'] = $dbCategories[$sc['name']];
+                    }
+
+                    return $sc;
+                }, $shortcodes);
+            }
+        } catch (\Throwable) {
+        }
+
+        $shortcodeCategories = ShortcodeCategory::active()->get();
+
+        return [$shortcodes, $shortcodeCategories];
+    }
+
     private function resolveActiveLocales(): Collection
     {
         if (class_exists(Locale::class)) {

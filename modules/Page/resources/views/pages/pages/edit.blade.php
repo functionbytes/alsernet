@@ -6,7 +6,6 @@
 
     @include('core::components.card', ['title' => 'Editar página: ' . $page->title])
 
-    @include('core::components.alerts')
 
     {{-- Página bloqueada por otro usuario --}}
     <div id="lockAlert" class="alert alert-warning alert-dismissible fade show" style="display:none;">
@@ -48,17 +47,17 @@
 
                 {{-- Tabs de idiomas --}}
                 <div class="card mb-3">
-                    <div class="card-header border-bottom px-4 pt-3 pb-0">
-                        <ul class="nav nav-tabs card-header-tabs" id="langTabs" role="tablist">
-                            @foreach($locales as $localeObj)
-                                @php $locale = $localeObj->code; $t = $translations->get($locale); @endphp
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link {{ $loop->first ? 'active' : '' }}"
-                                            id="tab-btn-{{ $locale }}"
-                                            data-bs-toggle="tab"
-                                            data-bs-target="#pane-{{ $locale }}"
-                                            data-locale="{{ $locale }}"
-                                            type="button" role="tab">
+                    <ul class="nav nav-tabs border-0 user-profile-tab" id="langTabs" role="tablist">
+                        @foreach($locales as $localeObj)
+                            @php $locale = $localeObj->code; $t = $translations->get($locale); @endphp
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $loop->first ? 'active' : '' }}"
+                                        id="tab-btn-{{ $locale }}"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#pane-{{ $locale }}"
+                                        data-locale="{{ $locale }}"
+                                        type="button" role="tab">
+                                    <span class="d-none d-md-block">
                                         {{ $localeObj->name }}
                                         @php
                                             $hasTitle   = !empty($t?->title);
@@ -66,28 +65,28 @@
                                             $isPublished = $t?->status === 'published';
                                             $isComplete  = $hasTitle && $hasContent;
                                             if ($t && $isPublished && $isComplete) {
-                                                $badge = '<span class="badge bg-success ms-1" style="font-size:.6rem" title="Publicado y completo">●</span>';
+                                                $badge = '<span class="badge bg-success ms-1" title="Publicado y completo">●</span>';
                                             } elseif ($t && $isComplete) {
-                                                $badge = '<span class="badge bg-info ms-1" style="font-size:.6rem" title="Completo, pendiente de publicar">●</span>';
+                                                $badge = '<span class="badge bg-info ms-1" title="Completo, pendiente de publicar">●</span>';
                                             } elseif ($t && ($hasTitle || $hasContent)) {
-                                                $badge = '<span class="badge bg-warning ms-1" style="font-size:.6rem" title="Incompleto: falta título o contenido">◐</span>';
+                                                $badge = '<span class="badge bg-warning ms-1" title="Incompleto: falta título o contenido">◐</span>';
                                             } elseif ($t) {
-                                                $badge = '<span class="badge bg-secondary ms-1" style="font-size:.6rem" title="Borrador sin contenido">○</span>';
+                                                $badge = '<span class="badge bg-secondary ms-1" title="Borrador sin contenido">○</span>';
                                             } else {
-                                                $badge = '<span class="badge bg-danger ms-1" style="font-size:.6rem" title="Sin traducción">✗</span>';
+                                                $badge = '<span class="badge bg-danger ms-1" title="Sin traducción">✗</span>';
                                             }
                                         @endphp
                                         {!! $badge !!}
-                                    </button>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+                                    </span>
+                                </button>
+                            </li>
+                        @endforeach
+                    </ul>
 
                     <div class="tab-content" id="langTabsContent">
                         @foreach($locales as $localeObj)
                             @php $locale = $localeObj->code; $t = $translations->get($locale); @endphp
-                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-3"
+                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-4"
                                  id="pane-{{ $locale }}" role="tabpanel">
 
                                 {{-- Nombre --}}
@@ -118,9 +117,9 @@
                                                name="translations[{{ $locale }}][slug]"
                                                value="{{ old('translations.'.$locale.'.slug', $t?->slug) }}"
                                                placeholder="slug-de-la-pagina">
-                                        <button type="button" class="btn btn-outline-secondary"
+                                        <button type="button" class="btn btn-info"
                                                 onclick="regenerateSlugForLocale('{{ $locale }}')">
-                                            Regenerar
+                                                <i class="fas fa-wand-magic-sparkles"></i>
                                         </button>
                                     </div>
                                     @error('translations.'.$locale.'.slug')
@@ -133,7 +132,7 @@
                                                target="_blank"
                                                class="text-decoration-none small text-muted"
                                                id="view-link-{{ $locale }}">
-                                                <i class="fas fa-external-link-alt me-1"></i>{{ $prefix ? url($prefix.'/'.$slugVal) : url($slugVal) }}
+                                                {{ $prefix ? url($prefix.'/'.$slugVal) : url($slugVal) }}
                                             </a>
                                         </div>
                                     @endif
@@ -156,25 +155,35 @@
 
                                 {{-- Contenido --}}
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold">Contenido</label>
-                                    <div class="d-grid gap-2 mb-2">
-                                        <button type="button" class="btn btn-outline-secondary"
-                                                onclick="toggleEditor('{{ $locale }}')">
-                                            Mostrar/Ocultar Editor
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary add-media-btn"
-                                                data-locale="{{ $locale }}">
-                                            <i class="fas fa-image me-1"></i> Agregar
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary ui-blocks-btn"
-                                                data-locale="{{ $locale }}"
-                                                data-bs-toggle="modal" data-bs-target="#uiBlocksModal">
-                                            <i class="fas fa-th-large me-1"></i> Bloques de interfaz de usuario
-                                        </button>
+                                    <div class="d-flex align-items-start justify-content-between mb-2 gap-2">
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-1">Contenido</h6>
+                                            <p class="text-muted mb-0" >Cuerpo principal de la página. Usa los botones para insertar imágenes o bloques.</p>
+                                        </div>
+                                        <div class="d-flex gap-1 flex-shrink-0 justify-content-center align-items-center">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light border"
+                                                    onclick="toggleEditor('{{ $locale }}')"
+                                                    title="Alternar editor visual / HTML">
+                                                <i class="fas fa-code"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light border add-media-btn"
+                                                    data-locale="{{ $locale }}"
+                                                    title="Insertar imagen desde la galería">
+                                                <i class="fas fa-image"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light border ui-blocks-btn"
+                                                    data-locale="{{ $locale }}"
+                                                    data-bs-toggle="modal" data-bs-target="#uiBlocksModal"
+                                                    title="Insertar bloque de interfaz">
+                                                <i class="fas fa-th-large"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    @include('page::pages.partials.shortcode-help', ['locale' => $locale])
-                                    <div id="editorWrapper-{{ $locale }}">
-                                <textarea id="content-{{ $locale }}"
+                                    <div id="editorWrapper-{{ $locale }}" class="mt-3 d-none">
+                                        <textarea id="content-{{ $locale }}"
                                           name="translations[{{ $locale }}][content]"
                                           class="@error('translations.'.$locale.'.content') is-invalid @enderror">{{ old('translations.'.$locale.'.content', $t?->content) }}</textarea>
                                     </div>
@@ -215,10 +224,6 @@
                                        name="translations[{{ $locale }}][published_at]" data-locale="{{ $locale }}"
                                        value="{{ $tData['published_at'] }}">
                             @endforeach
-
-                            <div class="col-md-12">
-                                <hr class="my-2">
-                            </div>
 
                             {{-- Estilo de encabezado --}}
                             <div class="col-md-12">
@@ -285,10 +290,6 @@
                                 </div>
                             </div>
                             @endif
-
-                            <div class="col-md-12">
-                                <hr class="my-2">
-                            </div>
 
                             {{-- Página padre --}}
                             @php $selectedCategories = old('categories', $page->categories->pluck('id')->toArray()); @endphp
@@ -357,15 +358,16 @@
                                             </button>
                                         </div>
                                     @else
-                                        <div id="featuredImageEmpty" class="text-center py-3 border border-2 border-dashed rounded bg-light">
-                                            <i class="fas fa-image fa-2x text-muted mb-1"></i>
-                                            <p class="text-muted mb-0 small">Sin imagen</p>
+                                        <div id="featuredImageEmpty"
+                                             class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light"
+                                             style="min-height:140px; border:2px dashed #dee2e6; cursor:pointer;"
+                                             onclick="document.getElementById('btn-featured-image-picker').click()">
+                                            <i class="fas fa-image fa-3x mb-2" style="color:#adb5bd;"></i>
+                                            <p class="mb-0 small" style="color:#6c757d;">Haz clic para seleccionar una imagen</p>
                                         </div>
                                     @endif
                                 </div>
-                                <button type="button" id="btn-featured-image-picker" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-photo-video me-1"></i> Seleccionar imagen
-                                </button>
+                                <button type="button" id="btn-featured-image-picker" class="d-none"></button>
                             </div>
 
                         </div>
@@ -471,17 +473,15 @@
                         <h5 class="mb-0 fw-bold">Publicar</h5>
                     </div>
                     <div class="card-body d-grid gap-2">
-                        <button type="submit" form="pageForm" class="btn btn-primary">
+                        <button type="submit" form="pageForm" class="btn btn-info">
                             Guardar
                         </button>
-                        <a href="{{ route('pages.visual-editor', $page) }}?locale={{ $locales->first()?->code }}"
-                           class="btn btn-outline-primary" id="btn-editor-visual">
-                            <i class="fas fa-paint-brush me-1"></i> Abrir editor visual
+                        <a href="{{ route('pages.visual-editor', $page) }}?locale={{ $locales->first()?->code }}" class="btn btn-primary" id="btn-editor-visual">
+                            Editor visual
                         </a>
-                        <a href="{{ route('pages.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('pages.index') }}" class="btn btn-secondary">
                             Cancelar
                         </a>
-                        <hr class="my-1">
                         <a href="#" class="btn btn-outline-secondary" id="btn-ver-pagina" target="_blank">
                             Ver página
                         </a>
@@ -507,16 +507,58 @@
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary w-100">Duplicar página</button>
                         </form>
-                        <button type="button" class="btn btn-outline-info" id="btn-preview">
-                            <i class="fas fa-eye me-1"></i>Vista previa
+                        <button type="button"
+                                class="btn btn-info w-100 delete-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete-modal"
+                                data-url="{{ route('pages.destroy', $page->id) }}">
+                            Eliminar página
                         </button>
-                        <button type="button" class="btn btn-outline-danger" id="deleteBtn">Eliminar página</button>
-                        <form action="{{ route('pages.destroy', $page->id) }}" method="POST" id="deleteForm">
-                            @csrf
-                            @method('DELETE')
-                        </form>
                     </div>
                 </div>
+
+
+
+                {{-- Información --}}
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-0 fw-bold">Información</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Creado</span>
+                            <strong>{{ $page->created_at->format('d/m/Y H:i') }}</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Modificado</span>
+                            <strong>{{ $page->updated_at->format('d/m/Y H:i') }}</strong>
+                        </div>
+                        @if($page->user)
+                            <div class="mb-2">
+                                <span class="text-muted d-block">Autor</span>
+                                <strong>{{ $page->user->full_name ?? $page->user->name }}</strong>
+                            </div>
+                        @endif
+                        @if($page->hasVersions())
+                            <div class="mb-2">
+                                <span class="text-muted d-block">Versiones</span>
+                                <strong>{{ $page->getTotalVersions() }}</strong>
+                            </div>
+                        @endif
+                        @php
+                            $badges = ['published'=>'bg-success-subtle text-success','draft'=>'bg-secondary-subtle text-secondary','pending'=>'bg-warning-subtle text-warning'];
+                            $labels = ['published'=>'Publicado','draft'=>'Borrador','pending'=>'Pendiente'];
+                        @endphp
+                        <div>
+                            <span class="text-muted d-block mb-1">Estado</span>
+                            @php $statusVal = $page->status instanceof \Modules\Page\Enums\PageStatus ? $page->status->value : $page->status; @endphp
+                            <span class="badge {{ $badges[$statusVal] ?? 'bg-secondary-subtle text-secondary' }}">
+                                {{ $labels[$statusVal] ?? $statusVal }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
 
                 {{-- SEO --}}
                 <div class="card mb-3">
@@ -544,25 +586,19 @@
                             @endphp
 
                             @if($seoScore)
-                            <div class="card {{ $sBg }} shadow-none mb-3">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded d-flex align-items-center justify-content-center {{ $sIbg }}"
-                                             style="width:40px;height:40px;flex-shrink:0;">
-                                            <i class="fas fa-search"></i>
-                                        </div>
-                                        <h6 class="mb-0 ms-3 fw-semibold">Score SEO</h6>
-                                        <div class="ms-auto d-flex align-items-center {{ $sTxt }}">
-                                            <i class="fas {{ $seoScore >= 60 ? 'fa-arrow-up' : 'fa-arrow-down' }} me-1" style="font-size:0.8rem;"></i>
-                                            <span class="fw-bold fs-5">{{ $seoScore }}/100</span>
+                                <div class="rounded-3 p-3 mb-3 d-flex align-items-center justify-content-between {{ $sBg }}">
+                                    <div>
+                                        <div class="text-muted small mb-1">Score SEO</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-bold fs-4 {{ $sTxt }}">{{ $seoScore }}<span class="fs-6 fw-normal text-muted">/100</span></span>
+                                            <span class="badge {{ $sIbg }}">{{ $sLabel }}</span>
                                         </div>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between mt-3">
-                                        <h4 class="mb-0 fw-semibold">Grado {{ $seoGrade }}</h4>
-                                        <span class="badge {{ $sIbg }}">{{ $sLabel }}</span>
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 {{ $sTxt }}"
+                                         style="width:52px;height:52px;border:3px solid currentColor;opacity:.85;">
+                                        {{ $seoGrade }}
                                     </div>
                                 </div>
-                            </div>
                             @endif
 
                             <div class="card shadow-none mb-0">
@@ -573,9 +609,8 @@
                                         <dt class="text-muted fw-normal mb-1">Descripción</dt>
                                         <dd class="text-muted mb-0" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ $seoMeta->description ?: '—' }}</dd>
                                     </dl>
-                                    <a href="{{ route('setting.seo.metas.edit', $seoMeta) }}"
-                                       class="btn btn-outline-primary w-100">
-                                        <i class="fas fa-edit me-1"></i>Editar SEO
+                                    <a href="{{ route('setting.seo.metas.edit', $seoMeta) }}" class="btn btn-info w-100">
+                                        Editar SEO
                                     </a>
                                 </div>
                             </div>
@@ -588,46 +623,6 @@
 
 
 
-                {{-- Información --}}
-                <div class="card mb-3">
-                    <div class="card-header p-3 bg-white border-bottom">
-                        <h5 class="mb-0 fw-bold">Información</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Creado</small>
-                            <strong>{{ $page->created_at->format('d/m/Y H:i') }}</strong>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Modificado</small>
-                            <strong>{{ $page->updated_at->format('d/m/Y H:i') }}</strong>
-                        </div>
-                        @if($page->user)
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Autor</small>
-                                <strong>{{ $page->user->full_name ?? $page->user->name }}</strong>
-                            </div>
-                        @endif
-                        @if($page->hasVersions())
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Versiones</small>
-                                <strong>{{ $page->getTotalVersions() }}</strong>
-                            </div>
-                        @endif
-                        @php
-                            $badges = ['published'=>'bg-success-subtle text-success','draft'=>'bg-secondary-subtle text-secondary','pending'=>'bg-warning-subtle text-warning'];
-                            $labels = ['published'=>'Publicado','draft'=>'Borrador','pending'=>'Pendiente'];
-                        @endphp
-                        <div>
-                            <small class="text-muted d-block mb-1">Estado</small>
-                            @php $statusVal = $page->status instanceof \Modules\Page\Enums\PageStatus ? $page->status->value : $page->status; @endphp
-                            <span class="badge {{ $badges[$statusVal] ?? 'bg-secondary-subtle text-secondary' }}">
-                                {{ $labels[$statusVal] ?? $statusVal }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- DeepL Traducción automática --}}
                 @if(count($locales) > 1)
                     <div class="card mb-3">
@@ -637,9 +632,9 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <p class="small text-muted mb-2">Traduce el contenido de la página al idioma seleccionado usando DeepL.</p>
+                            <p class=" text-muted mb-2">Traduce el contenido de la página al idioma seleccionado usando DeepL.</p>
                             <div class="mb-2">
-                                <label for="page-deepl-target-lang" class="form-label small">Idioma destino</label>
+                                <label for="page-deepl-target-lang" class="form-label ">Idioma destino</label>
                                 <select id="page-deepl-target-lang" class="form-select select2">
                                     @foreach($locales as $localeObj)
                                         <option value="{{ $localeObj->code }}">{{ $localeObj->name }}</option>
@@ -650,7 +645,7 @@
                         </div>
 
                         <div class="card-footer"> <div class="d-grid gap-2">
-                                <button type="button" id="btn-page-deepl-translate" class="btn btn-outline-primary">
+                                <button type="button" id="btn-page-deepl-translate" class="btn btn-info">
                                     Traducir idioma seleccionado
                                     <span id="page-deepl-spinner" class="spinner-border spinner-border-sm ms-1 d-none"></span>
                                 </button>
@@ -671,16 +666,15 @@
                     <div class="card-body" id="performance-results">
                         <div class="text-center text-muted py-3">
                             <i class="fas fa-tachometer-alt fa-2x mb-2 d-block"></i>
-                            <small>Haz clic en "Analizar" para obtener métricas de Google PageSpeed</small>
+                            <span>Haz clic en "Analizar" para obtener métricas de Google PageSpeed</span>
                         </div>
                     </div>
                     <div class="card-footer" >
-                     
-                            <a href="{{ route('pages.analytics.view', $page->id) }}" class="btn btn-outline-primary w-100 mb-1">
-                                <i class="fas fa-chart-bar me-1"></i>Analytics
+                            <a href="{{ route('pages.analytics.view', $page->id) }}" class="btn btn-info w-100 mb-1">
+                                Analytics
                             </a>
                             <button type="button" class="btn btn-outline-secondary w-100" id="btn-scan-performance">
-                                <i class="fas fa-sync-alt me-1"></i>Analizar
+                                Analizar
                             </button>
                         </div>
                     </div>
@@ -692,63 +686,39 @@
     </form>
 
     {{-- MODAL: Bloques de interfaz de usuario --}}
-    <div class="modal fade" id="uiBlocksModal" tabindex="-1" aria-labelledby="uiBlocksModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="uiBlocksModalLabel">Bloques de interfaz de usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-
-                    {{-- Búsqueda --}}
-                    <div class="mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="uiBlocksSearch" placeholder="Buscar...">
-                            <button class="btn btn-outline-secondary" type="button" id="uiBlocksClearSearch">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Grid de bloques --}}
-                    @php $uiBlocks = \Modules\Template\Models\Shortcode::active()->get(); @endphp
-                    <div class="row" id="uiBlocksGrid">
-                        @forelse($uiBlocks as $block)
-                            <div class="col-xl-3 col-lg-4 col-sm-6 mb-3 ui-block-item" data-name="{{ strtolower($block->name) }}">
-                                <div class="card h-100 ui-block-card border" style="cursor:pointer;"
-                                     data-block-key="{{ $block->key }}"
-                                     data-block-name="{{ $block->name }}">
-                                    <div class="card-body text-center py-3">
-                                        <div class="mb-2" style="font-size:2rem; color:#adb5bd;">
-                                            <i class="{{ $block->icon }}"></i>
-                                        </div>
-                                        <h6 class="card-title mb-1 fw-semibold">{{ $block->name }}</h6>
-                                        <p class="card-text  text-muted mb-2">{{ $block->description }}</p>
-                                        <button type="button" class="btn btn-sm btn-outline-primary btn-use-block"
-                                                data-block-key="{{ $block->key }}"
-                                                data-block-name="{{ $block->name }}">
-                                            Usar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12">
-                                <p class="text-muted text-center py-4">No hay shortcodes configurados. <a href="{{ route('settings.shortcodes.create') }}">Crear uno</a>.</p>
-                            </div>
-                        @endforelse
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="useSelectedBlock" disabled>Usar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @php
+        $uiIconMap = [
+            'button' => 'fa-hand-pointer', 'alert' => 'fa-exclamation-circle',
+            'columns' => 'fa-table-columns', 'column' => 'fa-bars', 'youtube' => 'fa-youtube',
+            'image' => 'fa-image', 'icon' => 'fa-icons', 'badge' => 'fa-tag',
+            'card' => 'fa-id-card', 'accordion' => 'fa-layer-group',
+            'accordion-item' => 'fa-list', 'quote' => 'fa-quote-left',
+            'contact-form' => 'fa-envelope', 'form' => 'fa-file-alt',
+            'our-offices' => 'fa-building', 'site-features' => 'fa-star',
+            'reviews' => 'fa-star-half-alt', 'gallery' => 'fa-images',
+            'spacer' => 'fa-arrows-alt-v', 'raw-html' => 'fa-code',
+            'image-gallery' => 'fa-grip', 'video' => 'fa-video',
+            'faq' => 'fa-question-circle', 'testimonials' => 'fa-comments',
+            'cta' => 'fa-bullhorn', 'map' => 'fa-map-marker-alt',
+            'ticker' => 'fa-scroll', 'slider' => 'fa-sliders',
+        ];
+        $uiCatIconMap = [
+            'estructura'  => 'fa-table-columns',
+            'contenido'   => 'fa-pen-nib',
+            'media'       => 'fa-photo-film',
+            'formularios' => 'fa-file-alt',
+            'tema'        => 'fa-palette',
+            'otros'       => 'fa-cubes',
+        ];
+        $uiCategoryLabels = $shortcodeCategories->pluck('label', 'slug');
+        $uiCategorySlugs  = $shortcodeCategories->pluck('slug');
+        $uiGrouped = collect($shortcodes)->groupBy(fn($sc) => $sc['category'] ?? 'otros');
+        $orderedCats = $uiCategorySlugs->filter(fn($s) => $uiGrouped->has($s))
+            ->concat($uiGrouped->keys()->diff($uiCategorySlugs)->values())
+            ->values();
+        $uiTotalBlocks = collect($shortcodes)->count();
+    @endphp
+    @include('theme::partials.ui-blocks-modal')
 
     {{-- MODAL: Configuración de bloque seleccionado --}}
     <div class="modal fade" id="blockConfigModal" tabindex="-1" aria-hidden="true">
@@ -813,6 +783,8 @@
             </div>
         </div>
     </div>
+
+    @include('core::components.delete')
 
 @endsection
 
@@ -1012,90 +984,135 @@ $(document).ready(function () {
     // =========================================================
     // UI BLOCKS MODAL
     // =========================================================
-    var selectedBlockKey = null;
-    var selectedBlockName = null;
+
+    // Categoría activa (sidebar buttons + mobile pills)
+    $(document).on('click', '.ui-cat-btn, .ui-cat-pill', function () {
+        var cat = $(this).data('cat');
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('[data-cat="' + cat + '"]').addClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        $('.ui-blocks-pane[data-pane="' + cat + '"]').removeClass('d-none');
+        $('#uiBlocksSearch').val('');
+        $('#uiSearchClear').hide();
+        $('#uiSearchMsg').hide();
+        $('#uiEmptySearch').hide();
+    });
 
     // Búsqueda
     $('#uiBlocksSearch').on('input', function () {
-        var q = $(this).val().toLowerCase();
-        $('.ui-block-item').each(function () {
-            $(this).toggle($(this).data('name').includes(q));
+        var q = $(this).val().toLowerCase().trim();
+        var $clear = $('#uiSearchClear');
+        var $msg   = $('#uiSearchMsg');
+        var $empty = $('#uiEmptySearch');
+
+        $clear.toggle(q.length > 0);
+
+        if (!q) {
+            $msg.hide();
+            $empty.hide();
+            var activeCat = $('.ui-cat-btn.active, .ui-cat-pill.active').first().data('cat') || '__all__';
+            $('.ui-blocks-pane').addClass('d-none');
+            $('.ui-blocks-pane[data-pane="' + activeCat + '"]').removeClass('d-none');
+            $('.ui-block-item').show();
+            return;
+        }
+
+        // Durante búsqueda: mostrar pane __all__ con filtro
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        var $allPane = $('.ui-blocks-pane[data-pane="__all__"]');
+        $allPane.removeClass('d-none');
+
+        var count = 0;
+        $allPane.find('.ui-block-item').each(function () {
+            var name = $(this).data('name') || '';
+            var cat  = $(this).data('category') || '';
+            var desc = $(this).find('.sc-desc').text().toLowerCase();
+            var match = name.includes(q) || cat.includes(q) || desc.includes(q);
+            $(this).toggle(match);
+            if (match) { count++; }
         });
-    });
-    $('#uiBlocksClearSearch').on('click', function () {
-        $('#uiBlocksSearch').val('');
-        $('.ui-block-item').show();
-    });
 
-    // Selección de bloque (clic en card)
-    $(document).on('click', '.ui-block-card', function () {
-        $('.ui-block-card').removeClass('border-primary');
-        $(this).addClass('border-primary');
-        selectedBlockKey = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        $('#useSelectedBlock').prop('disabled', false);
-    });
-
-    // Doble clic → usar directamente
-    $(document).on('dblclick', '.ui-block-card', function () {
-        selectedBlockKey = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        openBlockConfig(selectedBlockKey, selectedBlockName);
-    });
-
-    // Botón "Usar" en card
-    $(document).on('click', '.btn-use-block', function (e) {
-        e.stopPropagation();
-        selectedBlockKey = $(this).data('block-key');
-        selectedBlockName = $(this).data('block-name');
-        openBlockConfig(selectedBlockKey, selectedBlockName);
-    });
-
-    // Botón "Usar" en footer del modal
-    $('#useSelectedBlock').on('click', function () {
-        if (selectedBlockKey) {
-            openBlockConfig(selectedBlockKey, selectedBlockName);
+        if (count === 0) {
+            $allPane.addClass('d-none');
+            $empty.css('display', 'flex');
+            $msg.hide();
+        } else {
+            $empty.hide();
+            $msg.text(count + ' resultado' + (count !== 1 ? 's' : '') + ' para "' + q + '"').show();
         }
     });
 
+    // Botón limpiar búsqueda
+    $('#uiSearchClear').on('click', function () {
+        $('#uiBlocksSearch').val('').trigger('input');
+    });
+
+    // Clic en card → insertar bloque
+    $(document).on('click', '.ui-block-card', function () {
+        openBlockConfig($(this).data('block-key'), $(this).data('block-name'));
+    });
+
+    // Limpiar búsqueda al abrir el modal
+    $('#uiBlocksModal').on('show.bs.modal', function () {
+        $('#uiBlocksSearch').val('');
+        $('#uiSearchClear').hide();
+        $('#uiSearchMsg').hide();
+        $('#uiEmptySearch').hide();
+        $('.ui-cat-btn, .ui-cat-pill').removeClass('active');
+        $('[data-cat="__all__"]').addClass('active');
+        $('.ui-blocks-pane').addClass('d-none');
+        $('.ui-blocks-pane[data-pane="__all__"]').removeClass('d-none');
+        $('.ui-block-item').show();
+    });
+
+    var uiBlocksData = @json($shortcodes);
+
     function openBlockConfig(key, name) {
+        var block = uiBlocksData.find(function (b) { return b.name === key; });
+        var hasAttrs = block && block.attributes && block.attributes.length;
+        if (!hasAttrs) {
+            insertBlock(key, block);
+            return;
+        }
         $('#uiBlocksModal').modal('hide');
         $('#blockConfigTitle').text('Configurar: ' + name);
-        $('#blockConfigBody').html(getBlockConfigForm(key));
+        $('#blockConfigBody').html(getBlockConfigForm(block));
         $('#insertBlockBtn').off('click').on('click', function () {
-            insertBlock(key);
+            insertBlock(key, block);
+            $('#blockConfigModal').modal('hide');
         });
         setTimeout(function () {
             $('#blockConfigModal').modal('show');
         }, 300);
     }
 
-    function getBlockConfigForm(key) {
-        var block = uiBlocksData.find(function (b) { return b.key === key; });
-        if (!block || !block.config_fields || !block.config_fields.length) {
+    function getBlockConfigForm(block) {
+        if (!block || !block.attributes || !block.attributes.length) {
             return '<p class="text-muted">Este bloque no requiere configuración.</p>';
         }
         var html = '';
-        block.config_fields.forEach(function (field) {
-            html += '<div class="mb-3"><label class="form-label fw-semibold">' + field.label + '</label>';
-            if (field.type === 'select' && field.options) {
-                html += '<select class="form-select select2" id="' + field.id + '">';
-                Object.entries(field.options).forEach(function (entry) {
+        block.attributes.forEach(function (attr) {
+            var id = 'attr-' + attr.name;
+            html += '<div class="mb-3"><label class="form-label fw-semibold">' + (attr.label || attr.name) + '</label>';
+            if (attr.type === 'select' && attr.options) {
+                html += '<select class="form-select" id="' + id + '">';
+                Object.entries(attr.options).forEach(function (entry) {
                     html += '<option value="' + entry[0] + '">' + entry[1] + '</option>';
                 });
                 html += '</select>';
-            } else if (field.type === 'textarea') {
-                html += '<textarea class="form-control" id="' + field.id + '" rows="' + (field.rows || 4) + '" placeholder="' + (field.placeholder || '') + '"></textarea>';
+            } else if (attr.type === 'textarea') {
+                html += '<textarea class="form-control" id="' + id + '" rows="4" placeholder="' + (attr.placeholder || '') + '"></textarea>';
             } else {
-                html += '<input type="' + (field.type || 'text') + '" class="form-control" id="' + field.id + '" placeholder="' + (field.placeholder || '') + '">';
+                html += '<input type="' + (attr.type || 'text') + '" class="form-control" id="' + id + '" placeholder="' + (attr.placeholder || '') + '">';
             }
             html += '</div>';
         });
         return html;
     }
 
-    function insertBlock(key) {
-        var shortcode = buildShortcode(key);
+    function insertBlock(key, block) {
+        var shortcode = buildShortcode(key, block);
         var editor = tinymce.get('content-' + activeLocale);
         if (editor) {
             editor.insertContent(shortcode + '\n');
@@ -1104,18 +1121,18 @@ $(document).ready(function () {
             var pos = ta.selectionStart || ta.value.length;
             ta.value = ta.value.substring(0, pos) + shortcode + '\n' + ta.value.substring(pos);
         }
-        $('#blockConfigModal').modal('hide');
+        $('#uiBlocksModal').modal('hide');
     }
 
-    function buildShortcode(key) {
-        var block = uiBlocksData.find(function (b) { return b.key === key; });
-        if (!block || !block.shortcode_template) { return '[' + key + '][/' + key + ']'; }
-        var result = block.shortcode_template;
-        (block.config_fields || []).forEach(function (field) {
-            var val = ($('#' + field.id).val() || '').replace(/"/g, '&quot;');
-            result = result.replace(new RegExp('\\{' + field.id + '\\}', 'g'), val);
-        });
-        return result;
+    function buildShortcode(key, block) {
+        if (!block || !block.attributes || !block.attributes.length) {
+            return '[' + key + '][/' + key + ']';
+        }
+        var attrs = block.attributes.map(function (attr) {
+            var val = ($('#attr-' + attr.name).val() || '').replace(/"/g, '&quot;');
+            return val ? attr.name + '="' + val + '"' : '';
+        }).filter(Boolean).join(' ');
+        return attrs ? '[' + key + ' ' + attrs + '][/' + key + ']' : '[' + key + '][/' + key + ']';
     }
 
     // =========================================================
@@ -1162,11 +1179,6 @@ $(document).ready(function () {
     $(document).on('click', '#btn-remove-featured-image', function () {
         clearFeaturedImage();
     });
-
-    // =========================================================
-    // UI BLOCKS DATA
-    // =========================================================
-    var uiBlocksData = @json($uiBlocks->toArray());
 
     // =========================================================
     // PREVIEW TOKEN
@@ -1230,10 +1242,8 @@ $(document).ready(function () {
     // =========================================================
     // DELETE
     // =========================================================
-    $('#deleteBtn').on('click', function () {
-        if (confirm('¿Eliminar esta página?\n\nEsta acción no se puede deshacer.')) {
-            $('#deleteForm').submit();
-        }
+    $('.delete-btn').on('click', function () {
+        $('#delete-form').attr('action', $(this).data('url'));
     });
 
     // Toastr flash
@@ -1250,12 +1260,7 @@ $(document).ready(function () {
     var pageId = {{ $page->id }};
     var autoSaveTimeout;
     var autoSaveUrl = '{{ route('api.pages.auto-save', $page->id) }}';
-    var autoSaveIndicator = '<span id="autoSaveIndicator" class="ms-2 badge bg-info"><i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...</span>';
     var lastSavedData = {};
-
-    if ($('#autoSaveIndicator').length === 0) {
-        $('#pageForm .btn-primary:first').after(autoSaveIndicator);
-    }
 
     function collectAutoSaveData() {
         var data = {
@@ -1283,9 +1288,6 @@ $(document).ready(function () {
             return;
         }
 
-        var $indicator = $('#autoSaveIndicator');
-        $indicator.html('<i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...').removeClass('bg-success').addClass('bg-info');
-
         $.ajax({
             url: autoSaveUrl,
             method: 'PATCH',
@@ -1298,20 +1300,12 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     lastSavedData = currentData;
-                    $indicator.html('<i class="fas fa-check me-1"></i>Guardado ' + (new Date().toLocaleTimeString())).removeClass('bg-info').addClass('bg-success');
-                    setTimeout(function () {
-                        $indicator.fadeOut(300, function () { $(this).html('').fadeIn(); });
-                    }, 3000);
+                    toastr.success('Guardado ' + (new Date().toLocaleTimeString()), 'Auto-guardado', { timeOut: 2000, positionClass: 'toast-bottom-right' });
                 }
             },
             error: function (xhr) {
                 console.error('Error en auto-save:', xhr);
-                $indicator.html('<i class="fas fa-exclamation-triangle me-1"></i>Error al guardar').removeClass('bg-info').addClass('bg-danger');
-                setTimeout(function () {
-                    $indicator.fadeOut(300, function () {
-                        $(this).html('<i class="fas fa-sync-alt fa-spin me-1"></i>Auto-guardando...').removeClass('bg-danger').addClass('bg-info').fadeIn();
-                    });
-                }, 5000);
+                toastr.error('No se pudo auto-guardar', 'Error', { timeOut: 4000, positionClass: 'toast-bottom-right' });
             }
         });
     }
@@ -1581,7 +1575,10 @@ function regenerateSlugForLocale(locale) {
 }
 
 function toggleEditor(locale) {
-    $('#editorWrapper-' + locale).toggle();
+    var $wrapper = $('#editorWrapper-' + locale);
+    var $btn = $('[onclick="toggleEditor(\'' + locale + '\')"]');
+    $wrapper.toggleClass('d-none');
+    $btn.toggleClass('active btn-secondary btn-light');
 }
 
 // =========================================================

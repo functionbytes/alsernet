@@ -25,6 +25,7 @@ window.MediaPicker = (function ($) {
     var _selected    = null;
     var _searchTimer = null;
     var _currentTab  = 'all_media';
+    var _typeFilter  = 'all';
     var _dragCounter = 0;
 
     /* ── Helpers ────────────────────────────────────────────── */
@@ -78,41 +79,45 @@ window.MediaPicker = (function ($) {
 
     /* ── Card rendering ─────────────────────────────────────── */
     function _renderFileCard(file) {
-        var fullUrl = file.public_url || (_cfg.urls.base + '/' + file.url.replace(/^media\//, ''));
-        var isImage = file.type === 'image';
-        var thumb   = isImage
-            ? '<img src="' + fullUrl + '" alt="' + file.name + '" class="card-img-top" style="height:140px; object-fit:cover;" loading="lazy">'
-            : '<div class="d-flex align-items-center justify-content-center bg-light" style="height:140px;"><i class="' + _iconClass(file.type) + ' fa-2x"></i></div>';
-
-        var ext      = _ext(file.name);
-        var sizeText = file.human_size || file.size_human || '';
+        var fullUrl  = file.public_url || (_cfg.urls.base + '/' + file.url.replace(/^media\//, ''));
+        var isImage  = file.type === 'image';
         var safeName = $('<div>').text(file.name).html();
         var safeUrl  = $('<div>').text(fullUrl).html();
+        var ext      = _ext(file.name);
+        var sizeText = file.human_size || file.size_human || '';
 
-        return '<div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 col-6">' +
-            '<div class="card mp-file rounded-2 position-relative border" style="cursor:pointer;"' +
+        var thumbHtml = isImage
+            ? '<img src="' + fullUrl + '" alt="' + safeName + '" class="mp-file-thumb" loading="lazy">'
+            : '<div class="mp-file-icon-area d-flex align-items-center justify-content-center"><i class="' + _iconClass(file.type) + ' fa-2x"></i></div>';
+
+        var metaLine = sizeText + (ext ? ' &bull; ' + ext : '');
+
+        return '<div class="col-xl-3 col-lg-4 col-md-4 col-6">' +
+            '<div class="mp-file position-relative"' +
             ' data-full-url="' + safeUrl + '"' +
             ' data-url="' + $('<div>').text(file.url).html() + '"' +
             ' data-name="' + safeName + '"' +
             ' data-type="' + (file.type || '') + '">' +
-            '<div class="position-relative overflow-hidden rounded-top">' + thumb + '</div>' +
-            '<div class="card-body p-2 px-3">' +
-            '<p class="fw-semibold mb-1 text-truncate small" title="' + safeName + '">' + safeName + '</p>' +
-            '<div class="d-flex align-items-center justify-content-between">' +
-            '<span class="text-muted" style="font-size:11px;">' + sizeText + '</span>' +
-            '<span class="badge bg-primary-subtle text-primary" style="font-size:10px;">' + ext + '</span>' +
-            '</div></div></div></div>';
+            '<div class="mp-check"><i class="fas fa-check"></i></div>' +
+            '<div class="mp-select-circle"></div>' +
+            '<div class="position-relative overflow-hidden">' + thumbHtml + '</div>' +
+            '<div class="mp-file-info">' +
+            '<p class="mp-file-name text-truncate mb-0" title="' + safeName + '">' + safeName + '</p>' +
+            '<p class="mp-file-size">' + metaLine + '</p>' +
+            '</div>' +
+            '</div></div>';
     }
 
     function _renderFolderCard(folder) {
         var safeName = $('<div>').text(folder.name).html();
-        return '<div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 col-6">' +
-            '<div class="card mp-folder rounded-2 border" style="cursor:pointer;"' +
-            ' data-id="' + folder.id + '" data-name="' + safeName + '">' +
-            '<div class="d-flex align-items-center justify-content-center bg-warning-subtle" style="height:100px;">' +
-            '<i class="fas fa-folder fa-3x text-warning"></i></div>' +
-            '<div class="card-body p-2 px-3">' +
-            '<p class="fw-semibold mb-0 text-truncate small" title="' + safeName + '">' + safeName + '</p>' +
+        var count    = folder.files_count || '';
+        return '<div class="col-xl-3 col-lg-4 col-md-4 col-6">' +
+            '<div class="mp-folder" data-id="' + folder.id + '" data-name="' + safeName + '">' +
+            '<div class="mp-folder-icon-area d-flex align-items-center justify-content-center">' +
+            '<i class="fas fa-folder mp-folder-icon"></i></div>' +
+            '<div class="mp-file-info">' +
+            '<p class="mp-file-name text-truncate mb-0" title="' + safeName + '">' + safeName + '</p>' +
+            (count ? '<p class="mp-file-size">' + count + ' archivos</p>' : '<p class="mp-file-size">&nbsp;</p>') +
             '</div></div></div>';
     }
 
@@ -122,7 +127,7 @@ window.MediaPicker = (function ($) {
         _hideDetail();
         _updateUploadContext();
         $('#mp-insert-btn').prop('disabled', true);
-        $('#mp-selected-name').text('Ningún archivo seleccionado');
+        $('#mp-selected-name').html('<i class="fas fa-image me-1 opacity-50"></i>Ningún archivo seleccionado');
         $('#mp-grid').html(
             '<div class="col-12 text-center py-5">' +
             '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>' +
@@ -142,6 +147,8 @@ window.MediaPicker = (function ($) {
                 var files = data.files || [];
                 if (_cfg.filter === 'image') {
                     files = files.filter(function (f) { return f.type === 'image'; });
+                } else if (_typeFilter !== 'all') {
+                    files = files.filter(function (f) { return f.type === _typeFilter; });
                 }
                 $.each(files, function (_, f) { html += _renderFileCard(f); });
 
@@ -179,18 +186,22 @@ window.MediaPicker = (function ($) {
 
     /* ── Detail panel ───────────────────────────────────────── */
     function _showDetail(file) {
-        var isImage = file.type === 'image';
-        var thumb   = isImage
-            ? '<img src="' + file.fullUrl + '" class="img-fluid" style="max-height:130px; object-fit:contain;">'
-            : '<i class="' + _iconClass(file.type) + ' fa-3x"></i>';
-        $('#mp-detail-preview').html(thumb);
+        var isImage  = file.type === 'image';
+        var safeName = $('<div>').text(file.name).html();
+        var ext      = _ext(file.name);
+        var sizeText = file.human_size || file.size_human || '';
 
-        var ext = _ext(file.name);
-        $('#mp-detail-meta').html(
-            '<p class="fw-semibold mb-1 small text-truncate" title="' + $('<div>').text(file.name).html() + '">' +
-            $('<div>').text(file.name).html() + '</p>' +
-            '<span class="badge bg-primary-subtle text-primary">' + ext + '</span>'
-        );
+        var thumbHtml = isImage
+            ? '<img src="' + file.fullUrl + '" class="mp-detail-img">'
+            : '<i class="' + _iconClass(file.type) + ' fa-3x p-4"></i>';
+        $('#mp-detail-preview').html(thumbHtml);
+
+        var metaHtml = '';
+        metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Nombre</dt><dd class="mb-0 text-truncate ms-2" title="' + safeName + '">' + safeName + '</dd></div>';
+        if (ext)      metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Tipo</dt><dd class="mb-0">' + ext + '</dd></div>';
+        if (sizeText) metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Tamaño</dt><dd class="mb-0">' + sizeText + '</dd></div>';
+        $('#mp-detail-meta-dl').html(metaHtml);
+        $('#mp-detail-meta').html('');
 
         $('#mp-detail-url').val(file.fullUrl);
 
@@ -204,7 +215,7 @@ window.MediaPicker = (function ($) {
 
     function _hideDetail() {
         $('#mp-detail').addClass('d-none').removeClass('d-flex');
-        $('#mp-detail-preview, #mp-detail-meta').html('');
+        $('#mp-detail-preview, #mp-detail-meta, #mp-detail-meta-dl').html('');
         $('#mp-detail-url, #mp-detail-code').val('');
     }
 
@@ -344,13 +355,12 @@ window.MediaPicker = (function ($) {
         _selected    = null;
         _hideDetail();
         $('#mp-insert-btn').prop('disabled', true);
-        $('#mp-selected-name').text('Ningún archivo seleccionado');
+        $('#mp-selected-name').html('<i class="fas fa-image me-1 opacity-50"></i>Ningún archivo seleccionado');
         $('#mp-search').val('');
+        $('#mp-search-clear').hide();
 
         $('#mp-sidebar-tabs .mp-tab-btn').each(function () {
-            var active = $(this).data('view') === view;
-            $(this).toggleClass('active bg-primary text-white', active)
-                   .toggleClass('text-dark', !active);
+            $(this).toggleClass('active', $(this).data('view') === view);
         });
         $('#mp-breadcrumb').toggle(view === 'all_media');
         _loadItems(null, '', 1);
@@ -436,19 +446,19 @@ window.MediaPicker = (function ($) {
         /* Drag & drop */
         $(document).on('dragenter', '#mp-dropzone', function (e) {
             e.preventDefault(); _dragCounter++;
-            $(this).find('.upload-zone-modern').css({ 'border-color': '#90bb13', 'background': '#e8f5d0' });
+            $(this).find('.mp-drop-area').addClass('drag-over');
         });
         $(document).on('dragleave', '#mp-dropzone', function (e) {
             e.preventDefault(); _dragCounter--;
             if (_dragCounter <= 0) {
                 _dragCounter = 0;
-                $(this).find('.upload-zone-modern').css({ 'border-color': '', 'background': '' });
+                $(this).find('.mp-drop-area').removeClass('drag-over');
             }
         });
         $(document).on('dragover', '#mp-dropzone', function (e) { e.preventDefault(); });
         $(document).on('drop', '#mp-dropzone', function (e) {
             e.preventDefault(); _dragCounter = 0;
-            $(this).find('.upload-zone-modern').css({ 'border-color': '', 'background': '' });
+            $(this).find('.mp-drop-area').removeClass('drag-over');
             var files = e.originalEvent.dataTransfer.files;
             for (var i = 0; i < files.length; i++) { _uploadFile(files[i]); }
         });
@@ -456,8 +466,14 @@ window.MediaPicker = (function ($) {
         /* Search */
         $(document).on('input', '#mp-search', function () {
             var q = $(this).val();
+            $('#mp-search-clear').toggle(q.length > 0);
             clearTimeout(_searchTimer);
             _searchTimer = setTimeout(function () { _loadItems(_currentFolderId(), q, 1); }, 400);
+        });
+
+        /* Search clear */
+        $(document).on('click', '#mp-search-clear', function () {
+            $('#mp-search').val('').trigger('input').focus();
         });
 
         /* Folder navigation */
@@ -476,8 +492,8 @@ window.MediaPicker = (function ($) {
 
         /* File selection */
         $(document).on('click', '.mp-file', function () {
-            $('.mp-file').removeClass('border-primary shadow');
-            $(this).addClass('border-primary shadow');
+            $('.mp-file').removeClass('selected');
+            $(this).addClass('selected');
             _selected = {
                 url:     $(this).data('url'),
                 fullUrl: $(this).data('full-url'),
@@ -485,7 +501,7 @@ window.MediaPicker = (function ($) {
                 type:    $(this).data('type')
             };
             $('#mp-insert-btn').prop('disabled', false);
-            $('#mp-selected-name').text(_selected.name);
+            $('#mp-selected-name').html('<i class="fas fa-check-circle me-1 text-success"></i>' + $('<div>').text(_selected.name).html());
             _showDetail(_selected);
         });
 
@@ -500,8 +516,8 @@ window.MediaPicker = (function ($) {
             _confirm();
         });
 
-        /* Insert */
-        $(document).on('click', '#mp-insert-btn', _confirm);
+        /* Insert (footer + detail panel) */
+        $(document).on('click', '#mp-insert-btn, #mp-detail-insert-btn', _confirm);
 
         /* Copy URL */
         $(document).on('click', '#mp-copy-url', function () {
@@ -513,13 +529,58 @@ window.MediaPicker = (function ($) {
             _copyToClipboard($('#mp-detail-code').val(), $(this));
         });
 
+        /* Type filter tabs */
+        $(document).on('click', '.mp-type-tab', function () {
+            _typeFilter = $(this).data('type');
+            $('.mp-type-tab').removeClass('active');
+            $(this).addClass('active');
+            _loadItems(_currentFolderId(), $('#mp-search').val(), 1);
+        });
+
+        /* Detail panel close */
+        $(document).on('click', '#mp-detail-close', function () {
+            _hideDetail();
+        });
+
+        /* Copy URL action (detail footer) */
+        $(document).on('click', '#mp-copy-url-action', function () {
+            if (_selected) {
+                _copyToClipboard(_selected.fullUrl, $(this));
+            }
+        });
+
+        /* Download action */
+        $(document).on('click', '#mp-download-action', function () {
+            if (_selected) {
+                var a = document.createElement('a');
+                a.href = _selected.fullUrl;
+                a.download = _selected.name || '';
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+
+        /* Search clear */
+        $(document).on('click', '#mp-search-clear', function () {
+            $('#mp-search').val('').trigger('input');
+            $(this).hide();
+        });
+        $(document).on('input', '#mp-search', function () {
+            $('#mp-search-clear').toggle($(this).val().length > 0);
+        });
+
         /* Reset on close */
         $(document).on('hidden.bs.modal', '#mp-modal', function () {
             _selected = null;
             _cfg      = {};
+            _typeFilter = 'all';
             _hideDetail();
             $('#mp-dropzone').addClass('d-none');
             $('#mp-import-url-form').addClass('d-none');
+            $('#mp-search-clear').hide();
+            $('.mp-type-tab').removeClass('active').first().addClass('active');
         });
     }
 
@@ -547,12 +608,12 @@ window.MediaPicker = (function ($) {
             _modal = new bootstrap.Modal(document.getElementById('mp-modal'));
         }
 
-        $('#mp-title').html('<i class="fas fa-images me-2 text-primary"></i>' + _cfg.title);
+        $('#mp-title').html('<i class="fas fa-images me-2"></i>' + _cfg.title);
         _breadcrumbs = [{ id: null, name: 'Todos los archivos' }];
         _selected    = null;
         _currentTab  = 'all_media';
         $('#mp-insert-btn').prop('disabled', true);
-        $('#mp-selected-name').text('Ningún archivo seleccionado');
+        $('#mp-selected-name').html('<i class="fas fa-image me-1 opacity-50"></i>Ningún archivo seleccionado');
         $('#mp-dropzone').addClass('d-none');
         $('#mp-import-url-form').addClass('d-none');
         $('#mp-search').val('');
@@ -560,9 +621,7 @@ window.MediaPicker = (function ($) {
 
         /* Reset tabs */
         $('#mp-sidebar-tabs .mp-tab-btn').each(function () {
-            var active = $(this).data('view') === 'all_media';
-            $(this).toggleClass('active bg-primary text-white', active)
-                   .toggleClass('text-dark', !active);
+            $(this).toggleClass('active', $(this).data('view') === 'all_media');
         });
 
         _hideDetail();

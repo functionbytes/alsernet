@@ -15,45 +15,49 @@
         $missingLocaleObjects = $activeLocales->filter(fn($l) => !in_array($l->code, $existingLocaleCodes));
     @endphp
     <div class="widget-content mb-0 pb-0">
-        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-            <span class="text-muted small fw-semibold me-1">Idioma:</span>
-
+        <ul class="nav nav-tabs border-0 user-profile-tab mb-3" role="tablist">
             @foreach($siblingMetas as $localeKey => $siblingMeta)
                 @php
                     $isActive = $siblingMeta->id === $meta->id;
                     $label = $localeKey === 'global' ? 'Global' : ($localeNameMap[$localeKey] ?? strtoupper($localeKey));
+                    $hasIssue = !$isActive && (empty($siblingMeta->title) || empty($siblingMeta->description));
                 @endphp
-                @php $hasIssue = !$isActive && (empty($siblingMeta->title) || empty($siblingMeta->description)); @endphp
-                <a href="{{ route('setting.seo.metas.edit', $siblingMeta) }}"
-                   class="btn btn-sm {{ $isActive ? 'btn-primary' : 'btn-outline-secondary' }}" style="position:relative;">
-                    {{ $label }}
-                    @if($hasIssue)
-                    <span style="position:absolute;top:-4px;right:-4px;width:8px;height:8px;background:#FA896B;border-radius:50%;border:1px solid #fff;display:inline-block;"></span>
-                    @endif
-                </a>
+                <li class="nav-item" role="presentation">
+                    <a href="{{ route('setting.seo.metas.edit', $siblingMeta) }}"
+                       class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $isActive ? 'active' : '' }}"
+                       role="tab">
+                        <span class="d-none d-md-block">
+                            {{ $label }}
+                            @if($hasIssue)
+                                <span class="badge bg-danger ms-1" title="Faltan campos obligatorios"><i class="fas fa-exclamation"></i></span>
+                            @endif
+                        </span>
+                    </a>
+                </li>
             @endforeach
 
             @if($showMissingLocales && $missingLocaleObjects->isNotEmpty())
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-plus me-1"></i>Añadir idioma
-                </button>
-                <ul class="dropdown-menu">
-                    @foreach($missingLocaleObjects as $missingLocale)
-                    <li>
-                        <form action="{{ route('setting.seo.metas.create-locale', $meta) }}" method="POST" class="d-inline">
-                            @csrf
-                            <input type="hidden" name="locale" value="{{ $missingLocale->code }}">
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-plus me-2 text-success"></i>{{ $missingLocale->name }}
-                            </button>
-                        </form>
-                    </li>
-                    @endforeach
-                </ul>
-            </div>
+            <li class="nav-item" role="presentation">
+                <div class="dropdown">
+                    <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 dropdown-toggle border-0"
+                            type="button" data-bs-toggle="dropdown">
+                        <span class="d-none d-md-block"><i class="fas fa-plus me-1"></i>Añadir idioma</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        @foreach($missingLocaleObjects as $missingLocale)
+                        <li>
+                            <form action="{{ route('setting.seo.metas.create-locale', $meta) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="locale" value="{{ $missingLocale->code }}">
+                                <button type="submit" class="dropdown-item">{{ $missingLocale->name }}</button>
+                            </form>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </li>
             @endif
-        </div>
+        </ul>
     </div>
     @endif
 
