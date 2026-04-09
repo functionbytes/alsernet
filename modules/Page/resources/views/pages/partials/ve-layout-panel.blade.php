@@ -1,4 +1,4 @@
-<div id="ve-layout-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="ve-layout-panel" class="ve-panel-root">
 
     {{-- Header --}}
     <div class="ve-lp-header">
@@ -69,7 +69,7 @@
     </div>
 
     {{-- Structure tree --}}
-    <div id="ve-layout-tree" style="flex:1; overflow-y:auto; display:none; padding:10px;"></div>
+    <div id="ve-layout-tree" class="ve-scrollable-area ve-hidden"></div>
 
     {{-- Footer hint --}}
     <div class="ve-lp-footer">
@@ -332,6 +332,8 @@
 }
 
 /* ── Footer ────────────────────────────────────────────────────── */
+#ve-layout-tree { padding: 10px; }
+
 .ve-lp-footer {
     padding: 7px 14px;
     border-top: 1px solid #e9ecef;
@@ -398,10 +400,10 @@
         const $empty = $('#ve-layout-empty');
 
         if (!data || !data.length) {
-            $tree.hide(); $empty.show(); return;
+            $tree.addClass('ve-hidden'); $empty.removeClass('ve-hidden'); return;
         }
-        $empty.hide();
-        $tree.empty().show();
+        $empty.addClass('ve-hidden');
+        $tree.empty().removeClass('ve-hidden');
 
         data.forEach(function (container) {
             $tree.append(buildContainerNode(container));
