@@ -152,61 +152,61 @@
         </div>
 
         {{-- OG Preview --}}
-        <div style="border-top:1px solid #f0f0f0; margin-top:4px;">
-            <div id="ve-og-header" style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; cursor:pointer; user-select:none;">
-                <span style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">VISTA PREVIA OG</span>
-                <i class="fa-duotone fa-solid fa-chevron-down" id="ve-og-chevron" style="font-size:10px; color:#888; transition:transform .2s;"></i>
+        <div class="ve-collapsible-section">
+            <div id="ve-og-header" class="ve-collapsible-header">
+                <span class="ve-collapsible-label">VISTA PREVIA OG</span>
+                <i class="fa-duotone fa-solid fa-chevron-down ve-collapsible-chevron" id="ve-og-chevron"></i>
             </div>
-            <div id="ve-og-body" style="display:none; padding-bottom:12px;">
-                <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <button type="button" class="btn btn-xs btn-outline-secondary ve-og-tab active" data-tab="fb" style="font-size:10px; padding:2px 8px;">Facebook</button>
-                    <button type="button" class="btn btn-xs btn-outline-secondary ve-og-tab" data-tab="tw" style="font-size:10px; padding:2px 8px;">Twitter</button>
+            <div id="ve-og-body" class="ve-collapsible-body">
+                <div class="ve-og-tab-row">
+                    <button type="button" class="btn btn-xs btn-outline-secondary ve-og-tab active" data-tab="fb">Facebook</button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary ve-og-tab" data-tab="tw">Twitter</button>
                 </div>
                 {{-- Facebook card --}}
-                <div id="ve-og-fb" class="ve-og-card" style="border:1px solid #dddfe2; border-radius:4px; overflow:hidden; font-family:Helvetica,Arial,sans-serif; background:#fff;">
-                    <div id="ve-og-fb-img" style="background:#e9ecef; height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <div id="ve-og-fb" class="ve-og-card ve-og-card-fb">
+                    <div id="ve-og-fb-img" class="ve-og-img-area">
                         <i class="fa-duotone fa-solid fa-image text-muted"></i>
                     </div>
-                    <div style="padding:8px 10px; background:#f2f3f5;">
-                        <div id="ve-og-fb-domain" style="font-size:10px; color:#606770; text-transform:uppercase; margin-bottom:2px;">ejemplo.com</div>
-                        <div id="ve-og-fb-title" style="font-size:12px; font-weight:700; color:#1d2129; margin-bottom:2px;">Título de la página</div>
-                        <div id="ve-og-fb-desc" style="font-size:11px; color:#606770; line-height:1.3;">Descripción de la página</div>
+                    <div class="ve-og-fb-body">
+                        <div id="ve-og-fb-domain" class="ve-og-fb-domain">ejemplo.com</div>
+                        <div id="ve-og-fb-title" class="ve-og-fb-title">Título de la página</div>
+                        <div id="ve-og-fb-desc" class="ve-og-fb-desc">Descripción de la página</div>
                     </div>
                 </div>
                 {{-- Twitter card --}}
-                <div id="ve-og-tw" class="ve-og-card" style="display:none; border:1px solid #e1e8ed; border-radius:14px; overflow:hidden; font-family:-apple-system,sans-serif; background:#fff;">
-                    <div id="ve-og-tw-img" style="background:#e9ecef; height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <div id="ve-og-tw" class="ve-og-card ve-og-card-tw ve-hidden">
+                    <div id="ve-og-tw-img" class="ve-og-img-area">
                         <i class="fa-duotone fa-solid fa-image text-muted"></i>
                     </div>
-                    <div style="padding:8px 12px;">
-                        <div id="ve-og-tw-title" style="font-size:12px; font-weight:700; color:#14171a; margin-bottom:2px;">Título de la página</div>
-                        <div id="ve-og-tw-desc" style="font-size:11px; color:#657786; line-height:1.3; margin-bottom:2px;">Descripción de la página</div>
-                        <div id="ve-og-tw-domain" style="font-size:10px; color:#657786;">ejemplo.com</div>
+                    <div class="ve-og-tw-body">
+                        <div id="ve-og-tw-title" class="ve-og-tw-title">Título de la página</div>
+                        <div id="ve-og-tw-desc" class="ve-og-tw-desc">Descripción de la página</div>
+                        <div id="ve-og-tw-domain" class="ve-og-tw-domain">ejemplo.com</div>
                     </div>
                 </div>
             </div>
         </div>
 
         {{-- SEO Analysis --}}
-        <div style="border-top:1px solid #f0f0f0; margin-top:4px;">
-            <div id="ve-seo-anal-header" style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; cursor:pointer; user-select:none;">
-                <span style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">ANÁLISIS SEO</span>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <button type="button" id="btn-run-seo" class="btn btn-outline-secondary" style="font-size:10px; padding:1px 8px;" onclick="event.stopPropagation(); runSeoAnalysis();">Analizar</button>
-                    <i class="fa-duotone fa-solid fa-chevron-down" id="ve-seo-anal-chevron" style="font-size:10px; color:#888; transition:transform .2s;"></i>
+        <div class="ve-collapsible-section">
+            <div id="ve-seo-anal-header" class="ve-collapsible-header">
+                <span class="ve-collapsible-label">ANÁLISIS SEO</span>
+                <div class="ve-collapsible-actions">
+                    <button type="button" id="btn-run-seo" class="btn btn-outline-secondary ve-btn-micro" onclick="event.stopPropagation(); runSeoAnalysis();">Analizar</button>
+                    <i class="fa-duotone fa-solid fa-chevron-down ve-collapsible-chevron" id="ve-seo-anal-chevron"></i>
                 </div>
             </div>
-            <div id="ve-seo-anal-body" style="display:none; padding-bottom:12px;">
-                <div id="ve-seo-results" style="font-size:11px;">
-                    <p class="text-muted" style="font-size:11px;">Haz clic en "Analizar" para ejecutar el análisis.</p>
+            <div id="ve-seo-anal-body" class="ve-collapsible-body">
+                <div id="ve-seo-results" class="ve-seo-results">
+                    <p class="text-muted ve-seo-results-hint">Haz clic en "Analizar" para ejecutar el análisis.</p>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <div style="padding:8px 12px; border-top:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0;">
-        <small style="font-size:10px; color:#999;">
+    <div class="ve-settings-footer">
+        <small class="ve-settings-footer-text">
             <i class="fa-duotone fa-solid fa-info-circle me-1"></i>Los cambios se aplican al guardar la página
         </small>
     </div>
@@ -257,7 +257,7 @@
         $('#ve-og-fb-domain, #ve-og-tw-domain').text(domain);
 
         if (imgUrl) {
-            var imgHtml = '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+            var imgHtml = '<img src="' + imgUrl + '" class="ve-og-img-fill">';
             $('#ve-og-fb-img, #ve-og-tw-img').html(imgHtml);
         } else {
             var placeholder = '<i class="fa-duotone fa-solid fa-image text-muted"></i>';
@@ -277,10 +277,10 @@
         var $chev = $('#ve-og-chevron');
         if ($body.is(':visible')) {
             $body.slideUp(150);
-            $chev.css('transform', 'rotate(-90deg)');
+            $chev.addClass('ve-chevron-collapsed');
         } else {
             $body.slideDown(150);
-            $chev.css('transform', 'rotate(0deg)');
+            $chev.removeClass('ve-chevron-collapsed');
             updateOgPreview();
         }
     });
@@ -330,15 +330,15 @@
         var kws = keywords.split(',').map(function (k) { return k.trim().toLowerCase(); }).filter(Boolean);
         var kwHtml = '';
         if (kws.length && wordCount > 0) {
-            kwHtml = '<div style="margin-top:8px;"><strong style="font-size:11px;">Densidad de keywords:</strong></div>';
+            kwHtml = '<div class="ve-anal-kw-header"><strong>Densidad de keywords:</strong></div>';
             kws.forEach(function (kw) {
                 if (!kw) return;
                 var re2   = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
                 var count = (textOnly.match(re2) || []).length;
                 var density = wordCount > 0 ? ((count / wordCount) * 100).toFixed(1) : 0;
                 var densColor = density > 3 ? '#dc3545' : (density >= 1 ? '#28a745' : '#888');
-                kwHtml += '<div style="display:flex;justify-content:space-between;padding:2px 0;">' +
-                    '<span style="color:#555;">' + kw + '</span>' +
+                kwHtml += '<div class="ve-anal-row">' +
+                    '<span class="ve-anal-kw">' + kw + '</span>' +
                     '<span style="color:' + densColor + ';">' + count + ' veces (' + density + '%)</span>' +
                     '</div>';
             });
@@ -358,27 +358,21 @@
         var scoreColor = score >= 70 ? '#28a745' : (score >= 40 ? '#ffc107' : '#dc3545');
 
         var html2 = [
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">',
-            '<span>Palabras:</span><strong>' + wordCount + '</strong></div>',
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">',
-            '<span>Caracteres:</span><strong>' + charCount + '</strong></div>',
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">',
-            '<span>Meta título:</span><strong style="color:' + titleColor + ';">' + titleMsg + '</strong></div>',
-            '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">',
-            '<span>Meta descripción:</span><strong style="color:' + descColor + ';">' + descMsg + '</strong></div>',
+            '<div class="ve-anal-row mb-1"><span>Palabras:</span><strong>' + wordCount + '</strong></div>',
+            '<div class="ve-anal-row mb-1"><span>Caracteres:</span><strong>' + charCount + '</strong></div>',
+            '<div class="ve-anal-row mb-1"><span>Meta título:</span><strong style="color:' + titleColor + ';">' + titleMsg + '</strong></div>',
+            '<div class="ve-anal-row mb-2"><span>Meta descripción:</span><strong style="color:' + descColor + ';">' + descMsg + '</strong></div>',
             kwHtml,
-            '<div style="margin-top:10px;">',
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">',
-            '<strong>Puntuación SEO:</strong><strong style="color:' + scoreColor + ';">' + score + '/100</strong></div>',
-            '<div style="background:#e9ecef;border-radius:4px;height:8px;overflow:hidden;">',
-            '<div style="background:' + scoreColor + ';width:' + score + '%;height:100%;border-radius:4px;transition:width .5s;"></div>',
-            '</div></div>',
+            '<div class="ve-anal-score-wrap">',
+            '<div class="ve-anal-row mb-1"><strong>Puntuación SEO:</strong><strong style="color:' + scoreColor + ';">' + score + '/100</strong></div>',
+            '<div class="ve-anal-bar-track"><div class="ve-anal-bar-fill" style="background:' + scoreColor + ';width:' + score + '%;"></div></div>',
+            '</div>',
         ].join('');
 
         $('#ve-seo-results').html(html2);
         if ($('#ve-seo-anal-body').is(':hidden')) {
             $('#ve-seo-anal-body').slideDown(150);
-            $('#ve-seo-anal-chevron').css('transform', 'rotate(0deg)');
+            $('#ve-seo-anal-chevron').removeClass('ve-chevron-collapsed');
         }
     };
 
@@ -388,10 +382,10 @@
         var $chev = $('#ve-seo-anal-chevron');
         if ($body.is(':visible')) {
             $body.slideUp(150);
-            $chev.css('transform', 'rotate(-90deg)');
+            $chev.addClass('ve-chevron-collapsed');
         } else {
             $body.slideDown(150);
-            $chev.css('transform', 'rotate(0deg)');
+            $chev.removeClass('ve-chevron-collapsed');
             window.runSeoAnalysis();
         }
     });
@@ -431,3 +425,169 @@
 
 })(jQuery);
 </script>
+
+<style>
+/* ── Collapsible sections ─────────────────────────────────────── */
+.ve-collapsible-section {
+    border-top: 1px solid #f0f0f0;
+    margin-top: 4px;
+}
+.ve-collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    cursor: pointer;
+    user-select: none;
+}
+.ve-collapsible-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.ve-collapsible-chevron {
+    font-size: 10px;
+    color: #888;
+    transition: transform .2s;
+}
+.ve-chevron-collapsed {
+    transform: rotate(-90deg);
+}
+.ve-collapsible-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ve-collapsible-body {
+    display: none;
+    padding-bottom: 12px;
+}
+
+/* ── Micro button (analizar) ──────────────────────────────────── */
+.ve-btn-micro {
+    font-size: 10px !important;
+    padding: 1px 8px !important;
+}
+
+/* ── OG tab row ───────────────────────────────────────────────── */
+.ve-og-tab-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+/* ── OG cards ─────────────────────────────────────────────────── */
+.ve-og-card-fb {
+    border: 1px solid #dddfe2;
+    border-radius: 4px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+.ve-og-card-tw {
+    border: 1px solid #e1e8ed;
+    border-radius: 14px;
+    font-family: -apple-system, sans-serif;
+}
+.ve-og-img-area {
+    background: #e9ecef;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.ve-og-img-fill {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ve-og-fb-body {
+    padding: 8px 10px;
+    background: #f2f3f5;
+}
+.ve-og-fb-domain {
+    font-size: 10px;
+    color: #606770;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.ve-og-fb-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d2129;
+    margin-bottom: 2px;
+}
+.ve-og-fb-desc {
+    font-size: 11px;
+    color: #606770;
+    line-height: 1.3;
+}
+.ve-og-tw-body {
+    padding: 8px 12px;
+}
+.ve-og-tw-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #14171a;
+    margin-bottom: 2px;
+}
+.ve-og-tw-desc {
+    font-size: 11px;
+    color: #657786;
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+.ve-og-tw-domain {
+    font-size: 10px;
+    color: #657786;
+}
+
+/* ── SEO analysis results ─────────────────────────────────────── */
+.ve-seo-results {
+    font-size: 11px;
+}
+.ve-seo-results-hint {
+    font-size: 11px;
+}
+.ve-anal-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+.ve-anal-kw-header {
+    margin-top: 8px;
+}
+.ve-anal-kw-header strong {
+    font-size: 11px;
+}
+.ve-anal-kw {
+    color: #555;
+}
+.ve-anal-score-wrap {
+    margin-top: 10px;
+}
+.ve-anal-bar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+}
+.ve-anal-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .5s;
+}
+
+/* ── Settings panel footer ────────────────────────────────────── */
+.ve-settings-footer {
+    padding: 8px 12px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+.ve-settings-footer-text {
+    font-size: 10px;
+    color: #999;
+}
+</style>

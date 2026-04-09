@@ -1,54 +1,52 @@
-<div id="ve-inspector-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="ve-inspector-panel" class="ve-panel">
 
     {{-- Header --}}
-    <div style="padding:10px 12px; border-bottom:1px solid #eee; flex-shrink:0;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+    <div class="ve-panel-header">
+        <div class="ve-panel-header-row">
             <div>
-                <div style="font-size:10px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.5px;">Elemento</div>
-                <span id="ve-inspector-element-name" style="font-size:13px; font-weight:700; color:#333;">Ninguno</span>
+                <div class="ve-label-tag">Elemento</div>
+                <span id="ve-inspector-element-name" class="ve-element-name">Ninguno</span>
             </div>
-            <div style="display:flex; gap:4px;">
-                <button type="button" class="btn btn-outline-secondary" id="btn-copy-styles"
-                        title="Copiar estilos" style="font-size:11px; padding:2px 8px;">
+            <div class="ve-btn-row-gap4">
+                <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-copy-styles"
+                        title="Copiar estilos">
                     <i class="fa-duotone fa-solid fa-copy"></i>
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-paste-styles"
-                        title="Pegar estilos" style="font-size:11px; padding:2px 8px;" disabled>
+                <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-paste-styles"
+                        title="Pegar estilos" disabled>
                     <i class="fa-duotone fa-solid fa-paste"></i>
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-hide-element"
-                        title="Ocultar elemento" style="font-size:11px; padding:2px 8px; display:none;">
+                <button type="button" class="btn btn-outline-secondary ve-btn-icon ve-hidden" id="btn-hide-element"
+                        title="Ocultar elemento">
                     <i class="fa-duotone fa-solid fa-eye-slash"></i>
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-deselect-element"
-                        title="Deseleccionar" style="font-size:11px; padding:2px 8px;">
+                <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-deselect-element"
+                        title="Deseleccionar">
                     <i class="fa-duotone fa-solid fa-times"></i>
                 </button>
             </div>
         </div>
         {{-- Breadcrumb --}}
-        <div id="ve-inspector-breadcrumb"
-             style="display:none; background:#fff; border:1px solid #e9ecef; border-radius:4px; padding:4px 8px; font-size:11px; overflow-x:auto; white-space:nowrap; margin-top:4px;">
-        </div>
+        <div id="ve-inspector-breadcrumb" class="ve-breadcrumb ve-hidden"></div>
     </div>
 
     {{-- Empty state --}}
-    <div id="ve-inspector-empty" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#aaa; text-align:center; padding:24px;">
-        <div style="font-size:12px; line-height:1.5;">Haz click en un elemento<br>del preview para inspeccionarlo</div>
+    <div id="ve-inspector-empty" class="ve-empty-state">
+        <div class="ve-empty-text">Haz click en un elemento<br>del preview para inspeccionarlo</div>
     </div>
 
     {{-- Sections (shown when element selected) --}}
-    <div id="ve-inspector-sections" style="display:none; flex:1; overflow-y:auto;">
+    <div id="ve-inspector-sections" class="ve-hidden ve-sections-wrap">
 
         {{-- Visibility --}}
-        <div id="ve-section-visibility" style="display:none;">
+        <div id="ve-section-visibility" class="ve-hidden">
             <div class="ve-section-header" data-target="ve-sect-visibility">
                 <span>Visibilidad</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-visibility" style="padding:10px 12px;">
-                <div style="font-size:11px; color:#666; margin-bottom:8px;">Ocultar en dispositivos:</div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+            <div id="ve-sect-visibility" class="ve-sect-body">
+                <div class="ve-hint-text">Ocultar en dispositivos:</div>
+                <div class="ve-flex-wrap-gap mb-10px">
                     <button type="button" class="btn btn-outline-secondary ve-visibility-btn"
                             data-class="d-none d-sm-block" title="Ocultar en móvil">
                         Móvil
@@ -62,13 +60,11 @@
                         Desktop
                     </button>
                 </div>
-                <div style="border-top:1px solid #f0f0f0; padding-top:8px;">
-                    <button type="button" class="btn btn-outline-secondary w-100" id="btn-toggle-hidden"
-                            style="font-size:12px;">
+                <div class="ve-border-top-pad">
+                    <button type="button" class="btn btn-outline-secondary w-100 ve-btn-text" id="btn-toggle-hidden">
                         Ocultar elemento
                     </button>
-                    <button type="button" class="btn btn-outline-secondary w-100 mt-1" id="btn-toggle-shown"
-                            style="font-size:12px; display:none;">
+                    <button type="button" class="btn btn-outline-secondary w-100 mt-1 ve-btn-text ve-hidden" id="btn-toggle-shown">
                         Mostrar elemento
                     </button>
                 </div>
@@ -76,63 +72,61 @@
         </div>
 
         {{-- Attributes --}}
-        <div id="ve-section-attributes" style="display:none;">
+        <div id="ve-section-attributes" class="ve-hidden">
             <div class="ve-section-header collapsed" data-target="ve-sect-attrs">
                 <span>Atributos HTML</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-attrs" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">ID</label>
+            <div id="ve-sect-attrs" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>ID</label>
                     <input type="text" class="form-control" id="ve-attr-id" placeholder="elemento-id">
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Clases CSS</label>
+                <div class="ve-field">
+                    <label>Clases CSS</label>
                     <input type="text" class="form-control" id="ve-attr-class" placeholder="clase1 clase2">
                 </div>
-                <div id="ve-attr-src-wrap" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">src</label>
+                <div id="ve-attr-src-wrap" class="ve-hidden ve-field">
+                    <label>src</label>
                     <input type="text" class="form-control" id="ve-attr-src" placeholder="https://...">
                 </div>
-                <div id="ve-attr-alt-wrap" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">alt</label>
+                <div id="ve-attr-alt-wrap" class="ve-hidden ve-field">
+                    <label>alt</label>
                     <input type="text" class="form-control" id="ve-attr-alt" placeholder="Texto alternativo">
                 </div>
-                <div id="ve-attr-href-wrap" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">href</label>
+                <div id="ve-attr-href-wrap" class="ve-hidden ve-field">
+                    <label>href</label>
                     <input type="url" class="form-control" id="ve-attr-href" placeholder="https://...">
                 </div>
-                <div id="ve-attr-placeholder-wrap" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">placeholder</label>
+                <div id="ve-attr-placeholder-wrap" class="ve-hidden ve-field">
+                    <label>placeholder</label>
                     <input type="text" class="form-control" id="ve-attr-placeholder" placeholder="Placeholder...">
                 </div>
-                <button type="button" class="btn btn w-100 mt-2" id="btn-apply-attrs"
-                        style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;">
+                <button type="button" class="btn ve-btn-primary w-100 mt-2" id="btn-apply-attrs">
                     Aplicar atributos
                 </button>
             </div>
         </div>
 
         {{-- Link (only for <a>) --}}
-        <div id="ve-section-link-wrapper" style="display:none;">
+        <div id="ve-section-link-wrapper" class="ve-hidden">
             <div class="ve-section-header" data-target="ve-sect-link">
                 <span>Enlace</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-link" style="padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">URL</label>
+            <div id="ve-sect-link" class="ve-sect-body">
+                <div class="ve-field">
+                    <label>URL</label>
                     <input type="url" class="form-control" id="ve-link-href-inspector" placeholder="https://...">
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Abrir en</label>
+                <div class="ve-field">
+                    <label>Abrir en</label>
                     <select class="form-select form-select" id="ve-link-target-inspector">
                         <option value="">Misma pestaña</option>
                         <option value="_blank">Nueva pestaña</option>
                     </select>
                 </div>
-                <button type="button" class="btn btn w-100" id="btn-apply-link-inspector"
-                        style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;">
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-link-inspector">
                     Aplicar enlace
                 </button>
             </div>
@@ -142,17 +136,16 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header" data-target="ve-sect-typo">
                 <span>Tipografía</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="typo"
                             title="Restablecer tipografía"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-typo" style="padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Familia de fuente</label>
+            <div id="ve-sect-typo" class="ve-sect-body">
+                <div class="ve-field">
+                    <label>Familia de fuente</label>
                     <select class="form-select form-select ve-css-prop" data-prop="font-family">
                         <option value="">Predeterminada</option>
                         <option value="'Arial', sans-serif">Arial</option>
@@ -171,16 +164,16 @@
                         <option value="'Playfair Display', serif">Playfair Display</option>
                     </select>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                <div class="ve-grid-2 ve-field">
                     <div>
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Tamaño</label>
+                        <label>Tamaño</label>
                         <div class="input-group">
                             <input type="number" class="form-control ve-css-prop" data-prop="font-size" data-unit="px" placeholder="16" min="8" max="200">
-                            <span class="input-group-text" style="font-size:10px;">px</span>
+                            <span class="input-group-text ve-unit-text">px</span>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Peso</label>
+                        <label>Peso</label>
                         <select class="form-select form-select ve-css-prop" data-prop="font-weight">
                             <option value="">Normal</option>
                             <option value="300">Light (300)</option>
@@ -192,17 +185,17 @@
                         </select>
                     </div>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Color de texto</label>
-                    <div style="display:flex; gap:6px;">
-                        <input type="color" class="form-control form-control-color ve-css-prop"
-                               data-prop="color" value="#000000" style="width:44px; padding:2px;">
-                        <input type="text" class="form-control ve-color-text"
-                               placeholder="#000000" style="font-family:monospace; font-size:11px;">
+                <div class="ve-field">
+                    <label>Color de texto</label>
+                    <div class="ve-color-row">
+                        <input type="color" class="form-control form-control-color ve-css-prop ve-color-picker-input"
+                               data-prop="color" value="#000000">
+                        <input type="text" class="form-control ve-color-text ve-monospace"
+                               placeholder="#000000">
                     </div>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Alineación</label>
+                <div class="ve-field">
+                    <label>Alineación</label>
                     <div class="btn-group btn-group-sm w-100">
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-align" data-value="left" title="Izquierda"><i class="fa-duotone fa-solid fa-align-left"></i></button>
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-align" data-value="center" title="Centro"><i class="fa-duotone fa-solid fa-align-center"></i></button>
@@ -210,16 +203,16 @@
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-align" data-value="justify" title="Justificado"><i class="fa-duotone fa-solid fa-align-justify"></i></button>
                     </div>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">
-                        Interlineado <small class="ve-range-value" style="color:#1a1a1a;">1.5</small>
+                <div class="ve-field">
+                    <label>
+                        Interlineado <small class="ve-range-value ve-range-dark">1.5</small>
                     </label>
                     <input type="range" class="form-range ve-css-prop"
                            data-prop="line-height" data-unit=""
                            min="1" max="3" step="0.1" value="1.5">
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Transformación</label>
+                <div class="ve-field">
+                    <label>Transformación</label>
                     <select class="form-select form-select ve-css-prop" data-prop="text-transform">
                         <option value="">Normal</option>
                         <option value="uppercase">MAYÚSCULAS</option>
@@ -227,18 +220,18 @@
                         <option value="capitalize">Capitalizar</option>
                     </select>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Decoración</label>
+                <div class="ve-field">
+                    <label>Decoración</label>
                     <div class="btn-group btn-group-sm w-100">
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-decoration" data-value="none" title="Sin decoración"><i class="fa-duotone fa-solid fa-minus"></i></button>
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-decoration" data-value="underline" title="Subrayado"><u>S</u></button>
                         <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-decoration" data-value="line-through" title="Tachado"><s>T</s></button>
-                        <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-decoration" data-value="overline" title="Línea superior"><span style="text-decoration:overline;">L</span></button>
+                        <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="text-decoration" data-value="overline" title="Línea superior"><span class="ve-overline">L</span></button>
                     </div>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">
-                        Espaciado letras <small class="ve-range-value" style="color:#1a1a1a;">0px</small>
+                    <label>
+                        Espaciado letras <small class="ve-range-value ve-range-dark">0px</small>
                     </label>
                     <input type="range" class="form-range ve-css-prop" data-prop="letter-spacing" data-unit="px" min="-3" max="15" step="0.5" value="0">
                 </div>
@@ -249,37 +242,36 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-spacing">
                 <span>Espaciado</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="spacing"
                             title="Restablecer espaciado"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-spacing" style="display:none; padding:10px 12px;">
-                <div style="font-size:10px; font-weight:600; color:#888; text-align:center; margin-bottom:8px; text-transform:uppercase;">Padding (interior)</div>
-                <div style="display:grid; grid-template-columns:1fr 56px 1fr; grid-template-rows:auto 56px auto; gap:4px; max-width:176px; margin:0 auto 12px;">
+            <div id="ve-sect-spacing" class="ve-hidden ve-sect-body">
+                <div class="ve-spacing-title">Padding (interior)</div>
+                <div class="ve-box-model ve-box-model-mb">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-top" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-top" data-unit="px" placeholder="0" min="0">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-left" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
-                    <div style="background:#e9ecef; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#aaa;">P</div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-right" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-left" data-unit="px" placeholder="0" min="0">
+                    <div class="ve-box-center">P</div>
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-right" data-unit="px" placeholder="0" min="0">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0">
                     <div></div>
                 </div>
-                <div style="font-size:10px; font-weight:600; color:#888; text-align:center; margin-bottom:8px; text-transform:uppercase;">Margin (exterior)</div>
-                <div style="display:grid; grid-template-columns:1fr 56px 1fr; grid-template-rows:auto 56px auto; gap:4px; max-width:176px; margin:0 auto;">
+                <div class="ve-spacing-title">Margin (exterior)</div>
+                <div class="ve-box-model">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-top" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-top" data-unit="px" placeholder="0">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-left" data-unit="px" placeholder="0" style="font-size:11px;">
-                    <div style="background:#e9ecef; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#aaa;">M</div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-right" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-left" data-unit="px" placeholder="0">
+                    <div class="ve-box-center">M</div>
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-right" data-unit="px" placeholder="0">
                     <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop" data-prop="margin-bottom" data-unit="px" placeholder="0" style="font-size:11px;">
+                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-bottom" data-unit="px" placeholder="0">
                     <div></div>
                 </div>
             </div>
@@ -289,57 +281,53 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-bg">
                 <span>Fondo</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="bg"
                             title="Restablecer fondo"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-bg" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Color de fondo</label>
-                    <div style="display:flex; gap:6px;">
-                        <input type="color" class="form-control form-control-color ve-css-prop"
-                               data-prop="background-color" value="#ffffff" style="width:44px; padding:2px;">
-                        <input type="text" class="form-control ve-color-text"
-                               placeholder="transparent" style="font-family:monospace; font-size:11px;">
+            <div id="ve-sect-bg" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>Color de fondo</label>
+                    <div class="ve-color-row">
+                        <input type="color" class="form-control form-control-color ve-css-prop ve-color-picker-input"
+                               data-prop="background-color" value="#ffffff">
+                        <input type="text" class="form-control ve-color-text ve-monospace"
+                               placeholder="transparent">
                     </div>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">
-                        Opacidad <small class="ve-range-value" style="color:#1a1a1a;">1</small>
+                <div class="ve-field">
+                    <label>
+                        Opacidad <small class="ve-range-value ve-range-dark">1</small>
                     </label>
                     <input type="range" class="form-range ve-css-prop"
                            data-prop="opacity" data-unit=""
                            min="0" max="1" step="0.05" value="1">
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Imagen de fondo</label>
+                <div class="ve-field">
+                    <label>Imagen de fondo</label>
                     {{-- Hidden file input kept for JS compatibility --}}
-                    <input type="file" id="ve-bg-image-file" accept="image/*" style="display:none;">
-                    <div style="display:flex; gap:6px; align-items:center;">
-                        <button type="button" class="btn btn-outline-secondary" id="btn-bg-media-picker"
-                                style="flex:1; font-size:12px; padding:7px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <input type="file" id="ve-bg-image-file" accept="image/*" class="ve-hidden">
+                    <div class="ve-action-row">
+                        <button type="button" class="btn btn-outline-secondary ve-btn-media-picker" id="btn-bg-media-picker">
                             <i class="fa-duotone fa-solid fa-image"></i>
                             <span>Seleccionar imagen</span>
                         </button>
-                        <button class="btn btn-outline-secondary" type="button" id="btn-clear-bg-image" title="Quitar imagen"
-                                style="width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:6px;">
+                        <button class="btn btn-outline-secondary ve-btn-square" type="button" id="btn-clear-bg-image" title="Quitar imagen">
                             <i class="fa-duotone fa-solid fa-times"></i>
                         </button>
                     </div>
-                    <div id="ve-bg-preview" style="display:none; margin-top:6px; border-radius:6px; overflow:hidden; border:1px solid #eee;">
-                        <img id="ve-bg-preview-img" style="width:100%; height:60px; object-fit:cover;" alt="">
+                    <div id="ve-bg-preview" class="ve-hidden ve-bg-preview">
+                        <img id="ve-bg-preview-img" class="ve-bg-preview-img" alt="">
                     </div>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">o pegar URL</label>
-                    <div style="display:flex; gap:6px; align-items:center;">
-                        <input type="url" class="form-control" id="ve-bg-image-url" placeholder="https://..." style="flex:1;">
-                        <button class="btn" type="button" id="btn-apply-bg-url" title="Aplicar URL"
-                                style="width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:6px; background:#b10100; border-color:#b10100; color:#fff;">
+                    <label>o pegar URL</label>
+                    <div class="ve-action-row">
+                        <input type="url" class="form-control ve-flex-fill" id="ve-bg-image-url" placeholder="https://...">
+                        <button class="btn ve-btn-square ve-btn-primary" type="button" id="btn-apply-bg-url" title="Aplicar URL">
                             <i class="fa-duotone fa-solid fa-check"></i>
                         </button>
                     </div>
@@ -351,25 +339,24 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-border">
                 <span>Borde</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="border"
                             title="Restablecer borde"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-border" style="display:none; padding:10px 12px;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+            <div id="ve-sect-border" class="ve-hidden ve-sect-body">
+                <div class="ve-grid-2 ve-field">
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Grosor</label>
+                        <label>Grosor</label>
                         <div class="input-group">
                             <input type="number" class="form-control ve-css-prop" data-prop="border-width" data-unit="px" placeholder="0" min="0">
-                            <span class="input-group-text" style="font-size:10px;">px</span>
+                            <span class="input-group-text ve-unit-text">px</span>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Estilo</label>
+                        <label>Estilo</label>
                         <select class="form-select form-select ve-css-prop" data-prop="border-style">
                             <option value="none">Ninguno</option>
                             <option value="solid">Sólido</option>
@@ -379,14 +366,14 @@
                         </select>
                     </div>
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Color del borde</label>
-                    <input type="color" class="form-control form-control-color ve-css-prop"
-                           data-prop="border-color" value="#dee2e6" style="width:100%;">
+                <div class="ve-field">
+                    <label>Color del borde</label>
+                    <input type="color" class="form-control form-control-color ve-css-prop ve-color-full"
+                           data-prop="border-color" value="#dee2e6">
                 </div>
                 <div>
-                    <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">
-                        Esquinas redondeadas <small class="ve-range-value" style="color:#1a1a1a;">0px</small>
+                    <label>
+                        Esquinas redondeadas <small class="ve-range-value ve-range-dark">0px</small>
                     </label>
                     <input type="range" class="form-range ve-css-prop"
                            data-prop="border-radius" data-unit="px"
@@ -401,93 +388,89 @@
                 <span>Sombra</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-shadow" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:6px;">Sombra de caja</label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+            <div id="ve-sect-shadow" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>Sombra de caja</label>
+                    <div class="ve-grid-2 ve-mb-6">
                         <div>
-                            <label style="font-size:10px; color:#888;">Offset X</label>
+                            <label>Offset X</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-x" placeholder="0">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888;">Offset Y</label>
+                            <label>Offset Y</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-y" placeholder="4">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888;">Difuminado</label>
+                            <label>Difuminado</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-blur" placeholder="8" min="0">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888;">Expansión</label>
+                            <label>Expansión</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-shadow-input" id="ve-shadow-spread" placeholder="0">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                     </div>
-                    <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
-                        <input type="color" class="form-control form-control-color ve-shadow-input" id="ve-shadow-color" value="#000000" style="width:44px; padding:2px;">
-                        <label style="font-size:10px; color:#888; margin:0;">Color</label>
+                    <div class="ve-color-row ve-mb-6">
+                        <input type="color" class="form-control form-control-color ve-shadow-input ve-color-picker-input" id="ve-shadow-color" value="#000000">
+                        <label class="ve-label-inline">Color</label>
                         <div class="form-check ms-auto mb-0">
                             <input class="form-check-input ve-shadow-input" type="checkbox" id="ve-shadow-inset">
-                            <label class="form-check-label" for="ve-shadow-inset" style="font-size:11px; color:#555;">Interior</label>
+                            <label class="form-check-label ve-check-label" for="ve-shadow-inset">Interior</label>
                         </div>
                     </div>
-                    <div style="display:flex; gap:6px;">
-                        <button type="button" class="btn btn-primary flex-grow-1" id="btn-apply-shadow"
-                                style="background:#b10100;border-color:#b10100;font-size:12px;">
+                    <div class="ve-action-row">
+                        <button type="button" class="btn ve-btn-primary flex-grow-1" id="btn-apply-shadow">
                             Aplicar
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="btn-clear-shadow"
-                                style="font-size:12px;" title="Quitar sombra">
+                        <button type="button" class="btn btn-outline-secondary ve-btn-text" id="btn-clear-shadow" title="Quitar sombra">
                             <i class="fa-duotone fa-solid fa-times"></i>
                         </button>
                     </div>
                 </div>
-                <div style="border-top:1px solid #f0f0f0; padding-top:10px; margin-top:4px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:6px;">Sombra de texto</label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+                <div class="ve-subsection-divider">
+                    <label>Sombra de texto</label>
+                    <div class="ve-grid-2 ve-mb-6">
                         <div>
-                            <label style="font-size:10px; color:#888;">Offset X</label>
+                            <label>Offset X</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-x" placeholder="0">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888;">Offset Y</label>
+                            <label>Offset Y</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-y" placeholder="1">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888;">Difuminado</label>
+                            <label>Difuminado</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="ve-tshadow-blur" placeholder="2" min="0">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
-                        <div style="display:flex; align-items:flex-end;">
-                            <input type="color" class="form-control form-control-color" id="ve-tshadow-color" value="#000000" style="width:44px; padding:2px;">
+                        <div class="ve-color-align-end">
+                            <input type="color" class="form-control form-control-color ve-color-picker-input" id="ve-tshadow-color" value="#000000">
                         </div>
                     </div>
-                    <div style="display:flex; gap:6px;">
-                        <button type="button" class="btn btn-primary flex-grow-1" id="btn-apply-tshadow"
-                                style="background:#b10100;border-color:#b10100;font-size:12px;">
+                    <div class="ve-action-row">
+                        <button type="button" class="btn ve-btn-primary flex-grow-1" id="btn-apply-tshadow">
                             Aplicar
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="btn-clear-tshadow"
-                                style="font-size:12px;" title="Quitar sombra">
+                        <button type="button" class="btn btn-outline-secondary ve-btn-text" id="btn-clear-tshadow" title="Quitar sombra">
                             <i class="fa-duotone fa-solid fa-times"></i>
                         </button>
                     </div>
@@ -501,20 +484,20 @@
                 <span>Tamaño</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-size" style="display:none; padding:10px 12px;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div id="ve-sect-size" class="ve-hidden ve-sect-body">
+                <div class="ve-grid-2">
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Ancho</label>
+                        <label>Ancho</label>
                         <div class="input-group">
                             <input type="text" class="form-control ve-css-prop" data-prop="width" data-unit="" placeholder="auto">
-                            <span class="input-group-text" style="font-size:10px;">px/%</span>
+                            <span class="input-group-text ve-unit-text">px/%</span>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:3px;">Alto</label>
+                        <label>Alto</label>
                         <div class="input-group">
                             <input type="text" class="form-control ve-css-prop" data-prop="height" data-unit="" placeholder="auto">
-                            <span class="input-group-text" style="font-size:10px;">px/%</span>
+                            <span class="input-group-text ve-unit-text">px/%</span>
                         </div>
                     </div>
                 </div>
@@ -525,17 +508,16 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-position">
                 <span>Posición</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="position"
                             title="Restablecer posición"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-position" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Posición</label>
+            <div id="ve-sect-position" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>Posición</label>
                     <select class="form-select form-select ve-css-prop" data-prop="position" id="ve-position-select">
                         <option value="">Normal (static)</option>
                         <option value="relative">Relativa</option>
@@ -544,40 +526,40 @@
                         <option value="sticky">Sticky</option>
                     </select>
                 </div>
-                <div id="ve-position-coords" style="display:none; margin-bottom:8px;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                <div id="ve-position-coords" class="ve-hidden ve-field">
+                    <div class="ve-grid-2-gap6">
                         <div>
-                            <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Top</label>
+                            <label>Top</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="top" data-unit="px" placeholder="auto">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Right</label>
+                            <label>Right</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="right" data-unit="px" placeholder="auto">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Bottom</label>
+                            <label>Bottom</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="bottom" data-unit="px" placeholder="auto">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                         <div>
-                            <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Left</label>
+                            <label>Left</label>
                             <div class="input-group">
                                 <input type="number" class="form-control ve-css-prop" data-prop="left" data-unit="px" placeholder="auto">
-                                <span class="input-group-text" style="font-size:10px;">px</span>
+                                <span class="input-group-text ve-unit-text">px</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Z-index</label>
+                    <label>Z-index</label>
                     <input type="number" class="form-control ve-css-prop" data-prop="z-index" data-unit="" placeholder="auto" step="1">
                 </div>
             </div>
@@ -587,17 +569,16 @@
         <div class="ve-inspector-section">
             <div class="ve-section-header collapsed" data-target="ve-sect-flex">
                 <span>Display / Flex</span>
-                <div style="display:flex;align-items:center;gap:4px;">
+                <div class="ve-section-header-actions">
                     <button type="button" class="ve-reset-section-btn" data-section="flex"
                             title="Restablecer flex"
-                            style="background:transparent;border:none;color:#bbb;padding:1px 5px;font-size:10px;border-radius:3px;cursor:pointer;line-height:1.6;"
                             onclick="event.stopPropagation()"><i class="fa-duotone fa-solid fa-undo-alt"></i></button>
                     <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
                 </div>
             </div>
-            <div id="ve-sect-flex" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Display</label>
+            <div id="ve-sect-flex" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>Display</label>
                     <select class="form-select form-select ve-css-prop" data-prop="display" id="ve-display-select">
                         <option value="">Predeterminado</option>
                         <option value="block">block</option>
@@ -610,9 +591,9 @@
                         <option value="none">none (ocultar)</option>
                     </select>
                 </div>
-                <div id="ve-flex-controls" style="display:none;">
-                    <div style="margin-bottom:8px;">
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Dirección</label>
+                <div id="ve-flex-controls" class="ve-hidden">
+                    <div class="ve-field">
+                        <label>Dirección</label>
                         <div class="btn-group btn-group-sm w-100">
                             <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="flex-direction" data-value="row" title="Fila →"><i class="fa-duotone fa-solid fa-arrow-right"></i></button>
                             <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="flex-direction" data-value="column" title="Columna ↓"><i class="fa-duotone fa-solid fa-arrow-down"></i></button>
@@ -620,8 +601,8 @@
                             <button type="button" class="btn btn-outline-secondary ve-css-btn" data-prop="flex-direction" data-value="column-reverse" title="Columna inversa ↑"><i class="fa-duotone fa-solid fa-arrow-up"></i></button>
                         </div>
                     </div>
-                    <div style="margin-bottom:8px;">
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Alineación horizontal</label>
+                    <div class="ve-field">
+                        <label>Alineación horizontal</label>
                         <select class="form-select form-select ve-css-prop" data-prop="justify-content">
                             <option value="">Normal</option>
                             <option value="flex-start">Inicio</option>
@@ -632,8 +613,8 @@
                             <option value="space-evenly">Space evenly</option>
                         </select>
                     </div>
-                    <div style="margin-bottom:8px;">
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Alineación vertical</label>
+                    <div class="ve-field">
+                        <label>Alineación vertical</label>
                         <select class="form-select form-select ve-css-prop" data-prop="align-items">
                             <option value="">Normal</option>
                             <option value="stretch">Stretch</option>
@@ -643,8 +624,8 @@
                             <option value="baseline">Baseline</option>
                         </select>
                     </div>
-                    <div style="margin-bottom:8px;">
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Wrap</label>
+                    <div class="ve-field">
+                        <label>Wrap</label>
                         <select class="form-select form-select ve-css-prop" data-prop="flex-wrap">
                             <option value="">nowrap</option>
                             <option value="wrap">wrap</option>
@@ -653,10 +634,10 @@
                     </div>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">Gap</label>
+                    <label>Gap</label>
                     <div class="input-group">
                         <input type="number" class="form-control ve-css-prop" data-prop="gap" data-unit="px" placeholder="0" min="0">
-                        <span class="input-group-text" style="font-size:10px;">px</span>
+                        <span class="input-group-text ve-unit-text">px</span>
                     </div>
                 </div>
             </div>
@@ -668,38 +649,37 @@
                 <span>Transform</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-transform" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">
-                        Rotar <small id="ve-rotate-val" style="color:#1a1a1a;">0°</small>
+            <div id="ve-sect-transform" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
+                    <label>
+                        Rotar <small id="ve-rotate-val" class="ve-range-dark">0°</small>
                     </label>
                     <input type="range" id="ve-transform-rotate" min="-180" max="180" step="1" value="0" class="form-range">
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-size:11px; color:#666; display:block; margin-bottom:3px;">
-                        Escala <small id="ve-scale-val" style="color:#1a1a1a;">1×</small>
+                <div class="ve-field">
+                    <label>
+                        Escala <small id="ve-scale-val" class="ve-range-dark">1×</small>
                     </label>
                     <input type="range" id="ve-transform-scale" min="0.1" max="3" step="0.05" value="1" class="form-range">
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
+                <div class="ve-grid-2-gap6 ve-field">
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Translate X</label>
+                        <label>Translate X</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="ve-transform-tx" placeholder="0">
-                            <span class="input-group-text" style="font-size:10px;">px</span>
+                            <span class="input-group-text ve-unit-text">px</span>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:10px; color:#888; display:block; margin-bottom:2px;">Translate Y</label>
+                        <label>Translate Y</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="ve-transform-ty" placeholder="0">
-                            <span class="input-group-text" style="font-size:10px;">px</span>
+                            <span class="input-group-text ve-unit-text">px</span>
                         </div>
                     </div>
                 </div>
-                <div style="display:flex; gap:6px;">
-                    <button type="button" class="btn btn flex-grow-1" id="btn-apply-transform"
-                            style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;">
+                <div class="ve-action-row">
+                    <button type="button" class="btn ve-btn-primary flex-grow-1" id="btn-apply-transform">
                         Aplicar
                     </button>
                     <button type="button" class="btn btn-outline-secondary" id="btn-clear-transform" title="Quitar transform">
@@ -715,7 +695,7 @@
                 <span>Gradiente</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-gradient" style="display:none; padding:10px 12px;">
+            <div id="ve-sect-gradient" class="ve-hidden ve-sect-body">
                 <div class="ve-gradient-preview" id="ve-gradient-preview"></div>
                 <div class="ve-field">
                     <label>Dirección</label>
@@ -747,7 +727,7 @@
                 <span>Sombra visual</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-shadow-builder" style="display:none; padding:10px 12px;">
+            <div id="ve-sect-shadow-builder" class="ve-hidden ve-sect-body">
                 <div class="ve-shadow-preview" id="ve-shadow-preview"></div>
                 <div class="ve-shadow-row">
                     <label>X</label>
@@ -786,8 +766,8 @@
                 <span>Animaciones</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-motion" style="display:none; padding:10px 12px;">
-                <div style="margin-bottom:8px;">
+            <div id="ve-sect-motion" class="ve-hidden ve-sect-body">
+                <div class="ve-field">
                     <label>Efecto de entrada</label>
                     <select class="form-select ve-motion-select" id="ve-motion-effect">
                         <option value="">Ninguno</option>
@@ -801,7 +781,7 @@
                         <option value="slide-down">Slide Down</option>
                     </select>
                 </div>
-                <div style="margin-bottom:8px;">
+                <div class="ve-field">
                     <label>Duración</label>
                     <select class="form-select" id="ve-motion-duration">
                         <option value="0.3s">Rápida (0.3s)</option>
@@ -810,7 +790,7 @@
                         <option value="1.5s">Muy lenta (1.5s)</option>
                     </select>
                 </div>
-                <div style="margin-bottom:8px;">
+                <div class="ve-field">
                     <label>Retraso</label>
                     <select class="form-select" id="ve-motion-delay">
                         <option value="0s" selected>Sin retraso</option>
@@ -821,12 +801,10 @@
                         <option value="1s">1s</option>
                     </select>
                 </div>
-                <button type="button" class="btn w-100" id="btn-apply-motion"
-                        style="background:#b10100;border-color:#b10100;color:#fff;font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;">
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-motion">
                     Aplicar animación
                 </button>
-                <button type="button" class="btn btn-outline-secondary w-100 mt-1" id="btn-remove-motion"
-                        style="font-size:12px;padding:5px 12px;border-radius:6px;">
+                <button type="button" class="btn btn-outline-secondary ve-btn-text w-100 mt-1" id="btn-remove-motion">
                     Quitar animación
                 </button>
             </div>
@@ -838,12 +816,10 @@
                 <span>CSS personalizado</span>
                 <i class="fa-duotone fa-solid fa-chevron-down ve-section-chevron"></i>
             </div>
-            <div id="ve-sect-css" style="display:none; padding:10px 12px;">
-                <textarea class="form-control" id="ve-custom-css" rows="5"
-                          style="font-family:monospace; font-size:11px;"
+            <div id="ve-sect-css" class="ve-hidden ve-sect-body">
+                <textarea class="form-control ve-monospace ve-btn-text" id="ve-custom-css" rows="5"
                           placeholder="color: red;&#10;margin-top: 20px;"></textarea>
-                <button type="button" class="btn btn-primary mt-2 w-100" id="btn-apply-custom-css"
-                        style="background:#b10100;border-color:#b10100;font-size:12px;">
+                <button type="button" class="btn ve-btn-primary mt-2 w-100" id="btn-apply-custom-css">
                     Aplicar CSS
                 </button>
             </div>
@@ -853,17 +829,313 @@
 </div>
 
 <style>
-.ve-section-header { cursor: pointer; }
+/* ── Panel shell ─────────────────────────────────────────── */
+.ve-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ve-panel-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ve-border, #eee);
+    flex-shrink: 0;
+}
+
+.ve-panel-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.ve-label-tag {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ve-text-muted, #999);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.ve-element-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ve-text, #333);
+}
+
+.ve-btn-row-gap4 {
+    display: flex;
+    gap: 4px;
+}
+
+.ve-btn-icon {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+.ve-breadcrumb {
+    background: var(--ve-bg, #fff);
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-top: 4px;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.ve-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    text-align: center;
+    padding: 24px;
+}
+
+.ve-empty-text {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* ── Sections wrapper ────────────────────────────────────── */
+.ve-sections-wrap {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ── Section headers ─────────────────────────────────────── */
+.ve-section-header {
+    cursor: pointer;
+}
 .ve-section-header:hover { background: #f0f0f5 !important; }
 .ve-section-header > span {
     font-size: 12px;
     color: #444;
     font-weight: 600;
 }
+
+.ve-section-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Section body ────────────────────────────────────────── */
+.ve-sect-body {
+    padding: 10px 12px;
+}
+
+/* ── Fields & labels ─────────────────────────────────────── */
 #ve-inspector-sections label {
     font-size: 11px !important;
     color: #555 !important;
 }
+
+.ve-field {
+    margin-bottom: 8px;
+}
+
+.ve-label-inline {
+    font-size: 10px;
+    color: var(--ve-text-soft, #888);
+    margin: 0;
+}
+
+.ve-check-label {
+    font-size: 11px;
+    color: #555;
+}
+
+/* ── Reset section button ────────────────────────────────── */
+.ve-reset-section-btn {
+    background: transparent;
+    border: none;
+    color: var(--ve-text-faint, #bbb);
+    padding: 1px 5px;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 1.6;
+}
+
+/* ── Utility: hidden ─────────────────────────────────────── */
+.ve-hidden { display: none; }
+
+/* ── Visibility section ──────────────────────────────────── */
+.ve-hint-text {
+    font-size: 11px;
+    color: var(--ve-text-soft, #666);
+    margin-bottom: 8px;
+}
+
+.ve-flex-wrap-gap {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mb-10px { margin-bottom: 10px; }
+
+.ve-border-top-pad {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+}
+
+/* ── Primary action button ───────────────────────────────── */
+.ve-btn-primary {
+    background: var(--ve-primary, #b10100);
+    border-color: var(--ve-primary, #b10100);
+    color: #fff;
+    font-size: 12px;
+}
+.ve-btn-primary:hover {
+    background: #8e0000;
+    border-color: #8e0000;
+    color: #fff;
+}
+
+/* ── Small text buttons ──────────────────────────────────── */
+.ve-btn-text {
+    font-size: 12px;
+}
+
+/* ── Grids ───────────────────────────────────────────────── */
+.ve-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ve-grid-2-gap6 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+/* ── Color inputs ────────────────────────────────────────── */
+.ve-color-row {
+    display: flex;
+    gap: 6px;
+}
+
+.ve-color-picker-input {
+    width: 44px;
+    padding: 2px;
+}
+
+.ve-color-full {
+    width: 100%;
+}
+
+.ve-monospace {
+    font-family: monospace;
+    font-size: 11px;
+}
+
+/* ── Range value display ─────────────────────────────────── */
+.ve-range-dark { color: #1a1a1a; }
+
+/* ── Unit text in input-groups ───────────────────────────── */
+.ve-unit-text { font-size: 10px; }
+
+/* ── Spacing box-model grid ──────────────────────────────── */
+.ve-box-model {
+    display: grid;
+    grid-template-columns: 1fr 56px 1fr;
+    grid-template-rows: auto 56px auto;
+    gap: 4px;
+    max-width: 176px;
+    margin: 0 auto;
+}
+
+.ve-box-model-mb { margin-bottom: 12px; }
+
+.ve-box-center {
+    background: #e9ecef;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #aaa;
+}
+
+.ve-box-input { font-size: 11px; }
+
+/* ── Spacing section titles ──────────────────────────────── */
+.ve-spacing-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    text-align: center;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+/* ── Background section ──────────────────────────────────── */
+.ve-action-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.ve-btn-media-picker {
+    flex: 1;
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ve-btn-square {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.ve-flex-fill { flex: 1; }
+
+.ve-bg-preview {
+    margin-top: 6px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--ve-border, #eee);
+}
+
+.ve-bg-preview-img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+}
+
+/* ── Shadow section ──────────────────────────────────────── */
+.ve-mb-6 { margin-bottom: 6px; }
+
+.ve-subsection-divider {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+.ve-color-align-end {
+    display: flex;
+    align-items: flex-end;
+}
+
+/* ── Overline decoration ─────────────────────────────────── */
+.ve-overline { text-decoration: overline; }
 </style>
 
 <script>
