@@ -97,6 +97,32 @@ Comparativa con Elementor y plan de implementación para el editor visual de Als
 
 ---
 
+## Estado actual — Implementado ✅
+
+### Sesión completa (60+ features + 15 commits)
+- Stitch designs: Media Picker, Shortcode Manager, Visual Editor restructure
+- Dark mode, Command palette (Ctrl+K), Keyboard shortcuts modal
+- Navigator DOM tree, Split responsive preview, 20+ device presets
+- Quick actions floating bar, Enhanced inline toolbar (B/I/U/S/Tag/Size/Color)
+- Copy/paste styles, Drag reorder between columns, Image resize handles
+- CSS class autocomplete (Bootstrap 5.3), Gradient builder, Box shadow builder
+- Motion effects (8 animations), Wireframe mode
+- Popup builder, Form builder, AI content generation
+- Accessibility audit, Performance score, SEO score card
+- Element search (Ctrl+F), Responsive ruler, Page weight monitor
+- Global design system, Dynamic content tags, Display conditions
+- Paste smart (Word/Docs cleanup), Global blocks, Version compare
+- Drag files from desktop, Live CSS injection, Animation replay
+- Google SEO preview, Social share preview
+- Auto-save progress bar, Unsaved changes dot, Autosave timestamp
+
+### Pendiente para próxima sesión
+- **Refactor inline styles**: Inspector panel (217), Settings (47), Visual editor (99)
+- **Extraer CSS/JS**: Mover 1500+ líneas de inline CSS y 600+ líneas de sync JS a archivos externos
+- **Tests E2E**: Playwright/Cypress para el visual editor
+- **API endpoints**: `/api/v1/ai/generate-content`, `/api/v1/page-import`
+- **Collaboration indicators**: WebSocket para multi-usuario
+
 ## Plan de implementación recomendado
 
 ### Fase 1 (próximas 2 semanas)
