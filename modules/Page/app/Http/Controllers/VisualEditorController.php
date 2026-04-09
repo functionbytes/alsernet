@@ -992,49 +992,69 @@ class VisualEditorController extends Controller
         }
     });
 
-    // ── Drag reorder sections within preview ─────────────────────────────
-    var dragEl = null, dragPlaceholder = null, dragStartY = 0, isDragging = false;
+    // ── Drag reorder ANY element within preview ──────────────────────────
+    var dragEl = null, dragPlaceholder = null, dragStartY = 0, dragStartX = 0, isDragging = false, dragOrigParent = null, dragOrigNext = null;
 
     document.addEventListener('mousedown', function(e) {
         if (isEditing || !selectedEl || e.button !== 0) return;
-        // Only allow drag on top-level sections (direct children of ck-content or body sections)
-        var ck = document.querySelector('.ck-content');
-        var parent = ck || document.body;
-        if (selectedEl.parentNode !== parent) return;
+        // Allow drag on any selected element (not just top-level)
         dragEl = selectedEl;
         dragStartY = e.clientY;
+        dragStartX = e.clientX;
         isDragging = false;
+        dragOrigParent = dragEl.parentNode;
+        dragOrigNext = dragEl.nextSibling;
     });
 
     document.addEventListener('mousemove', function(e) {
         if (!dragEl) return;
         var dy = Math.abs(e.clientY - dragStartY);
-        if (dy < 8 && !isDragging) return; // threshold
+        var dx = Math.abs(e.clientX - dragStartX);
+        if (dy < 8 && dx < 8 && !isDragging) return;
 
         if (!isDragging) {
             isDragging = true;
             hideQuickBar();
-            dragEl.style.opacity = '0.4';
+            dragEl.style.opacity = '0.3';
+            dragEl.style.outline = '2px dashed #b10100';
             dragPlaceholder = document.createElement('div');
             dragPlaceholder.className = 've-drag-placeholder';
-            dragPlaceholder.style.cssText = 'height:4px;background:#b10100;border-radius:2px;margin:4px 0;transition:all .1s;';
+            dragPlaceholder.style.cssText = 'height:4px;background:#b10100;border-radius:2px;margin:4px 0;pointer-events:none;';
         }
 
-        // Find insertion point
-        var ck = document.querySelector('.ck-content') || document.body;
-        var children = Array.from(ck.children).filter(function(c) { return c !== dragPlaceholder && c.nodeType === 1; });
-        var inserted = false;
-        for (var i = 0; i < children.length; i++) {
-            var rect = children[i].getBoundingClientRect();
-            if (e.clientY < rect.top + rect.height / 2) {
-                if (dragPlaceholder.nextSibling !== children[i]) {
-                    ck.insertBefore(dragPlaceholder, children[i]);
-                }
-                inserted = true;
-                break;
-            }
+        // Find the element under cursor (excluding drag element and placeholder)
+        dragEl.style.pointerEvents = 'none';
+        dragPlaceholder.style.display = 'none';
+        var target = document.elementFromPoint(e.clientX, e.clientY);
+        dragEl.style.pointerEvents = '';
+        dragPlaceholder.style.display = '';
+
+        if (!target || target === dragEl || target === dragPlaceholder) return;
+
+        // Don't drop inside itself
+        if (dragEl.contains(target)) return;
+
+        // Find the closest container-like element (div, section, td, li, col)
+        var dropParent = target;
+        // If target is a text node or small inline, go up to its block parent
+        while (dropParent && dropParent.nodeType === 1) {
+            var display = window.getComputedStyle(dropParent).display;
+            if (display === 'block' || display === 'flex' || display === 'grid' || display === 'table-cell') break;
+            dropParent = dropParent.parentElement;
         }
-        if (!inserted) ck.appendChild(dragPlaceholder);
+        if (!dropParent || dropParent === dragEl || dragEl.contains(dropParent)) return;
+
+        // Insert placeholder relative to target within its parent
+        var rect = target.getBoundingClientRect();
+        var midY = rect.top + rect.height / 2;
+        var parent = target.parentNode;
+        if (!parent) return;
+
+        if (e.clientY < midY) {
+            parent.insertBefore(dragPlaceholder, target);
+        } else {
+            parent.insertBefore(dragPlaceholder, target.nextSibling);
+        }
     });
 
     document.addEventListener('mouseup', function(e) {
@@ -1043,12 +1063,15 @@ class VisualEditorController extends Controller
             dragPlaceholder.parentNode.insertBefore(dragEl, dragPlaceholder);
             dragPlaceholder.remove();
             dragEl.style.opacity = '';
+            dragEl.style.outline = '';
             showQuickBar(dragEl);
             window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
             window.parent.postMessage({ type: 've-section-reordered' }, '*');
         } else if (dragEl) {
             dragEl.style.opacity = '';
+            dragEl.style.outline = '';
         }
+        if (dragPlaceholder && dragPlaceholder.parentNode) dragPlaceholder.remove();
         dragEl = null;
         dragPlaceholder = null;
         isDragging = false;

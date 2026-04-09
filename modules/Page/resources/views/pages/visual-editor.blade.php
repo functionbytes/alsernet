@@ -2527,6 +2527,9 @@
                 $('.ve-locale-btn').removeClass('active');
                 $('.ve-locale-btn[data-locale="' + newLocale + '"]').addClass('active');
 
+                // Update preview URL for new locale
+                window.postMessage({ type: 've-locale-changed', locale: newLocale }, '*');
+
                 // Reset history
                 historyStack = [{ label: 'Idioma: ' + newLocale.toUpperCase(), html: data.content || '' }];
                 historyPointer = 0;
@@ -4352,6 +4355,20 @@
             if (bar) { bar.textContent = origAS.textContent; bar.className = origAS.className + ' ms-1'; }
         }).observe(origAS, { childList: true, attributes: true, characterData: true, subtree: true });
     }
+
+    // ── Update preview URL when locale changes ──
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-locale-changed') {
+            var loc = ev.data.locale || '';
+            var baseUrl = $('.ve-topbar-preview-btn').data('base-url') || $('.ve-topbar-preview-btn').attr('href');
+            if (!$('.ve-topbar-preview-btn').data('base-url')) {
+                $('.ve-topbar-preview-btn').data('base-url', baseUrl);
+            }
+            // Append locale param if not default
+            var newUrl = baseUrl + (baseUrl.indexOf('?') !== -1 ? '&' : '?') + 'locale=' + loc;
+            $('.ve-topbar-preview-btn').attr('href', newUrl);
+        }
+    });
 
     // ── Sync locale bar click to main locale switcher ──
     $(document).on('click', '#btn-locale-bar + .dropdown-menu .ve-locale-btn', function(){
