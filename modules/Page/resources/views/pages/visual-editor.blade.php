@@ -661,6 +661,19 @@
         .ve-btn-primary { background:#b10100; border-color:#b10100; color:#fff; font-size:12px; padding:6px 16px; border-radius:8px; font-weight:600; }
         .ve-btn-primary:hover { background:#900000; border-color:#900000; color:#fff; }
         .ve-diff-badge { font-size:9px; background:var(--ve-bg-muted); color:var(--ve-text-muted); padding:1px 5px; border-radius:3px; margin-left:auto; }
+
+        /* ── SEO score card ──────────────────────────────── */
+        .ve-seo-subtitle { font-size:12px; color:var(--ve-text-muted); margin-bottom:12px; }
+        .ve-seo-score-card { display:flex; align-items:center; justify-content:space-between; background:var(--ve-bg-muted); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+        .ve-seo-score-left { }
+        .ve-seo-score-label { font-size:11px; color:var(--ve-text-muted); }
+        .ve-seo-score-value { font-size:28px; font-weight:700; color:var(--ve-text); line-height:1.2; }
+        .ve-seo-score-grade { font-size:12px; font-weight:600; color:var(--ve-text-muted); }
+        .ve-seo-score-ring { width:48px; height:48px; border-radius:50%; border:3px solid var(--ve-text); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:var(--ve-text); }
+        .ve-seo-preview { margin-bottom:12px; }
+        .ve-seo-preview-title { font-size:11px; color:var(--ve-text-muted); margin-bottom:2px; }
+        .ve-seo-preview-value { font-size:13px; font-weight:700; color:var(--ve-text); margin-bottom:10px; }
+        .ve-seo-preview-desc { font-size:12px; color:var(--ve-text-soft); line-height:1.5; margin-bottom:10px; }
         .ve-color-input-row { display:flex; gap:6px; align-items:center; }
         .ve-color-picker { width:36px; height:32px; border:1px solid var(--ve-border); border-radius:6px; padding:2px; cursor:pointer; flex-shrink:0; }
         .ve-color-input-row .form-control { flex:1; font-family:'SF Mono',monospace; font-size:11px; }
@@ -5058,6 +5071,36 @@
             if (window.veToast) window.veToast('Contenido insertado', 'success');
         }
     });
+
+    // ── SEO score + toggle ──
+    $(document).on('click', '#btn-toggle-seo-fields', function() {
+        $('#ve-seo-fields').toggleClass('ve-hidden');
+        $(this).text($('#ve-seo-fields').hasClass('ve-hidden') ? 'Editar SEO' : 'Ocultar campos');
+    });
+    function updateSeoScore() {
+        var title = ($('#ve-settings-seo-title').val() || '').trim();
+        var desc = ($('#ve-settings-seo-description').val() || '').trim();
+        var kw = ($('#ve-settings-seo-keywords').val() || '').trim();
+        var score = 0, max = 100;
+        if (title.length > 0) score += 25;
+        if (title.length >= 30 && title.length <= 60) score += 10;
+        if (desc.length > 0) score += 25;
+        if (desc.length >= 120 && desc.length <= 160) score += 10;
+        if (kw.length > 0) score += 15;
+        if ($('#ve-settings-featured-image').val()) score += 15;
+        var pct = Math.min(Math.round(score), 100);
+        var grade = pct >= 80 ? 'Excelente' : pct >= 60 ? 'Bueno' : pct >= 40 ? 'Regular' : 'Bajo';
+        var letter = pct >= 80 ? 'A' : pct >= 60 ? 'B' : pct >= 40 ? 'C' : 'D';
+        var ringColor = pct >= 80 ? '#43a047' : pct >= 60 ? '#333' : pct >= 40 ? '#f9a825' : '#b10100';
+        $('#ve-seo-score-num').text(pct + '/100');
+        $('#ve-seo-score-grade').text(grade);
+        $('#ve-seo-score-letter').text(letter);
+        $('#ve-seo-score-ring').css('border-color', ringColor).find('span').css('color', ringColor);
+        $('#ve-seo-preview-title').text(title || 'Sin título SEO');
+        $('#ve-seo-preview-desc').text(desc ? (desc.length > 120 ? desc.substring(0,120) + '...' : desc) : 'Sin descripción');
+    }
+    $(document).on('input', '#ve-settings-seo-title, #ve-settings-seo-description, #ve-settings-seo-keywords, #ve-settings-featured-image', updateSeoScore);
+    setTimeout(updateSeoScore, 2000);
 
     // ── P2.4: Revision diff indicator ──
     // Show simple diff info on hover over history items

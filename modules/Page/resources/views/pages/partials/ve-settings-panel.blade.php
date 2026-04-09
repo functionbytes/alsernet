@@ -22,15 +22,6 @@
         </div>
 
         <div class="ve-field">
-            <label>Slug (URL)</label>
-            <div class="input-group">
-                <span class="input-group-text">/</span>
-                <input type="text" class="form-control" id="ve-settings-slug"
-                       value="{{ $translation->slug ?? $page->slug }}" placeholder="mi-pagina">
-            </div>
-        </div>
-
-        <div class="ve-field">
             <label>Estado</label>
             <select class="form-select" id="ve-settings-status">
                 <option value="published" {{ $page->status->value === 'published' ? 'selected' : '' }}>Publicado</option>
@@ -103,37 +94,60 @@
 
         {{-- SEO --}}
         <div class="ve-section-title ve-section-title-bordered">SEO</div>
+        <p class="ve-seo-subtitle">Optimización para buscadores</p>
 
-        <div class="ve-field">
-            <label>Meta título</label>
-            <input type="text" class="form-control" id="ve-settings-seo-title"
-                   value="{{ $translation->seo_title ?? $page->seo_title ?? '' }}" placeholder="Igual al título si está vacío">
-        </div>
-
-        <div class="ve-field">
-            <label>Meta descripción</label>
-            <textarea class="form-control ve-textarea-resizable" id="ve-settings-seo-description"
-                      rows="3" placeholder="Descripción para buscadores (max 160 caracteres)...">{{ $translation->seo_description ?? $page->seo_description ?? '' }}</textarea>
-            <div id="ve-seo-desc-count" class="ve-field-counter">0 / 160</div>
-        </div>
-
-        <div class="ve-field">
-            <label>Keywords</label>
-            <input type="text" class="form-control" id="ve-settings-seo-keywords"
-                   value="{{ $translation->seo_keywords ?? $page->seo_keywords ?? '' }}" placeholder="palabra1, palabra2, ...">
-        </div>
-
-        <div class="ve-field ve-field-last">
-            <label>Imagen destacada (URL)</label>
-            <div class="input-group">
-                <input type="url" class="form-control" id="ve-settings-featured-image"
-                       value="{{ $page->featured_image ?? '' }}" placeholder="https://...">
-                <button type="button" class="btn btn-outline-secondary" id="btn-settings-media-picker" title="Seleccionar de medios">
-                    <i class="fa-duotone fa-solid fa-photo-video"></i>
-                </button>
+        {{-- SEO Score card --}}
+        <div class="ve-seo-score-card">
+            <div class="ve-seo-score-left">
+                <div class="ve-seo-score-label">Score SEO</div>
+                <div class="ve-seo-score-value" id="ve-seo-score-num">--</div>
+                <div class="ve-seo-score-grade" id="ve-seo-score-grade">--</div>
             </div>
-            <div id="ve-settings-img-preview" class="ve-img-preview ve-hidden">
-                <img id="ve-settings-img-thumb" src="" alt="" class="ve-img-thumb">
+            <div class="ve-seo-score-ring" id="ve-seo-score-ring">
+                <span id="ve-seo-score-letter">?</span>
+            </div>
+        </div>
+
+        {{-- SEO Preview --}}
+        <div class="ve-seo-preview">
+            <div class="ve-seo-preview-title">Título SEO</div>
+            <div class="ve-seo-preview-value" id="ve-seo-preview-title">{{ $translation->seo_title ?? $page->seo_title ?? $page->title }}</div>
+            <div class="ve-seo-preview-title">Descripción</div>
+            <div class="ve-seo-preview-desc" id="ve-seo-preview-desc">{{ Str::limit($translation->seo_description ?? $page->seo_description ?? '', 120) }}</div>
+        </div>
+
+        {{-- Edit SEO button (toggles detail fields) --}}
+        <button type="button" class="btn ve-btn-primary w-100 mb-3" id="btn-toggle-seo-fields">
+            Editar SEO
+        </button>
+
+        {{-- SEO fields (hidden by default) --}}
+        <div id="ve-seo-fields" class="ve-hidden">
+            <div class="ve-field">
+                <label>Meta título</label>
+                <input type="text" class="form-control" id="ve-settings-seo-title"
+                       value="{{ $translation->seo_title ?? $page->seo_title ?? '' }}" placeholder="Igual al título si está vacío">
+            </div>
+            <div class="ve-field">
+                <label>Meta descripción</label>
+                <textarea class="form-control ve-textarea-resizable" id="ve-settings-seo-description"
+                          rows="3" placeholder="Descripción para buscadores (max 160 caracteres)...">{{ $translation->seo_description ?? $page->seo_description ?? '' }}</textarea>
+                <div id="ve-seo-desc-count" class="ve-field-counter">0 / 160</div>
+            </div>
+            <div class="ve-field">
+                <label>Keywords</label>
+                <input type="text" class="form-control" id="ve-settings-seo-keywords"
+                       value="{{ $translation->seo_keywords ?? $page->seo_keywords ?? '' }}" placeholder="palabra1, palabra2, ...">
+            </div>
+            <div class="ve-field ve-field-last">
+                <label>Imagen destacada (URL)</label>
+                <div class="input-group">
+                    <input type="url" class="form-control" id="ve-settings-featured-image"
+                           value="{{ $page->featured_image ?? '' }}" placeholder="https://...">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-settings-media-picker" title="Seleccionar de medios">
+                        <i class="fa-duotone fa-solid fa-photo-video"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
