@@ -4862,16 +4862,16 @@
 
     // ── P3.4: Dynamic content tags ──
     var dynamicTags = {
-        '{{page.title}}': '{{ $page->title }}',
-        '{{page.url}}': '{{ url($page->slug ?? "") }}',
-        '{{site.name}}': '{{ config("app.name") }}',
-        '{{current.year}}': new Date().getFullYear().toString(),
-        '{{current.date}}': new Date().toLocaleDateString('es-ES'),
+        'page.title': @json($page->title),
+        'page.url': @json(url($page->slug ?? '')),
+        'site.name': @json(config('app.name')),
+        'current.year': new Date().getFullYear().toString(),
+        'current.date': new Date().toLocaleDateString('es-ES'),
     };
     cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Título de página', icon:'fa-tag', action: function() {
         if (window.veEditor) {
             window.veEditor.model.change(function() {
-                var view = window.veEditor.data.processor.toView('<span data-dynamic="page.title">' + dynamicTags['{{page.title}}'] + '</span>');
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="page.title">' + dynamicTags['page.title'] + '</span>');
                 var model = window.veEditor.data.toModel(view);
                 window.veEditor.model.insertContent(model);
             });
@@ -4880,7 +4880,7 @@
     cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Año actual', icon:'fa-calendar', action: function() {
         if (window.veEditor) {
             window.veEditor.model.change(function() {
-                var view = window.veEditor.data.processor.toView('<span data-dynamic="current.year">' + dynamicTags['{{current.year}}'] + '</span>');
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="current.year">' + dynamicTags['current.year'] + '</span>');
                 var model = window.veEditor.data.toModel(view);
                 window.veEditor.model.insertContent(model);
             });
@@ -4889,7 +4889,7 @@
     cmdActions.push({ cat:'Insertar', label:'Tag dinámico: Nombre del sitio', icon:'fa-globe', action: function() {
         if (window.veEditor) {
             window.veEditor.model.change(function() {
-                var view = window.veEditor.data.processor.toView('<span data-dynamic="site.name">' + dynamicTags['{{site.name}}'] + '</span>');
+                var view = window.veEditor.data.processor.toView('<span data-dynamic="site.name">' + dynamicTags['site.name'] + '</span>');
                 var model = window.veEditor.data.toModel(view);
                 window.veEditor.model.insertContent(model);
             });
