@@ -5,8 +5,8 @@
             <div class="ve-panel-label">Ajustes</div>
             <span class="ve-panel-title">Configuración de página</span>
         </div>
-        <button type="button" class="btn ve-btn-primary" id="btn-save-settings">
-            <i class="fa-duotone fa-solid fa-save me-1"></i>Guardar
+        <button type="button" class="btn ve-panel-action-btn ve-code-apply-btn" id="btn-save-settings" title="Guardar configuración">
+            <i class="fa-duotone fa-solid fa-save"></i>
         </button>
     </div>
 

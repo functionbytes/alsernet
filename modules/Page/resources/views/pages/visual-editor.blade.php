@@ -1248,8 +1248,15 @@
             background: var(--ve-bg-muted) !important;
             border-right: 1px solid var(--ve-border) !important;
         }
-        /* Default to light theme CodeMirror */
         #ve-panel-code .CodeMirror .CodeMirror-linenumber { color: var(--ve-text-faint); }
+        /* CodeMirror full height + scroll */
+        #ve-panel-code { display:flex; flex-direction:column; }
+        #ve-code-editor-wrap { flex:1 !important; min-height:0; overflow:hidden; }
+        #ve-panel-code .CodeMirror { height:100% !important; }
+        #ve-panel-code .CodeMirror-scroll { overflow:auto !important; }
+        /* Apply button in code panel header — red circle */
+        .ve-code-apply-btn { background:var(--ve-primary) !important; border-color:var(--ve-primary) !important; color:#fff !important; }
+        .ve-code-apply-btn:hover { background:#900000 !important; border-color:#900000 !important; color:#fff !important; }
         /* Scrollbars always visible (horizontal + vertical) */
         #ve-panel-code .CodeMirror-hscrollbar,
         #ve-panel-code .CodeMirror-vscrollbar {
@@ -1418,12 +1425,8 @@
                             <button class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-refresh" title="Sincronizar">
                                 <i class="fa-duotone fa-solid fa-sync-alt"></i>
                             </button>
-                        </div>
-                    </div>
-                    <div class="ve-editor-toolbar" id="ve-code-toolbar">
-                        <div class="ms-auto">
-                            <button class="btn ve-btn-primary" id="ve-code-apply" title="Aplicar cambios al preview">
-                                <i class="fa-duotone fa-solid fa-check me-1"></i>Aplicar
+                            <button class="btn ve-panel-action-btn ve-code-apply-btn" id="ve-code-apply" title="Aplicar cambios">
+                                <i class="fa-duotone fa-solid fa-check"></i>
                             </button>
                         </div>
                     </div>
@@ -1622,6 +1625,33 @@
 
     </div>{{-- /ve-main --}}
 
+</div>
+
+{{-- ── Conditions modal ──────────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-conditions-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content ve-cmd-content">
+            <div class="ve-ai-modal-header">
+                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-filter ve-ai-modal-icon"></i>Condiciones de visibilidad</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="ve-ai-modal-body">
+                <div class="ve-field">
+                    <label>Mostrar este elemento cuando:</label>
+                    <select class="form-select" id="ve-condition-select">
+                        <option value="">Sin condición</option>
+                        <option value="logged-in">Solo usuarios logueados</option>
+                        <option value="guest">Solo visitantes</option>
+                        <option value="mobile">Solo móvil</option>
+                        <option value="desktop">Solo desktop</option>
+                    </select>
+                </div>
+                <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-condition">
+                    <i class="fa-duotone fa-solid fa-check me-1"></i>Aplicar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- ── Popup builder modal ────────────────────────────────────────────────── --}}
@@ -4917,17 +4947,21 @@
     })();
     $(document).on('click', '#ctx-conditions', function() {
         $('#ve-context-menu').hide();
-        var condition = prompt('Condición de visibilidad:\n\n• logged-in (solo usuarios logueados)\n• guest (solo visitantes)\n• mobile (solo móvil)\n• desktop (solo desktop)\n• none (quitar condición)');
-        if (!condition) return;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('ve-conditions-modal')).show();
+    });
+    $(document).on('click', '#btn-apply-condition', function() {
+        var condition = $('#ve-condition-select').val();
         var frame = document.getElementById('ve-preview-frame');
         if (frame && frame.contentWindow) {
-            if (condition === 'none') {
+            if (!condition) {
                 frame.contentWindow.postMessage({ type: 've-remove-attr', attr: 'data-condition' }, '*');
+                if (window.veToast) window.veToast('Condición eliminada', 'info');
             } else {
                 frame.contentWindow.postMessage({ type: 've-set-attr', attr: 'data-condition', value: condition }, '*');
+                if (window.veToast) window.veToast('Condición: ' + condition, 'success');
             }
-            if (window.veToast) window.veToast('Condición: ' + condition, 'info');
         }
+        bootstrap.Modal.getInstance(document.getElementById('ve-conditions-modal')).hide();
     });
 
     // ── P3.9: AI content generation ──
