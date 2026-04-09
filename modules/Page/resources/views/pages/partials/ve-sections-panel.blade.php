@@ -56,7 +56,7 @@
 .ve-tab.active { color:#b10100; border-bottom-color:#b10100; }
 
 /* Tab content */
-.ve-tab-content { display:none; flex:1; overflow-y:auto; }
+.ve-tab-content { display:none; flex:1 1 0; overflow-y:auto; min-height:0; }
 .ve-tab-content.active { display:block; }
 
 /* Empty state */
