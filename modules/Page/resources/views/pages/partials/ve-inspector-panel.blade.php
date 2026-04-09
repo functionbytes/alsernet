@@ -829,14 +829,7 @@
 </div>
 
 <style>
-/* ── Panel shell ─────────────────────────────────────────── */
-.ve-panel {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
+/* ── Panel header (shared) ──────────────────────────────── */
 .ve-panel-header {
     padding: 10px 12px;
     border-bottom: 1px solid var(--ve-border, #eee);
