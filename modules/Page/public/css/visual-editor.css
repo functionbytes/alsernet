@@ -1,3 +1,4 @@
+    <style>
         :root {
             --ve-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
             --ve-primary: #b10100;
@@ -953,7 +954,7 @@
         .ve-panel { display: none; flex: 1 1 0; flex-direction: column; overflow: hidden; min-height: 0; opacity: 0; transition: opacity .15s ease; }
         .ve-panel.active { display: flex; opacity: 1; }
         /* Ensure all panel root containers fill their parent */
-        .ve-panel > div[id] { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+        .ve-panel > div[id] { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .ve-panel .ve-panel-root { height: 100%; }
         /* Settings scrollable area fills remaining space */
         .ve-scrollable-area { flex: 1 1 0; overflow-y: auto; min-height: 0; }
