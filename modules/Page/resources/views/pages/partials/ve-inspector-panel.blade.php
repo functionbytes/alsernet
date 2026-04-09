@@ -1160,11 +1160,11 @@
             window._veLastSelectedStyles = e.data.styles || {};
             showElementInfo(e.data.tag, e.data.styles, e.data);
             if (e.data.isLink) {
-                $('#ve-section-link-wrapper').show();
+                $('#ve-section-link-wrapper').removeClass('ve-hidden');
                 $('#ve-link-href-inspector').val(e.data.href || '');
                 $('#ve-link-target-inspector').val(e.data.linkTarget || '');
             } else {
-                $('#ve-section-link-wrapper').hide();
+                $('#ve-section-link-wrapper').addClass('ve-hidden');
             }
         }
     });
@@ -1220,11 +1220,11 @@
     function showElementInfo(tag, styles, data) {
         data = data || {};
         $('#ve-inspector-element-name').text('<' + tag + '>');
-        $('#ve-inspector-empty').hide();
-        $('#ve-inspector-sections').show();
-        $('#ve-section-visibility').show();
-        $('#ve-section-attributes').show();
-        $('#btn-hide-element').show();
+        $('#ve-inspector-empty').addClass('ve-hidden');
+        $('#ve-inspector-sections').removeClass('ve-hidden');
+        $('#ve-section-visibility').removeClass('ve-hidden');
+        $('#ve-section-attributes').removeClass('ve-hidden');
+        $('#btn-hide-element').removeClass('ve-hidden');
         populateFields(styles);
         // Update visibility toggle state
         const isHidden = styles['display'] === 'none';
@@ -1250,12 +1250,12 @@
 
     function deselect() {
         $('#ve-inspector-element-name').text('Ninguno');
-        $('#ve-inspector-sections').hide();
-        $('#ve-inspector-empty').show();
-        $('#ve-section-visibility').hide();
-        $('#ve-section-attributes').hide();
-        $('#btn-hide-element').hide();
-        $('#ve-inspector-breadcrumb').hide();
+        $('#ve-inspector-sections').addClass('ve-hidden');
+        $('#ve-inspector-empty').removeClass('ve-hidden');
+        $('#ve-section-visibility').addClass('ve-hidden');
+        $('#ve-section-attributes').addClass('ve-hidden');
+        $('#btn-hide-element').addClass('ve-hidden');
+        $('#ve-inspector-breadcrumb').addClass('ve-hidden');
         clearFields();
     }
 
@@ -1407,16 +1407,16 @@
     /* ── Visibility: hide/show element ──────────────────────────────── */
     $('#btn-toggle-hidden, #btn-hide-element').on('click', function () {
         applyStyle('display', 'none');
-        $('#btn-toggle-hidden').hide();
-        $('#btn-toggle-shown').show();
-        $('#btn-hide-element').hide();
+        $('#btn-toggle-hidden').addClass('ve-hidden');
+        $('#btn-toggle-shown').removeClass('ve-hidden');
+        $('#btn-hide-element').addClass('ve-hidden');
     });
 
     $('#btn-toggle-shown').on('click', function () {
         applyStyle('display', '');
-        $('#btn-toggle-hidden').show();
-        $('#btn-toggle-shown').hide();
-        $('#btn-hide-element').show();
+        $('#btn-toggle-hidden').removeClass('ve-hidden');
+        $('#btn-toggle-shown').addClass('ve-hidden');
+        $('#btn-hide-element').removeClass('ve-hidden');
     });
 
     /* ── Visibility: responsive class toggles ────────────────────────── */
