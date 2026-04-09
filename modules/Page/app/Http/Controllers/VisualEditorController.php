@@ -320,11 +320,25 @@ class VisualEditorController extends Controller
         var bar = document.createElement('div');
         bar.className = 've-quick-bar';
         bar.id = 've-quick-bar';
-        bar.innerHTML = '<button title="Mover arriba" data-action="move-up">&#8593;</button>' +
+        var tag = el.tagName.toLowerCase();
+        var isText = ['h1','h2','h3','h4','h5','h6','p','span','a','li','td','th','label','strong','em','blockquote'].indexOf(tag) !== -1;
+        var isLink = tag === 'a';
+
+        var btns = '<button title="Mover arriba" data-action="move-up">&#8593;</button>' +
             '<button title="Mover abajo" data-action="move-down">&#8595;</button>' +
-            '<button title="Duplicar" data-action="duplicate">&#10697;</button>' +
-            '<button title="Inspeccionar" data-action="inspect">&#9881;</button>' +
+            '<button title="Duplicar" data-action="duplicate">&#10697;</button>';
+
+        if (isText) {
+            btns += '<button title="Negrita" data-action="bold" style="font-weight:900;">B</button>' +
+                '<button title="Cursiva" data-action="italic" style="font-style:italic;">I</button>' +
+                '<button title="Color" data-action="color">&#127912;</button>';
+        }
+        if (isLink) {
+            btns += '<button title="Editar enlace" data-action="edit-link">&#128279;</button>';
+        }
+        btns += '<button title="Inspeccionar" data-action="inspect">&#9881;</button>' +
             '<button class="ve-qb-danger" title="Eliminar" data-action="delete">&#10005;</button>';
+        bar.innerHTML = btns;
         var top = window.scrollY + rect.top - 38;
         if (top < 4) top = window.scrollY + rect.bottom + 4;
         bar.style.position = 'absolute';
@@ -341,6 +355,26 @@ class VisualEditorController extends Controller
             else if (act === 'duplicate') window.parent.postMessage({type:'ve-duplicate-element'},'*');
             else if (act === 'delete') window.parent.postMessage({type:'ve-delete-element'},'*');
             else if (act === 'inspect') window.parent.postMessage({type:'ve-request-inspect'},'*');
+            else if (act === 'bold') {
+                if (selectedEl) {
+                    var fw = window.getComputedStyle(selectedEl).fontWeight;
+                    selectedEl.style.fontWeight = (parseInt(fw) >= 700) ? '400' : '700';
+                    window.parent.postMessage({type:'ve-inline-edit-committed', html: extractContent()},'*');
+                }
+            }
+            else if (act === 'italic') {
+                if (selectedEl) {
+                    var fs = window.getComputedStyle(selectedEl).fontStyle;
+                    selectedEl.style.fontStyle = (fs === 'italic') ? 'normal' : 'italic';
+                    window.parent.postMessage({type:'ve-inline-edit-committed', html: extractContent()},'*');
+                }
+            }
+            else if (act === 'color') {
+                window.parent.postMessage({type:'ve-request-inspect'},'*');
+            }
+            else if (act === 'edit-link') {
+                window.parent.postMessage({type:'ve-open-link-editor', nodeId: selectedEl ? selectedEl.id : ''},'*');
+            }
         });
     }
     function hideQuickBar() {
