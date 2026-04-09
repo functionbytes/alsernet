@@ -145,30 +145,31 @@ foreach ($shortcodes as $sc) {
         <div class="ve-sc-grid-presets">
             <div class="ve-sc-grid-presets-title">Insertar estructura</div>
             <div class="ve-sc-grid-presets-grid">
-                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="1">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div></div>
-                    <span class="ve-grid-card-label">1 Col</span>
-                </button>
-                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="2">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
-                    <span class="ve-grid-card-label">2 Cols</span>
-                </button>
-                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="3">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
-                    <span class="ve-grid-card-label">3 Cols</span>
-                </button>
-                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="4">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
-                    <span class="ve-grid-card-label">4 Cols</span>
-                </button>
-                <button type="button" class="ve-insert-layout ve-grid-card" data-type="1-2">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block ve-grid-col-wide" style="flex:2"></div></div>
-                    <span class="ve-grid-card-label">1/3 · 2/3</span>
-                </button>
-                <button type="button" class="ve-insert-layout ve-grid-card" data-type="2-1">
-                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block ve-grid-col-wide" style="flex:2"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
-                    <span class="ve-grid-card-label">2/3 · 1/3</span>
-                </button>
+                @php
+                $gridTemplates = [
+                    ['cols' => '1', 'label' => '1 Col', 'vis' => [1], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-12"><p>Contenido de la columna</p></div></div></div></section>'],
+                    ['cols' => '2', 'label' => '2 Cols', 'vis' => [1,1], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-6"><p>Contenido de la columna</p></div><div class="col-md-6"><p>Contenido de la columna</p></div></div></div></section>'],
+                    ['cols' => '3', 'label' => '3 Cols', 'vis' => [1,1,1], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-4"><p>Contenido de la columna</p></div><div class="col-md-4"><p>Contenido de la columna</p></div><div class="col-md-4"><p>Contenido de la columna</p></div></div></div></section>'],
+                    ['cols' => '4', 'label' => '4 Cols', 'vis' => [1,1,1,1], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-3"><p>Contenido</p></div><div class="col-md-3"><p>Contenido</p></div><div class="col-md-3"><p>Contenido</p></div><div class="col-md-3"><p>Contenido</p></div></div></div></section>'],
+                    ['type' => '1-2', 'label' => '1/3 · 2/3', 'vis' => [1,2], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-4"><p>Contenido de la columna</p></div><div class="col-md-8"><p>Contenido de la columna</p></div></div></div></section>'],
+                    ['type' => '2-1', 'label' => '2/3 · 1/3', 'vis' => [2,1], 'html' => '<section class="py-5"><div class="container"><div class="row g-4"><div class="col-md-8"><p>Contenido de la columna</p></div><div class="col-md-4"><p>Contenido de la columna</p></div></div></div></section>'],
+                ];
+                @endphp
+                @foreach($gridTemplates as $tpl)
+                <div class="ve-block-item ve-sc-item ve-insert-layout ve-grid-card"
+                     draggable="true"
+                     data-{{ isset($tpl['cols']) ? 'cols' : 'type' }}="{{ $tpl['cols'] ?? $tpl['type'] }}"
+                     data-name="layout-{{ $tpl['cols'] ?? $tpl['type'] }}"
+                     data-example="{{ $tpl['html'] }}"
+                     data-category="estructura">
+                    <div class="ve-grid-card-vis">
+                        @foreach($tpl['vis'] as $flex)
+                        <div class="ve-grid-col-block {{ $flex > 1 ? 've-grid-col-wide' : '' }}" style="flex:{{ $flex }}"></div>
+                        @endforeach
+                    </div>
+                    <span class="ve-grid-card-label">{{ $tpl['label'] }}</span>
+                </div>
+                @endforeach
             </div>
         </div>
 
