@@ -1,64 +1,346 @@
 <div id="ve-layout-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
 
     {{-- Header --}}
-    <div style="padding:10px 12px; border-bottom:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;">
+    <div class="ve-lp-header">
         <div>
-            <div style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">LAYOUT</div>
-            <span style="font-size:12px; color:#555;">Grid Bootstrap</span>
+            <div class="ve-lp-title">LAYOUT</div>
+            <div class="ve-lp-subtitle">Grid Bootstrap</div>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-refresh-layout"
-                title="Actualizar" style="font-size:11px; padding:2px 8px;">
-            <i class="fa-duotone fa-solid fa-sync fa-xs"></i>
+        <button type="button" class="ve-lp-refresh" id="btn-refresh-layout" title="Actualizar estructura">
+            <i class="fas fa-rotate-right"></i>
         </button>
     </div>
 
     {{-- Quick insert --}}
-    <div style="padding:10px 12px; border-bottom:1px solid #e9ecef; flex-shrink:0;">
-        <div style="font-size:10px; font-weight:600; color:#888; margin-bottom:6px; text-transform:uppercase;">Insertar estructura</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-cols="1" style="font-size:11px; padding:4px;">
-                <i class="fa-duotone fa-solid fa-square me-1"></i>1 Col
+    <div class="ve-lp-section">
+        <div class="ve-lp-section-label">Insertar estructura</div>
+        <div class="ve-lp-presets">
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="1" title="1 columna">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col" style="flex:12"></span>
+                </span>
+                <span class="ve-lp-preset-label">1 Col</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-cols="2" style="font-size:11px; padding:4px;">
-                <i class="fa-duotone fa-solid fa-columns me-1"></i>2 Cols
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="2" title="2 columnas iguales">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col" style="flex:6"></span>
+                    <span class="ve-lp-col" style="flex:6"></span>
+                </span>
+                <span class="ve-lp-preset-label">2 Cols</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-cols="3" style="font-size:11px; padding:4px;">
-                <i class="fa-duotone fa-solid fa-grip-lines-vertical me-1"></i>3 Cols
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="3" title="3 columnas iguales">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col" style="flex:4"></span>
+                    <span class="ve-lp-col" style="flex:4"></span>
+                    <span class="ve-lp-col" style="flex:4"></span>
+                </span>
+                <span class="ve-lp-preset-label">3 Cols</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-cols="4" style="font-size:11px; padding:4px;">
-                <i class="fa-duotone fa-solid fa-th me-1"></i>4 Cols
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="4" title="4 columnas iguales">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col" style="flex:3"></span>
+                    <span class="ve-lp-col" style="flex:3"></span>
+                    <span class="ve-lp-col" style="flex:3"></span>
+                    <span class="ve-lp-col" style="flex:3"></span>
+                </span>
+                <span class="ve-lp-preset-label">4 Cols</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-type="1-2" style="font-size:11px; padding:4px;">
-                <span style="font-size:10px;">1/3 · 2/3</span>
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-type="1-2" title="1/3 · 2/3">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col" style="flex:4"></span>
+                    <span class="ve-lp-col ve-lp-col--wide" style="flex:8"></span>
+                </span>
+                <span class="ve-lp-preset-label">1/3 · 2/3</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary ve-insert-layout"
-                    data-type="2-1" style="font-size:11px; padding:4px;">
-                <span style="font-size:10px;">2/3 · 1/3</span>
+            <button type="button" class="ve-lp-preset ve-insert-layout" data-type="2-1" title="2/3 · 1/3">
+                <span class="ve-lp-preset-vis">
+                    <span class="ve-lp-col ve-lp-col--wide" style="flex:8"></span>
+                    <span class="ve-lp-col" style="flex:4"></span>
+                </span>
+                <span class="ve-lp-preset-label">2/3 · 1/3</span>
             </button>
         </div>
     </div>
 
     {{-- Empty state --}}
-    <div id="ve-layout-empty" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#aaa; text-align:center; padding:20px;">
-        <i class="fa-duotone fa-solid fa-th" style="font-size:28px; margin-bottom:10px; opacity:.3;"></i>
-        <div style="font-size:12px; line-height:1.5;">Haz clic en "Actualizar"<br>para ver la estructura de la página</div>
+    <div id="ve-layout-empty" class="ve-lp-empty">
+        <i class="fas fa-table-cells-large ve-lp-empty-icon"></i>
+        <div class="ve-lp-empty-text">Haz clic en "Actualizar"<br>para ver la estructura de la página</div>
     </div>
 
     {{-- Structure tree --}}
-    <div id="ve-layout-tree" style="flex:1; overflow-y:auto; display:none; padding:8px;"></div>
+    <div id="ve-layout-tree" style="flex:1; overflow-y:auto; display:none; padding:10px;"></div>
 
-    <div style="padding:8px 12px; border-top:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0;">
-        <small style="font-size:10px; color:#999;">
-            <i class="fa-duotone fa-solid fa-info-circle me-1"></i>Haz clic en un elemento para seleccionarlo en el preview
-        </small>
+    {{-- Footer hint --}}
+    <div class="ve-lp-footer">
+        <i class="fas fa-circle-info me-1"></i>Haz clic en un elemento para seleccionarlo
     </div>
 
 </div>
+
+<style>
+/* ── Layout panel ──────────────────────────────────────────────── */
+.ve-lp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+    background: #fff;
+}
+.ve-lp-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.ve-lp-subtitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+}
+.ve-lp-refresh {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    color: #737c7f;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.ve-lp-refresh:hover {
+    background: #f4f6f8;
+    border-color: #dee2e6;
+    color: #1a1c1e;
+}
+
+/* ── Section label ─────────────────────────────────────────────── */
+.ve-lp-section {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+.ve-lp-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #abb3b7;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 8px;
+}
+
+/* ── Presets grid ──────────────────────────────────────────────── */
+.ve-lp-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.ve-lp-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 7px 8px 6px;
+    background: #f4f6f8;
+    border: 1px solid #eaeff1;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+}
+.ve-lp-preset:hover {
+    background: #eaeff1;
+    border-color: #dee2e6;
+}
+.ve-lp-preset.ve-insert-active {
+    border-color: #b10100;
+    background: #fff0f0;
+}
+.ve-lp-preset-vis {
+    display: flex;
+    gap: 2px;
+    height: 18px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ve-lp-col {
+    background: #dee2e6;
+    border-radius: 2px;
+    transition: background .15s;
+}
+.ve-lp-col--wide {
+    background: #c5cdd2;
+}
+.ve-lp-preset:hover .ve-lp-col  { background: #c5cdd2; }
+.ve-lp-preset:hover .ve-lp-col--wide { background: #adb5bd; }
+.ve-lp-preset-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #586064;
+    white-space: nowrap;
+}
+
+/* ── Empty state ───────────────────────────────────────────────── */
+.ve-lp-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 20px;
+    color: #abb3b7;
+}
+.ve-lp-empty-icon {
+    font-size: 30px;
+    margin-bottom: 12px;
+    opacity: .4;
+}
+.ve-lp-empty-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #abb3b7;
+}
+
+/* ── Tree nodes ────────────────────────────────────────────────── */
+.ve-lp-container {
+    margin-bottom: 6px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+.ve-lp-node {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    background: #f4f6f8;
+    border: none;
+    border-left: 3px solid #b10100;
+    cursor: pointer;
+    transition: all .12s;
+}
+.ve-lp-node:hover {
+    background: #eef0f2;
+}
+.ve-lp-node-icon {
+    font-size: 10px;
+    color: #999;
+    flex-shrink: 0;
+}
+.ve-lp-node-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ve-lp-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+.ve-lp-badge--rows {
+    background: #eee;
+    color: #666;
+}
+.ve-lp-badge--cols {
+    background: #eee;
+    color: #999;
+}
+/* Container inner content */
+.ve-lp-container-body {
+    padding: 4px 6px 6px;
+}
+
+/* Row node */
+.ve-lp-row {
+    margin-left: 6px;
+    margin-bottom: 3px;
+    border-left: 2px solid #eee;
+    padding-left: 6px;
+}
+.ve-lp-row-node {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all .12s;
+    margin-bottom: 3px;
+}
+.ve-lp-row-node:hover {
+    background: #f0f0f0;
+    border-color: #ddd;
+}
+.ve-lp-row-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666;
+    flex: 1;
+}
+
+/* Column chips */
+.ve-lp-cols-row {
+    display: flex;
+    gap: 3px;
+    margin-left: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+    padding-left: 6px;
+}
+.ve-lp-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    background: #f4f6f8;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #666;
+    cursor: pointer;
+    transition: all .12s;
+    white-space: nowrap;
+}
+.ve-lp-chip:hover {
+    background: #b10100;
+    border-color: #b10100;
+    color: #fff;
+}
+
+/* ── Footer ────────────────────────────────────────────────────── */
+.ve-lp-footer {
+    padding: 7px 14px;
+    border-top: 1px solid #e9ecef;
+    background: #f4f6f8;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #abb3b7;
+}
+</style>
 
 <script>
 (function ($) {
@@ -99,10 +381,8 @@
 
         // Visual feedback
         const $btn = $(this);
-        $btn.removeClass('btn-outline-secondary').addClass('btn-success');
-        setTimeout(function () {
-            $btn.removeClass('btn-success').addClass('btn-outline-secondary');
-        }, 1000);
+        $btn.addClass('ve-insert-active');
+        setTimeout(function () { $btn.removeClass('ve-insert-active'); }, 800);
     });
 
     /* ── Scan iframe for Bootstrap grid structure ────────────────────── */
@@ -124,90 +404,79 @@
         $tree.empty().show();
 
         data.forEach(function (container) {
-            const $cont = buildContainerNode(container);
-            $tree.append($cont);
+            $tree.append(buildContainerNode(container));
         });
     };
 
-    function buildContainerNode(container) {
-        const $wrap = $('<div>').css({ marginBottom: '8px' });
+    function selectNode(nodeId) {
+        const frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow && nodeId) {
+            frame.contentWindow.postMessage({ type: 've-select-by-id', nodeId: nodeId }, '*');
+        }
+    }
 
-        const $header = $('<div>').css({
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '5px 8px', background: '#f5f5f5',
-            borderRadius: '5px', cursor: 'pointer',
-            border: '1px solid #dee2e6', marginBottom: '4px',
-        })
-        .html(
-            '<i class="fa-duotone fa-solid fa-square" style="color:#555;font-size:10px;"></i>' +
-            '<span style="font-size:11px;font-weight:600;color:#333;flex:1;">' + escHtml(container.tag) + '</span>' +
-            '<span class="badge" style="background:#555;font-size:9px;">' + (container.rows || 0) + ' filas</span>'
-        )
-        .on('click', function () {
-            if (container.nodeId) {
-                const frame = document.getElementById('ve-preview-frame');
-                if (frame && frame.contentWindow) {
-                    frame.contentWindow.postMessage({ type: 've-select-by-id', nodeId: container.nodeId }, '*');
-                }
+    function buildContainerNode(container) {
+        const rowCount = container.rows ? container.rows.length : 0;
+
+        const $wrap = $('<div class="ve-lp-container">');
+
+        const $chevron = rowCount > 0
+            ? '<i class="fas fa-chevron-down ve-lp-node-icon" style="font-size:8px;transition:transform .15s;"></i>'
+            : '<i class="fas fa-square ve-lp-node-icon"></i>';
+
+        const $header = $('<div class="ve-lp-node">')
+            .html(
+                $chevron +
+                '<span class="ve-lp-node-tag">' + escHtml(container.tag) + '</span>' +
+                '<span class="ve-lp-badge ve-lp-badge--rows">' + rowCount + ' fila' + (rowCount !== 1 ? 's' : '') + '</span>'
+            );
+
+        // Click on tag selects in preview, click on chevron toggles
+        $header.on('click', function (e) {
+            if (rowCount > 0 && $(e.target).hasClass('fa-chevron-down') || $(e.target).hasClass('fa-chevron-up')) {
+                var $body = $wrap.find('.ve-lp-container-body');
+                var $ico = $header.find('.fa-chevron-down, .fa-chevron-up');
+                $body.slideToggle(150);
+                $ico.toggleClass('fa-chevron-down fa-chevron-up');
+            } else {
+                selectNode(container.nodeId);
             }
         });
 
         $wrap.append($header);
 
         if (container.rows && container.rows.length) {
+            const $body = $('<div class="ve-lp-container-body">');
+
             container.rows.forEach(function (row, ri) {
-                const $row = $('<div>').css({ marginLeft: '12px', marginBottom: '4px' });
+                const colCount = row.cols ? row.cols.length : 0;
+                const $rowWrap = $('<div class="ve-lp-row">');
 
-                const $rowHead = $('<div>').css({
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '4px 8px', background: '#f0f0f0',
-                    borderRadius: '4px', cursor: 'pointer',
-                    border: '1px solid #dee2e6', marginBottom: '3px',
-                })
-                .html(
-                    '<i class="fa-duotone fa-solid fa-grip-lines" style="color:#666;font-size:10px;"></i>' +
-                    '<span style="font-size:11px;color:#333;flex:1;">Fila ' + (ri + 1) + '</span>' +
-                    '<span class="badge" style="background:#666;font-size:9px;">' + (row.cols ? row.cols.length : 0) + ' cols</span>'
-                )
-                .on('click', function () {
-                    if (row.nodeId) {
-                        const frame = document.getElementById('ve-preview-frame');
-                        if (frame && frame.contentWindow) {
-                            frame.contentWindow.postMessage({ type: 've-select-by-id', nodeId: row.nodeId }, '*');
-                        }
-                    }
-                });
+                const $rowHead = $('<div class="ve-lp-row-node">')
+                    .html(
+                        '<i class="fas fa-grip-lines ve-lp-node-icon"></i>' +
+                        '<span class="ve-lp-row-label">Fila ' + (ri + 1) + '</span>' +
+                        '<span class="ve-lp-badge ve-lp-badge--cols">' + colCount + ' col' + (colCount !== 1 ? 's' : '') + '</span>'
+                    )
+                    .on('click', function () { selectNode(row.nodeId); });
 
-                $row.append($rowHead);
+                $rowWrap.append($rowHead);
 
                 if (row.cols && row.cols.length) {
-                    const $cols = $('<div>').css({
-                        display: 'flex', gap: '3px', marginLeft: '12px', flexWrap: 'wrap',
-                    });
+                    const $chipsRow = $('<div class="ve-lp-cols-row">');
                     row.cols.forEach(function (col) {
-                        const $col = $('<div>').css({
-                            flex: col.span || 1, minWidth: '24px',
-                            padding: '3px 6px', background: '#eee',
-                            border: '1px solid #dee2e6', borderRadius: '4px',
-                            fontSize: '10px', textAlign: 'center', cursor: 'pointer',
-                            color: '#555',
-                        })
-                        .text('col-' + (col.span || '?'))
-                        .on('click', function () {
-                            if (col.nodeId) {
-                                const frame = document.getElementById('ve-preview-frame');
-                                if (frame && frame.contentWindow) {
-                                    frame.contentWindow.postMessage({ type: 've-select-by-id', nodeId: col.nodeId }, '*');
-                                }
-                            }
-                        });
-                        $cols.append($col);
+                        $('<span class="ve-lp-chip">')
+                            .text('col-' + (col.span || '?'))
+                            .on('click', function () { selectNode(col.nodeId); })
+                            .appendTo($chipsRow);
                     });
-                    $row.append($cols);
+                    $rowWrap.append($chipsRow);
                 }
 
-                $wrap.append($row);
+                $body.append($rowWrap);
             });
+
+            $wrap.append($body);
         }
 
         return $wrap;

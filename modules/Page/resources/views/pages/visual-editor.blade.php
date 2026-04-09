@@ -13,63 +13,706 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <style>
+        :root {
+            --ve-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            --ve-primary: #b10100;
+            --ve-text: #333;
+            --ve-text-soft: #666;
+            --ve-text-muted: #999;
+            --ve-text-faint: #bbb;
+            --ve-bg: #fff;
+            --ve-bg-subtle: #fafafa;
+            --ve-bg-muted: #f4f6f8;
+            --ve-border: #eee;
+            --ve-border-soft: #e8eaed;
+            --ve-radius-sm: 4px;
+            --ve-radius-md: 6px;
+            --ve-radius-lg: 16px;
+            --ve-font-xs: 10px;
+            --ve-font-sm: 11px;
+            --ve-font-md: 12px;
+            --ve-font-base: 13px;
+        }
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: var(--ve-font); font-size: var(--ve-font-md); color: var(--ve-text); }
+        /* ── Global form standardization ── */
+        #ve-body input[type="text"],
+        #ve-body input[type="number"],
+        #ve-body input[type="url"],
+        #ve-body select,
+        #ve-body textarea {
+            font-size: var(--ve-font-md);
+            font-family: var(--ve-font);
+            border-radius: var(--ve-radius-sm);
+            border: 1px solid var(--ve-border);
+            background: var(--ve-bg-muted);
+            color: var(--ve-text);
+            padding: 5px 8px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        #ve-body input:focus,
+        #ve-body select:focus,
+        #ve-body textarea:focus {
+            border-color: var(--ve-primary);
+            box-shadow: 0 0 0 2px rgba(177,1,0,.08);
+            background: var(--ve-bg);
+        }
+        #ve-body input::placeholder { color: var(--ve-text-faint); }
+        #ve-body .form-control { font-size: var(--ve-font-md); }
+        #ve-body .form-control-sm { font-size: var(--ve-font-sm); padding: 4px 8px; }
+        #ve-body .btn-sm { font-size: var(--ve-font-sm); padding: 4px 10px; border-radius: var(--ve-radius-sm); }
+        #ve-body label { font-size: var(--ve-font-sm); font-weight: 600; color: var(--ve-text-soft); margin-bottom: 3px; display: block; }
 
-        /* ── Toolbar ────────────────────────────────────────── */
-        #ve-toolbar {
-            height: 40px;
-            background: #fff;
-            color: #333;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            gap: 6px;
-            flex-shrink: 0;
-            border-bottom: 1px solid #e9ecef;
-            position: relative;
-            z-index: 200;
+        /* ── Panel global standardization ──────────────────── */
+        /* Panel headers (all partials use inline styles — override them) */
+        #ve-sidebar-panels [style*="border-bottom:1px solid #e9ecef"][style*="background:#f8f9fa"],
+        #ve-sidebar-panels .bg-light.border-bottom,
+        #ve-sidebar-panels .p-2.border-bottom {
+            background: var(--ve-bg) !important;
+            border-bottom: 1px solid var(--ve-border) !important;
+            padding: 8px 12px !important;
         }
-        #ve-toolbar .vr { background: #dee2e6; width: 1px; height: 20px; margin: 0 2px; flex-shrink: 0; }
-        #ve-toolbar .btn-outline-secondary {
-            border-color: #dee2e6;
-            color: #6c757d;
+        /* Section labels (LAYOUT, HISTORIAL, AJUSTES, etc.) */
+        #ve-sidebar-panels [style*="font-size:10px"][style*="text-transform:uppercase"] {
+            font-size: var(--ve-font-xs) !important;
+            font-weight: 700 !important;
+            color: var(--ve-text-muted) !important;
+            letter-spacing: .8px !important;
         }
-        #ve-toolbar .btn-outline-secondary:hover {
-            background: #f8f9fa;
-            border-color: #adb5bd;
-            color: #333;
+        /* Subtitles */
+        #ve-sidebar-panels [style*="font-size:12px"][style*="color:#555"] {
+            font-size: var(--ve-font-sm) !important;
+            color: var(--ve-text-soft) !important;
         }
-        #ve-toolbar .btn-outline-secondary.active,
-        #ve-toolbar .breakpoint-btn.active {
-            background: #1a1a1a !important;
-            border-color: #1a1a1a !important;
+        /* Action buttons in panel headers — round, visible */
+        #ve-sidebar-panels .btn-outline-secondary {
+            border: 1px solid var(--ve-border) !important;
+            color: var(--ve-text-muted) !important;
+            font-size: 14px !important;
+            width: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+            background: var(--ve-bg) !important;
+        }
+        #ve-sidebar-panels .btn-outline-secondary:hover {
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text) !important;
+            border-color: #ccc !important;
+        }
+        /* Danger outline (snapshots "Limpiar") — make subtle */
+        #ve-sidebar-panels .btn-outline-danger {
+            border-color: var(--ve-border-soft) !important;
+            color: var(--ve-text-muted) !important;
+            font-size: 9px !important;
+            padding: 1px 6px !important;
+        }
+        #ve-sidebar-panels .btn-outline-danger:hover {
+            background: #fdf2f2 !important;
+            color: var(--ve-primary) !important;
+            border-color: var(--ve-primary) !important;
+        }
+        /* Save buttons in panels */
+        #ve-sidebar-panels [style*="background:#1a1a1a"] {
+            background: var(--ve-primary) !important;
+            border-color: var(--ve-primary) !important;
+            color: #fff !important;
+            border-radius: var(--ve-radius-md) !important;
+            font-size: var(--ve-font-sm) !important;
+            padding: 4px 12px !important;
+        }
+        #ve-sidebar-panels [style*="background:#1a1a1a"]:hover {
+            background: #900000 !important;
+            border-color: #900000 !important;
+        }
+        /* Footer hints (all panels) */
+        #ve-sidebar-panels [style*="border-top:1px solid #e9ecef"][style*="background:#f8f9fa"] small,
+        #ve-sidebar-panels .border-top.bg-light small {
+            font-size: 9px !important;
+            color: var(--ve-text-faint) !important;
+        }
+        /* Input group text */
+        #ve-body .input-group-text {
+            font-size: var(--ve-font-sm);
+            color: var(--ve-text-muted);
+            background: var(--ve-bg-muted);
+            border-color: var(--ve-border);
+            padding: 4px 8px;
+        }
+        /* Select standardization */
+        #ve-body .form-select-sm {
+            font-size: var(--ve-font-sm);
+            padding: 4px 28px 4px 8px;
+            border-color: var(--ve-border);
+            border-radius: var(--ve-radius-sm);
+        }
+        /* Section items (Secciones panel) — more breathing room */
+        .ve-section-item {
+            padding: 6px 8px !important;
+            margin-bottom: 4px !important;
+            border-color: var(--ve-border) !important;
+            border-radius: var(--ve-radius-sm) !important;
+        }
+        .ve-section-tag {
+            font-size: 9px !important;
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text-muted) !important;
+        }
+        .ve-section-label { font-size: var(--ve-font-sm) !important; color: var(--ve-text) !important; }
+        /* History items */
+        .ve-history-item {
+            font-size: var(--ve-font-sm) !important;
+            padding: 5px 10px !important;
+            border-bottom-color: var(--ve-border) !important;
+            color: var(--ve-text-soft) !important;
+        }
+        .ve-history-item.current {
+            background: #fdf8f8 !important;
+            color: var(--ve-primary) !important;
+        }
+        .ve-history-item.current .ve-hist-dot { background: var(--ve-primary) !important; }
+        /* Inspector section headers */
+        /* Unified accordion header — shared by ALL panels */
+        .ve-section-header,
+        .ve-category-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            padding: 11px 12px !important;
+            background: var(--ve-bg) !important;
+            border: none !important;
+            border-bottom: 1px solid var(--ve-border) !important;
+            color: #444 !important;
+            text-transform: none !important;
+            letter-spacing: 0 !important;
+            cursor: pointer !important;
+            line-height: 1.3 !important;
+        }
+        .ve-section-header:hover,
+        .ve-category-header:hover { background: var(--ve-bg-subtle) !important; }
+        .ve-section-header .ve-section-chevron,
+        .ve-category-header .ve-cat-chevron { color: #ccc !important; font-size: 11px !important; }
+        .ve-category-header.collapsed .ve-cat-chevron { transform: rotate(-90deg) !important; }
+        .ve-category-header:not(.collapsed) .ve-cat-chevron { color: #999 !important; }
+
+        /* ── Select2 custom for visual editor ──────────────── */
+        #ve-sidebar-panels .select2-container { width: 100% !important; }
+        #ve-sidebar-panels .select2-container--default .select2-selection--single {
+            height: 30px;
+            border: 1px solid var(--ve-border);
+            border-radius: 4px;
+            background: var(--ve-bg-muted);
+            font-size: 11px;
+            padding: 0;
+        }
+        #ve-sidebar-panels .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            padding-left: 8px;
+            color: var(--ve-text);
+            font-size: 11px;
+        }
+        #ve-sidebar-panels .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 28px;
+        }
+        #ve-sidebar-panels .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: var(--ve-primary);
+            box-shadow: 0 0 0 2px rgba(177,1,0,.08);
+        }
+        .select2-dropdown {
+            border: 1px solid var(--ve-border) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
+            font-size: 11px !important;
+        }
+        .select2-results__option { padding: 6px 10px !important; font-size: 11px !important; }
+        .select2-results__option--highlighted[aria-selected] {
+            background: var(--ve-primary) !important;
             color: #fff !important;
         }
-        #ve-toolbar .text-white { color: #333 !important; }
+        .select2-search--dropdown .select2-search__field {
+            font-size: 11px !important;
+            padding: 5px 8px !important;
+            border: 1px solid var(--ve-border) !important;
+            border-radius: 4px !important;
+        }
+        .select2-search--dropdown .select2-search__field:focus {
+            border-color: var(--ve-primary) !important;
+        }
+
+        /* ── Inspector panel polish ────────────────────────── */
+        #ve-inspector-sections { padding-bottom: 20px; }
+        /* All inputs full width inside inspector */
+        #ve-inspector-sections input[type="text"],
+        #ve-inspector-sections input[type="url"],
+        #ve-inspector-sections input[type="number"],
+        #ve-inspector-sections select,
+        #ve-inspector-sections textarea {
+            width: 100% !important;
+            display: block !important;
+        }
+        #ve-inspector-sections .input-group { width: 100% !important; }
+        #ve-inspector-sections .form-control,
+        #ve-inspector-sections .form-select { width: 100% !important; }
+        /* Sections content padding */
+        #ve-inspector-sections [id^="ve-sect-"] { padding: 10px 12px !important; }
+        /* Visibility buttons row — fix overlap */
+        #ve-inspector-sections .ve-visibility-btn {
+            font-size: 11px !important;
+            padding: 5px 14px !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+            flex: 1 !important;
+            text-align: center !important;
+        }
+        #ve-inspector-sections .ve-visibility-btn.active {
+            background: var(--ve-primary) !important;
+            border-color: var(--ve-primary) !important;
+            color: #fff !important;
+        }
+        /* Ocultar/Mostrar element buttons — stack properly */
+        #ve-inspector-sections #btn-toggle-hidden,
+        #ve-inspector-sections #btn-toggle-shown {
+            font-size: 11px !important;
+            padding: 6px 12px !important;
+            border-radius: 6px !important;
+        }
+        /* Apply buttons inside inspector */
+        #ve-inspector-sections [id^="btn-apply-"] {
+            background: var(--ve-primary) !important;
+            border-color: var(--ve-primary) !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            padding: 6px 12px !important;
+        }
+        #ve-inspector-sections [id^="btn-apply-"]:hover {
+            background: #900000 !important;
+        }
+        /* Typography inputs grid */
+        #ve-inspector-sections .ve-css-prop {
+            font-size: 11px !important;
+            padding: 5px 8px !important;
+            border-radius: 4px !important;
+        }
+        /* Alignment/Decoration button groups */
+        #ve-inspector-sections .ve-align-btn,
+        #ve-inspector-sections .ve-deco-btn {
+            width: 36px !important;
+            height: 34px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+        }
+        #ve-inspector-sections .ve-align-btn.active,
+        #ve-inspector-sections .ve-deco-btn.active {
+            background: var(--ve-primary) !important;
+            border-color: var(--ve-primary) !important;
+            color: #fff !important;
+        }
+        /* Range sliders — use palette color */
+        #ve-inspector-sections input[type="range"],
+        #ve-inspector-panel input[type="range"],
+        #ve-body input[type="range"] {
+            accent-color: var(--ve-primary) !important;
+            width: 100%;
+        }
+        /* Spacing box model inputs */
+        #ve-inspector-sections input[type="number"],
+        #ve-inspector-sections .ve-spacing-input {
+            width: 100% !important;
+            font-size: 11px !important;
+            text-align: center !important;
+            padding: 4px 6px !important;
+            border: 1px solid var(--ve-border) !important;
+            border-radius: 4px !important;
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text) !important;
+        }
+        #ve-inspector-sections input[type="number"]:focus,
+        #ve-inspector-sections .ve-spacing-input:focus {
+            border-color: var(--ve-primary) !important;
+            background: var(--ve-bg) !important;
+        }
+        /* Spacing box labels (P, M) */
+        #ve-inspector-sections .ve-spacing-label {
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: var(--ve-text-faint) !important;
+        }
+        /* Color swatch + input row */
+        #ve-inspector-sections .ve-color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #ve-inspector-sections input[type="color"] {
+            width: 36px !important;
+            height: 32px !important;
+            border: 1px solid var(--ve-border) !important;
+            border-radius: 6px !important;
+            padding: 2px !important;
+            cursor: pointer;
+        }
+        /* File input override for media picker */
+        #ve-inspector-sections input[type="file"] {
+            font-size: 11px !important;
+        }
+        /* Input group text (px, etc) */
+        #ve-inspector-sections .input-group-text {
+            font-size: 10px !important;
+            padding: 4px 6px !important;
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text-muted) !important;
+            border-color: var(--ve-border) !important;
+        }
+        /* Select dropdowns in inspector */
+        #ve-inspector-sections select {
+            font-size: 11px !important;
+            padding: 5px 8px !important;
+            border-radius: 4px !important;
+            border: 1px solid var(--ve-border) !important;
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text) !important;
+        }
+        #ve-inspector-sections select:focus {
+            border-color: var(--ve-primary) !important;
+            background: var(--ve-bg) !important;
+        }
+        /* CSS custom textarea */
+        #ve-inspector-sections textarea {
+            font-family: 'SF Mono', 'Fira Code', monospace !important;
+            font-size: 11px !important;
+            padding: 8px !important;
+            border-radius: 4px !important;
+            border: 1px solid var(--ve-border) !important;
+            background: var(--ve-bg-muted) !important;
+            color: var(--ve-text) !important;
+        }
+        #ve-inspector-sections textarea:focus {
+            border-color: var(--ve-primary) !important;
+            background: var(--ve-bg) !important;
+        }
+        /* Spacing section title */
+        #ve-inspector-sections .ve-spacing-title {
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: .8px !important;
+            color: var(--ve-text-muted) !important;
+            text-align: center !important;
+            margin-bottom: 6px !important;
+        }
+        /* X dismiss buttons in inspector */
+        #ve-inspector-sections .ve-dismiss-btn {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px solid var(--ve-border);
+            background: var(--ve-bg);
+            color: var(--ve-text-muted);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #ve-inspector-sections .ve-dismiss-btn:hover {
+            background: var(--ve-bg-muted);
+            color: var(--ve-text);
+        }
+        /* Section labels inside inspector */
+        #ve-inspector-sections label {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: #666 !important;
+            margin-bottom: 4px !important;
+        }
+        /* Breadcrumb */
+        #ve-inspector-breadcrumb {
+            font-size: 10px !important;
+            color: #999 !important;
+            background: var(--ve-bg-muted) !important;
+            border: 1px solid var(--ve-border) !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+        }
+        /* Color swatch */
+        #ve-inspector-sections .ve-color-swatch {
+            border-radius: 4px !important;
+            border: 1px solid #eee !important;
+        }
+        /* Reset section buttons */
+        .ve-reset-section-btn { opacity: .5; transition: opacity .15s; }
+        .ve-reset-section-btn:hover { opacity: 1; color: var(--ve-primary) !important; }
+
+        /* ── Autosave status ────────────────────────────────── */
         #autosave-status { font-size: 11px; }
         #autosave-status.saving  { color: #ffc107; }
         #autosave-status.saved   { color: #555; }
         #autosave-status.error   { color: #FA896B; }
         #autosave-status.unsaved { color: #888; }
 
+        /* ── Top bar ─────────────────────────────────────────── */
+        #ve-topbar {
+            height: 40px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #eee;
+            z-index: 200;
+        }
+        .ve-topbar-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #bbb;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        .ve-topbar-search {
+            width: 100%;
+            border: none;
+            background: #f4f6f8;
+            border-radius: 16px;
+            padding: 6px 12px 6px 30px;
+            font-size: 12px;
+            color: #333;
+            outline: none;
+        }
+        .ve-topbar-search::placeholder { color: #bbb; }
+        .ve-topbar-search:focus {
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(177,1,0,.08);
+        }
+        .ve-topbar-search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--ve-text-faint); font-size: 11px;
+            cursor: pointer; padding: 2px;
+        }
+        .ve-topbar-search-clear:hover { color: var(--ve-text-soft); }
+        .ve-topbar-preview-btn {
+            background: #1a1c1e;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            letter-spacing: .02em;
+        }
+        .ve-topbar-preview-btn:hover { background: #333; color: #fff; }
+
+        /* ── Bottom bar ─────────────────────────────────────── */
+        #ve-bottombar {
+            height: 36px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 6px;
+            flex-shrink: 0;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+        }
+        .ve-bottom-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 13px;
+            padding: 3px 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        .ve-bottom-btn:hover { color: #555; background: #f4f6f8; }
+        .ve-bottom-btn:disabled { opacity: .25; cursor: default; }
+        .ve-bottom-btn:disabled:hover { color: #aaa; background: none; }
+        .ve-bottom-save {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            cursor: pointer;
+            letter-spacing: .02em;
+        }
+        .ve-bottom-save:hover { color: #b10100; }
+        .ve-bottom-save.has-changes { color: #333; position: relative; }
+        .ve-bottom-save.has-changes::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 2px;
+            width: 6px; height: 6px;
+            background: var(--ve-primary);
+            border-radius: 50%;
+        }
+
+        /* ── Dark mode ──────────────────────────────────────── */
+        #ve-body.ve-dark { --ve-text:#e0e0e0; --ve-text-soft:#aaa; --ve-text-muted:#777; --ve-text-faint:#555; --ve-bg:#1e1e1e; --ve-bg-subtle:#252525; --ve-bg-muted:#2a2a2a; --ve-border:#333; --ve-border-soft:#3a3a3a; }
+        #ve-body.ve-dark #ve-topbar { background:#1e1e1e; border-bottom-color:#333; }
+        #ve-body.ve-dark #ve-sidebar { background:#1e1e1e; border-right-color:#333; }
+        #ve-body.ve-dark #ve-sidebar-nav { background:#181818; border-right-color:#333; }
+        #ve-body.ve-dark #ve-sidebar-nav .ve-nav-btn { color:#888; }
+        #ve-body.ve-dark #ve-sidebar-nav .ve-nav-btn:hover { color:#ccc; background:#2a2a2a; }
+        #ve-body.ve-dark #ve-sidebar-panels { background:#1e1e1e; }
+        #ve-body.ve-dark #ve-bottombar { background:#1e1e1e; border-top-color:#333; }
+        #ve-body.ve-dark .ve-section-header,
+        #ve-body.ve-dark .ve-category-header { background:#1e1e1e !important; border-bottom-color:#333 !important; color:#ccc !important; }
+        #ve-body.ve-dark .ve-block-item { background:#2a2a2a; border-color:#333; }
+        #ve-body.ve-dark .ve-block-item:hover { background:#333; border-color:#444; }
+        #ve-body.ve-dark .ve-block-item .ve-block-icon i { color:#ccc !important; }
+        #ve-body.ve-dark .ve-block-item:hover .ve-block-icon i { color:#b10100 !important; }
+        #ve-body.ve-dark .ve-block-item .ve-block-name { color:#aaa; }
+        #ve-body.ve-dark .form-control, #ve-body.ve-dark .form-select { background:#2a2a2a; color:#e0e0e0; border-color:#444; }
+        #ve-body.ve-dark .ve-topbar-search { background:#2a2a2a; color:#e0e0e0; }
+        #ve-body.ve-dark .ve-topbar-search:focus { background:#333; }
+        #ve-body.ve-dark .ve-zoom-bar { background:#1e1e1e; border-color:#333; }
+        #ve-body.ve-dark .ve-zoom-btn { color:#777; }
+        #ve-body.ve-dark .ve-zoom-btn.active { color:#b10100; background:#2a2a2a; }
+        #ve-body.ve-dark .ve-lp-container { border-color:#333; background:#252525; }
+        #ve-body.ve-dark .ve-lp-node { background:#2a2a2a; }
+        #ve-body.ve-dark .ve-lp-node-tag { color:#ccc; }
+        #ve-body.ve-dark .ve-lp-badge { background:#333; color:#aaa; }
+        #ve-body.ve-dark .ve-lp-row-node { background:#252525; border-color:#333; }
+        #ve-body.ve-dark .ve-lp-chip { background:#333; border-color:#444; color:#aaa; }
+        #ve-body.ve-dark .btn-outline-secondary { border-color:#444 !important; color:#aaa !important; }
+        #ve-body.ve-dark .btn-outline-secondary:hover { background:#333 !important; color:#fff !important; }
+        #ve-body.ve-dark .ve-history-item { color:#aaa; border-bottom-color:#333; }
+        #ve-body.ve-dark .ve-topbar-preview-btn { background:#333; }
+        #ve-body.ve-dark .ve-bottom-save { color:#aaa; }
+        #ve-body.ve-dark .ve-bottom-btn { color:#666; }
+        #ve-body.ve-dark .select2-container--default .select2-selection--single { background:#2a2a2a; border-color:#444; }
+        #ve-body.ve-dark .select2-container--default .select2-selection--single .select2-selection__rendered { color:#e0e0e0; }
+
+        /* ── Settings panel classes ──────────────────────── */
+        .ve-settings-body { padding:12px; }
+        .ve-section-title { font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; margin-top:4px; }
+        .ve-section-title-bordered { padding-top:8px; border-top:1px solid var(--ve-border); }
+        .ve-field { margin-bottom:10px; }
+        .ve-field-last { margin-bottom:16px; }
+        .ve-field label { font-size:11px; font-weight:600; color:#666; display:block; margin-bottom:3px; }
+        .ve-field-counter { font-size:10px; color:#999; text-align:right; margin-top:2px; }
+        .ve-textarea-resizable { resize:vertical; }
+        .ve-img-preview { margin-top:6px; }
+        .ve-img-thumb { max-width:100%; border-radius:4px; border:1px solid var(--ve-border); max-height:100px; object-fit:cover; }
+        .ve-btn-primary { background:#b10100; border-color:#b10100; color:#fff; font-size:12px; padding:6px 16px; border-radius:8px; font-weight:600; }
+        .ve-btn-primary:hover { background:#900000; border-color:#900000; color:#fff; }
+
+        /* ── Audit panel ─────────────────────────────────── */
+        .ve-audit-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border-bottom:1px solid var(--ve-border); font-size:11px; }
+        .ve-audit-icon { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; margin-top:1px; }
+        .ve-audit-pass .ve-audit-icon { background:#e8f5e9; color:#43a047; }
+        .ve-audit-warn .ve-audit-icon { background:#fff8e1; color:#f9a825; }
+        .ve-audit-fail .ve-audit-icon { background:#fce4ec; color:#b10100; }
+        .ve-audit-msg { color:var(--ve-text-soft); flex:1; line-height:1.4; }
+        .ve-audit-score { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:50%; font-size:18px; font-weight:700; margin:12px auto; }
+        .ve-audit-score-good { border:3px solid #43a047; color:#43a047; }
+        .ve-audit-score-ok { border:3px solid #f9a825; color:#f9a825; }
+        .ve-audit-score-bad { border:3px solid #b10100; color:#b10100; }
+
+        /* ── CSS class autocomplete ──────────────────────── */
+        .ve-autocomplete { position:absolute; z-index:9999; background:var(--ve-bg); border:1px solid var(--ve-border); border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.1); max-height:180px; overflow-y:auto; width:100%; }
+        .ve-autocomplete-item { padding:5px 10px; font-size:11px; cursor:pointer; color:var(--ve-text-soft); font-family:'SF Mono',monospace; }
+        .ve-autocomplete-item:hover,.ve-autocomplete-item.active { background:var(--ve-bg-muted); color:var(--ve-text); }
+        .ve-autocomplete-item mark { background:transparent; color:var(--ve-primary); font-weight:700; }
+
+        /* ── Block tooltip preview ───────────────────────── */
+        .ve-block-tooltip {
+            position: fixed;
+            z-index: 9999;
+            background: var(--ve-bg);
+            border: 1px solid var(--ve-border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            padding: 10px 12px;
+            max-width: 220px;
+            pointer-events: none;
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--ve-text-soft);
+        }
+        .ve-block-tooltip-name {
+            font-weight: 700;
+            color: var(--ve-text);
+            font-size: 12px;
+            margin-bottom: 4px;
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* ── Command palette ─────────────────────────────── */
+        .ve-cmd-content { border:none !important; border-radius:12px !important; overflow:hidden; box-shadow:0 16px 48px rgba(0,0,0,.2) !important; }
+        .ve-cmd-search-wrap { position:relative; border-bottom:1px solid var(--ve-border); }
+        .ve-cmd-search-icon { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#bbb; font-size:14px; }
+        .ve-cmd-input { width:100%; border:none; padding:14px 16px 14px 44px; font-size:14px; color:var(--ve-text); background:var(--ve-bg); outline:none; }
+        .ve-cmd-input::placeholder { color:#bbb; }
+        .ve-cmd-results { max-height:320px; overflow-y:auto; padding:6px; }
+        .ve-cmd-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--ve-text); transition:background .1s; }
+        .ve-cmd-item:hover,.ve-cmd-item.ve-cmd-active { background:var(--ve-bg-muted); }
+        .ve-cmd-item i { width:20px; text-align:center; color:#999; font-size:14px; }
+        .ve-cmd-item kbd { margin-left:auto; font-size:10px; background:var(--ve-bg-muted); border:1px solid var(--ve-border); border-radius:3px; padding:1px 5px; color:#999; }
+        .ve-cmd-cat { font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:.5px; padding:8px 12px 4px; }
+
+        /* ── Shortcuts modal ────────────────────────────────── */
+        .ve-shortcut-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 0; border-bottom: 1px solid #f4f6f8;
+            font-size: 13px; color: #444;
+        }
+        .ve-shortcut-row:last-child { border-bottom: none; }
+        .ve-shortcut-row kbd {
+            background: #f4f6f8; border: 1px solid #eee; border-radius: 4px;
+            padding: 2px 8px; font-size: 11px; font-family: 'SF Mono', monospace;
+            color: #666; box-shadow: 0 1px 0 #ddd;
+        }
+
         /* ── Layout ─────────────────────────────────────────── */
         #ve-body {
             display: flex;
+            flex-direction: column;
             height: 100vh;
+            overflow: hidden;
+        }
+        #ve-main {
+            display: flex;
+            flex: 1;
             overflow: hidden;
             min-height: 0;
         }
 
+        /* ── Hidden toolbar (keeps IDs alive for JS) ──────── */
+        #ve-toolbar { display: none; }
+
         /* ── Sidebar ─────────────────────────────────────────── */
         #ve-sidebar {
-            width: 350px;
+            width: 340px;
             min-width: 280px;
             display: flex;
             flex-direction: row;
@@ -85,59 +728,54 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding-top: 8px;
-            width: 48px;
+            gap: 0;
+            padding: 0;
+            width: 52px;
             flex-shrink: 0;
-            border-right: 1px solid #e9ecef;
-            background: #fff;
+            border-right: 1px solid var(--ve-border);
+            background: var(--ve-bg);
+            border-top: 3px solid var(--ve-primary);
         }
         #ve-sidebar-nav .ve-nav-btn {
-            width: 48px;
+            width: 52px;
             height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: transparent;
             border: none;
-            color: #6c757d;
+            color: #555;
             cursor: pointer;
-            font-size: 16px;
             border-radius: 0;
             transition: all .15s;
             padding: 0;
         }
         #ve-sidebar-nav .ve-nav-btn span { display: none; }
         #ve-sidebar-nav .ve-nav-btn i { font-size: 18px; }
-        #ve-sidebar-nav .ve-nav-btn:hover { color: #333; background: #f8f9fa; }
+        #ve-sidebar-nav .ve-nav-btn:hover { color: var(--ve-text); background: var(--ve-bg-muted); }
         #ve-sidebar-nav .ve-nav-btn.active {
-            color: #1a1a1a;
-            background: transparent;
+            color: #fff;
+            background: var(--ve-primary);
             position: relative;
-        }
-        #ve-sidebar-nav .ve-nav-btn.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 8px;
-            bottom: 8px;
-            width: 3px;
-            background: #1a1a1a;
-            border-radius: 0 2px 2px 0;
-        }
-        #ve-sidebar-nav .ve-nav-back {
-            width: 48px;
+            border-radius: 8px;
+            width: 40px;
             height: 40px;
+            margin: 4px 0;
+        }
+        #ve-sidebar-nav .ve-nav-btn.active::before { display: none; }
+        #ve-sidebar-nav .ve-nav-back {
+            width: 52px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6c757d;
+            color: #555;
             text-decoration: none;
-            border-bottom: 1px solid #e9ecef;
-            margin-bottom: 4px;
+            border-bottom: 1px solid var(--ve-border);
             flex-shrink: 0;
         }
-        #ve-sidebar-nav .ve-nav-back:hover { color: #333; background: #f8f9fa; }
+        #ve-sidebar-nav .ve-nav-back i { font-size: 16px; }
+        #ve-sidebar-nav .ve-nav-back:hover { color: var(--ve-text); background: var(--ve-bg-muted); }
 
         /* Sidebar panels container */
         #ve-sidebar-panels {
@@ -188,14 +826,18 @@
             font-weight: 500;
             color: #6c757d;
         }
-        #ve-sidebar-actions .ve-save-btn:hover { color: #1a1a1a; }
+        #ve-sidebar-actions .ve-save-btn:hover { color: #b10100; }
         #ve-sidebar-actions .ve-save-btn:disabled { opacity: .35; }
         /* Responsive dropdown button — hide Bootstrap caret */
         #btn-responsive-bar::after { display: none; }
         #btn-responsive-bar { font-size: 14px; }
 
         /* Sidebar collapse transition */
-        #ve-sidebar { transition: margin-left .2s ease; }
+        #ve-sidebar { transition: width .2s ease; }
+        #ve-sidebar.collapsed { width: 52px !important; min-width: 52px !important; overflow: visible; }
+        #ve-sidebar.collapsed > div:not(#ve-sidebar-nav):not(#ve-sidebar-toggle) { display: none !important; }
+        #ve-sidebar.collapsed #ve-sidebar-toggle { right: -14px; }
+        #ve-sidebar.collapsed + #ve-sidebar-resize { display: none; }
 
         /* Sidebar toggle button */
         #ve-sidebar-toggle {
@@ -224,8 +866,8 @@
             background: #f8f9fa;
             box-shadow: 2px 0 8px rgba(0,0,0,.12);
         }
-        .ve-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
-        .ve-panel.active { display: flex; }
+        .ve-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; opacity: 0; transition: opacity .15s ease; }
+        .ve-panel.active { display: flex; opacity: 1; }
 
         /* Thin scrollbar for sidebar panels */
         #ve-sidebar-panels,
@@ -240,7 +882,7 @@
         /* ── Canvas ──────────────────────────────────────────── */
         #ve-canvas {
             flex: 1;
-            background: #404040;
+            background: #e8eaed;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -266,6 +908,11 @@
         }
         #ve-canvas-wrap.desktop  { align-items: stretch; overflow: hidden; }
         #ve-canvas-wrap.desktop #ve-preview-frame { width: 100%; height: 100%; box-shadow: none; border-radius: 0; }
+
+        /* Split responsive preview */
+        #ve-canvas-wrap.split { display:flex; gap:16px; padding:16px; align-items:flex-start; justify-content:center; overflow:auto; }
+        #ve-canvas-wrap.split #ve-preview-frame { width:60%; height:100%; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); flex-shrink:0; }
+        .ve-split-mobile { width:375px; height:812px; border:none; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); background:#fff; flex-shrink:0; }
 
         #ve-preview-frame {
             flex: none;
@@ -347,7 +994,7 @@
             display: none;
             position: absolute;
             height: 3px;
-            background: #1a1a1a;
+            background: #b10100;
             border-radius: 2px;
             pointer-events: none;
             z-index: 200;
@@ -358,7 +1005,7 @@
             display: block;
             width: 10px;
             height: 10px;
-            background: #1a1a1a;
+            background: #b10100;
             border-radius: 50%;
             position: absolute;
             left: -4px;
@@ -397,8 +1044,8 @@
         }
         .ve-history-item:hover { background: #f8f8f8; }
         .ve-history-item.current {
-            background: #f0f0f0;
-            color: #1a1a1a;
+            background: #fff0f0;
+            color: #b10100;
             font-weight: 600;
         }
         .ve-history-item .ve-hist-dot {
@@ -407,7 +1054,7 @@
             background: #ccc;
             flex-shrink: 0;
         }
-        .ve-history-item.current .ve-hist-dot { background: #1a1a1a; }
+        .ve-history-item.current .ve-hist-dot { background: #b10100; }
 
         /* ── Section items (Secciones panel) ─────────────────── */
         .ve-section-item {
@@ -450,35 +1097,36 @@
         /* ── Zoom bar ───────────────────────────────────────── */
         #ve-zoom-bar {
             position: absolute;
-            bottom: 14px;
+            bottom: 52px;
             right: 14px;
-            background: #000;
-            border: 1px solid #3d3d50;
-            border-radius: 4px;
-            padding: 3px 6px;
+            background: var(--ve-bg);
+            border: 1px solid var(--ve-border);
+            border-radius: 6px;
+            padding: 3px 4px;
             display: flex;
             align-items: center;
             gap: 1px;
             z-index: 200;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
         }
         .ve-zoom-btn {
             background: transparent;
             border: none;
-            color: #aaa;
-            font-size: 12px;
-            padding: 2px 8px;
+            color: var(--ve-text-muted);
+            font-size: 11px;
+            padding: 3px 8px;
             border-radius: 4px;
             cursor: pointer;
             transition: all .15s;
-            line-height: 1.7;
+            line-height: 1.5;
         }
-        .ve-zoom-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
-        .ve-zoom-btn.active { background: #fff; color: #1a1a1a; }
+        .ve-zoom-btn:hover { color: var(--ve-text); background: var(--ve-bg-muted); }
+        .ve-zoom-btn.active { background: var(--ve-bg-muted); color: var(--ve-primary); font-weight: 600; }
 
         /* ── Scroll sync active highlight ────────────────────── */
         .ve-section-item.ve-scroll-active {
-            border-color: #1a1a1a !important;
-            background: #f5f5f5 !important;
+            border-color: #b10100 !important;
+            background: #fff0f0 !important;
         }
 
         /* ── Misc ─────────────────────────────────────────────── */
@@ -488,15 +1136,20 @@
         .CodeMirror-dialog input { background: #3d3d3d; color: #f8f8f2; border: 1px solid #555; border-radius: 3px; padding: 1px 6px; }
         .CodeMirror-foldmarker { color: #e6db74; cursor: pointer; font-size: 11px; padding: 0 4px; background: rgba(255,255,255,.1); border-radius: 3px; }
         #ve-html-editor-modal .modal-body { padding: 0; }
-        .ve-editor-toolbar { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: #1e1e1e; border-bottom: 1px solid #444; flex-wrap: wrap; transition: background .2s, border-color .2s; }
-        .ve-editor-toolbar .btn { font-size: 11px; padding: 2px 8px; border-color: #555; color: #ccc; background: transparent; transition: background .2s, color .2s, border-color .2s; }
-        .ve-editor-toolbar .btn:hover { background: #333; color: #fff; }
+        .ve-editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; transition: background .2s, border-color .2s; }
+        .ve-editor-toolbar .btn { font-size: 12px; padding: 6px 14px; border: 1px solid #444; color: #ccc; background: #2a2a2a; border-radius: 6px; transition: all .15s; font-weight: 500; }
+        .ve-editor-toolbar .btn:hover { background: #3a3a3a; color: #fff; border-color: #555; }
         .ve-editor-toolbar .btn.active { background: #444; color: #fff; }
-        .ve-editor-toolbar .ve-tb-sep { width: 1px; height: 16px; background: #555; margin: 0 2px; transition: background .2s; }
+        .ve-editor-toolbar .btn i { margin-right: 4px; }
+        .ve-editor-toolbar .ve-tb-sep { width: 1px; height: 20px; background: #444; margin: 0 4px; transition: background .2s; }
+        /* Aplicar button special */
+        .ve-editor-toolbar .btn[id="ve-code-apply"] { background: var(--ve-primary) !important; border-color: var(--ve-primary) !important; color: #fff !important; font-weight: 600; padding: 6px 18px; }
+        .ve-editor-toolbar .btn[id="ve-code-apply"]:hover { background: #900000 !important; }
+        /* Light theme */
         .ve-editor-toolbar.light { background: #f5f5f5; border-bottom-color: #ddd; }
-        .ve-editor-toolbar.light .btn { border-color: #ccc; color: #333; }
-        .ve-editor-toolbar.light .btn:hover { background: #e0e0e0; color: #000; }
-        .ve-editor-toolbar.light .btn.active { background: #d0d0d0; color: #000; }
+        .ve-editor-toolbar.light .btn { border-color: #ccc; color: #333; background: #fff; }
+        .ve-editor-toolbar.light .btn:hover { background: #eee; color: #000; }
+        .ve-editor-toolbar.light .btn.active { background: #ddd; color: #000; }
         .ve-editor-toolbar.light .ve-tb-sep { background: #ccc; }
         .ve-editor-toolbar.light small { color: #666 !important; }
 
@@ -555,8 +1208,8 @@
             transition: all .15s;
         }
         .ve-link-type-option.active .ve-link-radio {
-            border-color: #1a1a1a;
-            background: #1a1a1a;
+            border-color: #b10100;
+            background: #b10100;
             box-shadow: inset 0 0 0 3px #fff;
         }
     </style>
@@ -571,21 +1224,40 @@
 {{-- ── Body ────────────────────────────────────────────────────────────────── --}}
 <div id="ve-body">
 
+    {{-- ── Top bar ──────────────────────────────────────────────────────── --}}
+    <div id="ve-topbar">
+        <div class="position-relative" style="flex:1; max-width:400px;">
+            <i class="fas fa-search ve-topbar-search-icon"></i>
+            <input type="text" id="ve-topbar-search" class="ve-topbar-search" placeholder="Buscar shortcode..." autocomplete="off">
+            <button type="button" id="ve-topbar-search-clear" class="ve-topbar-search-clear" style="display:none;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <a href="{{ $previewUrl }}" target="_blank" class="ve-topbar-preview-btn">
+                <i class="fa-duotone fa-solid fa-eye me-1"></i>Preview
+            </a>
+        </div>
+    </div>
+
+    {{-- ── Main area ──────────────────────────────────────────────────── --}}
+    <div id="ve-main">
+
     {{-- ── Sidebar ──────────────────────────────────────────────────────── --}}
     <div id="ve-sidebar">
 
         {{-- Vertical icon nav --}}
         <div id="ve-sidebar-nav">
             <a href="{{ route('pages.edit', $page) }}" class="ve-nav-btn ve-nav-back" title="Volver">
-                <i class="fa-duotone fa-solid fa-chevron-left"></i>
+                <i class="fa-duotone fa-solid fa-arrow-left"></i>
             </a>
             <button class="ve-nav-btn active" data-panel="shortcodes" title="Shortcodes">
-                <i class="fa-duotone fa-solid fa-code"></i>
-                <span>Shorts</span>
+                <i class="fa-duotone fa-solid fa-puzzle-piece"></i>
+                <span>Bloques</span>
             </button>
             <button class="ve-nav-btn" data-panel="inspector" title="Inspector">
                 <i class="fa-duotone fa-solid fa-sliders"></i>
-                <span>Inspector</span>
+                <span>Estilo</span>
             </button>
             <button class="ve-nav-btn" data-panel="layout" title="Layout">
                 <i class="fa-duotone fa-solid fa-table-columns"></i>
@@ -593,15 +1265,15 @@
             </button>
             <button class="ve-nav-btn" data-panel="sections" title="Secciones">
                 <i class="fa-duotone fa-solid fa-layer-group"></i>
-                <span>Secciones</span>
+                <span>Capas</span>
             </button>
             <button class="ve-nav-btn" data-panel="history" title="Historial">
                 <i class="fa-duotone fa-solid fa-clock-rotate-left"></i>
                 <span>Historial</span>
             </button>
             <button class="ve-nav-btn" data-panel="code" title="Código HTML">
-                <i class="fa-duotone fa-solid fa-file-code"></i>
-                <span>HTML</span>
+                <i class="fa-duotone fa-solid fa-code"></i>
+                <span>Código</span>
             </button>
             <button class="ve-nav-btn" data-panel="settings" title="Ajustes">
                 <i class="fa-duotone fa-solid fa-gear"></i>
@@ -609,7 +1281,7 @@
             </button>
         </div>
 
-        {{-- Content panels + bottom actions --}}
+        {{-- Panels only (no toolbar/actions inside sidebar) --}}
         <div style="display:flex; flex-direction:column; flex:1; min-width:0; min-height:0;">
 
             {{-- Panel content --}}
@@ -658,7 +1330,7 @@
                             <button class="btn btn-sm" id="ve-code-refresh" title="Sincronizar desde preview">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
-                            <button class="btn btn-sm active" id="ve-code-apply" title="Aplicar cambios al preview" style="background:#1a1a1a; border-color:#1a1a1a; color:#fff;">
+                            <button class="btn btn-sm active" id="ve-code-apply" title="Aplicar cambios al preview" style="background:#b10100; border-color:#b10100; color:#fff;">
                                 <i class="fas fa-check me-1"></i>Aplicar
                             </button>
                         </div>
@@ -674,144 +1346,68 @@
 
             </div>
 
-            {{-- Toolbar --}}
-            <div id="ve-toolbar">
-                <span class="fw-semibold text-truncate" style="max-width:160px;color:#000;font-size:13px;" title="{{ $page->title }}">
-                    {{ $page->title }}
-                </span>
-                <span class="{{ $page->status->badgeClass() }}" style="font-size:10px;">{{ $page->status->label() }}</span>
-                <span id="autosave-status" class="ms-1"></span>
-
+            {{-- Hidden ve-toolbar (kept in DOM for JS references) --}}
+            <div id="ve-toolbar" style="display:none;" aria-hidden="true">
+                <span id="autosave-status"></span>
                 @if(count($supportedLocales) > 1)
-                <div class="ms-auto">
-                    <div class="dropdown" id="ve-locale-dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" id="btn-locale-switcher"
-                                data-bs-toggle="dropdown" style="font-size:12px; min-width:50px; padding:2px 8px;">
-                            <span id="ve-locale-label">{{ strtoupper($locale) }}</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:100px;">
-                            @foreach($supportedLocales as $loc)
-                            <li>
-                                <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
-                                        data-locale="{{ $loc }}" style="font-size:12px;">
-                                    {{ strtoupper($loc) }}
-                                    @if(!in_array($loc, $existingLocales))
-                                        <span class="badge text-bg-secondary ms-1" style="font-size:9px;">Nuevo</span>
-                                    @endif
-                                </button>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-                @endif
-
-                {{-- Hidden controls — still functional via keyboard shortcuts and programmatic triggers --}}
-                <div style="display:none;" aria-hidden="true">
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary breakpoint-btn active" data-breakpoint="desktop" title="Escritorio">
-                            <i class="fa-duotone fa-solid fa-desktop"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px" title="Laptop">
-                            <i class="fa-duotone fa-solid fa-laptop"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px" title="Tablet">
-                            <i class="fa-duotone fa-solid fa-tablet-alt"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px" title="Móvil">
-                            <i class="fa-duotone fa-solid fa-mobile-alt"></i>
-                        </button>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-undo" title="Deshacer (Ctrl+Z)" disabled>
-                        <i class="fa-duotone fa-solid fa-undo"></i>
+                <div class="dropdown" id="ve-locale-dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" id="btn-locale-switcher"
+                            data-bs-toggle="dropdown" style="font-size:12px; min-width:50px; padding:2px 8px;">
+                        <span id="ve-locale-label">{{ strtoupper($locale) }}</span>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-redo" title="Rehacer (Ctrl+Y)" disabled>
-                        <i class="fa-duotone fa-solid fa-redo"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-discard" title="Descartar cambios">
-                        <i class="fa-duotone fa-solid fa-rotate-left"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm" id="btn-save" style="background:#1a1a1a; border-color:#1a1a1a; color:#fff; font-weight:600;">
-                        <i class="fa-duotone fa-solid fa-save me-1"></i>Guardar
-                    </button>
-                    <a href="{{ $previewUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver página pública">
-                        <i class="fa-duotone fa-solid fa-external-link-alt"></i>
-                    </a>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-insert-icon" title="Insertar icono">
-                        <i class="fa-duotone fa-solid fa-icons"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-export-html" title="Exportar HTML (.html)">
-                        <i class="fa-duotone fa-solid fa-file-export"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-rotate-device" title="Rotar dispositivo">
-                        <i class="fa-duotone fa-solid fa-mobile-alt"></i> <i class="fa-duotone fa-solid fa-sync-alt" style="font-size:9px;"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-shortcuts" title="Atajos de teclado">
-                        <i class="fa-duotone fa-solid fa-keyboard"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-preview-draft" title="Preview borrador en nueva pestaña">
-                        <i class="fa-duotone fa-solid fa-eye"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-find-replace" title="Buscar y reemplazar (Ctrl+H)">
-                        <i class="fa-duotone fa-solid fa-exchange-alt"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-grid-overlay" title="Grid overlay">
-                        <i class="fa-duotone fa-solid fa-border-all"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-media-manager" title="Gestor de medios">
-                        <i class="fa-duotone fa-solid fa-photo-video"></i>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Bottom action toolbar --}}
-            <div id="ve-sidebar-actions">
-                <button class="ve-action-btn" id="btn-undo-bar" title="Deshacer" disabled>
-                    <i class="fa-duotone fa-solid fa-rotate-left"></i>
-                </button>
-                <button class="ve-action-btn" id="btn-redo-bar" title="Rehacer" disabled>
-                    <i class="fa-duotone fa-solid fa-rotate-right"></i>
-                </button>
-                {{-- Responsive breakpoints dropdown --}}
-                <div class="dropdown" style="height:100%;">
-                    <button class="ve-action-btn dropdown-toggle" id="btn-responsive-bar"
-                            data-bs-toggle="dropdown" aria-expanded="false" title="Vista responsive"
-                            style="width:40px;">
-                        <i class="fa-duotone fa-solid fa-desktop" id="responsive-bar-icon"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-start" style="font-size:12px; min-width:150px;">
+                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:100px;">
+                        @foreach($supportedLocales as $loc)
                         <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn active"
-                                    data-breakpoint="desktop" title="Escritorio">
-                                <i class="fa-duotone fa-solid fa-desktop fa-fw text-muted"></i> Escritorio
+                            <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
+                                    data-locale="{{ $loc }}" style="font-size:12px;">
+                                {{ strtoupper($loc) }}
+                                @if(!in_array($loc, $existingLocales))
+                                    <span class="badge text-bg-secondary ms-1" style="font-size:9px;">Nuevo</span>
+                                @endif
                             </button>
                         </li>
-                        <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn"
-                                    data-breakpoint="laptop" data-width="1280px" data-height="800px">
-                                <i class="fa-duotone fa-solid fa-laptop fa-fw text-muted"></i> Laptop
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn"
-                                    data-breakpoint="tablet" data-width="768px" data-height="1024px">
-                                <i class="fa-duotone fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn"
-                                    data-breakpoint="mobile" data-width="375px" data-height="812px">
-                                <i class="fa-duotone fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil
-                            </button>
-                        </li>
+                        @endforeach
                     </ul>
                 </div>
-                <a href="{{ $previewUrl }}" target="_blank" class="ve-action-btn" title="Preview">
-                    <i class="fa-duotone fa-solid fa-eye"></i>
-                </a>
-                <button class="ve-action-btn ve-save-btn" id="btn-save-bar">
-                    Guardar
+                @endif
+                {{-- Hidden controls — still functional via keyboard shortcuts and programmatic triggers --}}
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary breakpoint-btn active" data-breakpoint="desktop" title="Escritorio">
+                        <i class="fa-duotone fa-solid fa-desktop"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px" title="Laptop">
+                        <i class="fa-duotone fa-solid fa-laptop"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px" title="Tablet">
+                        <i class="fa-duotone fa-solid fa-tablet-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px" title="Móvil">
+                        <i class="fa-duotone fa-solid fa-mobile-alt"></i>
+                    </button>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-undo" title="Deshacer (Ctrl+Z)" disabled>
+                    <i class="fa-duotone fa-solid fa-undo"></i>
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-redo" title="Rehacer (Ctrl+Y)" disabled>
+                    <i class="fa-duotone fa-solid fa-redo"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-discard" title="Descartar cambios">
+                    <i class="fa-duotone fa-solid fa-rotate-left"></i>
+                </button>
+                <button type="button" class="btn btn-sm" id="btn-save" style="background:#1a1a1a; border-color:#1a1a1a; color:#fff; font-weight:600;">
+                    <i class="fa-duotone fa-solid fa-save me-1"></i>Guardar
+                </button>
+                <a href="{{ $previewUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver página pública">
+                    <i class="fa-duotone fa-solid fa-external-link-alt"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-insert-icon" title="Insertar icono"><i class="fa-duotone fa-solid fa-icons"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-export-html" title="Exportar HTML (.html)"><i class="fa-duotone fa-solid fa-file-export"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-rotate-device" title="Rotar dispositivo"><i class="fa-duotone fa-solid fa-mobile-alt"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-shortcuts" title="Atajos de teclado"><i class="fa-duotone fa-solid fa-keyboard"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-preview-draft" title="Preview borrador"><i class="fa-duotone fa-solid fa-eye"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-find-replace" title="Buscar y reemplazar (Ctrl+H)"><i class="fa-duotone fa-solid fa-exchange-alt"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-grid-overlay" title="Grid overlay"><i class="fa-duotone fa-solid fa-border-all"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-media-manager" title="Gestor de medios"><i class="fa-duotone fa-solid fa-photo-video"></i></button>
             </div>
 
         </div>
@@ -826,7 +1422,7 @@
     {{-- ── Resize handle ──────────────────────────────────────────────── --}}
     <div id="ve-sidebar-resize" title="Arrastrar para redimensionar"></div>
 
-    {{-- ── Canvas ───────────────────────────────────────────────────────── --}}
+    {{-- ── Canvas area ─────────────────────────────────────────────────── --}}
     <div id="ve-canvas">
         <div id="ve-canvas-wrap" class="desktop">
 
@@ -851,6 +1447,61 @@
 
         </div>
 
+        {{-- Bottom bar --}}
+        <div id="ve-bottombar">
+            <span class="fw-semibold text-truncate" style="max-width:160px;color:#1a1c1e;font-size:13px;" title="{{ $page->title }}">
+                {{ $page->title }}
+            </span>
+            <span class="{{ $page->status->badgeClass() }}" style="font-size:10px;">{{ $page->status->label() }}</span>
+            <span id="autosave-status-bar" class="ms-1" style="font-size:11px;"></span>
+            <span id="ve-word-count" style="font-size:9px; color:var(--ve-text-faint); margin-left:4px;"></span>
+
+            <div class="ms-auto d-flex align-items-center gap-1">
+                @if(count($supportedLocales) > 1)
+                <div class="dropdown">
+                    <button class="ve-bottom-btn dropdown-toggle" id="btn-locale-bar"
+                            data-bs-toggle="dropdown" style="font-size:12px; font-weight:600;">
+                        {{ strtoupper($locale) }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:100px;">
+                        @foreach($supportedLocales as $loc)
+                        <li>
+                            <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
+                                    data-locale="{{ $loc }}" style="font-size:12px;">
+                                {{ strtoupper($loc) }}
+                            </button>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+                <button class="ve-bottom-btn" id="btn-undo-bar" title="Deshacer" disabled>
+                    <i class="fa-duotone fa-solid fa-rotate-left"></i>
+                </button>
+                <button class="ve-bottom-btn" id="btn-redo-bar" title="Rehacer" disabled>
+                    <i class="fa-duotone fa-solid fa-rotate-right"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="ve-bottom-btn dropdown-toggle" id="btn-responsive-bar"
+                            data-bs-toggle="dropdown" title="Vista responsive" style="font-size:13px;">
+                        <i class="fa-duotone fa-solid fa-desktop" id="responsive-bar-icon"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:150px;">
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn active" data-breakpoint="desktop"><i class="fa-duotone fa-solid fa-desktop fa-fw text-muted"></i> Escritorio</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px"><i class="fa-duotone fa-solid fa-laptop fa-fw text-muted"></i> Laptop</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px"><i class="fa-duotone fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px"><i class="fa-duotone fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil</button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-split-view"><i class="fa-duotone fa-solid fa-columns fa-fw text-muted"></i> Split (Desktop + Móvil)</button></li>
+                    </ul>
+                </div>
+                <button class="ve-bottom-btn" id="btn-dark-mode" title="Modo oscuro">
+                    <i class="fa-duotone fa-solid fa-circle-half-stroke"></i>
+                </button>
+                <button class="ve-bottom-save" id="btn-save-bar" title="Guardar (Ctrl+S)">Guardar</button>
+            </div>
+        </div>
+
         {{-- Zoom bar --}}
         <div id="ve-zoom-bar">
             <button class="ve-zoom-btn" data-zoom="0.5">50%</button>
@@ -861,7 +1512,55 @@
         </div>
     </div>
 
+    </div>{{-- /ve-main --}}
+
 </div>
+
+{{-- ── Command palette modal ─────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-command-palette" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content ve-cmd-content">
+            <div class="ve-cmd-search-wrap">
+                <i class="fa-duotone fa-solid fa-search ve-cmd-search-icon"></i>
+                <input type="text" id="ve-cmd-input" class="ve-cmd-input" placeholder="Buscar acciones, bloques, paneles..." autocomplete="off">
+            </div>
+            <div id="ve-cmd-results" class="ve-cmd-results"></div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Keyboard shortcuts modal ──────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-shortcuts-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border:none; border-radius:12px; overflow:hidden;">
+            <div class="modal-header" style="background:#fff; border-bottom:1px solid #eee; padding:14px 20px;">
+                <h6 style="font-weight:700; font-size:14px; color:#333; margin:0;">
+                    <i class="fa-duotone fa-solid fa-keyboard me-2" style="color:#999;"></i>Atajos de teclado
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px; max-height:60vh; overflow-y:auto;">
+                <div style="display:grid; gap:4px;">
+                    <div class="ve-shortcut-row"><span>Guardar</span><kbd>Ctrl+S</kbd></div>
+                    <div class="ve-shortcut-row"><span>Deshacer</span><kbd>Ctrl+Z</kbd></div>
+                    <div class="ve-shortcut-row"><span>Rehacer</span><kbd>Ctrl+Y</kbd></div>
+                    <div class="ve-shortcut-row"><span>Buscar y reemplazar</span><kbd>Ctrl+H</kbd></div>
+                    <div class="ve-shortcut-row"><span>Copiar elemento</span><kbd>Shift+C</kbd></div>
+                    <div class="ve-shortcut-row"><span>Pegar elemento</span><kbd>Shift+V</kbd></div>
+                    <div class="ve-shortcut-row"><span>Eliminar elemento</span><kbd>Delete</kbd></div>
+                    <div class="ve-shortcut-row"><span>Mover arriba</span><kbd>Shift+↑</kbd></div>
+                    <div class="ve-shortcut-row"><span>Mover abajo</span><kbd>Shift+↓</kbd></div>
+                    <div class="ve-shortcut-row"><span>Duplicar</span><kbd>Shift+D</kbd></div>
+                    <div class="ve-shortcut-row"><span>Ver atajos</span><kbd>?</kbd></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Media Picker modal ────────────────────────────────────────────────── --}}
+@include('media::partials.picker-modal')
+<script src="{{ asset('modules/Media/js/media-picker.js') }}"></script>
 
 {{-- ── Context menu ──────────────────────────────────────────────────────── --}}
 <div id="ve-context-menu">
@@ -3339,6 +4038,600 @@
             setTimeout(setupIframeDblClick, 1000);
         }
     }());
+
+})(jQuery);
+</script>
+
+{{-- Sync topbar search → shortcodes panel search --}}
+<script>
+(function($){
+    // ── Sync topbar search → shortcodes panel search ──
+    $('#ve-topbar-search').on('input', function(){
+        $('#ve-sc-search').val($(this).val()).trigger('input');
+        $('#ve-topbar-search-clear').toggle($(this).val().length > 0);
+    });
+    $(document).on('click', '#ve-topbar-search-clear', function(){
+        $('#ve-topbar-search').val('').trigger('input').focus();
+        $(this).hide();
+    });
+
+    // ── Sync autosave-status to bottom bar ──
+    var origAS = document.getElementById('autosave-status');
+    if (origAS) {
+        new MutationObserver(function(){
+            var bar = document.getElementById('autosave-status-bar');
+            if (bar) { bar.textContent = origAS.textContent; bar.className = origAS.className + ' ms-1'; }
+        }).observe(origAS, { childList: true, attributes: true, characterData: true, subtree: true });
+    }
+
+    // ── Sync locale bar click to main locale switcher ──
+    $(document).on('click', '#btn-locale-bar + .dropdown-menu .ve-locale-btn', function(){
+        var loc = $(this).data('locale');
+        $('#btn-locale-switcher + .dropdown-menu .ve-locale-btn[data-locale="'+loc+'"]').trigger('click');
+        $('#btn-locale-bar').text(loc.toUpperCase());
+    });
+
+    // ── Auto-refresh Layout & Sections when switching panels ──
+    $(document).on('click', '#ve-sidebar-nav .ve-nav-btn[data-panel]', function(){
+        var panel = $(this).data('panel');
+        if (panel === 'layout' && window.veRefreshLayout) {
+            setTimeout(function(){ window.veRefreshLayout(); }, 150);
+        }
+        if (panel === 'sections') {
+            setTimeout(function(){
+                var $btn = $('#btn-refresh-sections');
+                if ($btn.length) $btn.trigger('click');
+            }, 150);
+        }
+    });
+
+    // ── Save button visual feedback (observe autosave status) ──
+    var $saveBar = $('#btn-save-bar');
+    if (origAS && $saveBar.length) {
+        new MutationObserver(function(){
+            var cls = origAS.className || '';
+            if (cls.indexOf('saving') !== -1) {
+                $saveBar.html('<i class="fa-duotone fa-solid fa-spinner-third fa-spin" style="font-size:11px;"></i>');
+            } else if (cls.indexOf('saved') !== -1) {
+                $saveBar.html('<i class="fa-duotone fa-solid fa-check" style="color:#13C672;"></i>');
+                setTimeout(function(){ $saveBar.text('Guardar'); }, 1500);
+            } else if (cls.indexOf('error') !== -1) {
+                $saveBar.html('<i class="fa-duotone fa-solid fa-times" style="color:#b10100;"></i>');
+                setTimeout(function(){ $saveBar.text('Guardar'); }, 2000);
+            }
+        }).observe(origAS, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // ── Sidebar collapse override (only hide panels, keep icon nav) ──
+    $('#ve-sidebar-toggle').off('click').on('click', function () {
+        var $sidebar = $('#ve-sidebar');
+        var $icon = $(this).find('i');
+        var collapsed = $sidebar.hasClass('collapsed');
+        if (collapsed) {
+            $sidebar.removeClass('collapsed').css('width', '');
+            $icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+            $(this).attr('title', 'Colapsar barra lateral');
+        } else {
+            $sidebar.addClass('collapsed');
+            $icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+            $(this).attr('title', 'Expandir barra lateral');
+        }
+    });
+
+    // ── Background image MediaPicker integration ──
+    $(document).on('click', '#btn-bg-media-picker', function(){
+        if (!window.MediaPicker) {
+            // Fallback: trigger hidden file input
+            $('#ve-bg-image-file').trigger('click');
+            return;
+        }
+        window.MediaPicker.open({
+            filter: 'image',
+            title: 'Seleccionar imagen de fondo',
+            onSelect: function(url) {
+                $('#ve-bg-image-url').val(url);
+                $('#btn-apply-bg-url').trigger('click');
+                // Show preview
+                $('#ve-bg-preview-img').attr('src', url);
+                $('#ve-bg-preview').show();
+            }
+        });
+    });
+    // Show preview when URL applied
+    $(document).on('click', '#btn-apply-bg-url', function(){
+        var url = $('#ve-bg-image-url').val().trim();
+        if (url) {
+            $('#ve-bg-preview-img').attr('src', url);
+            $('#ve-bg-preview').show();
+        }
+    });
+    // Clear preview on clear
+    $(document).on('click', '#btn-clear-bg-image', function(){
+        $('#ve-bg-preview').hide();
+        $('#ve-bg-preview-img').attr('src', '');
+        $('#ve-bg-image-url').val('');
+    });
+
+    // ── Initialize Select2 on inspector selects ──
+    function initInspectorSelect2() {
+        $('#ve-inspector-sections select:not(.select2-hidden-accessible)').each(function(){
+            $(this).select2({
+                width: '100%',
+                minimumResultsForSearch: 8,
+                dropdownParent: $('#ve-sidebar-panels')
+            });
+        });
+    }
+    initInspectorSelect2();
+    // Re-init when inspector sections become visible
+    $(document).on('click', '#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]', function(){
+        setTimeout(initInspectorSelect2, 200);
+    });
+
+    // ── A2: Keyboard shortcuts modal ──
+    $(document).on('keydown', function(e) {
+        var tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+        if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+            e.preventDefault();
+            new bootstrap.Modal(document.getElementById('ve-shortcuts-modal')).show();
+        }
+    });
+
+    // ── A3: Copy/paste toast feedback ──
+    window.addEventListener('message', function(ev) {
+        if (!ev.data || !ev.data.type) return;
+        if (ev.data.type === 've-element-copied' && window.veToast) window.veToast('Elemento copiado', 'info');
+        if (ev.data.type === 've-element-pasted' && window.veToast) window.veToast('Elemento pegado', 'success');
+    });
+
+    // ── A4: Breakpoint dimensions in bottom bar ──
+    $(document).on('click', '.breakpoint-btn', function() {
+        var w = $(this).data('width') || '';
+        var h = $(this).data('height') || '';
+        var bp = $(this).data('breakpoint') || 'desktop';
+        var $dims = $('#ve-breakpoint-dims');
+        if (!$dims.length) {
+            $dims = $('<span id="ve-breakpoint-dims"></span>').css({fontSize:'9px',color:'#bbb',marginLeft:'2px'});
+            $('#btn-responsive-bar').after($dims);
+        }
+        $dims.text(bp === 'desktop' ? '' : w.replace('px','') + '×' + h.replace('px',''));
+    });
+
+    // ── A5: Unsaved changes red dot ──
+    if (origAS) {
+        new MutationObserver(function() {
+            var cls = origAS.className || '';
+            var $s = $('#btn-save-bar');
+            if (cls.indexOf('unsaved') !== -1 || cls.indexOf('saving') !== -1) $s.addClass('has-changes');
+            else $s.removeClass('has-changes');
+        }).observe(origAS, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // ── A7: Context menu extra options ──
+    var copiedStyles = null;
+    (function addExtraCtx() {
+        var $menu = $('#ve-context-menu');
+        if (!$menu.length) { setTimeout(addExtraCtx, 500); return; }
+        var $last = $menu.find('.ve-ctx-divider').last();
+        if ($last.length && !$('#ctx-inspect').length) {
+            $('<div class="ve-ctx-item" id="ctx-copy-style"><i class="fa-duotone fa-solid fa-palette fa-fw ve-ctx-icon-muted"></i> Copiar estilo</div>')
+                .insertBefore($last);
+            $('<div class="ve-ctx-item" id="ctx-paste-style"><i class="fa-duotone fa-solid fa-fill-drip fa-fw ve-ctx-icon-muted"></i> Pegar estilo</div>')
+                .insertBefore($last);
+            $('<div class="ve-ctx-item" id="ctx-inspect"><i class="fa-duotone fa-solid fa-sliders fa-fw ve-ctx-icon-muted"></i> Inspeccionar</div>')
+                .insertBefore($last);
+        }
+    })();
+    $(document).on('click', '#ctx-inspect', function() {
+        $('#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]').trigger('click');
+        $('#ve-context-menu').hide();
+    });
+    // P1.2: Copy/Paste styles
+    $(document).on('click', '#ctx-copy-style', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-copy-styles' }, '*');
+        }
+        $('#ve-context-menu').hide();
+        if (window.veToast) window.veToast('Estilo copiado', 'info');
+    });
+    $(document).on('click', '#ctx-paste-style', function() {
+        if (copiedStyles) {
+            var frame = document.getElementById('ve-preview-frame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.postMessage({ type: 've-paste-styles', styles: copiedStyles }, '*');
+            }
+            if (window.veToast) window.veToast('Estilo pegado', 'success');
+        }
+        $('#ve-context-menu').hide();
+    });
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-styles-copied') {
+            copiedStyles = ev.data.styles;
+        }
+    });
+
+    // ── A9: Autosave relative timestamp ──
+    var lastSaveTime = null;
+    if (origAS) {
+        new MutationObserver(function() {
+            if ((origAS.className || '').indexOf('saved') !== -1) lastSaveTime = Date.now();
+        }).observe(origAS, { attributes: true, attributeFilter: ['class'] });
+    }
+    setInterval(function() {
+        if (!lastSaveTime) return;
+        var diff = Math.floor((Date.now() - lastSaveTime) / 1000);
+        var $bar = $('#autosave-status-bar');
+        if ($bar.length && diff > 5) {
+            var t = diff < 60 ? diff + 's' : diff < 3600 ? Math.floor(diff/60) + ' min' : Math.floor(diff/3600) + 'h';
+            $bar.text('Guardado hace ' + t);
+        }
+    }, 10000);
+
+    // ── P3.1: Motion effects — apply animation classes ──
+    $(document).on('click', '#btn-apply-motion', function() {
+        var effect = $('#ve-motion-effect').val();
+        var duration = $('#ve-motion-duration').val();
+        var delay = $('#ve-motion-delay').val();
+        if (!effect) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({
+                type: 've-apply-motion',
+                effect: effect,
+                duration: duration,
+                delay: delay
+            }, '*');
+        }
+        if (window.veToast) window.veToast('Animación aplicada: ' + effect, 'success');
+    });
+    $(document).on('click', '#btn-remove-motion', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-remove-motion' }, '*');
+        }
+        if (window.veToast) window.veToast('Animación eliminada', 'info');
+    });
+
+    // ── P4.5 + P4.6: Accessibility audit + Performance score ──
+    function runAccessibilityAudit() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentWindow || !frame.contentDocument) return;
+        var doc = frame.contentDocument;
+        var issues = [];
+        var passed = 0;
+
+        // Check images without alt
+        var imgs = doc.querySelectorAll('img');
+        var noAlt = 0;
+        imgs.forEach(function(img) { if (!img.alt || !img.alt.trim()) noAlt++; });
+        if (noAlt > 0) issues.push({ type:'fail', msg: noAlt + ' imagen(es) sin atributo alt' });
+        else if (imgs.length) { passed++; issues.push({ type:'pass', msg: 'Todas las imágenes tienen alt (' + imgs.length + ')' }); }
+
+        // Check headings hierarchy
+        var headings = doc.querySelectorAll('h1,h2,h3,h4,h5,h6');
+        var h1Count = doc.querySelectorAll('h1').length;
+        if (h1Count === 0) issues.push({ type:'warn', msg: 'No hay H1 en la página' });
+        else if (h1Count > 1) issues.push({ type:'warn', msg: h1Count + ' etiquetas H1 (debería ser 1)' });
+        else { passed++; issues.push({ type:'pass', msg: 'Un solo H1 correcto' }); }
+
+        // Check links without text
+        var links = doc.querySelectorAll('a');
+        var emptyLinks = 0;
+        links.forEach(function(a) { if (!a.textContent.trim() && !a.querySelector('img') && !a.getAttribute('aria-label')) emptyLinks++; });
+        if (emptyLinks > 0) issues.push({ type:'fail', msg: emptyLinks + ' enlace(s) sin texto accesible' });
+        else if (links.length) { passed++; issues.push({ type:'pass', msg: 'Todos los enlaces tienen texto (' + links.length + ')' }); }
+
+        // Check contrast (basic — check if text color == bg color)
+        var bodyBg = window.getComputedStyle(doc.body).backgroundColor;
+        issues.push({ type:'pass', msg: 'Color de fondo del body definido' });
+        passed++;
+
+        // Check meta description
+        var metaDesc = doc.querySelector('meta[name="description"]');
+        if (metaDesc && metaDesc.content) { passed++; issues.push({ type:'pass', msg: 'Meta description presente' }); }
+        else issues.push({ type:'warn', msg: 'Sin meta description' });
+
+        // Check form labels
+        var inputs = doc.querySelectorAll('input:not([type="hidden"]),textarea,select');
+        var noLabel = 0;
+        inputs.forEach(function(inp) {
+            if (!inp.id || !doc.querySelector('label[for="'+inp.id+'"]')) {
+                if (!inp.getAttribute('aria-label') && !inp.getAttribute('placeholder')) noLabel++;
+            }
+        });
+        if (noLabel > 0) issues.push({ type:'warn', msg: noLabel + ' campo(s) de formulario sin label' });
+        else if (inputs.length) { passed++; issues.push({ type:'pass', msg: 'Campos de formulario con labels' }); }
+
+        var total = issues.length;
+        var score = Math.round((passed / total) * 100);
+
+        // Show in a modal/toast
+        var scoreClass = score >= 80 ? 'good' : score >= 50 ? 'ok' : 'bad';
+        var html = '<div class="ve-audit-score ve-audit-score-' + scoreClass + '">' + score + '</div>';
+        issues.forEach(function(i) {
+            var icon = i.type === 'pass' ? '&#10003;' : i.type === 'warn' ? '!' : '&#10005;';
+            html += '<div class="ve-audit-item ve-audit-' + i.type + '"><div class="ve-audit-icon">' + icon + '</div><div class="ve-audit-msg">' + i.msg + '</div></div>';
+        });
+
+        // Reuse shortcuts modal structure
+        var $modal = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;"><div class="modal-header" style="background:#fff;border-bottom:1px solid #eee;padding:14px 20px;"><h6 style="font-weight:700;font-size:14px;color:#333;margin:0;"><i class="fa-duotone fa-solid fa-universal-access me-2" style="color:#999;"></i>Auditoría de accesibilidad</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:16px 20px;max-height:60vh;overflow-y:auto;">' + html + '</div></div></div></div>');
+        $('body').append($modal);
+        new bootstrap.Modal($modal[0]).show();
+        $modal.on('hidden.bs.modal', function() { $modal.remove(); });
+    }
+
+    function runPerformanceScore() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        var doc = frame.contentDocument;
+        var issues = [];
+        var passed = 0;
+
+        // Count images
+        var imgs = doc.querySelectorAll('img');
+        var largeSrc = 0;
+        imgs.forEach(function(img) { if (img.naturalWidth > 1920) largeSrc++; });
+        issues.push({ type: imgs.length > 20 ? 'warn' : 'pass', msg: imgs.length + ' imágenes en la página' + (largeSrc > 0 ? ' (' + largeSrc + ' muy grandes)' : '') });
+        if (imgs.length <= 20) passed++;
+
+        // Check lazy loading
+        var noLazy = 0;
+        imgs.forEach(function(img) { if (!img.loading || img.loading !== 'lazy') noLazy++; });
+        if (noLazy > 3) issues.push({ type:'warn', msg: noLazy + ' imágenes sin lazy loading' });
+        else { passed++; issues.push({ type:'pass', msg: 'Lazy loading aplicado' }); }
+
+        // Count scripts
+        var scripts = doc.querySelectorAll('script[src]');
+        issues.push({ type: scripts.length > 10 ? 'warn' : 'pass', msg: scripts.length + ' scripts externos' });
+        if (scripts.length <= 10) passed++;
+
+        // Count stylesheets
+        var styles = doc.querySelectorAll('link[rel="stylesheet"]');
+        issues.push({ type: styles.length > 8 ? 'warn' : 'pass', msg: styles.length + ' hojas de estilo' });
+        if (styles.length <= 8) passed++;
+
+        // Estimate page weight
+        var html = doc.documentElement.outerHTML || '';
+        var sizeKB = Math.round(html.length / 1024);
+        issues.push({ type: sizeKB > 500 ? 'warn' : 'pass', msg: 'HTML: ~' + sizeKB + ' KB' });
+        if (sizeKB <= 500) passed++;
+
+        // Check WebP usage
+        var webpCount = 0;
+        imgs.forEach(function(img) { if ((img.src||'').match(/\.webp/i)) webpCount++; });
+        if (imgs.length > 0 && webpCount < imgs.length / 2) issues.push({ type:'warn', msg: 'Solo ' + webpCount + '/' + imgs.length + ' imágenes en WebP' });
+        else if (imgs.length) { passed++; issues.push({ type:'pass', msg: 'Buen uso de WebP' }); }
+
+        var total = issues.length;
+        var score = Math.round((passed / total) * 100);
+        var scoreClass = score >= 80 ? 'good' : score >= 50 ? 'ok' : 'bad';
+        var phtml = '<div class="ve-audit-score ve-audit-score-' + scoreClass + '">' + score + '</div>';
+        issues.forEach(function(i) {
+            var icon = i.type === 'pass' ? '&#10003;' : '!';
+            phtml += '<div class="ve-audit-item ve-audit-' + i.type + '"><div class="ve-audit-icon">' + icon + '</div><div class="ve-audit-msg">' + i.msg + '</div></div>';
+        });
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;"><div class="modal-header" style="background:#fff;border-bottom:1px solid #eee;padding:14px 20px;"><h6 style="font-weight:700;font-size:14px;color:#333;margin:0;"><i class="fa-duotone fa-solid fa-gauge-high me-2" style="color:#999;"></i>Performance score</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:16px 20px;max-height:60vh;overflow-y:auto;">' + phtml + '</div></div></div></div>');
+        $('body').append($m);
+        new bootstrap.Modal($m[0]).show();
+        $m.on('hidden.bs.modal', function() { $m.remove(); });
+    }
+
+    // (audit actions added to cmdActions after it's defined below)
+
+    // ── P2.2: CSS class autocomplete for Bootstrap 5.3 ──
+    var bsClasses = [
+        // Layout
+        'container','container-fluid','container-sm','container-md','container-lg','container-xl','container-xxl',
+        'row','col','col-1','col-2','col-3','col-4','col-5','col-6','col-7','col-8','col-9','col-10','col-11','col-12',
+        'col-sm-1','col-sm-2','col-sm-3','col-sm-4','col-sm-5','col-sm-6','col-sm-7','col-sm-8','col-sm-9','col-sm-10','col-sm-11','col-sm-12',
+        'col-md-1','col-md-2','col-md-3','col-md-4','col-md-5','col-md-6','col-md-7','col-md-8','col-md-9','col-md-10','col-md-11','col-md-12',
+        'col-lg-1','col-lg-2','col-lg-3','col-lg-4','col-lg-5','col-lg-6','col-lg-7','col-lg-8','col-lg-9','col-lg-10','col-lg-11','col-lg-12',
+        // Spacing
+        'p-0','p-1','p-2','p-3','p-4','p-5','px-0','px-1','px-2','px-3','px-4','px-5','py-0','py-1','py-2','py-3','py-4','py-5',
+        'pt-0','pt-1','pt-2','pt-3','pt-4','pt-5','pb-0','pb-1','pb-2','pb-3','pb-4','pb-5',
+        'm-0','m-1','m-2','m-3','m-4','m-5','m-auto','mx-auto','mx-0','mx-1','mx-2','mx-3','mx-4','mx-5',
+        'my-0','my-1','my-2','my-3','my-4','my-5','mt-0','mt-1','mt-2','mt-3','mt-4','mt-5','mb-0','mb-1','mb-2','mb-3','mb-4','mb-5',
+        'g-0','g-1','g-2','g-3','g-4','g-5',
+        // Display
+        'd-none','d-block','d-inline','d-inline-block','d-flex','d-inline-flex','d-grid','d-table',
+        'd-sm-none','d-sm-block','d-sm-flex','d-md-none','d-md-block','d-md-flex','d-lg-none','d-lg-block','d-lg-flex',
+        // Flex
+        'flex-row','flex-column','flex-wrap','flex-nowrap','justify-content-start','justify-content-center','justify-content-end','justify-content-between','justify-content-around',
+        'align-items-start','align-items-center','align-items-end','align-items-stretch','align-self-start','align-self-center','align-self-end',
+        'gap-0','gap-1','gap-2','gap-3','gap-4','gap-5',
+        // Text
+        'text-start','text-center','text-end','text-wrap','text-nowrap','text-truncate',
+        'fw-light','fw-normal','fw-bold','fw-semibold','fw-bolder','fst-italic','fst-normal',
+        'text-uppercase','text-lowercase','text-capitalize','text-decoration-none','text-decoration-underline',
+        'fs-1','fs-2','fs-3','fs-4','fs-5','fs-6','lh-1','lh-sm','lh-base','lh-lg',
+        // Colors
+        'text-primary','text-secondary','text-success','text-danger','text-warning','text-info','text-light','text-dark','text-muted','text-white','text-body',
+        'bg-primary','bg-secondary','bg-success','bg-danger','bg-warning','bg-info','bg-light','bg-dark','bg-white','bg-transparent',
+        // Borders
+        'border','border-0','border-top','border-bottom','border-start','border-end',
+        'border-primary','border-secondary','border-success','border-danger',
+        'rounded','rounded-0','rounded-1','rounded-2','rounded-3','rounded-circle','rounded-pill',
+        // Sizing
+        'w-25','w-50','w-75','w-100','w-auto','h-25','h-50','h-75','h-100','h-auto','mw-100','mh-100',
+        'vw-100','vh-100','min-vw-100','min-vh-100',
+        // Position
+        'position-static','position-relative','position-absolute','position-fixed','position-sticky',
+        'top-0','top-50','top-100','start-0','start-50','start-100','end-0','end-50','end-100','bottom-0','bottom-50','bottom-100',
+        'translate-middle',
+        // Visibility
+        'visible','invisible','overflow-auto','overflow-hidden','overflow-visible','overflow-scroll',
+        'opacity-25','opacity-50','opacity-75','opacity-100',
+        // Shadow
+        'shadow-none','shadow-sm','shadow','shadow-lg',
+        // Misc
+        'img-fluid','img-thumbnail','list-unstyled','clearfix','float-start','float-end','float-none',
+        'sticky-top','fixed-top','fixed-bottom',
+    ];
+    $(document).on('focus', '#ve-attr-class', function() {
+        var $input = $(this);
+        if ($input.data('ve-ac-bound')) return;
+        $input.data('ve-ac-bound', true);
+        var $wrap = $input.parent().css('position','relative');
+        var $ac = $('<div class="ve-autocomplete"></div>').hide().appendTo($wrap);
+        var selIdx = -1;
+
+        function update() {
+            var val = $input.val();
+            var parts = val.split(/\s+/);
+            var last = (parts[parts.length - 1] || '').toLowerCase();
+            if (last.length < 2) { $ac.hide(); return; }
+            var matches = bsClasses.filter(function(c) { return c.indexOf(last) !== -1; }).slice(0, 10);
+            if (!matches.length) { $ac.hide(); return; }
+            $ac.empty().show();
+            selIdx = -1;
+            matches.forEach(function(c) {
+                var hl = c.replace(new RegExp('(' + last.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')','i'), '<mark>$1</mark>');
+                $ac.append('<div class="ve-autocomplete-item">' + hl + '</div>');
+            });
+        }
+
+        function pick(cls) {
+            var val = $input.val();
+            var parts = val.split(/\s+/);
+            parts[parts.length - 1] = cls;
+            $input.val(parts.join(' ') + ' ').focus();
+            $ac.hide();
+        }
+
+        $input.on('input', update);
+        $ac.on('click', '.ve-autocomplete-item', function() { pick($(this).text()); });
+        $input.on('keydown', function(e) {
+            var $items = $ac.find('.ve-autocomplete-item');
+            if (!$items.length || $ac.is(':hidden')) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx+1, $items.length-1); $items.removeClass('active').eq(selIdx).addClass('active'); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx-1, 0); $items.removeClass('active').eq(selIdx).addClass('active'); }
+            else if (e.key === 'Enter' && selIdx >= 0) { e.preventDefault(); pick($items.eq(selIdx).text()); }
+            else if (e.key === 'Escape') { $ac.hide(); }
+        });
+        $input.on('blur', function() { setTimeout(function() { $ac.hide(); }, 200); });
+    });
+
+    // ── P4.1: Block tooltip preview on hover ──
+    var $tooltip = null;
+    var tooltipTimer = null;
+    $(document).on('mouseenter', '.ve-sc-item', function(e) {
+        var $el = $(this);
+        var name = $el.data('name') || '';
+        var desc = $el.attr('title') || '';
+        if (!name) return;
+        tooltipTimer = setTimeout(function() {
+            if ($tooltip) $tooltip.remove();
+            $tooltip = $('<div class="ve-block-tooltip"><div class="ve-block-tooltip-name">[' + name + ']</div>' + (desc ? '<div>' + desc + '</div>' : '') + '</div>');
+            $('body').append($tooltip);
+            var rect = $el[0].getBoundingClientRect();
+            $tooltip.css({ top: rect.top - $tooltip.outerHeight() - 6, left: rect.left + rect.width/2 - $tooltip.outerWidth()/2 });
+            if (parseInt($tooltip.css('top')) < 0) $tooltip.css('top', rect.bottom + 6);
+        }, 600);
+    }).on('mouseleave', '.ve-sc-item', function() {
+        clearTimeout(tooltipTimer);
+        if ($tooltip) { $tooltip.remove(); $tooltip = null; }
+    });
+
+    // ── P3.8: Split responsive preview ──
+    $(document).on('click', '#btn-split-view', function() {
+        var $wrap = $('#ve-canvas-wrap');
+        var $frame = $('#ve-preview-frame');
+        if ($wrap.hasClass('split')) {
+            $wrap.removeClass('split').addClass('desktop');
+            $wrap.find('.ve-split-mobile').remove();
+            $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid fa-desktop');
+        } else {
+            $wrap.removeClass('desktop tablet mobile laptop').addClass('split');
+            if (!$wrap.find('.ve-split-mobile').length) {
+                var $mobile = $('<iframe class="ve-split-mobile" sandbox="allow-same-origin allow-scripts"></iframe>').attr('src', $frame.attr('src'));
+                $wrap.append($mobile);
+            }
+            $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid fa-columns');
+        }
+    });
+
+    // ── P2.1: Quick bar inspect handler ──
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-request-inspect') {
+            $('#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]').trigger('click');
+        }
+    });
+
+    // ── P4.4: Dark mode toggle ──
+    $(document).on('click', '#btn-dark-mode', function() {
+        $('#ve-body').toggleClass('ve-dark');
+        localStorage.setItem('ve-dark-mode', $('#ve-body').hasClass('ve-dark') ? '1' : '0');
+    });
+    if (localStorage.getItem('ve-dark-mode') === '1') $('#ve-body').addClass('ve-dark');
+
+    // ── P4.2: Command palette (Ctrl+K) ──
+    var cmdActions = [
+        { cat:'Paneles', label:'Bloques', icon:'fa-puzzle-piece', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="shortcodes"]').trigger('click'); }},
+        { cat:'Paneles', label:'Inspector', icon:'fa-sliders', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]').trigger('click'); }},
+        { cat:'Paneles', label:'Layout', icon:'fa-table-columns', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="layout"]').trigger('click'); }},
+        { cat:'Paneles', label:'Secciones', icon:'fa-layer-group', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="sections"]').trigger('click'); }},
+        { cat:'Paneles', label:'Historial', icon:'fa-clock-rotate-left', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="history"]').trigger('click'); }},
+        { cat:'Paneles', label:'Código HTML', icon:'fa-code', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="code"]').trigger('click'); }},
+        { cat:'Paneles', label:'Ajustes', icon:'fa-gear', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="settings"]').trigger('click'); }},
+        { cat:'Acciones', label:'Guardar', icon:'fa-save', kbd:'Ctrl+S', action:function(){ $('#btn-save').trigger('click'); }},
+        { cat:'Acciones', label:'Deshacer', icon:'fa-rotate-left', kbd:'Ctrl+Z', action:function(){ $('#btn-undo').trigger('click'); }},
+        { cat:'Acciones', label:'Rehacer', icon:'fa-rotate-right', kbd:'Ctrl+Y', action:function(){ $('#btn-redo').trigger('click'); }},
+        { cat:'Acciones', label:'Preview', icon:'fa-eye', action:function(){ window.open($('.ve-topbar-preview-btn').attr('href'),'_blank'); }},
+        { cat:'Acciones', label:'Exportar HTML', icon:'fa-file-export', action:function(){ $('#btn-export-html').trigger('click'); }},
+        { cat:'Acciones', label:'Atajos de teclado', icon:'fa-keyboard', kbd:'?', action:function(){ new bootstrap.Modal(document.getElementById('ve-shortcuts-modal')).show(); }},
+        { cat:'Acciones', label:'Modo oscuro', icon:'fa-circle-half-stroke', action:function(){ $('#btn-dark-mode').trigger('click'); }},
+        { cat:'Vista', label:'Desktop', icon:'fa-desktop', action:function(){ $('.breakpoint-btn[data-breakpoint="desktop"]').trigger('click'); }},
+        { cat:'Vista', label:'Tablet', icon:'fa-tablet-screen-button', action:function(){ $('.breakpoint-btn[data-breakpoint="tablet"]').trigger('click'); }},
+        { cat:'Vista', label:'Móvil', icon:'fa-mobile-screen-button', action:function(){ $('.breakpoint-btn[data-breakpoint="mobile"]').trigger('click'); }},
+    ];
+    $('.ve-sc-item').each(function(){
+        var n = $(this).data('name');
+        cmdActions.push({ cat:'Bloques', label:'['+n+']', icon:'fa-cube', action:function(){ $('.ve-sc-item[data-name="'+n+'"]').trigger('click'); }});
+    });
+    // Add audit tools to command palette
+    cmdActions.push({ cat:'Herramientas', label:'Auditoría de accesibilidad', icon:'fa-universal-access', action: runAccessibilityAudit });
+    cmdActions.push({ cat:'Herramientas', label:'Performance score', icon:'fa-gauge-high', action: runPerformanceScore });
+    function renderCmd(q) {
+        var $r = $('#ve-cmd-results').empty();
+        var f = q ? cmdActions.filter(function(a){ return a.label.toLowerCase().indexOf(q)!==-1||a.cat.toLowerCase().indexOf(q)!==-1; }) : cmdActions;
+        var lc = '';
+        f.slice(0,15).forEach(function(a){
+            if(a.cat!==lc){ $r.append('<div class="ve-cmd-cat">'+a.cat+'</div>'); lc=a.cat; }
+            var $i=$('<div class="ve-cmd-item">').html('<i class="fa-duotone fa-solid '+a.icon+'"></i><span>'+a.label+'</span>'+(a.kbd?'<kbd>'+a.kbd+'</kbd>':''));
+            $i.on('click',function(){ a.action(); bootstrap.Modal.getInstance(document.getElementById('ve-command-palette')).hide(); });
+            $r.append($i);
+        });
+        if(!f.length) $r.html('<div class="ve-cmd-cat" style="text-align:center;padding:20px;">Sin resultados</div>');
+    }
+    $(document).on('input','#ve-cmd-input',function(){ renderCmd($(this).val().toLowerCase().trim()); });
+    function openCmdPalette() {
+        var el = document.getElementById('ve-command-palette');
+        if (!el) return;
+        var m = bootstrap.Modal.getOrCreateInstance(el);
+        m.show();
+        setTimeout(function(){ $('#ve-cmd-input').val('').focus(); renderCmd(''); }, 200);
+    }
+    $(document).on('keydown',function(e){
+        if((e.ctrlKey||e.metaKey)&&e.key==='k'){
+            e.preventDefault();
+            var t=(e.target.tagName||'').toLowerCase();
+            if(t!=='input'&&t!=='textarea') openCmdPalette();
+        }
+    });
+
+    // ── Word count in bottom bar ──
+    function updateWordCount() {
+        try {
+            var html = window.veEditor ? window.veEditor.getData() : '';
+            var text = html.replace(/<[^>]*>/g, ' ').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
+            var count = text ? text.split(' ').length : 0;
+            $('#ve-word-count').text(count.toLocaleString() + ' palabras');
+        } catch(e) {}
+    }
+    setInterval(updateWordCount, 5000);
+    setTimeout(updateWordCount, 3000);
 
 })(jQuery);
 </script>

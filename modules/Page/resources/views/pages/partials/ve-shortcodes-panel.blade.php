@@ -77,20 +77,15 @@ foreach ($shortcodes as $sc) {
 
 <div id="ve-shortcodes-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
 
-    {{-- Search --}}
-    <div style="padding:8px; border-bottom:1px solid #e9ecef; flex-shrink:0;">
-        <div style="position:relative;">
-            <i class="fa-duotone fa-solid fa-search" style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#aaa; font-size:12px; pointer-events:none;"></i>
-            <input type="text" id="ve-sc-search" class="form-control form-control-sm"
-                   placeholder="Buscar shortcode..."
-                   style="padding-left:28px; font-size:12px;">
-        </div>
+    {{-- Header --}}
+    <div style="padding:10px 12px; border-bottom:1px solid #eee; flex-shrink:0;">
+        <div style="font-size:10px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.5px;">Bloques</div>
+        <span style="font-size:13px; font-weight:700; color:#333;">Contenido disponible</span>
     </div>
 
-    {{-- Drag hint --}}
-    <div style="padding:5px 10px; background:#f5f5f5; border-bottom:1px solid #dee2e6; flex-shrink:0; font-size:11px; color:#888;">
-        <i class="fa-duotone fa-solid fa-hand-pointer me-1"></i>
-        Arrastra al preview o haz clic para insertar
+    {{-- Hidden search (synced from topbar) --}}
+    <div style="display:none;">
+        <input type="text" id="ve-sc-search">
     </div>
 
     {{-- Shortcodes accordion --}}
@@ -145,70 +140,126 @@ foreach ($shortcodes as $sc) {
             @endforelse
 
         </div>
+
+        {{-- Grid presets (always visible at bottom) --}}
+        <div class="ve-sc-grid-presets">
+            <div style="padding:7px 10px; font-size:11px; font-weight:600; color:#444; text-transform:uppercase; letter-spacing:.5px; border-top:1px solid #eee;">
+                Estructura
+            </div>
+            <div style="display:flex; gap:4px; padding:6px 10px 10px; flex-wrap:wrap;">
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="1">1 Col</button>
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="2">2 Cols</button>
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="3">3 Cols</button>
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="4">4 Cols</button>
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-type="1-2">1/3 · 2/3</button>
+                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-type="2-1">2/3 · 1/3</button>
+            </div>
+        </div>
+
     </div>
 
 </div>
 
 <style>
-/* ── Accordion categories (previously in ve-blocks-panel) ─────────── */
-.ve-blocks-category { border-bottom: 1px solid #f0f0f0; }
+/* Grid preset buttons in shortcodes panel */
+.ve-grid-preset-btn {
+    background: #f4f6f8; border: 1px solid #e8eaed; border-radius: 5px;
+    padding: 4px 10px; font-size: 10px; font-weight: 600; color: #586064;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.ve-grid-preset-btn:hover { background: #e8eaed; border-color: #ccc; color: #333; }
+.ve-grid-preset-btn.ve-insert-active { background: #b10100; border-color: #b10100; color: #fff; }
+
+/* ── Accordion categories ─────────── */
+.ve-blocks-category { border-bottom: none; }
 .ve-category-header {
     display: flex; align-items: center; justify-content: space-between;
-    width: 100%; padding: 9px 12px;
-    background: transparent; border: none; border-bottom: 1px solid #f0f0f0;
-    font-size: 12px; font-weight: 600; color: #444; cursor: pointer;
-    text-transform: uppercase; letter-spacing: .5px;
+    width: 100%; padding: 8px 10px;
+    background: transparent; border: none; border-bottom: none;
+    font-size: 10px; font-weight: 700; color: #888; cursor: pointer;
+    text-transform: uppercase; letter-spacing: .8px;
 }
-.ve-category-header:hover { background: #f8f9fa; }
+.ve-category-header:hover { background: #fafafa; color: #555; }
 .ve-category-header[aria-expanded="true"],
-.ve-category-header:not(.collapsed) { background: rgba(99,102,241,.08); }
-.ve-category-header i.ve-cat-chevron { font-size: 10px; color: #aaa; transition: transform .2s; }
+.ve-category-header:not(.collapsed) { background: transparent; color: #b10100; }
+.ve-category-header i.ve-cat-chevron { font-size: 9px; color: #bbb; transition: transform .2s; }
 .ve-category-header.collapsed i.ve-cat-chevron { transform: rotate(-90deg); }
+.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: #b10100; }
 
 .ve-blocks-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px 6px 8px;
 }
 .ve-block-item {
-    cursor: grab; border: 1px solid #e9ecef; border-radius: 8px;
-    padding: 12px 8px; text-align: center;
-    transition: border-color .15s, box-shadow .15s;
+    cursor: grab; border: 1px solid #eee; border-radius: 8px;
+    padding: 12px 6px 8px; text-align: center;
+    transition: all .15s;
     user-select: none; display: flex; flex-direction: column;
-    align-items: center; gap: 6px; background: #fff;
+    align-items: center; gap: 4px; background: #f8f9fa;
 }
-.ve-block-item .ve-block-icon { font-size: 20px; color: #6c757d; line-height: 1; }
-.ve-block-item .ve-block-name { font-size: 11px; color: #333; font-weight: 500; line-height: 1.3; }
-.ve-block-item:hover { border-color: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-.ve-block-item:active { cursor: grabbing; }
-.ve-block-item-custom { background: #fafff0; position: relative; }
-/* Normalize fa-lg override inside block icon container */
+.ve-block-item .ve-block-icon { font-size: 22px; color: #333; line-height: 1; }
+.ve-block-item .ve-block-name { font-size: 10px; color: #666; font-weight: 600; line-height: 1.3; }
+.ve-block-item:hover { background: #fff; border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.ve-block-item:hover .ve-block-icon { color: #b10100; }
+.ve-block-item:active { cursor: grabbing; transform: scale(.97); }
+/* Custom blocks — same style as regular */
+.ve-block-item-custom { background: #f8f9fa; position: relative; }
 .ve-block-item .ve-block-icon .fa-lg { font-size: inherit; }
+/* Force ALL block icons to dark color (override FA color classes) */
+.ve-block-item .ve-block-icon,
+.ve-block-item .ve-block-icon i,
+.ve-block-item .ve-block-icon .fas,
+.ve-block-item .ve-block-icon .far,
+.ve-block-item .ve-block-icon .fa-duotone { color: #333 !important; }
+.ve-block-item:hover .ve-block-icon,
+.ve-block-item:hover .ve-block-icon i,
+.ve-block-item:hover .ve-block-icon .fas,
+.ve-block-item:hover .ve-block-icon .far,
+.ve-block-item:hover .ve-block-icon .fa-duotone { color: #b10100 !important; }
 
 /* ── Shortcode-specific ────────────────────────────────────────────── */
 .ve-sc-item { position: relative; cursor: grab; }
-.ve-sc-item .ve-block-name { font-family: monospace; font-size: 10px; }
+.ve-sc-item .ve-block-name { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 9px; color: #555; font-weight: 600; }
 .ve-sc-cfg-badge {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 9px;
-    color: #aaa;
+    top: 6px;
+    right: 6px;
+    font-size: 10px;
+    color: #ccc;
     line-height: 1;
 }
-.ve-sc-item:hover .ve-sc-cfg-badge { color: #555; }
+.ve-sc-item:hover .ve-sc-cfg-badge { color: #999; }
 .ve-sc-item.dragging { opacity: .5; transform: scale(.97); }
 .ve-sc-delete-btn {
     position: absolute;
-    top: 4px; right: 4px;
-    background: transparent;
-    border: 1px solid #dee2e6;
-    border-radius: 3px;
-    font-size: 9px;
-    padding: 1px 4px;
-    color: #aaa;
+    top: 6px; right: 6px;
+    background: #f4f6f8;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    font-size: 10px;
+    padding: 2px 5px;
+    color: #999;
     cursor: pointer;
-    line-height: 1.4;
+    line-height: 1.2;
 }
-.ve-sc-delete-btn:hover { background: #dc3545; border-color: #dc3545; color: #fff; }
+.ve-sc-delete-btn:hover { background: #b10100; border-color: #b10100; color: #fff; }
+
+/* Category header — same style as inspector sections */
+.ve-category-header {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 10px 12px;
+    background: #fff; border: none; border-bottom: 1px solid #eee;
+    font-size: 13px; font-weight: 700; color: #333; cursor: pointer;
+    text-transform: none; letter-spacing: 0;
+}
+.ve-category-header:hover { background: #fafafa; }
+.ve-category-header[aria-expanded="true"],
+.ve-category-header:not(.collapsed) { background: #fff; color: #333; }
+.ve-category-header i.ve-cat-chevron { font-size: 11px; color: #ccc; transition: transform .2s; }
+.ve-category-header.collapsed i.ve-cat-chevron { transform: rotate(-90deg); }
+.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: #999; }
+/* Remove blue focus border */
+.ve-blocks-category { border: none; }
+.ve-category-header:focus { outline: none; box-shadow: none; }
 </style>
 
 <script>

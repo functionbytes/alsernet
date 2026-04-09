@@ -270,9 +270,13 @@ class VisualEditorController extends Controller
     {
         return <<<'HTML'
 <style>
-.ve-sel   { outline: 2px solid #1a1a1a !important; outline-offset: 1px !important; }
+.ve-sel   { outline: 2px solid #b10100 !important; outline-offset: 1px !important; }
 .ve-ctx   { outline: 2px solid #FA896B !important; outline-offset: 1px !important; }
 .ve-multi { outline: 2px solid #fd7e14 !important; outline-offset: 1px !important; }
+.ve-quick-bar { position:absolute; display:flex; gap:2px; padding:3px; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.12); z-index:99999; pointer-events:auto; }
+.ve-quick-bar button { width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:5px; color:#666; font-size:13px; cursor:pointer; transition:all .12s; }
+.ve-quick-bar button:hover { background:#f4f6f8; color:#333; }
+.ve-quick-bar button.ve-qb-danger:hover { background:#fdf2f2; color:#b10100; }
 </style>
 <script>
 (function () {
@@ -288,6 +292,7 @@ class VisualEditorController extends Controller
     }
 
     function cleanForExport() {
+        hideQuickBar();
         // Remove CSS selection classes (current approach)
         document.querySelectorAll('.ve-sel,.ve-ctx,.ve-multi').forEach(function (el) {
             el.classList.remove('ve-sel', 've-ctx', 've-multi');
@@ -302,6 +307,40 @@ class VisualEditorController extends Controller
     function restoreSelection() {
         if (selectedEl) { selectedEl.classList.add('ve-sel'); }
         multiSelected.forEach(function (el) { el.classList.add('ve-multi'); });
+    }
+
+    function showQuickBar(el) {
+        hideQuickBar();
+        var rect = el.getBoundingClientRect();
+        var bar = document.createElement('div');
+        bar.className = 've-quick-bar';
+        bar.id = 've-quick-bar';
+        bar.innerHTML = '<button title="Mover arriba" data-action="move-up">&#8593;</button>' +
+            '<button title="Mover abajo" data-action="move-down">&#8595;</button>' +
+            '<button title="Duplicar" data-action="duplicate">&#10697;</button>' +
+            '<button title="Inspeccionar" data-action="inspect">&#9881;</button>' +
+            '<button class="ve-qb-danger" title="Eliminar" data-action="delete">&#10005;</button>';
+        var top = window.scrollY + rect.top - 38;
+        if (top < 4) top = window.scrollY + rect.bottom + 4;
+        bar.style.position = 'absolute';
+        bar.style.top = top + 'px';
+        bar.style.left = (rect.left + rect.width / 2 - 80) + 'px';
+        document.body.appendChild(bar);
+        bar.addEventListener('click', function(e) {
+            var btn = e.target.closest('button');
+            if (!btn) return;
+            e.stopPropagation();
+            var act = btn.getAttribute('data-action');
+            if (act === 'move-up') window.parent.postMessage({type:'ve-move-element',direction:'up'},'*');
+            else if (act === 'move-down') window.parent.postMessage({type:'ve-move-element',direction:'down'},'*');
+            else if (act === 'duplicate') window.parent.postMessage({type:'ve-duplicate-element'},'*');
+            else if (act === 'delete') window.parent.postMessage({type:'ve-delete-element'},'*');
+            else if (act === 'inspect') window.parent.postMessage({type:'ve-request-inspect'},'*');
+        });
+    }
+    function hideQuickBar() {
+        var b = document.getElementById('ve-quick-bar');
+        if (b) b.remove();
     }
 
     function extractContent() {
@@ -419,6 +458,7 @@ class VisualEditorController extends Controller
 
             case 've-deselect':
                 cleanForExport();
+                hideQuickBar();
                 selectedEl = null;
                 selectedId = null;
                 break;
@@ -619,6 +659,8 @@ class VisualEditorController extends Controller
                     selectedEl  = byIdEl;
                     selectedId  = d.nodeId;
                     selectedEl.classList.add('ve-sel');
+                    showQuickBar(selectedEl);
+                    byIdEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     var cs2 = window.getComputedStyle(byIdEl);
                     // Build path
                     var path = [];
@@ -706,6 +748,66 @@ class VisualEditorController extends Controller
                 break;
             }
 
+            case 've-apply-motion': {
+                if (selectedEl) {
+                    // Inject animation CSS if not already
+                    if (!document.getElementById('ve-motion-css')) {
+                        var style = document.createElement('style');
+                        style.id = 've-motion-css';
+                        style.textContent = `
+                            @keyframes veFadeIn { from{opacity:0} to{opacity:1} }
+                            @keyframes veFadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+                            @keyframes veFadeInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+                            @keyframes veFadeInLeft { from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+                            @keyframes veFadeInRight { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+                            @keyframes veZoomIn { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+                            @keyframes veSlideUp { from{transform:translateY(50px)} to{transform:translateY(0)} }
+                            @keyframes veSlideDown { from{transform:translateY(-50px)} to{transform:translateY(0)} }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    var map = {'fade-in':'veFadeIn','fade-in-up':'veFadeInUp','fade-in-down':'veFadeInDown','fade-in-left':'veFadeInLeft','fade-in-right':'veFadeInRight','zoom-in':'veZoomIn','slide-up':'veSlideUp','slide-down':'veSlideDown'};
+                    var anim = map[d.effect] || '';
+                    if (anim) {
+                        selectedEl.setAttribute('data-ve-motion', d.effect);
+                        selectedEl.style.animation = anim + ' ' + (d.duration||'0.6s') + ' ' + (d.delay||'0s') + ' ease both';
+                    }
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
+            case 've-remove-motion': {
+                if (selectedEl) {
+                    selectedEl.removeAttribute('data-ve-motion');
+                    selectedEl.style.animation = '';
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
+
+            case 've-copy-styles': {
+                if (selectedEl) {
+                    var cs = window.getComputedStyle(selectedEl);
+                    var styles = {};
+                    var props = ['color','background-color','background-image','font-size','font-weight','font-family',
+                        'line-height','letter-spacing','text-align','text-decoration','text-transform',
+                        'padding','margin','border','border-radius','box-shadow','opacity',
+                        'display','position','width','height','max-width','min-height'];
+                    props.forEach(function(p){ styles[p] = cs.getPropertyValue(p); });
+                    window.parent.postMessage({ type: 've-styles-copied', styles: styles }, '*');
+                }
+                break;
+            }
+            case 've-paste-styles': {
+                if (selectedEl && d.styles) {
+                    Object.keys(d.styles).forEach(function(p){
+                        selectedEl.style.setProperty(p, d.styles[p]);
+                    });
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
+
             case 've-toggle-grid': {
                 var gridStyleId = 've-grid-overlay-style';
                 var existing = document.getElementById(gridStyleId);
@@ -726,6 +828,42 @@ class VisualEditorController extends Controller
                     ck.innerHTML = d.html;
                     window.parent.postMessage({ type: 've-inline-edit-committed', html: d.html }, '*');
                 }
+                break;
+            }
+
+            case 've-scan-navigator': {
+                // Full DOM tree scan for Navigator panel
+                function scanNode(el, depth) {
+                    if (depth > 6) return null;
+                    if (!el || el.nodeType !== 1) return null;
+                    var tag = el.tagName.toLowerCase();
+                    if (['script','style','link','meta','noscript','svg','path'].indexOf(tag) !== -1) return null;
+                    if (el.classList.contains('ve-quick-bar') || el.classList.contains('ve-sel')) { /* skip helpers */ }
+                    if (!el.id) el.id = generateId();
+                    var kids = [];
+                    Array.from(el.children).forEach(function(child) {
+                        var c = scanNode(child, depth + 1);
+                        if (c) kids.push(c);
+                    });
+                    var label = tag;
+                    if (el.id && !el.id.startsWith('ve-el-')) label += '#' + el.id;
+                    else if (el.className) {
+                        var cls = (typeof el.className === 'string' ? el.className : '').replace(/ve-sel|ve-ctx|ve-multi|ve-quick-bar/g,'').trim().split(/\s+/).slice(0,2).join('.');
+                        if (cls) label += '.' + cls;
+                    }
+                    var text = '';
+                    if (kids.length === 0) {
+                        text = (el.textContent || '').trim().substring(0, 30);
+                    }
+                    return { nodeId: el.id, tag: tag, label: label, text: text, children: kids };
+                }
+                var ck = document.querySelector('.ck-content') || document.body;
+                var tree = [];
+                Array.from(ck.children).forEach(function(child) {
+                    var n = scanNode(child, 0);
+                    if (n) tree.push(n);
+                });
+                window.parent.postMessage({ type: 've-navigator-scan', data: tree }, '*');
                 break;
             }
 
@@ -792,6 +930,7 @@ class VisualEditorController extends Controller
         selectedEl = el;
         selectedId = el.id;
         selectedEl.classList.add('ve-sel');
+        showQuickBar(el);
 
         var cs = window.getComputedStyle(el);
 

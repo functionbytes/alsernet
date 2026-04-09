@@ -19,13 +19,18 @@
                     </button>
 
                     {{-- Nav --}}
-                    <p class="mp-section-label mb-2">Explorar</p>
                     <nav class="d-flex flex-column gap-1 mb-4" id="mp-sidebar-tabs">
                         <button class="mp-nav-btn mp-tab-btn active" data-view="all_media">
                             <i class="fas fa-folder-open mp-nav-icon"></i>Biblioteca
                         </button>
                         <button class="mp-nav-btn mp-tab-btn" data-view="recent">
                             <i class="fas fa-clock mp-nav-icon"></i>Recientes
+                        </button>
+                        <button class="mp-nav-btn mp-tab-btn" data-view="favorites">
+                            <i class="fas fa-star mp-nav-icon"></i>Favoritos
+                        </button>
+                        <button class="mp-nav-btn mp-tab-btn" data-view="trash">
+                            <i class="fas fa-trash mp-nav-icon"></i>Papelera
                         </button>
                     </nav>
 
@@ -147,18 +152,27 @@
 
                         {{-- Insert --}}
                         <button type="button" id="mp-detail-insert-btn" class="btn mp-btn-primary w-100 mb-2">
-                            <i class="fas fa-check me-1"></i>Insertar archivo
+                            Insertar archivo
+                        </button>
+
+                        {{-- Edit --}}
+                        <button type="button" id="mp-detail-edit-btn" class="btn mp-btn-outline w-100 mb-3">
+                            <i class="fas fa-pen me-1"></i>Editar media
                         </button>
 
                         {{-- Actions --}}
-                        <div class="d-flex mp-detail-actions border-top mt-3 pt-3">
-                            <button type="button" class="mp-detail-action" id="mp-copy-url-action" title="Copiar URL">
-                                <i class="fas fa-link"></i>
-                                <span>Copiar</span>
+                        <div class="d-flex mp-detail-actions border-top pt-3">
+                            <button type="button" class="mp-detail-action" id="mp-copy-url-action" title="Compartir">
+                                <i class="fas fa-share-alt"></i>
+                                <span>Compartir</span>
                             </button>
                             <button type="button" class="mp-detail-action" id="mp-download-action" title="Descargar">
                                 <i class="fas fa-download"></i>
                                 <span>Descargar</span>
+                            </button>
+                            <button type="button" class="mp-detail-action mp-detail-action-danger" id="mp-delete-action" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                                <span>Eliminar</span>
                             </button>
                         </div>
 

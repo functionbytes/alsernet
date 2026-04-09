@@ -1,56 +1,63 @@
-<div id="ve-history-panel-wrap" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="ve-history-panel-wrap" class="ve-panel-root">
 
-    <div style="padding:10px 12px; border-bottom:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;">
+    <div class="ve-panel-header">
         <div>
-            <div style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">HISTORIAL</div>
-            <span style="font-size:12px; color:#555;">Cambios recientes</span>
+            <div class="ve-panel-label">Historial</div>
+            <span class="ve-panel-title">Cambios recientes</span>
         </div>
-        <div style="display:flex; gap:4px;">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-undo-hist"
-                    title="Deshacer" style="font-size:11px; padding:2px 8px;">
+        <div class="ve-panel-actions">
+            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-undo-hist" title="Deshacer">
                 <i class="fa-duotone fa-solid fa-undo"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-redo-hist"
-                    title="Rehacer" style="font-size:11px; padding:2px 8px;">
+            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-redo-hist" title="Rehacer">
                 <i class="fa-duotone fa-solid fa-redo"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-save-snapshot"
-                    title="Guardar snapshot" style="font-size:11px; padding:2px 8px;">
+            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-save-snapshot" title="Guardar snapshot">
                 <i class="fa-duotone fa-solid fa-camera"></i>
             </button>
         </div>
     </div>
 
-    <div id="ve-history-empty" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#aaa; text-align:center; padding:24px; display:none;">
-        <i class="fa-duotone fa-solid fa-history" style="font-size:28px; margin-bottom:10px; opacity:.3;"></i>
-        <div style="font-size:12px; line-height:1.5;">El historial aparecerá<br>cuando hagas cambios</div>
+    <div id="ve-history-empty" class="ve-empty-state ve-hidden">
+        <i class="fa-duotone fa-solid fa-history ve-empty-icon"></i>
+        <div class="ve-empty-text">El historial aparecerá<br>cuando hagas cambios</div>
     </div>
 
-    <div id="ve-history-list" style="flex:1; overflow-y:auto;"></div>
+    <div id="ve-history-list" class="ve-scrollable-area"></div>
 
     {{-- Snapshots section --}}
-    <div style="border-top:2px solid #e9ecef; flex-shrink:0;">
-        <div style="padding:6px 12px; background:#f8f9fa; display:flex; align-items:center; justify-content:space-between;">
-            <span style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">
-                <i class="fa-duotone fa-solid fa-camera me-1"></i>SNAPSHOTS
+    <div class="ve-snapshot-section">
+        <div class="ve-snapshot-header">
+            <span class="ve-panel-label">
+                <i class="fa-duotone fa-solid fa-camera me-1"></i>Snapshots
             </span>
-            <button type="button" class="btn btn-sm btn-outline-danger" id="btn-clear-snapshots"
-                    style="font-size:10px; padding:1px 6px;">Limpiar</button>
+            <button type="button" class="btn btn-outline-danger ve-snapshot-clear" id="btn-clear-snapshots">Limpiar</button>
         </div>
-        <div id="ve-snapshots-list" style="max-height:160px; overflow-y:auto;">
-            <div id="ve-snapshots-empty" style="text-align:center; color:#aaa; font-size:11px; padding:12px;">
+        <div id="ve-snapshots-list" class="ve-snapshot-list">
+            <div id="ve-snapshots-empty" class="ve-snapshot-empty">
                 Sin snapshots guardados
             </div>
         </div>
     </div>
 
-    <div style="padding:8px 12px; border-top:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0;">
-        <small style="font-size:10px; color:#999;">
-            <i class="fa-duotone fa-solid fa-info-circle me-1"></i>Haz clic en cualquier entrada para restaurar ese estado
-        </small>
+    <div class="ve-panel-footer">
+        <small><i class="fa-duotone fa-solid fa-info-circle me-1"></i>Haz clic en cualquier entrada para restaurar ese estado</small>
     </div>
 
 </div>
+
+<style>
+/* History panel classes (no inline styles) */
+.ve-panel-actions { display:flex; gap:4px; }
+.ve-hidden { display:none !important; }
+.ve-empty-text { font-size:12px; line-height:1.5; }
+.ve-scrollable-area { flex:1; overflow-y:auto; }
+.ve-snapshot-section { border-top:2px solid var(--ve-border, #eee); flex-shrink:0; }
+.ve-snapshot-header { padding:6px 12px; display:flex; align-items:center; justify-content:space-between; }
+.ve-snapshot-clear { font-size:9px !important; padding:1px 6px !important; }
+.ve-snapshot-list { max-height:160px; overflow-y:auto; }
+.ve-snapshot-empty { text-align:center; color:#aaa; font-size:11px; padding:12px; }
+</style>
 
 <script>
 (function ($) {

@@ -1,48 +1,47 @@
-<div id="ve-settings-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="ve-settings-panel" class="ve-panel-root">
 
-    <div style="padding:10px 12px; border-bottom:1px solid #e9ecef; background:#f8f9fa; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;">
+    <div class="ve-panel-header">
         <div>
-            <div style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.5px;">AJUSTES</div>
-            <span style="font-size:12px; color:#555;">Configuración de página</span>
+            <div class="ve-panel-label">Ajustes</div>
+            <span class="ve-panel-title">Configuración de página</span>
         </div>
-        <button type="button" class="btn btn-sm" id="btn-save-settings"
-                style="background:#1a1a1a;border-color:#1a1a1a;color:#fff;font-size:11px;padding:3px 10px;">
+        <button type="button" class="btn ve-btn-primary" id="btn-save-settings">
             <i class="fa-duotone fa-solid fa-save me-1"></i>Guardar
         </button>
     </div>
 
-    <div style="flex:1; overflow-y:auto; padding:12px;">
+    <div class="ve-scrollable-area ve-settings-body">
 
         {{-- Basic --}}
-        <div style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; margin-bottom:8px; margin-top:4px;">BÁSICO</div>
+        <div class="ve-section-title">Básico</div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Título de la página</label>
-            <input type="text" class="form-control form-control-sm" id="ve-settings-title"
+        <div class="ve-field">
+            <label>Título de la página</label>
+            <input type="text" class="form-control" id="ve-settings-title"
                    value="{{ $translation->title ?? $page->title }}" placeholder="Título...">
         </div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Slug (URL)</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text" style="font-size:11px; color:#999;">/</span>
+        <div class="ve-field">
+            <label>Slug (URL)</label>
+            <div class="input-group">
+                <span class="input-group-text">/</span>
                 <input type="text" class="form-control" id="ve-settings-slug"
                        value="{{ $translation->slug ?? $page->slug }}" placeholder="mi-pagina">
             </div>
         </div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Estado</label>
-            <select class="form-select form-select-sm" id="ve-settings-status">
+        <div class="ve-field">
+            <label>Estado</label>
+            <select class="form-select" id="ve-settings-status">
                 <option value="published" {{ $page->status->value === 'published' ? 'selected' : '' }}>Publicado</option>
                 <option value="draft"     {{ $page->status->value === 'draft'     ? 'selected' : '' }}>Borrador</option>
                 <option value="scheduled" {{ ($page->status->value ?? '') === 'scheduled' ? 'selected' : '' }}>Programado</option>
             </select>
         </div>
 
-        <div style="margin-bottom:16px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Plantilla</label>
-            <select class="form-select form-select-sm" id="ve-settings-template">
+        <div class="ve-field ve-field-last">
+            <label>Plantilla</label>
+            <select class="form-select" id="ve-settings-template">
                 <option value="default" {{ ($page->template ?? 'default') === 'default' ? 'selected' : '' }}>Default</option>
                 <option value="homepage" {{ ($page->template ?? '') === 'homepage' ? 'selected' : '' }}>Homepage</option>
                 <option value="landing" {{ ($page->template ?? '') === 'landing' ? 'selected' : '' }}>Landing</option>
@@ -51,39 +50,38 @@
         </div>
 
         {{-- SEO --}}
-        <div style="font-size:10px; font-weight:600; color:#888; text-transform:uppercase; margin-bottom:8px; padding-top:8px; border-top:1px solid #f0f0f0;">SEO</div>
+        <div class="ve-section-title ve-section-title-bordered">SEO</div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Meta título</label>
-            <input type="text" class="form-control form-control-sm" id="ve-settings-seo-title"
+        <div class="ve-field">
+            <label>Meta título</label>
+            <input type="text" class="form-control" id="ve-settings-seo-title"
                    value="{{ $translation->seo_title ?? $page->seo_title ?? '' }}" placeholder="Igual al título si está vacío">
         </div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Meta descripción</label>
-            <textarea class="form-control form-control-sm" id="ve-settings-seo-description"
-                      rows="3" placeholder="Descripción para buscadores (max 160 caracteres)..."
-                      style="font-size:11px; resize:vertical;">{{ $translation->seo_description ?? $page->seo_description ?? '' }}</textarea>
-            <div id="ve-seo-desc-count" style="font-size:10px; color:#999; text-align:right; margin-top:2px;">0 / 160</div>
+        <div class="ve-field">
+            <label>Meta descripción</label>
+            <textarea class="form-control ve-textarea-resizable" id="ve-settings-seo-description"
+                      rows="3" placeholder="Descripción para buscadores (max 160 caracteres)...">{{ $translation->seo_description ?? $page->seo_description ?? '' }}</textarea>
+            <div id="ve-seo-desc-count" class="ve-field-counter">0 / 160</div>
         </div>
 
-        <div style="margin-bottom:10px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Keywords</label>
-            <input type="text" class="form-control form-control-sm" id="ve-settings-seo-keywords"
+        <div class="ve-field">
+            <label>Keywords</label>
+            <input type="text" class="form-control" id="ve-settings-seo-keywords"
                    value="{{ $translation->seo_keywords ?? $page->seo_keywords ?? '' }}" placeholder="palabra1, palabra2, ...">
         </div>
 
-        <div style="margin-bottom:16px;">
-            <label style="font-size:11px; color:#555; display:block; margin-bottom:3px;">Imagen destacada (URL)</label>
-            <div class="input-group input-group-sm">
+        <div class="ve-field ve-field-last">
+            <label>Imagen destacada (URL)</label>
+            <div class="input-group">
                 <input type="url" class="form-control" id="ve-settings-featured-image"
                        value="{{ $page->featured_image ?? '' }}" placeholder="https://...">
                 <button type="button" class="btn btn-outline-secondary" id="btn-settings-media-picker" title="Seleccionar de medios">
                     <i class="fa-duotone fa-solid fa-photo-video"></i>
                 </button>
             </div>
-            <div id="ve-settings-img-preview" style="margin-top:6px; display:none;">
-                <img id="ve-settings-img-thumb" src="" alt="" style="max-width:100%; border-radius:4px; border:1px solid #dee2e6; max-height:100px; object-fit:cover;">
+            <div id="ve-settings-img-preview" class="ve-img-preview ve-hidden">
+                <img id="ve-settings-img-thumb" src="" alt="" class="ve-img-thumb">
             </div>
         </div>
 

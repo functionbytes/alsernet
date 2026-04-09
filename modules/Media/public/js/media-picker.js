@@ -94,10 +94,13 @@ window.MediaPicker = (function ($) {
 
         return '<div class="col-xl-3 col-lg-4 col-md-4 col-6">' +
             '<div class="mp-file position-relative"' +
+            ' data-id="' + (file.id || '') + '"' +
             ' data-full-url="' + safeUrl + '"' +
             ' data-url="' + $('<div>').text(file.url).html() + '"' +
             ' data-name="' + safeName + '"' +
-            ' data-type="' + (file.type || '') + '">' +
+            ' data-type="' + (file.type || '') + '"' +
+            ' data-size="' + sizeText + '"' +
+            ' data-dims="' + (file.dimensions || '') + '">' +
             '<div class="mp-check"><i class="fas fa-check"></i></div>' +
             '<div class="mp-select-circle"></div>' +
             '<div class="position-relative overflow-hidden">' + thumbHtml + '</div>' +
@@ -190,6 +193,7 @@ window.MediaPicker = (function ($) {
         var safeName = $('<div>').text(file.name).html();
         var ext      = _ext(file.name);
         var sizeText = file.human_size || file.size_human || '';
+        var dims     = file.dimensions || '';
 
         var thumbHtml = isImage
             ? '<img src="' + file.fullUrl + '" class="mp-detail-img">'
@@ -198,8 +202,9 @@ window.MediaPicker = (function ($) {
 
         var metaHtml = '';
         metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Nombre</dt><dd class="mb-0 text-truncate ms-2" title="' + safeName + '">' + safeName + '</dd></div>';
-        if (ext)      metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Tipo</dt><dd class="mb-0">' + ext + '</dd></div>';
+        if (dims)     metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Dimensiones</dt><dd class="mb-0">' + dims + '</dd></div>';
         if (sizeText) metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Tamaño</dt><dd class="mb-0">' + sizeText + '</dd></div>';
+        if (ext)      metaHtml += '<div class="d-flex justify-content-between mb-2"><dt>Tipo</dt><dd class="mb-0">' + ext + '</dd></div>';
         $('#mp-detail-meta-dl').html(metaHtml);
         $('#mp-detail-meta').html('');
 
@@ -495,10 +500,13 @@ window.MediaPicker = (function ($) {
             $('.mp-file').removeClass('selected');
             $(this).addClass('selected');
             _selected = {
-                url:     $(this).data('url'),
-                fullUrl: $(this).data('full-url'),
-                name:    $(this).data('name'),
-                type:    $(this).data('type')
+                id:         $(this).data('id'),
+                url:        $(this).data('url'),
+                fullUrl:    $(this).data('full-url'),
+                name:       $(this).data('name'),
+                type:       $(this).data('type'),
+                human_size: $(this).data('size'),
+                dimensions: $(this).data('dims')
             };
             $('#mp-insert-btn').prop('disabled', false);
             $('#mp-selected-name').html('<i class="fas fa-check-circle me-1 text-success"></i>' + $('<div>').text(_selected.name).html());
@@ -508,10 +516,13 @@ window.MediaPicker = (function ($) {
         /* Double-click to insert immediately */
         $(document).on('dblclick', '.mp-file', function () {
             _selected = {
-                url:     $(this).data('url'),
-                fullUrl: $(this).data('full-url'),
-                name:    $(this).data('name'),
-                type:    $(this).data('type')
+                id:         $(this).data('id'),
+                url:        $(this).data('url'),
+                fullUrl:    $(this).data('full-url'),
+                name:       $(this).data('name'),
+                type:       $(this).data('type'),
+                human_size: $(this).data('size'),
+                dimensions: $(this).data('dims')
             };
             _confirm();
         });
@@ -559,6 +570,37 @@ window.MediaPicker = (function ($) {
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+            }
+        });
+
+        /* Delete action */
+        $(document).on('click', '#mp-delete-action', function () {
+            if (!_selected || !_selected.id) return;
+            if (!confirm('¿Eliminar este archivo?')) return;
+            $.ajax({
+                url: _cfg.urls.base.replace(/\/media$/, '') + '/panel/media/files/' + _selected.id,
+                type: 'DELETE',
+                data: { _token: _csrf() },
+                success: function (res) {
+                    if (res.success !== false) {
+                        toastr.success('Archivo eliminado');
+                        _hideDetail();
+                        _selected = null;
+                        $('#mp-insert-btn').prop('disabled', true);
+                        $('#mp-selected-name').html('<i class="fas fa-image me-1 opacity-50"></i>Ningún archivo seleccionado');
+                        _loadItems(_currentFolderId(), $('#mp-search').val(), 1);
+                    } else {
+                        toastr.error(res.message || 'Error al eliminar');
+                    }
+                },
+                error: function () { toastr.error('Error al eliminar el archivo'); }
+            });
+        });
+
+        /* Edit media action (opens in new tab) */
+        $(document).on('click', '#mp-detail-edit-btn', function () {
+            if (_selected && _selected.id) {
+                window.open('/panel/media?edit=' + _selected.id, '_blank');
             }
         });
 
