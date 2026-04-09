@@ -1258,7 +1258,7 @@
         }
         #ve-panel-code .CodeMirror .CodeMirror-linenumber { color: var(--ve-text-faint); }
         /* CodeMirror full height + scroll */
-        #ve-panel-code { display:flex; flex-direction:column; }
+        #ve-panel-code.active { flex-direction:column; }
         #ve-code-editor-wrap { flex:1 !important; min-height:0; overflow:hidden; }
         #ve-panel-code .CodeMirror { height:100% !important; }
         #ve-panel-code .CodeMirror-scroll { overflow:auto !important; }
