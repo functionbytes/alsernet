@@ -1069,19 +1069,23 @@
     /* ── Get content to save ─────────────────────────────────────────── */
     function getContentToSave() {
         return new Promise(function (resolve) {
-            // If the code panel is active, use its content directly — the user edited
-            // the raw HTML and we must not lose their changes by reading from the iframe.
+            // If the code panel is active, use its content directly
             if ($('#ve-panel-code').hasClass('active') && window._veFullCodeMirror) {
                 resolve(window._veFullCodeMirror.getValue());
                 return;
             }
-            // Always try to extract from iframe first (gets clean .ck-content)
+            // Primary source: CKEditor (always has the latest content)
+            if (editor) {
+                resolve(editor.getData());
+                return;
+            }
+            // Fallback: try iframe
             let timeout;
             const handler = function (e) {
                 if (!e.data || e.data.type !== 've-html-response') return;
                 window.removeEventListener('message', handler);
                 clearTimeout(timeout);
-                resolve(e.data.html || (editor ? editor.getData() : originalContent));
+                resolve(e.data.html || originalContent);
             };
             window.addEventListener('message', handler);
             const frame = document.getElementById('ve-preview-frame');
@@ -1089,12 +1093,12 @@
                 frame.contentWindow.postMessage({ type: 've-request-html' }, '*');
             } else {
                 window.removeEventListener('message', handler);
-                resolve(editor ? editor.getData() : originalContent);
+                resolve(originalContent);
                 return;
             }
             timeout = setTimeout(function () {
                 window.removeEventListener('message', handler);
-                resolve(editor ? editor.getData() : originalContent);
+                resolve(originalContent);
             }, 3000);
         });
     }
