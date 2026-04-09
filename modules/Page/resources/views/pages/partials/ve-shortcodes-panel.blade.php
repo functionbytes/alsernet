@@ -75,21 +75,21 @@ foreach ($shortcodes as $sc) {
 }
 @endphp
 
-<div id="ve-shortcodes-panel" style="height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="ve-shortcodes-panel" class="ve-panel-root">
 
     {{-- Header --}}
-    <div style="padding:10px 12px; border-bottom:1px solid #eee; flex-shrink:0;">
-        <div style="font-size:10px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.5px;">Bloques</div>
-        <span style="font-size:13px; font-weight:700; color:#333;">Contenido disponible</span>
+    <div class="ve-sc-header">
+        <div class="ve-panel-label">Bloques</div>
+        <span class="ve-panel-title">Contenido disponible</span>
     </div>
 
     {{-- Hidden search (synced from topbar) --}}
-    <div style="display:none;">
+    <div class="ve-hidden">
         <input type="text" id="ve-sc-search">
     </div>
 
     {{-- Shortcodes accordion --}}
-    <div id="ve-sc-list" style="flex:1; overflow-y:auto;">
+    <div id="ve-sc-list" class="ve-scrollable-area">
         <div id="ve-sc-accordion">
 
             @forelse($grouped as $cat => $items)
@@ -134,7 +134,7 @@ foreach ($shortcodes as $sc) {
 
             </div>
             @empty
-            <p class="text-muted text-center py-4" style="font-size:12px;">
+            <p class="text-muted text-center py-4 ve-sc-empty-msg">
                 No hay shortcodes registrados
             </p>
             @endforelse
@@ -164,7 +164,7 @@ foreach ($shortcodes as $sc) {
                      data-category="estructura">
                     <div class="ve-grid-card-vis">
                         @foreach($tpl['vis'] as $flex)
-                        <div class="ve-grid-col-block {{ $flex > 1 ? 've-grid-col-wide' : '' }}" style="flex:{{ $flex }}"></div>
+                        <div class="ve-grid-col-block {{ $flex > 1 ? 've-grid-col-wide ve-grid-col-f2' : 've-grid-col-f1' }}"></div>
                         @endforeach
                     </div>
                     <span class="ve-grid-card-label">{{ $tpl['label'] }}</span>
@@ -178,6 +178,14 @@ foreach ($shortcodes as $sc) {
 </div>
 
 <style>
+/* ── Panel root & header ────────────────────────────────────────── */
+.ve-sc-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ve-border, #eee);
+    flex-shrink: 0;
+}
+.ve-sc-empty-msg { font-size: 12px; }
+
 /* Grid preset visual cards */
 .ve-sc-grid-presets-title { padding:8px 10px; font-size:13px; font-weight:600; color:#444; border-top:1px solid #eee; }
 .ve-sc-grid-presets-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:6px 10px 12px; }
@@ -191,6 +199,8 @@ foreach ($shortcodes as $sc) {
 .ve-grid-card-vis { display:flex; gap:3px; height:22px; border-radius:4px; overflow:hidden; }
 .ve-grid-col-block { background:#ddd; border-radius:3px; min-width:8px; }
 .ve-grid-col-wide { background:#ccc; }
+.ve-grid-col-f1 { flex: 1; }
+.ve-grid-col-f2 { flex: 2; }
 .ve-grid-card:hover .ve-grid-col-block { background:#bbb; }
 .ve-grid-card:hover .ve-grid-col-wide { background:#aaa; }
 .ve-grid-card-label { font-size:10px; font-weight:600; color:#666; }

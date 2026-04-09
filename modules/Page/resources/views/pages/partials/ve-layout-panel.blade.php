@@ -17,45 +17,45 @@
         <div class="ve-lp-presets">
             <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="1" title="1 columna">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col" style="flex:12"></span>
+                    <span class="ve-lp-col ve-lp-col--f12"></span>
                 </span>
                 <span class="ve-lp-preset-label">1 Col</span>
             </button>
             <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="2" title="2 columnas iguales">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col" style="flex:6"></span>
-                    <span class="ve-lp-col" style="flex:6"></span>
+                    <span class="ve-lp-col ve-lp-col--f6"></span>
+                    <span class="ve-lp-col ve-lp-col--f6"></span>
                 </span>
                 <span class="ve-lp-preset-label">2 Cols</span>
             </button>
             <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="3" title="3 columnas iguales">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col" style="flex:4"></span>
-                    <span class="ve-lp-col" style="flex:4"></span>
-                    <span class="ve-lp-col" style="flex:4"></span>
+                    <span class="ve-lp-col ve-lp-col--f4"></span>
+                    <span class="ve-lp-col ve-lp-col--f4"></span>
+                    <span class="ve-lp-col ve-lp-col--f4"></span>
                 </span>
                 <span class="ve-lp-preset-label">3 Cols</span>
             </button>
             <button type="button" class="ve-lp-preset ve-insert-layout" data-cols="4" title="4 columnas iguales">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col" style="flex:3"></span>
-                    <span class="ve-lp-col" style="flex:3"></span>
-                    <span class="ve-lp-col" style="flex:3"></span>
-                    <span class="ve-lp-col" style="flex:3"></span>
+                    <span class="ve-lp-col ve-lp-col--f3"></span>
+                    <span class="ve-lp-col ve-lp-col--f3"></span>
+                    <span class="ve-lp-col ve-lp-col--f3"></span>
+                    <span class="ve-lp-col ve-lp-col--f3"></span>
                 </span>
                 <span class="ve-lp-preset-label">4 Cols</span>
             </button>
             <button type="button" class="ve-lp-preset ve-insert-layout" data-type="1-2" title="1/3 · 2/3">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col" style="flex:4"></span>
-                    <span class="ve-lp-col ve-lp-col--wide" style="flex:8"></span>
+                    <span class="ve-lp-col ve-lp-col--f4"></span>
+                    <span class="ve-lp-col ve-lp-col--wide ve-lp-col--f8"></span>
                 </span>
                 <span class="ve-lp-preset-label">1/3 · 2/3</span>
             </button>
             <button type="button" class="ve-lp-preset ve-insert-layout" data-type="2-1" title="2/3 · 1/3">
                 <span class="ve-lp-preset-vis">
-                    <span class="ve-lp-col ve-lp-col--wide" style="flex:8"></span>
-                    <span class="ve-lp-col" style="flex:4"></span>
+                    <span class="ve-lp-col ve-lp-col--wide ve-lp-col--f8"></span>
+                    <span class="ve-lp-col ve-lp-col--f4"></span>
                 </span>
                 <span class="ve-lp-preset-label">2/3 · 1/3</span>
             </button>
@@ -181,6 +181,14 @@
 .ve-lp-col--wide {
     background: #c5cdd2;
 }
+/* Flex presets for column width visualisation */
+.ve-lp-col--f3  { flex: 3; }
+.ve-lp-col--f4  { flex: 4; }
+.ve-lp-col--f6  { flex: 6; }
+.ve-lp-col--f8  { flex: 8; }
+.ve-lp-col--f12 { flex: 12; }
+/* Chevron icon inside layout tree nodes */
+.ve-lp-chevron-icon { font-size: 8px; transition: transform .15s; }
 .ve-lp-preset:hover .ve-lp-col  { background: #c5cdd2; }
 .ve-lp-preset:hover .ve-lp-col--wide { background: #adb5bd; }
 .ve-lp-preset-label {
@@ -423,7 +431,7 @@
         const $wrap = $('<div class="ve-lp-container">');
 
         const $chevron = rowCount > 0
-            ? '<i class="fas fa-chevron-down ve-lp-node-icon" style="font-size:8px;transition:transform .15s;"></i>'
+            ? '<i class="fas fa-chevron-down ve-lp-node-icon ve-lp-chevron-icon"></i>'
             : '<i class="fas fa-square ve-lp-node-icon"></i>';
 
         const $header = $('<div class="ve-lp-node">')

@@ -19,7 +19,7 @@
 
     {{-- Sections view --}}
     <div id="ve-sections-view" class="ve-tab-content active">
-        <div id="ve-sections-empty" class="ve-empty-state" style="display:none;">
+        <div id="ve-sections-empty" class="ve-empty-state ve-initially-hidden">
             <small>No hay secciones detectadas.<br>Añade bloques desde el panel de Bloques.</small>
         </div>
         <div id="ve-sections-list" class="ve-sections-list-area"></div>
@@ -42,6 +42,7 @@
 
 <style>
 .ve-panel-root { height:100%; display:flex; flex-direction:column; }
+.ve-initially-hidden { display: none; }
 .ve-panel-header { padding:10px 12px; border-bottom:1px solid var(--ve-border, #eee); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
 .ve-panel-label { font-size:10px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:.5px; }
 .ve-panel-title { font-size:13px; font-weight:700; color:#333; }

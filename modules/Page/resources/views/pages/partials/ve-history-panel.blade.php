@@ -57,6 +57,11 @@
 .ve-snapshot-clear { font-size:9px !important; padding:1px 6px !important; }
 .ve-snapshot-list { max-height:160px; overflow-y:auto; }
 .ve-snapshot-empty { text-align:center; color:#aaa; font-size:11px; padding:12px; }
+/* Snapshot items (rendered via JS) */
+.ve-snapshot-item { display:flex; align-items:center; gap:6px; padding:5px 10px; border-bottom:1px solid #f0f0f0; font-size:11px; }
+.ve-snapshot-item-icon { font-size:10px; }
+.ve-snapshot-item-date { flex:1; color:#555; }
+.ve-snapshot-item-btn { font-size:10px; padding:1px 6px; }
 </style>
 
 <script>
@@ -98,13 +103,11 @@
             var realIdx = snaps.length - 1 - i;
             var date = new Date(snap.timestamp).toLocaleString('es', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
             var $item = $([
-                '<div class="ve-snapshot-item" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;">',
-                '<i class="fa-duotone fa-solid fa-camera text-muted" style="font-size:10px;"></i>',
-                '<span style="flex:1;color:#555;" title="' + (snap.label || 'Snapshot') + '">' + date + '</span>',
-                '<button class="btn btn-xs btn-outline-secondary ve-snap-restore" data-idx="' + realIdx + '"',
-                ' style="font-size:10px;padding:1px 6px;">Restaurar</button>',
-                '<button class="btn btn-xs btn-outline-danger ve-snap-delete" data-idx="' + realIdx + '"',
-                ' style="font-size:10px;padding:1px 6px;"><i class="fa-duotone fa-solid fa-times"></i></button>',
+                '<div class="ve-snapshot-item">',
+                '<i class="fa-duotone fa-solid fa-camera text-muted ve-snapshot-item-icon"></i>',
+                '<span class="ve-snapshot-item-date" title="' + (snap.label || 'Snapshot') + '">' + date + '</span>',
+                '<button class="btn btn-xs btn-outline-secondary ve-snap-restore ve-snapshot-item-btn" data-idx="' + realIdx + '">Restaurar</button>',
+                '<button class="btn btn-xs btn-outline-danger ve-snap-delete ve-snapshot-item-btn" data-idx="' + realIdx + '"><i class="fa-duotone fa-solid fa-times"></i></button>',
                 '</div>',
             ].join(''));
             $list.append($item);
