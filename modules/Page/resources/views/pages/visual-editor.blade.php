@@ -663,6 +663,11 @@
         .ve-diff-badge { font-size:9px; background:var(--ve-bg-muted); color:var(--ve-text-muted); padding:1px 5px; border-radius:3px; margin-left:auto; }
 
         /* ── SEO score card ──────────────────────────────── */
+        /* ── Auto-save progress bar ──────────────────────── */
+        .ve-autosave-bar { position:absolute; top:0; left:0; width:0; height:2px; background:var(--ve-primary); transition:width .3s; z-index:300; }
+        .ve-autosave-bar.active { width:100%; animation:ve-autosave-pulse 1.5s ease-in-out; }
+        @keyframes ve-autosave-pulse { 0%{width:0} 50%{width:70%} 100%{width:100%} }
+
         .ve-seo-subtitle { font-size:12px; color:var(--ve-text-muted); margin-bottom:12px; }
         .ve-seo-score-card { display:flex; align-items:center; justify-content:space-between; background:var(--ve-bg-muted); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
         .ve-seo-score-left { }
@@ -5069,6 +5074,180 @@
             if (window.vePushHistory) window.vePushHistory('AI: contenido generado', window.veEditor.getData());
             bootstrap.Modal.getInstance(document.getElementById('ve-ai-modal')).hide();
             if (window.veToast) window.veToast('Contenido insertado', 'success');
+        }
+    });
+
+    // ── U3: Drag files from desktop to preview (upload + insert) ──
+    $(document).on('dragover', '#ve-canvas-wrap', function(e) { e.preventDefault(); });
+    $(document).on('drop', '#ve-canvas-wrap', function(e) {
+        e.preventDefault();
+        var files = e.originalEvent.dataTransfer.files;
+        if (!files || !files.length) return;
+        var file = files[0];
+        if (!file.type.startsWith('image/')) return;
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        $.ajax({
+            url: '/panel/media/files/upload',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res.success && res.file && res.file.public_url) {
+                    var html = '<img src="' + res.file.public_url + '" class="img-fluid" alt="' + (file.name || '') + '">';
+                    if (window.veEditor) {
+                        window.veEditor.model.change(function() {
+                            var view = window.veEditor.data.processor.toView(html);
+                            var model = window.veEditor.data.toModel(view);
+                            window.veEditor.model.insertContent(model);
+                        });
+                        if (window.veToast) window.veToast('Imagen insertada', 'success');
+                    }
+                }
+            },
+            error: function() { if (window.veToast) window.veToast('Error al subir imagen', 'error'); }
+        });
+    });
+
+    // ── U4: Auto-save visual indicator (progress bar) ──
+    var $autoSaveBar = $('<div class="ve-autosave-bar"></div>').prependTo('#ve-topbar');
+    window.addEventListener('message', function(ev) {
+        if (!ev.data) return;
+        if (ev.data.type === 've-autosave-start') {
+            $autoSaveBar.addClass('active');
+        }
+    });
+    if (origAS) {
+        new MutationObserver(function() {
+            var cls = origAS.className || '';
+            if (cls.indexOf('saving') !== -1) $autoSaveBar.addClass('active');
+            else $autoSaveBar.removeClass('active');
+        }).observe(origAS, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // ── D2: Conditional by locale (insert) ──
+    cmdActions.push({ cat:'Insertar', label:'Contenido solo ES', icon:'fa-language', action: function() {
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<div data-locale="es" class="locale-conditional">Contenido solo para español</div>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+    cmdActions.push({ cat:'Insertar', label:'Contenido solo PT', icon:'fa-language', action: function() {
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<div data-locale="pt" class="locale-conditional">Conteúdo apenas em português</div>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+
+    // ── D4: Content placeholders ──
+    cmdActions.push({ cat:'Insertar', label:'Placeholder de contenido', icon:'fa-puzzle-piece', action: function() {
+        var name = prompt('Nombre del placeholder (ej: hero-image, cta-form):');
+        if (!name) return;
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView('<div class="content-placeholder" data-placeholder="' + name + '" style="padding:20px;background:#f4f6f8;border:2px dashed #ccc;text-align:center;border-radius:8px;color:#999;">[PLACEHOLDER: ' + name + ']</div>');
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+
+    // ── D5: Repeater/Loop ──
+    cmdActions.push({ cat:'Insertar', label:'Bloque repetidor', icon:'fa-clone', action: function() {
+        var count = prompt('¿Cuántas repeticiones? (ej: 3):', '3');
+        if (!count) return;
+        var n = parseInt(count) || 3;
+        var html = '<div class="ve-repeater" data-repeat="' + n + '">\n';
+        for (var i = 0; i < n; i++) {
+            html += '  <div class="ve-repeater-item mb-3 p-3" style="background:#f8f9fa;border-radius:8px;border:1px solid #eee;">\n';
+            html += '    <h4>Item ' + (i+1) + '</h4>\n';
+            html += '    <p>Contenido del item</p>\n';
+            html += '  </div>\n';
+        }
+        html += '</div>';
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+        }
+    }});
+
+    // ── R1: Live CSS editing ──
+    cmdActions.push({ cat:'Herramientas', label:'CSS en vivo', icon:'fa-paint-brush', action: function() {
+        var css = prompt('CSS a aplicar en tiempo real:\n(se aplica al preview)');
+        if (!css) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-inject-css', css: css }, '*');
+        }
+    }});
+
+    // ── R3: Animation preview ──
+    cmdActions.push({ cat:'Herramientas', label:'Previsualizar animaciones', icon:'fa-play', action: function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-replay-animations' }, '*');
+        }
+        if (window.veToast) window.veToast('Animaciones reproduciéndose', 'info');
+    }});
+
+    // ── R4: Google SEO preview ──
+    cmdActions.push({ cat:'Herramientas', label:'Vista previa en Google', icon:'fa-google', action: function() {
+        var title = $('#ve-settings-seo-title').val() || $('#ve-settings-title').val() || 'Título de la página';
+        var desc = $('#ve-settings-seo-description').val() || 'Sin descripción';
+        var url = window.location.origin + '/' + ($('#ve-settings-slug').val() || '');
+        var html = '<div style="font-family:Arial,sans-serif;padding:20px;max-width:600px;">' +
+            '<div style="font-size:20px;color:#1a0dab;margin-bottom:4px;cursor:pointer;">' + title + '</div>' +
+            '<div style="font-size:14px;color:#006621;margin-bottom:4px;">' + url + '</div>' +
+            '<div style="font-size:13px;color:#545454;line-height:1.5;">' + desc + '</div></div>';
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-google ve-ai-modal-icon"></i>Vista previa en Google</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        $('body').append($m);
+        new bootstrap.Modal($m[0]).show();
+        $m.on('hidden.bs.modal', function() { $m.remove(); });
+    }});
+
+    // ── R5: Social share preview ──
+    cmdActions.push({ cat:'Herramientas', label:'Vista previa social', icon:'fa-share-alt', action: function() {
+        var title = $('#ve-settings-seo-title').val() || 'Título';
+        var desc = $('#ve-settings-seo-description').val() || 'Descripción';
+        var img = $('#ve-settings-featured-image').val() || '';
+        var html = '<div style="max-width:500px;border:1px solid #ddd;border-radius:8px;overflow:hidden;font-family:-apple-system,sans-serif;">' +
+            (img ? '<div style="height:200px;background:#f0f0f0;overflow:hidden;"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover;" alt=""></div>' : '<div style="height:200px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#aaa;"><i class="fa-duotone fa-solid fa-image fa-2x"></i></div>') +
+            '<div style="padding:12px;"><div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:4px;">' + window.location.hostname + '</div>' +
+            '<div style="font-size:15px;font-weight:600;color:#333;margin-bottom:4px;">' + title + '</div>' +
+            '<div style="font-size:13px;color:#666;line-height:1.4;">' + desc + '</div></div></div>';
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-share-alt ve-ai-modal-icon"></i>Vista previa al compartir</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        $('body').append($m);
+        new bootstrap.Modal($m[0]).show();
+        $m.on('hidden.bs.modal', function() { $m.remove(); });
+    }});
+
+    // ── E4: MediaPicker for image swap in preview ──
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-open-media-picker') {
+            var nodeId = ev.data.nodeId;
+            if (window.MediaPicker) {
+                window.MediaPicker.open({
+                    filter: 'image',
+                    title: 'Cambiar imagen',
+                    onSelect: function(url) {
+                        var frame = document.getElementById('ve-preview-frame');
+                        if (frame && frame.contentWindow) {
+                            frame.contentWindow.postMessage({ type: 've-set-img-src', nodeId: nodeId, src: url }, '*');
+                        }
+                    }
+                });
+            }
         }
     });
 

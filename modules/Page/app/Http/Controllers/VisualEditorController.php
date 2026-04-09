@@ -406,19 +406,66 @@ class VisualEditorController extends Controller
     var toolbar = document.createElement('div');
     toolbar.id = 've-inline-toolbar';
     toolbar.style.cssText = 'display:none;position:fixed;z-index:99999;background:#1e1e2e;border-radius:6px;padding:4px 6px;gap:4px;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.4);';
+    var tbBtnStyle = 'background:transparent;border:1px solid #444;border-radius:4px;color:#ddd;padding:3px 8px;cursor:pointer;font-size:12px;transition:all .1s;';
+    var tbSep = '<span class="ve-tb-sep" style="width:1px;background:#444;height:16px;display:inline-block;margin:0 2px;"></span>';
     toolbar.innerHTML = [
-        '<button data-cmd="bold" title="Negrita" style="background:transparent;border:1px solid #555;border-radius:4px;color:#fff;padding:2px 7px;cursor:pointer;font-weight:700;font-size:13px;">B</button>',
-        '<button data-cmd="italic" title="Cursiva" style="background:transparent;border:1px solid #555;border-radius:4px;color:#fff;padding:2px 7px;cursor:pointer;font-style:italic;font-size:13px;">I</button>',
-        '<button data-cmd="underline" title="Subrayado" style="background:transparent;border:1px solid #555;border-radius:4px;color:#fff;padding:2px 7px;cursor:pointer;text-decoration:underline;font-size:13px;">U</button>',
-        '<span style="width:1px;background:#444;height:16px;display:inline-block;"></span>',
-        '<button id="ve-tb-link" title="Enlace" style="background:transparent;border:1px solid #555;border-radius:4px;color:#fff;padding:2px 7px;cursor:pointer;font-size:13px;">&#128279;</button>',
-        '<span style="width:1px;background:#444;height:16px;display:inline-block;"></span>',
-        '<button id="ve-tb-done" title="Guardar cambios" style="background:#1a1a1a;border:1px solid #1a1a1a;border-radius:4px;color:#fff;padding:2px 8px;cursor:pointer;font-size:13px;font-weight:600;">&#10003;</button>',
+        '<button data-cmd="bold" title="Negrita" style="' + tbBtnStyle + 'font-weight:700;">B</button>',
+        '<button data-cmd="italic" title="Cursiva" style="' + tbBtnStyle + 'font-style:italic;">I</button>',
+        '<button data-cmd="underline" title="Subrayado" style="' + tbBtnStyle + 'text-decoration:underline;">U</button>',
+        '<button data-cmd="strikeThrough" title="Tachado" style="' + tbBtnStyle + 'text-decoration:line-through;">S</button>',
+        tbSep,
+        '<select id="ve-tb-tag" title="Cambiar tag" style="background:#2a2a3a;border:1px solid #444;border-radius:4px;color:#ddd;padding:2px 4px;font-size:11px;cursor:pointer;">',
+        '<option value="">Tag</option><option value="p">P</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="h5">H5</option><option value="h6">H6</option><option value="blockquote">Quote</option><option value="div">Div</option>',
+        '</select>',
+        '<select id="ve-tb-size" title="Tamaño" style="background:#2a2a3a;border:1px solid #444;border-radius:4px;color:#ddd;padding:2px 4px;font-size:11px;cursor:pointer;">',
+        '<option value="">Tamaño</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="24px">24</option><option value="28px">28</option><option value="32px">32</option><option value="36px">36</option><option value="48px">48</option>',
+        '</select>',
+        '<input type="color" id="ve-tb-color" value="#000000" title="Color de texto" style="width:24px;height:24px;border:1px solid #444;border-radius:4px;padding:1px;cursor:pointer;background:#2a2a3a;">',
+        tbSep,
+        '<button data-cmd="justifyLeft" title="Izquierda" style="' + tbBtnStyle + '">&#8676;</button>',
+        '<button data-cmd="justifyCenter" title="Centro" style="' + tbBtnStyle + '">&#8633;</button>',
+        '<button data-cmd="justifyRight" title="Derecha" style="' + tbBtnStyle + '">&#8677;</button>',
+        tbSep,
+        '<button id="ve-tb-link" title="Enlace" style="' + tbBtnStyle + '">&#128279;</button>',
+        tbSep,
+        '<button id="ve-tb-done" title="Guardar" style="background:#b10100;border:1px solid #b10100;border-radius:4px;color:#fff;padding:3px 8px;cursor:pointer;font-size:12px;font-weight:600;">&#10003;</button>',
     ].join('');
     document.body.appendChild(toolbar);
 
     // Prevent toolbar mousedown from stealing focus
     toolbar.addEventListener('mousedown', function (e) { e.preventDefault(); });
+
+    // E2: Tag change
+    document.getElementById('ve-tb-tag').addEventListener('change', function () {
+        var newTag = this.value;
+        if (!newTag || !editingEl) return;
+        var newEl = document.createElement(newTag);
+        newEl.innerHTML = editingEl.innerHTML;
+        // Copy classes and id
+        if (editingEl.className) newEl.className = editingEl.className;
+        if (editingEl.id) newEl.id = editingEl.id;
+        editingEl.parentNode.replaceChild(newEl, editingEl);
+        editingEl = newEl;
+        selectedEl = newEl;
+        newEl.contentEditable = 'true';
+        newEl.focus();
+        this.value = '';
+    });
+
+    // E3: Font size change
+    document.getElementById('ve-tb-size').addEventListener('change', function () {
+        if (!editingEl || !this.value) return;
+        editingEl.style.fontSize = this.value;
+        editingEl.focus();
+        this.value = '';
+    });
+
+    // E3: Color change
+    document.getElementById('ve-tb-color').addEventListener('input', function () {
+        if (!editingEl) return;
+        document.execCommand('foreColor', false, this.value);
+        editingEl.focus();
+    });
 
     // ── Toolbar button actions ───────────────────────────────────────────
     toolbar.addEventListener('click', function (e) {
@@ -846,6 +893,29 @@ class VisualEditorController extends Controller
                 arr[nidx].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 break;
             }
+            case 've-inject-css': {
+                var liveStyle = document.getElementById('ve-live-css');
+                if (!liveStyle) { liveStyle = document.createElement('style'); liveStyle.id = 've-live-css'; document.head.appendChild(liveStyle); }
+                liveStyle.textContent = d.css || '';
+                break;
+            }
+            case 've-replay-animations': {
+                document.querySelectorAll('[data-ve-motion]').forEach(function(el) {
+                    var anim = el.style.animation;
+                    el.style.animation = 'none';
+                    el.offsetHeight; // trigger reflow
+                    el.style.animation = anim;
+                });
+                break;
+            }
+            case 've-set-img-src': {
+                var img = d.nodeId ? document.getElementById(d.nodeId) : null;
+                if (img && img.tagName.toLowerCase() === 'img' && d.src) {
+                    img.src = d.src;
+                    window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+                }
+                break;
+            }
             case 've-set-attr': {
                 if (selectedEl && d.attr) {
                     selectedEl.setAttribute(d.attr, d.value || '');
@@ -1232,6 +1302,64 @@ class VisualEditorController extends Controller
         positionNearElement(toolbar, el);
         window.parent.postMessage({ type: 've-editing-started', nodeId: el.id }, '*');
     });
+
+    // E4: Double-click on image → open MediaPicker in parent
+    document.addEventListener('dblclick', function (e) {
+        var el = e.target;
+        if (!el || el.tagName.toLowerCase() !== 'img') return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!el.id) el.id = generateId();
+        selectedEl = el;
+        selectedId = el.id;
+        window.parent.postMessage({ type: 've-open-media-picker', nodeId: el.id, currentSrc: el.src }, '*');
+    });
+
+    // E6: Image resize handles
+    document.addEventListener('click', function (e) {
+        // Remove existing resize handles
+        document.querySelectorAll('.ve-img-resize-handle').forEach(function(h) { h.remove(); });
+        var el = e.target;
+        if (!el || el.tagName.toLowerCase() !== 'img') return;
+        if (!el.id) el.id = generateId();
+
+        // Add resize handles
+        var wrapper = el.parentNode;
+        if (wrapper.style.position !== 'relative') wrapper.style.position = 'relative';
+
+        var handle = document.createElement('div');
+        handle.className = 've-img-resize-handle';
+        handle.style.cssText = 'position:absolute;bottom:0;right:0;width:14px;height:14px;background:#b10100;cursor:se-resize;border-radius:2px;z-index:9999;';
+        var imgRect = el.getBoundingClientRect();
+        var wrapRect = wrapper.getBoundingClientRect();
+        handle.style.top = (imgRect.bottom - wrapRect.top - 14) + 'px';
+        handle.style.left = (imgRect.right - wrapRect.left - 14) + 'px';
+        wrapper.appendChild(handle);
+
+        var startW, startH, startX, startY;
+        handle.addEventListener('mousedown', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            startW = el.offsetWidth;
+            startH = el.offsetHeight;
+            startX = ev.clientX;
+            startY = ev.clientY;
+
+            function onMove(me) {
+                var newW = startW + (me.clientX - startX);
+                var newH = startH + (me.clientY - startY);
+                el.style.width = Math.max(30, newW) + 'px';
+                el.style.height = 'auto';
+            }
+            function onUp() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    }, true);
 
     // ── Blur: commit edit when focus leaves editable + toolbar/popover ───
     document.addEventListener('focusout', function (e) {
