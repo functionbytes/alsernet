@@ -141,18 +141,34 @@ foreach ($shortcodes as $sc) {
 
         </div>
 
-        {{-- Grid presets (always visible at bottom) --}}
+        {{-- Grid presets (visual cards at bottom) --}}
         <div class="ve-sc-grid-presets">
-            <div style="padding:7px 10px; font-size:11px; font-weight:600; color:#444; text-transform:uppercase; letter-spacing:.5px; border-top:1px solid #eee;">
-                Estructura
-            </div>
-            <div style="display:flex; gap:4px; padding:6px 10px 10px; flex-wrap:wrap;">
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="1">1 Col</button>
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="2">2 Cols</button>
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="3">3 Cols</button>
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-cols="4">4 Cols</button>
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-type="1-2">1/3 · 2/3</button>
-                <button type="button" class="ve-insert-layout ve-grid-preset-btn" data-type="2-1">2/3 · 1/3</button>
+            <div class="ve-sc-grid-presets-title">Insertar estructura</div>
+            <div class="ve-sc-grid-presets-grid">
+                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="1">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div></div>
+                    <span class="ve-grid-card-label">1 Col</span>
+                </button>
+                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="2">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
+                    <span class="ve-grid-card-label">2 Cols</span>
+                </button>
+                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="3">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
+                    <span class="ve-grid-card-label">3 Cols</span>
+                </button>
+                <button type="button" class="ve-insert-layout ve-grid-card" data-cols="4">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
+                    <span class="ve-grid-card-label">4 Cols</span>
+                </button>
+                <button type="button" class="ve-insert-layout ve-grid-card" data-type="1-2">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block" style="flex:1"></div><div class="ve-grid-col-block ve-grid-col-wide" style="flex:2"></div></div>
+                    <span class="ve-grid-card-label">1/3 · 2/3</span>
+                </button>
+                <button type="button" class="ve-insert-layout ve-grid-card" data-type="2-1">
+                    <div class="ve-grid-card-vis"><div class="ve-grid-col-block ve-grid-col-wide" style="flex:2"></div><div class="ve-grid-col-block" style="flex:1"></div></div>
+                    <span class="ve-grid-card-label">2/3 · 1/3</span>
+                </button>
             </div>
         </div>
 
@@ -161,14 +177,22 @@ foreach ($shortcodes as $sc) {
 </div>
 
 <style>
-/* Grid preset buttons in shortcodes panel */
-.ve-grid-preset-btn {
-    background: #f4f6f8; border: 1px solid #e8eaed; border-radius: 5px;
-    padding: 4px 10px; font-size: 10px; font-weight: 600; color: #586064;
-    cursor: pointer; transition: all .15s; white-space: nowrap;
+/* Grid preset visual cards */
+.ve-sc-grid-presets-title { padding:8px 10px; font-size:13px; font-weight:600; color:#444; border-top:1px solid #eee; }
+.ve-sc-grid-presets-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:6px 10px 12px; }
+.ve-grid-card {
+    display:flex; flex-direction:column; align-items:stretch; gap:6px;
+    padding:10px 10px 8px; background:#f8f9fa; border:1px solid #eee;
+    border-radius:8px; cursor:pointer; transition:all .15s; text-align:center;
 }
-.ve-grid-preset-btn:hover { background: #e8eaed; border-color: #ccc; color: #333; }
-.ve-grid-preset-btn.ve-insert-active { background: #b10100; border-color: #b10100; color: #fff; }
+.ve-grid-card:hover { background:#fff; border-color:#ccc; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.ve-grid-card.ve-insert-active { border-color:#b10100; background:#fdf2f2; }
+.ve-grid-card-vis { display:flex; gap:3px; height:22px; border-radius:4px; overflow:hidden; }
+.ve-grid-col-block { background:#ddd; border-radius:3px; min-width:8px; }
+.ve-grid-col-wide { background:#ccc; }
+.ve-grid-card:hover .ve-grid-col-block { background:#bbb; }
+.ve-grid-card:hover .ve-grid-col-wide { background:#aaa; }
+.ve-grid-card-label { font-size:10px; font-weight:600; color:#666; }
 
 /* ── Accordion categories ─────────── */
 .ve-blocks-category { border-bottom: none; }
@@ -223,11 +247,11 @@ foreach ($shortcodes as $sc) {
     position: absolute;
     top: 6px;
     right: 6px;
-    font-size: 10px;
-    color: #ccc;
+    font-size: 11px;
+    color: #555;
     line-height: 1;
 }
-.ve-sc-item:hover .ve-sc-cfg-badge { color: #999; }
+.ve-sc-item:hover .ve-sc-cfg-badge { color: #333; }
 .ve-sc-item.dragging { opacity: .5; transform: scale(.97); }
 .ve-sc-delete-btn {
     position: absolute;

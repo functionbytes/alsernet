@@ -864,11 +864,12 @@
 
         /* Sidebar panels container */
         #ve-sidebar-panels {
-            flex: 1;
+            flex: 1 1 0;
             overflow: hidden;
             background: #fff;
             display: flex;
             flex-direction: column;
+            min-height: 0;
             min-height: 0;
             min-width: 0;
         }
@@ -951,8 +952,15 @@
             background: #f8f9fa;
             box-shadow: 2px 0 8px rgba(0,0,0,.12);
         }
-        .ve-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; opacity: 0; transition: opacity .15s ease; }
+        .ve-panel { display: none; flex: 1 1 0; flex-direction: column; overflow: hidden; min-height: 0; opacity: 0; transition: opacity .15s ease; }
         .ve-panel.active { display: flex; opacity: 1; }
+        /* Ensure all panel root containers fill their parent */
+        .ve-panel > div[id] { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+        .ve-panel .ve-panel-root { height: 100%; }
+        /* Settings scrollable area fills remaining space */
+        .ve-scrollable-area { flex: 1 1 0; overflow-y: auto; min-height: 0; }
+        /* Shortcodes panel list fills space */
+        #ve-sc-list { flex: 1 1 0; overflow-y: auto; min-height: 0; }
 
         /* Thin scrollbar for sidebar panels */
         #ve-sidebar-panels,
