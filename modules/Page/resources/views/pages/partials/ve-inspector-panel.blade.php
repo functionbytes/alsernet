@@ -1,4 +1,4 @@
-<div id="ve-inspector-panel" class="ve-panel">
+<div id="ve-inspector-panel" class="ve-panel-root">
 
     {{-- Header --}}
     <div class="ve-panel-header">
