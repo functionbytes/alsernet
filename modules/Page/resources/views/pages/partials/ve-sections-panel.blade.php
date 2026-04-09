@@ -66,16 +66,29 @@
 .ve-sections-list-area { flex:1; overflow-y:auto; padding:8px; }
 
 /* Navigator tree */
-.ve-navigator-tree-area { padding:6px; display:none; }
-.ve-nav-node { margin-left:12px; }
-.ve-nav-node-header { display:flex; align-items:center; gap:4px; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:11px; color:#555; transition:background .1s; }
-.ve-nav-node-header:hover { background:#f4f6f8; }
-.ve-nav-node-header.ve-nav-selected { background:#fdf2f2; color:#b10100; font-weight:600; }
-.ve-nav-toggle { width:14px; text-align:center; font-size:8px; color:#bbb; cursor:pointer; flex-shrink:0; }
+.ve-navigator-tree-area { padding:8px; display:none; }
+.ve-nav-node { margin-left:10px; margin-bottom:2px; }
+.ve-nav-node:first-child { margin-left:0; }
+.ve-nav-node-header {
+    display:flex; align-items:center; gap:6px;
+    padding:6px 8px; border:1px solid var(--ve-border, #eee);
+    border-radius:6px; cursor:pointer; font-size:11px;
+    color:#555; background:#fff; transition:all .15s;
+    margin-bottom:2px;
+}
+.ve-nav-node-header:hover { border-color:#ccc; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.ve-nav-node-header.ve-nav-selected { border-color:#b10100; background:#fdf2f2; color:#b10100; }
+.ve-nav-toggle { width:16px; text-align:center; font-size:9px; color:#bbb; cursor:pointer; flex-shrink:0; transition:transform .15s; }
 .ve-nav-toggle.empty { visibility:hidden; }
-.ve-nav-tag { font-family:'SF Mono','Fira Code',monospace; font-size:10px; color:#666; }
-.ve-nav-text { font-size:9px; color:#bbb; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-left:auto; }
-.ve-nav-children { display:none; }
+.ve-nav-toggle.open { transform:rotate(90deg); }
+.ve-nav-tag-badge {
+    font-family:'SF Mono',monospace; font-size:9px; font-weight:600;
+    background:#f4f6f8; color:#999; padding:1px 5px;
+    border-radius:3px; flex-shrink:0;
+}
+.ve-nav-label { font-size:11px; color:#333; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+.ve-nav-text { font-size:9px; color:#bbb; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-left:auto; }
+.ve-nav-children { display:none; padding-left:4px; border-left:1px solid #eee; margin-left:8px; }
 .ve-nav-children.open { display:block; }
 </style>
 
@@ -116,28 +129,33 @@
 
     function buildNavNode(node, depth) {
         var $wrap = $('<div class="ve-nav-node">');
-        if (depth === 0) $wrap.css('marginLeft', 0);
         var hasChildren = node.children && node.children.length > 0;
         var toggleIcon = hasChildren ? '&#9654;' : '';
         var toggleClass = hasChildren ? 've-nav-toggle' : 've-nav-toggle empty';
 
+        // Extract just the tag name for the badge
+        var tagOnly = node.tag || '?';
+        var displayLabel = node.label || tagOnly;
+        // Truncate label
+        if (displayLabel.length > 25) displayLabel = displayLabel.substring(0, 25) + '...';
+
         var $header = $('<div class="ve-nav-node-header">')
             .html(
                 '<span class="' + toggleClass + '">' + toggleIcon + '</span>' +
-                '<span class="ve-nav-tag">' + escHtml(node.label) + '</span>' +
+                '<span class="ve-nav-tag-badge">' + escHtml(tagOnly) + '</span>' +
+                '<span class="ve-nav-label">' + escHtml(displayLabel) + '</span>' +
                 (node.text ? '<span class="ve-nav-text">' + escHtml(node.text) + '</span>' : '')
             );
 
-        // Click tag to select in preview
         $header.on('click', function(e) {
-            if ($(e.target).hasClass('ve-nav-toggle')) {
-                // Toggle children
+            var $target = $(e.target);
+            if ($target.hasClass('ve-nav-toggle') || $target.closest('.ve-nav-toggle').length) {
                 var $kids = $wrap.find('> .ve-nav-children');
                 $kids.toggleClass('open');
-                var $tog = $(e.target);
+                var $tog = $header.find('.ve-nav-toggle');
+                $tog.toggleClass('open');
                 $tog.html($kids.hasClass('open') ? '&#9660;' : '&#9654;');
             } else {
-                // Select element
                 $('.ve-nav-node-header').removeClass('ve-nav-selected');
                 $header.addClass('ve-nav-selected');
                 var frame = document.getElementById('ve-preview-frame');

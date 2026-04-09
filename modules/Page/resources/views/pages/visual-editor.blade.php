@@ -257,40 +257,38 @@
 
         /* ── Inspector panel polish ────────────────────────── */
         #ve-inspector-sections { padding-bottom: 20px; }
-        /* All inputs full width inside inspector */
-        #ve-inspector-sections input[type="text"],
-        #ve-inspector-sections input[type="url"],
-        #ve-inspector-sections input[type="number"],
-        #ve-inspector-sections select,
-        #ve-inspector-sections textarea {
-            width: 100% !important;
-            display: block !important;
-        }
-        #ve-inspector-sections .input-group { width: 100% !important; }
-        #ve-inspector-sections .form-control,
-        #ve-inspector-sections .form-select { width: 100% !important; }
+        /* Inputs full width — but NOT inside input-groups */
+        #ve-inspector-sections .form-control:not(.input-group .form-control),
+        #ve-inspector-sections .form-select:not(.input-group .form-select),
+        #ve-inspector-sections textarea { width: 100% !important; }
+        #ve-inspector-sections .input-group { width: 100% !important; display: flex !important; flex-wrap: nowrap !important; }
+        #ve-inspector-sections .input-group .form-control { flex: 1 !important; width: auto !important; }
+        #ve-inspector-sections .input-group .input-group-text { flex-shrink: 0 !important; }
         /* Sections content padding */
         #ve-inspector-sections [id^="ve-sect-"] { padding: 10px 12px !important; }
-        /* Visibility buttons row — fix overlap */
+        /* Visibility buttons row */
         #ve-inspector-sections .ve-visibility-btn {
             font-size: 11px !important;
-            padding: 5px 14px !important;
+            padding: 6px 12px !important;
             border-radius: 6px !important;
             font-weight: 500 !important;
-            flex: 1 !important;
+            flex: 1 1 auto !important;
             text-align: center !important;
+            white-space: nowrap !important;
         }
         #ve-inspector-sections .ve-visibility-btn.active {
             background: var(--ve-primary) !important;
             border-color: var(--ve-primary) !important;
             color: #fff !important;
         }
-        /* Ocultar/Mostrar element buttons — stack properly */
+        /* Ocultar/Mostrar element buttons — stack vertically */
         #ve-inspector-sections #btn-toggle-hidden,
         #ve-inspector-sections #btn-toggle-shown {
             font-size: 11px !important;
             padding: 6px 12px !important;
             border-radius: 6px !important;
+            display: block !important;
+            width: 100% !important;
         }
         /* Apply buttons inside inspector */
         #ve-inspector-sections [id^="btn-apply-"] {
@@ -1223,22 +1221,20 @@
         .CodeMirror-dialog input { background: #3d3d3d; color: #f8f8f2; border: 1px solid #555; border-radius: 3px; padding: 1px 6px; }
         .CodeMirror-foldmarker { color: #e6db74; cursor: pointer; font-size: 11px; padding: 0 4px; background: rgba(255,255,255,.1); border-radius: 3px; }
         #ve-html-editor-modal .modal-body { padding: 0; }
-        .ve-editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; transition: background .2s, border-color .2s; }
-        .ve-editor-toolbar .btn { font-size: 12px; padding: 6px 14px; border: 1px solid #444; color: #ccc; background: #2a2a2a; border-radius: 6px; transition: all .15s; font-weight: 500; }
-        .ve-editor-toolbar .btn:hover { background: #3a3a3a; color: #fff; border-color: #555; }
-        .ve-editor-toolbar .btn.active { background: #444; color: #fff; }
+        .ve-editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--ve-bg); border-bottom: 1px solid var(--ve-border); flex-wrap: wrap; }
+        .ve-editor-toolbar .btn { font-size: 11px; padding: 5px 12px; border: 1px solid var(--ve-border); color: var(--ve-text-soft); background: var(--ve-bg); border-radius: 6px; transition: all .15s; font-weight: 500; }
+        .ve-editor-toolbar .btn:hover { background: var(--ve-bg-muted); color: var(--ve-text); border-color: #ccc; }
+        .ve-editor-toolbar .btn.active { background: var(--ve-bg-muted); color: var(--ve-text); }
         .ve-editor-toolbar .btn i { margin-right: 4px; }
-        .ve-editor-toolbar .ve-tb-sep { width: 1px; height: 20px; background: #444; margin: 0 4px; transition: background .2s; }
-        /* Aplicar button special */
-        .ve-editor-toolbar .btn[id="ve-code-apply"] { background: var(--ve-primary) !important; border-color: var(--ve-primary) !important; color: #fff !important; font-weight: 600; padding: 6px 18px; }
+        .ve-editor-toolbar .ve-tb-sep { width: 1px; height: 18px; background: var(--ve-border); margin: 0 4px; }
+        .ve-editor-toolbar .btn[id="ve-code-apply"] { background: var(--ve-primary) !important; border-color: var(--ve-primary) !important; color: #fff !important; font-weight: 600; padding: 5px 16px; }
         .ve-editor-toolbar .btn[id="ve-code-apply"]:hover { background: #900000 !important; }
-        /* Light theme */
-        .ve-editor-toolbar.light { background: #f5f5f5; border-bottom-color: #ddd; }
-        .ve-editor-toolbar.light .btn { border-color: #ccc; color: #333; background: #fff; }
-        .ve-editor-toolbar.light .btn:hover { background: #eee; color: #000; }
-        .ve-editor-toolbar.light .btn.active { background: #ddd; color: #000; }
-        .ve-editor-toolbar.light .ve-tb-sep { background: #ccc; }
-        .ve-editor-toolbar.light small { color: #666 !important; }
+        /* Light/dark variants kept for compatibility */
+        .ve-editor-toolbar.light { background: var(--ve-bg); border-bottom-color: var(--ve-border); }
+        .ve-editor-toolbar.light .btn { border-color: var(--ve-border); color: var(--ve-text-soft); background: var(--ve-bg); }
+        .ve-editor-toolbar.light .btn:hover { background: var(--ve-bg-muted); color: var(--ve-text); }
+        .ve-editor-toolbar.light .ve-tb-sep { background: var(--ve-border); }
+        .ve-editor-toolbar.light small { color: var(--ve-text-muted) !important; }
 
         /* ── Full-page code editor panel ──────────────────────── */
         #ve-panel-code .CodeMirror {
@@ -1246,11 +1242,14 @@
             font-size: 12px;
             font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
             border: none;
+            background: var(--ve-bg) !important;
         }
         #ve-panel-code .CodeMirror-gutters {
-            background: #f8f9fa;
-            border-right: 1px solid #e9ecef;
+            background: var(--ve-bg-muted) !important;
+            border-right: 1px solid var(--ve-border) !important;
         }
+        /* Default to light theme CodeMirror */
+        #ve-panel-code .CodeMirror .CodeMirror-linenumber { color: var(--ve-text-faint); }
         /* Scrollbars always visible (horizontal + vertical) */
         #ve-panel-code .CodeMirror-hscrollbar,
         #ve-panel-code .CodeMirror-vscrollbar {
@@ -1395,30 +1394,36 @@
                 </div>
 
                 <div class="ve-panel" id="ve-panel-code">
-                    <div class="ve-editor-toolbar" id="ve-code-toolbar" style="flex-shrink:0;">
-                        <button type="button" class="btn btn-sm" id="ve-code-btn-format" title="Formatear HTML">
-                            <i class="fas fa-wand-magic-sparkles me-1"></i>Formatear
-                        </button>
-                        <div class="ve-tb-sep"></div>
-                        <button type="button" class="btn btn-sm" id="ve-code-btn-fold" title="Colapsar todo">
-                            <i class="fas fa-compress-alt me-1"></i>Colapsar
-                        </button>
-                        <button type="button" class="btn btn-sm" id="ve-code-btn-unfold" title="Expandir todo">
-                            <i class="fas fa-expand-alt me-1"></i>Expandir
-                        </button>
-                        <div class="ve-tb-sep"></div>
-                        <button type="button" class="btn btn-sm" id="ve-code-btn-wrap" title="Ajuste de línea">
-                            <i class="fas fa-align-left me-1"></i>Ajuste
-                        </button>
-                        <div class="ms-auto d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-sm" id="ve-code-btn-theme" title="Tema claro / oscuro">
-                                <i class="fas fa-circle-half-stroke"></i>
+                    <div class="ve-panel-header">
+                        <div>
+                            <div class="ve-panel-label">Código</div>
+                            <span class="ve-panel-title">Editor HTML</span>
+                        </div>
+                        <div class="ve-panel-actions">
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-format" title="Formatear">
+                                <i class="fa-duotone fa-solid fa-wand-magic-sparkles"></i>
                             </button>
-                            <button class="btn btn-sm" id="ve-code-refresh" title="Sincronizar desde preview">
-                                <i class="fas fa-sync-alt"></i>
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-fold" title="Colapsar">
+                                <i class="fa-duotone fa-solid fa-compress-alt"></i>
                             </button>
-                            <button class="btn btn-sm active" id="ve-code-apply" title="Aplicar cambios al preview" style="background:#b10100; border-color:#b10100; color:#fff;">
-                                <i class="fas fa-check me-1"></i>Aplicar
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-unfold" title="Expandir">
+                                <i class="fa-duotone fa-solid fa-expand-alt"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-wrap" title="Ajuste">
+                                <i class="fa-duotone fa-solid fa-align-left"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-theme" title="Tema">
+                                <i class="fa-duotone fa-solid fa-circle-half-stroke"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-refresh" title="Sincronizar">
+                                <i class="fa-duotone fa-solid fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ve-editor-toolbar" id="ve-code-toolbar">
+                        <div class="ms-auto">
+                            <button class="btn ve-btn-primary" id="ve-code-apply" title="Aplicar cambios al preview">
+                                <i class="fa-duotone fa-solid fa-check me-1"></i>Aplicar
                             </button>
                         </div>
                     </div>
