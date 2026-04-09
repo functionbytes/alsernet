@@ -1074,18 +1074,13 @@
                 resolve(window._veFullCodeMirror.getValue());
                 return;
             }
-            // Primary source: CKEditor (always has the latest content)
-            if (editor) {
-                resolve(editor.getData());
-                return;
-            }
-            // Fallback: try iframe
+            // Primary source: iframe (preserves full HTML with classes/attributes)
             let timeout;
             const handler = function (e) {
                 if (!e.data || e.data.type !== 've-html-response') return;
                 window.removeEventListener('message', handler);
                 clearTimeout(timeout);
-                resolve(e.data.html || originalContent);
+                resolve(e.data.html || (editor ? editor.getData() : originalContent));
             };
             window.addEventListener('message', handler);
             const frame = document.getElementById('ve-preview-frame');
@@ -1093,12 +1088,12 @@
                 frame.contentWindow.postMessage({ type: 've-request-html' }, '*');
             } else {
                 window.removeEventListener('message', handler);
-                resolve(originalContent);
+                resolve(editor ? editor.getData() : originalContent);
                 return;
             }
             timeout = setTimeout(function () {
                 window.removeEventListener('message', handler);
-                resolve(originalContent);
+                resolve(editor ? editor.getData() : originalContent);
             }, 3000);
         });
     }
