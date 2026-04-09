@@ -2477,20 +2477,20 @@
                     originalContent = content;
                     setAutoSaveStatus('saved', 'Guardado ' + currentTime());
                     $btn.html('<i class="fa-duotone fa-solid fa-check me-1"></i>Guardado')
-                        .css({ background: '#28a745', 'border-color': '#28a745' });
+                        .css({ background: '#13C672', 'border-color': '#13C672' });
                     setTimeout(function () {
                         $btn.html('<i class="fa-duotone fa-solid fa-save me-1"></i>Guardar')
-                            .css({ background: '#1a1a1a', 'border-color': '#1a1a1a' });
+                            .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 2500);
                 },
                 error: function (xhr) {
                     const msg = xhr.responseJSON?.message || 'Error al guardar';
                     $btn.html('<i class="fa-duotone fa-solid fa-exclamation-triangle me-1"></i>Error')
-                        .css({ background: '#dc3545', 'border-color': '#dc3545' });
+                        .css({ background: '#FA896B', 'border-color': '#FA896B' });
                     alert(msg);
                     setTimeout(function () {
                         $btn.html('<i class="fa-duotone fa-solid fa-save me-1"></i>Guardar')
-                            .css({ background: '#1a1a1a', 'border-color': '#1a1a1a' });
+                            .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 3000);
                 },
                 complete: function () { isSaving = false; $btn.prop('disabled', false); },
@@ -3173,6 +3173,8 @@
     });
 
     var veCodeDark = false;
+    // Start in light theme
+    if (veFullCodeMirror) veFullCodeMirror.setOption('theme', 'default');
     $('#ve-code-btn-theme').on('click', function () {
         if (!veFullCodeMirror) { return; }
         veCodeDark = !veCodeDark;
@@ -3180,7 +3182,7 @@
         $('#ve-code-toolbar').toggleClass('light', !veCodeDark);
         $(this).toggleClass('active', veCodeDark);
         // Sync apply button visibility in dark mode
-        $('#ve-code-apply').css({ background: veCodeDark ? '#444' : '#1a1a1a', 'border-color': veCodeDark ? '#444' : '#1a1a1a' });
+        $('#ve-code-apply').css({ background: veCodeDark ? '#444' : '#b10100', 'border-color': veCodeDark ? '#444' : '#b10100' });
     });
 
     /* ── Drag & drop: blocks → iframe ────────────────────────────────── */
@@ -5108,6 +5110,120 @@
             bootstrap.Modal.getInstance(document.getElementById('ve-ai-modal')).hide();
             if (window.veToast) window.veToast('Contenido insertado', 'success');
         }
+    });
+
+    // ── U2: Paste smart (clean HTML from Word/Google Docs) ──
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-paste-event') {
+            // Already handled inside iframe via bridge
+        }
+    });
+    // Add paste cleaner in command palette
+    cmdActions.push({ cat:'Herramientas', label:'Limpiar HTML pegado', icon:'fa-broom', action: function() {
+        if (!window.veEditor) return;
+        var html = window.veEditor.getData();
+        // Remove MS Word / Google Docs junk
+        html = html.replace(/class="Mso[^"]*"/gi, '');
+        html = html.replace(/style="[^"]*mso-[^"]*"/gi, '');
+        html = html.replace(/<o:p>[\s\S]*?<\/o:p>/gi, '');
+        html = html.replace(/<xml>[\s\S]*?<\/xml>/gi, '');
+        html = html.replace(/<style>[\s\S]*?<\/style>/gi, '');
+        html = html.replace(/<!--\[if[\s\S]*?endif\]-->/gi, '');
+        html = html.replace(/<\/?span[^>]*>/gi, '');
+        html = html.replace(/\s{2,}/g, ' ');
+        window.veEditor.setData(html);
+        if (window.vePushHistory) window.vePushHistory('HTML limpiado', html);
+        if (window.veToast) window.veToast('HTML limpiado de formato Word/Docs', 'success');
+    }});
+
+    // ── R2: Responsive live preview (manual drag resize) ──
+    var canvasResizing = false, canvasStartX = 0, canvasStartW = 0;
+    $(document).on('mousedown', '#ve-preview-frame', function(e) {
+        // Only start if near right edge (last 10px)
+        var rect = this.getBoundingClientRect();
+        if (e.clientX < rect.right - 10) return;
+        e.preventDefault();
+        canvasResizing = true;
+        canvasStartX = e.clientX;
+        canvasStartW = $(this).width();
+        $('body').css('cursor', 'ew-resize');
+    });
+    $(document).on('mousemove', function(e) {
+        if (!canvasResizing) return;
+        var newW = canvasStartW + (e.clientX - canvasStartX);
+        if (newW < 280) newW = 280;
+        var $wrap = $('#ve-canvas-wrap');
+        if ($wrap.hasClass('desktop')) {
+            $wrap.removeClass('desktop');
+        }
+        $('#ve-preview-frame').css({ width: newW + 'px', height: '100%', boxShadow: '0 8px 32px rgba(0,0,0,.4)', borderRadius: '8px' });
+        // Show dimensions
+        var $dims = $('#ve-breakpoint-dims');
+        if (!$dims.length) { $dims = $('<span id="ve-breakpoint-dims"></span>').css({fontSize:'9px',color:'#bbb',marginLeft:'2px'}); $('#btn-responsive-bar').after($dims); }
+        $dims.text(newW + '×' + $('#ve-preview-frame').height());
+    });
+    $(document).on('mouseup', function() {
+        if (canvasResizing) { canvasResizing = false; $('body').css('cursor', ''); }
+    });
+
+    // ── N9: Version compare (simple text diff) ──
+    cmdActions.push({ cat:'Herramientas', label:'Comparar con versión guardada', icon:'fa-code-compare', action: function() {
+        if (!window.veEditor) return;
+        var current = window.veEditor.getData();
+        var original = typeof originalContent !== 'undefined' ? originalContent : '';
+        var added = 0, removed = 0;
+        // Simple line-based diff
+        var origLines = original.split('\n');
+        var currLines = current.split('\n');
+        origLines.forEach(function(l) { if (currLines.indexOf(l) === -1) removed++; });
+        currLines.forEach(function(l) { if (origLines.indexOf(l) === -1) added++; });
+        var html = '<div style="text-align:center;padding:12px;">' +
+            '<div style="font-size:24px;font-weight:700;color:#333;">Cambios detectados</div>' +
+            '<div style="display:flex;gap:20px;justify-content:center;margin:16px 0;">' +
+            '<div style="padding:12px 20px;background:#e8f5e9;border-radius:8px;"><span style="font-size:20px;font-weight:700;color:#43a047;">+' + added + '</span><br><small style="color:#666;">líneas añadidas</small></div>' +
+            '<div style="padding:12px 20px;background:#fce4ec;border-radius:8px;"><span style="font-size:20px;font-weight:700;color:#b10100;">-' + removed + '</span><br><small style="color:#666;">líneas eliminadas</small></div>' +
+            '</div><small style="color:#999;">Total original: ' + origLines.length + ' líneas · Actual: ' + currLines.length + ' líneas</small></div>';
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-code-compare ve-ai-modal-icon"></i>Comparar versiones</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        $('body').append($m);
+        new bootstrap.Modal($m[0]).show();
+        $m.on('hidden.bs.modal', function() { $m.remove(); });
+    }});
+
+    // ── D3: Global blocks (save/insert from localStorage) ──
+    var globalBlocks = JSON.parse(localStorage.getItem('ve-global-blocks') || '[]');
+    cmdActions.push({ cat:'Herramientas', label:'Guardar sección como bloque global', icon:'fa-globe', action: function() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentWindow) return;
+        frame.contentWindow.postMessage({ type: 've-get-selected-html' }, '*');
+        setTimeout(function() {
+            var html = window._veSelectedHtml || '';
+            if (!html) { if (window.veToast) window.veToast('Selecciona un elemento primero', 'error'); return; }
+            var name = prompt('Nombre del bloque global:');
+            if (!name) return;
+            globalBlocks.push({ name: name, html: html, created: new Date().toISOString() });
+            localStorage.setItem('ve-global-blocks', JSON.stringify(globalBlocks));
+            if (window.veToast) window.veToast('Bloque "' + name + '" guardado', 'success');
+        }, 300);
+    }});
+    cmdActions.push({ cat:'Insertar', label:'Insertar bloque global', icon:'fa-globe', action: function() {
+        if (!globalBlocks.length) { if (window.veToast) window.veToast('No hay bloques globales guardados', 'info'); return; }
+        var list = globalBlocks.map(function(b, i) { return (i+1) + '. ' + b.name; }).join('\n');
+        var idx = prompt('Bloques globales disponibles:\n\n' + list + '\n\nNúmero del bloque a insertar:');
+        if (!idx) return;
+        var block = globalBlocks[parseInt(idx) - 1];
+        if (!block) return;
+        if (window.veEditor) {
+            window.veEditor.model.change(function() {
+                var view = window.veEditor.data.processor.toView(block.html);
+                var model = window.veEditor.data.toModel(view);
+                window.veEditor.model.insertContent(model);
+            });
+            if (window.veToast) window.veToast('Bloque "' + block.name + '" insertado', 'success');
+        }
+    }});
+    // Listen for selected HTML from bridge
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-selected-html') window._veSelectedHtml = ev.data.html || '';
     });
 
     // ── U3: Drag files from desktop to preview (upload + insert) ──

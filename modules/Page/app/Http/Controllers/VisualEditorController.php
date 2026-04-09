@@ -893,6 +893,12 @@ class VisualEditorController extends Controller
                 arr[nidx].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 break;
             }
+            case 've-get-selected-html': {
+                if (selectedEl) {
+                    window.parent.postMessage({ type: 've-selected-html', html: selectedEl.outerHTML }, '*');
+                }
+                break;
+            }
             case 've-inject-css': {
                 var liveStyle = document.getElementById('ve-live-css');
                 if (!liveStyle) { liveStyle = document.createElement('style'); liveStyle.id = 've-live-css'; document.head.appendChild(liveStyle); }
@@ -1270,6 +1276,27 @@ class VisualEditorController extends Controller
 
         // Send element path separately (for breadcrumb)
         window.parent.postMessage({ type: 've-element-path', path: elPath }, '*');
+    });
+
+    // ── U2: Paste cleaner (auto-clean Word/Docs HTML on paste) ──────────
+    document.addEventListener('paste', function(e) {
+        if (!isEditing || !editingEl) return;
+        var html = (e.clipboardData || window.clipboardData).getData('text/html');
+        if (!html) return;
+        // Check if it's from MS Word or Google Docs
+        if (html.indexOf('mso-') !== -1 || html.indexOf('docs-internal-guid') !== -1 || html.indexOf('MsoNormal') !== -1) {
+            e.preventDefault();
+            html = html.replace(/class="Mso[^"]*"/gi, '');
+            html = html.replace(/style="[^"]*mso-[^"]*"/gi, '');
+            html = html.replace(/<o:p>[\s\S]*?<\/o:p>/gi, '');
+            html = html.replace(/<xml>[\s\S]*?<\/xml>/gi, '');
+            html = html.replace(/<style>[\s\S]*?<\/style>/gi, '');
+            html = html.replace(/<!--\[if[\s\S]*?endif\]-->/gi, '');
+            html = html.replace(/<\/?span[^>]*>/gi, '');
+            html = html.replace(/docs-internal-guid-[^"']*/gi, '');
+            html = html.replace(/\s{2,}/g, ' ');
+            document.execCommand('insertHTML', false, html);
+        }
     });
 
     // ── Double-click to inline-edit text elements ────────────────────────
