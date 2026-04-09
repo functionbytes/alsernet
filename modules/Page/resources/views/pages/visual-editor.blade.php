@@ -935,6 +935,10 @@
         /* Responsive dropdown button — hide Bootstrap caret */
         #btn-responsive-bar::after { display: none; }
         #btn-responsive-bar { font-size: 14px; }
+        #btn-responsive-bar + .dropdown-menu { max-height: 60vh; overflow-y: auto; min-width: 220px; font-size: 12px; }
+        #btn-responsive-bar + .dropdown-menu .dropdown-header { font-size: 10px; color: var(--ve-primary); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 6px 12px 2px; }
+        #btn-responsive-bar + .dropdown-menu .dropdown-item { font-size: 12px; padding: 5px 12px; display: flex; align-items: center; }
+        #btn-responsive-bar + .dropdown-menu .dropdown-item small { font-size: 10px; }
 
         /* Sidebar collapse transition */
         #ve-sidebar { transition: width .2s ease; }
@@ -1021,9 +1025,9 @@
         #ve-canvas-wrap.desktop #ve-preview-frame { width: 100%; height: 100%; box-shadow: none; border-radius: 0; }
 
         /* Split responsive preview */
-        #ve-canvas-wrap.split { display:flex; gap:16px; padding:16px; align-items:flex-start; justify-content:center; overflow:auto; }
-        #ve-canvas-wrap.split #ve-preview-frame { width:60%; height:100%; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); flex-shrink:0; }
-        .ve-split-mobile { width:375px; height:812px; border:none; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); background:#fff; flex-shrink:0; }
+        #ve-canvas-wrap.split { display:flex !important; gap:16px; padding:16px; align-items:stretch !important; justify-content:center; overflow:auto !important; }
+        #ve-canvas-wrap.split #ve-preview-frame { flex:1; max-width:65%; height:auto !important; width:auto !important; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); border:1px solid var(--ve-border); }
+        .ve-split-mobile { width:375px !important; height:100% !important; border:none; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.1); background:#fff; flex-shrink:0; border:1px solid var(--ve-border); }
 
         #ve-preview-frame {
             flex: none;
@@ -1618,10 +1622,34 @@
                         <i class="fa-duotone fa-solid fa-desktop" id="responsive-bar-icon"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:150px;">
+                        <li><h6 class="dropdown-header">Responsive</h6></li>
                         <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn active" data-breakpoint="desktop"><i class="fa-duotone fa-solid fa-desktop fa-fw text-muted"></i> Escritorio</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px"><i class="fa-duotone fa-solid fa-laptop fa-fw text-muted"></i> Laptop</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px"><i class="fa-duotone fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px"><i class="fa-duotone fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px"><i class="fa-duotone fa-solid fa-laptop fa-fw text-muted"></i> Laptop <small class="ms-auto text-muted">1280×800</small></button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px"><i class="fa-duotone fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet <small class="ms-auto text-muted">768×1024</small></button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px"><i class="fa-duotone fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil <small class="ms-auto text-muted">375×812</small></button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">iPhone</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="375px" data-height="667px">iPhone SE <small class="ms-auto text-muted">375×667</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="414px" data-height="896px">iPhone XR <small class="ms-auto text-muted">414×896</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="390px" data-height="844px">iPhone 12 Pro <small class="ms-auto text-muted">390×844</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="430px" data-height="932px">iPhone 14 Pro Max <small class="ms-auto text-muted">430×932</small></button></li>
+                        <li><h6 class="dropdown-header">Android</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Pixel 7 <small class="ms-auto text-muted">412×915</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="740px">Samsung Galaxy S8+ <small class="ms-auto text-muted">360×740</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Samsung Galaxy S20 Ultra <small class="ms-auto text-muted">412×915</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="280px" data-height="653px">Samsung Galaxy A51/71 <small class="ms-auto text-muted">280×653</small></button></li>
+                        <li><h6 class="dropdown-header">Tablet</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="768px" data-height="1024px">iPad Mini <small class="ms-auto text-muted">768×1024</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="820px" data-height="1180px">iPad Air <small class="ms-auto text-muted">820×1180</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="1366px">iPad Pro <small class="ms-auto text-muted">1024×1366</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="912px" data-height="1368px">Surface Pro 7 <small class="ms-auto text-muted">912×1368</small></button></li>
+                        <li><h6 class="dropdown-header">Foldable</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="540px" data-height="720px">Surface Duo <small class="ms-auto text-muted">540×720</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="344px" data-height="882px">Galaxy Z Fold 5 <small class="ms-auto text-muted">344×882</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="568px">Asus Zenbook Fold <small class="ms-auto text-muted">360×568</small></button></li>
+                        <li><h6 class="dropdown-header">Smart Display</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="600px">Nest Hub <small class="ms-auto text-muted">1024×600</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1280px" data-height="800px">Nest Hub Max <small class="ms-auto text-muted">1280×800</small></button></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-split-view"><i class="fa-duotone fa-solid fa-columns fa-fw text-muted"></i> Split (Desktop + Móvil)</button></li>
                     </ul>
@@ -2601,6 +2629,7 @@
         laptop:  'fa-laptop',
         tablet:  'fa-tablet-screen-button',
         mobile:  'fa-mobile-screen-button',
+        device:  'fa-mobile-screen-button',
     };
 
     $(document).on('click', '.breakpoint-btn', function () {
@@ -2617,6 +2646,10 @@
         const iconClass = BREAKPOINT_ICONS[bp] || 'fa-desktop';
         $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid ' + iconClass);
         $('#btn-rotate-device').toggle(bp !== 'desktop');
+
+        // Remove split if active
+        $wrap.find('.ve-split-mobile').remove();
+        $wrap.removeClass('split');
 
         if (bp === 'desktop') {
             $wrap.removeClass().addClass('desktop');
