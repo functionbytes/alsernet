@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Modules\Locales\Models\Locale;
 use Modules\Page\Events\PageAutoSaved;
 use Modules\Page\Models\Page;
 use Modules\Page\Services\PageAutoSaveService;
@@ -177,10 +178,14 @@ class VisualEditorController extends Controller
         ], fn ($v) => $v !== null);
 
         if (! empty($translationFields)) {
-            $page->translations()->updateOrCreate(
-                ['locale' => $locale],
-                $translationFields
-            );
+            // Resolve locale_id from locale code
+            $localeModel = Locale::where('code', $locale)->first();
+            if ($localeModel) {
+                $page->translations()->updateOrCreate(
+                    ['locale_id' => $localeModel->id],
+                    $translationFields
+                );
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Página guardada correctamente.']);

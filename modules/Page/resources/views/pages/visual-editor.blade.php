@@ -4540,6 +4540,9 @@
         if (window.veToast) window.veToast('Animación eliminada', 'info');
     });
 
+    // ── Command palette actions array (declared early, populated below) ──
+    var cmdActions = [];
+
     // ── N4: Import from URL ──
     cmdActions.push({ cat:'Herramientas', label:'Importar sección desde URL', icon:'fa-download', action: function() {
         var url = prompt('URL de la página a importar:');
@@ -5334,7 +5337,8 @@
     if (localStorage.getItem('ve-dark-mode') === '1') $('#ve-body').addClass('ve-dark');
 
     // ── P4.2: Command palette (Ctrl+K) ──
-    var cmdActions = [
+    // Base command palette actions (cmdActions declared earlier in the script)
+    cmdActions.push(
         { cat:'Paneles', label:'Bloques', icon:'fa-puzzle-piece', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="shortcodes"]').trigger('click'); }},
         { cat:'Paneles', label:'Inspector', icon:'fa-sliders', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]').trigger('click'); }},
         { cat:'Paneles', label:'Layout', icon:'fa-table-columns', action:function(){ $('#ve-sidebar-nav .ve-nav-btn[data-panel="layout"]').trigger('click'); }},
@@ -5351,8 +5355,8 @@
         { cat:'Acciones', label:'Modo oscuro', icon:'fa-circle-half-stroke', action:function(){ $('#btn-dark-mode').trigger('click'); }},
         { cat:'Vista', label:'Desktop', icon:'fa-desktop', action:function(){ $('.breakpoint-btn[data-breakpoint="desktop"]').trigger('click'); }},
         { cat:'Vista', label:'Tablet', icon:'fa-tablet-screen-button', action:function(){ $('.breakpoint-btn[data-breakpoint="tablet"]').trigger('click'); }},
-        { cat:'Vista', label:'Móvil', icon:'fa-mobile-screen-button', action:function(){ $('.breakpoint-btn[data-breakpoint="mobile"]').trigger('click'); }},
-    ];
+        { cat:'Vista', label:'Móvil', icon:'fa-mobile-screen-button', action:function(){ $('.breakpoint-btn[data-breakpoint="mobile"]').trigger('click'); }}
+    );
     $('.ve-sc-item').each(function(){
         var n = $(this).data('name');
         cmdActions.push({ cat:'Bloques', label:'['+n+']', icon:'fa-cube', action:function(){ $('.ve-sc-item[data-name="'+n+'"]').trigger('click'); }});
