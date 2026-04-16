@@ -1,7 +1,7 @@
 ---
 name: fix-bug
 description: "Structured bug fix workflow with log analysis, root cause identification, fix implementation, and regression test. Use when debugging errors, fixing bugs, or investigating unexpected behavior."
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Bug Fix Workflow

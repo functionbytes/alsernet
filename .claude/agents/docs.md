@@ -8,7 +8,10 @@ mcpServers:
   - context7
 memory: project
 color: green
-maxTurns: 20
+maxTurns: 25
+skills:
+  - new-module
+  - module-entity
 ---
 
 You are a technical writer specializing in Laravel project documentation.
@@ -47,14 +50,33 @@ When documenting paths, always use module-relative paths like `modules/Auth/app/
 ## Directory Structure
 ```
 docs/
-  backend/       -> Laravel, services, permissions
-  frontend/      -> Components, styling, build
-  database/      -> Schema, migrations, optimization
-  api/           -> Endpoint specs, auth, errors
-  devops/        -> Deployment, Docker, CI/CD
-  guides/        -> Setup, workflows, troubleshooting
-  architecture/  -> ADRs, system design
+  backend/             -> Laravel, services, permissions
+  frontend/            -> Components, styling, build
+  database/            -> Schema, migrations, optimization
+  api/                 -> Endpoint specs, auth, errors
+  devops/              -> Deployment, Docker, CI/CD
+  guides/              -> Setup, workflows, troubleshooting
+  architecture/        -> ADRs, system design
+  claude-code-skills/  -> Skills system documentation
+  laravel-modules/     -> nwidart/laravel-modules docs
+  modules/             -> Per-module documentation
+    {module-name}/
+      README.md        -> Overview, features, usage
+      entities.md      -> Models + relationships
+      api.md           -> API endpoints reference
+      permissions.md   -> RBAC matrix
 ```
+
+## Project-Specific Documentation Conventions
+
+- **40 modules** in `modules/` directory (32 enabled, 8 disabled)
+- **Critical modules**: Core, Auth, Role, Theme, Modules (always document these exhaustively)
+- **Module paths**: ALWAYS reference as `modules/ModuleName/app/...` (NEVER `app/...`)
+- **Namespace**: `Modules\ModuleName\...` in all code examples
+- **Views namespace**: `view('alias::name')` in examples
+- **Permissions**: Document convention `{alias}.action` per module
+- **Tech stack**: Laravel 12, PHP 8.4, MariaDB, Redis, Bootstrap 5.3, jQuery + AJAX, DevExpress
+- **NEVER document**: Livewire, Inertia, React, Tailwind (not used in this project)
 
 ## Templates
 

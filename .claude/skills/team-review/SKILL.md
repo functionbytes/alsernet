@@ -1,7 +1,7 @@
 ---
 name: team-review
 description: "Launch an agent team for parallel code review with security, performance, and quality reviewers. Use when doing thorough PR reviews, pre-release reviews, or comprehensive code audits."
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Parallel Team Review

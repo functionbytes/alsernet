@@ -1,7 +1,7 @@
 ---
 name: module-entity
 description: "Add features to an existing module. Supports: entity (CRUD completo), api (REST layer), settings (config page), events (event system), dashboard (stats+charts). Combine multiple in one call. Use when adding any functionality to a module."
-disable-model-invocation: true
+disable-model-invocation: false
 argument-hint: "[ModuleName] [features: entity,api,settings,events,dashboard] [EntityName] [description]"
 ---
 
@@ -37,6 +37,13 @@ Also read the supporting files in this skill:
 - [reference.md](reference.md) for nwidart commands and project patterns
 - [existing-modules.md](existing-modules.md) for similar module examples
 - [templates.md](templates.md) for exact code templates
+
+**For all Blade views** (entity index, forms, settings, dashboard), ALWAYS consult the **ui-patterns** skill files:
+- `ui-patterns/list-patterns.md` for index page structure
+- `ui-patterns/form-patterns.md` for create/edit forms
+- `ui-patterns/modal-patterns.md` for filter/delete/bulk modals
+- `ui-patterns/dashboard-patterns.md` for stats + charts
+- `ui-patterns/javascript-patterns.md` for BulkActions, select2, ajax, delete
 
 ---
 
@@ -249,9 +256,23 @@ Add "Dashboard" as first sidebar item:
 ## Post-Generation Checklist
 
 1. `php artisan module:migrate {ModuleName}` (if new migration)
-2. `php artisan route:list --name={alias}` (verify routes)
-3. `vendor/bin/pint --dirty` (format all new PHP files)
-4. Check NavService items appear in UI
+2. `php artisan route:clear` (if new routes added)
+3. `php artisan config:clear` (if config changed)
+4. `php artisan route:list --name={alias}` (verify routes)
+5. `vendor/bin/pint --dirty` (format all new PHP files)
+6. Check NavService items appear in UI (refresh page, NavService is registered at boot)
+
+### Cache commands by what changed
+
+| Feature added | Commands to run |
+|---------------|----------------|
+| `entity` (new Model class) | `composer dump-autoload` (only if autoload-dev tests needed) |
+| `entity` (new routes) | `php artisan route:clear` |
+| `api` (new api.php) | `php artisan route:clear` |
+| `settings` (new Setting model usage) | `php artisan cache:clear` (Setting model may cache) |
+| `events` (new EventServiceProvider) | `php artisan config:clear` + `php artisan event:clear` |
+| `dashboard` (new routes) | `php artisan route:clear` |
+| **Anything and unsure** | `php artisan optimize:clear` |
 
 ## Rules (ALL features)
 - Font Awesome 6 ONLY (not Tabler)

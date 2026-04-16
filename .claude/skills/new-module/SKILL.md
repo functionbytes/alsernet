@@ -1,7 +1,7 @@
 ---
 name: new-module
 description: "Create a new Laravel module following exact project conventions (nwidart/laravel-modules v12). Generates ServiceProvider with NavService, routes, config, permissions seeder, module.json, composer.json. Registers in bootstrap/providers.php, modules_statuses.json, and root composer.json autoload. Use when creating a new module from scratch."
-disable-model-invocation: true
+disable-model-invocation: false
 argument-hint: "[ModuleName] [description]"
 ---
 
@@ -276,10 +276,12 @@ Read `composer.json` in project root. Find the `autoload.psr-4` section. Add in 
 "Modules\\{ModuleName}\\Database\\Seeders\\": "modules/{ModuleName}/database/seeders/"
 ```
 
-### 6.4 Run composer dump-autoload
+### 6.4 Run cache & autoload commands
 
+Execute IN ORDER:
 ```bash
-composer dump-autoload
+composer dump-autoload          # Register new PSR-4 namespace
+php artisan optimize:clear      # Clear ALL caches (config+route+view)
 ```
 
 ## Step 7: Verify
@@ -288,6 +290,22 @@ composer dump-autoload
 2. `php artisan route:list --name={alias}` - routes registered
 3. `vendor/bin/pint --dirty` - format all new PHP files
 4. Check that NavService menu items appear (may need page refresh)
+
+## When to Run Laravel Commands
+
+| Changed | Command |
+|---------|---------|
+| composer.json autoload / new namespace | `composer dump-autoload` |
+| modules_statuses.json | `composer dump-autoload` + `php artisan optimize:clear` |
+| bootstrap/providers.php | `composer dump-autoload` + `php artisan config:clear` |
+| config/*.php or module config | `php artisan config:clear` |
+| routes/*.php or module routes | `php artisan route:clear` |
+| Blade views (not reflecting) | `php artisan view:clear` |
+| Anything and unsure | `php artisan optimize:clear` |
+| After seeding permissions | `php artisan cache:clear` (Spatie cache) |
+
+NEVER run: `config:cache`, `route:cache`, `view:cache` in development (dificulta debug).
+NEVER run: `migrate:fresh` (BLOCKED - destroys all data).
 
 ## CRITICAL Rules
 

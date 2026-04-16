@@ -1,7 +1,7 @@
 ---
 name: team-feature
 description: "Launch an agent team for parallel feature implementation with backend, frontend, and testing teammates. Use for medium-to-large features that span multiple layers."
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Parallel Team Feature Implementation

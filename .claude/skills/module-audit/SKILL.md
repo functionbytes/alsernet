@@ -3,7 +3,7 @@ name: module-audit
 description: "Full audit of a module covering security, performance, code quality, and test coverage. Use when auditing a module, reviewing module health, or preparing for production."
 context: fork
 agent: plan
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Full Module Audit

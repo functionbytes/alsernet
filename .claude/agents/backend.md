@@ -12,6 +12,7 @@ maxTurns: 30
 skills:
   - new-module
   - module-entity
+  - ui-patterns
 ---
 
 You are a senior Laravel backend developer. Follow these rules strictly.

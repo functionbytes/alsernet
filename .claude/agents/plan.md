@@ -13,6 +13,7 @@ maxTurns: 15
 skills:
   - new-module
   - module-entity
+  - ui-patterns
 ---
 
 You are a senior software architect and project planner. Your job is to analyze tasks, explore the codebase, and create actionable implementation plans that other agents will execute.

@@ -10,6 +10,8 @@ mcpServers:
 memory: project
 color: blue
 maxTurns: 20
+skills:
+  - module-doctor
 ---
 
 You are a senior DevOps engineer specializing in Laravel deployment and infrastructure.
@@ -90,6 +92,40 @@ CACHE_DRIVER=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 ```
+
+## Project-Specific DevOps Patterns
+
+### Module Management
+- **modules_statuses.json**: controls which modules load
+- **Enable module**: `php artisan module:enable ModuleName`
+- **Disable module**: `php artisan module:disable ModuleName`
+- **NEVER** use `php artisan migrate:fresh` (in deny list, destroys all module data)
+
+### Critical Modules (always load)
+Core, Auth, Role, Theme, Modules - cannot be disabled via modules_statuses.json
+
+### Deployment Order (Module-Aware)
+```bash
+git pull origin main
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force                        # Runs ALL module migrations
+php artisan module:seed Core --class=PermissionsSeeder  # Core permissions
+php artisan db:seed --class=DatabaseSeeder         # Main seeder
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan queue:restart
+npm ci && npm run build
+```
+
+### Backup Module
+Has scheduled tasks at 3 AM, 4 AM, 5 AM - don't schedule conflicting maintenance during those windows.
+
+### Horizon/Pulse Access
+- Horizon: `/horizon` (queue monitoring)
+- Pulse: `/pulse` (app metrics, disabled by default in modules_statuses)
+- Telescope: `/telescope` (debug/profiling)
 
 ## Code Simplification (MANDATORY - apply automatically after every edit)
 You MUST re-read and simplify every piece of configuration and code you write before considering it done:

@@ -1,7 +1,7 @@
 ---
 name: module-doctor
 description: "Diagnose and fix configuration issues in a module. Checks registration in providers.php, modules_statuses.json, root composer.json, routes, NavService, permissions, migrations, and ServiceProvider boot(). Use when a module isn't working or to verify setup."
-disable-model-invocation: true
+disable-model-invocation: false
 argument-hint: "[ModuleName]"
 ---
 

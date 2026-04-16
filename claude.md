@@ -8,21 +8,53 @@
 #   .claude/settings.json ..... Project permissions & hooks (committable)
 #   .claude/settings.local.json User overrides (gitignored)
 #   .claude/agents/ ........... 11 subagents (auto-delegated by Claude)
-#   .claude/commands/ ......... 12 slash commands (manual /name invocation)
-#   .claude/hooks/ ............ Lifecycle scripts (SessionStart, etc.)
+#   .claude/skills/ ........... 6 skills (manual /name or auto-invoked)
+#   .claude/commands/ ......... 12 slash commands (legacy, still work)
+#   .claude/rules/ ............ 4 path-specific rules (auto-loaded per file type)
+#   .claude/hooks/ ............ Lifecycle scripts (SessionStart, PostToolUse, etc.)
 #   .mcp.json ................. MCP server config (committable)
 #   tests/fixtures/test-users.json Test credentials for E2E testing
 #
 # SUBAGENTS (.claude/agents/) - auto-delegated, run in isolated context:
-#   plan(sonnet)     backend(sonnet)  frontend(sonnet)  testing(sonnet)
-#   docs(haiku)      security(sonnet) database(sonnet)
-#   devops(sonnet)   review(sonnet)   performance(sonnet)
-#   api(sonnet)
-#[ATENCION-MODULO-SIMPLIFICADO.md](ATENCION-MODULO-SIMPLIFICADO.md)
+#   plan(sonnet/purple)      backend(sonnet/blue)     frontend(sonnet/green)
+#   testing(sonnet/yellow)   docs(haiku/green)        security(sonnet/red)
+#   database(sonnet/orange)  devops(sonnet/blue)      review(sonnet/pink)
+#   performance(sonnet/cyan) api(sonnet/cyan)
+#
+# SKILLS (.claude/skills/) - advanced workflows:
+#   Module lifecycle:
+#     /new-module ....... Create complete module from scratch (all boilerplate)
+#     /module-entity .... Add features to module: entity, api, settings, events,
+#                         dashboard (combine: "Inventory Product entity api settings")
+#     /module-test ...... Generate PHPUnit tests for existing module (analyzes
+#                         controllers/routes/models, auto-creates factories)
+#     /module-doctor .... Diagnose module issues (12 checks, auto-fix)
+#     /module-audit ..... Full audit: security + performance + quality (parallel)
+#   General workflows:
+#     /fix-bug .......... Structured bug fix with logs, root cause, regression test
+#     /team-review ...... Agent team: 3 parallel reviewers (security/perf/quality)
+#     /team-feature ..... Agent team: parallel backend+frontend+testing
+#
 # SLASH COMMANDS (.claude/commands/) - manual invocation with /name:
 #   Role commands:  /backend /frontend /testing /docs
 #                   /database /devops /api
 #   Workflows:      /plan /check /review /security /performance
+#
+# RULES (.claude/rules/) - 13 rules, auto-loaded when editing matching files:
+#   blade-views.md ......... *.blade.php (icons, CSS, modals, select2, dropdowns)
+#   migrations.md .......... migrations/ (column change rules, indexes, foreign keys)
+#   controllers.md ......... Controllers/ (thin controllers, Form Requests, authorize)
+#   javascript.md .......... *.js (jQuery/AJAX, CSRF, DevExpress, toastr)
+#   models.md .............. Models/ (fillable, casts, relationships, query())
+#   services.md ............ Services/ (DI, transactions, return types)
+#   tests.md ............... tests/ (PHPUnit, factories, RefreshDatabase, assertions)
+#   api-controllers.md ..... Controllers/Api/ (Resources, JSON format, Sanctum, status codes)
+#   seeders.md ............. seeders/ (permissions naming, firstOrCreate, guard)
+#   form-requests.md ....... Http/Requests/ (authorize, rules, messages, attributes)
+#   routes.md .............. routes/*.php (web/api/settings prefix+name+middleware)
+#   policies.md ............ Policies/ (Gate::policy, Spatie permissions, ownership)
+#   laravel-cache-commands . *.php/routes/config/composer (when to dump-autoload,
+#                            optimize:clear, config:clear, route:clear, view:clear)
 #
 # MCP SERVERS (.mcp.json) - 4 servers:
 #   laravel-boost .... Primary: DB queries, tinker, docs, routes, logs (ALL agents)
@@ -31,16 +63,25 @@
 #   redis ............ Cache inspection & management (database, devops, performance)
 #
 # HOOKS (.claude/settings.json):
-#   SessionStart ..... Repo context (branch, modules, migrations, Redis)
+#   SessionStart ..... Repo context via JSON (branch, modules, PHP/Laravel/Redis)
 #   SessionStart ..... Explanatory output style with insights
 #   PreToolUse ....... Malware analysis guard on file reads
 #   PreToolUse ....... Quality gate on git commit (pint + tests + simplify)
-#   PostToolUse ...... PHP syntax check on Edit/Write (.php files)
+#   PostToolUse ...... PHP syntax check on Edit/Write (.php files, blocks on error)
+#   Stop ............. Final quality verification (simplify, pint, N+1, icons)
+#   SubagentStop ..... Subagent output quality review (conventions, icons, jQuery)
+#   PostCompact ...... Reinjects critical project rules after context compaction
+#   Notification ..... macOS desktop notification when Claude needs input
 #
 # PLUGINS:
 #   Install laravel-simplifier from laravel/claude-code:
 #   /plugin marketplace add laravel/claude-code
 #   /plugin install laravel-simplifier@laravel
+#
+# AGENT TEAMS (experimental, enabled via env):
+#   Create teams for parallel work with natural language or skills:
+#   /team-review [scope] .. 3 parallel reviewers (security/perf/quality)
+#   /team-feature [desc] .. Parallel backend+frontend+testing implementation
 # ============================================================
 
 ## [CUSTOMIZE] Project Identity
