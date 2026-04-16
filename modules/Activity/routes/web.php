@@ -9,6 +9,7 @@ Route::middleware(['web', 'auth'])
     ->name('activity.')
     ->group(function () {
         Route::get('/logs', [ActivityController::class, 'logs'])->name('logs');
+        Route::get('/logs/stats', [ActivityController::class, 'stats'])->name('logs.stats');
         Route::post('/logs/bulk-action', [ActivityController::class, 'bulkAction'])->name('logs.bulk-action');
         Route::get('/logs/export', [ActivityController::class, 'export'])->name('export')->middleware('throttle:10,1');
         Route::get('/logs/{id}', [ActivityController::class, 'show'])->name('logs.show');

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('old_value')->nullable();
             $table->text('new_value')->nullable();
             $table->json('metadata')->nullable();
-            $table->timestamp('created_at')->useCurrentOnUpdate();
+            $table->timestamp('created_at')->useCurrent();
 
             // Foreign keys
             $table->foreign('ticket_id')->references('id')->on('helpdesk_tickets')->onDelete('cascade');

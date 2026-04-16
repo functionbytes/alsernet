@@ -33,13 +33,11 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('helpdesk_conversations')) {
+        if (Schema::hasTable('helpdesk_conversations') && Schema::hasColumn('helpdesk_conversations', 'channel')) {
             Schema::table('helpdesk_conversations', function (Blueprint $table) {
-                // channel — used in webhook processing
                 if (! $this->hasIndex('helpdesk_conversations', 'helpdesk_conversations_channel_index')) {
                     $table->index('channel', 'helpdesk_conversations_channel_index');
                 }
-                // (external_sender_id, channel) composite — used in ProcessSocialWebhookJob
                 if (! $this->hasIndex('helpdesk_conversations', 'helpdesk_conversations_sender_channel_index')) {
                     $table->index(['external_sender_id', 'channel'], 'helpdesk_conversations_sender_channel_index');
                 }
@@ -48,12 +46,11 @@ return new class extends Migration
 
         if (Schema::hasTable('helpdesk_conversation_items')) {
             Schema::table('helpdesk_conversation_items', function (Blueprint $table) {
-                // (conversation_id, created_at) composite — ordered message loading
                 if (! $this->hasIndex('helpdesk_conversation_items', 'helpdesk_conv_items_conversation_created_index')) {
                     $table->index(['conversation_id', 'created_at'], 'helpdesk_conv_items_conversation_created_index');
                 }
-                // external_id — used in deduplication
-                if (! $this->hasIndex('helpdesk_conversation_items', 'helpdesk_conv_items_external_id_index')) {
+                if (Schema::hasColumn('helpdesk_conversation_items', 'external_id') &&
+                    ! $this->hasIndex('helpdesk_conversation_items', 'helpdesk_conv_items_external_id_index')) {
                     $table->index('external_id', 'helpdesk_conv_items_external_id_index');
                 }
             });

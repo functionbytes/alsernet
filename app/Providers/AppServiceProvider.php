@@ -6,7 +6,9 @@ use App\Services\DeepLTranslationService;
 use App\Services\GlobalSearchRegistrar;
 use App\Services\GlobalSearchService;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Events\MigrationsStarted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -26,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        if ($this->app->environment('testing')) {
+            $this->app['events']->listen(MigrationsStarted::class, function () {
+                DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
+            });
+        }
 
         $this->configureApplicationDefaults();
         $this->configureHorizonGate();

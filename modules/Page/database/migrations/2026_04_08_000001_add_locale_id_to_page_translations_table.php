@@ -15,11 +15,13 @@ return new class extends Migration
             $table->index('locale_id');
         });
 
-        DB::statement('
-            UPDATE page_translations pt
-            JOIN locales l ON l.code = pt.locale
-            SET pt.locale_id = l.id
-        ');
+        if (Schema::hasTable('locales')) {
+            DB::statement('
+                UPDATE page_translations pt
+                JOIN locales l ON l.code = pt.locale
+                SET pt.locale_id = l.id
+            ');
+        }
     }
 
     public function down(): void

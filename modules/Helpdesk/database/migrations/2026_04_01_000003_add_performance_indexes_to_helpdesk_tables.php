@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Index for filtering draft/published articles (very frequent query)
-        if (Schema::hasTable('helpdesk_helpcenter_articles')) {
+        if (Schema::hasTable('helpdesk_helpcenter_articles') && Schema::hasColumn('helpdesk_helpcenter_articles', 'draft')) {
             Schema::table('helpdesk_helpcenter_articles', function (Blueprint $table) {
                 if (! $this->hasIndex('helpdesk_helpcenter_articles', 'helpcenter_articles_draft_index')) {
                     $table->index('draft', 'helpcenter_articles_draft_index');

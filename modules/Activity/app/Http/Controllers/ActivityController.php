@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Modules\Activity\Services\ActivityLogService;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -128,6 +129,15 @@ class ActivityController extends Controller
                 'deleted' => (int) $row->deleted,
             ];
         });
+    }
+
+    public function stats(): JsonResponse
+    {
+        $this->authorize('Activity.logs.index');
+
+        $data = app(ActivityLogService::class)->countByEvent();
+
+        return response()->json($data);
     }
 
     public function bulkAction(Request $request): JsonResponse

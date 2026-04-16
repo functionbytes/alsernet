@@ -27,6 +27,10 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="{{ route('activity.export', request()->query()) }}">Exportar CSV</a>
+                                <div class="dropdown-divider"></div>
+                                <button id="refresh-stats-btn" type="button" class="dropdown-item">
+                                    <i class="fas fa-arrows-rotate me-1"></i> Refrescar stats
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -40,7 +44,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total registros</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="total">{{ number_format($stats['total']) }}</h4>
                                 <small class="text-muted">En el sistema</small>
                             </div>
                         </div>
@@ -49,7 +53,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Creaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['created']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="created">{{ number_format($stats['created']) }}</h4>
                                 <small class="text-muted">Registros creados</small>
                             </div>
                         </div>
@@ -58,7 +62,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Actualizaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['updated']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="updated">{{ number_format($stats['updated']) }}</h4>
                                 <small class="text-muted">Registros modificados</small>
                             </div>
                         </div>
@@ -67,7 +71,7 @@
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Eliminaciones</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['deleted']) }}</h4>
+                                <h4 class="mb-1 fw-bold" data-stat="deleted">{{ number_format($stats['deleted']) }}</h4>
                                 <small class="text-muted">Registros eliminados</small>
                             </div>
                         </div>
@@ -81,7 +85,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -255,6 +259,30 @@ $(document).ready(function () {
         $('#bulk-action-select').val('').trigger('change');
         $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
         bulk.reset();
+    });
+
+    // Refresh stats
+    $('#refresh-stats-btn').on('click', function () {
+        const $btn  = $(this);
+        const $icon = $btn.find('i');
+        $btn.prop('disabled', true);
+        $icon.addClass('fa-spin');
+
+        $.getJSON('{{ route('activity.logs.stats') }}')
+            .done(function (data) {
+                $('[data-stat="total"]').text(new Intl.NumberFormat().format(data.total));
+                $('[data-stat="created"]').text(new Intl.NumberFormat().format(data.created));
+                $('[data-stat="updated"]').text(new Intl.NumberFormat().format(data.updated));
+                $('[data-stat="deleted"]').text(new Intl.NumberFormat().format(data.deleted));
+                toastr.success('Stats actualizados');
+            })
+            .fail(function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al refrescar.');
+            })
+            .always(function () {
+                $btn.prop('disabled', false);
+                $icon.removeClass('fa-spin');
+            });
     });
 
     $('#bulk-apply-btn').on('click', function () {
