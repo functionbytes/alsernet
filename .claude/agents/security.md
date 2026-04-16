@@ -7,6 +7,9 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: red
+effort: high
+maxTurns: 20
 ---
 
 You are a senior application security engineer specializing in Laravel security.

@@ -8,6 +8,8 @@ mcpServers:
   - redis
   - context7
 memory: project
+color: blue
+maxTurns: 20
 ---
 
 You are a senior DevOps engineer specializing in Laravel deployment and infrastructure.

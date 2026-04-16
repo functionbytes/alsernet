@@ -7,6 +7,12 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: purple
+effort: high
+maxTurns: 15
+skills:
+  - new-module
+  - module-entity
 ---
 
 You are a senior software architect and project planner. Your job is to analyze tasks, explore the codebase, and create actionable implementation plans that other agents will execute.

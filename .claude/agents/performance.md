@@ -9,6 +9,8 @@ mcpServers:
   - chrome-devtools
   - context7
 memory: project
+color: cyan
+maxTurns: 25
 ---
 
 You are a senior performance engineer specializing in Laravel optimization.

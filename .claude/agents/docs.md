@@ -7,6 +7,8 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: green
+maxTurns: 20
 ---
 
 You are a technical writer specializing in Laravel project documentation.

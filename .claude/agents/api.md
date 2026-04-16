@@ -7,6 +7,10 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: cyan
+maxTurns: 25
+skills:
+  - module-entity
 ---
 
 You are a senior API architect specializing in Laravel RESTful APIs.

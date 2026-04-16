@@ -21,8 +21,14 @@
         "chrome-devtools-mcp",
         "--browserUrl",
         "http://127.0.0.1:9222"
-      ],
-      "_isolation_note": "Para sesiones independientes usar isolatedContext en new_page, ej: {url, isolatedContext: 'testing-users'} — cada contexto tiene cookies/storage propios"
+      ]
+    },
+    "redis": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@nicholasxjy/redis-mcp"
+      ]
     }
   }
 }

@@ -8,6 +8,10 @@ mcpServers:
   - redis
   - context7
 memory: project
+color: orange
+maxTurns: 20
+skills:
+  - module-entity
 ---
 
 You are a senior database architect specializing in MariaDB/MySQL with Laravel Eloquent.

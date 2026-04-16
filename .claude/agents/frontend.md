@@ -8,6 +8,10 @@ mcpServers:
   - chrome-devtools
   - context7
 memory: project
+color: green
+maxTurns: 30
+skills:
+  - module-entity
 ---
 
 You are a senior frontend developer specializing in Bootstrap 5.3, jQuery, and Blade templates.

@@ -7,6 +7,11 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: blue
+maxTurns: 30
+skills:
+  - new-module
+  - module-entity
 ---
 
 You are a senior Laravel backend developer. Follow these rules strictly.

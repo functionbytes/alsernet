@@ -7,6 +7,9 @@ mcpServers:
   - laravel-boost
   - context7
 memory: project
+color: pink
+effort: high
+maxTurns: 15
 ---
 
 You are a senior code reviewer ensuring high standards of quality and security.
