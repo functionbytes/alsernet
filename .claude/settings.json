@@ -168,7 +168,7 @@
     "SubagentStop": [
       {
         "type": "prompt",
-        "prompt": "Review the subagent's output for quality:\n1. Did it follow project conventions (modules structure, Model::query(), Form Requests)?\n2. Was code simplified (early returns, no nested ternaries)?\n3. Were Font Awesome 6 icons used (not Tabler ti-*)?\n4. Did it use jQuery+AJAX (not Livewire/Inertia)?\nFlag any issues before accepting the result."
+        "prompt": "Review the subagent's output for quality:\n1. Did it follow project conventions (modules structure, Model::query(), Form Requests)?\n2. Was code simplified (early returns, no nested ternaries)?\n3. Were Font Awesome 6 icons used (not Tabler ti-*)?\n4. Did it use jQuery+AJAX (not Livewire/Inertia)?\n5. If PHP files were written/edited: were relevant tests run with `php artisan test --filter`? If not, flag it.\n6. If tests were run: did they all pass? Flag any failures.\nFlag any issues before accepting the result."
       }
     ],
     "PostCompact": [

@@ -40,7 +40,7 @@
 #                   /database /devops /api
 #   Workflows:      /plan /check /review /security /performance
 #
-# RULES (.claude/rules/) - 13 rules, auto-loaded when editing matching files:
+# RULES (.claude/rules/) - 16 rules, auto-loaded when editing matching files:
 #   blade-views.md ......... *.blade.php (icons, CSS, modals, select2, dropdowns)
 #   migrations.md .......... migrations/ (column change rules, indexes, foreign keys)
 #   controllers.md ......... Controllers/ (thin controllers, Form Requests, authorize)
@@ -55,6 +55,9 @@
 #   policies.md ............ Policies/ (Gate::policy, Spatie permissions, ownership)
 #   laravel-cache-commands . *.php/routes/config/composer (when to dump-autoload,
 #                            optimize:clear, config:clear, route:clear, view:clear)
+#   events-listeners.md .... Events/ + Listeners/ (Dispatchable, ShouldBroadcast, queue)
+#   jobs.md ................ Jobs/ (ShouldQueue, tries, timeout, backoff, failed)
+#   notifications.md ....... Notifications/ + Mail/ (channels, toArray, Mailable)
 #
 # MCP SERVERS (.mcp.json) - 4 servers:
 #   laravel-boost .... Primary: DB queries, tinker, docs, routes, logs (ALL agents)

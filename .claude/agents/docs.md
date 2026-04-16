@@ -1,7 +1,7 @@
 ---
 name: docs
 description: "Documentation specialist for technical docs, API docs, architecture guides, and README files. Use when explicitly asked to create or update documentation."
-model: haiku
+model: sonnet
 tools: Read, Write, Edit, Grep, Glob
 mcpServers:
   - laravel-boost

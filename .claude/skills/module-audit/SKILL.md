@@ -4,6 +4,7 @@ description: "Full audit of a module covering security, performance, code qualit
 context: fork
 agent: plan
 disable-model-invocation: false
+argument-hint: "[ModuleName]"
 ---
 
 # Full Module Audit

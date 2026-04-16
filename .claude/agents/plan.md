@@ -2,7 +2,7 @@
 name: plan
 description: "Planning and orchestration specialist. Use FIRST for any task involving 3+ files, multiple agents, unclear scope, or architectural decisions. Analyzes requirements, explores code, designs the approach, and decides which agents to use. Always plan before implementing."
 model: sonnet
-tools: Read, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash
 mcpServers:
   - laravel-boost
   - context7
