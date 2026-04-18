@@ -2,7 +2,7 @@
 <div class="card mb-3">
     <div class="card-header p-3 bg-white border-bottom">
         <h5 class="mb-1 fw-bold">Notas</h5>
-        <p class="small mb-0 text-muted">Anotaciones y comentarios sobre el PQRSF</p>
+        <p class="small mb-0 text-muted">Anotaciones y comentarios sobre el peticiones</p>
     </div>
     <div class="card-body">
         <!-- Notes List -->
@@ -12,7 +12,7 @@
                     <i class="fas fa-circle-info text-black me-2 mt-1" style="font-size: 0.9rem;"></i>
                     <div>
                         <small class="fw-semibold d-block">No hay notas aún.</small>
-                        <small class="text-muted">No hay notas para este PQRSF registradas.</small>
+                        <small class="text-muted">No hay notas para este peticiones registradas.</small>
                     </div>
                 </div>
             </div>

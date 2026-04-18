@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Seguimiento PQRSF')
+@section('title', 'Seguimiento peticiones')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Seguimiento de PQRSF'])
+    @include('core::components.card', ['title' => 'Seguimiento de peticiones'])
 
     <div class="row justify-content-center">
         <div class="col-lg-12">
@@ -18,7 +18,7 @@
                             </div>
                         </div>
 
-                        <h3 class="fw-bold">Consulte el estado de su pqrsf</h3>
+                        <h3 class="fw-bold">Consulte el estado de su peticiones</h3>
                         <p class="text-muted mb-5 fs-3">Ingrese su numero de radicado para ver el estado actual y el historial completo de su solicitud</p>
 
                         <form action="{{ route('attention.tracking') }}" method="GET" class="mx-auto" style="max-width: 540px;">
@@ -26,7 +26,7 @@
                                 <input type="text"
                                        class="form-control form-control-lg tracking-input"
                                        name="radicado"
-                                       placeholder="Ej: PQRSF-2026-000001"
+                                       placeholder="Ej: peticiones-2026-000001"
                                        required
                                        autocomplete="off">
                                 <button class="btn btn-primary tracking-submit-btn" type="submit">
@@ -37,7 +37,7 @@
 
                         <div class="info-badge">
                             <i class="fas fa-info-circle me-2"></i>
-                            <span>El numero de radicado fue enviado a su correo electronico al momento de radicar su PQRSF</span>
+                            <span>El numero de radicado fue enviado a su correo electronico al momento de radicar su peticiones</span>
                         </div>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h5 class="mb-1 fw-bold">Información general</h5>
-                                        <p class="small mb-0 text-muted">Detalles del PQRSF radicado</p>
+                                        <p class="small mb-0 text-muted">Detalles del peticiones radicado</p>
                                     </div>
                                     <span class="badge bg-{{ $attention->status->color() }}">
                                         {{ $attention->status->label() }}
@@ -120,7 +120,7 @@
                         <div class="card mb-3">
                             <div class="card-header p-3 bg-white border-bottom">
                                 <h5 class="mb-1 fw-bold">Progreso de la solicitud</h5>
-                                <p class="small mb-0 text-muted">Estados por los que ha pasado su PQRSF</p>
+                                <p class="small mb-0 text-muted">Estados por los que ha pasado su peticiones</p>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">

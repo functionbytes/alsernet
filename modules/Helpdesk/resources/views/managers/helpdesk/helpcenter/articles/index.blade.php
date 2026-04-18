@@ -23,7 +23,7 @@
                 </div>
               </div>
               <div class="col-auto">
-                <select class="form-select" name="draft" onchange="this.form.submit()">
+                <select class="form-select" name="draft">
                   <option value="">Todos los estados</option>
                   <option value="1" {{ request('draft') === '1' ? 'selected' : '' }}>Borradores</option>
                   <option value="0" {{ request('draft') === '0' ? 'selected' : '' }}>Publicados</option>

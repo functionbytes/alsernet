@@ -126,7 +126,7 @@
                         <div class="mt-2">
                             <select name="location_id" class="form-select select2"
                                     data-placeholder="Todas las ubicaciones"
-                                    onchange="this.form.submit()">
+                                   >
                                 <option value="">Todas las ubicaciones</option>
                                 @foreach($locations as $location)
                                     <option value="{{ $location->id }}"

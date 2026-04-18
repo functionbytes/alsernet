@@ -4,6 +4,7 @@ namespace Modules\Attention\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Models\Attention;
@@ -39,8 +40,8 @@ class AttentionWorkflowIntegrationTest extends TestCase
     {
         Event::fake();
 
-        // 1. Submit PQRSF
-        $response = $this->postJson('/api/pqrsf/submit', [
+        // 1. Submit peticiones
+        $response = $this->postJson('/api/peticiones/submit', [
             'type_id' => $this->type->id,
             'category_id' => $this->category->id,
             'customer_firstname' => 'John',
@@ -144,7 +145,7 @@ class AttentionWorkflowIntegrationTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson("/api/attentions/{$attention->uid}/files", [
                 'files' => [
-                    \Illuminate\Http\UploadedFile::fake()->create('document.pdf', 100),
+                    UploadedFile::fake()->create('document.pdf', 100),
                 ],
             ]);
 

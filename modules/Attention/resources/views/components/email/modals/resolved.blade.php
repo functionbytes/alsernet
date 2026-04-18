@@ -12,7 +12,7 @@
                 @csrf
                 <div class="modal-body">
                     <div class="alert alert-info" role="alert">
-                        Se enviará un email al ciudadano notificando que su PQRSF ha sido resuelto.
+                        Se enviará un email al ciudadano notificando que su peticiones ha sido resuelto.
                     </div>
 
                     <div class="mb-3">

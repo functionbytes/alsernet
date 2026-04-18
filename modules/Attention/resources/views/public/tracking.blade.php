@@ -1,6 +1,6 @@
 @extends('attention::layouts.public')
 
-@section('title', 'Seguimiento PQRSF')
+@section('title', 'Seguimiento peticiones')
 
 @section('content')
 
@@ -15,16 +15,16 @@
                              style="width: 70px; height: 70px; background: linear-gradient(135deg, #90bb13 0%, #13C672 100%); box-shadow: 0 4px 20px rgba(144, 187, 19, 0.3);">
                             <i class="fas fa-magnifying-glass fa-2x text-white"></i>
                         </div>
-                        <h4 class="fw-bold mb-2" style="color: #1a2030;">Consulte el estado de su PQRSF</h4>
+                        <h4 class="fw-bold mb-2" style="color: #1a2030;">Consulte el estado de su peticiones</h4>
                         <p class="text-muted mb-0">Ingrese su numero de radicado para ver el estado actual</p>
                     </div>
 
-                    <form action="{{ route('pqrsf.tracking') }}" method="GET" class="mx-auto" style="max-width: 550px;">
+                    <form action="{{ route('peticiones.tracking') }}" method="GET" class="mx-auto" style="max-width: 550px;">
                         <div class="search-input-wrapper">
                             <i class="fas fa-search search-icon"></i>
                             <input type="text" class="form-control form-control-lg search-input" name="radicado"
                                    value="{{ $radicado ?? request('radicado') }}"
-                                   placeholder="Ej: PQRSF-2026-000001" required>
+                                   placeholder="Ej: peticiones-2026-000001" required>
                             <button class="btn btn-primary btn-lg search-button" type="submit">
                                 Consultar
                             </button>
@@ -103,7 +103,7 @@
                                     <div class="timeline-body">
                                         <h6 class="mb-1">Recibido</h6>
                                         <p class="text-muted mb-0">
-                                            Su PQRSF ha sido radicado exitosamente
+                                            Su peticiones ha sido radicado exitosamente
                                             <br>{{ $attention->created_at->format('d/m/Y H:i') }}
                                         </p>
                                     </div>
@@ -138,7 +138,7 @@
                                         <h6 class="mb-1">Resuelto</h6>
                                         <p class="text-muted mb-0">
                                             @if($isResolved)
-                                                Su PQRSF ha sido resuelto
+                                                Su peticiones ha sido resuelto
                                                 @if($attention->resolved_at)
                                                     <br>{{ $attention->resolved_at->format('d/m/Y H:i') }}
                                                 @endif
@@ -212,7 +212,7 @@
                                 <p class="mb-2"><strong>Verifique que:</strong></p>
                                 <ul class="mb-0 text-muted">
                                     <li>El numero de radicado este escrito correctamente</li>
-                                    <li>Incluya los guiones (Ej: PQRSF-2026-000001)</li>
+                                    <li>Incluya los guiones (Ej: peticiones-2026-000001)</li>
                                     <li>El radicado haya sido generado en nuestro sistema</li>
                                 </ul>
                             </div>
@@ -223,7 +223,7 @@
 
             {{-- Enlace al formulario --}}
             <div class="text-center mt-4">
-                <a href="{{ route('pqrsf.form') }}" class="btn btn-outline-primary">
+                <a href="{{ route('peticiones.form') }}" class="btn btn-outline-primary">
                     <i class="fas fa-file-pen me-2"></i>Radicar nueva solicitud
                 </a>
             </div>

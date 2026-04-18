@@ -185,7 +185,7 @@ class AttentionDepartmentsController extends Controller
     {
         // Check if department has assigned attentions
         if ($department->attentions()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar el departamento porque tiene PQRSF asignados.');
+            return back()->with('error', 'No se puede eliminar el departamento porque tiene peticiones asignados.');
         }
 
         $department->delete();

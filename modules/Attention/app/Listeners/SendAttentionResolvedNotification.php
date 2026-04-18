@@ -2,6 +2,11 @@
 
 namespace Modules\Attention\Listeners;
 
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Attention\Events\AttentionResolved;
 
@@ -34,9 +39,9 @@ class SendAttentionResolvedNotification
         }
 
         // Crear notificación inline para enviar
-        $notification = new class extends Notification implements \Illuminate\Contracts\Broadcasting\ShouldBroadcast, \Illuminate\Contracts\Queue\ShouldQueue
+        $notification = new class extends Notification implements ShouldBroadcast, ShouldQueue
         {
-            use \Illuminate\Bus\Queueable;
+            use Queueable;
 
             public ?int $recipientUserId = null;
 
@@ -54,8 +59,8 @@ class SendAttentionResolvedNotification
             public function toDatabase($notifiable)
             {
                 return [
-                    'title' => '✅ PQRSF resuelto',
-                    'message' => "El PQRSF #{$this->attention->radicado} ha sido marcado como resuelto. ".
+                    'title' => '✅ peticiones resuelto',
+                    'message' => "El peticiones #{$this->attention->radicado} ha sido marcado como resuelto. ".
                                  "Cliente: {$this->attention->full_name}.",
                     'icon' => 'fa-duotone fas fa-check-circle',
                     'color' => 'success',
@@ -70,9 +75,9 @@ class SendAttentionResolvedNotification
 
             public function toBroadcast($notifiable)
             {
-                return new \Illuminate\Notifications\Messages\BroadcastMessage([
-                    'title' => '✅ PQRSF resuelto',
-                    'message' => "PQRSF #{$this->attention->radicado} ha sido resuelto",
+                return new BroadcastMessage([
+                    'title' => '✅ peticiones resuelto',
+                    'message' => "peticiones #{$this->attention->radicado} ha sido resuelto",
                     'icon' => 'fa-duotone fas fa-check-circle',
                     'color' => 'success',
                     'action_url' => url("/attentions/show/{$this->attention->uid}"),
@@ -87,7 +92,7 @@ class SendAttentionResolvedNotification
             public function broadcastOn(): array
             {
                 return [
-                    new \Illuminate\Broadcasting\Channel('attentions.resolved'),
+                    new Channel('attentions.resolved'),
                 ];
             }
 

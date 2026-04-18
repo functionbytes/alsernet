@@ -21,7 +21,7 @@ class AttentionAdminTest extends TestCase
         $this->createAttention(['customer_email' => 'user3@example.com']);
 
         // Act
-        $response = $this->getJson('/api/settings/pqrsf');
+        $response = $this->getJson('/api/settings/peticiones');
 
         // Assert
         $response->assertStatus(200)
@@ -46,7 +46,7 @@ class AttentionAdminTest extends TestCase
     public function test_guest_cannot_access_admin_endpoints()
     {
         // Act
-        $response = $this->getJson('/api/settings/pqrsf');
+        $response = $this->getJson('/api/settings/peticiones');
 
         // Assert
         $response->assertStatus(401);
@@ -60,7 +60,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -94,7 +94,7 @@ class AttentionAdminTest extends TestCase
         $department = $this->createDepartment();
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/assign-department", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-department", [
             'department_id' => $department->id,
             'comment' => 'Asignado a departamento',
         ]);
@@ -103,7 +103,7 @@ class AttentionAdminTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'PQRSF asignado a departamento correctamente',
+                'message' => 'peticiones asignado a departamento correctamente',
             ]);
 
         $attention->refresh();
@@ -125,7 +125,7 @@ class AttentionAdminTest extends TestCase
         $user = $this->createUser();
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/assign-user", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-user", [
             'user_id' => $user->id,
             'comment' => 'Asignado a usuario',
         ]);
@@ -153,7 +153,7 @@ class AttentionAdminTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/change-status", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/change-status", [
             'status' => AttentionStatus::IN_PROCESS->value,
             'comment' => 'Iniciando proceso',
         ]);
@@ -181,7 +181,7 @@ class AttentionAdminTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/resolve", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/resolve", [
             'resolution' => 'Se ha resuelto la solicitud satisfactoriamente',
             'response_type' => ResponseType::EMAIL->value,
         ]);
@@ -190,7 +190,7 @@ class AttentionAdminTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'PQRSF resuelto correctamente',
+                'message' => 'peticiones resuelto correctamente',
             ]);
 
         $attention->refresh();
@@ -216,7 +216,7 @@ class AttentionAdminTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/close", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/close", [
             'comment' => 'Cerrando caso',
         ]);
 
@@ -224,7 +224,7 @@ class AttentionAdminTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'PQRSF cerrado correctamente',
+                'message' => 'peticiones cerrado correctamente',
             ]);
 
         $attention->refresh();
@@ -246,7 +246,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/notes", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/notes", [
             'content' => 'Esta es una nota interna importante',
         ]);
 
@@ -275,7 +275,7 @@ class AttentionAdminTest extends TestCase
         $attention->addNote('Segunda nota', $user->id);
 
         // Act
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}/notes");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/notes");
 
         // Assert
         $response->assertStatus(200)
@@ -305,7 +305,7 @@ class AttentionAdminTest extends TestCase
         $attention->logAction('test_action_2', 'Segunda acción', $user->id);
 
         // Act
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}/actions");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/actions");
 
         // Assert
         $response->assertStatus(200)
@@ -331,7 +331,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}/emails");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/emails");
 
         // Assert
         $response->assertStatus(200)
@@ -351,7 +351,7 @@ class AttentionAdminTest extends TestCase
         $this->createAttention(['status' => AttentionStatus::RESOLVED]);
 
         // Act
-        $response = $this->getJson('/api/settings/pqrsf/stats/overview');
+        $response = $this->getJson('/api/settings/peticiones/stats/overview');
 
         // Assert
         $response->assertStatus(200)
@@ -376,7 +376,7 @@ class AttentionAdminTest extends TestCase
         $this->createAttention(['status' => AttentionStatus::IN_PROCESS]);
 
         // Act
-        $response = $this->getJson('/api/settings/pqrsf?status=received');
+        $response = $this->getJson('/api/settings/peticiones?status=received');
 
         // Assert
         $response->assertStatus(200)
@@ -393,7 +393,7 @@ class AttentionAdminTest extends TestCase
         $this->createAttention(['subject' => 'Solicitud de certificado']);
 
         // Act
-        $response = $this->getJson('/api/settings/pqrsf?search=solicitud');
+        $response = $this->getJson('/api/settings/peticiones?search=solicitud');
 
         // Assert
         $response->assertStatus(200)
@@ -408,7 +408,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/resolve", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/resolve", [
             'response_type' => ResponseType::EMAIL->value,
             // Falta resolution
         ]);
@@ -426,7 +426,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/resolve", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/resolve", [
             'resolution' => 'Resuelto',
             // Falta response_type
         ]);
@@ -444,7 +444,7 @@ class AttentionAdminTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->patchJson("/api/settings/pqrsf/{$attention->radicado}", [
+        $response = $this->patchJson("/api/settings/peticiones/{$attention->radicado}", [
             'subject' => 'Nuevo asunto actualizado',
             'description' => 'Nueva descripción actualizada',
         ]);

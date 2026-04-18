@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormAccessToken;
 
 class FormAccessTokenController extends Controller
 {
-    public function index(Form $form): JsonResponse
+    public function index(Request $request, Form $form): View|JsonResponse
     {
         $this->authorize('Forms.forms.edit');
 
@@ -19,15 +20,18 @@ class FormAccessTokenController extends Controller
             ->where('form_id', $form->id)
             ->with('creator')
             ->latest()
-            ->get()
-            ->map(function (FormAccessToken $token) {
-                return [
-                    'token' => $token,
-                    'status' => $this->resolveStatus($token),
-                ];
-            });
+            ->get();
 
-        return response()->json(['data' => $tokens]);
+        if ($request->expectsJson()) {
+            $mapped = $tokens->map(fn ($token) => [
+                'token' => $token,
+                'status' => $this->resolveStatus($token),
+            ]);
+
+            return response()->json(['data' => $mapped]);
+        }
+
+        return view('forms::settings.forms.access-tokens.index', compact('form', 'tokens'));
     }
 
     public function store(Request $request, Form $form): JsonResponse

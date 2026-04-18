@@ -42,7 +42,7 @@ class AttentionDemoDataSeeder extends Seeder
             return;
         }
 
-        // Crear 50 PQRSF de ejemplo
+        // Crear 50 peticiones de ejemplo
         foreach (range(1, 50) as $i) {
             $status = collect([
                 AttentionStatus::RECEIVED,

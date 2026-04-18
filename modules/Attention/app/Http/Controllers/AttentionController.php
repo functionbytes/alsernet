@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
- * Main controller for PQRSF management
+ * Main controller for peticiones management
  * Handles both public (citizen) and settings operations
  */
 class AttentionController extends Controller
@@ -39,8 +39,8 @@ class AttentionController extends Controller
     // =========================================================================
 
     /**
-     * Submit a new PQRSF (public endpoint)
-     * POST /api/pqrsf
+     * Submit a new peticiones (public endpoint)
+     * POST /api/peticiones
      */
     public function submit(SubmitAttentionRequest $request): JsonResponse
     {
@@ -77,7 +77,7 @@ class AttentionController extends Controller
             // Log initial action
             $attention->logAction(
                 'created',
-                'PQRSF creado por el ciudadano',
+                'peticiones creado por el ciudadano',
                 null // No user ID for public submissions
             );
 
@@ -104,7 +104,7 @@ class AttentionController extends Controller
                     'status' => $attention->status->value,
                     'status_label' => $attention->status->label(),
                     'created_at' => $attention->created_at->toIso8601String(),
-                    'tracking_url' => route('api.pqrsf.track', ['radicado' => $attention->radicado]),
+                    'tracking_url' => route('api.peticiones.track', ['radicado' => $attention->radicado]),
                 ],
             ], 201);
 
@@ -125,8 +125,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Track a PQRSF by radicado number (public endpoint)
-     * GET /api/pqrsf/{radicado}
+     * Track a peticiones by radicado number (public endpoint)
+     * GET /api/peticiones/{radicado}
      */
     public function track(string $radicado): JsonResponse
     {
@@ -168,8 +168,8 @@ class AttentionController extends Controller
     // =========================================================================
 
     /**
-     * List all PQRSF with pagination, filters and search
-     * GET /api/settings/pqrsf
+     * List all peticiones with pagination, filters and search
+     * GET /api/settings/peticiones
      */
     public function index(Request $request): JsonResponse
     {
@@ -252,8 +252,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Show detailed information of a specific PQRSF
-     * GET /api/settings/pqrsf/{radicado}
+     * Show detailed information of a specific peticiones
+     * GET /api/settings/peticiones/{radicado}
      */
     public function show(string $radicado): JsonResponse
     {
@@ -355,8 +355,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Update PQRSF basic information
-     * PATCH /api/settings/pqrsf/{radicado}
+     * Update peticiones basic information
+     * PATCH /api/settings/peticiones/{radicado}
      */
     public function update(UpdateAttentionRequest $request, string $radicado): JsonResponse
     {
@@ -420,8 +420,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Assign PQRSF to a department
-     * POST /api/settings/pqrsf/{radicado}/assign-department
+     * Assign peticiones to a department
+     * POST /api/settings/peticiones/{radicado}/assign-department
      */
     public function assignDepartment(Request $request, string $radicado): JsonResponse
     {
@@ -474,8 +474,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Assign PQRSF to a user
-     * POST /api/settings/pqrsf/{radicado}/assign-user
+     * Assign peticiones to a user
+     * POST /api/settings/peticiones/{radicado}/assign-user
      */
     public function assignUser(Request $request, string $radicado): JsonResponse
     {
@@ -540,8 +540,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Change PQRSF status
-     * POST /api/settings/pqrsf/{radicado}/change-status
+     * Change peticiones status
+     * POST /api/settings/peticiones/{radicado}/change-status
      */
     public function changeStatus(Request $request, string $radicado): JsonResponse
     {
@@ -602,8 +602,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Resolve PQRSF with response
-     * POST /api/settings/pqrsf/{radicado}/resolve
+     * Resolve peticiones with response
+     * POST /api/settings/peticiones/{radicado}/resolve
      */
     public function resolve(ResolveAttentionRequest $request, string $radicado): JsonResponse
     {
@@ -671,8 +671,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Close PQRSF
-     * POST /api/settings/pqrsf/{radicado}/close
+     * Close peticiones
+     * POST /api/settings/peticiones/{radicado}/close
      */
     public function close(Request $request, string $radicado): JsonResponse
     {
@@ -731,8 +731,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Add internal note to PQRSF
-     * POST /api/settings/pqrsf/{radicado}/notes
+     * Add internal note to peticiones
+     * POST /api/settings/peticiones/{radicado}/notes
      */
     public function addNote(Request $request, string $radicado): JsonResponse
     {
@@ -772,8 +772,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Get all notes for a PQRSF
-     * GET /api/settings/pqrsf/{radicado}/notes
+     * Get all notes for a peticiones
+     * GET /api/settings/peticiones/{radicado}/notes
      */
     public function getNotes(string $radicado): JsonResponse
     {
@@ -799,8 +799,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Get action history for a PQRSF
-     * GET /api/settings/pqrsf/{radicado}/actions
+     * Get action history for a peticiones
+     * GET /api/settings/peticiones/{radicado}/actions
      */
     public function getActions(string $radicado): JsonResponse
     {
@@ -826,8 +826,8 @@ class AttentionController extends Controller
     }
 
     /**
-     * Get sent emails for a PQRSF
-     * GET /api/settings/pqrsf/{radicado}/emails
+     * Get sent emails for a peticiones
+     * GET /api/settings/peticiones/{radicado}/emails
      */
     public function getEmails(string $radicado): JsonResponse
     {
@@ -853,7 +853,7 @@ class AttentionController extends Controller
 
     /**
      * Get statistics
-     * GET /api/settings/pqrsf/stats
+     * GET /api/settings/peticiones/stats
      */
     public function stats(Request $request): JsonResponse
     {
@@ -919,7 +919,7 @@ class AttentionController extends Controller
 
     /**
      * Submit satisfaction survey
-     * POST /api/pqrsf/{radicado}/satisfaction
+     * POST /api/peticiones/{radicado}/satisfaction
      */
     public function submitSatisfaction(Request $request, string $radicado): JsonResponse
     {
@@ -999,7 +999,7 @@ class AttentionController extends Controller
             // Base query
             $baseQuery = Attention::query();
 
-            // Total PQRSF statistics
+            // Total peticiones statistics
             $totalAll = (clone $baseQuery)->count();
             $totalToday = (clone $baseQuery)->whereDate('created_at', $now->toDateString())->count();
             $totalWeek = (clone $baseQuery)->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count();
@@ -1254,7 +1254,7 @@ class AttentionController extends Controller
     // =========================================================================
 
     /**
-     * Get SLA status for a specific PQRSF
+     * Get SLA status for a specific peticiones
      * GET /api/attentions/{radicado}/sla-status
      */
     public function slaStatus(string $radicado): JsonResponse
@@ -1353,7 +1353,7 @@ class AttentionController extends Controller
     }
 
     /**
-     * Get list of PQRSF with SLA breaches
+     * Get list of peticiones with SLA breaches
      * GET /api/attentions/sla-breaches
      */
     public function slaBreaches(Request $request): JsonResponse
@@ -1446,7 +1446,7 @@ class AttentionController extends Controller
     // =========================================================================
 
     /**
-     * Bulk assign PQRSF to department or user
+     * Bulk assign peticiones to department or user
      * POST /api/attentions/bulk-assign
      */
     public function bulkAssign(BulkActionRequest $request): JsonResponse
@@ -1559,7 +1559,7 @@ class AttentionController extends Controller
     }
 
     /**
-     * Bulk close PQRSF
+     * Bulk close peticiones
      * POST /api/attentions/bulk-close
      */
     public function bulkClose(BulkActionRequest $request): JsonResponse
@@ -1649,7 +1649,7 @@ class AttentionController extends Controller
     }
 
     /**
-     * Bulk delete PQRSF (soft delete)
+     * Bulk delete peticiones (soft delete)
      * DELETE /api/attentions/bulk-delete
      */
     public function bulkDelete(BulkActionRequest $request): JsonResponse
@@ -1745,7 +1745,7 @@ class AttentionController extends Controller
     // =========================================================================
 
     /**
-     * Request export of PQRSF data
+     * Request export of peticiones data
      * POST /api/attentions/export
      */
     public function export(Request $request): JsonResponse
@@ -1854,7 +1854,7 @@ class AttentionController extends Controller
                 default => 'application/octet-stream',
             };
 
-            $fileName = 'pqrsf_export_'.now()->format('Y-m-d_His').".{$exportData['format']}";
+            $fileName = 'peticiones_export_'.now()->format('Y-m-d_His').".{$exportData['format']}";
 
             Log::info('Export downloaded', [
                 'user_id' => auth()->id(),

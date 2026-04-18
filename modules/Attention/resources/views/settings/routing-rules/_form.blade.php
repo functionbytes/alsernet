@@ -38,7 +38,7 @@
 </p>
 <div class="row g-3">
     <div class="col-md-4">
-        <label class="form-label">Tipo de PQRSF</label>
+        <label class="form-label">Tipo de peticiones</label>
         <select name="condition_type_id" class="form-select select2">
             <option value="">— Cualquier tipo —</option>
             @foreach($types as $type)

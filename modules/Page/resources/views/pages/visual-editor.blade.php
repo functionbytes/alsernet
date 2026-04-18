@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
 
@@ -21,7 +22,123 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <link rel="stylesheet" href="{{ asset('modules/Page/css/visual-editor.css') }}">
+    <link rel="stylesheet" href="{{ asset('modules/Page/css/visual-editor.css') }}?v=3">
+    <style>
+        @keyframes vePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(144,187,19,0.4); }
+            50%       { box-shadow: 0 0 0 6px rgba(144,187,19,0); }
+        }
+        .ve-btn-unsaved { animation: vePulse 2s infinite; }
+
+        /* Presentation mode */
+        body.ve-presentation-mode #ve-sidebar,
+        body.ve-presentation-mode #ve-topbar,
+        body.ve-presentation-mode #ve-bottombar,
+        body.ve-presentation-mode #ve-statusbar { display: none !important; }
+        body.ve-presentation-mode #ve-main { padding: 0 !important; }
+        body.ve-presentation-mode #ve-sidebar-resize { display: none !important; }
+        body.ve-presentation-mode #ve-preview-frame { width: 100vw !important; height: 100vh !important; border: none !important; }
+
+        /* Device frame overlay */
+        #ve-device-frame {
+            position: absolute; pointer-events: none; z-index: 10;
+            border: 12px solid #1e1e2e; border-radius: 36px;
+            box-shadow: 0 0 0 2px #333, 0 20px 60px rgba(0,0,0,0.4);
+            transition: all .3s ease; display: none;
+            top: 0; left: 0;
+        }
+        #ve-device-frame.tablet { border-radius: 20px; border-width: 16px; }
+        #ve-device-frame::before {
+            content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 4px; background: #333; border-radius: 2px;
+        }
+
+        /* ── Comment pins ── */
+        .ve-comment-pin { transition: transform .15s; }
+        .ve-comment-pin:hover { transform: scale(1.3); }
+
+        /* ── Page title inline edit ── */
+        #ve-page-title-display { cursor: pointer; }
+
+        /* ── Snippets modal layout ── */
+        .ve-snippets-layout {
+            display: flex;
+            min-height: 360px;
+        }
+        .ve-snippets-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        .ve-snippets-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ve-snippet-item {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid transparent;
+            background: #fff;
+            color: #333;
+        }
+        .ve-snippet-item:hover { background: #e9ecef; border-color: #dee2e6; }
+        .ve-snippet-item.active { background: #90bb13; color: #fff; border-color: #7aa310; }
+        .ve-snippets-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+        }
+        .ve-snippets-editor textarea { flex: 1; resize: none; }
+        .ve-monospace { font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; }
+
+        /* ── Icon Picker ── */
+        .ve-icon-cell {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 60px; height: 60px; border-radius: 8px; cursor: pointer;
+            border: 1px solid transparent; transition: background .15s, border-color .15s;
+            font-size: 11px; color: #555; gap: 4px; padding: 4px;
+        }
+        .ve-icon-cell i { font-size: 20px; color: #444; }
+        .ve-icon-cell:hover { background: #f0f5e6; border-color: #90bb13; }
+        .ve-icon-cell:hover i { color: #90bb13; }
+        .ve-icon-cell span { font-size: 9px; text-align: center; overflow: hidden; white-space: nowrap; max-width: 56px; text-overflow: ellipsis; }
+
+        /* ── Quick Actions Bar ── */
+        #ve-quick-actions-bar {
+            position: fixed; bottom: 18px; right: 18px; z-index: 1080;
+            display: flex; flex-direction: row; gap: 6px; align-items: center;
+        }
+        .ve-qa-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: none;
+            background: #222; color: #fff; font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3); cursor: pointer;
+            transition: background .15s, transform .1s;
+        }
+        .ve-qa-btn:hover { background: #90bb13; transform: scale(1.1); }
+
+        /* Wireframe mode */
+        #ve-canvas-wrap.ve-wireframe #ve-preview-frame { filter: grayscale(1) contrast(0.4) brightness(1.5); }
+        #ve-canvas-wrap.ve-wireframe::after {
+            content: 'WIREFRAME'; position: absolute; top: 8px; right: 12px;
+            font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #90bb13;
+            pointer-events: none; z-index: 99;
+        }
+    </style>
 </head>
 <body>
 
@@ -30,24 +147,185 @@
     <textarea id="ve-content">{{ $initialContent }}</textarea>
 </div>
 
+@if ($draftInfo)
+<div id="ve-draft-banner" style="background:#fffbe6;border-bottom:1px solid #FEC90F;padding:6px 16px;font-size:12px;display:flex;align-items:center;gap:10px;z-index:200;position:relative;">
+    <i class="fa-solid fa-clock-rotate-left text-warning"></i>
+    <span>Borrador guardado automáticamente <strong>{{ $draftInfo['saved_at'] }}</strong> por {{ $draftInfo['user_name'] }}.</span>
+    <button type="button" class="btn btn-sm btn-warning ms-1" id="btn-restore-draft" style="font-size:11px;padding:1px 8px;">Restaurar</button>
+    <button type="button" class="btn btn-sm btn-link ms-auto text-muted p-0" id="btn-dismiss-draft" style="font-size:11px;">Descartar</button>
+</div>
+@endif
+
+{{-- Lock banner (shown when another user holds the lock) --}}
+<div id="ve-lock-banner" style="display:none;background:#fff3cd;border-bottom:1px solid #ffc107;padding:6px 16px;font-size:12px;display:none;align-items:center;gap:10px;z-index:200;position:relative;">
+    <i class="fa-solid fa-lock text-warning"></i>
+    <span id="ve-lock-banner-text">Esta página está siendo editada por otro usuario.</span>
+</div>
+
 {{-- ── Body ────────────────────────────────────────────────────────────────── --}}
 <div id="ve-body">
 
     {{-- ── Top bar ──────────────────────────────────────────────────────── --}}
     <div id="ve-topbar">
-        <div class="position-relative" style="flex:1; max-width:400px;">
-            <i class="fas fa-search ve-topbar-search-icon"></i>
-            <input type="text" id="ve-topbar-search" class="ve-topbar-search" placeholder="Buscar shortcode..." autocomplete="off">
-            <button type="button" id="ve-topbar-search-clear" class="ve-topbar-search-clear" style="display:none;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
         <div class="ms-auto d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-search-in-page" title="Buscar texto en página (Ctrl+F)">
+                <i class="fas fa-magnifying-glass"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-outline-mode" title="Modo outline">
+                <i class="fa-solid fa-border-all"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-grid-overlay-top" title="Grid de 12 columnas">
+                <i class="fa-solid fa-table-columns"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-hover-inspect" title="Inspeccionar al hover">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary ve-btn-icon dropdown-toggle" data-bs-toggle="dropdown" title="Fondo del canvas" id="btn-canvas-bg">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="min-width:140px;font-size:12px;">
+                    <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#f4f6f8">Gris claro</button></li>
+                    <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#e9ecef">Gris</button></li>
+                    <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#1e1e2e">Oscuro</button></li>
+                    <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#ffffff">Blanco</button></li>
+                    <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="repeating-linear-gradient(45deg,#f0f0f0 0,#f0f0f0 10px,#fff 10px,#fff 20px)">Cuadrícula</button></li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-fullscreen-preview" title="Pantalla completa">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-diff-preview" title="Ver cambios">
+                <i class="fa-solid fa-code-compare"></i>
+            </button>
             <a href="{{ $previewUrl }}" target="_blank" class="ve-topbar-preview-btn">
-                <i class="fa-duotone fa-solid fa-eye me-1"></i>Preview
+                <i class="fa-solid fa-eye me-1"></i>Preview
             </a>
         </div>
     </div>
+
+    {{-- ── Bottom bar (moved to top) ──────────────────────────────────── --}}
+    <div id="ve-bottombar">
+            <span id="ve-page-title-display" class="fw-semibold text-truncate ve-page-title-display" title="Doble clic para renombrar">{{ $page->title }}</span>
+            <span class="{{ $page->status->badgeClass() }} ve-status-badge">{{ $page->status->label() }}</span>
+            <span id="autosave-status-bar" class="ms-1 ve-autosave-bar-text"></span>
+            <span id="ve-autosave-indicator" class="ve-autosave-indicator"></span>
+            <span id="ve-word-count" class="ve-weight-badge"></span>
+            <span id="ve-page-weight" class="ve-weight-badge"></span>
+
+            <div class="ms-auto d-flex align-items-center gap-1">
+                @if(count($supportedLocales) > 1)
+                <div class="dropdown">
+                    <button class="ve-bottom-btn ve-bottom-btn-locale dropdown-toggle" id="btn-locale-bar"
+                            data-bs-toggle="dropdown">
+                        {{ strtoupper($locale) }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        @foreach($supportedLocales as $loc)
+                        <li>
+                            <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
+                                    data-locale="{{ $loc }}">
+                                {{ strtoupper($loc) }}
+                            </button>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
+                <button class="ve-bottom-btn" id="btn-undo-bar" title="Deshacer (Ctrl+Z)" disabled>
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button class="ve-bottom-btn" id="btn-redo-bar" title="Rehacer (Ctrl+Y)" disabled>
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                {{-- Responsive dropdown --}}
+                <div class="dropdown">
+                    <button class="ve-bottom-btn dropdown-toggle" id="btn-responsive-bar"
+                            data-bs-toggle="dropdown" title="Vista responsive" style="font-size:13px;">
+                        <i class="fa-solid fa-desktop" id="responsive-bar-icon"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end ve-responsive-dropdown">
+                        <li><h6 class="dropdown-header">Responsive</h6></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn active" data-breakpoint="desktop"><i class="fa-solid fa-desktop fa-fw text-muted"></i> Escritorio</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px"><i class="fa-solid fa-laptop fa-fw text-muted"></i> Laptop <small class="ms-auto text-muted">1280×800</small></button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px"><i class="fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet <small class="ms-auto text-muted">768×1024</small></button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px"><i class="fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil <small class="ms-auto text-muted">375×812</small></button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">iPhone</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="375px" data-height="667px">iPhone SE <small class="ms-auto text-muted">375×667</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="414px" data-height="896px">iPhone XR <small class="ms-auto text-muted">414×896</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="390px" data-height="844px">iPhone 12 Pro <small class="ms-auto text-muted">390×844</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="430px" data-height="932px">iPhone 14 Pro Max <small class="ms-auto text-muted">430×932</small></button></li>
+                        <li><h6 class="dropdown-header">Android</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Pixel 7 <small class="ms-auto text-muted">412×915</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="740px">Samsung Galaxy S8+ <small class="ms-auto text-muted">360×740</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Samsung Galaxy S20 Ultra <small class="ms-auto text-muted">412×915</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="280px" data-height="653px">Samsung Galaxy A51/71 <small class="ms-auto text-muted">280×653</small></button></li>
+                        <li><h6 class="dropdown-header">Tablet</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="768px" data-height="1024px">iPad Mini <small class="ms-auto text-muted">768×1024</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="820px" data-height="1180px">iPad Air <small class="ms-auto text-muted">820×1180</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="1366px">iPad Pro <small class="ms-auto text-muted">1024×1366</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="912px" data-height="1368px">Surface Pro 7 <small class="ms-auto text-muted">912×1368</small></button></li>
+                        <li><h6 class="dropdown-header">Foldable</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="540px" data-height="720px">Surface Duo <small class="ms-auto text-muted">540×720</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="344px" data-height="882px">Galaxy Z Fold 5 <small class="ms-auto text-muted">344×882</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="568px">Asus Zenbook Fold <small class="ms-auto text-muted">360×568</small></button></li>
+                        <li><h6 class="dropdown-header">Smart Display</h6></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="600px">Nest Hub <small class="ms-auto text-muted">1024×600</small></button></li>
+                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1280px" data-height="800px">Nest Hub Max <small class="ms-auto text-muted">1280×800</small></button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-split-view"><i class="fa-solid fa-columns fa-fw text-muted"></i> Split (Desktop + Móvil)</button></li>
+                    </ul>
+                </div>
+
+                {{-- Vista dropdown --}}
+                <div class="dropdown">
+                    <button class="ve-bottom-btn dropdown-toggle" data-bs-toggle="dropdown" title="Vista">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">Vista</h6></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-wireframe"><i class="fa-solid fa-vector-square fa-fw text-muted"></i> Wireframe</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-ruler"><i class="fa-solid fa-ruler-horizontal fa-fw text-muted"></i> Regla</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-dark-mode"><i class="fa-solid fa-circle-half-stroke fa-fw text-muted"></i> Modo oscuro</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-presentation-mode"><i class="fa-solid fa-presentation-screen fa-fw text-muted"></i> Presentación</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-qr-preview"><i class="fa-solid fa-qrcode fa-fw text-muted"></i> QR preview</button></li>
+                    </ul>
+                </div>
+
+                {{-- Herramientas dropdown --}}
+                <div class="dropdown">
+                    <button class="ve-bottom-btn dropdown-toggle" data-bs-toggle="dropdown" title="Herramientas">
+                        <i class="fa-solid fa-wrench"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">Herramientas</h6></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-snippets"><i class="fa-solid fa-code fa-fw text-muted"></i> Snippets HTML</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-a11y-check"><i class="fa-solid fa-universal-access fa-fw text-muted"></i> Accesibilidad</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-check-images"><i class="fas fa-image-slash fa-fw text-muted"></i> Imágenes rotas</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-comment-mode"><i class="fas fa-comment fa-fw text-muted"></i> Comentarios</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-page-stats"><i class="fas fa-chart-simple fa-fw text-muted"></i> Estadísticas</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-quick-actions-config"><i class="fa-solid fa-bolt fa-fw text-muted"></i> Acciones rápidas</button></li>
+                    </ul>
+                </div>
+
+                @if($page->status->value !== 'published')
+                <button type="button" class="ve-bottom-btn ve-bottom-btn-publish" id="btn-publish-page" title="Publicar página">
+                    <i class="fa-solid fa-globe me-1"></i>Publicar
+                </button>
+                @else
+                <button type="button" class="ve-bottom-btn" id="btn-unpublish-page" title="Despublicar página">
+                    <i class="fa-solid fa-eye-slash me-1"></i>Despublicar
+                </button>
+                @endif
+                <button type="button" class="ve-bottom-btn ve-bottom-btn-approval" id="btn-request-approval" title="Solicitar aprobación">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button class="ve-bottom-save" id="btn-save-bar" title="Guardar (Ctrl+S)">Guardar</button>
+            </div>
+        </div>
 
     {{-- ── Main area ──────────────────────────────────────────────────── --}}
     <div id="ve-main">
@@ -58,35 +336,43 @@
         {{-- Vertical icon nav --}}
         <div id="ve-sidebar-nav">
             <a href="{{ route('pages.edit', $page) }}" class="ve-nav-btn ve-nav-back" title="Volver">
-                <i class="fa-duotone fa-solid fa-arrow-left"></i>
+                <i class="fa-solid fa-arrow-left"></i>
             </a>
             <button class="ve-nav-btn active" data-panel="shortcodes" title="Shortcodes">
-                <i class="fa-duotone fa-solid fa-puzzle-piece"></i>
+                <i class="fa-solid fa-puzzle-piece"></i>
                 <span>Bloques</span>
             </button>
             <button class="ve-nav-btn" data-panel="inspector" title="Inspector">
-                <i class="fa-duotone fa-solid fa-sliders"></i>
+                <i class="fa-solid fa-sliders"></i>
                 <span>Estilo</span>
             </button>
             <button class="ve-nav-btn" data-panel="layout" title="Layout">
-                <i class="fa-duotone fa-solid fa-table-columns"></i>
+                <i class="fa-solid fa-table-columns"></i>
                 <span>Layout</span>
             </button>
             <button class="ve-nav-btn" data-panel="sections" title="Secciones">
-                <i class="fa-duotone fa-solid fa-layer-group"></i>
+                <i class="fa-solid fa-layer-group"></i>
                 <span>Capas</span>
             </button>
             <button class="ve-nav-btn" data-panel="history" title="Historial">
-                <i class="fa-duotone fa-solid fa-clock-rotate-left"></i>
+                <i class="fa-solid fa-clock-rotate-left"></i>
                 <span>Historial</span>
             </button>
             <button class="ve-nav-btn" data-panel="code" title="Código HTML">
-                <i class="fa-duotone fa-solid fa-code"></i>
+                <i class="fa-solid fa-code"></i>
                 <span>Código</span>
             </button>
             <button class="ve-nav-btn" data-panel="settings" title="Ajustes">
-                <i class="fa-duotone fa-solid fa-gear"></i>
+                <i class="fa-solid fa-gear"></i>
                 <span>Ajustes</span>
+            </button>
+            <button class="ve-nav-btn" data-panel="dom-tree" title="Árbol DOM">
+                <i class="fa-solid fa-sitemap"></i>
+                <span>Árbol</span>
+            </button>
+            <button class="ve-nav-btn" data-panel="session" title="Historial de sesión">
+                <i class="fa-solid fa-timeline"></i>
+                <span>Sesión</span>
             </button>
         </div>
 
@@ -124,25 +410,25 @@
                         </div>
                         <div class="ve-panel-actions">
                             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-format" title="Formatear">
-                                <i class="fa-duotone fa-solid fa-wand-magic-sparkles"></i>
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
                             </button>
                             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-fold" title="Colapsar">
-                                <i class="fa-duotone fa-solid fa-compress-alt"></i>
+                                <i class="fa-solid fa-compress-alt"></i>
                             </button>
                             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-unfold" title="Expandir">
-                                <i class="fa-duotone fa-solid fa-expand-alt"></i>
+                                <i class="fa-solid fa-expand-alt"></i>
                             </button>
                             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-wrap" title="Ajuste">
-                                <i class="fa-duotone fa-solid fa-align-left"></i>
+                                <i class="fa-solid fa-align-left"></i>
                             </button>
                             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-btn-theme" title="Tema">
-                                <i class="fa-duotone fa-solid fa-circle-half-stroke"></i>
+                                <i class="fa-solid fa-circle-half-stroke"></i>
                             </button>
                             <button class="btn btn-outline-secondary ve-panel-action-btn" id="ve-code-refresh" title="Sincronizar">
-                                <i class="fa-duotone fa-solid fa-sync-alt"></i>
+                                <i class="fa-solid fa-sync-alt"></i>
                             </button>
                             <button class="btn ve-panel-action-btn ve-code-apply-btn" id="ve-code-apply" title="Aplicar cambios">
-                                <i class="fa-duotone fa-solid fa-check"></i>
+                                <i class="fa-solid fa-check"></i>
                             </button>
                         </div>
                     </div>
@@ -155,77 +441,64 @@
                     @include('page::pages.partials.ve-settings-panel')
                 </div>
 
+                <div class="ve-panel" id="ve-panel-dom-tree">
+                    <div class="ve-panel-header">
+                        <div>
+                            <div class="ve-panel-label">DOM</div>
+                            <span class="ve-panel-title">Árbol DOM</span>
+                        </div>
+                        <div class="ve-panel-actions">
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-dom-refresh" title="Actualizar">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ve-dom-tree-list" style="padding:8px;font-size:11px;overflow:auto;flex:1;"></div>
+                </div>
+
+                {{-- Session history panel (Mejora C) --}}
+                <div class="ve-panel" id="ve-panel-session">
+                    <div class="ve-panel-header">
+                        <div>
+                            <div class="ve-panel-label">Actividad</div>
+                            <span class="ve-panel-title">Historial de sesión</span>
+                        </div>
+                        <div class="ve-panel-actions">
+                            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-session-clear" title="Limpiar historial">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ve-session-history-list" style="overflow-y:auto;flex:1;"></div>
+                </div>
+
             </div>
 
-            {{-- Hidden ve-toolbar (kept in DOM for JS references) --}}
-            <div id="ve-toolbar" style="display:none;" aria-hidden="true">
+            {{-- Ghost elements for JS references (IDs needed by existing scripts) --}}
+            <div style="display:none;" aria-hidden="true">
                 <span id="autosave-status"></span>
-                @if(count($supportedLocales) > 1)
-                <div class="dropdown" id="ve-locale-dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" id="btn-locale-switcher"
-                            data-bs-toggle="dropdown" style="font-size:12px; min-width:50px; padding:2px 8px;">
-                        <span id="ve-locale-label">{{ strtoupper($locale) }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:100px;">
-                        @foreach($supportedLocales as $loc)
-                        <li>
-                            <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
-                                    data-locale="{{ $loc }}" style="font-size:12px;">
-                                {{ strtoupper($loc) }}
-                                @if(!in_array($loc, $existingLocales))
-                                    <span class="badge text-bg-secondary ms-1" style="font-size:9px;">Nuevo</span>
-                                @endif
-                            </button>
-                        </li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
-                {{-- Hidden controls — still functional via keyboard shortcuts and programmatic triggers --}}
-                <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-secondary breakpoint-btn active" data-breakpoint="desktop" title="Escritorio">
-                        <i class="fa-duotone fa-solid fa-desktop"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px" title="Laptop">
-                        <i class="fa-duotone fa-solid fa-laptop"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px" title="Tablet">
-                        <i class="fa-duotone fa-solid fa-tablet-alt"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px" title="Móvil">
-                        <i class="fa-duotone fa-solid fa-mobile-alt"></i>
-                    </button>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-undo" title="Deshacer (Ctrl+Z)" disabled>
-                    <i class="fa-duotone fa-solid fa-undo"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-redo" title="Rehacer (Ctrl+Y)" disabled>
-                    <i class="fa-duotone fa-solid fa-redo"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-discard" title="Descartar cambios">
-                    <i class="fa-duotone fa-solid fa-rotate-left"></i>
-                </button>
-                <button type="button" class="btn btn-sm" id="btn-save" style="background:#1a1a1a; border-color:#1a1a1a; color:#fff; font-weight:600;">
-                    <i class="fa-duotone fa-solid fa-save me-1"></i>Guardar
-                </button>
-                <a href="{{ $previewUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver página pública">
-                    <i class="fa-duotone fa-solid fa-external-link-alt"></i>
-                </a>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-insert-icon" title="Insertar icono"><i class="fa-duotone fa-solid fa-icons"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-export-html" title="Exportar HTML (.html)"><i class="fa-duotone fa-solid fa-file-export"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-rotate-device" title="Rotar dispositivo"><i class="fa-duotone fa-solid fa-mobile-alt"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-shortcuts" title="Atajos de teclado"><i class="fa-duotone fa-solid fa-keyboard"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-preview-draft" title="Preview borrador"><i class="fa-duotone fa-solid fa-eye"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-find-replace" title="Buscar y reemplazar (Ctrl+H)"><i class="fa-duotone fa-solid fa-exchange-alt"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-grid-overlay" title="Grid overlay"><i class="fa-duotone fa-solid fa-border-all"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-media-manager" title="Gestor de medios"><i class="fa-duotone fa-solid fa-photo-video"></i></button>
+                <button id="btn-undo" disabled></button>
+                <button id="btn-redo" disabled></button>
+                <button id="btn-save"></button>
+                <button id="btn-discard"></button>
+                <button id="btn-insert-icon"></button>
+                <button id="btn-export-html"></button>
+                <button id="btn-server-export"></button>
+                <button id="btn-server-import"></button>
+                <button id="btn-rotate-device"></button>
+                <button id="btn-shortcuts"></button>
+                <button id="btn-preview-draft"></button>
+                <button id="btn-find-replace"></button>
+                <button id="btn-grid-overlay"></button>
+                <button id="btn-media-manager"></button>
+                <span id="ve-locale-label">{{ strtoupper($locale) }}</span>
             </div>
 
         </div>
 
         {{-- Sidebar toggle --}}
         <div id="ve-sidebar-toggle" title="Colapsar barra lateral">
-            <i class="fa-duotone fa-solid fa-chevron-left"></i>
+            <i class="fa-solid fa-chevron-left"></i>
         </div>
 
     </div>
@@ -237,14 +510,23 @@
     <div id="ve-canvas">
         <div class="ve-ruler" id="ve-ruler"></div>
         <div class="ve-search-bar" id="ve-element-search">
-            <i class="fa-duotone fa-solid fa-search"></i>
+            <i class="fa-solid fa-search"></i>
             <input type="text" id="ve-element-search-input" placeholder="Buscar texto en la página...">
             <span class="ve-search-bar-count" id="ve-search-count"></span>
-            <button id="ve-search-prev" title="Anterior"><i class="fa-duotone fa-solid fa-chevron-up"></i></button>
-            <button id="ve-search-next" title="Siguiente"><i class="fa-duotone fa-solid fa-chevron-down"></i></button>
-            <button id="ve-search-close" title="Cerrar"><i class="fa-duotone fa-solid fa-times"></i></button>
+            <button id="ve-search-prev" title="Anterior"><i class="fa-solid fa-chevron-up"></i></button>
+            <button id="ve-search-next" title="Siguiente"><i class="fa-solid fa-chevron-down"></i></button>
+            <button id="ve-search-close" title="Cerrar"><i class="fa-solid fa-times"></i></button>
         </div>
-        <div id="ve-canvas-wrap" class="desktop">
+        <div id="ve-canvas-wrap" class="desktop" style="position:relative;">
+
+            {{-- Find in page panel --}}
+            <div id="ve-find-in-page" style="display:none; position:absolute; top:8px; right:16px; z-index:100; background:#fff; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.15); padding:8px; gap:6px; align-items:center;">
+                <input type="text" id="ve-find-in-page-input" class="form-control form-control-sm" style="width:200px;" placeholder="Buscar en página...">
+                <span id="ve-find-count" style="font-size:11px;color:#999;white-space:nowrap;min-width:40px;"></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-find-prev" title="Anterior">↑</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-find-next" title="Siguiente">↓</button>
+                <button type="button" class="btn-close btn-sm" id="btn-find-close"></button>
+            </div>
 
             {{-- Drag overlay (shown when dragging a block) --}}
             <div id="ve-drag-overlay"></div>
@@ -257,6 +539,9 @@
                 <div class="spinner-border text-light" role="status" style="width:2rem;height:2rem;"></div>
             </div>
 
+            {{-- Device frame overlay --}}
+            <div id="ve-device-frame"></div>
+
             {{-- Preview iframe --}}
             <iframe id="ve-preview-frame"
                     src="{{ $visualPreviewUrl }}?locale={{ $locale }}"
@@ -265,92 +550,6 @@
                     style="width:100%;height:100%;">
             </iframe>
 
-        </div>
-
-        {{-- Bottom bar --}}
-        <div id="ve-bottombar">
-            <span class="fw-semibold text-truncate" style="max-width:160px;color:#1a1c1e;font-size:13px;" title="{{ $page->title }}">
-                {{ $page->title }}
-            </span>
-            <span class="{{ $page->status->badgeClass() }}" style="font-size:10px;">{{ $page->status->label() }}</span>
-            <span id="autosave-status-bar" class="ms-1" style="font-size:11px;"></span>
-            <span id="ve-word-count" class="ve-weight-badge"></span>
-            <span id="ve-page-weight" class="ve-weight-badge"></span>
-
-            <div class="ms-auto d-flex align-items-center gap-1">
-                @if(count($supportedLocales) > 1)
-                <div class="dropdown">
-                    <button class="ve-bottom-btn dropdown-toggle" id="btn-locale-bar"
-                            data-bs-toggle="dropdown" style="font-size:12px; font-weight:600;">
-                        {{ strtoupper($locale) }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:100px;">
-                        @foreach($supportedLocales as $loc)
-                        <li>
-                            <button class="dropdown-item ve-locale-btn {{ $loc === $locale ? 'active' : '' }}"
-                                    data-locale="{{ $loc }}" style="font-size:12px;">
-                                {{ strtoupper($loc) }}
-                            </button>
-                        </li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
-                <button class="ve-bottom-btn" id="btn-undo-bar" title="Deshacer" disabled>
-                    <i class="fa-duotone fa-solid fa-rotate-left"></i>
-                </button>
-                <button class="ve-bottom-btn" id="btn-redo-bar" title="Rehacer" disabled>
-                    <i class="fa-duotone fa-solid fa-rotate-right"></i>
-                </button>
-                <div class="dropdown">
-                    <button class="ve-bottom-btn dropdown-toggle" id="btn-responsive-bar"
-                            data-bs-toggle="dropdown" title="Vista responsive" style="font-size:13px;">
-                        <i class="fa-duotone fa-solid fa-desktop" id="responsive-bar-icon"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" style="font-size:12px; min-width:150px;">
-                        <li><h6 class="dropdown-header">Responsive</h6></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn active" data-breakpoint="desktop"><i class="fa-duotone fa-solid fa-desktop fa-fw text-muted"></i> Escritorio</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="laptop" data-width="1280px" data-height="800px"><i class="fa-duotone fa-solid fa-laptop fa-fw text-muted"></i> Laptop <small class="ms-auto text-muted">1280×800</small></button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="tablet" data-width="768px" data-height="1024px"><i class="fa-duotone fa-solid fa-tablet-screen-button fa-fw text-muted"></i> Tablet <small class="ms-auto text-muted">768×1024</small></button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 breakpoint-btn" data-breakpoint="mobile" data-width="375px" data-height="812px"><i class="fa-duotone fa-solid fa-mobile-screen-button fa-fw text-muted"></i> Móvil <small class="ms-auto text-muted">375×812</small></button></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><h6 class="dropdown-header">iPhone</h6></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="375px" data-height="667px">iPhone SE <small class="ms-auto text-muted">375×667</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="414px" data-height="896px">iPhone XR <small class="ms-auto text-muted">414×896</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="390px" data-height="844px">iPhone 12 Pro <small class="ms-auto text-muted">390×844</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="430px" data-height="932px">iPhone 14 Pro Max <small class="ms-auto text-muted">430×932</small></button></li>
-                        <li><h6 class="dropdown-header">Android</h6></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Pixel 7 <small class="ms-auto text-muted">412×915</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="740px">Samsung Galaxy S8+ <small class="ms-auto text-muted">360×740</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="412px" data-height="915px">Samsung Galaxy S20 Ultra <small class="ms-auto text-muted">412×915</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="280px" data-height="653px">Samsung Galaxy A51/71 <small class="ms-auto text-muted">280×653</small></button></li>
-                        <li><h6 class="dropdown-header">Tablet</h6></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="768px" data-height="1024px">iPad Mini <small class="ms-auto text-muted">768×1024</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="820px" data-height="1180px">iPad Air <small class="ms-auto text-muted">820×1180</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="1366px">iPad Pro <small class="ms-auto text-muted">1024×1366</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="912px" data-height="1368px">Surface Pro 7 <small class="ms-auto text-muted">912×1368</small></button></li>
-                        <li><h6 class="dropdown-header">Foldable</h6></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="540px" data-height="720px">Surface Duo <small class="ms-auto text-muted">540×720</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="344px" data-height="882px">Galaxy Z Fold 5 <small class="ms-auto text-muted">344×882</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="360px" data-height="568px">Asus Zenbook Fold <small class="ms-auto text-muted">360×568</small></button></li>
-                        <li><h6 class="dropdown-header">Smart Display</h6></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1024px" data-height="600px">Nest Hub <small class="ms-auto text-muted">1024×600</small></button></li>
-                        <li><button class="dropdown-item breakpoint-btn" data-breakpoint="device" data-width="1280px" data-height="800px">Nest Hub Max <small class="ms-auto text-muted">1280×800</small></button></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2" id="btn-split-view"><i class="fa-duotone fa-solid fa-columns fa-fw text-muted"></i> Split (Desktop + Móvil)</button></li>
-                    </ul>
-                </div>
-                <button class="ve-bottom-btn" id="btn-wireframe" title="Modo wireframe">
-                    <i class="fa-duotone fa-solid fa-vector-square"></i>
-                </button>
-                <button class="ve-bottom-btn" id="btn-ruler" title="Regla">
-                    <i class="fa-duotone fa-solid fa-ruler-horizontal"></i>
-                </button>
-                <button class="ve-bottom-btn" id="btn-dark-mode" title="Modo oscuro">
-                    <i class="fa-duotone fa-solid fa-circle-half-stroke"></i>
-                </button>
-                <button class="ve-bottom-save" id="btn-save-bar" title="Guardar (Ctrl+S)">Guardar</button>
-            </div>
         </div>
 
         {{-- Zoom bar --}}
@@ -367,12 +566,175 @@
 
 </div>
 
+{{-- ── Icon picker modal (Mejora A) ────────────────────────────────────── --}}
+<div class="modal fade" id="ve-icon-picker-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-icons me-2 text-muted"></i>Seleccionar icono</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="ve-icon-search" placeholder="Buscar icono... (star, home, user...)">
+                <div id="ve-icon-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px;max-height:400px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Snippets modal (Mejora B) ───────────────────────────────────────── --}}
+<div class="modal fade" id="ve-snippets-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-code me-2 text-muted"></i>Snippets HTML</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="ve-snippets-layout">
+                    <div class="ve-snippets-sidebar">
+                        <div id="ve-snippets-list" class="ve-snippets-list"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 mt-2" id="btn-snippet-new">
+                            <i class="fas fa-plus me-1"></i> Nuevo
+                        </button>
+                    </div>
+                    <div class="ve-snippets-editor">
+                        <input type="text" class="form-control form-control-sm" id="ve-snippet-name" placeholder="Nombre del snippet">
+                        <textarea class="form-control ve-monospace" id="ve-snippet-code" rows="10" placeholder="<!-- HTML del snippet -->"></textarea>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn ve-btn-primary btn-sm flex-fill" id="btn-snippet-save">Guardar</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" id="btn-snippet-insert">Insertar en página</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-snippet-delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Approval request modal ─────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-approval-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-paper-plane me-2"></i>Solicitar aprobación</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ve-field">
+                    <label style="font-size:12px;">Comentario (opcional)</label>
+                    <textarea class="form-control" id="ve-approval-comment" rows="3"
+                              placeholder="Describe los cambios realizados..." style="font-size:12px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-2 d-block">
+                <button type="button" class="btn btn-warning w-100 mb-2" id="btn-confirm-approval" style="font-size:12px;">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Enviar solicitud
+                </button>
+                <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal" style="font-size:12px;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Import modal ────────────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-import-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-file-import me-2"></i>Importar página</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:12px;">Selecciona un archivo JSON exportado para importar su contenido.</p>
+                <input type="file" class="form-control" id="ve-import-file" accept=".json,.html" style="font-size:12px;">
+            </div>
+            <div class="modal-footer py-2 d-block">
+                <button type="button" class="btn w-100 mb-2" id="btn-confirm-import" style="background:#90bb13;color:#fff;font-size:12px;">
+                    <i class="fa-solid fa-upload me-1"></i>Importar
+                </button>
+                <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal" style="font-size:12px;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Diff modal (side-by-side) ──────────────────────────────────────── --}}
+<div class="modal fade" id="ve-diff-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:95vw;">
+        <div class="modal-content" style="height:80vh;">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-code-compare me-2"></i>Comparar versiones</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0 d-flex" style="overflow:hidden;height:100%;">
+                <div style="flex:1;display:flex;flex-direction:column;border-right:2px solid #dee2e6;">
+                    <div style="padding:6px 12px;background:#f8f9fa;font-size:11px;font-weight:600;border-bottom:1px solid #dee2e6;">
+                        <i class="fa-solid fa-clock-rotate-left me-1 text-muted"></i>Original (al cargar)
+                    </div>
+                    <iframe id="ve-diff-frame-original" style="flex:1;border:none;width:100%;" sandbox="allow-same-origin"></iframe>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;">
+                    <div style="padding:6px 12px;background:#f0f5e6;font-size:11px;font-weight:600;border-bottom:1px solid #dee2e6;">
+                        <i class="fa-solid fa-pen me-1" style="color:#90bb13;"></i>Actual (cambios no guardados)
+                    </div>
+                    <iframe id="ve-diff-frame-current" style="flex:1;border:none;width:100%;" sandbox="allow-same-origin"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Accessibility modal (Mejora E) ──────────────────────────────────── --}}
+<div class="modal fade" id="ve-a11y-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-universal-access me-2"></i>Accesibilidad</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="ve-a11y-results" style="max-height:400px;overflow-y:auto;"></div>
+            </div>
+            <div class="modal-footer py-2 d-block">
+                <button type="button" class="btn btn-sm w-100 mb-2" id="btn-a11y-fix-all" style="background:#90bb13;color:#fff;font-size:12px;">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Reparar todo automáticamente
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-bs-dismiss="modal" style="font-size:12px;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Quick actions config modal (Mejora D) ───────────────────────────── --}}
+<div class="modal fade" id="ve-quick-actions-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-bolt me-2 text-muted"></i>Acciones rápidas</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:12px;">Selecciona hasta 6 acciones para mostrar como botones flotantes.</p>
+                <div id="ve-qa-options" class="d-flex flex-column gap-1"></div>
+                <button type="button" class="btn ve-btn-primary btn-sm w-100 mt-3" id="btn-qa-save">
+                    <i class="fas fa-check me-1"></i> Aplicar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Quick actions floating bar (Mejora D) ───────────────────────────── --}}
+<div id="ve-quick-actions-bar"></div>
+
 {{-- ── Conditions modal ──────────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-conditions-modal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content ve-cmd-content">
             <div class="ve-ai-modal-header">
-                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-filter ve-ai-modal-icon"></i>Condiciones de visibilidad</h6>
+                <h6 class="ve-ai-modal-title"><i class="fa-solid fa-filter ve-ai-modal-icon"></i>Condiciones de visibilidad</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="ve-ai-modal-body">
@@ -387,7 +749,7 @@
                     </select>
                 </div>
                 <button type="button" class="btn ve-btn-primary w-100" id="btn-apply-condition">
-                    <i class="fa-duotone fa-solid fa-check me-1"></i>Aplicar
+                    <i class="fa-solid fa-check me-1"></i>Aplicar
                 </button>
             </div>
         </div>
@@ -399,7 +761,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content ve-cmd-content">
             <div class="ve-ai-modal-header">
-                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-window-restore ve-ai-modal-icon"></i>Crear popup</h6>
+                <h6 class="ve-ai-modal-title"><i class="fa-solid fa-window-restore ve-ai-modal-icon"></i>Crear popup</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="ve-ai-modal-body">
@@ -429,7 +791,7 @@
                     </select>
                 </div>
                 <button type="button" class="btn ve-btn-primary w-100" id="btn-insert-popup">
-                    <i class="fa-duotone fa-solid fa-plus me-1"></i>Insertar popup
+                    <i class="fa-solid fa-plus me-1"></i>Insertar popup
                 </button>
             </div>
         </div>
@@ -441,7 +803,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content ve-cmd-content">
             <div class="ve-ai-modal-header">
-                <h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-rectangle-list ve-ai-modal-icon"></i>Constructor de formularios</h6>
+                <h6 class="ve-ai-modal-title"><i class="fa-solid fa-rectangle-list ve-ai-modal-icon"></i>Constructor de formularios</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="ve-ai-modal-body">
@@ -460,11 +822,11 @@
                         <div class="ve-form-field-row">
                             <input type="text" class="form-control" value="Nombre" placeholder="Label del campo">
                             <select class="form-select"><option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option></select>
-                            <button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button>
+                            <button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-solid fa-times"></i></button>
                         </div>
                     </div>
                     <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="btn-add-form-field">
-                        <i class="fa-duotone fa-solid fa-plus me-1"></i>Agregar campo
+                        <i class="fa-solid fa-plus me-1"></i>Agregar campo
                     </button>
                 </div>
                 <div class="ve-field">
@@ -476,7 +838,7 @@
                     <input type="text" class="form-control" id="ve-form-action" placeholder="email@ejemplo.com o https://...">
                 </div>
                 <button type="button" class="btn ve-btn-primary w-100" id="btn-insert-form">
-                    <i class="fa-duotone fa-solid fa-plus me-1"></i>Insertar formulario
+                    <i class="fa-solid fa-plus me-1"></i>Insertar formulario
                 </button>
             </div>
         </div>
@@ -489,7 +851,7 @@
         <div class="modal-content ve-cmd-content">
             <div class="modal-header ve-ai-modal-header">
                 <h6 class="ve-ai-modal-title">
-                    <i class="fa-duotone fa-solid fa-wand-magic-sparkles ve-ai-modal-icon"></i>Generar contenido con AI
+                    <i class="fa-solid fa-wand-magic-sparkles ve-ai-modal-icon"></i>Generar contenido con AI
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -518,17 +880,17 @@
                     </select>
                 </div>
                 <button type="button" class="btn ve-btn-primary w-100" id="btn-ai-generate">
-                    <i class="fa-duotone fa-solid fa-wand-magic-sparkles me-1"></i>Generar
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Generar
                 </button>
                 <div id="ve-ai-result" class="ve-ai-result ve-hidden">
                     <label>Resultado</label>
                     <div id="ve-ai-output" class="ve-ai-output"></div>
                     <div class="ve-ai-actions">
                         <button type="button" class="btn ve-btn-primary" id="btn-ai-insert">
-                            <i class="fa-duotone fa-solid fa-check me-1"></i>Insertar
+                            <i class="fa-solid fa-check me-1"></i>Insertar
                         </button>
                         <button type="button" class="btn btn-outline-secondary" id="btn-ai-regenerate">
-                            <i class="fa-duotone fa-solid fa-rotate me-1"></i>Regenerar
+                            <i class="fa-solid fa-rotate me-1"></i>Regenerar
                         </button>
                     </div>
                 </div>
@@ -542,39 +904,10 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
         <div class="modal-content ve-cmd-content">
             <div class="ve-cmd-search-wrap">
-                <i class="fa-duotone fa-solid fa-search ve-cmd-search-icon"></i>
+                <i class="fa-solid fa-search ve-cmd-search-icon"></i>
                 <input type="text" id="ve-cmd-input" class="ve-cmd-input" placeholder="Buscar acciones, bloques, paneles..." autocomplete="off">
             </div>
             <div id="ve-cmd-results" class="ve-cmd-results"></div>
-        </div>
-    </div>
-</div>
-
-{{-- ── Keyboard shortcuts modal ──────────────────────────────────────────── --}}
-<div class="modal fade" id="ve-shortcuts-modal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border:none; border-radius:12px; overflow:hidden;">
-            <div class="modal-header" style="background:#fff; border-bottom:1px solid #eee; padding:14px 20px;">
-                <h6 style="font-weight:700; font-size:14px; color:#333; margin:0;">
-                    <i class="fa-duotone fa-solid fa-keyboard me-2" style="color:#999;"></i>Atajos de teclado
-                </h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:16px 20px; max-height:60vh; overflow-y:auto;">
-                <div style="display:grid; gap:4px;">
-                    <div class="ve-shortcut-row"><span>Guardar</span><kbd>Ctrl+S</kbd></div>
-                    <div class="ve-shortcut-row"><span>Deshacer</span><kbd>Ctrl+Z</kbd></div>
-                    <div class="ve-shortcut-row"><span>Rehacer</span><kbd>Ctrl+Y</kbd></div>
-                    <div class="ve-shortcut-row"><span>Buscar y reemplazar</span><kbd>Ctrl+H</kbd></div>
-                    <div class="ve-shortcut-row"><span>Copiar elemento</span><kbd>Shift+C</kbd></div>
-                    <div class="ve-shortcut-row"><span>Pegar elemento</span><kbd>Shift+V</kbd></div>
-                    <div class="ve-shortcut-row"><span>Eliminar elemento</span><kbd>Delete</kbd></div>
-                    <div class="ve-shortcut-row"><span>Mover arriba</span><kbd>Shift+↑</kbd></div>
-                    <div class="ve-shortcut-row"><span>Mover abajo</span><kbd>Shift+↓</kbd></div>
-                    <div class="ve-shortcut-row"><span>Duplicar</span><kbd>Shift+D</kbd></div>
-                    <div class="ve-shortcut-row"><span>Ver atajos</span><kbd>?</kbd></div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -584,40 +917,40 @@
 <script src="{{ asset('modules/Media/js/media-picker.js') }}"></script>
 
 {{-- ── Context menu ──────────────────────────────────────────────────────── --}}
-<div id="ve-context-menu">
-    <div class="ve-ctx-item" id="ctx-copy">
-        <i class="fa-duotone fa-solid fa-copy fa-fw text-muted"></i> Copiar
-        <span class="ms-auto" style="font-size:10px;color:#bbb;">⇧C</span>
-    </div>
-    <div class="ve-ctx-item" id="ctx-paste" style="display:none;">
-        <i class="fa-duotone fa-solid fa-paste fa-fw text-muted"></i> Pegar después
-        <span class="ms-auto" style="font-size:10px;color:#bbb;">⇧V</span>
-    </div>
-    <div class="ve-ctx-divider"></div>
-    <div class="ve-ctx-item" id="ctx-move-up">
-        <i class="fa-duotone fa-solid fa-arrow-up fa-fw text-muted"></i> Mover arriba
-    </div>
-    <div class="ve-ctx-item" id="ctx-move-down">
-        <i class="fa-duotone fa-solid fa-arrow-down fa-fw text-muted"></i> Mover abajo
-    </div>
-    <div class="ve-ctx-item" id="ctx-duplicate">
-        <i class="fa-duotone fa-solid fa-clone fa-fw text-muted"></i> Duplicar
-    </div>
-    <div class="ve-ctx-item" id="ctx-edit-html">
-        <i class="fa-duotone fa-solid fa-code fa-fw text-muted"></i> Editar HTML
-    </div>
-    <div class="ve-ctx-item" id="ctx-save-block">
-        <i class="fa-duotone fa-solid fa-bookmark fa-fw text-muted"></i> Guardar como shortcode
-    </div>
-    <div class="ve-ctx-divider"></div>
-    <div class="ve-ctx-item text-danger" id="ctx-delete">
-        <i class="fa-duotone fa-solid fa-trash-can fa-fw"></i> Eliminar
-    </div>
+<div id="ve-context-menu" role="menu">
+    <button type="button" class="ve-ctx-item" id="ctx-copy" role="menuitem">
+        <i class="fa-solid fa-copy fa-fw text-muted"></i> Copiar
+        <span class="ms-auto ve-ctx-shortcut">⇧C</span>
+    </button>
+    <button type="button" class="ve-ctx-item" id="ctx-paste" style="display:none;" role="menuitem">
+        <i class="fa-solid fa-paste fa-fw text-muted"></i> Pegar después
+        <span class="ms-auto ve-ctx-shortcut">⇧V</span>
+    </button>
+    <div class="ve-ctx-divider" role="separator"></div>
+    <button type="button" class="ve-ctx-item" id="ctx-move-up" role="menuitem">
+        <i class="fa-solid fa-arrow-up fa-fw text-muted"></i> Mover arriba
+    </button>
+    <button type="button" class="ve-ctx-item" id="ctx-move-down" role="menuitem">
+        <i class="fa-solid fa-arrow-down fa-fw text-muted"></i> Mover abajo
+    </button>
+    <button type="button" class="ve-ctx-item" id="ctx-duplicate" role="menuitem">
+        <i class="fa-solid fa-clone fa-fw text-muted"></i> Duplicar
+    </button>
+    <button type="button" class="ve-ctx-item" id="ctx-edit-html" role="menuitem">
+        <i class="fa-solid fa-code fa-fw text-muted"></i> Editar HTML
+    </button>
+    <button type="button" class="ve-ctx-item" id="ctx-save-block" role="menuitem">
+        <i class="fa-solid fa-bookmark fa-fw text-muted"></i> Guardar como shortcode
+    </button>
+    <div class="ve-ctx-divider" role="separator"></div>
+    <button type="button" class="ve-ctx-item text-danger" id="ctx-delete" role="menuitem">
+        <i class="fa-solid fa-trash-can fa-fw"></i> Eliminar
+    </button>
 </div>
 
 {{-- ── Modal: HTML editor ────────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-html-editor-modal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0">Editor HTML
@@ -657,7 +990,7 @@
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-sm btn-primary" id="btn-apply-html"
                         style="background:#1a1a1a;border-color:#1a1a1a;">
-                    <i class="fa-duotone fa-solid fa-check me-1"></i>Aplicar cambios
+                    <i class="fa-solid fa-check me-1"></i>Aplicar cambios
                 </button>
             </div>
         </div>
@@ -666,10 +999,10 @@
 
 {{-- ── Modal: icono selector ─────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-icon-modal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fa-duotone fa-solid fa-icons me-2"></i>Insertar icono</h5>
+                <h5 class="modal-title"><i class="fa-solid fa-icons me-2"></i>Insertar icono</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -700,7 +1033,7 @@
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0">
-                    <i class="fa-duotone fa-solid fa-code me-2 text-muted"></i>
+                    <i class="fa-solid fa-code me-2 text-muted"></i>
                     <span id="ve-scb-title">Shortcode Builder</span>
                     <code id="ve-scb-tag" class="ms-2" style="font-size:11px; background:#f1f3f5; padding:1px 6px; border-radius:3px;"></code>
                 </h6>
@@ -747,10 +1080,10 @@
 
 {{-- ── Modal: Atajos de teclado ──────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-shortcuts-modal" tabindex="-1">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title mb-0"><i class="fa-duotone fa-solid fa-keyboard me-2 text-muted"></i>Atajos de teclado</h6>
+                <h6 class="modal-title mb-0"><i class="fa-solid fa-keyboard me-2 text-muted"></i>Atajos de teclado</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
@@ -813,6 +1146,25 @@
 </div>
 
 
+{{-- ── Modal: Estadísticas de página ──────────────────────────────────────── --}}
+<div class="modal fade" id="ve-stats-modal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-chart-simple me-2 text-muted"></i>Estadísticas</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <tbody id="ve-stats-table">
+                        <tr><td>Cargando…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- ── Modal: Confirmar eliminación ───────────────────────────────────────── --}}
 <div class="modal fade" id="ve-confirm-modal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-sm modal-dialog-centered">
@@ -834,6 +1186,73 @@
     </div>
 </div>
 
+{{-- ── Modal: QR Preview ───────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-qr-modal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0">Escanea desde tu móvil</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-3">
+                <div id="ve-qr-container" style="display:inline-block;"></div>
+                <div id="ve-qr-url" class="mt-2" style="font-size:10px;color:#aaa;word-break:break-all;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Modal: Imágenes rotas ────────────────────────────────────────────────── --}}
+<div class="modal fade" id="ve-broken-images-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-image-slash me-2 text-muted"></i>Imágenes rotas</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="ve-broken-images-list" style="max-height:400px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Modal: Buscar y reemplazar en shortcodes ────────────────────────────── --}}
+<div class="modal fade" id="ve-sc-find-replace-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0">Buscar y reemplazar en bloques</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:12px;">Tipo de bloque (opcional)</label>
+                    <input type="text" class="form-control form-control-sm" id="sc-fr-type" placeholder="contact-form, button... (vacío = todos)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:12px;">Atributo</label>
+                    <input type="text" class="form-control form-control-sm" id="sc-fr-attr" placeholder="email, title, color...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:12px;">Buscar</label>
+                    <input type="text" class="form-control form-control-sm" id="sc-fr-find" placeholder="valor a buscar">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:12px;">Reemplazar con</label>
+                    <input type="text" class="form-control form-control-sm" id="sc-fr-replace" placeholder="nuevo valor">
+                </div>
+                <div id="sc-fr-preview" style="font-size:12px;color:#888;min-height:18px;"></div>
+            </div>
+            <div class="modal-footer py-2 d-block">
+                <button type="button" class="btn ve-btn-primary w-100 mb-1" id="btn-sc-fr-preview">Vista previa</button>
+                <button type="button" class="btn btn-danger w-100 mb-1" id="btn-sc-fr-apply">Aplicar a todos</button>
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Block HTML data (used by shortcodes panel to render HTML blocks) --}}
 @include('page::pages.partials.ve-blocks-data')
 
@@ -849,7 +1268,10 @@
     const VISUAL_PREVIEW       = '{{ route("pages.visual-preview", $page) }}';
     const SAVE_URL             = '{{ route("pages.visual-save", $page) }}';
     const LOCALE_CONTENT_URL   = '{{ route("pages.locale-content", $page) }}';
-    const EXPAND_SHORTCODE_URL = '{{ route("pages.expand-shortcode", $page) }}';
+    const EXPAND_SHORTCODE_URL   = '{{ route("pages.expand-shortcode", $page) }}';
+    const EDITOR_VERSIONS_URL    = '{{ route("pages.editor-versions", $page) }}';
+    const EDITOR_VERSION_URL     = '{{ url("panel/pages/".$page->id."/editor-versions") }}';
+    const DRAFT_URL              = '{{ route("pages.draft", $page) }}';
     let   LOCALE            = '{{ $locale ?? app()->getLocale() }}';
     const DEFAULT_LOCALE    = '{{ $defaultLocale ?? app()->getLocale() }}';
     const PAGE_DATA      = {!! json_encode([
@@ -970,7 +1392,11 @@
 
     function markModified(dirty) {
         isModified = dirty;
+        window._veIsModified = dirty;
         setAutoSaveStatus(dirty ? 'unsaved' : '', dirty ? 'Sin guardar' : '');
+        $('#btn-save').toggleClass('ve-btn-unsaved', dirty);
+        $('#btn-save-bar').toggleClass('ve-btn-unsaved', dirty);
+        $(document).trigger('ve-modified-changed', [dirty]);
     }
 
     /* ── CKEditor init ───────────────────────────────────────────────── */
@@ -978,10 +1404,10 @@
         toolbar: {
             items: [
                 'heading', '|',
-                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'bold', 'italic', '|',
                 'link', '|',
                 'bulletedList', 'numberedList', '|',
-                'blockQuote', 'code', '|',
+                'blockQuote', '|',
                 'insertTable', '|',
                 'outdent', 'indent', '|',
                 'undo', 'redo',
@@ -1114,7 +1540,16 @@
                 method:      'PATCH',
                 contentType: 'application/json',
                 headers:     { 'X-CSRF-TOKEN': CSRF },
-                data:        JSON.stringify({ content: content }),
+                data:        JSON.stringify({
+                    content:         content,
+                    locale:          LOCALE,
+                    title:           PAGE_DATA.title,
+                    slug:            PAGE_DATA.slug,
+                    status:          PAGE_DATA.status,
+                    seo_title:       PAGE_DATA.seo_title       || '',
+                    seo_description: PAGE_DATA.seo_description || '',
+                    seo_keywords:    PAGE_DATA.seo_keywords    || '',
+                }),
                 success: function () {
                     isModified = false;
                     hasInspectorChanges = false;
@@ -1150,7 +1585,6 @@
                     content:         content,
                     template:        PAGE_DATA.template,
                     title:           PAGE_DATA.title,
-                    slug:            PAGE_DATA.slug,
                     status:          PAGE_DATA.status,
                     seo_title:       PAGE_DATA.seo_title       || '',
                     seo_description: PAGE_DATA.seo_description || '',
@@ -1161,20 +1595,20 @@
                     hasInspectorChanges = false;
                     originalContent = content;
                     setAutoSaveStatus('saved', 'Guardado ' + currentTime());
-                    $btn.html('<i class="fa-duotone fa-solid fa-check me-1"></i>Guardado')
+                    $btn.html('<i class="fa-solid fa-check me-1"></i>Guardado')
                         .css({ background: '#13C672', 'border-color': '#13C672' });
                     setTimeout(function () {
-                        $btn.html('<i class="fa-duotone fa-solid fa-save me-1"></i>Guardar')
+                        $btn.html('<i class="fa-solid fa-save me-1"></i>Guardar')
                             .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 2500);
                 },
                 error: function (xhr) {
                     const msg = xhr.responseJSON?.message || 'Error al guardar';
-                    $btn.html('<i class="fa-duotone fa-solid fa-exclamation-triangle me-1"></i>Error')
+                    $btn.html('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error')
                         .css({ background: '#FA896B', 'border-color': '#FA896B' });
                     alert(msg);
                     setTimeout(function () {
-                        $btn.html('<i class="fa-duotone fa-solid fa-save me-1"></i>Guardar')
+                        $btn.html('<i class="fa-solid fa-save me-1"></i>Guardar')
                             .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 3000);
                 },
@@ -1187,7 +1621,7 @@
         if (isSaving) return;
         isSaving = true;
         const $btn = $(this).prop('disabled', true)
-                            .html('<i class="fa-duotone fa-solid fa-spinner fa-spin me-1"></i>Guardando...');
+                            .html('<i class="fa-solid fa-spinner fa-spin me-1"></i>Guardando...');
         doSave($btn);
     });
 
@@ -1218,7 +1652,7 @@
         }
 
         var $btn = $('#btn-locale-switcher');
-        $btn.prop('disabled', true).html('<i class="fa-duotone fa-solid fa-spinner fa-spin"></i>');
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
 
         $.ajax({
             url: LOCALE_CONTENT_URL,
@@ -1329,7 +1763,7 @@
 
         // Update bottom bar icon and rotate-device button visibility
         const iconClass = BREAKPOINT_ICONS[bp] || 'fa-desktop';
-        $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid ' + iconClass);
+        $('#responsive-bar-icon').attr('class', 'fa-solid ' + iconClass);
         $('#btn-rotate-device').toggle(bp !== 'desktop');
 
         // Remove split if active
@@ -1370,6 +1804,9 @@
         if (panel === 'settings') {
             setTimeout(function () { if (window.runSeoAnalysis) window.runSeoAnalysis(); }, 100);
         }
+        if (panel === 'dom-tree') {
+            setTimeout(buildDomTree, 150);
+        }
         if (panel === 'code') {
             setTimeout(function () { veInitCodePanel(); }, 80);
             $('#ve-sidebar').css('width', '600px');
@@ -1384,6 +1821,186 @@
     $('#btn-undo-bar').on('click', function () { $('#btn-undo').trigger('click'); });
     $('#btn-redo-bar').on('click', function () { $('#btn-redo').trigger('click'); });
     $('#btn-save-bar').on('click', function () { $('#btn-save').trigger('click'); });
+
+    /* ── Publish / Unpublish ─────────────────────────────────────────── */
+    var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+    var PUBLISH_URL   = '{{ route("pages.publish", $page) }}';
+    var UNPUBLISH_URL = '{{ route("pages.unpublish", $page) }}';
+
+    $('#btn-publish-page').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.post(PUBLISH_URL, { _token: CSRF_TOKEN })
+            .done(function () {
+                showToast('<i class="fa-solid fa-globe me-1"></i>Página publicada correctamente.');
+                $btn.hide();
+                $('#btn-unpublish-page').show();
+            })
+            .fail(function () { showToast('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error al publicar.', 'error'); })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+
+    $('#btn-unpublish-page').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.post(UNPUBLISH_URL, { _token: CSRF_TOKEN })
+            .done(function () {
+                showToast('<i class="fa-solid fa-eye-slash me-1"></i>Página despublicada.');
+                $btn.hide();
+                $('#btn-publish-page').show();
+            })
+            .fail(function () { showToast('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error al despublicar.', 'error'); })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+
+    /* ── Approval request ────────────────────────────────────────────── */
+    var APPROVAL_URL = '{{ route("pages.approval.request", $page) }}';
+
+    $('#btn-request-approval').on('click', function () {
+        new bootstrap.Modal(document.getElementById('ve-approval-modal')).show();
+    });
+
+    $('#btn-confirm-approval').on('click', function () {
+        var comment = $('#ve-approval-comment').val().trim();
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: APPROVAL_URL,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            data: { comment: comment },
+        })
+        .done(function () {
+            bootstrap.Modal.getInstance(document.getElementById('ve-approval-modal')).hide();
+            showToast('<i class="fa-solid fa-check me-1"></i>Solicitud de aprobación enviada.');
+        })
+        .fail(function () { showToast('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error al enviar solicitud.', 'error'); })
+        .always(function () { $btn.prop('disabled', false); });
+    });
+
+    /* ── Page lock ───────────────────────────────────────────────────── */
+    var LOCK_URL = '{{ url("api/v1/pages/" . $page->id . "/lock") }}';
+    var lockRenewTimer = null;
+
+    function acquireLock() {
+        $.ajax({
+            url: LOCK_URL,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+        })
+        .done(function (res) {
+            var data = res && res.data ? res.data : res;
+            if (data && data.locked_by_me === false && data.locked_by) {
+                showLockBanner(data.locked_by);
+            } else {
+                lockRenewTimer = setInterval(renewLock, 60000);
+            }
+        })
+        .fail(function (xhr) {
+            if (xhr.status === 423) {
+                var data = xhr.responseJSON && xhr.responseJSON.data;
+                showLockBanner(data && data.locked_by ? data.locked_by : 'otro usuario');
+            }
+        });
+    }
+
+    function renewLock() {
+        $.ajax({ url: LOCK_URL, method: 'PATCH', headers: { 'X-CSRF-TOKEN': CSRF_TOKEN } });
+    }
+
+    function releaseLock() {
+        clearInterval(lockRenewTimer);
+        navigator.sendBeacon && navigator.sendBeacon(LOCK_URL + '?_method=DELETE&_token=' + CSRF_TOKEN);
+    }
+
+    function showLockBanner(user) {
+        $('#ve-lock-banner-text').text('Esta página está siendo editada por ' + user + '. Tus cambios podrían sobrescribirse.');
+        $('#ve-lock-banner').css('display', 'flex');
+    }
+
+    $(window).on('beforeunload', releaseLock);
+    acquireLock();
+
+    /* ── Server export / import ──────────────────────────────────────── */
+    $('#btn-server-export').on('click', function () {
+        window.open('{{ route("pages.export.download") }}?ids={{ $page->id }}', '_blank');
+    });
+
+    $('#btn-server-import').on('click', function () {
+        new bootstrap.Modal(document.getElementById('ve-import-modal')).show();
+    });
+
+    $('#btn-confirm-import').on('click', function () {
+        var file = document.getElementById('ve-import-file').files[0];
+        if (!file) { showToast('Selecciona un archivo primero.', 'error'); return; }
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', CSRF_TOKEN);
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: '{{ route("pages.import.process") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+        })
+        .done(function () {
+            bootstrap.Modal.getInstance(document.getElementById('ve-import-modal')).hide();
+            showToast('<i class="fa-solid fa-check me-1"></i>Página importada correctamente.');
+        })
+        .fail(function () { showToast('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error al importar.', 'error'); })
+        .always(function () { $btn.prop('disabled', false); });
+    });
+
+    /* ── A11y auto-fix ───────────────────────────────────────────────── */
+    $('#btn-a11y-fix-all').on('click', function () {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) { return; }
+        var doc = frame.contentDocument;
+        var fixed = 0;
+
+        // Add alt="" to images without alt
+        doc.querySelectorAll('img:not([alt])').forEach(function (img) {
+            img.setAttribute('alt', '');
+            fixed++;
+        });
+        doc.querySelectorAll('img[alt=""]').forEach(function (img) {
+            // already has alt (even empty) — counts as accessible
+        });
+
+        // Add aria-label to empty links
+        doc.querySelectorAll('a').forEach(function (a) {
+            if (!a.textContent.trim() && !a.querySelector('img') && !a.getAttribute('aria-label')) {
+                a.setAttribute('aria-label', 'Enlace');
+                fixed++;
+            }
+        });
+
+        if (fixed > 0) {
+            // Sync fixed HTML back to editor
+            var newHtml = doc.body ? doc.body.innerHTML : '';
+            if (window.p && window.p.veEditor) {
+                window.p.veEditor.setData(newHtml);
+            }
+            showToast('<i class="fa-solid fa-wand-magic-sparkles me-1"></i>' + fixed + ' problema(s) reparado(s).');
+        } else {
+            showToast('<i class="fa-solid fa-check me-1"></i>No hay problemas que reparar automáticamente.');
+        }
+        bootstrap.Modal.getInstance(document.getElementById('ve-a11y-modal')).hide();
+    });
+
+    /* ── Media picker recent images ──────────────────────────────────── */
+    var VE_RECENT_MEDIA_KEY = 've_recent_media_{{ $page->id }}';
+
+    function getRecentMedia() {
+        try { return JSON.parse(localStorage.getItem(VE_RECENT_MEDIA_KEY) || '[]'); } catch (e) { return []; }
+    }
+
+    function addRecentMedia(url) {
+        if (!url || !url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i)) return;
+        var list = getRecentMedia().filter(function (u) { return u !== url; });
+        list.unshift(url);
+        localStorage.setItem(VE_RECENT_MEDIA_KEY, JSON.stringify(list.slice(0, 5)));
+    }
 
     // Sync disabled state from top toolbar to bottom bar
     const undoRedoObserver = new MutationObserver(function () {
@@ -1450,6 +2067,10 @@
     /* ── Inspector style tracking ────────────────────────────────────── */
     let currentContextNodeId = null;
 
+    /* ── Hover inspect state (declared early; handler added at end) ─── */
+    var hoverInspectMode = false;
+    var $hoverTooltip    = null;
+
     /* ── Global message dispatcher ───────────────────────────────────── */
     window.addEventListener('message', function (e) {
         if (!e.data || !e.data.type) return;
@@ -1474,6 +2095,18 @@
                 // Auto-switch to inspector panel
                 $('[data-panel="inspector"]').trigger('click');
                 break;
+
+            case 've-open-sc-editor': {
+                $('[data-panel="inspector"]').trigger('click');
+                setTimeout(function () {
+                    var $section = $('#ve-section-shortcode');
+                    var $scroll  = $section.closest('.ve-panel-root');
+                    if ($section.length && !$section.hasClass('ve-hidden') && $scroll.length) {
+                        $scroll.animate({ scrollTop: $scroll.scrollTop() + $section.position().top - 8 }, 200);
+                    }
+                }, 150);
+                break;
+            }
 
             case 've-inline-edit-committed':
                 syncFromIframe(d.html);
@@ -1525,7 +2158,7 @@
                     copiedElementHtml = d.html || null;
                     if (copiedElementHtml) {
                         $('#ctx-paste').show();
-                        showToast('<i class="fa-duotone fa-solid fa-copy me-1"></i>Elemento copiado');
+                        showToast('<i class="fa-solid fa-copy me-1"></i>Elemento copiado');
                     }
                 }
                 break;
@@ -1554,6 +2187,29 @@
                     $('.ve-section-item[data-index="' + d.index + '"]').addClass('ve-scroll-active');
                 }
                 break;
+
+            case 've-element-dims': {
+                if (!hoverInspectMode) break;
+                if (!$hoverTooltip || !$hoverTooltip.length) {
+                    $hoverTooltip = $('<div id="ve-hover-tooltip">')
+                        .css({
+                            position: 'fixed', zIndex: 99998, pointerEvents: 'none',
+                            background: '#1e1e2e', color: '#e0e0e0', padding: '3px 8px',
+                            borderRadius: '4px', fontSize: '11px', fontFamily: 'monospace',
+                            boxShadow: '0 2px 8px rgba(0,0,0,.4)', whiteSpace: 'nowrap',
+                        });
+                    $('body').append($hoverTooltip);
+                }
+                var w   = d.width  !== undefined ? Math.round(d.width)  : '?';
+                var h   = d.height !== undefined ? Math.round(d.height) : '?';
+                var tag = d.tag    ? '<' + d.tag + '> · ' : '';
+                // Pin tooltip to bottom-left of canvas to avoid CKEditor balloon toolbars
+                var frameRect2 = document.getElementById('ve-preview-frame').getBoundingClientRect();
+                $hoverTooltip
+                    .text(tag + w + '×' + h + (d.x !== undefined ? ' @ ' + Math.round(d.x) + ',' + Math.round(d.y) : ''))
+                    .css({ left: (frameRect2.left + 8) + 'px', top: (frameRect2.bottom - 28) + 'px' });
+                break;
+            }
         }
     });
 
@@ -1658,7 +2314,11 @@
                     foldGutter:       true,
                     gutters:          ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
                     foldOptions:      { widget: ' ▾ ··· ', minFoldSize: 2 },
+                    hintOptions:      { hint: window.veBootstrapHint, completeSingle: false },
                     extraKeys: {
+                        'Ctrl-Space': function (cm) {
+                            CodeMirror.commands.autocomplete(cm, window.veBootstrapHint, { completeSingle: false });
+                        },
                         'Ctrl-F': 'findPersistent',
                         'Ctrl-H': 'replace',
                         'F11': function (cm) {
@@ -1675,6 +2335,7 @@
                     },
                 }
             );
+            window.veCodeMirror.on('inputRead', window.veBootstrapHintAuto);
         }
         window.veCodeMirror.refresh();
     });
@@ -1683,7 +2344,7 @@
     $('#ve-btn-format').on('click', function () {
         if (!window.veCodeMirror) { return; }
         window.veCodeMirror.setValue(veFormatHtml(window.veCodeMirror.getValue()));
-        toastr.info('Código formateado.');
+        showToast('<i class="fas fa-check me-1"></i>Código formateado.');
     });
 
     $('#ve-btn-fold-all').on('click', function () {
@@ -1747,9 +2408,17 @@
                     styleActiveLine: true,
                     foldGutter:     true,
                     gutters:        ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-                    extraKeys:      { 'Ctrl-F': 'findPersistent', 'Ctrl-H': 'replace' },
+                    hintOptions:    { hint: window.veBootstrapHint, completeSingle: false },
+                    extraKeys:      {
+                        'Ctrl-Space': function (cm) {
+                            CodeMirror.commands.autocomplete(cm, window.veBootstrapHint, { completeSingle: false });
+                        },
+                        'Ctrl-F': 'findPersistent',
+                        'Ctrl-H': 'replace',
+                    },
                 }
             );
+            veFullCodeMirror.on('inputRead', window.veBootstrapHintAuto);
             veFullCodeMirror.on('change', function () {
                 codeEditorDirty = true;
                 markModified(true);
@@ -1823,16 +2492,34 @@
     $('#ve-code-apply').on('click', function () {
         if (!veFullCodeMirror) return;
         var html = veFullCodeMirror.getValue();
-        sendToFrame({ type: 've-set-full-html', html: html });
-        codeEditorDirty = false;
-        markModified(true);
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Compilando…');
+        $.ajax({
+            url: VISUAL_PREVIEW,
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: JSON.stringify({ content: html }),
+        }).done(function (rendered) {
+            var frame = document.getElementById('ve-frame');
+            if (!frame) { return; }
+            frame.contentDocument.open();
+            frame.contentDocument.write(rendered);
+            frame.contentDocument.close();
+            codeEditorDirty = false;
+            markModified(true);
+        }).fail(function () {
+            showToast('<i class="fas fa-times-circle me-1 text-danger"></i>Error al compilar el contenido.');
+        }).always(function () {
+            $btn.prop('disabled', false).text('Aplicar');
+        });
     });
 
     // ── Toolbar del panel código completo ────────────────────────────────────
     $('#ve-code-btn-format').on('click', function () {
         if (!veFullCodeMirror) { return; }
         veFullCodeMirror.setValue(veFormatHtml(veFullCodeMirror.getValue()));
-        toastr.info('Código formateado.');
+        showToast('<i class="fas fa-check me-1"></i>Código formateado.');
     });
 
     $('#ve-code-btn-fold').on('click', function () {
@@ -1975,14 +2662,14 @@
 
             const $item = $([
                 '<div class="ve-section-item" data-index="' + index + '">',
-                '<i class="fa-duotone fa-solid fa-grip-vertical ve-section-handle"></i>',
+                '<i class="fa-solid fa-grip-vertical ve-section-handle"></i>',
                 '<span class="ve-section-tag">' + tag + '</span>',
                 '<span class="ve-section-label" title="' + label.replace(/"/g, '&quot;') + '">',
                 label, '</span>',
                 '<div class="d-flex gap-1">',
-                '<button class="btn btn-xs btn-outline-secondary ve-sec-up px-1 py-0" style="font-size:10px;line-height:1.4;" title="Subir"><i class="fa-duotone fa-solid fa-chevron-up"></i></button>',
-                '<button class="btn btn-xs btn-outline-secondary ve-sec-down px-1 py-0" style="font-size:10px;line-height:1.4;" title="Bajar"><i class="fa-duotone fa-solid fa-chevron-down"></i></button>',
-                '<button class="btn btn-xs btn-outline-secondary ve-sec-delete px-1 py-0" style="font-size:10px;line-height:1.4;" title="Eliminar"><i class="fa-duotone fa-solid fa-times"></i></button>',
+                '<button class="btn btn-sm ve-sec-btn ve-sec-up" title="Subir"><i class="fa-solid fa-chevron-up"></i></button>',
+                '<button class="btn btn-sm ve-sec-btn ve-sec-down" title="Bajar"><i class="fa-solid fa-chevron-down"></i></button>',
+                '<button class="btn btn-sm ve-sec-btn ve-sec-delete" title="Eliminar"><i class="fa-solid fa-times"></i></button>',
                 '</div></div>',
             ].join(''));
 
@@ -2253,9 +2940,12 @@
                 const ck    = frame?.contentDocument?.querySelector('.ck-content');
                 if (!ck) return;
 
-                // Parse the returned HTML and append each top-level node.
+                // Wrap with a sentinel div so extractContent() restores the raw shortcode
+                // tag on save rather than persisting the expanded HTML.
+                const safeCode = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                                     .replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
                 const tmp = frame.contentDocument.createElement('div');
-                tmp.innerHTML = html;
+                tmp.innerHTML = '<div data-ve-sc="' + safeCode + '">' + html + '</div>';
                 while (tmp.firstChild) {
                     ck.appendChild(tmp.firstChild);
                 }
@@ -2265,7 +2955,7 @@
                 getContentToSave().then(function (savedHtml) {
                     pushHistory('Insertar shortcode', savedHtml);
                 });
-                showToast('<i class="fa-duotone fa-solid fa-code me-1"></i>Shortcode insertado');
+                showToast('<i class="fa-solid fa-code me-1"></i>Shortcode insertado');
             },
             error: function () {
                 // Fallback: insert raw shortcode text
@@ -2278,7 +2968,7 @@
                     isModified = true;
                     scheduleAutoSave();
                 }
-                showToast('<i class="fa-duotone fa-solid fa-code me-1"></i>Shortcode insertado');
+                showToast('<i class="fa-solid fa-code me-1"></i>Shortcode insertado');
             },
         });
     });
@@ -2287,7 +2977,7 @@
         const code = $('#ve-scb-preview').text();
         if (!code) return;
         navigator.clipboard?.writeText(code).then(function () {
-            showToast('<i class="fa-duotone fa-solid fa-copy me-1"></i>Copiado al portapapeles');
+            showToast('<i class="fa-solid fa-copy me-1"></i>Copiado al portapapeles');
         }).catch(function () {
             // fallback
             const ta = document.createElement('textarea');
@@ -2296,7 +2986,7 @@
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            showToast('<i class="fa-duotone fa-solid fa-copy me-1"></i>Copiado');
+            showToast('<i class="fa-solid fa-copy me-1"></i>Copiado');
         });
     });
 
@@ -2355,7 +3045,7 @@
         localStorage.setItem('ve-custom-shortcodes', JSON.stringify(stored));
         pendingSaveBlockHtml = null;
         bootstrap.Modal.getInstance(document.getElementById('ve-save-block-modal'))?.hide();
-        showToast('<i class="fa-duotone fa-solid fa-bookmark me-1"></i>Shortcode guardado: ' + name);
+        showToast('<i class="fa-solid fa-bookmark me-1"></i>Shortcode guardado: ' + name);
         // Refresh shortcodes panel if visible
         if (window.veRenderCustomShortcodes) window.veRenderCustomShortcodes();
     });
@@ -2368,7 +3058,7 @@
             copiedElementHtml = html || null;
             if (copiedElementHtml) {
                 $('#ctx-paste').show();
-                showToast('<i class="fa-duotone fa-solid fa-copy me-1"></i>Elemento copiado');
+                showToast('<i class="fa-solid fa-copy me-1"></i>Elemento copiado');
             }
         }
     };
@@ -2445,7 +3135,7 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('<i class="fa-duotone fa-solid fa-download me-1"></i>HTML exportado: ' + slug + '.html');
+        showToast('<i class="fa-solid fa-download me-1"></i>HTML exportado: ' + slug + '.html');
     });
 
     /* ── Warn on unsaved changes ─────────────────────────────────────── */
@@ -2460,6 +3150,356 @@
     window.getContentToSave     = getContentToSave;
     window.scheduleAutoSave     = scheduleAutoSave;
     window.EXPAND_SHORTCODE_URL = EXPAND_SHORTCODE_URL;
+
+    /* veToast(message, type) — wrapper compatible con agentes externos */
+    window.veToast = function (msg, type) {
+        var iconMap = { success: 'fa-check', error: 'fa-times-circle', info: 'fa-info-circle', warning: 'fa-exclamation-triangle' };
+        var colorMap = { success: '#13C672', error: '#FA896B', info: '#aaa', warning: '#FEC90F' };
+        var t = type || 'info';
+        showToast('<i class="fas ' + (iconMap[t] || 'fa-info-circle') + ' me-1" style="color:' + (colorMap[t] || '#aaa') + '"></i>' + msg);
+    };
+
+    /* ── MEJORA 9: Zoom con Ctrl+Scroll ─────────────────────────────── */
+    // zoom buttons use data-zoom with decimal values: 0.5, 0.75, 1, 1.25, 1.5
+    $(document).on('wheel', '#ve-preview-frame, #ve-canvas-wrap', function (e) {
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        var zoomLevels = [0.5, 0.75, 1, 1.25, 1.5];
+        var $active = $('.ve-zoom-btn.active');
+        var current = $active.length ? parseFloat($active.data('zoom')) : 1;
+        var idx = zoomLevels.indexOf(current);
+        if (idx === -1) idx = 2;
+        if (e.originalEvent.deltaY < 0 && idx < zoomLevels.length - 1) idx++;
+        else if (e.originalEvent.deltaY > 0 && idx > 0) idx--;
+        $('[data-zoom="' + zoomLevels[idx] + '"].ve-zoom-btn').trigger('click');
+    });
+
+    /* ── MEJORA 10: Modo outline ─────────────────────────────────────── */
+    var outlineMode = false;
+    $('#btn-outline-mode').on('click', function () {
+        outlineMode = !outlineMode;
+        $(this).toggleClass('active', outlineMode);
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        var styleId = 've-outline-style';
+        var existing = frame.contentDocument.getElementById(styleId);
+        if (outlineMode) {
+            if (!existing) {
+                var s = frame.contentDocument.createElement('style');
+                s.id = styleId;
+                s.textContent = '* { outline: 1px dashed rgba(144,187,19,0.4) !important; }';
+                frame.contentDocument.head.appendChild(s);
+            }
+        } else {
+            if (existing) existing.remove();
+        }
+    });
+
+    // Re-apply outline after preview reloads
+    $(document).on('ve-preview-updated', function () {
+        if (!outlineMode) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        if (!frame.contentDocument.getElementById('ve-outline-style')) {
+            var s = frame.contentDocument.createElement('style');
+            s.id = 've-outline-style';
+            s.textContent = '* { outline: 1px dashed rgba(144,187,19,0.4) !important; }';
+            frame.contentDocument.head.appendChild(s);
+        }
+    });
+
+    /* ── MEJORA 11: Pantalla completa del preview ────────────────────── */
+    var previewFullscreen = false;
+    $('#btn-fullscreen-preview').on('click', function () {
+        previewFullscreen = !previewFullscreen;
+        $('#ve-sidebar').toggleClass('ve-hidden', previewFullscreen);
+        $(this).toggleClass('active', previewFullscreen);
+        $('#btn-fullscreen-preview i')
+            .toggleClass('fa-expand', !previewFullscreen)
+            .toggleClass('fa-compress', previewFullscreen);
+        setTimeout(function () { $(window).trigger('resize'); }, 100);
+    });
+
+    $(document).on('keydown.fullscreen', function (e) {
+        if (e.key === 'Escape' && previewFullscreen) {
+            $('#btn-fullscreen-preview').trigger('click');
+        }
+    });
+
+    /* ── MEJORA 12: Responsive preview quick-buttons ─────────────────── */
+    // These mirror the existing .breakpoint-btn system but with simpler width-only control
+    $(document).on('click', '.ve-resp-btn', function () {
+        $('.ve-resp-btn').removeClass('active');
+        $(this).addClass('active');
+        var w = $(this).data('width');
+        var $frame = $('#ve-preview-frame');
+        if (w === '100%') {
+            // Delegate to the desktop breakpoint button to keep state in sync
+            $('.breakpoint-btn[data-breakpoint="desktop"]').trigger('click');
+        } else if (w === '768px') {
+            $('.breakpoint-btn[data-breakpoint="tablet"]').trigger('click');
+        } else if (w === '375px') {
+            $('.breakpoint-btn[data-breakpoint="mobile"]').trigger('click');
+        }
+    });
+
+    /* ── MEJORA 13: Buscador de elementos ya existe en canvas (#ve-element-search) ── */
+    // The canvas already has a full search bar (#ve-element-search-input, #ve-search-count,
+    // #ve-search-prev, #ve-search-next, #ve-search-close). We only add the inspector panel
+    // mini-search that highlights elements directly in the iframe DOM.
+    var searchHighlightStyle = null;
+    $(document).on('input', '#ve-inspector-element-search', function () {
+        var q = $(this).val().trim().toLowerCase();
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        if (searchHighlightStyle) searchHighlightStyle.remove();
+        frame.contentDocument.querySelectorAll('.ve-search-match').forEach(function (el) {
+            el.classList.remove('ve-search-match');
+        });
+        if (!q) { $('#ve-inspector-search-results').text(''); return; }
+        var matches = [];
+        frame.contentDocument.querySelectorAll('body *').forEach(function (el) {
+            if (el.hasAttribute('data-ve-sc')) return;
+            if (el.textContent.toLowerCase().includes(q) && !el.matches('script,style,meta,link,head')) {
+                el.classList.add('ve-search-match');
+                matches.push(el);
+            }
+        });
+        searchHighlightStyle = frame.contentDocument.createElement('style');
+        searchHighlightStyle.textContent = '.ve-search-match { outline: 2px solid #FEC90F !important; background: rgba(254,201,15,0.1) !important; }';
+        frame.contentDocument.head.appendChild(searchHighlightStyle);
+        $('#ve-inspector-search-results').text(matches.length + ' elemento(s) encontrado(s)');
+        if (matches[0]) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    $(document).on('click', '#btn-inspector-search-clear', function () {
+        $('#ve-inspector-element-search').val('').trigger('input');
+    });
+
+    /* ── MEJORA 14: Auto-guardado — ya existe setInterval(doAutoSave, 60000) ── */
+    // The existing doAutoSave runs every 60s. We only add the indicator update loop.
+    var lastAutoSaveTime = null;
+
+    // Patch doAutoSave success to record time and update indicator
+    var _origSetAutoSaveStatus = setAutoSaveStatus;
+    setAutoSaveStatus = function (state, text) {
+        _origSetAutoSaveStatus(state, text);
+        if (state === 'saved') {
+            lastAutoSaveTime = new Date();
+            updateAutoSaveIndicator();
+        }
+        $('#autosave-status-bar').text(text || '').attr('class', state ? 'ms-1 ve-autosave-' + state : 'ms-1');
+    };
+
+    function updateAutoSaveIndicator() {
+        if (!lastAutoSaveTime) { $('#ve-autosave-indicator').text(''); return; }
+        var diff = Math.round((new Date() - lastAutoSaveTime) / 1000);
+        var label;
+        if (diff < 30)          label = 'Guardado automáticamente';
+        else if (diff < 90)     label = 'Auto-guardado hace 1 min';
+        else if (diff < 3600)   label = 'Auto-guardado hace ' + Math.round(diff / 60) + ' min';
+        else                    label = 'Auto-guardado hace ' + Math.round(diff / 3600) + ' h';
+        $('#ve-autosave-indicator').text(label);
+    }
+    setInterval(updateAutoSaveIndicator, 30000);
+
+    /* ── MEJORA 15: Panel árbol DOM ──────────────────────────────────── */
+    function buildDomTree() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        var $list = $('#ve-dom-tree-list').empty();
+        var ignoreTags = ['script', 'style', 'meta', 'link', 'head'];
+
+        function renderNode(el, depth) {
+            if (el.nodeType !== 1) return;
+            var tag = el.tagName.toLowerCase();
+            if (ignoreTags.indexOf(tag) !== -1) return;
+
+            var id  = el.id ? '#' + el.id : '';
+            var cls = typeof el.className === 'string' && el.className
+                ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.')
+                : '';
+            var label = (tag + (id || cls)).substring(0, 28);
+            var isSentinel = el.hasAttribute('data-ve-sc');
+            var pl = depth * 12 + 4;
+
+            var tagColor = { div:'#6366f1', span:'#0ea5e9', p:'#059669', h1:'#dc2626', h2:'#dc2626',
+                             h3:'#dc2626', h4:'#dc2626', a:'#d97706', img:'#7c3aed', form:'#0891b2',
+                             input:'#0891b2', button:'#7c3aed', section:'#16a34a', header:'#16a34a',
+                             footer:'#16a34a', nav:'#16a34a', ul:'#ca8a04', ol:'#ca8a04', li:'#ca8a04' };
+            var color = tagColor[tag] || '#555';
+            var $item = $('<div>')
+                .addClass('ve-dom-node')
+                .css({ paddingLeft: pl + 'px', paddingTop: '3px', paddingBottom: '3px',
+                       paddingRight: '6px', cursor: 'pointer', borderRadius: '3px',
+                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                       fontSize: '12px', lineHeight: '1.4' })
+                .html(
+                    (isSentinel ? '<i class="fas fa-puzzle-piece" style="color:#90bb13;margin-right:4px;font-size:9px;"></i>' : '') +
+                    '<span style="color:' + color + ';font-weight:600;">&lt;' + tag + '&gt;</span>' +
+                    (id ? '<span style="color:#888;font-size:11px;">' + $('<span>').text(id).html() + '</span>' : '') +
+                    (cls && !id ? '<span style="color:#aaa;font-size:11px;">' + $('<span>').text(cls.substring(0,20)).html() + '</span>' : '')
+                );
+
+            $item.on('mouseenter', function () { el.style.outline = '1px dashed #FEC90F'; });
+            $item.on('mouseleave', function () { el.style.outline = ''; });
+            $item.on('click', function (e) { e.stopPropagation(); el.click(); });
+            $list.append($item);
+
+            if (depth < 5) {
+                Array.from(el.children).slice(0, 15).forEach(function (child) {
+                    renderNode(child, depth + 1);
+                });
+            }
+        }
+
+        var body = frame.contentDocument.body;
+        if (body) {
+            Array.from(body.children).forEach(function (child) { renderNode(child, 0); });
+        }
+    }
+
+    // Build DOM tree when its panel is activated
+    $('#ve-sidebar-nav').on('click', '.ve-nav-btn[data-panel="dom-tree"]', function () {
+        setTimeout(buildDomTree, 150);
+    });
+
+    $('#btn-dom-refresh').on('click', buildDomTree);
+
+    /* ── Comparar antes/después (side-by-side iframes) ──────────────── */
+    var originalIframeHtml = null;
+
+    $('#ve-preview-frame').on('load', function () {
+        try {
+            if (!originalIframeHtml && this.contentDocument && this.contentDocument.body) {
+                originalIframeHtml = this.contentDocument.outerHTML;
+            }
+        } catch (e) {}
+    });
+
+    $('#btn-diff-preview').on('click', function () {
+        var frame = document.getElementById('ve-preview-frame');
+        var $modal = $('#ve-diff-modal');
+
+        // Populate original frame
+        var origFrame = document.getElementById('ve-diff-frame-original');
+        if (origFrame && originalIframeHtml) {
+            origFrame.srcdoc = originalIframeHtml;
+        } else if (origFrame) {
+            origFrame.srcdoc = '<body style="display:flex;align-items:center;justify-content:center;height:100%;color:#aaa;font-family:sans-serif;">Sin snapshot original disponible</body>';
+        }
+
+        // Populate current frame with current preview content
+        var curFrame = document.getElementById('ve-diff-frame-current');
+        if (curFrame && frame && frame.contentDocument) {
+            try {
+                curFrame.srcdoc = frame.contentDocument.outerHTML;
+            } catch (e) {
+                curFrame.srcdoc = '<body style="display:flex;align-items:center;justify-content:center;height:100%;color:#aaa;font-family:sans-serif;">No disponible (cross-origin)</body>';
+            }
+        }
+
+        new bootstrap.Modal(document.getElementById('ve-diff-modal')).show();
+    });
+
+    /* ── FEATURE 1: Session History Log ─────────────────────────────── */
+    var veSessionLog = [];
+
+    function addSessionEntry(label, icon) {
+        var entry = {
+            time:  new Date().toLocaleTimeString(),
+            label: label,
+            icon:  icon || 'fa-circle-dot',
+        };
+        veSessionLog.unshift(entry);
+        if (veSessionLog.length > 50) veSessionLog.pop();
+        renderSessionHistory();
+    }
+
+    function renderSessionHistory() {
+        var $list = $('#ve-session-history-list');
+        if (!veSessionLog.length) {
+            $list.html('<div class="text-muted text-center" style="padding:16px;font-size:12px;">Sin actividad aún.</div>');
+            return;
+        }
+        var html = veSessionLog.map(function (e) {
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">'
+                + '<i class="fa-solid ' + e.icon + ' text-muted" style="width:14px;flex-shrink:0;"></i>'
+                + '<span style="flex:1;">' + $('<span>').text(e.label).html() + '</span>'
+                + '<span style="color:#aaa;font-size:10px;">' + e.time + '</span>'
+                + '</div>';
+        }).join('');
+        $list.html(html);
+    }
+
+    // Expose so panel scripts can call it
+    window.veAddSessionEntry = addSessionEntry;
+
+    // Hook: Guardar (btn-save triggers doSave which fires success; intercept markModified)
+    $(document).on('click', '#btn-save, #btn-save-bar', function () {
+        addSessionEntry('Guardado manual', 'fa-floppy-disk');
+    });
+
+    // Hook: Deshacer / Rehacer
+    $(document).on('click', '#btn-undo, #btn-undo-bar', function () {
+        addSessionEntry('Deshacer', 'fa-rotate-left');
+    });
+    $(document).on('click', '#btn-redo, #btn-redo-bar', function () {
+        addSessionEntry('Rehacer', 'fa-rotate-right');
+    });
+
+    // Hook: Cambio de breakpoint
+    $(document).on('click', '.breakpoint-btn', function () {
+        var bp = $(this).data('breakpoint') || 'desktop';
+        var icons = { desktop: 'fa-desktop', laptop: 'fa-laptop', tablet: 'fa-tablet-screen-button', mobile: 'fa-mobile-screen-button', device: 'fa-mobile-screen-button' };
+        addSessionEntry('Vista: ' + bp.charAt(0).toUpperCase() + bp.slice(1), icons[bp] || 'fa-desktop');
+    });
+
+    // Hook: iframe load (preview updated)
+    $('#ve-preview-frame').on('load', function () {
+        addSessionEntry('Preview recargado', 'fa-arrows-rotate');
+    });
+
+    // Hook: Limpiar historial de sesión
+    $('#btn-session-clear').on('click', function () {
+        veSessionLog = [];
+        renderSessionHistory();
+    });
+
+    // Init
+    renderSessionHistory();
+
+    /* ── FEATURE 4: Hover element info tooltip ───────────────────────── */
+    $('#btn-hover-inspect').on('click', function () {
+        hoverInspectMode = !hoverInspectMode;
+        $(this).toggleClass('active', hoverInspectMode);
+
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentDocument && frame.contentDocument.body) {
+            frame.contentDocument.body.style.cursor = hoverInspectMode ? 'crosshair' : '';
+        }
+
+        sendToFrame({ type: 've-hover-inspect-toggle', active: hoverInspectMode });
+
+        if (!hoverInspectMode && $hoverTooltip) {
+            $hoverTooltip.remove();
+            $hoverTooltip = null;
+        }
+
+        showToast(hoverInspectMode
+            ? '<i class="fa-solid fa-crosshairs me-1"></i>Inspect hover activado'
+            : '<i class="fa-solid fa-crosshairs me-1"></i>Inspect hover desactivado'
+        );
+    });
+
+    // Re-apply cursor after preview reload when inspect mode is on
+    $('#ve-preview-frame').on('load', function () {
+        if (!hoverInspectMode) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentDocument && frame.contentDocument.body) {
+            frame.contentDocument.body.style.cursor = 'crosshair';
+        }
+        sendToFrame({ type: 've-hover-inspect-toggle', active: true });
+    });
 
 })(jQuery);
 </script>
@@ -2481,10 +3521,214 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/html-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+<script>
+/* ── Bootstrap 5 + Font Awesome 6 class autocomplete for CodeMirror ── */
+(function () {
+    var BS_CLASSES = [
+        /* Layout */
+        'container','container-fluid','container-sm','container-md','container-lg','container-xl','container-xxl',
+        'row','row-cols-1','row-cols-2','row-cols-3','row-cols-4','row-cols-auto',
+        'col','col-1','col-2','col-3','col-4','col-5','col-6','col-7','col-8','col-9','col-10','col-11','col-12',
+        'col-auto','col-sm','col-sm-1','col-sm-2','col-sm-3','col-sm-4','col-sm-6','col-sm-8','col-sm-12',
+        'col-md','col-md-1','col-md-2','col-md-3','col-md-4','col-md-6','col-md-8','col-md-12',
+        'col-lg','col-lg-1','col-lg-2','col-lg-3','col-lg-4','col-lg-6','col-lg-8','col-lg-12',
+        'col-xl','col-xl-3','col-xl-4','col-xl-6','col-xl-8','col-xl-12',
+        'g-0','g-1','g-2','g-3','g-4','g-5','gx-0','gx-1','gx-2','gx-3','gx-4','gx-5',
+        'gy-0','gy-1','gy-2','gy-3','gy-4','gy-5','offset-1','offset-2','offset-3','offset-4','offset-6',
+        /* Display */
+        'd-none','d-block','d-inline','d-inline-block','d-flex','d-inline-flex','d-grid','d-table','d-table-cell',
+        'd-sm-none','d-sm-block','d-sm-flex','d-md-none','d-md-block','d-md-flex',
+        'd-lg-none','d-lg-block','d-lg-flex','d-xl-none','d-xl-block','d-xl-flex',
+        /* Flex */
+        'flex-row','flex-row-reverse','flex-column','flex-column-reverse',
+        'flex-wrap','flex-nowrap','flex-wrap-reverse','flex-fill','flex-grow-0','flex-grow-1','flex-shrink-0','flex-shrink-1',
+        'justify-content-start','justify-content-end','justify-content-center','justify-content-between','justify-content-around','justify-content-evenly',
+        'align-items-start','align-items-end','align-items-center','align-items-baseline','align-items-stretch',
+        'align-self-start','align-self-end','align-self-center','align-self-baseline','align-self-stretch',
+        'align-content-start','align-content-end','align-content-center','align-content-between','align-content-around','align-content-stretch',
+        'gap-0','gap-1','gap-2','gap-3','gap-4','gap-5','gap-auto',
+        'order-0','order-1','order-2','order-3','order-4','order-5','order-first','order-last',
+        /* Spacing */
+        'm-0','m-1','m-2','m-3','m-4','m-5','m-auto',
+        'mt-0','mt-1','mt-2','mt-3','mt-4','mt-5','mt-auto',
+        'mb-0','mb-1','mb-2','mb-3','mb-4','mb-5','mb-auto',
+        'ms-0','ms-1','ms-2','ms-3','ms-4','ms-5','ms-auto',
+        'me-0','me-1','me-2','me-3','me-4','me-5','me-auto',
+        'mx-0','mx-1','mx-2','mx-3','mx-4','mx-5','mx-auto',
+        'my-0','my-1','my-2','my-3','my-4','my-5','my-auto',
+        'p-0','p-1','p-2','p-3','p-4','p-5',
+        'pt-0','pt-1','pt-2','pt-3','pt-4','pt-5',
+        'pb-0','pb-1','pb-2','pb-3','pb-4','pb-5',
+        'ps-0','ps-1','ps-2','ps-3','ps-4','ps-5',
+        'pe-0','pe-1','pe-2','pe-3','pe-4','pe-5',
+        'px-0','px-1','px-2','px-3','px-4','px-5',
+        'py-0','py-1','py-2','py-3','py-4','py-5',
+        /* Sizing */
+        'w-25','w-50','w-75','w-100','w-auto','mw-100',
+        'h-25','h-50','h-75','h-100','h-auto','mh-100',
+        'vw-100','vh-100','min-vw-100','min-vh-100',
+        /* Typography */
+        'h1','h2','h3','h4','h5','h6',
+        'display-1','display-2','display-3','display-4','display-5','display-6',
+        'lead','small','mark','del','s','ins','u','strong','em','abbr',
+        'text-start','text-center','text-end','text-wrap','text-nowrap','text-truncate','text-break',
+        'text-lowercase','text-uppercase','text-capitalize',
+        'fw-light','fw-lighter','fw-normal','fw-semibold','fw-bold','fw-bolder',
+        'fst-italic','fst-normal',
+        'fs-1','fs-2','fs-3','fs-4','fs-5','fs-6',
+        'lh-1','lh-sm','lh-base','lh-lg',
+        'font-monospace',
+        'text-decoration-none','text-decoration-underline','text-decoration-line-through',
+        /* Colors — text */
+        'text-primary','text-secondary','text-success','text-danger','text-warning','text-info',
+        'text-light','text-dark','text-white','text-muted','text-body','text-black','text-black-50','text-white-50',
+        'text-reset','text-opacity-25','text-opacity-50','text-opacity-75','text-opacity-100',
+        /* Colors — bg */
+        'bg-primary','bg-secondary','bg-success','bg-danger','bg-warning','bg-info',
+        'bg-light','bg-dark','bg-white','bg-transparent','bg-body',
+        'bg-gradient','bg-opacity-10','bg-opacity-25','bg-opacity-50','bg-opacity-75','bg-opacity-100',
+        /* Border */
+        'border','border-0','border-top','border-top-0','border-end','border-end-0',
+        'border-bottom','border-bottom-0','border-start','border-start-0',
+        'border-primary','border-secondary','border-success','border-danger','border-warning','border-info','border-light','border-dark','border-white',
+        'border-1','border-2','border-3','border-4','border-5',
+        'border-opacity-10','border-opacity-25','border-opacity-50','border-opacity-75','border-opacity-100',
+        'rounded','rounded-0','rounded-1','rounded-2','rounded-3','rounded-4','rounded-5','rounded-circle','rounded-pill',
+        'rounded-top','rounded-end','rounded-bottom','rounded-start',
+        /* Shadow */
+        'shadow','shadow-sm','shadow-lg','shadow-none',
+        /* Position */
+        'position-static','position-relative','position-absolute','position-fixed','position-sticky',
+        'top-0','top-50','top-100','bottom-0','bottom-50','bottom-100',
+        'start-0','start-50','start-100','end-0','end-50','end-100',
+        'translate-middle','translate-middle-x','translate-middle-y',
+        /* Overflow */
+        'overflow-auto','overflow-hidden','overflow-visible','overflow-scroll',
+        'overflow-x-auto','overflow-x-hidden','overflow-y-auto','overflow-y-hidden',
+        /* Z-index */
+        'z-0','z-1','z-2','z-3','z-n1',
+        /* Visibility */
+        'visible','invisible','visually-hidden','visually-hidden-focusable',
+        /* Opacity */
+        'opacity-0','opacity-25','opacity-50','opacity-75','opacity-100',
+        /* Components */
+        'btn','btn-sm','btn-lg','btn-block',
+        'btn-primary','btn-secondary','btn-success','btn-danger','btn-warning','btn-info','btn-light','btn-dark','btn-link',
+        'btn-outline-primary','btn-outline-secondary','btn-outline-success','btn-outline-danger',
+        'btn-outline-warning','btn-outline-info','btn-outline-light','btn-outline-dark',
+        'btn-close','btn-check',
+        'badge','text-bg-primary','text-bg-secondary','text-bg-success','text-bg-danger',
+        'text-bg-warning','text-bg-info','text-bg-light','text-bg-dark',
+        'alert','alert-primary','alert-secondary','alert-success','alert-danger',
+        'alert-warning','alert-info','alert-light','alert-dark','alert-dismissible',
+        'card','card-body','card-title','card-subtitle','card-text','card-link',
+        'card-header','card-footer','card-img','card-img-top','card-img-bottom','card-img-overlay',
+        'card-group','card-columns',
+        'nav','nav-tabs','nav-pills','nav-fill','nav-justified','nav-item','nav-link',
+        'navbar','navbar-brand','navbar-nav','navbar-toggler','navbar-expand','navbar-expand-sm',
+        'navbar-expand-md','navbar-expand-lg','navbar-expand-xl','navbar-light','navbar-dark',
+        'dropdown','dropdown-toggle','dropdown-menu','dropdown-item','dropdown-divider',
+        'dropdown-menu-end','dropdown-menu-start','dropup','dropend','dropstart',
+        'list-group','list-group-item','list-group-flush','list-group-numbered',
+        'list-group-item-primary','list-group-item-success','list-group-item-danger','list-group-item-warning',
+        'list-unstyled','list-inline','list-inline-item',
+        'table','table-sm','table-bordered','table-borderless','table-striped','table-hover','table-responsive',
+        'table-primary','table-secondary','table-success','table-danger','table-warning','table-info','table-light','table-dark',
+        'form-control','form-control-sm','form-control-lg','form-control-color',
+        'form-select','form-select-sm','form-select-lg',
+        'form-check','form-check-input','form-check-label','form-check-inline',
+        'form-switch','form-range','form-label','form-text','form-floating',
+        'input-group','input-group-text','input-group-sm','input-group-lg',
+        'was-validated','is-valid','is-invalid','valid-feedback','invalid-feedback',
+        'modal','modal-dialog','modal-dialog-centered','modal-dialog-scrollable',
+        'modal-content','modal-header','modal-title','modal-body','modal-footer',
+        'modal-sm','modal-lg','modal-xl','modal-fullscreen',
+        'pagination','page-item','page-link','pagination-sm','pagination-lg',
+        'progress','progress-bar','progress-bar-striped','progress-bar-animated',
+        'spinner-border','spinner-border-sm','spinner-grow','spinner-grow-sm',
+        'toast','toast-container','toast-header','toast-body',
+        'tooltip','popover','popover-header','popover-body',
+        'accordion','accordion-item','accordion-header','accordion-button','accordion-body','accordion-collapse','accordion-flush',
+        'collapse','collapsing','show',
+        'tab-content','tab-pane','fade','active','disabled',
+        'breadcrumb','breadcrumb-item',
+        'placeholder','placeholder-wave','placeholder-glow',
+        'ratio','ratio-1x1','ratio-4x3','ratio-16x9','ratio-21x9',
+        'img-fluid','img-thumbnail','figure','figure-img','figure-caption',
+        /* Utilities misc */
+        'clearfix','link-primary','link-secondary','link-success','link-danger',
+        'pe-none','pe-auto','user-select-none','user-select-auto','user-select-all',
+        'text-decoration-color-primary',
+        /* Font Awesome 6 — prefix only (user types fa-...) */
+        'fas','far','fab','fa-solid','fa-regular','fa-brands',
+        'fa-xs','fa-sm','fa-lg','fa-xl','fa-2xl','fa-fw','fa-spin','fa-pulse',
+        'fa-2x','fa-3x','fa-4x','fa-5x','fa-6x','fa-7x','fa-8x','fa-9x','fa-10x',
+        'fa-rotate-90','fa-rotate-180','fa-rotate-270','fa-flip-horizontal','fa-flip-vertical',
+        'fa-inverse','fa-stack','fa-stack-1x','fa-stack-2x',
+    ];
+
+    window.veBootstrapHint = function (cm) {
+        var cursor = cm.getCursor();
+        var line   = cm.getLine(cursor.line);
+        var before = line.substring(0, cursor.ch);
+
+        /* Inside class="..." → Bootstrap + FA class suggestions */
+        var classMatch = before.match(/\bclass=["']([^"']*)$/) ||
+                         before.match(/\bclass=([^\s>]*)$/);
+        if (classMatch) {
+            var typed   = classMatch[1];
+            var parts   = typed.split(/\s+/);
+            var current = parts[parts.length - 1];
+            var list = current.length === 0
+                ? BS_CLASSES
+                : BS_CLASSES.filter(function (c) { return c.indexOf(current) === 0; });
+            if (!list.length) { return null; }
+            return {
+                list: list,
+                from: CodeMirror.Pos(cursor.line, cursor.ch - current.length),
+                to:   CodeMirror.Pos(cursor.line, cursor.ch),
+            };
+        }
+
+        /* Everywhere else: use the built-in HTML hint (tags + attributes) */
+        if (CodeMirror.hint && CodeMirror.hint.html) {
+            return CodeMirror.hint.html(cm);
+        }
+
+        return null;
+    };
+
+    /* Auto-trigger hint while typing */
+    window.veBootstrapHintAuto = function (cm, change) {
+        if (change.origin !== '+input' && change.origin !== 'paste') { return; }
+        var cursor = cm.getCursor();
+        var line   = cm.getLine(cursor.line);
+        var before = line.substring(0, cursor.ch);
+
+        /* Inside class attribute → Bootstrap classes */
+        if (/\bclass=["'][^"']*$/.test(before)) {
+            CodeMirror.commands.autocomplete(cm, window.veBootstrapHint, { completeSingle: false });
+            return;
+        }
+        /* After < or </ → tag name completion */
+        if (/<\/?[\w]*$/.test(before)) {
+            CodeMirror.commands.autocomplete(cm, window.veBootstrapHint, { completeSingle: false });
+            return;
+        }
+        /* Inside an open tag after a space → attribute completion */
+        if (/<[\w][^>]*\s[\w-]*$/.test(before)) {
+            CodeMirror.commands.autocomplete(cm, window.veBootstrapHint, { completeSingle: false });
+        }
+    };
+}());
+</script>
 
 {{-- ── Modal: Find & Replace ─────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-find-replace-modal" tabindex="-1">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0">Buscar y reemplazar</h6>
@@ -2509,7 +3753,7 @@
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-sm" id="btn-do-replace"
                         style="background:#1a1a1a;border-color:#1a1a1a;color:#fff;">
-                    <i class="fa-duotone fa-solid fa-check me-1"></i>Reemplazar todo
+                    <i class="fa-solid fa-check me-1"></i>Reemplazar todo
                 </button>
             </div>
         </div>
@@ -2518,7 +3762,7 @@
 
 {{-- ── Modal: Media Manager ──────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-media-modal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0">Gestor de medios</h6>
@@ -2539,14 +3783,14 @@
                     </div>
                     <div class="col-auto">
                         <label class="btn btn-sm btn-outline-secondary mb-0" id="btn-media-upload-label" title="Subir archivo">
-                            <i class="fa-duotone fa-solid fa-upload me-1"></i>Subir
+                            <i class="fa-solid fa-upload me-1"></i>Subir
                             <input type="file" id="ve-media-upload-input" style="display:none;" multiple>
                         </label>
                     </div>
                 </div>
                 <div id="ve-media-grid" style="display:grid; grid-template-columns:repeat(auto-fill,120px); gap:10px; max-height:420px; overflow-y:auto; min-height:100px;">
                     <div class="text-muted text-center" style="grid-column:1/-1; padding:40px 0;">
-                        <i class="fa-duotone fa-solid fa-spinner fa-spin me-1"></i>Cargando medios...
+                        <i class="fa-solid fa-spinner fa-spin me-1"></i>Cargando medios...
                     </div>
                 </div>
             </div>
@@ -2555,7 +3799,7 @@
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-sm" id="btn-media-select"
                         style="background:#1a1a1a;border-color:#1a1a1a;color:#fff;" disabled>
-                    <i class="fa-duotone fa-solid fa-check me-1"></i>Seleccionar
+                    <i class="fa-solid fa-check me-1"></i>Seleccionar
                 </button>
             </div>
         </div>
@@ -2564,7 +3808,7 @@
 
 {{-- ── Modal: Link Editor ─────────────────────────────────────────────── --}}
 <div class="modal fade" id="ve-link-editor-modal" tabindex="-1">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,.2);">
             <div class="modal-header border-0 pb-0">
                 <h6 class="modal-title fw-semibold" style="font-size:16px;">A dónde quieres enlazar?</h6>
@@ -2670,6 +3914,33 @@
         });
     });
 
+    /* ── Draft banner: restore / dismiss ────────────────────────────── */
+    $('#btn-restore-draft').on('click', function () {
+        var $btn = $(this).prop('disabled', true).text('Cargando...');
+        $.get(DRAFT_URL)
+            .done(function (res) {
+                if (!res.success || !res.data) {
+                    showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Sin borrador activo', 'error');
+                    return;
+                }
+                if (!confirm('¿Restaurar el borrador guardado ' + res.data.saved_at + '? El contenido actual quedará en el historial de deshacer.')) return;
+                if (window.veEditor) {
+                    vePushHistory('Antes de restaurar borrador', window.veEditor.getData());
+                    window.veEditor.setData(res.data.content || '');
+                }
+                showToast('<i class="fa-solid fa-clock-rotate-left me-1"></i>Borrador restaurado');
+                $('#ve-draft-banner').slideUp(200);
+            })
+            .fail(function () {
+                showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Error al cargar borrador', 'error');
+            })
+            .always(function () { $btn.prop('disabled', false).text('Restaurar'); });
+    });
+
+    $('#btn-dismiss-draft').on('click', function () {
+        $('#ve-draft-banner').slideUp(200);
+    });
+
     /* ═══════════════════════════════════════════════════════════════
        FEATURE 6: Find & Replace
     ═══════════════════════════════════════════════════════════════ */
@@ -2719,7 +3990,90 @@
         var newHtml = root.innerHTML;
         window.veEditor.setData(newHtml);
         if (window.vePushHistory) window.vePushHistory('Buscar y reemplazar', newHtml);
-        $('#ve-fr-feedback').html('<span class="text-success"><i class="fa-duotone fa-solid fa-check me-1"></i>' + count + ' reemplazo(s) realizados.</span>');
+        $('#ve-fr-feedback').html('<span class="text-success"><i class="fa-solid fa-check me-1"></i>' + count + ' reemplazo(s) realizados.</span>');
+    });
+
+    // ── Bulk find/replace in shortcodes ─────────────────────────────────────
+    function getScNodeRaw(node) {
+        return node.getAttribute('data-ve-sc') || '';
+    }
+
+    $('#btn-sc-fr-preview').on('click', function () {
+        var type    = $('#sc-fr-type').val().trim();
+        var attr    = $('#sc-fr-attr').val().trim();
+        var find    = $('#sc-fr-find').val();
+        var replace = $('#sc-fr-replace').val();
+        if (!attr || !find) { $('#sc-fr-preview').text('Completa atributo y valor a buscar.'); return; }
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) { $('#sc-fr-preview').text('Preview no disponible.'); return; }
+        var nodes = frame.contentDocument.querySelectorAll('[data-ve-sc]');
+        var matches = 0;
+        nodes.forEach(function (n) {
+            var raw = decodeURIComponent(getScNodeRaw(n));
+            if (type && raw.indexOf('[' + type) === -1) return;
+            var re = new RegExp(attr + '=["\']([^"\']*' + find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^"\']*)["\']');
+            if (re.test(raw)) matches++;
+        });
+        $('#sc-fr-preview').html('<i class="fas fa-search me-1"></i>' + matches + ' bloque(s) coinciden.');
+    });
+
+    $('#btn-sc-fr-apply').on('click', function () {
+        var type    = $('#sc-fr-type').val().trim();
+        var attr    = $('#sc-fr-attr').val().trim();
+        var find    = $('#sc-fr-find').val();
+        var replace = $('#sc-fr-replace').val();
+        if (!attr || !find) { showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>Completa atributo y valor.'); return; }
+        if (!confirm('¿Aplicar el reemplazo a todos los bloques coincidentes?')) return;
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        var nodes = Array.from(frame.contentDocument.querySelectorAll('[data-ve-sc]'));
+        var changed = 0;
+        nodes.forEach(function (n) {
+            var raw = decodeURIComponent(getScNodeRaw(n));
+            if (type && raw.indexOf('[' + type) === -1) return;
+            var re = new RegExp('(' + attr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=["\'])' + find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            if (!re.test(raw)) return;
+            var newRaw = raw.replace(re, '$1' + replace);
+            n.setAttribute('data-ve-sc', encodeURIComponent(newRaw));
+            changed++;
+        });
+        if (changed) {
+            showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>' + changed + ' bloque(s) actualizados.');
+            bootstrap.Modal.getInstance(document.getElementById('ve-sc-find-replace-modal')).hide();
+            if (window.vePushHistory) window.vePushHistory('Bulk find/replace en shortcodes');
+        } else {
+            showToast('<i class="fas fa-info-circle me-1"></i>No se encontraron coincidencias.');
+        }
+    });
+
+    // ── Page title rename (dblclick on topbar title) ─────────────────────────
+    $(document).on('dblclick', '#ve-page-title-display', function () {
+        var $span = $(this);
+        var current = $span.text().trim();
+        var $input = $('<input type="text" class="form-control form-control-sm" style="max-width:160px;font-size:13px;height:24px;padding:2px 6px;">')
+            .val(current).insertAfter($span);
+        $span.hide();
+        $input.focus().select();
+        function commit() {
+            var newTitle = $input.val().trim() || current;
+            $span.text(newTitle).show();
+            $input.remove();
+            if (newTitle !== current) {
+                $.ajax({
+                    url: '{{ route("pages.update", $page) }}',
+                    method: 'PUT',
+                    headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+                    contentType: 'application/json',
+                    data: JSON.stringify({ title: newTitle, _method: 'PUT' }),
+                    success: function () { showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>Título actualizado.'); document.title = newTitle + ' — Visual Editor'; },
+                    error: function () { showToast('<i class="fas fa-times-circle me-1 text-danger"></i>No se pudo actualizar el título.'); $span.text(current); }
+                });
+            }
+        }
+        $input.on('blur', commit).on('keydown', function (e) {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') { $span.show(); $input.remove(); }
+        });
     });
 
     /* ═══════════════════════════════════════════════════════════════
@@ -2752,7 +4106,7 @@
     }
 
     function loadMediaFiles() {
-        $('#ve-media-grid').html('<div class="text-muted text-center" style="grid-column:1/-1;padding:40px 0;"><i class="fa-duotone fa-solid fa-spinner fa-spin me-1"></i>Cargando...</div>');
+        $('#ve-media-grid').html('<div class="text-muted text-center" style="grid-column:1/-1;padding:40px 0;"><i class="fa-solid fa-spinner fa-spin me-1"></i>Cargando...</div>');
         $.ajax({
             url: '{{ route("media.list") }}',
             method: 'GET',
@@ -2775,6 +4129,28 @@
             return nameOk && typeOk;
         });
         var $grid = $('#ve-media-grid').empty();
+
+        // Prepend recent images section when no search filter active
+        if (!query && !typeF) {
+            var recent = getRecentMedia();
+            if (recent.length) {
+                var $recentLabel = $('<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#90bb13;text-transform:uppercase;letter-spacing:1px;padding:2px 0 4px;">Recientes</div>');
+                $grid.append($recentLabel);
+                recent.forEach(function (url) {
+                    var fname = url.split('/').pop().split('?')[0];
+                    var $item = $('<div class="ve-media-item ve-media-recent" data-url="' + url + '" title="' + fname + '" style="border:2px solid #dee2e6;border-radius:6px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:6px;background:#f0f5e6;min-height:90px;"><img src="' + url + '" style="max-width:100%;max-height:70px;object-fit:cover;border-radius:3px;"><span style="font-size:10px;color:#555;text-align:center;word-break:break-all;line-height:1.2;">' + fname.substring(0, 20) + '</span></div>');
+                    $item.on('click', function () {
+                        $('.ve-media-item').css('border-color', '#dee2e6');
+                        $(this).css('border-color', '#1a1a1a');
+                        veSelectedMedia = { url: url, name: fname };
+                        $('#btn-media-select').prop('disabled', false);
+                        $('#ve-media-selected-info').text(fname);
+                    });
+                    $grid.append($item);
+                });
+                $grid.append('<div style="grid-column:1/-1;border-top:1px solid #dee2e6;margin:4px 0 6px;font-size:10px;color:#aaa;">Todos los medios</div>');
+            }
+        }
         if (!files.length) {
             $grid.html('<div class="text-muted text-center" style="grid-column:1/-1;padding:40px 0;">Sin resultados.</div>');
             return;
@@ -2782,7 +4158,7 @@
         files.forEach(function (f) {
             var isImg  = (f.type || f.mime_type || '').toLowerCase().includes('image');
             var thumb  = isImg ? (f.url || f.thumbnail_url || '') : '';
-            var icon   = isImg ? '' : '<i class="fa-duotone fa-solid fa-file fa-2x text-muted"></i>';
+            var icon   = isImg ? '' : '<i class="fa-solid fa-file fa-2x text-muted"></i>';
             var $item  = $([
                 '<div class="ve-media-item" data-id="' + f.id + '" data-url="' + (f.url || '') + '" title="' + (f.name || '') + '"',
                 ' style="border:2px solid #dee2e6;border-radius:6px;overflow:hidden;cursor:pointer;',
@@ -2811,6 +4187,7 @@
     $('#btn-media-select').on('click', function () {
         if (!veSelectedMedia) return;
         var url = veSelectedMedia.url || '';
+        addRecentMedia(url);
         // Copy to clipboard
         if (navigator.clipboard) {
             navigator.clipboard.writeText(url);
@@ -2820,7 +4197,7 @@
             $('#ve-settings-featured-image').val(url).trigger('input');
         }
         bootstrap.Modal.getInstance(document.getElementById('ve-media-modal'))?.hide();
-        if (window.showToast) window.showToast('<i class="fa-duotone fa-solid fa-check me-1"></i>URL copiada: ' + url.substring(0, 40));
+        if (window.showToast) window.showToast('<i class="fa-solid fa-check me-1"></i>URL copiada: ' + url.substring(0, 40));
     });
 
     // Upload
@@ -3072,18 +4449,8 @@
 })(jQuery);
 </script>
 
-{{-- Sync topbar search → shortcodes panel search --}}
 <script>
 (function($){
-    // ── Sync topbar search → shortcodes panel search ──
-    $('#ve-topbar-search').on('input', function(){
-        $('#ve-sc-search').val($(this).val()).trigger('input');
-        $('#ve-topbar-search-clear').toggle($(this).val().length > 0);
-    });
-    $(document).on('click', '#ve-topbar-search-clear', function(){
-        $('#ve-topbar-search').val('').trigger('input').focus();
-        $(this).hide();
-    });
 
     // ── Sync autosave-status to bottom bar ──
     var origAS = document.getElementById('autosave-status');
@@ -3135,12 +4502,12 @@
         new MutationObserver(function(){
             var cls = origAS.className || '';
             if (cls.indexOf('saving') !== -1) {
-                $saveBar.html('<i class="fa-duotone fa-solid fa-spinner-third fa-spin" style="font-size:11px;"></i>');
+                $saveBar.html('<i class="fa-solid fa-spinner-third fa-spin" style="font-size:11px;"></i>');
             } else if (cls.indexOf('saved') !== -1) {
-                $saveBar.html('<i class="fa-duotone fa-solid fa-check" style="color:#13C672;"></i>');
+                $saveBar.html('<i class="fa-solid fa-check" style="color:#13C672;"></i>');
                 setTimeout(function(){ $saveBar.text('Guardar'); }, 1500);
             } else if (cls.indexOf('error') !== -1) {
-                $saveBar.html('<i class="fa-duotone fa-solid fa-times" style="color:#b10100;"></i>');
+                $saveBar.html('<i class="fa-solid fa-times" style="color:#b10100;"></i>');
                 setTimeout(function(){ $saveBar.text('Guardar'); }, 2000);
             }
         }).observe(origAS, { attributes: true, attributeFilter: ['class'] });
@@ -3259,11 +4626,11 @@
         if (!$menu.length) { setTimeout(addExtraCtx, 500); return; }
         var $last = $menu.find('.ve-ctx-divider').last();
         if ($last.length && !$('#ctx-inspect').length) {
-            $('<div class="ve-ctx-item" id="ctx-copy-style"><i class="fa-duotone fa-solid fa-palette fa-fw ve-ctx-icon-muted"></i> Copiar estilo</div>')
+            $('<div class="ve-ctx-item" id="ctx-copy-style"><i class="fa-solid fa-palette fa-fw ve-ctx-icon-muted"></i> Copiar estilo</div>')
                 .insertBefore($last);
-            $('<div class="ve-ctx-item" id="ctx-paste-style"><i class="fa-duotone fa-solid fa-fill-drip fa-fw ve-ctx-icon-muted"></i> Pegar estilo</div>')
+            $('<div class="ve-ctx-item" id="ctx-paste-style"><i class="fa-solid fa-fill-drip fa-fw ve-ctx-icon-muted"></i> Pegar estilo</div>')
                 .insertBefore($last);
-            $('<div class="ve-ctx-item" id="ctx-inspect"><i class="fa-duotone fa-solid fa-sliders fa-fw ve-ctx-icon-muted"></i> Inspeccionar</div>')
+            $('<div class="ve-ctx-item" id="ctx-inspect"><i class="fa-solid fa-sliders fa-fw ve-ctx-icon-muted"></i> Inspeccionar</div>')
                 .insertBefore($last);
         }
     })();
@@ -3452,7 +4819,7 @@
         var row = '<div class="ve-form-field-row">' +
             '<input type="text" class="form-control" placeholder="Label">' +
             '<select class="form-select"><option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option></select>' +
-            '<button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button></div>';
+            '<button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-solid fa-times"></i></button></div>';
         $('#ve-form-fields').append(row);
     });
     $(document).on('click', '.ve-form-remove-field', function() { $(this).closest('.ve-form-field-row').remove(); });
@@ -3469,7 +4836,7 @@
         var $container = $('#ve-form-fields').empty();
         fields.forEach(function(f) {
             var opts = '<option value="text">Texto</option><option value="email">Email</option><option value="tel">Teléfono</option><option value="textarea">Textarea</option><option value="select">Select</option>';
-            var row = '<div class="ve-form-field-row"><input type="text" class="form-control" value="' + f[0] + '"><select class="form-select">' + opts.replace('value="' + f[1] + '"', 'value="' + f[1] + '" selected') + '</select><button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-duotone fa-solid fa-times"></i></button></div>';
+            var row = '<div class="ve-form-field-row"><input type="text" class="form-control" value="' + f[0] + '"><select class="form-select">' + opts.replace('value="' + f[1] + '"', 'value="' + f[1] + '" selected') + '</select><button type="button" class="btn btn-outline-secondary ve-form-remove-field"><i class="fa-solid fa-times"></i></button></div>';
             $container.append(row);
         });
     });
@@ -3664,7 +5031,7 @@
     // ── P3.4: Dynamic content tags ──
     var dynamicTags = {
         'page.title': @json($page->title),
-        'page.url': @json(url($page->slug ?? '')),
+        'page.url': @json(url($translation->slug ?? $page->slug ?? '')),
         'site.name': @json(config('app.name')),
         'current.year': new Date().getFullYear().toString(),
         'current.date': new Date().toLocaleDateString('es-ES'),
@@ -3704,7 +5071,7 @@
         if (!$menu.length) { setTimeout(addConditionCtx, 500); return; }
         var $last = $menu.find('.ve-ctx-divider').last();
         if ($last.length && !$('#ctx-conditions').length) {
-            $('<div class="ve-ctx-item" id="ctx-conditions"><i class="fa-duotone fa-solid fa-filter fa-fw ve-ctx-icon-muted"></i> Condiciones</div>')
+            $('<div class="ve-ctx-item" id="ctx-conditions"><i class="fa-solid fa-filter fa-fw ve-ctx-icon-muted"></i> Condiciones</div>')
                 .insertBefore($last);
         }
     })();
@@ -3738,7 +5105,7 @@
         if (!$menu.length) { setTimeout(addAiCtx, 500); return; }
         var $last = $menu.find('.ve-ctx-divider').last();
         if ($last.length && !$('#ctx-ai-generate').length) {
-            $('<div class="ve-ctx-item" id="ctx-ai-generate"><i class="fa-duotone fa-solid fa-wand-magic-sparkles fa-fw ve-ctx-icon-muted"></i> Generar con AI</div>')
+            $('<div class="ve-ctx-item" id="ctx-ai-generate"><i class="fa-solid fa-wand-magic-sparkles fa-fw ve-ctx-icon-muted"></i> Generar con AI</div>')
                 .insertBefore($last);
         }
     })();
@@ -3754,7 +5121,7 @@
         if (!prompt) { if (window.veToast) window.veToast('Escribe una descripción', 'error'); return; }
 
         var $btn = $('#btn-ai-generate');
-        $btn.prop('disabled', true).html('<i class="fa-duotone fa-solid fa-spinner-third fa-spin me-1"></i>Generando...');
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner-third fa-spin me-1"></i>Generando...');
 
         // Try API endpoint, fallback to placeholder
         $.ajax({
@@ -3779,7 +5146,7 @@
             $('#ve-ai-output').html(templates[type] || templates.paragraph);
             $('#ve-ai-result').removeClass('ve-hidden');
         }).always(function() {
-            $btn.prop('disabled', false).html('<i class="fa-duotone fa-solid fa-wand-magic-sparkles me-1"></i>Generar');
+            $btn.prop('disabled', false).html('<i class="fa-solid fa-wand-magic-sparkles me-1"></i>Generar');
         });
     });
 
@@ -3868,7 +5235,7 @@
             '<div style="padding:12px 20px;background:#e8f5e9;border-radius:8px;"><span style="font-size:20px;font-weight:700;color:#43a047;">+' + added + '</span><br><small style="color:#666;">líneas añadidas</small></div>' +
             '<div style="padding:12px 20px;background:#fce4ec;border-radius:8px;"><span style="font-size:20px;font-weight:700;color:#b10100;">-' + removed + '</span><br><small style="color:#666;">líneas eliminadas</small></div>' +
             '</div><small style="color:#999;">Total original: ' + origLines.length + ' líneas · Actual: ' + currLines.length + ' líneas</small></div>';
-        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-code-compare ve-ai-modal-icon"></i>Comparar versiones</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-solid fa-code-compare ve-ai-modal-icon"></i>Comparar versiones</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
         $('body').append($m);
         new bootstrap.Modal($m[0]).show();
         $m.on('hidden.bs.modal', function() { $m.remove(); });
@@ -4044,7 +5411,7 @@
             '<div style="font-size:20px;color:#1a0dab;margin-bottom:4px;cursor:pointer;">' + title + '</div>' +
             '<div style="font-size:14px;color:#006621;margin-bottom:4px;">' + url + '</div>' +
             '<div style="font-size:13px;color:#545454;line-height:1.5;">' + desc + '</div></div>';
-        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-google ve-ai-modal-icon"></i>Vista previa en Google</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-solid fa-google ve-ai-modal-icon"></i>Vista previa en Google</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
         $('body').append($m);
         new bootstrap.Modal($m[0]).show();
         $m.on('hidden.bs.modal', function() { $m.remove(); });
@@ -4056,11 +5423,11 @@
         var desc = $('#ve-settings-seo-description').val() || 'Descripción';
         var img = $('#ve-settings-featured-image').val() || '';
         var html = '<div style="max-width:500px;border:1px solid #ddd;border-radius:8px;overflow:hidden;font-family:-apple-system,sans-serif;">' +
-            (img ? '<div style="height:200px;background:#f0f0f0;overflow:hidden;"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover;" alt=""></div>' : '<div style="height:200px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#aaa;"><i class="fa-duotone fa-solid fa-image fa-2x"></i></div>') +
+            (img ? '<div style="height:200px;background:#f0f0f0;overflow:hidden;"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover;" alt=""></div>' : '<div style="height:200px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#aaa;"><i class="fa-solid fa-image fa-2x"></i></div>') +
             '<div style="padding:12px;"><div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:4px;">' + window.location.hostname + '</div>' +
             '<div style="font-size:15px;font-weight:600;color:#333;margin-bottom:4px;">' + title + '</div>' +
             '<div style="font-size:13px;color:#666;line-height:1.4;">' + desc + '</div></div></div>';
-        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-duotone fa-solid fa-share-alt ve-ai-modal-icon"></i>Vista previa al compartir</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content ve-cmd-content"><div class="ve-ai-modal-header"><h6 class="ve-ai-modal-title"><i class="fa-solid fa-share-alt ve-ai-modal-icon"></i>Vista previa al compartir</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="ve-ai-modal-body">' + html + '</div></div></div></div>');
         $('body').append($m);
         new bootstrap.Modal($m[0]).show();
         $m.on('hidden.bs.modal', function() { $m.remove(); });
@@ -4245,11 +5612,8 @@
             html += '<div class="ve-audit-item ve-audit-' + i.type + '"><div class="ve-audit-icon">' + icon + '</div><div class="ve-audit-msg">' + i.msg + '</div></div>';
         });
 
-        // Reuse shortcuts modal structure
-        var $modal = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;"><div class="modal-header" style="background:#fff;border-bottom:1px solid #eee;padding:14px 20px;"><h6 style="font-weight:700;font-size:14px;color:#333;margin:0;"><i class="fa-duotone fa-solid fa-universal-access me-2" style="color:#999;"></i>Auditoría de accesibilidad</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:16px 20px;max-height:60vh;overflow-y:auto;">' + html + '</div></div></div></div>');
-        $('body').append($modal);
-        new bootstrap.Modal($modal[0]).show();
-        $modal.on('hidden.bs.modal', function() { $modal.remove(); });
+        $('#ve-a11y-results').html(html);
+        new bootstrap.Modal(document.getElementById('ve-a11y-modal')).show();
     }
 
     function runPerformanceScore() {
@@ -4302,7 +5666,7 @@
             var icon = i.type === 'pass' ? '&#10003;' : '!';
             phtml += '<div class="ve-audit-item ve-audit-' + i.type + '"><div class="ve-audit-icon">' + icon + '</div><div class="ve-audit-msg">' + i.msg + '</div></div>';
         });
-        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;"><div class="modal-header" style="background:#fff;border-bottom:1px solid #eee;padding:14px 20px;"><h6 style="font-weight:700;font-size:14px;color:#333;margin:0;"><i class="fa-duotone fa-solid fa-gauge-high me-2" style="color:#999;"></i>Performance score</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:16px 20px;max-height:60vh;overflow-y:auto;">' + phtml + '</div></div></div></div>');
+        var $m = $('<div class="modal fade" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;"><div class="modal-header" style="background:#fff;border-bottom:1px solid #eee;padding:14px 20px;"><h6 style="font-weight:700;font-size:14px;color:#333;margin:0;"><i class="fa-solid fa-gauge-high me-2" style="color:#999;"></i>Performance score</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:16px 20px;max-height:60vh;overflow-y:auto;">' + phtml + '</div></div></div></div>');
         $('body').append($m);
         new bootstrap.Modal($m[0]).show();
         $m.on('hidden.bs.modal', function() { $m.remove(); });
@@ -4431,14 +5795,14 @@
         if ($wrap.hasClass('split')) {
             $wrap.removeClass('split').addClass('desktop');
             $wrap.find('.ve-split-mobile').remove();
-            $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid fa-desktop');
+            $('#responsive-bar-icon').attr('class', 'fa-solid fa-desktop');
         } else {
             $wrap.removeClass('desktop tablet mobile laptop').addClass('split');
             if (!$wrap.find('.ve-split-mobile').length) {
                 var $mobile = $('<iframe class="ve-split-mobile" sandbox="allow-same-origin allow-scripts"></iframe>').attr('src', $frame.attr('src'));
                 $wrap.append($mobile);
             }
-            $('#responsive-bar-icon').attr('class', 'fa-duotone fa-solid fa-columns');
+            $('#responsive-bar-icon').attr('class', 'fa-solid fa-columns');
         }
     });
 
@@ -4446,6 +5810,116 @@
     window.addEventListener('message', function(ev) {
         if (ev.data && ev.data.type === 've-request-inspect') {
             $('#ve-sidebar-nav .ve-nav-btn[data-panel="inspector"]').trigger('click');
+        }
+    });
+
+    // ── Broken shortcodes indicator ──────────────────────────────────────────
+    function checkBrokenSentinels() {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) return;
+        var broken = [];
+        frame.contentDocument.querySelectorAll('[data-ve-sc]').forEach(function(el) {
+            var encoded = el.getAttribute('data-ve-sc');
+            var decoded = encoded.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#039;/g,"'");
+            var match = decoded.match(/^\[([a-z0-9_-]+)/i);
+            if (match) {
+                var name = match[1];
+                if (window.veScMetaMap && !(name in window.veScMetaMap)) {
+                    broken.push(name);
+                }
+            }
+        });
+        var $badge = $('#ve-broken-sc-badge');
+        if (broken.length > 0) {
+            if (!$badge.length) {
+                $('<span id="ve-broken-sc-badge" title="Shortcodes no registrados: ' + broken.join(', ') + '" style="font-size:10px;color:#b10100;cursor:pointer;margin-left:6px;">&#9888; ' + broken.length + ' roto(s)</span>')
+                    .appendTo('#ve-topbar');
+            } else {
+                $badge.attr('title', 'Shortcodes no registrados: ' + broken.join(', ')).text('⚠ ' + broken.length + ' roto(s)');
+            }
+        } else {
+            $badge.remove();
+        }
+    }
+    $('#ve-preview-frame').on('load', function() { setTimeout(checkBrokenSentinels, 1000); });
+
+    // ── Page statistics modal ────────────────────────────────────────────────
+    $('#btn-page-stats').on('click', function() {
+        var frame = document.getElementById('ve-preview-frame');
+        var uniqueSc = new Set();
+        var shortcuts = 0, words = 0, images = 0, links = 0, headings = 0;
+        if (frame && frame.contentDocument) {
+            var doc = frame.contentDocument;
+            doc.querySelectorAll('[data-ve-sc]').forEach(function(el) {
+                shortcuts++;
+                var decoded = el.getAttribute('data-ve-sc').replace(/&amp;/g,'&');
+                var m = decoded.match(/^\[([a-z0-9_-]+)/i);
+                if (m) uniqueSc.add(m[1]);
+            });
+            var text = doc.body ? doc.body.innerText : '';
+            words = text.trim().split(/\s+/).filter(Boolean).length;
+            images = doc.querySelectorAll('img').length;
+            links = doc.querySelectorAll('a[href]').length;
+            headings = doc.querySelectorAll('h1,h2,h3,h4,h5,h6').length;
+        }
+        var rows = [
+            ['Shortcodes en la página', shortcuts],
+            ['Shortcodes únicos', uniqueSc.size],
+            ['Palabras', words.toLocaleString()],
+            ['Imágenes', images],
+            ['Enlaces', links],
+            ['Encabezados', headings],
+        ];
+        var html = rows.map(function(r) {
+            return '<tr><td class="px-3">' + r[0] + '</td><td class="px-3 fw-bold text-end">' + r[1] + '</td></tr>';
+        }).join('');
+        $('#ve-stats-table').html(html);
+        new bootstrap.Modal(document.getElementById('ve-stats-modal')).show();
+    });
+
+    // ── Find in page ─────────────────────────────────────────────────────────
+    function showFindPanel() {
+        $('#ve-find-in-page').css('display', 'flex');
+        $('#ve-find-in-page-input').focus();
+    }
+    $('#btn-search-in-page').on('click', function() {
+        var $panel = $('#ve-find-in-page');
+        if ($panel.is(':visible')) {
+            $panel.hide();
+        } else {
+            showFindPanel();
+        }
+    });
+
+    $(document).on('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !$(e.target).is('input,textarea')) {
+            e.preventDefault();
+            showFindPanel();
+        }
+    });
+
+    var findDebounce;
+    $('#ve-find-in-page-input').on('input', function() {
+        clearTimeout(findDebounce);
+        var query = $(this).val();
+        findDebounce = setTimeout(function() {
+            sendToFrame({ type: 've-find-in-page', query: query });
+        }, 300);
+    });
+
+    $('#btn-find-next').on('click', function() { sendToFrame({ type: 've-find-navigate', dir: 'next' }); });
+    $('#btn-find-prev').on('click', function() { sendToFrame({ type: 've-find-navigate', dir: 'prev' }); });
+    $('#btn-find-close').on('click', function() {
+        $('#ve-find-in-page').hide();
+        sendToFrame({ type: 've-find-in-page', query: '' });
+        $('#ve-find-count').text('');
+    });
+
+    window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 've-find-results') {
+            var c = ev.data.count;
+            var cur = ev.data.current;
+            $('#ve-find-count').text(c > 0 ? cur + '/' + c : 'Sin resultados');
         }
     });
 
@@ -4490,7 +5964,7 @@
         var lc = '';
         f.slice(0,15).forEach(function(a){
             if(a.cat!==lc){ $r.append('<div class="ve-cmd-cat">'+a.cat+'</div>'); lc=a.cat; }
-            var $i=$('<div class="ve-cmd-item">').html('<i class="fa-duotone fa-solid '+a.icon+'"></i><span>'+a.label+'</span>'+(a.kbd?'<kbd>'+a.kbd+'</kbd>':''));
+            var $i=$('<div class="ve-cmd-item">').html('<i class="fa-solid '+a.icon+'"></i><span>'+a.label+'</span>'+(a.kbd?'<kbd>'+a.kbd+'</kbd>':''));
             $i.on('click',function(){ a.action(); bootstrap.Modal.getInstance(document.getElementById('ve-command-palette')).hide(); });
             $r.append($i);
         });
@@ -4512,17 +5986,411 @@
         }
     });
 
-    // ── Word count in bottom bar ──
+    // ── Word count + KB in bottom bar ──
     function updateWordCount() {
         try {
-            var html = window.veEditor ? window.veEditor.getData() : '';
-            var text = html.replace(/<[^>]*>/g, ' ').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
-            var count = text ? text.split(' ').length : 0;
-            $('#ve-word-count').text(count.toLocaleString() + ' palabras');
+            var frame = document.getElementById('ve-preview-frame');
+            var html = '';
+            var text = '';
+
+            if (frame && frame.contentDocument && frame.contentDocument.body) {
+                text = frame.contentDocument.body.innerText || '';
+                html = frame.contentDocument.body.innerHTML || '';
+            } else if (window.veEditor) {
+                html = window.veEditor.getData() || '';
+                text = html.replace(/<[^>]*>/g, ' ').replace(/&[^;]+;/g, ' ');
+            }
+
+            var words = text.trim() ? text.trim().split(/\s+/).filter(function (w) { return w.length > 0; }).length : 0;
+            var kb    = html ? (new Blob([html]).size / 1024).toFixed(1) : '0.0';
+            $('#ve-word-count').text(words.toLocaleString() + ' palabras · ' + kb + ' KB');
         } catch(e) {}
     }
-    setInterval(updateWordCount, 5000);
+    setInterval(updateWordCount, 10000);
     setTimeout(updateWordCount, 3000);
+    $('#ve-preview-frame').on('load', function () { setTimeout(updateWordCount, 500); });
+    $(document).on('ve-content-changed', updateWordCount);
+
+    // ── Presentation mode ────────────────────────────────────────────────────
+    $('#btn-presentation-mode').on('click', function () {
+        $('body').toggleClass('ve-presentation-mode');
+        var on = $('body').hasClass('ve-presentation-mode');
+        $(this).toggleClass('active', on).attr('title', on ? 'Salir del modo presentación (Esc)' : 'Modo presentación');
+    });
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && $('body').hasClass('ve-presentation-mode')) {
+            $('body').removeClass('ve-presentation-mode');
+            $('#btn-presentation-mode').removeClass('active').attr('title', 'Modo presentación');
+        }
+    });
+
+    // ── QR preview ──────────────────────────────────────────────────────────
+    $('#btn-qr-preview').on('click', function () {
+        var url = $('#ve-preview-frame').attr('src') || window.location.href;
+        var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+        $('#ve-qr-container').html('<img src="' + qrUrl + '" width="200" height="200" alt="QR">');
+        $('#ve-qr-url').text(url);
+        new bootstrap.Modal(document.getElementById('ve-qr-modal')).show();
+    });
+
+    // ── Snippets modal ──────────────────────────────────────────────────────
+    $('#btn-snippets').on('click', function () {
+        new bootstrap.Modal(document.getElementById('ve-snippets-modal')).show();
+    });
+
+    // ── Accessibility audit ─────────────────────────────────────────────────
+    $('#btn-a11y-check').on('click', function () {
+        runAccessibilityAudit();
+    });
+
+    // ── Quick actions modal ─────────────────────────────────────────────────
+    $('#btn-quick-actions-config').on('click', function () {
+        new bootstrap.Modal(document.getElementById('ve-quick-actions-modal')).show();
+    });
+
+    // ── Check broken images ─────────────────────────────────────────────────
+    $('#btn-check-images').on('click', function () {
+        var frame = document.getElementById('ve-preview-frame');
+        if (!frame || !frame.contentDocument) {
+            showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>El preview no está disponible.');
+            return;
+        }
+        var imgs = frame.contentDocument.querySelectorAll('img');
+        var html = '';
+        var checked = 0;
+        if (!imgs.length) {
+            html = '<div class="p-3 text-muted text-center">No hay imágenes en la página.</div>';
+            $('#ve-broken-images-list').html(html);
+            new bootstrap.Modal(document.getElementById('ve-broken-images-modal')).show();
+            return;
+        }
+        html = '<div class="p-3 text-muted" id="ve-img-scanning">Verificando ' + imgs.length + ' imágenes...</div>';
+        $('#ve-broken-images-list').html(html);
+        new bootstrap.Modal(document.getElementById('ve-broken-images-modal')).show();
+        var results = [];
+        Array.from(imgs).forEach(function (img) {
+            var src = img.src || img.getAttribute('src') || '';
+            var testImg = new Image();
+            testImg.onload = function () {
+                results.push({ src: src, ok: true });
+                checked++;
+                if (checked === imgs.length) renderImgResults(results, imgs.length);
+            };
+            testImg.onerror = function () {
+                results.push({ src: src, ok: false });
+                checked++;
+                if (checked === imgs.length) renderImgResults(results, imgs.length);
+            };
+            testImg.src = src + '?_ve=' + Date.now();
+        });
+        function renderImgResults(res, total) {
+            var broken = res.filter(function (r) { return !r.ok; });
+            if (!broken.length) {
+                $('#ve-broken-images-list').html('<div class="p-3 text-success text-center"><i class="fas fa-check-circle me-1"></i>Todas las ' + total + ' imágenes cargan correctamente.</div>');
+            } else {
+                var rows = broken.map(function (r) {
+                    var name = r.src.split('/').pop().split('?')[0] || r.src;
+                    return '<div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom"><i class="fas fa-exclamation-triangle text-danger mt-1"></i><div style="word-break:break-all;font-size:12px;"><div class="fw-semibold text-danger">' + name + '</div><div class="text-muted">' + r.src + '</div></div></div>';
+                }).join('');
+                $('#ve-broken-images-list').html('<div class="px-3 py-2 text-danger fw-semibold">' + broken.length + ' imagen(es) rota(s) de ' + total + '</div>' + rows);
+            }
+        }
+    });
+
+    // ── Snippets CRUD (localStorage) ────────────────────────────────────────
+    var VE_SNIPPETS_KEY = 've_snippets';
+    var activeSnippetId = null;
+
+    function loadSnippets() {
+        try {
+            return JSON.parse(localStorage.getItem(VE_SNIPPETS_KEY) || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveSnippets(arr) {
+        localStorage.setItem(VE_SNIPPETS_KEY, JSON.stringify(arr));
+    }
+
+    function renderSnippetList() {
+        var snippets = loadSnippets();
+        var $list = $('#ve-snippets-list');
+        $list.empty();
+
+        if (!snippets.length) {
+            $list.append('<div class="text-muted" style="font-size:11px;padding:4px 2px;">Sin snippets guardados</div>');
+            return;
+        }
+
+        snippets.forEach(function (s) {
+            var $item = $('<div class="ve-snippet-item">')
+                .text(s.name || 'Sin nombre')
+                .attr('data-id', s.id);
+            if (s.id === activeSnippetId) {
+                $item.addClass('active');
+            }
+            $list.append($item);
+        });
+    }
+
+    // Load snippet into editor fields
+    function loadSnippetIntoEditor(id) {
+        var snippets = loadSnippets();
+        var s = snippets.find(function (x) { return x.id === id; });
+        if (!s) return;
+        activeSnippetId = s.id;
+        $('#ve-snippet-name').val(s.name);
+        $('#ve-snippet-code').val(s.code);
+        renderSnippetList();
+    }
+
+    function clearSnippetEditor() {
+        activeSnippetId = null;
+        $('#ve-snippet-name').val('');
+        $('#ve-snippet-code').val('');
+        renderSnippetList();
+    }
+
+    // Open modal → render list
+    document.getElementById('ve-snippets-modal').addEventListener('show.bs.modal', function () {
+        renderSnippetList();
+    });
+
+    // Click on snippet item to load it
+    $(document).on('click', '.ve-snippet-item', function () {
+        var id = parseInt($(this).attr('data-id'), 10);
+        loadSnippetIntoEditor(id);
+    });
+
+    // New snippet
+    $('#btn-snippet-new').on('click', function () {
+        clearSnippetEditor();
+    });
+
+    // Save / update snippet
+    $('#btn-snippet-save').on('click', function () {
+        var name = $.trim($('#ve-snippet-name').val());
+        var code = $('#ve-snippet-code').val();
+
+        if (!name) {
+            showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>Escribe un nombre para el snippet.');
+            return;
+        }
+
+        var snippets = loadSnippets();
+
+        if (activeSnippetId) {
+            snippets = snippets.map(function (s) {
+                return s.id === activeSnippetId ? { id: s.id, name: name, code: code } : s;
+            });
+            showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>Snippet actualizado.');
+        } else {
+            activeSnippetId = Date.now();
+            snippets.push({ id: activeSnippetId, name: name, code: code });
+            showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>Snippet guardado.');
+        }
+
+        saveSnippets(snippets);
+        renderSnippetList();
+    });
+
+    // Delete active snippet
+    $('#btn-snippet-delete').on('click', function () {
+        if (!activeSnippetId) {
+            showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>Selecciona un snippet para eliminar.');
+            return;
+        }
+
+        var snippets = loadSnippets().filter(function (s) { return s.id !== activeSnippetId; });
+        saveSnippets(snippets);
+        clearSnippetEditor();
+        showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>Snippet eliminado.');
+    });
+
+    // Insert snippet HTML into the page via postMessage
+    $('#btn-snippet-insert').on('click', function () {
+        var code = $('#ve-snippet-code').val();
+        if (!$.trim(code)) {
+            showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>El snippet está vacío.');
+            return;
+        }
+        sendToFrame({ type: 've-insert-html', html: code });
+        showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>Snippet insertado en la página.');
+        bootstrap.Modal.getInstance(document.getElementById('ve-snippets-modal')).hide();
+    });
+
+    // ── Comment mode ─────────────────────────────────────────────────────────
+    var veCommentMode = false;
+    $('#btn-comment-mode').on('click', function () {
+        veCommentMode = !veCommentMode;
+        $(this).toggleClass('active', veCommentMode)
+               .attr('title', veCommentMode ? 'Clic en el preview para comentar (activo)' : 'Añadir comentario (modo comentar)');
+        if (veCommentMode) {
+            showToast('<i class="fas fa-info-circle me-1"></i>' + 'Modo comentario activo. Haz clic en el preview donde quieras comentar.');
+        }
+    });
+    window.addEventListener('message', function (ev) {
+        if (!ev.data || ev.data.type !== 've-canvas-click' || !veCommentMode) return;
+        var text = prompt('Escribe tu comentario:');
+        if (!text) return;
+        var x = ev.data.x || 0;
+        var y = ev.data.y || 0;
+        var $pin = $('<div class="ve-comment-pin" title="' + $('<div>').text(text).html() + '" style="position:absolute;left:' + x + 'px;top:' + y + 'px;background:#FEC90F;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;z-index:9999;">' + $('.ve-comment-pin').length + 1 + '</div>');
+        $pin.attr('data-bs-toggle', 'tooltip').attr('data-bs-placement', 'top');
+        $('#ve-main').append($pin);
+        new bootstrap.Tooltip($pin[0]).show();
+    });
+
+    // ── Icon Picker (Feature A) ───────────────────────────────────────────────
+    var VE_ICONS = [
+        // Básicos
+        'fa-solid fa-star', 'fa-solid fa-heart', 'fa-solid fa-home', 'fa-solid fa-user',
+        'fa-solid fa-gear', 'fa-solid fa-bell', 'fa-solid fa-search', 'fa-solid fa-check',
+        'fa-solid fa-xmark', 'fa-solid fa-plus', 'fa-solid fa-minus', 'fa-solid fa-pen',
+        'fa-solid fa-trash', 'fa-solid fa-floppy-disk', 'fa-solid fa-download', 'fa-solid fa-upload',
+        'fa-solid fa-share', 'fa-solid fa-link', 'fa-solid fa-image', 'fa-solid fa-file',
+        'fa-solid fa-folder', 'fa-solid fa-calendar', 'fa-solid fa-clock', 'fa-solid fa-lock',
+        'fa-solid fa-unlock', 'fa-solid fa-eye', 'fa-solid fa-comment', 'fa-solid fa-envelope',
+        'fa-solid fa-phone', 'fa-solid fa-location-dot', 'fa-solid fa-globe', 'fa-solid fa-chart-bar',
+        'fa-solid fa-table', 'fa-solid fa-list', 'fa-solid fa-code', 'fa-solid fa-tag',
+        'fa-solid fa-thumbs-up', 'fa-solid fa-thumbs-down', 'fa-solid fa-flag', 'fa-solid fa-bookmark',
+        'fa-solid fa-circle-info', 'fa-solid fa-triangle-exclamation', 'fa-solid fa-shield',
+        'fa-solid fa-key', 'fa-solid fa-bolt', 'fa-solid fa-fire', 'fa-solid fa-leaf',
+        'fa-solid fa-map', 'fa-solid fa-paper-plane', 'fa-solid fa-rotate', 'fa-solid fa-arrows-rotate',
+        // Multimedia
+        'fa-solid fa-play', 'fa-solid fa-pause', 'fa-solid fa-music', 'fa-solid fa-video',
+        'fa-solid fa-camera', 'fa-solid fa-microphone', 'fa-solid fa-volume-high',
+        // Sociales
+        'fa-brands fa-facebook', 'fa-brands fa-twitter', 'fa-brands fa-instagram',
+        'fa-brands fa-linkedin', 'fa-brands fa-youtube', 'fa-brands fa-tiktok',
+        'fa-brands fa-whatsapp', 'fa-brands fa-github',
+    ];
+
+    function renderIconGrid(filter) {
+        var $grid = $('#ve-icon-grid');
+        $grid.empty();
+        var list = filter
+            ? VE_ICONS.filter(function (ic) { return ic.toLowerCase().indexOf(filter.toLowerCase()) !== -1; })
+            : VE_ICONS;
+
+        $.each(list, function (_, iconClass) {
+            var parts = iconClass.split(' ');
+            var name = parts[parts.length - 1].replace('fa-', '');
+            var $cell = $('<div class="ve-icon-cell" title="' + iconClass + '">'
+                + '<i class="' + iconClass + '"></i>'
+                + '<span>' + name + '</span>'
+                + '</div>');
+            $cell.on('click', function () {
+                navigator.clipboard.writeText(iconClass).then(function () {
+                    showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>' + 'Copiado: ' + iconClass);
+                }).catch(function () {
+                    showToast('<i class="fas fa-info-circle me-1"></i>' + 'Clase: ' + iconClass);
+                });
+                bootstrap.Modal.getInstance(document.getElementById('ve-icon-picker-modal')).hide();
+            });
+            $grid.append($cell);
+        });
+    }
+
+    $('#ve-icon-picker-modal').on('show.bs.modal', function () {
+        $('#ve-icon-search').val('');
+        renderIconGrid('');
+    });
+
+    $('#ve-icon-search').on('input', function () {
+        renderIconGrid($(this).val().trim());
+    });
+
+    // ── Quick Actions Bar (Feature D) ────────────────────────────────────────
+    var QA_ACTIONS = [
+        { id: 'save',         label: 'Guardar',       icon: 'fa-solid fa-floppy-disk',       action: function () { $('#btn-save').trigger('click'); } },
+        { id: 'undo',         label: 'Deshacer',      icon: 'fa-solid fa-rotate-left',        action: function () { $('#btn-undo').trigger('click'); } },
+        { id: 'redo',         label: 'Rehacer',       icon: 'fa-solid fa-rotate-right',       action: function () { $('#btn-redo').trigger('click'); } },
+        { id: 'preview',      label: 'Preview',       icon: 'fa-solid fa-eye',                action: function () { window.open($('.ve-topbar-preview-btn').attr('href'), '_blank'); } },
+        { id: 'presentation', label: 'Presentación',  icon: 'fa-solid fa-tv',                 action: function () { $('#btn-presentation-mode').trigger('click'); } },
+        { id: 'grid',         label: 'Grid overlay',  icon: 'fa-solid fa-border-all',         action: function () { $('#btn-grid-overlay').trigger('click'); } },
+        { id: 'a11y',         label: 'Accesibilidad', icon: 'fa-solid fa-universal-access',   action: function () { $('#btn-a11y-check').trigger('click'); } },
+        { id: 'images',       label: 'Imágenes rotas',icon: 'fa-solid fa-image',              action: function () { $('#btn-check-images').trigger('click'); } },
+        { id: 'stats',        label: 'Estadísticas',  icon: 'fa-solid fa-chart-simple',       action: function () { $('#btn-page-stats').trigger('click'); } },
+        { id: 'shortcuts',    label: 'Atajos',        icon: 'fa-solid fa-keyboard',           action: function () { new bootstrap.Modal(document.getElementById('ve-shortcuts-modal')).show(); } },
+    ];
+
+    var VE_QA_KEY = 've_qa_selected';
+
+    function getQaSelected() {
+        try { return JSON.parse(localStorage.getItem(VE_QA_KEY)) || []; } catch (e) { return []; }
+    }
+
+    function renderQuickActionsBar() {
+        var selected = getQaSelected();
+        var $bar = $('#ve-quick-actions-bar');
+        $bar.empty();
+        $.each(selected, function (_, id) {
+            var action = null;
+            $.each(QA_ACTIONS, function (_, a) { if (a.id === id) { action = a; return false; } });
+            if (!action) return;
+            var $btn = $('<button class="ve-qa-btn" title="' + action.label + '" type="button"><i class="' + action.icon + '"></i></button>');
+            $btn.on('click', action.action);
+            $bar.append($btn);
+        });
+    }
+
+    $('#ve-quick-actions-modal').on('show.bs.modal', function () {
+        var selected = getQaSelected();
+        var $opts = $('#ve-qa-options').empty();
+        $.each(QA_ACTIONS, function (_, a) {
+            var checked = selected.indexOf(a.id) !== -1 ? ' checked' : '';
+            $opts.append(
+                '<div class="form-check">'
+                + '<input class="form-check-input ve-qa-checkbox" type="checkbox" id="qa-' + a.id + '" value="' + a.id + '"' + checked + '>'
+                + '<label class="form-check-label" for="qa-' + a.id + '" style="font-size:13px;">'
+                + '<i class="' + a.icon + ' me-1 text-muted"></i>' + a.label
+                + '</label></div>'
+            );
+        });
+    });
+
+    $('#btn-qa-save').on('click', function () {
+        var selected = [];
+        $('.ve-qa-checkbox:checked').each(function () {
+            if (selected.length < 6) { selected.push($(this).val()); }
+        });
+        localStorage.setItem(VE_QA_KEY, JSON.stringify(selected));
+        bootstrap.Modal.getInstance(document.getElementById('ve-quick-actions-modal')).hide();
+        renderQuickActionsBar();
+        showToast('<i class="fas fa-check me-1" style="color:#13C672"></i>' + 'Acciones rápidas actualizadas');
+    });
+
+    // Enforce max 6 checkboxes
+    $(document).on('change', '.ve-qa-checkbox', function () {
+        var $checked = $('.ve-qa-checkbox:checked');
+        if ($checked.length > 6) {
+            $(this).prop('checked', false);
+            showToast('<i class="fas fa-exclamation-triangle me-1" style="color:#FEC90F"></i>' + 'Máximo 6 acciones rápidas');
+        }
+    });
+
+    // Init bar on load
+    renderQuickActionsBar();
+
+    // ── Canvas background ────────────────────────────────────────────────────
+    $(document).on('click', '.ve-canvas-bg-btn', function () {
+        var bg = $(this).data('bg');
+        $('#ve-canvas-wrap').css('background', bg);
+        $('#btn-grid-overlay-top').closest('.dropdown').prev('#btn-canvas-bg')
+            .find('i').css('color', bg === '#ffffff' || !bg ? '' : '#90bb13');
+        localStorage.setItem('ve-canvas-bg', bg);
+    });
+    // Restore canvas bg on load
+    var savedCanvasBg = localStorage.getItem('ve-canvas-bg');
+    if (savedCanvasBg) $('#ve-canvas-wrap').css('background', savedCanvasBg);
+
+    // ── Grid overlay top bar button (syncs with bottom btn-grid-overlay) ─────
+    $(document).on('click', '#btn-grid-overlay-top', function () {
+        $('#btn-grid-overlay').trigger('click');
+        $(this).toggleClass('active', $('#btn-grid-overlay').hasClass('active'));
+    });
 
 })(jQuery);
 </script>

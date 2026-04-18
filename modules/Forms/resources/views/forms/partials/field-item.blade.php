@@ -30,7 +30,38 @@
         'password'           => 'fas fa-key',
         'color_picker'       => 'fas fa-palette',
     ];
-    $icon = $typeIcons[$field->type] ?? 'fas fa-question';
+
+    $accentClasses = [
+        'text'               => 'field-accent-basic',
+        'email'              => 'field-accent-basic',
+        'phone'              => 'field-accent-basic',
+        'textarea'           => 'field-accent-basic',
+        'number'             => 'field-accent-basic',
+        'date'               => 'field-accent-basic',
+        'time'               => 'field-accent-basic',
+        'url'                => 'field-accent-basic',
+        'password'           => 'field-accent-basic',
+        'select'             => 'field-accent-select',
+        'radio'              => 'field-accent-select',
+        'checkbox'           => 'field-accent-select',
+        'image_choice'       => 'field-accent-select',
+        'file'               => 'field-accent-advanced',
+        'rating'             => 'field-accent-advanced',
+        'slider'             => 'field-accent-advanced',
+        'nps'                => 'field-accent-advanced',
+        'likert'             => 'field-accent-advanced',
+        'signature'          => 'field-accent-advanced',
+        'calculation'        => 'field-accent-advanced',
+        'address'            => 'field-accent-advanced',
+        'color_picker'       => 'field-accent-advanced',
+        'section_header'     => 'field-accent-layout',
+        'html_block'         => 'field-accent-layout',
+        'divider'            => 'field-accent-layout',
+        'spacer'             => 'field-accent-layout',
+        'hidden'             => 'field-accent-layout',
+        'consent'            => 'field-accent-legal',
+        'newsletter_consent' => 'field-accent-legal',
+    ];
 
     $widthLabels = [
         'full'    => '100%',
@@ -38,64 +69,78 @@
         'third'   => '33%',
         'quarter' => '25%',
     ];
+
+    $icon        = $typeIcons[$field->type] ?? 'fas fa-question';
+    $accentClass = $accentClasses[$field->type] ?? '';
 @endphp
 
-<div class="field-item d-flex align-items-center gap-3 p-3 mb-2"
-     id="field-item-{{ $field->id }}"
-     data-id="{{ $field->id }}">
+<tr class="field-item {{ $accentClass }}"
+    id="field-item-{{ $field->id }}"
+    data-id="{{ $field->id }}">
 
-    {{-- Handle --}}
-    <span class="drag-handle" title="Arrastrar para reordenar">
-        <i class="fas fa-grip-vertical"></i>
-    </span>
+    {{-- Drag handle --}}
+    <td class="col-drag text-center">
+        <span class="drag-handle" title="Arrastrar para reordenar">
+            <i class="fas fa-grip-vertical"></i>
+        </span>
+    </td>
 
-    {{-- Icono tipo --}}
-    <span class="text-muted flex-shrink-0" title="{{ $field->type }}">
-        <i class="{{ $icon }}"></i>
-    </span>
-
-    {{-- Info --}}
-    <div class="flex-grow-1" style="min-width:0">
-        <div class="fw-semibold text-truncate">{{ $field->label }}</div>
-        <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
-            <code class="small text-muted field-type-badge">{{ $field->type }}</code>
-            <span class="badge bg-light text-secondary field-type-badge">{{ $field->name }}</span>
-            @if ($field->is_required)
-                <span class="badge bg-light-danger text-danger field-type-badge">Obligatorio</span>
-            @endif
-            @if ($field->width && $field->width !== 'full')
-                <span class="badge bg-light text-muted field-type-badge">
-                    {{ $widthLabels[$field->width] ?? $field->width }}
-                </span>
-            @endif
+    {{-- Campo: label + type below --}}
+    <td class="col-label">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted flex-shrink-0" title="{{ $field->type }}">
+                <i class="{{ $icon }}"></i>
+            </span>
+            <div class="min-width-0">
+                <div class="fw-semibold small text-truncate">{{ $field->label }}</div>
+                <div class="d-flex align-items-center gap-1 mt-1">
+                    <code class="field-type-badge text-muted">{{ $field->type }}</code>
+                    @if ($field->is_required)
+                        <span class="badge bg-light-danger text-danger field-type-badge">Req.</span>
+                    @endif
+                    @if ($field->step_number)
+                        <span class="badge bg-light text-secondary field-type-badge">P{{ $field->step_number }}</span>
+                    @endif
+                </div>
+            </div>
         </div>
-    </div>
+    </td>
 
-    {{-- Acciones --}}
-    <div class="d-flex gap-1 flex-shrink-0">
-        <button type="button"
-                class="btn btn-sm btn-outline-secondary btn-edit-field"
-                data-id="{{ $field->id }}"
-                title="Editar campo"
-                aria-label="Editar campo {{ $field->label }}">
-            <i class="fas fa-pencil-alt"></i>
-        </button>
-        <button type="button"
-                class="btn btn-sm btn-outline-info btn-duplicate-field"
-                data-field-id="{{ $field->id }}"
-                data-url="{{ route('settings.forms.fields.duplicate', [$form, $field]) }}"
-                title="Duplicar campo"
-                aria-label="Duplicar campo {{ $field->label }}">
-            <i class="fas fa-copy"></i>
-        </button>
-        <button type="button"
-                class="btn btn-sm btn-outline-danger btn-delete-field"
-                data-id="{{ $field->id }}"
-                data-label="{{ $field->label }}"
-                title="Eliminar campo"
-                aria-label="Eliminar campo {{ $field->label }}">
-            <i class="fas fa-trash-alt"></i>
-        </button>
-    </div>
+    {{-- Key --}}
+    <td class="col-key">
+        <span class="badge bg-light text-secondary field-type-badge field-key-badge text-truncate d-inline-block">{{ $field->name }}</span>
+    </td>
 
-</div>
+    {{-- Actions --}}
+    <td class="col-actions text-center">
+        <div class="dropdown field-actions">
+            <a href="javascript:void(0)" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-vertical"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item btn-edit-field" href="javascript:void(0)"
+                       data-id="{{ $field->id }}">
+                        Editar
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item btn-duplicate-field" href="javascript:void(0)"
+                       data-field-id="{{ $field->id }}"
+                       data-url="{{ route('settings.forms.fields.duplicate', [$form, $field]) }}">
+                        Duplicar
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item btn-delete-field" href="javascript:void(0)"
+                       data-id="{{ $field->id }}"
+                       data-label="{{ $field->label }}">
+                        Eliminar
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </td>
+
+</tr>

@@ -97,7 +97,7 @@
 
     {{-- Modal: Create token --}}
     <div class="modal fade" id="modal-create-token" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Nuevo widget</h5>
@@ -138,7 +138,7 @@
 
     {{-- Modal: Embed code --}}
     <div class="modal fade" id="modal-embed-code" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Codigo de integracion</h5>

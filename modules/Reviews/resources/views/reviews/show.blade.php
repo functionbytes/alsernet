@@ -6,82 +6,231 @@
 
     @include('core::components.card', ['title' => 'Detalle de reseña'])
 
+    @include('core::components.alerts')
+
     <div class="row">
-        <div class="col-md-8">
-            <!-- Review Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0 fw-bold">Reseña de {{ $review->reviewer_name }}</h6>
+
+        {{-- Columna izquierda: Moderación y estadísticas --}}
+        <div class="col-lg-4">
+
+            {{-- Moderación --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Moderación</h5>
+                    <p class="small mb-0 text-muted">Visibilidad, destacado y etiquetas internas</p>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex align-items-start mb-3">
-                        <img src="{{ $review->reviewer_photo_url ?? asset('images/default-avatar.png') }}"
-                             class="rounded-circle me-3"
-                             width="60"
-                             height="60"
-                             alt="{{ $review->reviewer_name }}">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{ $review->reviewer_name }}</h6>
-                            <div class="mb-2">
-                                <x-reviews::rating-stars :rating="$review->star_rating" />
+                    <form id="moderation-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="is_visible"
+                                       name="is_visible"
+                                       value="1"
+                                       {{ $review->moderation?->is_visible ? 'checked' : '' }}>
+                                <label class="form-check-label fw-semibold" for="is_visible">
+                                    Visible en plataforma pública
+                                </label>
                             </div>
-                            <small class="text-muted">
-                                <i class="far fa-clock"></i> {{ $review->review_time->format('d/m/Y H:i') }}
-                            </small>
+                            <small class="text-muted d-block mt-1 ms-4 ps-2">La reseña aparecerá en el widget y en las páginas públicas del negocio</small>
                         </div>
-                    </div>
 
-                    @if($review->comment)
-                        <div class="mb-3" id="review-comment-section">
-                            <p class="mb-0" id="original-comment">{{ $review->comment }}</p>
-                            <div id="translated-comment-block" class="mt-2 d-none">
-                                <span id="detected-lang-badge" class="badge bg-secondary-subtle text-secondary mb-1 d-none"></span>
-                                <p class="mb-0 fst-italic text-muted" id="translated-comment-text"></p>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="is_featured"
+                                       name="is_featured"
+                                       value="1"
+                                       {{ $review->moderation?->is_featured ? 'checked' : '' }}>
+                                <label class="form-check-label fw-semibold" for="is_featured">
+                                    Destacada
+                                </label>
                             </div>
-                            <div class="mt-2">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" id="translate-comment-btn">
-                                    <i class="fas fa-language"></i> Traducir
-                                </button>
-                            </div>
+                            <small class="text-muted d-block mt-1 ms-4 ps-2">Se mostrará de forma prominente como reseña destacada en el widget</small>
                         </div>
-                    @else
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Esta reseña no incluye comentario escrito.
-                        </div>
-                    @endif
 
-                    <div class="border-top pt-3 mt-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Ubicación:</strong><br>
-                                {{ $review->location->name }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Dirección:</strong><br>
-                                {{ $review->location->address }}
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Etiquetas</label>
+                            @php
+                                $availableTags  = $review->location->available_tags ?? [];
+                                $assignedTags   = $review->moderation?->tags ?? [];
+                            @endphp
+                            <select class="form-select select2"
+                                    id="tags"
+                                    name="tags[]"
+                                    multiple="multiple">
+                                @if(count($availableTags) > 0)
+                                    @foreach($availableTags as $tag)
+                                        <option value="{{ $tag['slug'] }}"
+                                            {{ in_array($tag['slug'], $assignedTags) ? 'selected' : '' }}>
+                                            {{ $tag['label'] }}
+                                        </option>
+                                    @endforeach
+                                @else
+                                    @foreach($assignedTags as $tag)
+                                        <option value="{{ $tag }}" selected>{{ $tag }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <small class="text-muted">Categoriza la reseña para filtrarla y organizarla internamente</small>
                         </div>
-                    </div>
 
-                    @if($review->location->phone)
-                        <div class="mt-2">
-                            <strong>Teléfono:</strong> {{ $review->location->phone }}
+                        <div class="mb-4">
+                            <label for="internal_notes" class="form-label fw-semibold">Notas internas</label>
+                            <textarea class="form-control"
+                                      id="internal_notes"
+                                      name="internal_notes"
+                                      rows="3"
+                                      placeholder="Notas solo visibles para el equipo...">{{ $review->moderation?->internal_notes }}</textarea>
+                            <small class="text-muted">Solo visibles para el equipo interno, no se publican en ningún canal</small>
                         </div>
-                    @endif
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Guardar moderación
+                        </button>
+                    </form>
                 </div>
             </div>
 
-            <!-- Reply Form -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0 fw-bold">Responder reseña</h6>
+            {{-- Traducciones --}}
+            @if($review->comment)
+            @php $existingTranslations = $review->translations->keyBy('locale_code'); @endphp
+            <div class="card mb-3">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 fw-bold">Traducciones</h6>
+                            <small class="text-muted">{{ $review->translations->count() }} de {{ ($activeLocales ?? collect())->count() }} idiomas</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#translationsModal">
+                            <i class="fas fa-language me-1"></i> Gestionar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Estadísticas --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Estadísticas</h5>
+                    <p class="small mb-0 text-muted">Información de sincronización</p>
                 </div>
                 <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Sincronizada</label>
+                            <input type="text" class="form-control" value="{{ $review->created_at->diffForHumans() }}" disabled>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Última actualización</label>
+                            <input type="text" class="form-control" value="{{ $review->updated_at->diffForHumans() }}" disabled>
+                        </div>
+                        @if($review->google_review_id)
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">ID Google</label>
+                                <input type="text" class="form-control font-monospace small" value="{{ Str::limit($review->google_review_id, 30) }}" disabled>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Acciones --}}
+            <div class="card">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Acciones</h5>
+                    <p class="small mb-0 text-muted">Operaciones sobre esta reseña</p>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="{{ route('reviews.index') }}" class="btn btn-outline-secondary">
+                        Volver al listado
+                    </a>
+                    <button type="button"
+                            class="btn btn-info report-review-btn"
+                            data-review-id="{{ $review->id }}">
+                        Reportar reseña
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Columna derecha: Detalle y respuesta --}}
+        <div class="col-lg-8">
+
+            {{-- Detalle de la reseña --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Reseña</h5>
+                    <p class="small mb-0 text-muted">{{ $review->reviewer_name }}</p>
+                </div>
+                <div class="card-body">
+
+                    {{-- Datos del cliente --}}
+                    <div class="mb-2">
+                        <p class="fw-semibold mb-0">Datos del cliente</p>
+                        <small class="text-muted">Información del autor y contenido de la reseña recibida</small>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Cliente</label>
+                            <input type="text" class="form-control" value="{{ $review->reviewer_name }}" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Calificación</label>
+                            <input type="text" class="form-control" value="{{ $review->star_rating->value() }}/5" disabled>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Comentario</label>
+                            <textarea class="form-control" rows="3" disabled>{{ $review->comment ?: 'Sin comentario' }}</textarea>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {{-- Información de ubicación --}}
+                    <div class="mb-2">
+                        <p class="fw-semibold mb-0">Ubicación</p>
+                        <small class="text-muted">Establecimiento donde se originó la reseña</small>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Fecha</label>
+                            <input type="text" class="form-control" value="{{ $review->review_time->format('d/m/Y H:i') }}" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Nombre</label>
+                            <input type="text" class="form-control" value="{{ $review->location->name }}" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Dirección</label>
+                            <input type="text" class="form-control" value="{{ $review->location->address }}" disabled>
+                        </div>
+                        @if($review->location->phone)
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold">Teléfono</label>
+                                <input type="text" class="form-control" value="{{ $review->location->phone }}" disabled>
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Responder reseña --}}
+            <div class="card">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Responder reseña</h5>
+                    <p class="small mb-0 text-muted">Redacta y publica una respuesta en Google</p>
+                </div>
+                <div class="card-body">
+
                     @if($review->replies->count() > 0)
-                        @php
-                            $lastReply = $review->replies->first();
-                        @endphp
-                        <div class="alert alert-info" data-reply-id="{{ $lastReply->id }}">
+                        @php $lastReply = $review->replies->first(); @endphp
+                        <div class="alert alert-info mb-3" data-reply-id="{{ $lastReply->id }}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>Última respuesta:</strong>
@@ -101,223 +250,205 @@
                                 @if($lastReply->isDraft())
                                     <button type="button"
                                             class="btn btn-sm btn-outline-secondary edit-reply-inline-btn"
-                                            data-reply-id="{{ $lastReply->id }}"
-                                            title="Editar respuesta">
-                                        <i class="fas fa-pencil-alt"></i> Editar
+                                            data-reply-id="{{ $lastReply->id }}">
+                                        <i class="fas fa-pencil-alt me-1"></i> Editar
                                     </button>
                                 @endif
                             </div>
                             @if($lastReply->reply_text)
-                                <div class="mt-2 p-2 bg-light rounded reply-text-display">{{ $lastReply->reply_text }}</div>
+                                <div class="mt-2 p-2 bg-white rounded reply-text-display">{{ $lastReply->reply_text }}</div>
                             @endif
                         </div>
                     @endif
+
+                    <div class="mb-2">
+                        <p class="fw-semibold mb-0">Sugerencias de plantillas</p>
+                        <small class="text-muted">Selecciona una plantilla predefinida para usar como base de tu respuesta</small>
+                    </div>
 
                     <form id="reply-form">
-                        <div class="mb-3">
-                            <label for="template-select" class="form-label">Plantilla (opcional)</label>
-                            <select class="form-select select2" id="template-select">
-                                <option value="">Seleccionar plantilla...</option>
-                                @foreach($templates ?? [] as $tpl)
-                                    <option value="{{ $tpl->id }}"
-                                            data-body="{{ $tpl->body }}">
-                                        {{ $tpl->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <div class="row g-3">
 
-                        <div class="mb-3">
-                            <label for="reply_text" class="form-label">Respuesta</label>
-                            <textarea class="form-control"
-                                      id="reply_text"
-                                      name="reply_text"
-                                      rows="5"
-                                      placeholder="Escribe tu respuesta aquí...">{{ old('reply_text', $review->replies->first()->reply_text ?? '') }}</textarea>
-                            <small class="form-text text-muted">
-                                Variables disponibles: {reviewer_name}, {location_name}, {star_rating}
-                            </small>
-                        </div>
-
-                        @if($aiEnabled ?? false)
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1">Tono de la respuesta</label>
-                            <div class="btn-group btn-group-sm" role="group" id="toneSelector">
-                                <input type="radio" class="btn-check" name="ai_tone" value="professional" id="tone_professional" checked>
-                                <label class="btn btn-outline-secondary" for="tone_professional">Profesional</label>
-
-                                <input type="radio" class="btn-check" name="ai_tone" value="friendly" id="tone_friendly">
-                                <label class="btn btn-outline-secondary" for="tone_friendly">Amigable</label>
-
-                                <input type="radio" class="btn-check" name="ai_tone" value="apologetic" id="tone_apologetic">
-                                <label class="btn btn-outline-secondary" for="tone_apologetic">Disculpa</label>
-
-                                <input type="radio" class="btn-check" name="ai_tone" value="grateful" id="tone_grateful">
-                                <label class="btn btn-outline-secondary" for="tone_grateful">Agradecimiento</label>
-
-                                <input type="radio" class="btn-check" name="ai_tone" value="concise" id="tone_concise">
-                                <label class="btn btn-outline-secondary" for="tone_concise">Conciso</label>
+                            <div class="col-12">
+                                <select class="form-select" id="template-select">
+                                    <option value="">Seleccionar plantilla...</option>
+                                    @foreach($templates ?? [] as $tpl)
+                                        <option value="{{ $tpl->id }}" data-body="{{ $tpl->body }}">
+                                            {{ $tpl->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                        </div>
-                        @endif
 
-                        <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
+                            <div class="col-12">
+                                <label for="reply_text" class="form-label fw-semibold">Respuesta</label>
+                                <textarea class="form-control"
+                                          id="reply_text"
+                                          name="reply_text"
+                                          rows="5"
+                                          placeholder="Escribe tu respuesta aquí...">{{ old('reply_text', $review->replies->first()->reply_text ?? '') }}</textarea>
+                                <small class="text-muted">Variables disponibles: {reviewer_name}, {location_name}, {star_rating}</small>
+                            </div>
+
                             @if($aiEnabled ?? false)
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="generate-ai-reply">
-                                <i class="fas fa-robot"></i> Generar con IA
-                            </button>
-                            <span id="ai-loading" class="text-muted d-none">
-                                <i class="fas fa-spinner fa-spin"></i> Generando...
-                            </span>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Tono de la respuesta</label>
+                                    <div class="btn-group btn-group-sm w-100" role="group" id="toneSelector">
+                                        <input type="radio" class="btn-check" name="ai_tone" value="professional" id="tone_professional" checked>
+                                        <label class="btn btn-outline-secondary" for="tone_professional">Profesional</label>
+
+                                        <input type="radio" class="btn-check" name="ai_tone" value="friendly" id="tone_friendly">
+                                        <label class="btn btn-outline-secondary" for="tone_friendly">Amigable</label>
+
+                                        <input type="radio" class="btn-check" name="ai_tone" value="apologetic" id="tone_apologetic">
+                                        <label class="btn btn-outline-secondary" for="tone_apologetic">Disculpa</label>
+
+                                        <input type="radio" class="btn-check" name="ai_tone" value="grateful" id="tone_grateful">
+                                        <label class="btn btn-outline-secondary" for="tone_grateful">Agradecimiento</label>
+
+                                        <input type="radio" class="btn-check" name="ai_tone" value="concise" id="tone_concise">
+                                        <label class="btn btn-outline-secondary" for="tone_concise">Conciso</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-outline-primary w-100" id="generate-ai-reply">
+                                        <i class="fas fa-robot me-1"></i> Generar con IA
+                                    </button>
+                                    <span id="ai-loading" class="text-muted d-none mt-1 d-block">
+                                        <i class="fas fa-spinner fa-spin"></i> Generando...
+                                    </span>
+                                </div>
                             @endif
-                        </div>
 
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-secondary" id="save-draft">
-                                <i class="fas fa-save"></i> Guardar borrador
-                            </button>
-                            @can('reviews.replies.approve')
-                                <button type="button" class="btn btn-warning" id="approve-reply">
-                                    <i class="fas fa-check"></i> Aprobar
-                                </button>
-                            @endcan
-                            @can('reviews.replies.publish')
-                                <button type="button" class="btn btn-success" id="publish-reply">
-                                    <i class="fab fa-google"></i> Publicar en Google
-                                </button>
-                            @endcan
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <!-- Moderation Panel -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0 fw-bold">Moderación</h6>
-                </div>
-                <div class="card-body">
-                    <form id="moderation-form">
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       id="is_visible"
-                                       name="is_visible"
-                                       value="1"
-                                       {{ $review->moderation?->is_visible ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_visible">
-                                    Visible en plataforma pública
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       id="is_featured"
-                                       name="is_featured"
-                                       value="1"
-                                       {{ $review->moderation?->is_featured ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_featured">
-                                    Destacada
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="tags" class="form-label">Etiquetas</label>
-                            <select class="form-select select2"
-                                    id="tags"
-                                    name="tags[]"
-                                    multiple="multiple">
-                                @foreach($review->moderation?->tags ?? [] as $tag)
-                                    <option value="{{ $tag }}" selected>{{ $tag }}</option>
-                                @endforeach
-                            </select>
-                            <small class="form-text text-muted">Escriba para agregar nuevas etiquetas o seleccione existentes</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="internal_notes" class="form-label">Notas internas</label>
-                            <textarea class="form-control"
-                                      id="internal_notes"
-                                      name="internal_notes"
-                                      rows="3"
-                                      placeholder="Notas solo visibles para el equipo...">{{ $review->moderation?->internal_notes }}</textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-save"></i> Guardar moderación
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary w-100" id="save-draft">
+                            Guardar borrador
                         </button>
-                    </form>
+                        @can('reviews.replies.approve')
+                            <button type="button" class="btn btn-outline-secondary w-100" id="approve-reply">
+                                Aprobar
+                            </button>
+                        @endcan
+                        @can('reviews.replies.publish')
+                            <button type="button" class="btn btn-outline-secondary w-100" id="publish-reply">
+                                Publicar en Google
+                            </button>
+                        @endcan
+                    </div>
                 </div>
             </div>
 
-            <!-- Review Stats -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0 fw-bold">Estadísticas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <small class="text-muted">Sincronizada:</small><br>
-                        <strong>{{ $review->created_at->diffForHumans() }}</strong>
-                    </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Última actualización:</small><br>
-                        <strong>{{ $review->updated_at->diffForHumans() }}</strong>
-                    </div>
-                    @if($review->google_review_id)
-                        <div class="mb-2">
-                            <small class="text-muted">ID Google:</small><br>
-                            <code class="small">{{ Str::limit($review->google_review_id, 20) }}</code>
-                        </div>
-                    @endif
-                </div>
-            </div>
         </div>
     </div>
 
-    <div class="mt-3 d-flex justify-content-between align-items-center">
-        <a href="{{ route('reviews.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver al listado
-        </a>
-        <button type="button"
-                class="btn btn-outline-danger btn-sm report-review-btn"
-                data-review-id="{{ $review->id }}"
-                title="Reportar reseña a Google">
-            <i class="fas fa-flag"></i> Reportar
-        </button>
-    </div>
-
-    <!-- Report Review Modal -->
+    {{-- Modal: Reportar reseña --}}
     <div class="modal fade" id="reportReviewModal" tabindex="-1">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Reportar reseña</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted">Reportar como inapropiada a Google</p>
+                    <p class="text-muted mb-3">Reportar como inapropiada a Google</p>
                     @foreach(['SPAM' => 'Spam', 'FAKE_REVIEW' => 'Reseña falsa', 'HATE_SPEECH' => 'Discurso de odio', 'HARASSMENT' => 'Acoso', 'OTHER' => 'Otro'] as $value => $label)
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="report_reason" value="{{ $value }}" id="reason_{{ $value }}">
-                        <label class="form-check-label" for="reason_{{ $value }}">{{ $label }}</label>
-                    </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="report_reason" value="{{ $value }}" id="reason_{{ $value }}">
+                            <label class="form-check-label" for="reason_{{ $value }}">{{ $label }}</label>
+                        </div>
                     @endforeach
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger btn-sm" id="submitReportBtn">Reportar</button>
+                <div class="modal-footer d-block">
+                    <button type="button" class="btn btn-danger w-100 mb-2" id="submitReportBtn">Reportar</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
+
+{{-- Modal Traducciones --}}
+@if($review->comment)
+<div class="modal fade" id="translationsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-language me-2"></i>Traducciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                @forelse($activeLocales ?? [] as $locale)
+                    @php $t = $existingTranslations->get(strtoupper($locale->code)); @endphp
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">
+                                @if($locale->flag) {{ $locale->flag }} @endif
+                                {{ $locale->native_name ?? $locale->name }}
+                                <span class="text-muted small">({{ strtoupper($locale->code) }})</span>
+                            </span>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary show-translate-btn"
+                                        data-locale="{{ strtoupper($locale->code) }}"
+                                        data-review-id="{{ $review->id }}">
+                                    <i class="fas fa-magic me-1"></i>{{ $t ? 'Re-traducir' : 'Traducir' }}
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-edit-translation"
+                                        data-locale="{{ strtoupper($locale->code) }}">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="translation-display" data-locale="{{ strtoupper($locale->code) }}">
+                            <p class="mb-0 small show-translated-text" data-locale="{{ strtoupper($locale->code) }}">
+                                @if($t)
+                                    {{ $t->translated_text }}
+                                @else
+                                    <span class="text-muted fst-italic">Sin traducción</span>
+                                @endif
+                            </p>
+                            @if($t?->translated_at)
+                                <small class="text-muted">{{ $t->translated_at->format('d/m/Y H:i') }}</small>
+                            @endif
+                        </div>
+                        <div class="translation-edit d-none" data-locale="{{ strtoupper($locale->code) }}">
+                            <textarea class="form-control form-control-sm mb-2 translation-edit-input"
+                                      data-locale="{{ strtoupper($locale->code) }}"
+                                      rows="3">{{ $t?->translated_text }}</textarea>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary btn-save-translation"
+                                        data-locale="{{ strtoupper($locale->code) }}"
+                                        data-review-id="{{ $review->id }}">
+                                    <i class="fas fa-save me-1"></i>Guardar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-cancel-edit"
+                                        data-locale="{{ strtoupper($locale->code) }}">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-4 text-center text-muted">No hay idiomas activos configurados.</div>
+                @endforelse
+            </div>
+            <div class="modal-footer d-block">
+                @if(($activeLocales ?? collect())->isNotEmpty())
+                <button type="button" class="btn btn-primary w-100 mb-2" id="translate-all-btn">
+                    <i class="fas fa-magic me-1"></i>Traducir todos los idiomas
+                </button>
+                @endif
+                <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 @endsection
 
@@ -346,41 +477,45 @@
 <script src="{{ asset('modules/reviews/js/reply-editor.js') }}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize Select2 for tags
     $('#tags').select2({
         tags: true,
         tokenSeparators: [','],
         placeholder: 'Agregar etiquetas...',
+        minimumInputLength: 0,
+        @if(count($availableTags) === 0)
         ajax: {
             url: '{{ route("reviews.tags.list") }}',
             dataType: 'json',
             delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
+            data: function(params) { return { q: params.term ?? '' }; },
             processResults: function(data) {
-                return {
-                    results: data.tags.map(function(tag) {
-                        return { id: tag, text: tag };
-                    })
-                };
+                return { results: data.tags.map(function(tag) { return { id: tag, text: tag }; }) };
             },
-            cache: true
-        }
+            cache: true,
+        },
+        @endif
     });
+
     const reviewId = {{ $review->id }};
     const reviewerName = '{{ $review->reviewer_name }}';
     const locationName = '{{ $review->location->name }}';
     const starRating = '{{ $review->star_rating }}';
+
+    // Select2 para plantillas
+    $('#template-select').select2({
+        placeholder: 'Seleccionar plantilla...',
+        allowClear: true,
+        width: '100%',
+    });
 
     // Cargar plantilla
     $('#template-select').on('change', function() {
         const body = $(this).find(':selected').data('body');
         if (body) {
             let text = body
-                .replace('{reviewer_name}', reviewerName)
-                .replace('{location_name}', locationName)
-                .replace('{star_rating}', starRating);
+                .replace(/{reviewer_name}/g, reviewerName)
+                .replace(/{location_name}/g, locationName)
+                .replace(/{star_rating}/g, starRating);
             $('#reply_text').val(text);
         }
     });
@@ -457,60 +592,100 @@ $(document).ready(function() {
     });
     @endif
 
-    // Traducir comentario con DeepL
+    // Traducciones
     @if($review->comment)
-    let translationVisible = false;
+    const translateUrl = '{{ url("panel/reviews/" . $review->id . "/translate") }}';
+    const totalLocales = {{ ($activeLocales ?? collect())->count() }};
 
-    $('#translate-comment-btn').on('click', function() {
-        const btn = $(this);
+    function updateTranslationCount() {
+        const done = $('#translationsModal .show-translated-text').filter(function () {
+            return !$(this).find('.fst-italic').length && $(this).text().trim() !== '';
+        }).length;
+        $('.card .text-muted small, .card small.text-muted').first().text(done + ' de ' + totalLocales + ' idiomas');
+    }
 
-        if (translationVisible) {
-            // Toggle back to original
-            $('#translated-comment-block').addClass('d-none');
-            btn.html('<i class="fas fa-language"></i> Traducir');
-            translationVisible = false;
-            return;
-        }
-
-        // Show cached translation if available
-        const cachedText = $('#translated-comment-text').text();
-        if (cachedText) {
-            $('#translated-comment-block').removeClass('d-none');
-            btn.html('<i class="fas fa-language"></i> Ver original');
-            translationVisible = true;
-            return;
-        }
-
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Traduciendo...');
-
+    function doTranslate(localeCode, btn) {
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
         $.ajax({
-            url: `/reviews/${reviewId}/translate`,
+            url: translateUrl,
             method: 'POST',
+            data: { target_lang: localeCode },
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function(response) {
-                const langNames = {
-                    'EN': 'inglés', 'ES': 'español', 'PT': 'portugués', 'FR': 'francés',
-                    'DE': 'alemán', 'IT': 'italiano', 'NL': 'neerlandés', 'PL': 'polaco',
-                    'RU': 'ruso', 'JA': 'japonés', 'ZH': 'chino',
-                };
-                const detectedLang = response.detected_lang;
-                const langLabel = detectedLang ? (langNames[detectedLang] || detectedLang.toLowerCase()) : null;
-
-                if (langLabel) {
-                    $('#detected-lang-badge').text(`Traducido del ${langLabel}`).removeClass('d-none');
+            success: function (res) {
+                if (res.success) {
+                    $('.show-translated-text[data-locale="' + localeCode + '"]')
+                        .text(res.translated || '').removeClass('text-muted fst-italic');
+                    btn.html('<i class="fas fa-magic me-1"></i>Re-traducir');
+                    toastr.success('Traducido a ' + localeCode);
+                    updateTranslationCount();
                 }
-
-                $('#translated-comment-text').text(response.translated);
-                $('#translated-comment-block').removeClass('d-none');
-                btn.html('<i class="fas fa-language"></i> Ver original');
-                translationVisible = true;
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 toastr.error(xhr.responseJSON?.message || 'Error al traducir');
+                btn.html('<i class="fas fa-magic me-1"></i>Traducir');
             },
-            complete: function() {
-                btn.prop('disabled', false);
+            complete: function () { btn.prop('disabled', false); },
+        });
+    }
+
+    $(document).on('click', '.show-translate-btn', function () {
+        doTranslate($(this).data('locale'), $(this));
+    });
+
+    $(document).on('click', '#translate-all-btn', function () {
+        const allBtn = $(this);
+        allBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Traduciendo...');
+        $('#translationsModal .show-translate-btn').each(function () {
+            doTranslate($(this).data('locale'), $(this));
+        });
+        const observer = setInterval(function () {
+            if ($('#translationsModal .show-translate-btn[disabled]').length === 0) {
+                allBtn.prop('disabled', false).html('<i class="fas fa-magic me-1"></i>Traducir todos los idiomas');
+                clearInterval(observer);
             }
+        }, 500);
+    });
+
+    $(document).on('click', '.btn-edit-translation', function () {
+        const locale = $(this).data('locale');
+        const currentText = $('.show-translated-text[data-locale="' + locale + '"]').text().trim();
+        $('.translation-edit-input[data-locale="' + locale + '"]').val(currentText);
+        $('.translation-display[data-locale="' + locale + '"]').addClass('d-none');
+        $('.translation-edit[data-locale="' + locale + '"]').removeClass('d-none');
+    });
+
+    $(document).on('click', '.btn-cancel-edit', function () {
+        const locale = $(this).data('locale');
+        $('.translation-display[data-locale="' + locale + '"]').removeClass('d-none');
+        $('.translation-edit[data-locale="' + locale + '"]').addClass('d-none');
+    });
+
+    $(document).on('click', '.btn-save-translation', function () {
+        const locale = $(this).data('locale');
+        const text = $('.translation-edit-input[data-locale="' + locale + '"]').val().trim();
+        const btn = $(this);
+        if (!text) { toastr.warning('El texto no puede estar vacío.'); return; }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        $.ajax({
+            url: '{{ url("panel/reviews/" . $review->id . "/translations") }}/' + locale,
+            method: 'PATCH',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { translated_text: text },
+            success: function (res) {
+                $('.show-translated-text[data-locale="' + locale + '"]')
+                    .text(res.translated_text).removeClass('text-muted fst-italic');
+                $('.translation-display[data-locale="' + locale + '"]').removeClass('d-none');
+                $('.translation-edit[data-locale="' + locale + '"]').addClass('d-none');
+                toastr.success('Traducción guardada.');
+                updateTranslationCount();
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar.');
+            },
+            complete: function () {
+                btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Guardar');
+            },
         });
     });
     @endif

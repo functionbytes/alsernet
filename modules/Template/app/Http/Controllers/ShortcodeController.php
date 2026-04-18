@@ -87,7 +87,13 @@ class ShortcodeController extends Controller
         $themeCssUrls = array_values(array_column($styleAssets, 'source'));
         $themeJsUrls = array_values(array_column($scriptAssets, 'source'));
 
-        return view('template::shortcodes.edit', compact('shortcode', 'themeCssUrls', 'themeJsUrls'));
+        $locale = app()->getLocale();
+        $langFile = base_path("platform/themes/{$activeTheme}/lang/{$locale}.json");
+        $themeTranslations = file_exists($langFile)
+            ? json_decode(file_get_contents($langFile), true) ?? []
+            : [];
+
+        return view('template::shortcodes.edit', compact('shortcode', 'themeCssUrls', 'themeJsUrls', 'themeTranslations'));
     }
 
     public function update(Request $request, Shortcode $shortcode): RedirectResponse

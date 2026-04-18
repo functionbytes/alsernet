@@ -23,18 +23,18 @@ class AttentionPublicSubmissionTest extends TestCase
 
     // ========== SUCCESSFUL SUBMISSION ==========
 
-    public function test_valid_pqrsf_submission_redirects_to_success_page(): void
+    public function test_valid_peticiones_submission_redirects_to_success_page(): void
     {
         $data = $this->validAttentionData();
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertRedirect();
 
         $attention = Attention::where('subject', $data['subject'])->first();
         $this->assertNotNull($attention);
         $this->assertStringContainsString(
-            route('pqrsf.success', $attention->radicado),
+            route('peticiones.success', $attention->radicado),
             $response->headers->get('Location')
         );
     }
@@ -43,7 +43,7 @@ class AttentionPublicSubmissionTest extends TestCase
     {
         $data = $this->validAttentionData();
 
-        $this->post(route('pqrsf.submit'), $data);
+        $this->post(route('peticiones.submit'), $data);
 
         $this->assertDatabaseHas('attentions', [
             'subject' => $data['subject'],
@@ -51,15 +51,15 @@ class AttentionPublicSubmissionTest extends TestCase
         ]);
     }
 
-    public function test_submission_generates_radicado_with_pqrsf_prefix(): void
+    public function test_submission_generates_radicado_with_peticiones_prefix(): void
     {
         $data = $this->validAttentionData();
 
-        $this->post(route('pqrsf.submit'), $data);
+        $this->post(route('peticiones.submit'), $data);
 
         $attention = Attention::where('subject', $data['subject'])->first();
         $this->assertNotNull($attention->radicado);
-        $this->assertStringStartsWith('PQRSF-', $attention->radicado);
+        $this->assertStringStartsWith('peticiones-', $attention->radicado);
     }
 
     // ========== RATE LIMITING ==========
@@ -69,12 +69,12 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData();
 
         for ($i = 0; $i < 10; $i++) {
-            $this->post(route('pqrsf.submit'), array_merge($data, [
+            $this->post(route('peticiones.submit'), array_merge($data, [
                 'customer_email' => "ratelimit{$i}@example.com",
             ]));
         }
 
-        $response = $this->post(route('pqrsf.submit'), array_merge($data, [
+        $response = $this->post(route('peticiones.submit'), array_merge($data, [
             'customer_email' => 'ratelimit11@example.com',
         ]));
 
@@ -88,7 +88,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData();
         unset($data['type_id']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['type_id']);
     }
@@ -98,7 +98,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData();
         unset($data['category_id']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['category_id']);
     }
@@ -108,7 +108,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData();
         unset($data['subject']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['subject']);
     }
@@ -118,7 +118,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData();
         unset($data['description']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['description']);
     }
@@ -128,7 +128,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData(['is_anonymous' => false]);
         unset($data['customer_firstname']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['customer_firstname']);
     }
@@ -138,7 +138,7 @@ class AttentionPublicSubmissionTest extends TestCase
         $data = $this->validAttentionData(['is_anonymous' => false]);
         unset($data['customer_email']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['customer_email']);
     }
@@ -147,7 +147,7 @@ class AttentionPublicSubmissionTest extends TestCase
     {
         $data = $this->validAttentionData(['customer_email' => 'not-a-valid-email']);
 
-        $response = $this->post(route('pqrsf.submit'), $data);
+        $response = $this->post(route('peticiones.submit'), $data);
 
         $response->assertSessionHasErrors(['customer_email']);
     }
@@ -163,7 +163,7 @@ class AttentionPublicSubmissionTest extends TestCase
             'customer_email' => 'citizen@example.com',
         ]);
 
-        $this->post(route('pqrsf.submit'), $data);
+        $this->post(route('peticiones.submit'), $data);
 
         Mail::assertSent(AttentionConfirmationMail::class, function ($mail) {
             return $mail->hasTo('citizen@example.com');
@@ -176,7 +176,7 @@ class AttentionPublicSubmissionTest extends TestCase
 
         $data = $this->validAnonymousAttentionData();
 
-        $this->post(route('pqrsf.submit'), $data);
+        $this->post(route('peticiones.submit'), $data);
 
         Mail::assertNotSent(AttentionConfirmationMail::class);
     }

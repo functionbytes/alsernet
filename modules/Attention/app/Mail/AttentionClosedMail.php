@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email enviado cuando se cierra un PQRSF
+ * Email enviado cuando se cierra un peticiones
  *
  * Confirma el cierre del caso e informa que el proceso ha finalizado
  */
@@ -38,7 +38,7 @@ class AttentionClosedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "PQRSF Cerrado - Radicado: {$this->attention->radicado}",
+            subject: "peticiones Cerrado - Radicado: {$this->attention->radicado}",
         );
     }
 

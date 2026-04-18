@@ -35,7 +35,7 @@
 
                     <div class="card-body pb-0">
                         <p class="text-muted mb-3">
-                            Configura el comportamiento general del sistema de PQRSF que se aplica a <strong>TODOS</strong>
+                            Configura el comportamiento general del sistema de peticiones que se aplica a <strong>TODOS</strong>
                             los tipos de solicitudes.
                         </p>
 
@@ -47,7 +47,7 @@
                             <li class="mb-2">
                                 <strong>Prefijo de radicado</strong>
                                 <br>
-                                <small class="text-muted">Define el formato del número de radicado (ej: PQRSF-2024-0001).</small>
+                                <small class="text-muted">Define el formato del número de radicado (ej: peticiones-2024-0001).</small>
                             </li>
                             <li class="mb-2">
                                 <strong>Tamaño máximo de archivos</strong>
@@ -67,7 +67,7 @@
                         </ul>
 
                         <p class="text-muted border-top pt-3">
-                            Estas configuraciones se aplican automáticamente a todos los tipos de PQRSF sin excepción.
+                            Estas configuraciones se aplican automáticamente a todos los tipos de peticiones sin excepción.
                         </p>
                     </div>
 
@@ -79,13 +79,13 @@
                 </div>
             </div>
 
-            <!-- Opción 2: Tipos de PQRSF -->
+            <!-- Opción 2: Tipos de peticiones -->
             <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-header border-bottom py-3">
                         <div class="d-flex align-items-center justify-content-between">
                             <h6 class="mb-0 fw-bold text-dark">
-                                Tipos de PQRSF
+                                Tipos de peticiones
                             </h6>
                             <span class="badge bg-light-secondary">Específico</span>
                         </div>
@@ -105,7 +105,7 @@
                             <li class="mb-2">
                                 <strong>Gestionar tipos</strong>
                                 <br>
-                                <small class="text-muted">Define qué tipos de PQRSF estarán disponibles para los usuarios.</small>
+                                <small class="text-muted">Define qué tipos de peticiones estarán disponibles para los usuarios.</small>
                             </li>
                             <li class="mb-2">
                                 <strong>Crear tipos personalizados</strong>
@@ -126,7 +126,7 @@
 
                     <div class="card-footer border-top">
                         <a href="{{ route('settings.attention.types.index') }}" class="btn btn-primary w-100">
-                            Ir a tipos de PQRSF
+                            Ir a tipos de peticiones
                         </a>
                     </div>
                 </div>

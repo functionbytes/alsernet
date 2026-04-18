@@ -7,19 +7,19 @@
         </div>
         <div class="ve-panel-actions">
             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-undo-hist" title="Deshacer">
-                <i class="fa-duotone fa-solid fa-undo"></i>
+                <i class="fa-solid fa-undo"></i>
             </button>
             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-redo-hist" title="Rehacer">
-                <i class="fa-duotone fa-solid fa-redo"></i>
+                <i class="fa-solid fa-redo"></i>
             </button>
             <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-save-snapshot" title="Guardar snapshot">
-                <i class="fa-duotone fa-solid fa-camera"></i>
+                <i class="fa-solid fa-camera"></i>
             </button>
         </div>
     </div>
 
     <div id="ve-history-empty" class="ve-empty-state ve-hidden">
-        <i class="fa-duotone fa-solid fa-history ve-empty-icon"></i>
+        <i class="fa-solid fa-history ve-empty-icon"></i>
         <div class="ve-empty-text">El historial aparecerá<br>cuando hagas cambios</div>
     </div>
 
@@ -29,7 +29,7 @@
     <div class="ve-snapshot-section">
         <div class="ve-snapshot-header">
             <span class="ve-panel-label">
-                <i class="fa-duotone fa-solid fa-camera me-1"></i>Snapshots
+                <i class="fa-solid fa-camera me-1"></i>Snapshots
             </span>
             <button type="button" class="btn btn-outline-danger ve-snapshot-clear" id="btn-clear-snapshots">Limpiar</button>
         </div>
@@ -40,8 +40,25 @@
         </div>
     </div>
 
+    {{-- Server versions section --}}
+    <div class="ve-snapshot-section" id="ve-server-versions-section">
+        <div class="ve-snapshot-header">
+            <span class="ve-panel-label">
+                <i class="fa-solid fa-code-branch me-1"></i>Versiones
+            </span>
+            <button type="button" class="btn btn-outline-secondary ve-snapshot-clear" id="btn-load-versions" title="Cargar versiones">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+        <div id="ve-versions-list" class="ve-snapshot-list">
+            <div id="ve-versions-empty" class="ve-snapshot-empty">
+                Haz clic en <i class="fa-solid fa-rotate-right"></i> para cargar
+            </div>
+        </div>
+    </div>
+
     <div class="ve-panel-footer">
-        <small><i class="fa-duotone fa-solid fa-info-circle me-1"></i>Haz clic en cualquier entrada para restaurar ese estado</small>
+        <small><i class="fa-solid fa-info-circle me-1"></i>Haz clic en cualquier entrada para restaurar ese estado</small>
     </div>
 
 </div>
@@ -56,12 +73,18 @@
 .ve-snapshot-header { padding:6px 12px; display:flex; align-items:center; justify-content:space-between; }
 .ve-snapshot-clear { font-size:9px !important; padding:1px 6px !important; }
 .ve-snapshot-list { max-height:160px; overflow-y:auto; }
-.ve-snapshot-empty { text-align:center; color:#aaa; font-size:11px; padding:12px; }
+.ve-snapshot-empty { text-align:center; color:var(--ve-text-muted); font-size:11px; padding:12px; }
 /* Snapshot items (rendered via JS) */
-.ve-snapshot-item { display:flex; align-items:center; gap:6px; padding:5px 10px; border-bottom:1px solid #f0f0f0; font-size:11px; }
+.ve-snapshot-item { display:flex; align-items:center; gap:6px; padding:5px 10px; border-bottom:1px solid var(--ve-border); font-size:11px; }
 .ve-snapshot-item-icon { font-size:10px; }
-.ve-snapshot-item-date { flex:1; color:#555; }
+.ve-snapshot-item-date { flex:1; color:var(--ve-text-soft); }
 .ve-snapshot-item-btn { font-size:10px; padding:1px 6px; }
+/* Version items */
+.ve-version-item { display:flex; align-items:center; gap:6px; padding:5px 10px; border-bottom:1px solid var(--ve-border); font-size:11px; }
+.ve-version-badge { background:#e8f4fd; color:#1a6fa0; border-radius:3px; padding:0 5px; font-size:10px; font-weight:600; flex-shrink:0; }
+.ve-version-info { flex:1; min-width:0; }
+.ve-version-title { color:var(--ve-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100px; }
+.ve-version-meta { color:var(--ve-text-muted); font-size:10px; }
 </style>
 
 <script>
@@ -104,10 +127,10 @@
             var date = new Date(snap.timestamp).toLocaleString('es', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
             var $item = $([
                 '<div class="ve-snapshot-item">',
-                '<i class="fa-duotone fa-solid fa-camera text-muted ve-snapshot-item-icon"></i>',
+                '<i class="fa-solid fa-camera text-muted ve-snapshot-item-icon"></i>',
                 '<span class="ve-snapshot-item-date" title="' + (snap.label || 'Snapshot') + '">' + date + '</span>',
-                '<button class="btn btn-xs btn-outline-secondary ve-snap-restore ve-snapshot-item-btn" data-idx="' + realIdx + '">Restaurar</button>',
-                '<button class="btn btn-xs btn-outline-danger ve-snap-delete ve-snapshot-item-btn" data-idx="' + realIdx + '"><i class="fa-duotone fa-solid fa-times"></i></button>',
+                '<button class="btn btn-sm btn-outline-secondary ve-snap-restore ve-snapshot-item-btn" data-idx="' + realIdx + '">Restaurar</button>',
+                '<button class="btn btn-sm btn-outline-danger ve-snap-delete ve-snapshot-item-btn" data-idx="' + realIdx + '"><i class="fa-solid fa-times"></i></button>',
                 '</div>',
             ].join(''));
             $list.append($item);
@@ -132,7 +155,7 @@
         if (snaps.length > 20) snaps = snaps.slice(-20);
         saveSnapshots(snaps);
         renderSnapshots();
-        if (p.showToast) p.showToast('<i class="fa-duotone fa-solid fa-camera me-1"></i>Snapshot guardado');
+        if (p.showToast) p.showToast('<i class="fa-solid fa-camera me-1"></i>Snapshot guardado');
     });
 
     $(document).on('click', '.ve-snap-restore', function () {
@@ -146,7 +169,7 @@
             p.veEditor.setData(snap.html || '');
         }
         if (p.vePushHistory) p.vePushHistory('Snapshot restaurado', snap.html || '');
-        if (p.showToast) p.showToast('<i class="fa-duotone fa-solid fa-camera me-1"></i>Snapshot restaurado');
+        if (p.showToast) p.showToast('<i class="fa-solid fa-camera me-1"></i>Snapshot restaurado');
     });
 
     $(document).on('click', '.ve-snap-delete', function () {
@@ -165,6 +188,85 @@
 
     // Initial render
     renderSnapshots();
+
+    /* ── Server versions (Feature 3) ───────────────────────────────── */
+    var p = window.parent || window;
+    var versionsLoaded = false;
+
+    function renderVersions(versions) {
+        var $list  = $('#ve-versions-list');
+        var $empty = $('#ve-versions-empty');
+        $list.find('.ve-version-item').remove();
+
+        if (!versions.length) {
+            $empty.text('Sin versiones guardadas').show();
+            return;
+        }
+
+        $empty.hide();
+        versions.forEach(function (v) {
+            var $item = $([
+                '<div class="ve-version-item">',
+                '<span class="ve-version-badge">v' + v.version_number + '</span>',
+                '<div class="ve-version-info">',
+                '<div class="ve-version-title" title="' + $('<div>').text(v.title || '').html() + '">' + $('<div>').text(v.title || 'Sin título').html() + '</div>',
+                '<div class="ve-version-meta">' + v.created_at_human + ' · ' + $('<div>').text(v.user).html() + '</div>',
+                '</div>',
+                '<button class="btn btn-sm btn-outline-secondary ve-version-load ve-snapshot-item-btn" data-id="' + v.id + '">Cargar</button>',
+                '</div>',
+            ].join(''));
+            $list.append($item);
+        });
+    }
+
+    $('#btn-load-versions').on('click', function () {
+        var $btn = $(this);
+        var versionsUrl = p.EDITOR_VERSIONS_URL;
+        if (!versionsUrl) return;
+
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+        $('#ve-versions-empty').text('Cargando...').show();
+
+        $.get(versionsUrl)
+            .done(function (res) {
+                if (res.success) {
+                    renderVersions(res.data);
+                    versionsLoaded = true;
+                }
+            })
+            .fail(function () {
+                $('#ve-versions-empty').text('Error al cargar versiones').show();
+            })
+            .always(function () {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i>');
+            });
+    });
+
+    $(document).on('click', '.ve-version-load', function () {
+        var versionId = $(this).data('id');
+        var versionUrl = p.EDITOR_VERSION_URL;
+        if (!versionUrl) return;
+
+        var $btn = $(this).prop('disabled', true).text('...');
+
+        $.get(versionUrl + '/' + versionId)
+            .done(function (res) {
+                if (!res.success || !res.data) return;
+                if (!confirm('¿Cargar la versión ' + res.data.version_number + ' en el editor? Los cambios no guardados quedarán en el historial.')) return;
+                if (p.veEditor) {
+                    var html = res.data.content || '';
+                    if (p.vePushHistory) p.vePushHistory('Antes de cargar v' + res.data.version_number, p.veEditor.getData());
+                    p.veEditor.setData(html);
+                    if (p.showToast) p.showToast('<i class="fa-solid fa-code-branch me-1"></i>Versión ' + res.data.version_number + ' cargada');
+                }
+            })
+            .fail(function () {
+                if (p.showToast) p.showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Error al cargar la versión', 'error');
+            })
+            .always(function () {
+                $btn.prop('disabled', false).text('Cargar');
+            });
+    });
 
 })(jQuery);
 </script>

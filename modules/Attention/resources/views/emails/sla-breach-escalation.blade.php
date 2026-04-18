@@ -1,14 +1,14 @@
 @component('mail::message')
 # ⚠️ ALERTA DE INCUMPLIMIENTO SLA
 
-Se ha detectado un incumplimiento de los plazos legales establecidos en la Ley 1437/2011 (CPACA) para el siguiente PQRSF:
+Se ha detectado un incumplimiento de los plazos legales establecidos en la Ley 1437/2011 (CPACA) para el siguiente peticiones:
 
 @component('mail::panel')
 ## Radicado: **{{ $radicado }}**
 **URGENCIA:** <span style="color: red;">{{ $urgency }}</span>
 @endcomponent
 
-## Información del PQRSF
+## Información del peticiones
 
 **Tipo:** {{ $tipo }}
 **Categoría:** {{ $categoria }}
@@ -51,8 +51,8 @@ Según la **Ley 1437 de 2011 (Art. 86)**, el incumplimiento de los términos par
 
 ---
 
-**IMPORTANTE:** Este es un correo automático del Sistema de Gestión PQRSF. El incumplimiento de plazos puede generar consecuencias legales graves.
+**IMPORTANTE:** Este es un correo automático del Sistema de Gestión peticiones. El incumplimiento de plazos puede generar consecuencias legales graves.
 
-Sistema de Gestión PQRSF
+Sistema de Gestión peticiones
 {{ config('app.name') }}
 @endcomponent

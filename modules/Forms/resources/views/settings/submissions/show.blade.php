@@ -1,217 +1,306 @@
 @extends('layouts.theme')
 
-@section('title', 'Submission #' . $submission->id . ': ' . $form->name)
+@section('title', 'Submission #' . $submission->id . ' - ' . $form->name)
 
 @section('content')
-<div class="container-fluid">
+
+    @include('core::components.card', ['title' => 'Detalle de la submission'])
+
+    @php
+        $statusMap = [
+            'new'       => ['label' => 'Nuevo',       'class' => 'bg-primary'],
+            'in_review' => ['label' => 'En revisión', 'class' => 'bg-warning text-dark'],
+            'resolved'  => ['label' => 'Resuelto',    'class' => 'bg-success'],
+            'rejected'  => ['label' => 'Rechazado',   'class' => 'bg-danger'],
+        ];
+        $st = $statusMap[$submission->status ?? 'new'] ?? $statusMap['new'];
+    @endphp
+
     <div class="row">
-        <div class="col-12">
+        <div class="col-lg-8">
 
-            {{-- Breadcrumb --}}
-            <nav aria-label="breadcrumb" class="mb-3">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('settings.forms.index') }}">Formularios</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('settings.forms.edit', $form) }}">{{ $form->name }}</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('settings.forms.submissions.index', $form) }}">Submissions</a>
-                    </li>
-                    <li class="breadcrumb-item active">#{{ $submission->id }}</li>
-                </ol>
-            </nav>
+            {{-- Información general --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1 fw-bold">Información general</h5>
+                            <p class="mb-0 text-muted">Detalles de la submission enviada</p>
+                        </div>
+                        <span class="badge {{ $st['class'] }}" id="statusBadge">{{ $st['label'] }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Formulario</label>
+                            <p class="mb-0">
+                                <span class="badge bg-info">{{ $form->name }}</span>
+                            </p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Fecha de envío</label>
+                            <p class="mb-0">{{ $submission->created_at?->format('d/m/Y H:i:s') ?? '—' }}</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">IP</label>
+                            <p class="mb-0">{{ $submission->ip_address ?? '—' }}</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">País / Ciudad</label>
+                            <p class="mb-0">{{ implode(', ', array_filter([$submission->country, $submission->city])) ?: '—' }}</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Leído</label>
+                            <p class="mb-0">
+                                @if ($submission->is_read)
+                                    <span class="badge bg-success">Sí</span>
+                                @else
+                                    <span class="badge bg-secondary">No</span>
+                                @endif
+                            </p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <label class="form-label fw-semibold text-muted">Spam</label>
+                            <p class="mb-0">
+                                @if ($submission->is_spam)
+                                    <span class="badge bg-danger">Sí</span>
+                                @else
+                                    <span class="badge bg-secondary">No</span>
+                                @endif
+                            </p>
+                        </div>
+                        @if ($submission->user)
+                            <div class="col-sm-12 col-md-6">
+                                <label class="form-label fw-semibold text-muted">Usuario</label>
+                                <p class="mb-0">{{ $submission->user->full_name }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
 
-            {{-- Header --}}
-            <div class="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
-                <div class="d-flex align-items-center gap-3">
-                    <a href="{{ route('settings.forms.submissions.index', $form) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                    <div>
-                        <h5 class="mb-1 fw-bold">Submission #{{ $submission->id }}</h5>
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            @php
-                                $statusMap = [
-                                    'new'       => ['label' => 'Nuevo',      'class' => 'bg-primary'],
-                                    'in_review' => ['label' => 'En revisión', 'class' => 'bg-warning text-dark'],
-                                    'resolved'  => ['label' => 'Resuelto',    'class' => 'bg-success'],
-                                    'rejected'  => ['label' => 'Rechazado',   'class' => 'bg-danger'],
-                                ];
-                                $st = $statusMap[$submission->status ?? 'new'] ?? $statusMap['new'];
-                            @endphp
-                            <span class="badge {{ $st['class'] }}" id="statusBadge">{{ $st['label'] }}</span>
-                            <select id="statusSelect" class="form-select form-select-sm" style="width: auto;">
-                                <option value="new"       {{ ($submission->status ?? 'new') === 'new'       ? 'selected' : '' }}>Nuevo</option>
-                                <option value="in_review" {{ ($submission->status ?? 'new') === 'in_review' ? 'selected' : '' }}>En revisión</option>
-                                <option value="resolved"  {{ ($submission->status ?? 'new') === 'resolved'  ? 'selected' : '' }}>Resuelto</option>
-                                <option value="rejected"  {{ ($submission->status ?? 'new') === 'rejected'  ? 'selected' : '' }}>Rechazado</option>
-                            </select>
-                            <label class="small text-muted mb-0">Asignado a:</label>
-                            <select id="assignedToSelect" class="form-select form-select-sm" style="width: auto;">
-                                <option value="">— Sin asignar —</option>
-                                @foreach ($users as $user)
-                                    <option value="{{ $user->id }}" {{ $submission->assigned_to == $user->id ? 'selected' : '' }}>
-                                        {{ $user->firstname }} {{ $user->lastname }}
-                                    </option>
-                                @endforeach
-                            </select>
+            {{-- Respuestas del formulario --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-1 fw-bold">Respuestas</h5>
+                    <p class="mb-0 text-muted">Campos enviados por el usuario</p>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 35%;">Campo</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($submission->values->reject(fn($v) => $v->field_type === 'hidden') as $value)
+                                    <tr>
+                                        <td class="text-muted fw-semibold">
+                                            {{ $value->field_label ?: $value->field_key }}
+                                        </td>
+                                        <td>
+                                            @if ($value->field_type === 'signature' && $value->value)
+                                                <img src="{{ $value->value }}" alt="Firma"
+                                                     style="max-height: 60px; border: 1px solid #ddd; border-radius: 4px;">
+                                            @else
+                                                {{ $value->getDisplayValue() ?: '—' }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted py-3">Sin respuestas registradas</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Metadatos --}}
+            @if ($submission->utm_source || $submission->utm_medium || $submission->utm_campaign || $submission->utm_term || $submission->referrer_url || $submission->time_to_complete || $submission->user_agent)
+                <div class="card mb-3">
+                    <div class="card-header p-3 bg-white border-bottom">
+                        <h5 class="mb-1 fw-bold">Metadatos</h5>
+                        <p class="mb-0 text-muted">Información técnica del envío</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @if ($submission->utm_source)
+                                <div class="col-sm-12 col-md-6">
+                                    <label class="form-label fw-semibold text-muted">UTM Source</label>
+                                    <p class="mb-0">{{ $submission->utm_source }}</p>
+                                </div>
+                            @endif
+                            @if ($submission->utm_medium)
+                                <div class="col-sm-12 col-md-6">
+                                    <label class="form-label fw-semibold text-muted">UTM Medium</label>
+                                    <p class="mb-0">{{ $submission->utm_medium }}</p>
+                                </div>
+                            @endif
+                            @if ($submission->utm_campaign)
+                                <div class="col-sm-12 col-md-6">
+                                    <label class="form-label fw-semibold text-muted">UTM Campaign</label>
+                                    <p class="mb-0">{{ $submission->utm_campaign }}</p>
+                                </div>
+                            @endif
+                            @if ($submission->utm_term)
+                                <div class="col-sm-12 col-md-6">
+                                    <label class="form-label fw-semibold text-muted">UTM Term</label>
+                                    <p class="mb-0">{{ $submission->utm_term }}</p>
+                                </div>
+                            @endif
+                            @if ($submission->referrer_url)
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-muted">Referrer URL</label>
+                                    <p class="mb-0 text-truncate" title="{{ $submission->referrer_url }}">
+                                        {{ $submission->referrer_url }}
+                                    </p>
+                                </div>
+                            @endif
+                            @if ($submission->time_to_complete)
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-muted">Tiempo de completado</label>
+                                    <p class="mb-0">{{ gmdate('i:s', $submission->time_to_complete) }} min</p>
+                                </div>
+                            @endif
+                            @if ($submission->user_agent)
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-muted">User Agent</label>
+                                    <p class="mb-0 text-muted">{{ $submission->user_agent }}</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ route('settings.forms.submissions.pdf', [$form, $submission]) }}"
-                       class="btn btn-sm btn-outline-secondary" target="_blank">
-                        <i class="fas fa-file-pdf me-1"></i> PDF
-                    </a>
-                    <button type="button" class="btn btn-sm btn-outline-info" id="resendEmailBtn"
-                            data-type="admin">
-                        Reenviar email
-                    </button>
-                    <button type="button" class="btn btn-sm {{ $submission->is_spam ? 'btn-warning' : 'btn-outline-warning' }}" id="toggleSpamBtn">
-                        {{ $submission->is_spam ? 'Desmarcar spam' : 'Marcar spam' }}
-                    </button>
-                    <form method="POST" action="{{ route('settings.forms.submissions.destroy', [$form, $submission]) }}"
-                          onsubmit="return confirm('¿Eliminar esta submission? Esta acción no se puede deshacer.')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger">
+            @endif
+
+        </div>
+
+        {{-- Sidebar derecho --}}
+        <div class="col-lg-4">
+
+            {{-- Estado y asignación --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold">Estado y asignación</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted">Estado</label>
+                        <select id="statusSelect" class="form-select">
+                            <option value="new"       {{ ($submission->status ?? 'new') === 'new'       ? 'selected' : '' }}>Nuevo</option>
+                            <option value="in_review" {{ ($submission->status ?? 'new') === 'in_review' ? 'selected' : '' }}>En revisión</option>
+                            <option value="resolved"  {{ ($submission->status ?? 'new') === 'resolved'  ? 'selected' : '' }}>Resuelto</option>
+                            <option value="rejected"  {{ ($submission->status ?? 'new') === 'rejected'  ? 'selected' : '' }}>Rechazado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold text-muted">Asignado a</label>
+                        <select id="assignedToSelect" class="form-select">
+                            <option value="">— Sin asignar —</option>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}" {{ $submission->assigned_to == $user->id ? 'selected' : '' }}>
+                                    {{ $user->firstname }} {{ $user->lastname }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Acciones --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold">Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('settings.forms.submissions.pdf', [$form, $submission]) }}"
+                           class="btn btn-primary" target="_blank">
+                            Descargar PDF
+                        </a>
+                        <button type="button" class="btn btn-outline-info" id="resendEmailBtn" data-type="admin">
+                            Reenviar email
+                        </button>
+                        <button type="button" class="btn {{ $submission->is_spam ? 'btn-warning' : 'btn-outline-warning' }}" id="toggleSpamBtn">
+                            {{ $submission->is_spam ? 'Desmarcar spam' : 'Marcar spam' }}
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="deleteSubmissionBtn">
                             Eliminar
+                        </button>
+                        <a href="{{ route('settings.forms.submissions.index', $form) }}" class="btn btn-outline-secondary">
+                            Volver a submissions
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Notas internas --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold">Notas internas</h5>
+                </div>
+                <div class="card-body">
+                    <div id="notesList" class="mb-3">
+                        @forelse ($submission->notes as $note)
+                            <div class="border-bottom pb-2 mb-2">
+                                <strong>{{ $note->user ? $note->user->firstname.' '.$note->user->lastname : 'Sistema' }}</strong>
+                                <p class="mb-1">{{ $note->note }}</p>
+                                <span class="text-muted">{{ $note->created_at?->format('d/m/Y H:i') }}</span>
+                            </div>
+                        @empty
+                            <p class="text-muted mb-0" id="emptyNotes">Sin notas aún.</p>
+                        @endforelse
+                    </div>
+                    <form id="addNoteForm">
+                        <div class="mb-2">
+                            <textarea id="noteText" class="form-control" rows="3"
+                                      placeholder="Añadir nota interna..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Guardar nota
                         </button>
                     </form>
                 </div>
             </div>
 
-            <div class="row g-4">
-
-                {{-- Col principal: respuestas --}}
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Respuestas</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="width: 35%;">Campo</th>
-                                            <th>Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($submission->values->reject(fn($v) => $v->field_type === 'hidden') as $value)
-                                            <tr>
-                                                <td class="text-muted fw-semibold">{{ $value->field_label ?: $value->field_key }}</td>
-                                                <td>
-                                                    @if ($value->field_type === 'signature' && $value->value)
-                                                        <img src="{{ $value->value }}" alt="Firma" style="max-height: 60px; border: 1px solid #ddd; border-radius: 4px;">
-                                                    @else
-                                                        {{ $value->getDisplayValue() ?: '—' }}
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="2" class="text-center text-muted py-3">Sin respuestas registradas</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+            {{-- Estadísticas --}}
+            <div class="card mb-3">
+                <div class="card-header p-3 bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold">Estadísticas</h5>
                 </div>
-
-                {{-- Col lateral --}}
-                <div class="col-lg-4">
-
-                    {{-- Información --}}
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Información</h6>
-                            <dl class="row g-0 mb-0 small">
-                                <dt class="col-5 text-muted">Fecha</dt>
-                                <dd class="col-7">{{ $submission->created_at?->format('d/m/Y H:i:s') ?? '—' }}</dd>
-
-                                <dt class="col-5 text-muted">IP</dt>
-                                <dd class="col-7">{{ $submission->ip_address ?? '—' }}</dd>
-
-                                <dt class="col-5 text-muted">País / Ciudad</dt>
-                                <dd class="col-7">{{ implode(', ', array_filter([$submission->country, $submission->city])) ?: '—' }}</dd>
-
-                                <dt class="col-5 text-muted">User Agent</dt>
-                                <dd class="col-7 text-truncate" title="{{ $submission->user_agent ?? '' }}" style="max-width: 160px;">
-                                    {{ $submission->user_agent ?? '—' }}
-                                </dd>
-
-                                <dt class="col-5 text-muted">Tiempo</dt>
-                                <dd class="col-7">
-                                    @if ($submission->time_to_complete)
-                                        {{ gmdate('i:s', $submission->time_to_complete) }} min
-                                    @else
-                                        —
-                                    @endif
-                                </dd>
-
-                                @if ($submission->utm_source)
-                                    <dt class="col-5 text-muted">UTM Source</dt>
-                                    <dd class="col-7">{{ $submission->utm_source }}</dd>
-                                @endif
-
-                                @if ($submission->utm_campaign)
-                                    <dt class="col-5 text-muted">UTM Campaign</dt>
-                                    <dd class="col-7">{{ $submission->utm_campaign }}</dd>
-                                @endif
-
-                                @if ($submission->referrer_url)
-                                    <dt class="col-5 text-muted">Referrer</dt>
-                                    <dd class="col-7 text-truncate" title="{{ $submission->referrer_url }}" style="max-width: 160px;">
-                                        {{ $submission->referrer_url }}
-                                    </dd>
-                                @endif
-
-                                @if ($submission->user)
-                                    <dt class="col-5 text-muted">Usuario</dt>
-                                    <dd class="col-7">{{ $submission->user->full_name }}</dd>
-                                @endif
-                            </dl>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Notas internas:</span>
+                            <span class="fw-bold">{{ $submission->notes->count() }}</span>
                         </div>
                     </div>
-
-                    {{-- Notas internas --}}
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Notas internas</h6>
-
-                            <div id="notesList">
-                                @forelse ($submission->notes as $note)
-                                    <div class="border-bottom pb-2 mb-2">
-                                        <strong class="small">{{ $note->user ? $note->user->firstname.' '.$note->user->lastname : 'Sistema' }}</strong><br>
-                                        <span class="small">{{ $note->note }}</span>
-                                        <small class="text-muted d-block">{{ $note->created_at?->format('d/m/Y H:i') }}</small>
-                                    </div>
-                                @empty
-                                    <p class="text-muted" id="emptyNotes">Sin notas aún.</p>
-                                @endforelse
-                            </div>
-
-                            <form id="addNoteForm" class="mt-3">
-                                <div class="mb-2">
-                                    <textarea id="noteText" class="form-control form-control-sm" rows="3"
-                                              placeholder="Añadir nota interna..."></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-primary w-100">
-                                    <i class="fas fa-plus me-1"></i> Guardar nota
-                                </button>
-                            </form>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Valores registrados:</span>
+                            <span class="fw-bold">{{ $submission->values->count() }}</span>
                         </div>
                     </div>
-
                 </div>
             </div>
 
         </div>
     </div>
-</div>
+
+    {{-- Delete form (hidden) --}}
+    <form id="deleteForm" method="POST"
+          action="{{ route('settings.forms.submissions.destroy', [$form, $submission]) }}"
+          class="d-none">
+        @csrf
+        @method('DELETE')
+    </form>
+
 @endsection
 
 @push('scripts')
@@ -247,7 +336,7 @@
     $('#addNoteForm').on('submit', function (e) {
         e.preventDefault();
         const note = $('#noteText').val().trim();
-        if (!note) return;
+        if (!note) { return; }
         $.ajax({
             url: addNoteUrl,
             method: 'POST',
@@ -255,11 +344,11 @@
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function (res) {
                 $('#emptyNotes').remove();
-                $('#notesList').append(
+                $('#notesList').prepend(
                     '<div class="border-bottom pb-2 mb-2">' +
-                        '<strong class="small">' + res.user + '</strong><br>' +
-                        '<span class="small">' + res.note + '</span>' +
-                        '<small class="text-muted d-block">' + res.created_at + '</small>' +
+                        '<strong>' + res.user + '</strong>' +
+                        '<p class="mb-1">' + res.note + '</p>' +
+                        '<span class="text-muted">' + res.created_at + '</span>' +
                     '</div>'
                 );
                 $('#noteText').val('');
@@ -290,6 +379,12 @@
             success: function (res) { toastr.success(res.message); },
             error: function () { toastr.error('Error al reenviar el email'); }
         });
+    });
+
+    $('#deleteSubmissionBtn').on('click', function () {
+        if (confirm('¿Eliminar esta submission? Esta acción no se puede deshacer.')) {
+            $('#deleteForm').submit();
+        }
     });
 </script>
 @endpush

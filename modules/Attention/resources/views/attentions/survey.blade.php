@@ -15,7 +15,7 @@
 
                 <div class="card-body p-4">
                     @if(!$attention->satisfaction_rating)
-                        <!-- Información del PQRSF -->
+                        <!-- Información del peticiones -->
                         <div class="alert alert-info">
                             <div class="row">
                                 <div class="col-md-6">

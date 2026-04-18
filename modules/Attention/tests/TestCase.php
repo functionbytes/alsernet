@@ -2,9 +2,12 @@
 
 namespace Modules\Attention\Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionCategory;
@@ -25,7 +28,7 @@ abstract class TestCase extends BaseTestCase
 
         // Cargar configuración del módulo
         $this->app['config']->set('attention', [
-            'radicado_prefix' => 'PQRSF',
+            'radicado_prefix' => 'peticiones',
             'attachments' => [
                 'max_size' => 10 * 1024 * 1024,
                 'allowed_mimes' => [
@@ -98,11 +101,11 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createUser(array $attributes = [])
     {
-        return \App\Models\User::factory()->create($attributes);
+        return User::factory()->create($attributes);
     }
 
     /**
-     * Helper: Crear un PQRSF completo con relaciones
+     * Helper: Crear un peticiones completo con relaciones
      */
     protected function createAttention(array $attributes = []): Attention
     {
@@ -111,7 +114,7 @@ abstract class TestCase extends BaseTestCase
         $sede = $this->createSede();
 
         return Attention::create(array_merge([
-            'uid' => \Illuminate\Support\Str::uuid(),
+            'uid' => Str::uuid(),
             'radicado' => Attention::generateRadicado(),
             'type_id' => $type->id,
             'category_id' => $category->id,
@@ -130,7 +133,7 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Helper: Crear PQRSF anónimo
+     * Helper: Crear peticiones anónimo
      */
     protected function createAnonymousAttention(array $attributes = []): Attention
     {
@@ -170,7 +173,7 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createTestFile($name = 'test.pdf', $size = 1024)
     {
-        return \Illuminate\Http\UploadedFile::fake()->create($name, $size, 'application/pdf');
+        return UploadedFile::fake()->create($name, $size, 'application/pdf');
     }
 
     /**
@@ -178,11 +181,11 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createTestImage($name = 'test.jpg')
     {
-        return \Illuminate\Http\UploadedFile::fake()->image($name);
+        return UploadedFile::fake()->image($name);
     }
 
     /**
-     * Helper: Datos válidos para crear PQRSF
+     * Helper: Datos válidos para crear peticiones
      */
     protected function validAttentionData(array $overrides = []): array
     {
@@ -207,7 +210,7 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Helper: Datos válidos para PQRSF anónimo
+     * Helper: Datos válidos para peticiones anónimo
      */
     protected function validAnonymousAttentionData(array $overrides = []): array
     {

@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>@yield('title', 'Sistema PQRSF') - {{ config('app.name', 'Alsernet') }}</title>
+    <title>@yield('title', 'Sistema peticiones') - {{ config('app.name', 'Alsernet') }}</title>
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,10 +272,10 @@
                     <div class="brand-subtitle">Sistema de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones</div>
                 </div>
                 <div class="d-none d-md-flex gap-2">
-                    <a href="{{ route('pqrsf.form') }}" class="btn btn-sm btn-outline-light">
-                        <i class="fas fa-file-pen me-1"></i> Radicar PQRSF
+                    <a href="{{ route('peticiones.form') }}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-file-pen me-1"></i> Radicar peticiones
                     </a>
-                    <a href="{{ route('pqrsf.tracking') }}" class="btn btn-sm btn-outline-light">
+                    <a href="{{ route('peticiones.tracking') }}" class="btn btn-sm btn-outline-light">
                         <i class="fas fa-magnifying-glass me-1"></i> Consultar estado
                     </a>
                 </div>
@@ -309,7 +309,7 @@
         <div class="container text-center">
             <p class="mb-1">&copy; {{ date('Y') }} {{ config('app.name', 'Alsernet') }}. Todos los derechos reservados.</p>
             <p class="mb-0">
-                <small>Sistema PQRSF - Conforme a la normatividad colombiana vigente</small>
+                <small>Sistema peticiones - Conforme a la normatividad colombiana vigente</small>
             </p>
         </div>
     </footer>

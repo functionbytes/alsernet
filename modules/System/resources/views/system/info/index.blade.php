@@ -227,7 +227,7 @@
                                 </div>
                             @else
                                 <div class="input-group mb-3" >
-                                    <span class="input-group-text bg-white border-end-0">
+                                    <span class="input-group-text bg-white border-end-1">
                                         <i class="fas fa-search text-muted"></i>
                                     </span>
                                     <input type="text" class="form-control border-start-0" id="packageSearch" placeholder="Buscar paquete...">

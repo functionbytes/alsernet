@@ -18,7 +18,7 @@ use Tests\TestCase;
 /**
  * Feature tests for AttentionController
  *
- * Pruebas de integración para el controlador principal de PQRSF
+ * Pruebas de integración para el controlador principal de peticiones
  */
 class AttentionControllerTest extends TestCase
 {
@@ -53,9 +53,9 @@ class AttentionControllerTest extends TestCase
     // ========================================================================
 
     /**
-     * Test: Can submit a new PQRSF (public endpoint)
+     * Test: Can submit a new peticiones (public endpoint)
      */
-    public function test_can_submit_pqrsf_as_citizen(): void
+    public function test_can_submit_peticiones_as_citizen(): void
     {
         $data = [
             'type_id' => $this->type->id,
@@ -73,7 +73,7 @@ class AttentionControllerTest extends TestCase
             'response_type' => 'email',
         ];
 
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -100,9 +100,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can submit anonymous PQRSF
+     * Test: Can submit anonymous peticiones
      */
-    public function test_can_submit_anonymous_pqrsf(): void
+    public function test_can_submit_anonymous_peticiones(): void
     {
         $data = [
             'type_id' => $this->type->id,
@@ -112,7 +112,7 @@ class AttentionControllerTest extends TestCase
             'is_anonymous' => true,
         ];
 
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         $response->assertStatus(201)
             ->assertJson(['success' => true]);
@@ -129,7 +129,7 @@ class AttentionControllerTest extends TestCase
      */
     public function test_validates_required_fields_on_submit(): void
     {
-        $response = $this->postJson('/api/pqrsf', []);
+        $response = $this->postJson('/api/peticiones', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
@@ -154,7 +154,7 @@ class AttentionControllerTest extends TestCase
             // Missing citizen info
         ];
 
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
@@ -182,7 +182,7 @@ class AttentionControllerTest extends TestCase
             'attachments' => [$file],
         ];
 
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         $response->assertStatus(201);
 
@@ -192,16 +192,16 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can track PQRSF by radicado
+     * Test: Can track peticiones by radicado
      */
-    public function test_can_track_pqrsf_by_radicado(): void
+    public function test_can_track_peticiones_by_radicado(): void
     {
         $attention = Attention::factory()->create([
             'type_id' => $this->type->id,
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -218,7 +218,7 @@ class AttentionControllerTest extends TestCase
      */
     public function test_returns_404_when_radicado_not_found(): void
     {
-        $response = $this->getJson('/api/pqrsf/INVALID-RADICADO');
+        $response = $this->getJson('/api/peticiones/INVALID-RADICADO');
 
         $response->assertStatus(404)
             ->assertJson([
@@ -231,9 +231,9 @@ class AttentionControllerTest extends TestCase
     // ========================================================================
 
     /**
-     * Test: Admin can list all PQRSF
+     * Test: Admin can list all peticiones
      */
-    public function test_admin_can_list_all_pqrsf(): void
+    public function test_admin_can_list_all_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -242,7 +242,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/pqrsf');
+        $response = $this->getJson('/api/settings/peticiones');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -258,9 +258,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can filter PQRSF by status
+     * Test: Can filter peticiones by status
      */
-    public function test_can_filter_pqrsf_by_status(): void
+    public function test_can_filter_peticiones_by_status(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -276,16 +276,16 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/pqrsf?status=received');
+        $response = $this->getJson('/api/settings/peticiones?status=received');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
     }
 
     /**
-     * Test: Can search PQRSF
+     * Test: Can search peticiones
      */
-    public function test_can_search_pqrsf(): void
+    public function test_can_search_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -295,16 +295,16 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/pqrsf?search=searchme');
+        $response = $this->getJson('/api/settings/peticiones?search=searchme');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
     }
 
     /**
-     * Test: Admin can view PQRSF detail
+     * Test: Admin can view peticiones detail
      */
-    public function test_admin_can_view_pqrsf_detail(): void
+    public function test_admin_can_view_peticiones_detail(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -313,7 +313,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -331,9 +331,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Admin can update PQRSF
+     * Test: Admin can update peticiones
      */
-    public function test_admin_can_update_pqrsf(): void
+    public function test_admin_can_update_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -349,7 +349,7 @@ class AttentionControllerTest extends TestCase
             'description' => 'Updated description with enough characters',
         ];
 
-        $response = $this->patchJson("/api/settings/pqrsf/{$attention->radicado}", $updateData);
+        $response = $this->patchJson("/api/settings/peticiones/{$attention->radicado}", $updateData);
 
         $response->assertStatus(200)
             ->assertJson([
@@ -363,9 +363,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Cannot update closed PQRSF
+     * Test: Cannot update closed peticiones
      */
-    public function test_cannot_update_closed_pqrsf(): void
+    public function test_cannot_update_closed_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -375,7 +375,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->patchJson("/api/settings/pqrsf/{$attention->radicado}", [
+        $response = $this->patchJson("/api/settings/peticiones/{$attention->radicado}", [
             'subject' => 'New subject',
         ]);
 
@@ -383,7 +383,7 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can assign PQRSF to department
+     * Test: Can assign peticiones to department
      */
     public function test_can_assign_to_department(): void
     {
@@ -396,7 +396,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/assign-department", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-department", [
             'department_id' => $department->id,
             'comment' => 'Assigned by test',
         ]);
@@ -411,7 +411,7 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can assign PQRSF to user
+     * Test: Can assign peticiones to user
      */
     public function test_can_assign_to_user(): void
     {
@@ -424,7 +424,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/assign-user", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-user", [
             'user_id' => $assignedUser->id,
         ]);
 
@@ -437,7 +437,7 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can change PQRSF status
+     * Test: Can change peticiones status
      */
     public function test_can_change_status(): void
     {
@@ -449,7 +449,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/change-status", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/change-status", [
             'status' => 'in_process',
             'comment' => 'Starting work',
         ]);
@@ -463,9 +463,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can resolve PQRSF
+     * Test: Can resolve peticiones
      */
-    public function test_can_resolve_pqrsf(): void
+    public function test_can_resolve_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -476,7 +476,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/resolve", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/resolve", [
             'resolution' => 'Esta es la respuesta completa a su solicitud. Hemos procesado su petición y adjuntamos la información solicitada.',
             'response_type' => 'email',
             'send_notification' => false, // Disable for testing
@@ -491,9 +491,9 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can close PQRSF
+     * Test: Can close peticiones
      */
-    public function test_can_close_pqrsf(): void
+    public function test_can_close_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
 
@@ -503,7 +503,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/close", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/close", [
             'comment' => 'Closing after resolution',
         ]);
 
@@ -515,7 +515,7 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Can add note to PQRSF
+     * Test: Can add note to peticiones
      */
     public function test_can_add_note(): void
     {
@@ -526,7 +526,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/notes", [
+        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/notes", [
             'content' => 'This is a test note with sufficient length',
         ]);
 
@@ -552,7 +552,7 @@ class AttentionControllerTest extends TestCase
 
         $attention->addNote('Test note', $this->adminUser->id);
 
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}/notes");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/notes");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -573,7 +573,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/settings/pqrsf/{$attention->radicado}/actions");
+        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/actions");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -594,7 +594,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/pqrsf/stats');
+        $response = $this->getJson('/api/settings/peticiones/stats');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -619,7 +619,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/satisfaction", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/satisfaction", [
             'rating' => 5,
             'comment' => 'Excelente servicio',
         ]);
@@ -633,7 +633,7 @@ class AttentionControllerTest extends TestCase
     }
 
     /**
-     * Test: Cannot submit satisfaction for unresolved PQRSF
+     * Test: Cannot submit satisfaction for unresolved peticiones
      */
     public function test_cannot_submit_satisfaction_for_unresolved(): void
     {
@@ -643,7 +643,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/satisfaction", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/satisfaction", [
             'rating' => 5,
         ]);
 
@@ -659,7 +659,7 @@ class AttentionControllerTest extends TestCase
      */
     public function test_requires_authentication_for_admin_endpoints(): void
     {
-        $response = $this->getJson('/api/settings/pqrsf');
+        $response = $this->getJson('/api/settings/peticiones');
 
         $response->assertStatus(401);
     }

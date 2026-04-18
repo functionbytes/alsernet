@@ -1,9 +1,9 @@
 {
     "name": "Attention",
     "alias": "attention",
-    "description": "Sistema PQRSF (Peticiones, Quejas, Reclamos, Sugerencias, Felicitaciones) simplificado",
+    "description": "Sistema peticiones (Peticiones, Quejas, Reclamos, Sugerencias, Felicitaciones) simplificado",
     "keywords": [
-        "pqrsf",
+        "peticiones",
         "peticiones",
         "atencion",
         "ciudadanos"

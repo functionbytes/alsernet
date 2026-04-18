@@ -15,7 +15,7 @@ Usa este checklist para asegurarte de que los tests están completos y cumplen c
 
 ## ✅ Cobertura de Features (API)
 
-### Submission (Envío de PQRSF)
+### Submission (Envío de peticiones)
 - [x] Test de envío exitoso
 - [x] Test de envío con archivos adjuntos
 - [x] Test de validación de campos requeridos
@@ -62,14 +62,14 @@ Usa este checklist para asegurarte de que los tests están completos y cumplen c
 - [x] Test de throttling en uploads
 
 ### Admin Panel (Panel Administrativo)
-- [x] Test de listado de PQRSF
+- [x] Test de listado de peticiones
 - [x] Test de acceso denegado a invitados
 - [x] Test de visualización de detalle
 - [x] Test de asignación a departamento
 - [x] Test de asignación a usuario
 - [x] Test de cambio de estado
-- [x] Test de resolución de PQRSF
-- [x] Test de cierre de PQRSF
+- [x] Test de resolución de peticiones
+- [x] Test de cierre de peticiones
 - [x] Test de agregado de notas
 - [x] Test de listado de notas
 - [x] Test de visualización de historial de acciones
@@ -293,7 +293,7 @@ time ./run-tests.sh
 **Última actualización:** 2026-02-08
 
 ### Features Implementadas
-- ✅ Envío de PQRSF (público)
+- ✅ Envío de peticiones (público)
 - ✅ Consulta/tracking (público)
 - ✅ Carga de archivos (público)
 - ✅ Panel administrativo (autenticado)

@@ -2,6 +2,8 @@
 
 namespace Modules\Attention\Models;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +17,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
- * Modelo principal del sistema PQRSF simplificado
+ * Modelo principal del sistema peticiones simplificado
  *
  * Representa una Petición, Queja, Reclamo, Sugerencia o Felicitación
  */
@@ -95,16 +97,16 @@ class Attention extends Model implements HasMedia
     // MUTATORS - Transformaciones automáticas
     // =========================================================================
 
-    protected function customerFirstname(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function customerFirstname(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
 
-    protected function customerLastname(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function customerLastname(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
@@ -230,11 +232,11 @@ class Attention extends Model implements HasMedia
      */
     public function assignedUser(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     /**
-     * Notas internas del PQRSF
+     * Notas internas del peticiones
      */
     public function notes(): HasMany
     {
@@ -290,7 +292,7 @@ class Attention extends Model implements HasMedia
      */
     public static function generateRadicado(): string
     {
-        $prefix = config('attention.radicado_prefix', 'PQRSF');
+        $prefix = config('attention.radicado_prefix', 'peticiones');
         $year = date('Y');
 
         // Get last radicado of current year
@@ -385,7 +387,7 @@ class Attention extends Model implements HasMedia
             'resolved_at' => now(),
         ]);
 
-        $this->logAction('resolved', 'PQRSF resuelto');
+        $this->logAction('resolved', 'peticiones resuelto');
     }
 
     /**
@@ -398,7 +400,7 @@ class Attention extends Model implements HasMedia
             'closed_at' => now(),
         ]);
 
-        $this->logAction('closed', "PQRSF cerrado. {$comment}");
+        $this->logAction('closed', "peticiones cerrado. {$comment}");
     }
 
     /**
@@ -458,7 +460,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Verificar si el PQRSF debe ser archivado
+     * Verificar si el peticiones debe ser archivado
      */
     public function shouldBeArchived(): bool
     {
@@ -497,7 +499,7 @@ class Attention extends Model implements HasMedia
     {
         if (! $this->canBePermanentlyDeleted()) {
             throw new \Exception(
-                "No se puede eliminar permanentemente el PQRSF {$this->radicado}. ".
+                "No se puede eliminar permanentemente el peticiones {$this->radicado}. ".
                 'La Ley 594/2000 (Ley General de Archivos) requiere retención mínima de '.
                 config('attention.data_retention.minimum_retention_years', 5).' años. '.
                 "Han transcurrido {$this->getYearsSinceClosed()} año(s) desde su cierre."
@@ -507,7 +509,7 @@ class Attention extends Model implements HasMedia
         // Log de auditoría antes de eliminar
         $this->logAction(
             'force_deleted',
-            "PQRSF eliminado permanentemente. Años transcurridos: {$this->getYearsSinceClosed()}",
+            "peticiones eliminado permanentemente. Años transcurridos: {$this->getYearsSinceClosed()}",
             auth()->id()
         );
 
@@ -515,7 +517,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Archivar el PQRSF
+     * Archivar el peticiones
      */
     public function archive(): bool
     {
@@ -528,7 +530,7 @@ class Attention extends Model implements HasMedia
         if ($result) {
             $this->logAction(
                 'archived',
-                'PQRSF archivado según política de retención (Ley 594/2000)'
+                'peticiones archivado según política de retención (Ley 594/2000)'
             );
         }
 
@@ -536,7 +538,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Scope para PQRSF archivados
+     * Scope para peticiones archivados
      */
     public function scopeArchived($query)
     {
@@ -544,7 +546,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Scope para PQRSF no archivados
+     * Scope para peticiones no archivados
      */
     public function scopeNotArchived($query)
     {
@@ -552,7 +554,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Scope para PQRSF que deberían ser archivados
+     * Scope para peticiones que deberían ser archivados
      */
     public function scopeShouldBeArchived($query)
     {
@@ -565,7 +567,7 @@ class Attention extends Model implements HasMedia
     }
 
     /**
-     * Scope para PQRSF con valor histórico
+     * Scope para peticiones con valor histórico
      */
     public function scopeHistorical($query)
     {

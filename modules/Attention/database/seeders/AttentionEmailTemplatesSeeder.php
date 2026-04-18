@@ -4,18 +4,19 @@ namespace Modules\Attention\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Lang;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Models\MailerTemplateLang;
 
 /**
- * Seeds email templates for the Attention (PQRSF) module.
+ * Seeds email templates for the Attention (peticiones) module.
  * Creates 5 templates: confirmation, assigned, in_process, resolution, custom.
  */
 class AttentionEmailTemplatesSeeder extends Seeder
 {
     public function run(): void
     {
-        $langs = \Modules\Core\Models\Lang::where('available', true)->get();
+        $langs = Lang::where('available', true)->get();
 
         if ($langs->isEmpty()) {
             $this->command->warn('No languages found - skipping attention template translations');
@@ -63,7 +64,7 @@ class AttentionEmailTemplatesSeeder extends Seeder
             [
                 'key' => 'attention_confirmation',
                 'name' => 'Confirmacion de recepcion',
-                'description' => 'Email enviado al ciudadano cuando se radica un nuevo PQRSF. Confirma la recepcion y proporciona el numero de radicado para seguimiento.',
+                'description' => 'Email enviado al ciudadano cuando se radica un nuevo peticiones. Confirma la recepcion y proporciona el numero de radicado para seguimiento.',
                 'subject' => 'Confirmacion de radicado {ATTENTION_RADICADO}',
                 'is_protected' => true,
                 'content' => $this->confirmationTemplate(),
@@ -71,23 +72,23 @@ class AttentionEmailTemplatesSeeder extends Seeder
             [
                 'key' => 'attention_assigned',
                 'name' => 'Notificacion de asignacion',
-                'description' => 'Email enviado al funcionario cuando se le asigna un nuevo PQRSF para gestion.',
-                'subject' => 'Nuevo PQRSF asignado - Radicado {ATTENTION_RADICADO}',
+                'description' => 'Email enviado al funcionario cuando se le asigna un nuevo peticiones para gestion.',
+                'subject' => 'Nuevo peticiones asignado - Radicado {ATTENTION_RADICADO}',
                 'is_protected' => true,
                 'content' => $this->assignedTemplate(),
             ],
             [
                 'key' => 'attention_in_process',
                 'name' => 'Notificacion en tramite',
-                'description' => 'Email enviado al ciudadano cuando su PQRSF pasa a estado "En proceso". Informa que la solicitud esta siendo atendida.',
-                'subject' => 'Su PQRSF esta en proceso - Radicado {ATTENTION_RADICADO}',
+                'description' => 'Email enviado al ciudadano cuando su peticiones pasa a estado "En proceso". Informa que la solicitud esta siendo atendida.',
+                'subject' => 'Su peticiones esta en proceso - Radicado {ATTENTION_RADICADO}',
                 'is_protected' => true,
                 'content' => $this->inProcessTemplate(),
             ],
             [
                 'key' => 'attention_resolution',
                 'name' => 'Notificacion de resolucion',
-                'description' => 'Email enviado al ciudadano cuando su PQRSF ha sido resuelto. Incluye la respuesta oficial y enlace a encuesta de satisfaccion.',
+                'description' => 'Email enviado al ciudadano cuando su peticiones ha sido resuelto. Incluye la respuesta oficial y enlace a encuesta de satisfaccion.',
                 'subject' => 'Respuesta a su solicitud {ATTENTION_RADICADO}',
                 'is_protected' => true,
                 'content' => $this->resolutionTemplate(),
@@ -106,7 +107,7 @@ class AttentionEmailTemplatesSeeder extends Seeder
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">PQRSF recibido exitosamente</h1>
+    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">peticiones recibido exitosamente</h1>
 
     <p>Estimado/a <strong>{CUSTOMER_NAME}</strong>,</p>
 
@@ -135,7 +136,7 @@ class AttentionEmailTemplatesSeeder extends Seeder
 
     <h2 style="font-size: 18px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 8px;">Como hacer seguimiento</h2>
 
-    <p>Puede consultar el estado de su PQRSF en cualquier momento utilizando el numero de radicado:</p>
+    <p>Puede consultar el estado de su peticiones en cualquier momento utilizando el numero de radicado:</p>
 
     <div style="text-align: center; margin: 24px 0;">
         <a href="{TRACKING_URL}" style="display: inline-block; background: #90bb13; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Consultar estado</a>
@@ -156,7 +157,7 @@ class AttentionEmailTemplatesSeeder extends Seeder
         <li><strong>Felicitacion:</strong> Acuse de recibo inmediato</li>
     </ul>
 
-    <p style="font-size: 14px; color: #555;">Recibira notificaciones por correo electronico sobre los cambios en el estado de su PQRSF.</p>
+    <p style="font-size: 14px; color: #555;">Recibira notificaciones por correo electronico sobre los cambios en el estado de su peticiones.</p>
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
 
@@ -171,7 +172,7 @@ HTML;
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Nuevo PQRSF asignado</h1>
+    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Nuevo peticiones asignado</h1>
 
     <p>Se le ha asignado un nuevo caso de atencion al ciudadano para su gestion.</p>
 
@@ -209,10 +210,10 @@ HTML;
 
     <h2 style="font-size: 18px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 8px;">Acciones requeridas</h2>
 
-    <p>Por favor revise el caso y proceda con la gestion correspondiente. Es importante mantener actualizado el estado del PQRSF para que el ciudadano pueda hacer seguimiento.</p>
+    <p>Por favor revise el caso y proceda con la gestion correspondiente. Es importante mantener actualizado el estado del peticiones para que el ciudadano pueda hacer seguimiento.</p>
 
     <div style="text-align: center; margin: 24px 0;">
-        <a href="{ATTENTION_URL}" style="display: inline-block; background: #13C672; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Gestionar PQRSF</a>
+        <a href="{ATTENTION_URL}" style="display: inline-block; background: #13C672; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Gestionar peticiones</a>
     </div>
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
@@ -227,7 +228,7 @@ HTML;
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
 
-    <p>Saludos,<br><strong>Sistema de Gestion PQRSF</strong><br>{COMPANY_NAME}</p>
+    <p>Saludos,<br><strong>Sistema de Gestion peticiones</strong><br>{COMPANY_NAME}</p>
 </div>
 HTML;
     }
@@ -236,7 +237,7 @@ HTML;
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Su PQRSF esta en proceso</h1>
+    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Su peticiones esta en proceso</h1>
 
     <p>Estimado/a <strong>{CUSTOMER_NAME}</strong>,</p>
 
@@ -279,7 +280,7 @@ HTML;
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
 
     <h3 style="font-size: 16px; color: #555;">Seguimiento</h3>
-    <p style="font-size: 14px; color: #555;">Puede consultar el estado de su PQRSF en cualquier momento usando el numero de radicado. Le notificaremos cuando haya novedades o cuando su caso sea resuelto.</p>
+    <p style="font-size: 14px; color: #555;">Puede consultar el estado de su peticiones en cualquier momento usando el numero de radicado. Le notificaremos cuando haya novedades o cuando su caso sea resuelto.</p>
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
 
@@ -294,7 +295,7 @@ HTML;
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #13C672; font-size: 24px; margin-bottom: 10px;">Su PQRSF ha sido resuelto</h1>
+    <h1 style="color: #13C672; font-size: 24px; margin-bottom: 10px;">Su peticiones ha sido resuelto</h1>
 
     <p>Estimado/a <strong>{CUSTOMER_NAME}</strong>,</p>
 

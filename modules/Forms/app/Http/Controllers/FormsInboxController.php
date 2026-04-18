@@ -175,6 +175,30 @@ class FormsInboxController extends Controller
         ]);
     }
 
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $this->authorize('Forms.submissions.edit');
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:mark_read,mark_unread,mark_spam,unmark_spam,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $query = FormSubmission::query()->whereIn('id', $validated['ids']);
+        $count = $query->count();
+
+        match ($validated['action']) {
+            'mark_read' => $query->update(['is_read' => true]),
+            'mark_unread' => $query->update(['is_read' => false]),
+            'mark_spam' => $query->update(['is_spam' => true]),
+            'unmark_spam' => $query->update(['is_spam' => false]),
+            'delete' => $query->delete(),
+        };
+
+        return response()->json(['success' => true, 'message' => "{$count} registro(s) procesados.", 'count' => $count]);
+    }
+
     public function deleteFile(FormSubmission $submission, FormSubmissionFile $file): JsonResponse
     {
         $this->authorize('Forms.submissions.delete');

@@ -22,8 +22,8 @@ use Modules\Attention\Http\Controllers\AttentionTypesController;
 */
 
 // ===== PÚBLICAS (Rate limited 60/min) =====
-Route::middleware(['api', 'throttle:60,1'])->prefix('pqrsf')->name('api.pqrsf.')->group(function () {
-    // Enviar PQRSF
+Route::middleware(['api', 'throttle:60,1'])->prefix('peticiones')->name('api.peticiones.')->group(function () {
+    // Enviar peticiones
     Route::post('/submit', [AttentionController::class, 'submit'])->name('submit');
 
     // Consultar estado por radicado

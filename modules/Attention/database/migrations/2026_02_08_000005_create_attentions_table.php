@@ -13,7 +13,7 @@ return new class extends Migration
 
             // Identificación
             $table->uuid('uid')->unique()->comment('Identificador único interno');
-            $table->string('radicado', 50)->unique()->comment('PQRSF-YYYY-NNNNNN');
+            $table->string('radicado', 50)->unique()->comment('peticiones-YYYY-NNNNNN');
 
             // Tipo y categorización
             $table->foreignId('type_id')
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->string('customer_cellphone', 50)->nullable();
             $table->string('customer_dni', 50)->nullable();
             $table->string('customer_address', 255)->nullable();
-            $table->boolean('is_anonymous')->default(false)->comment('PQRSF anónimo');
+            $table->boolean('is_anonymous')->default(false)->comment('peticiones anónimo');
 
             // Contenido
             $table->string('subject', 255)->comment('Asunto');

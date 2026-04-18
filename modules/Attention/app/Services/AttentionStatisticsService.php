@@ -12,9 +12,9 @@ use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Models\Attention;
 
 /**
- * Servicio de estadísticas para PQRSF
+ * Servicio de estadísticas para peticiones
  *
- * Proporciona métricas y análisis sobre PQRSF incluyendo dashboard stats,
+ * Proporciona métricas y análisis sobre peticiones incluyendo dashboard stats,
  * tendencias temporales, compliance de SLA y análisis por diferentes dimensiones.
  */
 class AttentionStatisticsService
@@ -96,7 +96,7 @@ class AttentionStatisticsService
     }
 
     /**
-     * Obtiene estadísticas por tipo de PQRSF
+     * Obtiene estadísticas por tipo de peticiones
      *
      * @param  Carbon|null  $from  Fecha inicial
      * @param  Carbon|null  $to  Fecha final
@@ -135,7 +135,7 @@ class AttentionStatisticsService
     }
 
     /**
-     * Obtiene estadísticas por estado de PQRSF
+     * Obtiene estadísticas por estado de peticiones
      *
      * @param  Carbon|null  $from  Fecha inicial
      * @param  Carbon|null  $to  Fecha final
@@ -369,7 +369,7 @@ class AttentionStatisticsService
     }
 
     /**
-     * Obtiene tendencia temporal de PQRSF
+     * Obtiene tendencia temporal de peticiones
      *
      * @param  string  $period  Período de agrupación (day, week, month)
      * @param  int  $periods  Cantidad de períodos a retornar

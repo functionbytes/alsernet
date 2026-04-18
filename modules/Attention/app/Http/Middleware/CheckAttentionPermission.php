@@ -12,7 +12,7 @@ class CheckAttentionPermission
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
@@ -30,7 +30,7 @@ class CheckAttentionPermission
                 return $next($request);
             }
 
-            abort(404, 'PQRSF no encontrado.');
+            abort(404, 'peticiones no encontrado.');
         }
 
         // Check the permission

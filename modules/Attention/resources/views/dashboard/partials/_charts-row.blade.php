@@ -4,7 +4,7 @@
         <div class="card w-100">
             <div class="card-header">
                 <h4 class="card-title fw-semibold mb-0">Tendencia últimos 7 días</h4>
-                <p class="card-subtitle mt-1">Evolución de PQRSF recibidas</p>
+                <p class="card-subtitle mt-1">Evolución de peticiones recibidas</p>
             </div>
             <div class="card-body">
                 <div id="chart-trend-7days" ></div>
@@ -30,7 +30,7 @@
         <div class="card w-100 h-100">
             <div class="card-header">
                 <h4 class="card-title fw-semibold mb-0">Por tipo de atención</h4>
-                <p class="card-subtitle mt-1">Distribución por categoría de PQRSF</p>
+                <p class="card-subtitle mt-1">Distribución por categoría de peticiones</p>
             </div>
             <div class="card-body">
                 <div id="list-by-type"></div>

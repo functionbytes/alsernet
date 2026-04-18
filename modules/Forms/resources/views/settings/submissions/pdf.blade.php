@@ -41,7 +41,7 @@
             border-collapse: collapse;
         }
         .fields-table th {
-            background-color: #90bb13;
+            background-color: #000000;
             color: #fff;
             padding: 8px 10px;
             text-align: left;

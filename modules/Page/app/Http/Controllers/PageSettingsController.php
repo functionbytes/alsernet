@@ -44,15 +44,18 @@ class PageSettingsController extends Controller
 
         $request->validate(array_merge([
             'permalink_prefix' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9\-\/]*$/'],
+            'homepage_page_id' => ['nullable', 'integer', 'exists:pages,id'],
             'supported_locales' => ['nullable', 'array'],
             'supported_locales.*' => ['string', 'max:10'],
         ], $errorPageRules));
 
         $prefix = ltrim((string) $request->input('permalink_prefix', ''), '/');
         $locales = array_filter(array_map('trim', $request->input('supported_locales', [])));
+        $homepageId = $request->input('homepage_page_id');
 
         Setting::set(self::SETTING_KEY, $prefix);
         Setting::set('page-supported-locales', implode(',', $locales));
+        Setting::set('homepage-page-id', $homepageId ?: '');
 
         foreach (self::ERROR_CODES as $code) {
             $pageId = $request->input("error_page_{$code}");

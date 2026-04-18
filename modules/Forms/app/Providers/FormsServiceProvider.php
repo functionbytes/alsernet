@@ -18,6 +18,7 @@ use Modules\Forms\Policies\FormPolicy;
 use Modules\Forms\Services\FormEmailService;
 use Modules\Forms\Services\FormSubmissionService;
 use Modules\Forms\Services\FormWebhookService;
+use Modules\Page\Http\Controllers\VisualEditorController;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -149,7 +150,15 @@ class FormsServiceProvider extends ServiceProvider
                     return '';
                 }
 
-                return view('forms::public.render', compact('form', 'shortcodeConfig'))->render();
+                $html = view('forms::public.render', compact('form', 'shortcodeConfig'))->render();
+
+                if (app()->bound('ve_preview_wrap')) {
+                    $safe = VisualEditorController::buildVeScTag('form', $attrs, '');
+
+                    return '<div data-ve-sc="'.$safe.'">'.$html.'</div>';
+                }
+
+                return $html;
             });
         });
     }

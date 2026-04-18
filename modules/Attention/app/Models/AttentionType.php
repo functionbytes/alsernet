@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Tipos de PQRSF
+ * Tipos de peticiones
  * P - Petición
  * Q - Queja
  * R - Reclamo

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
+use Modules\Locales\Services\LocaleService;
 use Modules\Reviews\Enums\ReplyStatus;
 use Modules\Reviews\Http\Requests\BulkModerationRequest;
 use Modules\Reviews\Http\Requests\ReviewFilterRequest;
@@ -22,6 +23,7 @@ use Modules\Reviews\Models\ReviewGoogleLocation;
 use Modules\Reviews\Models\ReviewModeration;
 use Modules\Reviews\Models\ReviewReply;
 use Modules\Reviews\Models\ReviewReplyTemplate;
+use Modules\Reviews\Models\ReviewTranslation;
 use Modules\Reviews\Services\AiReplyService;
 use Modules\Reviews\Services\AnomalyDetectionService;
 use Modules\Reviews\Services\GoogleReviewService;
@@ -69,7 +71,7 @@ class ReviewController extends Controller
             ->get();
 
         $query = Review::query()
-            ->with(['location', 'moderation', 'reply'])
+            ->with(['location', 'moderation', 'reply', 'translations'])
             ->withCount('replies');
 
         $query = ReviewQueryBuilder::applyFilters($query, $request->only([
@@ -98,7 +100,11 @@ class ReviewController extends Controller
 
         $reviews = $query->latest('review_time')->paginate(20)->withQueryString();
 
-        return view('reviews::reviews.index', compact('stats', 'locations', 'reviews'));
+        $templates = ReviewReplyTemplate::active()->orderBy('name')->get(['id', 'name', 'body']);
+
+        $activeLocales = app(LocaleService::class)->getActiveLocales();
+
+        return view('reviews::reviews.index', compact('stats', 'locations', 'reviews', 'templates', 'activeLocales'));
     }
 
     public function data(ReviewFilterRequest $request): JsonResponse
@@ -154,12 +160,13 @@ class ReviewController extends Controller
 
     public function show(Review $review): View
     {
-        $review->load(['location', 'moderation', 'replies.createdBy', 'replies.approvedBy']);
+        $review->load(['location', 'moderation', 'replies.createdBy', 'replies.approvedBy', 'translations']);
 
         $aiEnabled = ReviewAiSetting::where('is_enabled', true)->exists();
         $templates = ReviewReplyTemplate::active()->orderBy('name')->get(['id', 'name', 'body']);
+        $activeLocales = app(LocaleService::class)->getActiveLocales();
 
-        return view('reviews::reviews.show', compact('review', 'aiEnabled', 'templates'));
+        return view('reviews::reviews.show', compact('review', 'aiEnabled', 'templates', 'activeLocales'));
     }
 
     public function generateAiReply(Request $request, Review $review): JsonResponse
@@ -655,11 +662,14 @@ class ReviewController extends Controller
         $translationService = app(ReviewTranslationService::class);
         $result = $translationService->translateReview($review, $targetLang);
 
-        $review->update([
-            'translated_comment' => $result['translated'],
-            'detected_language' => $result['detected_lang'],
-            'translation_cached_at' => now(),
-        ]);
+        ReviewTranslation::updateOrCreate(
+            ['review_id' => $review->id, 'locale_code' => $targetLang],
+            [
+                'translated_text' => $result['translated'],
+                'detected_language' => $result['detected_lang'],
+                'translated_at' => now(),
+            ]
+        );
 
         return response()->json([
             'success' => true,
@@ -667,6 +677,29 @@ class ReviewController extends Controller
             'translated' => $result['translated'],
             'detected_lang' => $result['detected_lang'],
             'target_lang' => $result['target_lang'],
+        ]);
+    }
+
+    public function updateTranslation(Request $request, Review $review, string $locale): JsonResponse
+    {
+        $this->authorize('update', $review);
+
+        $validated = $request->validate([
+            'translated_text' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $translation = ReviewTranslation::updateOrCreate(
+            ['review_id' => $review->id, 'locale_code' => strtoupper($locale)],
+            [
+                'translated_text' => $validated['translated_text'],
+                'translated_at' => now(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'translated_text' => $translation->translated_text,
+            'translated_at' => $translation->translated_at->format('d/m/Y H:i'),
         ]);
     }
 

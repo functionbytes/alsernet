@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Reviews\Database\Factories\ReviewGoogleLocationFactory;
+use Modules\Reviews\Enums\SyncStrategy;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -37,6 +38,9 @@ class ReviewGoogleLocation extends Model
         'metadata_json',
         'synced_at',
         'sla_hours',
+        'place_id',
+        'sync_strategy',
+        'available_tags',
     ];
 
     protected function casts(): array
@@ -49,6 +53,8 @@ class ReviewGoogleLocation extends Model
             'metadata_json' => 'array',
             'synced_at' => 'datetime',
             'sla_hours' => 'integer',
+            'sync_strategy' => SyncStrategy::class,
+            'available_tags' => 'array',
         ];
     }
 

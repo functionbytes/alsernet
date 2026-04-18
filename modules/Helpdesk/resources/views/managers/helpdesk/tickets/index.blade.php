@@ -126,7 +126,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Estado</label>
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="status" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todos</option>
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->id }}" {{ request('status') == $status->id ? 'selected' : '' }}>
@@ -138,7 +138,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Prioridad</label>
-                            <select name="priority" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="priority" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todas</option>
                                 <option value="urgent" {{ request('priority') == 'urgent' ? 'selected' : '' }}>Urgente</option>
                                 <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>Alta</option>
@@ -149,7 +149,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Estado SLA</label>
-                            <select name="sla_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="sla_status" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todos</option>
                                 <option value="breached" {{ request('sla_status') == 'breached' ? 'selected' : '' }}>Incumplido</option>
                                 <option value="warning" {{ request('sla_status') == 'warning' ? 'selected' : '' }}>Próximo a vencer</option>
@@ -159,7 +159,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Asignado a</label>
-                            <select name="assignee" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="assignee" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todos</option>
                                 <option value="me" {{ request('assignee') == 'me' ? 'selected' : '' }}>Yo</option>
                                 <option value="unassigned" {{ request('assignee') == 'unassigned' ? 'selected' : '' }}>Sin asignar</option>
@@ -213,7 +213,7 @@
                             <input type="hidden" name="viewId" value="{{ $currentView->id }}">
                         @endif
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0">
+                            <span class="input-group-text bg-white border-end-1">
                                 <i class="fas fa-search text-primary"></i>
                             </span>
                             <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Buscar por #número, asunto, cliente..." value="{{ request('search') }}">

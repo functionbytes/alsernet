@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Request validation for updating an existing PQRSF (settings only)
+ * Request validation for updating an existing peticiones (settings only)
  */
 class UpdateAttentionRequest extends FormRequest
 {

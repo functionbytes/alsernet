@@ -85,14 +85,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ve-border);
     flex-shrink: 0;
-    background: #fff;
+    background: var(--ve-bg);
 }
 .ve-lp-title {
     font-size: 10px;
     font-weight: 600;
-    color: #999;
+    color: var(--ve-text-muted);
     text-transform: uppercase;
     letter-spacing: .5px;
     line-height: 1;
@@ -101,7 +101,7 @@
 .ve-lp-subtitle {
     font-size: 13px;
     font-weight: 700;
-    color: #333;
+    color: var(--ve-text);
 }
 .ve-lp-refresh {
     width: 28px;
@@ -223,7 +223,7 @@
 /* ── Tree nodes ────────────────────────────────────────────────── */
 .ve-lp-container {
     margin-bottom: 6px;
-    border: 1px solid #eee;
+    border: 1px solid var(--ve-border);
     border-radius: 8px;
     overflow: hidden;
     background: #fff;
@@ -244,13 +244,13 @@
 }
 .ve-lp-node-icon {
     font-size: 10px;
-    color: #999;
+    color: var(--ve-text-muted);
     flex-shrink: 0;
 }
 .ve-lp-node-tag {
     font-size: 11px;
     font-weight: 700;
-    color: #333;
+    color: var(--ve-text);
     font-family: 'SF Mono', 'Fira Code', monospace;
     flex: 1;
     overflow: hidden;
@@ -266,12 +266,12 @@
     line-height: 1.4;
 }
 .ve-lp-badge--rows {
-    background: #eee;
-    color: #666;
+    background: var(--ve-bg-muted);
+    color: var(--ve-text-soft);
 }
 .ve-lp-badge--cols {
-    background: #eee;
-    color: #999;
+    background: var(--ve-bg-muted);
+    color: var(--ve-text-muted);
 }
 /* Container inner content */
 .ve-lp-container-body {
@@ -282,7 +282,7 @@
 .ve-lp-row {
     margin-left: 6px;
     margin-bottom: 3px;
-    border-left: 2px solid #eee;
+    border-left: 2px solid var(--ve-border);
     padding-left: 6px;
 }
 .ve-lp-row-node {
@@ -290,8 +290,8 @@
     align-items: center;
     gap: 6px;
     padding: 4px 8px;
-    background: #fafafa;
-    border: 1px solid #eee;
+    background: var(--ve-bg-subtle);
+    border: 1px solid var(--ve-border);
     border-radius: 5px;
     cursor: pointer;
     transition: all .12s;
@@ -322,8 +322,8 @@
     align-items: center;
     justify-content: center;
     padding: 3px 8px;
-    background: #f4f6f8;
-    border: 1px solid #eee;
+    background: var(--ve-bg-muted);
+    border: 1px solid var(--ve-border);
     border-radius: 4px;
     font-size: 9px;
     font-weight: 600;

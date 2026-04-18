@@ -158,7 +158,7 @@
                                             <div class="form-check form-switch d-inline-block">
                                                 <input type="checkbox" class="form-check-input toggle-checkbox" role="switch"
                                                        {{ $group->is_active ? 'checked' : '' }}
-                                                       onchange="this.form.submit()">
+                                                      >
                                             </div>
                                         </form>
                                     </td>

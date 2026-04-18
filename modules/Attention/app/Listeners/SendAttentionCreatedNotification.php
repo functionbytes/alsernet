@@ -2,6 +2,11 @@
 
 namespace Modules\Attention\Listeners;
 
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Attention\Events\AttentionCreated;
 
@@ -34,9 +39,9 @@ class SendAttentionCreatedNotification
         }
 
         // Crear notificación inline para enviar
-        $notification = new class extends Notification implements \Illuminate\Contracts\Broadcasting\ShouldBroadcast, \Illuminate\Contracts\Queue\ShouldQueue
+        $notification = new class extends Notification implements ShouldBroadcast, ShouldQueue
         {
-            use \Illuminate\Bus\Queueable;
+            use Queueable;
 
             public ?int $recipientUserId = null;
 
@@ -54,8 +59,8 @@ class SendAttentionCreatedNotification
             public function toDatabase($notifiable)
             {
                 return [
-                    'title' => '📋 Nuevo PQRSF asignado',
-                    'message' => "Se ha creado un nuevo PQRSF #{$this->attention->radicado}. ".
+                    'title' => '📋 Nuevo peticiones asignado',
+                    'message' => "Se ha creado un nuevo peticiones #{$this->attention->radicado}. ".
                                  "Cliente: {$this->attention->full_name}. ".
                                  "Tipo: {$this->attention->type->name}.",
                     'icon' => 'fa-duotone fas fa-clipboard-check',
@@ -71,9 +76,9 @@ class SendAttentionCreatedNotification
 
             public function toBroadcast($notifiable)
             {
-                return new \Illuminate\Notifications\Messages\BroadcastMessage([
-                    'title' => '📋 Nuevo PQRSF asignado',
-                    'message' => "PQRSF #{$this->attention->radicado} requiere tu atención",
+                return new BroadcastMessage([
+                    'title' => '📋 Nuevo peticiones asignado',
+                    'message' => "peticiones #{$this->attention->radicado} requiere tu atención",
                     'icon' => 'fa-duotone fas fa-clipboard-check',
                     'color' => 'info',
                     'action_url' => url("/attentions/show/{$this->attention->uid}"),
@@ -88,7 +93,7 @@ class SendAttentionCreatedNotification
             public function broadcastOn(): array
             {
                 return [
-                    new \Illuminate\Broadcasting\Channel('attentions.created'),
+                    new Channel('attentions.created'),
                 ];
             }
 

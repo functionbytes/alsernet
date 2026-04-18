@@ -10,6 +10,7 @@ use Illuminate\View\View;
 use Modules\Locales\Models\Locale;
 use Modules\Page\Events\PageAutoSaved;
 use Modules\Page\Models\Page;
+use Modules\Page\Models\PageVersion;
 use Modules\Page\Services\PageAutoSaveService;
 use Modules\Page\Services\PageService;
 use Modules\Template\Models\Shortcode;
@@ -36,7 +37,8 @@ class VisualEditorController extends Controller
             ?? $page->translations->first();
 
         $prefix = setting('permalink-modules-page-models-page', '');
-        $publicUrl = url($prefix ? $prefix.'/'.$page->slug : $page->slug);
+        $slug = $translation?->slug ?? $page->slug;
+        $publicUrl = url($prefix ? $prefix.'/'.$slug : $slug);
 
         $shortcodes = [];
         try {
@@ -66,6 +68,8 @@ class VisualEditorController extends Controller
 
         $supportedLocales = PageService::getSupportedLocales();
 
+        $draftInfo = $this->autoSaveService->getDraftInfo($page, auth()->user());
+
         return view('page::pages.visual-editor', [
             'page' => $page,
             'translation' => $translation,
@@ -78,6 +82,7 @@ class VisualEditorController extends Controller
             'shortcodes' => $shortcodes,
             'supportedLocales' => $supportedLocales,
             'existingLocales' => $page->translations->pluck('locale')->all(),
+            'draftInfo' => $draftInfo,
         ]);
     }
 
@@ -100,7 +105,15 @@ class VisualEditorController extends Controller
         $fallbackContent = $translation?->content ?? $page->content ?? '';
         $tempContent = $request->input('content', $fallbackContent);
 
-        $transContent = function_exists('shortcode') ? shortcode($tempContent) : $tempContent;
+        if (function_exists('shortcode')) {
+            // Signal to shortcode callbacks that they should wrap their output with a
+            // data-ve-sc sentinel div so the visual editor can recover the raw tag on save.
+            app()->instance('ve_preview_wrap', true);
+            $transContent = shortcode($tempContent);
+            app()->forgetInstance('ve_preview_wrap');
+        } else {
+            $transContent = $tempContent;
+        }
 
         $viewName = $this->resolveViewName($page);
 
@@ -192,6 +205,28 @@ class VisualEditorController extends Controller
     }
 
     /**
+     * Return the current auto-save draft content as JSON.
+     */
+    public function getDraft(Page $page): JsonResponse
+    {
+        $this->authorize('update', $page);
+
+        $draft = $this->autoSaveService->getLatestDraft($page, auth()->user());
+
+        if (! $draft) {
+            return response()->json(['success' => false, 'message' => 'Sin borrador activo.']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'content' => $draft->data['content'] ?? $draft->content ?? '',
+                'saved_at' => $draft->saved_at->diffForHumans(),
+            ],
+        ]);
+    }
+
+    /**
      * Auto-save draft from the visual editor (web route, session auth).
      */
     public function autoSave(Request $request, Page $page): JsonResponse
@@ -200,6 +235,13 @@ class VisualEditorController extends Controller
 
         $data = $request->validate([
             'content' => ['nullable', 'string'],
+            'locale' => ['nullable', 'string', 'max:10'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:500'],
+            'seo_keywords' => ['nullable', 'string', 'max:500'],
         ]);
 
         $draft = $this->autoSaveService->saveAutoSave($page, auth()->user(), $data);
@@ -225,7 +267,7 @@ class VisualEditorController extends Controller
     {
         $this->authorize('update', $page);
 
-        $data = $request->validate(['shortcode' => ['required', 'string', 'max:500']]);
+        $data = $request->validate(['shortcode' => ['required', 'string', 'max:10000']]);
 
         $html = function_exists('shortcode') ? shortcode($data['shortcode']) : $data['shortcode'];
 
@@ -260,6 +302,55 @@ class VisualEditorController extends Controller
     }
 
     /**
+     * Return page versions list as JSON for the visual editor history panel.
+     */
+    public function getEditorVersions(Request $request, Page $page): JsonResponse
+    {
+        $this->authorize('update', $page);
+
+        $versions = PageVersion::query()
+            ->where('page_id', $page->id)
+            ->with('user:id,name')
+            ->orderByDesc('version_number')
+            ->limit(20)
+            ->get(['id', 'version_number', 'title', 'user_id', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $versions->map(fn (PageVersion $v) => [
+                'id' => $v->id,
+                'version_number' => $v->version_number,
+                'title' => $v->title,
+                'user' => $v->user?->name ?? '—',
+                'created_at' => $v->created_at->toIso8601String(),
+                'created_at_human' => $v->created_at->diffForHumans(),
+            ]),
+        ]);
+    }
+
+    /**
+     * Return a single version's content as JSON for the visual editor.
+     */
+    public function getEditorVersion(Request $request, Page $page, PageVersion $version): JsonResponse
+    {
+        $this->authorize('update', $page);
+
+        if ($version->page_id !== $page->id) {
+            abort(404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $version->id,
+                'version_number' => $version->version_number,
+                'title' => $version->title,
+                'content' => $version->content ?? '',
+            ],
+        ]);
+    }
+
+    /**
      * Build a <script> block injected into the preview iframe.
      *
      * Responsibilities:
@@ -275,14 +366,34 @@ class VisualEditorController extends Controller
     {
         return <<<'HTML'
 <style>
-.ve-sel   { outline: 2px solid #b10100 !important; outline-offset: 1px !important; }
-.ve-ctx   { outline: 2px solid #FA896B !important; outline-offset: 1px !important; }
-.ve-multi { outline: 2px solid #fd7e14 !important; outline-offset: 1px !important; }
+.ve-sel      { outline: 2px solid #b10100 !important; outline-offset: 1px !important; }
+.ve-ctx      { outline: 2px solid #FA896B !important; outline-offset: 1px !important; }
+.ve-multi    { outline: 2px solid #fd7e14 !important; outline-offset: 1px !important; }
+.ve-sc-active{ outline: 2px dashed #90bb13 !important; outline-offset: 4px !important; }
+@keyframes veScFlash { 0%{outline-color:#90bb13;outline-width:2px} 40%{outline-color:#13C672;outline-width:4px} 100%{outline-color:#90bb13;outline-width:2px} }
+.ve-sc-flash { animation: veScFlash .55s ease-out; }
 .ve-quick-bar { position:absolute; display:flex; gap:2px; padding:3px; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.12); z-index:99999; pointer-events:auto; }
 .ve-quick-bar button { width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:5px; color:#666; font-size:13px; cursor:pointer; transition:all .12s; }
 .ve-quick-bar button:hover { background:#f4f6f8; color:#333; }
 .ve-quick-bar button.ve-qb-danger:hover { background:#fdf2f2; color:#b10100; }
+.ve-quick-bar .qb-bold { font-weight:900; }
+.ve-quick-bar .qb-italic { font-style:italic; }
+.ve-quick-bar .qb-edit-block { color:#90bb13; font-size:11px; font-weight:700; }
+.ve-sc-hover { outline: 2px dashed #FEC90F !important; outline-offset: 4px !important; background: rgba(254,201,15,0.05) !important; }
+#ve-grid-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 9998; display: none;
+    background: repeating-linear-gradient(
+        to right,
+        rgba(144,187,19,0.08) 0px,
+        rgba(144,187,19,0.08) calc(8.333% - 16px),
+        transparent calc(8.333% - 16px),
+        transparent 8.333%
+    );
+}
+#ve-grid-overlay.active { display: block; }
 </style>
+<div id="ve-grid-overlay"></div>
 <script>
 (function () {
     var selectedEl    = null;
@@ -291,6 +402,11 @@ class VisualEditorController extends Controller
     var isEditing     = false;
     var editingEl     = null;
     var multiSelected = [];
+    var _veScCounter  = 0;
+
+    // Canvas improvements: hover inspect
+    var _veHoverInspectMode = false;
+    var _veHoverOverlay     = null;
 
     function generateId() {
         return 've-el-' + Date.now() + '-' + (++idCounter);
@@ -299,9 +415,10 @@ class VisualEditorController extends Controller
     function cleanForExport() {
         hideQuickBar();
         // Remove CSS selection classes (current approach)
-        document.querySelectorAll('.ve-sel,.ve-ctx,.ve-multi').forEach(function (el) {
-            el.classList.remove('ve-sel', 've-ctx', 've-multi');
+        document.querySelectorAll('.ve-sel,.ve-ctx,.ve-multi,.ve-sc-active').forEach(function (el) {
+            el.classList.remove('ve-sel', 've-ctx', 've-multi', 've-sc-active');
         });
+        window._veActiveSentinel = null;
         // Strip inline outline styles — backwards compat with content saved before the class-based fix
         document.querySelectorAll('[style]').forEach(function (el) {
             if (el.style.outline) { el.style.outline = ''; }
@@ -324,17 +441,28 @@ class VisualEditorController extends Controller
         var isText = ['h1','h2','h3','h4','h5','h6','p','span','a','li','td','th','label','strong','em','blockquote'].indexOf(tag) !== -1;
         var isLink = tag === 'a';
 
+        // Detect sentinel ancestor
+        var hasSentinel = false;
+        var qbCur = el;
+        while (qbCur && qbCur !== document.body) {
+            if (qbCur.hasAttribute('data-ve-sc')) { hasSentinel = true; break; }
+            qbCur = qbCur.parentElement;
+        }
+
         var btns = '<button title="Mover arriba" data-action="move-up">&#8593;</button>' +
             '<button title="Mover abajo" data-action="move-down">&#8595;</button>' +
             '<button title="Duplicar" data-action="duplicate">&#10697;</button>';
 
         if (isText) {
-            btns += '<button title="Negrita" data-action="bold" style="font-weight:900;">B</button>' +
-                '<button title="Cursiva" data-action="italic" style="font-style:italic;">I</button>' +
+            btns += '<button title="Negrita" data-action="bold" class="qb-bold">B</button>' +
+                '<button title="Cursiva" data-action="italic" class="qb-italic">I</button>' +
                 '<button title="Color" data-action="color">&#127912;</button>';
         }
         if (isLink) {
             btns += '<button title="Editar enlace" data-action="edit-link">&#128279;</button>';
+        }
+        if (hasSentinel) {
+            btns += '<button title="Editar bloque" data-action="edit-block" class="qb-edit-block">&#9632;</button>';
         }
         btns += '<button title="Inspeccionar" data-action="inspect">&#9881;</button>' +
             '<button class="ve-qb-danger" title="Eliminar" data-action="delete">&#10005;</button>';
@@ -372,6 +500,7 @@ class VisualEditorController extends Controller
             else if (act === 'color') {
                 window.parent.postMessage({type:'ve-request-inspect'},'*');
             }
+            else if (act === 'edit-block') window.parent.postMessage({type:'ve-open-sc-editor'},'*');
             else if (act === 'edit-link') {
                 window.parent.postMessage({type:'ve-open-link-editor', nodeId: selectedEl ? selectedEl.id : ''},'*');
             }
@@ -385,11 +514,18 @@ class VisualEditorController extends Controller
     function extractContent() {
         var ck = document.querySelector('.ck-content');
         if (!ck) return document.body.innerHTML;
-        // Remove auto-generated TOC before extracting
         var toc = ck.querySelector('.page-toc');
         if (toc) toc.remove();
-        var html = ck.innerHTML;
-        return html;
+        // Clone to avoid mutating the live preview DOM
+        var clone = ck.cloneNode(true);
+        // Restore shortcode sentinel wrappers → original raw tag text so the saved
+        // content keeps [shortcode][/shortcode] tags instead of expanded HTML.
+        clone.querySelectorAll('[data-ve-sc]').forEach(function (el) {
+            var tag = el.getAttribute('data-ve-sc');
+            var text = document.createTextNode(tag);
+            el.parentNode.replaceChild(text, el);
+        });
+        return clone.innerHTML;
     }
 
     function commitInlineEdit() {
@@ -398,9 +534,30 @@ class VisualEditorController extends Controller
         editingEl.removeAttribute('contenteditable');
         document.getElementById('ve-inline-toolbar').style.display = 'none';
         isEditing = false;
+
+        // If editing happened inside a shortcode sentinel, break it so
+        // the edited HTML is saved as-is instead of restoring the raw tag.
+        var sentinel = editingEl.closest('[data-ve-sc]');
+        if (sentinel) sentinel.removeAttribute('data-ve-sc');
+
         editingEl = null;
         window.parent.postMessage({ type: 've-inline-edit-committed', html: extractContent() }, '*');
     }
+
+    // ── Helper: position an element near another ────────────────────────
+    function positionNearElement(floater, anchor) {
+        var rect = anchor.getBoundingClientRect();
+        var fh   = floater.offsetHeight || 36;
+        var fw   = floater.offsetWidth  || 200;
+        var top  = rect.top > fh + 8 ? rect.top - fh - 6 : rect.bottom + 6;
+        var left = Math.min(rect.left, window.innerWidth - fw - 8);
+        floater.style.display = 'flex';
+        floater.style.top  = top  + 'px';
+        floater.style.left = Math.max(4, left) + 'px';
+    }
+
+    // ── Dummy link popover (link editing handled via postMessage) ────────
+    var linkPopover = { contains: function () { return false; } };
 
     // ── Inject floating inline toolbar ──────────────────────────────────
     var toolbar = document.createElement('div');
@@ -757,6 +914,26 @@ class VisualEditorController extends Controller
                         cur = cur.parentElement;
                     }
                     path.unshift({ tag: 'body', nodeId: null });
+                    // Detect sentinel (self or ancestor) for shortcode editing
+                    var sentinel2El = null;
+                    var sc2Cur = byIdEl;
+                    while (sc2Cur && sc2Cur !== document.body) {
+                        if (sc2Cur.hasAttribute('data-ve-sc')) { sentinel2El = sc2Cur; break; }
+                        sc2Cur = sc2Cur.parentElement;
+                    }
+                    if (sentinel2El && !sentinel2El.id) {
+                        sentinel2El.id = '_veSc' + (++_veScCounter);
+                    }
+                    if (window._veActiveSentinel && window._veActiveSentinel !== sentinel2El) {
+                        window._veActiveSentinel.classList.remove('ve-sc-active');
+                    }
+                    if (sentinel2El) {
+                        sentinel2El.classList.add('ve-sc-active');
+                        window._veActiveSentinel = sentinel2El;
+                    } else {
+                        if (window._veActiveSentinel) window._veActiveSentinel.classList.remove('ve-sc-active');
+                        window._veActiveSentinel = null;
+                    }
                     window.parent.postMessage({
                         type:          've-element-selected',
                         tag:           byIdEl.tagName.toLowerCase(),
@@ -769,7 +946,14 @@ class VisualEditorController extends Controller
                         elSrc:         byIdEl.getAttribute('src') || '',
                         elAlt:         byIdEl.getAttribute('alt') || '',
                         elHref:        byIdEl.getAttribute('href') || '',
-                        elPlaceholder: byIdEl.getAttribute('placeholder') || '',
+                        elPlaceholder:        byIdEl.getAttribute('data-form-field-placeholder') || byIdEl.getAttribute('placeholder') || '',
+                        elFormFieldId:        byIdEl.getAttribute('data-form-field-id') || '',
+                        elFormFieldLabel:     byIdEl.getAttribute('data-form-field-label') || '',
+                        elFormFieldHelp:      byIdEl.getAttribute('data-form-field-help') || '',
+                        elFormFieldRequired:  byIdEl.getAttribute('data-form-field-required') || '0',
+                        elInputType:          byIdEl.getAttribute('type') || '',
+                        elVeSc:               sentinel2El ? sentinel2El.getAttribute('data-ve-sc') : '',
+                        elVeScNodeId:         sentinel2El ? sentinel2El.id : '',
                         styles: {
                             'font-size': cs2.fontSize, 'font-weight': cs2.fontWeight,
                             'font-family': cs2.fontFamily, 'color': cs2.color,
@@ -785,6 +969,9 @@ class VisualEditorController extends Controller
                         },
                     }, '*');
                     window.parent.postMessage({ type: 've-element-path', path: path }, '*');
+                    // Send dimensions
+                    var selRect2 = byIdEl.getBoundingClientRect();
+                    window.parent.postMessage({ type: 've-element-dims', width: Math.round(selRect2.width), height: Math.round(selRect2.height), x: Math.round(selRect2.left), y: Math.round(selRect2.top) }, '*');
                 }
                 break;
             }
@@ -811,6 +998,20 @@ class VisualEditorController extends Controller
                 var rsEl = (d.nodeId ? document.getElementById(d.nodeId) : null) || selectedEl;
                 if (rsEl && d.props) {
                     d.props.forEach(function (p) { rsEl.style[p] = ''; });
+                }
+                break;
+            }
+
+            case 've-update-shortcode-sentinel': {
+                var scEl = d.scNodeId ? document.getElementById(d.scNodeId) : null;
+                if (scEl) {
+                    scEl.setAttribute('data-ve-sc', d.encodedSc);
+                    scEl.innerHTML = d.html;
+                    scEl.classList.remove('ve-sc-flash');
+                    void scEl.offsetWidth; // reflow to restart animation
+                    scEl.classList.add('ve-sc-flash');
+                    setTimeout(function () { scEl.classList.remove('ve-sc-flash'); }, 600);
+                    window.parent.postMessage({ type: 've-shortcode-sentinel-updated', scNodeId: d.scNodeId }, '*');
                 }
                 break;
             }
@@ -1099,7 +1300,153 @@ class VisualEditorController extends Controller
                 window.parent.postMessage({ type: 've-layout-scan', data: containers }, '*');
                 break;
             }
+
+            case 've-duplicate-sentinel': {
+                var origEl = window._veNodeMap && window._veNodeMap[d.scNodeId];
+                if (!origEl) break;
+                var clone = origEl.cloneNode(true);
+                var newId = 'VE-' + Math.random().toString(36).substr(2,8).toUpperCase();
+                clone.setAttribute('data-ve-node-id', newId);
+                origEl.parentNode.insertBefore(clone, origEl.nextSibling);
+                if (window._veNodeMap) window._veNodeMap[newId] = clone;
+                window.parent.postMessage({ type: 've-html-updated', html: document.body.innerHTML }, '*');
+                break;
+            }
+
+            case 've-move-sentinel': {
+                var el = window._veNodeMap && window._veNodeMap[d.scNodeId];
+                if (!el || !el.parentNode) break;
+                if (d.direction === 'up') {
+                    var prev = el.previousElementSibling;
+                    if (prev) el.parentNode.insertBefore(el, prev);
+                } else {
+                    var next = el.nextElementSibling;
+                    if (next) el.parentNode.insertBefore(next, el);
+                }
+                window.parent.postMessage({ type: 've-html-updated', html: document.body.innerHTML }, '*');
+                break;
+            }
+
+            case 've-highlight-sentinel-hover': {
+                var el = window._veNodeMap && window._veNodeMap[d.scNodeId];
+                if (!el) break;
+                if (window._veHoverSentinel && window._veHoverSentinel !== el) {
+                    window._veHoverSentinel.classList.remove('ve-sc-hover');
+                }
+                el.classList.add('ve-sc-hover');
+                window._veHoverSentinel = el;
+                break;
+            }
+
+            case 've-unhighlight-sentinel-hover': {
+                if (window._veHoverSentinel) {
+                    window._veHoverSentinel.classList.remove('ve-sc-hover');
+                    window._veHoverSentinel = null;
+                }
+                break;
+            }
+
+            case 've-get-computed-styles': {
+                var el = window._veNodeMap && window._veNodeMap[d.nodeId];
+                if (!el) break;
+                var cs = window.getComputedStyle(el);
+                var props = ['color','background-color','font-size','font-weight','font-family','margin','padding','border-radius','border','text-align','line-height','letter-spacing','opacity','display','flex-direction','justify-content','align-items'];
+                var styles = {};
+                props.forEach(function(p) { styles[p] = cs.getPropertyValue(p); });
+                window.parent.postMessage({ type: 've-computed-styles-result', styles: styles }, '*');
+                break;
+            }
+
+            case 've-apply-styles': {
+                var el = window._veNodeMap && window._veNodeMap[d.nodeId];
+                if (!el || !d.styles) break;
+                Object.keys(d.styles).forEach(function(prop) {
+                    el.style.setProperty(prop, d.styles[prop]);
+                });
+                window.parent.postMessage({ type: 've-html-updated', html: document.body.innerHTML }, '*');
+                break;
+            }
+
+            case 've-find-in-page': {
+                document.querySelectorAll('.ve-find-highlight').forEach(function(el) {
+                    el.outerHTML = el.innerHTML;
+                });
+                window._veFindMatches = [];
+                window._veFindIdx = 0;
+                if (!d.query) { window.parent.postMessage({type:'ve-find-results',count:0,current:0},'*'); break; }
+                var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                var nodes = [];
+                while (walker.nextNode()) {
+                    if (walker.currentNode.textContent.toLowerCase().includes(d.query.toLowerCase())) {
+                        nodes.push(walker.currentNode);
+                    }
+                }
+                nodes.forEach(function(node) {
+                    var escaped = d.query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+                    var html = node.textContent.replace(new RegExp(escaped, 'gi'), '<mark class="ve-find-highlight" style="background:#FEC90F;color:#000;">$&</mark>');
+                    var span = document.createElement('span');
+                    span.innerHTML = html;
+                    node.parentNode.replaceChild(span, node);
+                    span.querySelectorAll('.ve-find-highlight').forEach(function(m) { window._veFindMatches.push(m); });
+                });
+                var count = window._veFindMatches.length;
+                if (count > 0) { window._veFindMatches[0].scrollIntoView({behavior:'smooth',block:'center'}); }
+                window.parent.postMessage({type:'ve-find-results',count:count,current:count>0?1:0},'*');
+                break;
+            }
+
+            case 've-find-navigate': {
+                if (!window._veFindMatches || !window._veFindMatches.length) break;
+                var n = window._veFindMatches.length;
+                window._veFindIdx = ((window._veFindIdx + (d.dir === 'next' ? 1 : -1)) % n + n) % n;
+                window._veFindMatches[window._veFindIdx].scrollIntoView({behavior:'smooth',block:'center'});
+                window.parent.postMessage({type:'ve-find-results',count:n,current:window._veFindIdx+1},'*');
+                break;
+            }
+
+            // ── Canvas improvements ──────────────────────────────────────────
+
+            case 've-toggle-grid-overlay': {
+                var go = document.getElementById('ve-grid-overlay');
+                if (go) go.classList.toggle('active');
+                break;
+            }
+
+            case 've-toggle-hover-inspect': {
+                _veHoverInspectMode = !_veHoverInspectMode;
+                if (!_veHoverInspectMode && _veHoverOverlay) {
+                    _veHoverOverlay.style.display = 'none';
+                }
+                break;
+            }
         }
+    });
+
+    // ── Hover inspector ──────────────────────────────────────────────────
+    document.addEventListener('mousemove', function(e) {
+        if (!_veHoverInspectMode) return;
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el.id === 've-hover-overlay' || (el.closest && el.closest('#ve-hover-overlay'))) return;
+
+        if (!_veHoverOverlay) {
+            _veHoverOverlay = document.createElement('div');
+            _veHoverOverlay.id = 've-hover-overlay';
+            _veHoverOverlay.style.cssText = 'position:fixed;pointer-events:none;z-index:9997;border:1px dashed #90bb13;background:rgba(144,187,19,0.05);transition:all .1s;';
+            var hoverLabel = document.createElement('div');
+            hoverLabel.id = 've-hover-label';
+            hoverLabel.style.cssText = 'position:absolute;top:-20px;left:0;background:#90bb13;color:#fff;padding:1px 5px;font-size:10px;white-space:nowrap;border-radius:2px;font-family:monospace;';
+            _veHoverOverlay.appendChild(hoverLabel);
+            document.body.appendChild(_veHoverOverlay);
+        }
+
+        var rect = el.getBoundingClientRect();
+        _veHoverOverlay.style.display = 'block';
+        _veHoverOverlay.style.left    = rect.left + 'px';
+        _veHoverOverlay.style.top     = rect.top + 'px';
+        _veHoverOverlay.style.width   = rect.width + 'px';
+        _veHoverOverlay.style.height  = rect.height + 'px';
+        var label = document.getElementById('ve-hover-label');
+        if (label) label.textContent = el.tagName.toLowerCase() + ' ' + Math.round(rect.width) + '×' + Math.round(rect.height) + 'px';
     });
 
     // ── Drag reorder ANY element within preview ──────────────────────────
@@ -1225,6 +1572,29 @@ class VisualEditorController extends Controller
 
         var cs = window.getComputedStyle(el);
 
+        // Detect sentinel (self or ancestor) for shortcode editing
+        var sentinelEl = null;
+        var scCur = el;
+        while (scCur && scCur !== document.body) {
+            if (scCur.hasAttribute('data-ve-sc')) { sentinelEl = scCur; break; }
+            scCur = scCur.parentElement;
+        }
+        if (sentinelEl && !sentinelEl.id) {
+            sentinelEl.id = '_veSc' + (++_veScCounter);
+        }
+
+        // Highlight active sentinel
+        if (window._veActiveSentinel && window._veActiveSentinel !== sentinelEl) {
+            window._veActiveSentinel.classList.remove('ve-sc-active');
+        }
+        if (sentinelEl) {
+            sentinelEl.classList.add('ve-sc-active');
+            window._veActiveSentinel = sentinelEl;
+        } else {
+            if (window._veActiveSentinel) window._veActiveSentinel.classList.remove('ve-sc-active');
+            window._veActiveSentinel = null;
+        }
+
         // Build DOM breadcrumb path
         var elPath = [];
         var pathCur = el;
@@ -1246,7 +1616,14 @@ class VisualEditorController extends Controller
             elSrc:         el.getAttribute('src') || '',
             elAlt:         el.getAttribute('alt') || '',
             elHref:        el.getAttribute('href') || '',
-            elPlaceholder: el.getAttribute('placeholder') || '',
+            elPlaceholder:        el.getAttribute('data-form-field-placeholder') || el.getAttribute('placeholder') || '',
+            elFormFieldId:        el.getAttribute('data-form-field-id') || '',
+            elFormFieldLabel:     el.getAttribute('data-form-field-label') || '',
+            elFormFieldHelp:      el.getAttribute('data-form-field-help') || '',
+            elFormFieldRequired:  el.getAttribute('data-form-field-required') || '0',
+            elInputType:          el.getAttribute('type') || '',
+            elVeSc:               sentinelEl ? sentinelEl.getAttribute('data-ve-sc') : '',
+            elVeScNodeId:         sentinelEl ? sentinelEl.id : '',
             styles: {
                 'font-size':        cs.fontSize,
                 'font-weight':      cs.fontWeight,
@@ -1276,6 +1653,45 @@ class VisualEditorController extends Controller
 
         // Send element path separately (for breadcrumb)
         window.parent.postMessage({ type: 've-element-path', path: elPath }, '*');
+
+        // Send dimensions to parent
+        var selRect = el.getBoundingClientRect();
+        window.parent.postMessage({
+            type: 've-element-dims',
+            width: Math.round(selRect.width),
+            height: Math.round(selRect.height),
+            x: Math.round(selRect.left),
+            y: Math.round(selRect.top)
+        }, '*');
+
+        // Show dims tooltip in iframe
+        var dimsTooltip = document.getElementById('ve-dims-tooltip');
+        if (!dimsTooltip) {
+            dimsTooltip = document.createElement('div');
+            dimsTooltip.id = 've-dims-tooltip';
+            dimsTooltip.style.cssText = 'position:fixed;background:rgba(30,30,46,0.9);color:#fff;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;white-space:nowrap;font-family:monospace;';
+            document.body.appendChild(dimsTooltip);
+        }
+        dimsTooltip.textContent = Math.round(selRect.width) + ' × ' + Math.round(selRect.height) + 'px';
+        dimsTooltip.style.display = 'block';
+        dimsTooltip.style.left = (selRect.left + selRect.width / 2 - 40) + 'px';
+        dimsTooltip.style.top  = Math.max(selRect.top - 26, 4) + 'px';
+        clearTimeout(dimsTooltip._timer);
+        dimsTooltip._timer = setTimeout(function() { dimsTooltip.style.display = 'none'; }, 3000);
+    });
+
+    // ── Double-click on sentinel → open block editor ─────────────────────
+    document.addEventListener('dblclick', function (e) {
+        if (isEditing) return;
+        var el = e.target;
+        var cur = el;
+        while (cur && cur !== document.body) {
+            if (cur.hasAttribute('data-ve-sc')) {
+                window.parent.postMessage({ type: 've-open-sc-editor' }, '*');
+                return;
+            }
+            cur = cur.parentElement;
+        }
     });
 
     // ── U2: Paste cleaner (auto-clean Word/Docs HTML on paste) ──────────
@@ -1326,6 +1742,7 @@ class VisualEditorController extends Controller
         isEditing = true;
         editingEl = el;
 
+        hideQuickBar();
         positionNearElement(toolbar, el);
         window.parent.postMessage({ type: 've-editing-started', nodeId: el.id }, '*');
     });
@@ -1452,6 +1869,24 @@ HTML;
      *
      * Mirrors the logic in PublicController and PreviewController.
      */
+    /**
+     * Build the HTML-safe value for a data-ve-sc attribute, reconstructed from the
+     * shortcode key, parsed attrs, and inner content.  Brackets are replaced with
+     * HTML entities so the shortcode compiler regex does not match inside the attribute.
+     *
+     * @param  array<string, string>  $attrs
+     */
+    public static function buildVeScTag(string $key, array $attrs, string $content): string
+    {
+        $tag = '['.$key;
+        foreach ($attrs as $k => $v) {
+            $tag .= ' '.$k.'="'.htmlspecialchars($v, ENT_QUOTES).'"';
+        }
+        $tag .= $content !== '' ? ']'.$content.'[/'.$key.']' : ' /]';
+
+        return str_replace(['[', ']'], ['&#91;', '&#93;'], htmlspecialchars($tag, ENT_QUOTES));
+    }
+
     private function resolveViewName(Page $page): string
     {
         $template = $page->template ?: 'default';

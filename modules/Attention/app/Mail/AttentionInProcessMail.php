@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email enviado al ciudadano cuando su PQRSF cambia a estado "En Proceso"
+ * Email enviado al ciudadano cuando su peticiones cambia a estado "En Proceso"
  *
  * Informa que su solicitud está siendo atendida
  */
@@ -38,7 +38,7 @@ class AttentionInProcessMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "PQRSF En Proceso - Radicado: {$this->attention->radicado}",
+            subject: "peticiones En Proceso - Radicado: {$this->attention->radicado}",
         );
     }
 

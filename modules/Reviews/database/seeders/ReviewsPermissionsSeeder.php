@@ -5,13 +5,14 @@ namespace Modules\Reviews\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class ReviewsPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Define all Reviews module permissions
         $permissions = [
@@ -41,6 +42,8 @@ class ReviewsPermissionsSeeder extends Seeder
             'reviews.templates.delete' => 'Delete reply templates',
 
             // Settings
+            'reviews.settings.view' => 'View Reviews module settings',
+            'reviews.settings.update' => 'Update Reviews module settings',
             'reviews.settings.manage' => 'Manage Reviews module settings',
         ];
 
@@ -61,7 +64,7 @@ class ReviewsPermissionsSeeder extends Seeder
             $superAdmin->givePermissionTo(Permission::where('name', 'like', 'reviews.%')->get());
         }
 
-        // Admin - All permissions except settings
+        // Admin - All permissions except settings.manage
         $admin = Role::findByName('settings', 'web');
         if ($admin) {
             $admin->givePermissionTo(
@@ -69,6 +72,12 @@ class ReviewsPermissionsSeeder extends Seeder
                     ->where('name', '!=', 'reviews.settings.manage')
                     ->get()
             );
+        }
+
+        // Manager gets settings.view (read-only settings)
+        $manager = Role::findByName('manager', 'web');
+        if ($manager) {
+            $manager->givePermissionTo('reviews.settings.view');
         }
 
         // Manager - View, moderate, reply (no approval/publish)

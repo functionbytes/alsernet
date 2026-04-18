@@ -8,7 +8,7 @@
             <!-- Basic Information -->
             <div class="card mb-3">
                 <div class="card-header bg-light-primary">
-                    <h5 class="mb-0"><i class="ti ti-info-circle me-2"></i>Información Básica</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2"></i>Información Básica</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
@@ -48,7 +48,7 @@
             <!-- Personality/System Prompt -->
             <div class="card mb-3">
                 <div class="card-header bg-light-info">
-                    <h5 class="mb-0"><i class="ti ti-message-circle me-2"></i>Personalidad</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-message me-2"></i>Personalidad</h5>
                 </div>
                 <div class="card-body">
                     <label class="form-label fw-semibold">System Prompt (Instrucciones Base) <span class="text-danger">*</span></label>
@@ -64,7 +64,7 @@
             <!-- LLM Provider & Model -->
             <div class="card mb-3">
                 <div class="card-header bg-light-success">
-                    <h5 class="mb-0"><i class="ti ti-cpu me-2"></i>Proveedor LLM</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-microchip me-2"></i>Proveedor LLM</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
@@ -102,14 +102,14 @@
                     <div class="mb-0">
                         <label class="form-label fw-semibold">API Key</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="ti ti-key"></i></span>
+                            <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
                             <input type="password" name="api_key" id="api_key" class="form-control @error('api_key') is-invalid @enderror"
                                 placeholder="sk-... o xxxx-xxxx-xxxx" value="{{ old('api_key', $agent->settings['api_key'] ?? '') }}">
                             <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
-                                <i class="ti ti-eye"></i>
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                             <button class="btn btn-primary" type="button" id="testConnection">
-                                <i class="ti ti-plug"></i> Probar
+                                <i class="fa-solid fa-plug"></i> Probar
                             </button>
                         </div>
                         <small class="text-muted d-block mt-2">Tu API key se cifra y almacena de forma segura.</small>
@@ -123,7 +123,7 @@
             <!-- Advanced Parameters -->
             <div class="card mb-3">
                 <div class="card-header bg-light-warning">
-                    <h5 class="mb-0"><i class="ti ti-adjustments me-2"></i>Parámetros Avanzados</h5>
+                    <h5 class="mb-0"><i class="fa-solid fa-sliders me-2"></i>Parámetros Avanzados</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -161,7 +161,7 @@
             <!-- Save Button -->
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="ti ti-check me-2"></i>Guardar Configuración
+                    <i class="fa-solid fa-check me-2"></i>Guardar Configuración
                 </button>
             </div>
         </form>
@@ -172,14 +172,14 @@
         <!-- Status Card -->
         <div class="card mb-3">
             <div class="card-header bg-light-secondary">
-                <h5 class="mb-0"><i class="ti ti-chart-pie me-2"></i>Estado del Agente</h5>
+                <h5 class="mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Estado del Agente</h5>
             </div>
             <div class="card-body">
                 @if ($hasAgent ?? false)
                     <div class="text-center">
                         <div class="mb-3">
                             <span class="badge bg-{{ $agent->status === 'active' ? 'success' : 'secondary' }} p-3" style="font-size: 16px">
-                                <i class="ti ti-robot me-1"></i>{{ $agent->status_label }}
+                                <i class="fa-solid fa-robot me-1"></i>{{ $agent->status_label }}
                             </span>
                         </div>
                         <h5 class="mb-2">{{ $agent->name ?? 'Sin nombre' }}</h5>
@@ -188,13 +188,13 @@
 
                         @if ($agent->enabled_at)
                             <div class="alert alert-info py-2">
-                                <small><i class="ti ti-calendar me-1"></i>Activado: {{ $agent->enabled_at->format('d/m/Y H:i') }}</small>
+                                <small><i class="fa-solid fa-calendar me-1"></i>Activado: {{ $agent->enabled_at->format('d/m/Y H:i') }}</small>
                             </div>
                         @endif
                     </div>
                 @else
                     <div class="alert alert-info mb-0">
-                        <i class="ti ti-info-circle me-2"></i>
+                        <i class="fa-solid fa-circle-info me-2"></i>
                         <strong>Sin configurar</strong>
                         <p class="mb-0 mt-2 small">Rellena el formulario para crear tu primer agente IA.</p>
                     </div>
@@ -205,15 +205,15 @@
         <!-- Quick Links Card -->
         <div class="card">
             <div class="card-header bg-light-info">
-                <h5 class="mb-0"><i class="ti ti-help me-2"></i>Ayuda Rápida</h5>
+                <h5 class="mb-0"><i class="fa-solid fa-circle-question me-2"></i>Ayuda Rápida</h5>
             </div>
             <div class="card-body">
                 <h6 class="mb-2">¿Cómo obtener API Keys?</h6>
                 <ul class="small mb-3">
-                    <li><a href="https://platform.openai.com/api-keys" target="_blank" class="text-decoration-none">OpenAI <i class="ti ti-external-link"></i></a></li>
-                    <li><a href="https://console.anthropic.com/" target="_blank" class="text-decoration-none">Anthropic <i class="ti ti-external-link"></i></a></li>
-                    <li><a href="https://aistudio.google.com/" target="_blank" class="text-decoration-none">Google Gemini <i class="ti ti-external-link"></i></a></li>
-                    <li><a href="https://ollama.ai/" target="_blank" class="text-decoration-none">Ollama (Local) <i class="ti ti-external-link"></i></a></li>
+                    <li><a href="https://platform.openai.com/api-keys" target="_blank" class="text-decoration-none">OpenAI <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://console.anthropic.com/" target="_blank" class="text-decoration-none">Anthropic <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://aistudio.google.com/" target="_blank" class="text-decoration-none">Google Gemini <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://ollama.ai/" target="_blank" class="text-decoration-none">Ollama (Local) <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
                 </ul>
 
                 <hr>

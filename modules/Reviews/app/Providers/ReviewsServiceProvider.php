@@ -17,6 +17,7 @@ use Modules\Reviews\Console\Commands\DetectReviewAnomaliesCommand;
 use Modules\Reviews\Console\Commands\ExportUserReviewDataCommand;
 use Modules\Reviews\Console\Commands\GenerateMonthlyReportCommand;
 use Modules\Reviews\Console\Commands\GenerateReportCommand;
+use Modules\Reviews\Console\Commands\ImportJsonReviewsCommand;
 use Modules\Reviews\Console\Commands\InstallReviewsCommand;
 use Modules\Reviews\Console\Commands\ProcessScheduledRepliesCommand;
 use Modules\Reviews\Console\Commands\PruneOldReviewsCommand;
@@ -25,6 +26,7 @@ use Modules\Reviews\Console\Commands\SendWeeklyDigestCommand;
 use Modules\Reviews\Console\Commands\SyncGoogleReviewsCommand;
 use Modules\Reviews\Console\Commands\SyncReviewsCommand;
 use Modules\Reviews\Console\Commands\TrackCompetitorsCommand;
+use Modules\Reviews\Console\Commands\TranslateAllReviewsCommand;
 use Modules\Reviews\Events\ConnectionRevoked;
 use Modules\Reviews\Events\ReplyFailed;
 use Modules\Reviews\Events\ReplyPublished;
@@ -54,11 +56,14 @@ use Modules\Reviews\Policies\ReviewPolicy;
 use Modules\Reviews\Policies\ReviewReplyPolicy;
 use Modules\Reviews\Policies\ReviewReplyTemplatePolicy;
 use Modules\Reviews\Policies\ReviewSavedFilterPolicy;
+use Modules\Reviews\Services\Fetchers\PlacesApiReviewFetcher;
+use Modules\Reviews\Services\Fetchers\SerpApiReviewFetcher;
 use Modules\Reviews\Services\GoogleApiClient;
 use Modules\Reviews\Services\GoogleWebhookService;
 use Modules\Reviews\Services\NotificationService;
 use Modules\Reviews\Services\OutboundWebhookService;
 use Modules\Reviews\Services\PlatformRegistry;
+use Modules\Reviews\Services\ReviewFetchOrchestrator;
 use Modules\Reviews\Services\ReviewReportService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -84,6 +89,13 @@ class ReviewsServiceProvider extends ServiceProvider
             $registry->register($app->make(GoogleReviewPlatform::class));
 
             return $registry;
+        });
+
+        $this->app->singleton(ReviewFetchOrchestrator::class, function ($app) {
+            return new ReviewFetchOrchestrator([
+                $app->make(PlacesApiReviewFetcher::class),
+                $app->make(SerpApiReviewFetcher::class),
+            ]);
         });
     }
 
@@ -124,6 +136,8 @@ class ReviewsServiceProvider extends ServiceProvider
         $this->registerEventListeners();
         $this->registerMenus();
         $this->registerRateLimiters();
+        $this->registerShortcodes();
+        $this->registerViewComposers();
     }
 
     protected function registerCommands(): void
@@ -146,6 +160,8 @@ class ReviewsServiceProvider extends ServiceProvider
                 SendWeeklyDigestCommand::class,
                 GenerateMonthlyReportCommand::class,
                 TrackCompetitorsCommand::class,
+                ImportJsonReviewsCommand::class,
+                TranslateAllReviewsCommand::class,
             ]);
         }
     }
@@ -282,7 +298,7 @@ class ReviewsServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::registerMiniItem('reviews', [
-            'icon' => 'fa-duotone fa-star',
+            'icon' => 'fas fa-star',
             'tooltip' => 'Reseñas',
             'sidebar_id' => 'reviews',
             'order' => 50,
@@ -359,6 +375,153 @@ class ReviewsServiceProvider extends ServiceProvider
         // Google webhook endpoints: 60 requests per minute per IP
         RateLimiter::for('reviews:webhooks', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
+        });
+    }
+
+    protected function registerViewComposers(): void
+    {
+        // View composers moved to shortcode approach — no composer needed
+    }
+
+    protected function registerShortcodes(): void
+    {
+        $this->app->booted(function () {
+            if (! $this->app->bound('shortcode')) {
+                return;
+            }
+
+            app('shortcode')->register('reviews-testimonios', function (array $attrs) {
+                $locationId = isset($attrs['location_id']) ? (int) $attrs['location_id'] : null;
+                static $instanceCounter = 0;
+                $instanceId = ++$instanceCounter;
+
+                $locale = app()->getLocale();
+                $localeCode = strtoupper($locale);
+
+                // Scope: specific location or all active locations
+                $activeIds = $locationId
+                    ? [$locationId]
+                    : ReviewGoogleLocation::where('is_active', true)->pluck('id')->all();
+
+                $visible = fn ($q) => $q
+                    ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+                    ->orWhereDoesntHave('moderation');
+
+                $reviews = Review::query()
+                    ->where($visible)
+                    ->whereIn('location_id', $activeIds)
+                    ->with(['moderation', 'translations'])
+                    ->orderByDesc('star_rating')
+                    ->orderByDesc('review_time')
+                    ->get();
+
+                $row = Review::query()
+                    ->where($visible)
+                    ->whereIn('location_id', $activeIds)
+                    ->selectRaw("COUNT(*) as total, AVG(CASE star_rating
+                        WHEN 'ONE'   THEN 1
+                        WHEN 'TWO'   THEN 2
+                        WHEN 'THREE' THEN 3
+                        WHEN 'FOUR'  THEN 4
+                        WHEN 'FIVE'  THEN 5
+                        ELSE NULL END) as avg_rating")
+                    ->first();
+
+                $tagCounts = $reviews
+                    ->flatMap(fn ($r) => $r->moderation?->tags ?? [])
+                    ->countBy()
+                    ->sortByDesc(fn ($count) => $count)
+                    ->all();
+
+                // Merge available_tags from all scoped locations, deduplicate by slug
+                $availableTags = ReviewGoogleLocation::whereIn('id', $activeIds)
+                    ->get()
+                    ->flatMap(fn ($l) => $l->available_tags ?? [])
+                    ->keyBy('slug')
+                    ->values()
+                    ->all();
+
+                return view('reviews::shortcodes.testimonios', [
+                    'reviews' => $reviews,
+                    'avgRating' => (float) ($row->avg_rating ?? 0),
+                    'totalCount' => (int) ($row->total ?? 0),
+                    'tagCounts' => $tagCounts,
+                    'instanceId' => $instanceId,
+                    'localeCode' => $localeCode,
+                    'availableTags' => $availableTags,
+                ])->render();
+            });
+
+            app('shortcode')->register('reviews-home', function (array $attrs) {
+                $limit = (int) ($attrs['limit'] ?? 6);
+                $minRating = (int) ($attrs['min_rating'] ?? 5);
+                $localeCode = strtoupper(app()->getLocale());
+
+                $ratingValues = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
+                $allowedRatings = array_slice($ratingValues, $minRating - 1);
+
+                $visible = fn ($q) => $q
+                    ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+                    ->orWhereDoesntHave('moderation');
+
+                $reviews = Review::query()
+                    ->where($visible)
+                    ->whereIn('star_rating', $allowedRatings)
+                    ->with(['moderation', 'translations'])
+                    ->inRandomOrder()
+                    ->limit($limit)
+                    ->get();
+
+                $row = Review::query()
+                    ->where($visible)
+                    ->selectRaw("COUNT(*) as total, AVG(CASE star_rating
+                        WHEN 'ONE'   THEN 1 WHEN 'TWO'   THEN 2 WHEN 'THREE' THEN 3
+                        WHEN 'FOUR'  THEN 4 WHEN 'FIVE'  THEN 5 ELSE NULL END) as avg_rating")
+                    ->first();
+
+                return view('reviews::shortcodes.home-testimonials', [
+                    'reviews' => $reviews,
+                    'avgRating' => (float) ($row->avg_rating ?? 0),
+                    'totalCount' => (int) ($row->total ?? 0),
+                    'localeCode' => $localeCode,
+                ])->render();
+            });
+
+            app('shortcode')->register('reviews', function (array $attrs) {
+                $limit = (int) ($attrs['limit'] ?? 6);
+                $title = $attrs['title'] ?? null;
+                $minRating = (int) ($attrs['min_rating'] ?? 4);
+                $featured = filter_var($attrs['featured'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                $ratingMap = ['ONE' => 1, 'TWO' => 2, 'THREE' => 3, 'FOUR' => 4, 'FIVE' => 5];
+
+                $reviews = Review::query()
+                    ->where(function ($q) {
+                        $q->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+                            ->orWhereDoesntHave('moderation');
+                    })
+                    ->when($featured, fn ($q) => $q->whereHas('moderation', fn ($m) => $m->where('is_featured', true)))
+                    ->when($minRating > 1, function ($q) use ($minRating, $ratingMap) {
+                        $allowedRatings = array_keys(array_filter($ratingMap, fn ($v) => $v >= $minRating));
+                        $q->whereIn('star_rating', $allowedRatings);
+                    })
+                    ->with('moderation')
+                    ->orderByDesc('star_rating')
+                    ->orderByDesc('review_time')
+                    ->limit($limit)
+                    ->get();
+
+                if ($reviews->isEmpty()) {
+                    return '';
+                }
+
+                return view('template::partials.shortcodes.reviews', [
+                    'reviews_override' => $reviews,
+                    'limit' => $limit,
+                    'show_rating' => true,
+                    'reviews_section_title' => $title,
+                ])->render();
+            });
         });
     }
 }

@@ -231,6 +231,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            if ($e instanceof AuthenticationException) {
+                return redirect()->guest(route('auth.login'));
+            }
+
             $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
 
             if ($statusCode < 400) {

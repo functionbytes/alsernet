@@ -146,11 +146,11 @@
                 <!-- Footer Actions -->
                 <div class="card-footer d-flex justify-content-between align-items-center p-4">
                     <a href="{{ route('manager.helpdesk.conversations.index') }}" class="btn btn-light">
-                        <i class="ti ti-arrow-left me-1"></i> Cancelar
+                        <i class="fa-solid fa-arrow-left me-1"></i> Cancelar
                     </a>
 
                     <button type="submit" class="btn btn-primary">
-                        <i class="ti ti-check me-1"></i> Crear conversación
+                        <i class="fa-solid fa-check me-1"></i> Crear conversación
                     </button>
                 </div>
             </div>

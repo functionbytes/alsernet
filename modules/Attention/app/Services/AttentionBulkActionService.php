@@ -13,17 +13,17 @@ use Modules\Attention\Events\AttentionStatusChanged;
 use Modules\Attention\Models\Attention;
 
 /**
- * Servicio de acciones masivas para PQRSF
+ * Servicio de acciones masivas para peticiones
  *
- * Gestiona operaciones en lote sobre múltiples PQRSF incluyendo asignación,
+ * Gestiona operaciones en lote sobre múltiples peticiones incluyendo asignación,
  * cierre, eliminación y cambios de estado con logging y notificaciones.
  */
 class AttentionBulkActionService
 {
     /**
-     * Asigna múltiples PQRSF a departamento/usuario
+     * Asigna múltiples peticiones a departamento/usuario
      *
-     * @param  array  $attentionIds  IDs de PQRSF a asignar
+     * @param  array  $attentionIds  IDs de peticiones a asignar
      * @param  int|null  $departmentId  ID del departamento (opcional)
      * @param  int|null  $userId  ID del usuario (opcional)
      * @param  int|null  $performedBy  ID del usuario que realiza la acción
@@ -39,7 +39,7 @@ class AttentionBulkActionService
     ): array {
         try {
             if (empty($attentionIds)) {
-                throw new Exception('No se proporcionaron IDs de PQRSF');
+                throw new Exception('No se proporcionaron IDs de peticiones');
             }
 
             if (is_null($departmentId) && is_null($userId)) {
@@ -114,9 +114,9 @@ class AttentionBulkActionService
     }
 
     /**
-     * Cierra múltiples PQRSF
+     * Cierra múltiples peticiones
      *
-     * @param  array  $attentionIds  IDs de PQRSF a cerrar
+     * @param  array  $attentionIds  IDs de peticiones a cerrar
      * @param  string  $reason  Razón del cierre
      * @param  int|null  $performedBy  ID del usuario que realiza la acción
      * @return array Resultado con contadores de éxito/fallos
@@ -130,7 +130,7 @@ class AttentionBulkActionService
     ): array {
         try {
             if (empty($attentionIds)) {
-                throw new Exception('No se proporcionaron IDs de PQRSF');
+                throw new Exception('No se proporcionaron IDs de peticiones');
             }
 
             if (empty(trim($reason))) {
@@ -154,7 +154,7 @@ class AttentionBulkActionService
                             $errors[] = [
                                 'attention_id' => $attention->id,
                                 'radicado' => $attention->radicado,
-                                'error' => 'PQRSF ya está cerrada',
+                                'error' => 'peticiones ya está cerrada',
                             ];
 
                             continue;
@@ -210,9 +210,9 @@ class AttentionBulkActionService
     }
 
     /**
-     * Elimina múltiples PQRSF (soft delete)
+     * Elimina múltiples peticiones (soft delete)
      *
-     * @param  array  $attentionIds  IDs de PQRSF a eliminar
+     * @param  array  $attentionIds  IDs de peticiones a eliminar
      * @param  int|null  $performedBy  ID del usuario que realiza la acción
      * @return array Resultado con contadores de éxito/fallos
      *
@@ -224,7 +224,7 @@ class AttentionBulkActionService
     ): array {
         try {
             if (empty($attentionIds)) {
-                throw new Exception('No se proporcionaron IDs de PQRSF');
+                throw new Exception('No se proporcionaron IDs de peticiones');
             }
 
             $success = 0;
@@ -271,9 +271,9 @@ class AttentionBulkActionService
     }
 
     /**
-     * Cambia el estado de múltiples PQRSF
+     * Cambia el estado de múltiples peticiones
      *
-     * @param  array  $attentionIds  IDs de PQRSF a actualizar
+     * @param  array  $attentionIds  IDs de peticiones a actualizar
      * @param  AttentionStatus  $newStatus  Nuevo estado
      * @param  int|null  $performedBy  ID del usuario que realiza la acción
      * @return array Resultado con contadores de éxito/fallos
@@ -287,7 +287,7 @@ class AttentionBulkActionService
     ): array {
         try {
             if (empty($attentionIds)) {
-                throw new Exception('No se proporcionaron IDs de PQRSF');
+                throw new Exception('No se proporcionaron IDs de peticiones');
             }
 
             $success = 0;
@@ -393,7 +393,7 @@ class AttentionBulkActionService
     /**
      * Envía notificaciones masivas
      *
-     * @param  Collection  $attentions  Colección de PQRSF afectadas
+     * @param  Collection  $attentions  Colección de peticiones afectadas
      * @param  string  $action  Tipo de acción realizada
      */
     protected static function sendBulkNotifications(Collection $attentions, string $action): void

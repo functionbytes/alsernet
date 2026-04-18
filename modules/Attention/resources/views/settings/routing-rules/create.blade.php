@@ -65,7 +65,7 @@
 
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label fw-semibold">Tipo de PQRSF</label>
+                                    <label class="form-label fw-semibold">Tipo de peticiones</label>
                                     <select name="condition_type_id" class="form-select select2">
                                         <option value="">— Cualquier tipo —</option>
                                         @foreach($types as $type)
@@ -108,7 +108,7 @@
                         {{-- Sección: Acciones --}}
                         <div class="card-body">
                             <h6 class="fw-bold text-dark mb-1">Acciones</h6>
-                            <p class="text-muted mb-3">Define a quién se asignará la PQRSF cuando la regla coincida. Al menos una debe estar definida.</p>
+                            <p class="text-muted mb-3">Define a quién se asignará la peticiones cuando la regla coincida. Al menos una debe estar definida.</p>
 
                             <div class="row g-3">
                                 <div class="col-12">
@@ -175,12 +175,12 @@
                         <hr class="my-3">
 
                         <h6 class="fw-semibold mb-2">Condiciones</h6>
-                        <p class="text-muted mb-3">Filtra por tipo de PQRSF, categoría o sede. Dejar un campo en blanco significa que aplica a cualquier valor de ese criterio.</p>
+                        <p class="text-muted mb-3">Filtra por tipo de peticiones, categoría o sede. Dejar un campo en blanco significa que aplica a cualquier valor de ese criterio.</p>
 
                         <hr class="my-3">
 
                         <h6 class="fw-semibold mb-2">Acciones</h6>
-                        <p class="text-muted mb-0">Define a quién se asignará la PQRSF cuando la regla coincida. Puedes asignar a un usuario, a un departamento, o a ambos.</p>
+                        <p class="text-muted mb-0">Define a quién se asignará la peticiones cuando la regla coincida. Puedes asignar a un usuario, a un departamento, o a ambos.</p>
                     </div>
                 </div>
 

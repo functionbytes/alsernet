@@ -35,6 +35,8 @@ class SubscriberService
             Mail::send(new NewSubscriberAdminMail($subscriber));
         }
 
+        NewsletterEmailService::sendSubscriptionEmail($subscriber);
+
         $this->mailjet->addContact($email, $name);
 
         return $subscriber;
@@ -47,10 +49,18 @@ class SubscriberService
 
     public function bulkUnsubscribe(array $ids): int
     {
-        return Subscriber::query()->whereIn('id', $ids)->update([
+        $subscribers = Subscriber::query()->whereIn('id', $ids)->get(['email', 'name']);
+
+        $count = Subscriber::query()->whereIn('id', $ids)->update([
             'status' => SubscriberStatus::Unsubscribed->value,
             'unsubscribed_at' => now(),
         ]);
+
+        foreach ($subscribers as $subscriber) {
+            NewsletterEmailService::sendUnsubscriptionEmail($subscriber->email, $subscriber->name);
+        }
+
+        return $count;
     }
 
     public function bulkResubscribe(array $ids): int

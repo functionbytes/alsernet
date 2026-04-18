@@ -26,7 +26,7 @@ class FormCategoryController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $categories = $query->ordered()->get();
+        $categories = $query->ordered()->paginate(15)->withQueryString();
 
         $stats = [
             'total' => FormCategory::query()->count(),

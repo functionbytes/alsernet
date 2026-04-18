@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'PQRSF Pendientes')
+@section('title', 'peticiones Pendientes')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'PQRSF Pendientes'])
+    @include('core::components.card', ['title' => 'peticiones Pendientes'])
 
     <!-- Stats Cards -->
     <div class="row g-3 mb-4">
@@ -15,7 +15,7 @@
                         <div>
                             <h6 class="card-title mb-2">Total pendientes</h6>
                             <h2 >{{ $stats['total'] ?? 0 }}</h2>
-                            <small class="text-muted">PQRSF sin finalizar</small>
+                            <small class="text-muted">peticiones sin finalizar</small>
                         </div>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Filtros de búsqueda</h6>
-                        <p class="small mb-0 text-muted">Encuentra PQRSF usando múltiples criterios de filtrado</p>
+                        <p class="small mb-0 text-muted">Encuentra peticiones usando múltiples criterios de filtrado</p>
                     </div>
                 </div>
             </div>
@@ -266,7 +266,7 @@
                                 <td colspan="8" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="fa fa-inbox fa-3x mb-3"></i>
-                                        <p>No se encontraron PQRSF pendientes</p>
+                                        <p>No se encontraron peticiones pendientes</p>
                                     </div>
                                 </td>
                             </tr>

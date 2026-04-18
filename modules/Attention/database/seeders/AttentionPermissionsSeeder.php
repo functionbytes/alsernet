@@ -5,6 +5,7 @@ namespace Modules\Attention\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class AttentionPermissionsSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class AttentionPermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create permissions
         $permissions = $this->createPermissions();
@@ -32,75 +33,75 @@ class AttentionPermissionsSeeder extends Seeder
             // Basic permissions
             [
                 'name' => 'attention.view',
-                'description' => 'Ver PQRSF asignados o del departamento',
+                'description' => 'Ver peticiones asignados o del departamento',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.view-all',
-                'description' => 'Ver todos los PQRSF sin restricciones',
+                'description' => 'Ver todos los peticiones sin restricciones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.create',
-                'description' => 'Crear nuevos PQRSF',
+                'description' => 'Crear nuevos peticiones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.update',
-                'description' => 'Actualizar PQRSF',
+                'description' => 'Actualizar peticiones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.delete',
-                'description' => 'Eliminar PQRSF',
+                'description' => 'Eliminar peticiones',
                 'guard_name' => 'web',
             ],
 
             // Advanced permissions
             [
                 'name' => 'attention.manage',
-                'description' => 'Gestionar completamente PQRSF',
+                'description' => 'Gestionar completamente peticiones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.assign',
-                'description' => 'Asignar PQRSF a usuarios o departamentos',
+                'description' => 'Asignar peticiones a usuarios o departamentos',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.change-status',
-                'description' => 'Cambiar estado de PQRSF',
+                'description' => 'Cambiar estado de peticiones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.resolve',
-                'description' => 'Resolver PQRSF',
+                'description' => 'Resolver peticiones',
                 'guard_name' => 'web',
             ],
             [
                 'name' => 'attention.close',
-                'description' => 'Cerrar PQRSF',
+                'description' => 'Cerrar peticiones',
                 'guard_name' => 'web',
             ],
 
             // Communication permissions
             [
                 'name' => 'attention.send-email',
-                'description' => 'Enviar emails relacionados con PQRSF',
+                'description' => 'Enviar emails relacionados con peticiones',
                 'guard_name' => 'web',
             ],
 
             // Notes permissions
             [
                 'name' => 'attention.manage-notes',
-                'description' => 'Gestionar notas de PQRSF',
+                'description' => 'Gestionar notas de peticiones',
                 'guard_name' => 'web',
             ],
 
             // History permissions
             [
                 'name' => 'attention.view-history',
-                'description' => 'Ver historial completo de PQRSF',
+                'description' => 'Ver historial completo de peticiones',
                 'guard_name' => 'web',
             ],
 
@@ -114,7 +115,7 @@ class AttentionPermissionsSeeder extends Seeder
             // Type permissions
             [
                 'name' => 'attention.manage-types',
-                'description' => 'Gestionar tipos de PQRSF',
+                'description' => 'Gestionar tipos de peticiones',
                 'guard_name' => 'web',
             ],
 
@@ -187,7 +188,7 @@ class AttentionPermissionsSeeder extends Seeder
         // Attention Manager - Can manage assigned attentions
         $attentionManager = Role::firstOrCreate(
             ['name' => 'attention-manager', 'guard_name' => 'web'],
-            ['description' => 'Supervisor de PQRSF']
+            ['description' => 'Supervisor de peticiones']
         );
         $attentionManager->givePermissionTo([
             'attention.view-all',
@@ -241,7 +242,7 @@ class AttentionPermissionsSeeder extends Seeder
         $this->command->info('Roles creados:');
         $this->command->info('  - super-settings: Acceso completo');
         $this->command->info('  - attention-settings: Administrador del módulo');
-        $this->command->info('  - attention-manager: Supervisor de PQRSF');
+        $this->command->info('  - attention-manager: Supervisor de peticiones');
         $this->command->info('  - attention-agent: Agente de atención');
         $this->command->info('  - attention-user: Usuario básico');
         $this->command->info('');

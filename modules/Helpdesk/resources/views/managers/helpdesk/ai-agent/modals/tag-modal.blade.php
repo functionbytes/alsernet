@@ -1,10 +1,10 @@
 <!-- Tag Modal -->
 <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="tagModalLabel">
-                    <i class="ti ti-tag me-2"></i><span id="tagModalTitle">Nuevo Tag</span>
+                    <i class="fa-solid fa-tag me-2"></i><span id="tagModalTitle">Nuevo Tag</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -31,7 +31,7 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Icono (Tabler)</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="ti ti-icon" id="tag_icon_preview"></i></span>
+                                <span class="input-group-text"><i class="fa-solid fa-icons" id="tag_icon_preview"></i></span>
                                 <input type="text" class="form-control" id="tag_icon" name="icon" placeholder="ti-star">
                             </div>
                             <small class="text-muted">Ej: ti-star, ti-flag, ti-alert-circle</small>
@@ -63,7 +63,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="saveTagBtn">
-                        <i class="ti ti-check me-2"></i>Guardar Tag
+                        <i class="fa-solid fa-check me-2"></i>Guardar Tag
                     </button>
                 </div>
             </form>

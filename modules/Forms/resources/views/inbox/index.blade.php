@@ -17,9 +17,17 @@
                         <h5 class="mb-1 fw-bold">Inbox formularios</h5>
                         <p class="small mb-0 text-muted">Gestiona todas las respuestas recibidas en los formularios</p>
                     </div>
-                    <a href="{{ route('forms.inbox.dashboard') }}" class="btn btn-outline-primary">
-                        Dashboard
-                    </a>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ route('forms.inbox.dashboard') }}">Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -85,7 +93,7 @@
                         {{-- Search --}}
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input class="form-control border-start-0 ps-0" type="text" name="search"
@@ -127,15 +135,14 @@
             <div class="card-body">
                 @if(isset($submissions) && $submissions->isNotEmpty())
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle text-nowrap mb-0">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Formulario</th>
-                                    <th>Resumen</th>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th>Radicado</th>
+                                    <th>Tipo</th>
+                                    <th>Ciudadano</th>
                                     <th>Estado</th>
-                                    <th>Asignado a</th>
-                                    <th class="text-center">Leído</th>
-                                    <th class="text-center">Estrella</th>
                                     <th>Fecha</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -145,26 +152,27 @@
                                     @php
                                         $statusMap = [
                                             'new'       => ['label' => 'Nuevo',       'class' => 'bg-primary'],
-                                            'in_review' => ['label' => 'En revisión', 'class' => 'bg-warning text-dark'],
+                                            'in_review' => ['label' => 'En revisión', 'class' => 'bg-success'],
                                             'resolved'  => ['label' => 'Resuelto',    'class' => 'bg-success'],
                                             'rejected'  => ['label' => 'Rechazado',   'class' => 'bg-danger'],
                                         ];
-                                        $st = $statusMap[$submission->status ?? 'new'] ?? $statusMap['new'];
+                                        $st           = $statusMap[$submission->status ?? 'new'] ?? $statusMap['new'];
+                                        $citizenName  = $submission->getCitizenName();
+                                        $citizenEmail = $submission->getEmailValue();
                                     @endphp
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $submission->id }}"></td>
                                         <td>
-                                            <strong class="text-primary">{{ $submission->form->name ?? '—' }}</strong>
-                                            <br>
-                                            <small class="text-muted">#{{ $submission->id }}</small>
+                                            <strong class="text-primary">{{ $submission->getRadicado() }}</strong>
                                         </td>
                                         <td>
-                                            @foreach ($submission->values->take(2) as $value)
-                                                <div class="small text-truncate" style="max-width: 220px;"
-                                                     title="{{ $value->field_label }}: {{ $value->getDisplayValue() }}">
-                                                    <span class="text-muted">{{ $value->field_label }}:</span>
-                                                    {{ \Illuminate\Support\Str::limit($value->getDisplayValue(), 40) }}
-                                                </div>
-                                            @endforeach
+                                            <span class="text-muted">{{ $submission->form->name ?? '—' }}</span>
+                                        </td>
+                                        <td>
+                                            @if($citizenName)
+                                                <span class="fw-semibold">{{ $citizenName }}</span><br>
+                                            @endif
+                                            <small class="text-muted">{{ $citizenEmail ?? '—' }}</small>
                                         </td>
                                         <td>
                                             <span class="badge {{ $st['class'] }}">{{ $st['label'] }}</span>
@@ -172,25 +180,8 @@
                                                 <span class="badge bg-danger ms-1">Spam</span>
                                             @endif
                                         </td>
-                                        <td class="small">
-                                            {{ $submission->assignedTo?->full_name ?? '—' }}
-                                        </td>
-                                        <td class="text-center">
-                                            @if ($submission->is_read)
-                                                <i class="fas fa-envelope-open text-muted" title="Leído"></i>
-                                            @else
-                                                <i class="fas fa-envelope text-primary" title="No leído"></i>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <button class="btn btn-sm btn-link p-0 btn-star"
-                                                    data-url="{{ route('settings.forms.submissions.toggle-star', [$submission->form, $submission]) }}"
-                                                    title="{{ $submission->is_starred ? 'Quitar estrella' : 'Destacar' }}">
-                                                <i class="{{ $submission->is_starred ? 'fas' : 'far' }} fa-star text-warning"></i>
-                                            </button>
-                                        </td>
-                                        <td class="small text-nowrap">
-                                            {{ $submission->created_at?->format('d/m/Y H:i') }}
+                                        <td>
+                                            <span class="text-muted">{{ $submission->created_at?->format('d/m/Y H:i') }}</span>
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
@@ -240,6 +231,43 @@
             @if (isset($submissions) && $submissions->hasPages())
                 <div class="card-footer">{{ $submissions->withQueryString()->links() }}</div>
             @endif
+        </div>
+    </div>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> registro(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="mark_read">Marcar como leído</option>
+                            <option value="mark_unread">Marcar como no leído</option>
+                            <option value="mark_spam">Marcar como spam</option>
+                            <option value="unmark_spam">Quitar spam</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -389,17 +417,42 @@ $(document).ready(function () {
         $('#inbox-filter-form').submit();
     });
 
-    // ── Star toggle ───────────────────────────────────────────────────────
-    $(document).on('click', '.btn-star', function () {
-        const $btn = $(this);
+    // ── Bulk actions ──────────────────────────────────────────────────────
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un registro.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' registro(s) seleccionados?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+
         $.ajax({
-            url: $btn.data('url'),
-            method: 'PATCH',
+            url: '{{ route('forms.inbox.bulk-action') }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (res) {
-                $btn.find('i').toggleClass('fas', res.is_starred).toggleClass('far', !res.is_starred);
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.message || res.count + ' registro(s) procesados.');
+                setTimeout(() => location.reload(), 800);
             },
-            error: function () { toastr.error('Error al actualizar estrella'); }
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
         });
     });
 });

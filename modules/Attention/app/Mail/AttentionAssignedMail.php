@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email enviado al usuario/departamento cuando se le asigna un PQRSF
+ * Email enviado al usuario/departamento cuando se le asigna un peticiones
  *
  * Notifica la asignación y proporciona acceso directo al caso
  */
@@ -38,7 +38,7 @@ class AttentionAssignedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Nuevo PQRSF Asignado - Radicado: {$this->attention->radicado}",
+            subject: "Nuevo peticiones Asignado - Radicado: {$this->attention->radicado}",
         );
     }
 

@@ -17,6 +17,7 @@
         <option value="$PROJECT_DIR$/modules/Document/tests" />
         <option value="$PROJECT_DIR$/modules/Attention/tests" />
         <option value="$PROJECT_DIR$/modules/MailsSettings/tests" />
+        <option value="$PROJECT_DIR$/modules/Inventory/tests" />
         <option value="$PROJECT_DIR$/tests" />
         <option value="$PROJECT_DIR$/modules/Seo/tests" />
         <option value="$PROJECT_DIR$/modules/Blog/tests" />

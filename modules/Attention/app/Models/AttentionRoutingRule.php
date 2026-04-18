@@ -111,6 +111,6 @@ class AttentionRoutingRule extends Model
             $parts[] = 'Sede: '.($this->conditionSede?->name ?? '—');
         }
 
-        return $parts ? implode(', ', $parts) : 'Todas las PQRSF';
+        return $parts ? implode(', ', $parts) : 'Todas las peticiones';
     }
 }

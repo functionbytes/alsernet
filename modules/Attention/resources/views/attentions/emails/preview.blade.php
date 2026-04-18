@@ -181,7 +181,7 @@
             <div class="card mb-3">
                 <div class="card-header p-3 border-bottom">
                     <h6 class="mb-0 fw-bold">
-                        PQRSF relacionado
+                        peticiones relacionado
                     </h6>
                     <small class="text-muted">Informacion del radicado</small>
                 </div>
@@ -206,7 +206,7 @@
                             </p>
                         </div>
                         <div class="col-12">
-                            <h6 class="text-muted fw-semibold small mb-1">ESTADO PQRSF</h6>
+                            <h6 class="text-muted fw-semibold small mb-1">ESTADO peticiones</h6>
                             <p class="mb-0">
                                 @php
                                     $statusBootstrap = match($attention->status->color()) {

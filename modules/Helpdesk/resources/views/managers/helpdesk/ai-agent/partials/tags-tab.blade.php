@@ -1,16 +1,16 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h5 class="mb-1"><i class="ti ti-tags me-2"></i>Gestión de Tags</h5>
+        <h5 class="mb-1"><i class="fa-solid fa-tags me-2"></i>Gestión de Tags</h5>
         <p class="text-muted mb-0">Los tags permiten categorizar conversaciones y modificar el comportamiento del agente</p>
     </div>
     <button type="button" class="btn btn-primary" onclick="openTagModal()">
-        <i class="ti ti-plus me-2"></i>Nuevo Tag
+        <i class="fa-solid fa-plus me-2"></i>Nuevo Tag
     </button>
 </div>
 
 @if($tags->isEmpty())
     <div class="alert alert-info">
-        <i class="ti ti-info-circle me-2"></i>
+        <i class="fa-solid fa-circle-info me-2"></i>
         <strong>No hay tags configurados</strong>
         <p class="mb-0 mt-2">Crea tu primer tag para empezar a categorizar conversaciones y personalizar el comportamiento del agente.</p>
     </div>
@@ -38,7 +38,7 @@
 
                         @if($tag->system_prompt_addition)
                             <div class="alert alert-light py-2 px-2 mb-2">
-                                <small class="text-muted"><i class="ti ti-code me-1"></i>{{ Str::limit($tag->system_prompt_addition, 60) }}</small>
+                                <small class="text-muted"><i class="fa-solid fa-code me-1"></i>{{ Str::limit($tag->system_prompt_addition, 60) }}</small>
                             </div>
                         @endif
 
@@ -52,10 +52,10 @@
                             </div>
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-light" onclick="editTag({{ $tag->id }})" data-bs-toggle="tooltip" title="Editar">
-                                    <i class="ti ti-edit"></i>
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button type="button" class="btn btn-light text-danger" onclick="deleteTag({{ $tag->id }})" data-bs-toggle="tooltip" title="Eliminar">
-                                    <i class="ti ti-trash"></i>
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
                         </div>

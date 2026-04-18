@@ -1,21 +1,21 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h5 class="mb-1"><i class="ti ti-brain me-2"></i>Base de Conocimiento</h5>
+        <h5 class="mb-1"><i class="fa-solid fa-brain me-2"></i>Base de Conocimiento</h5>
         <p class="text-muted mb-0">Documentos y contenido que el agente utilizará para generar respuestas precisas</p>
     </div>
     <div class="btn-group">
         <button type="button" class="btn btn-outline-warning" onclick="importFromHelpCenter()">
-            <i class="ti ti-download me-2"></i>Importar desde Help Center
+            <i class="fa-solid fa-download me-2"></i>Importar desde Help Center
         </button>
         <button type="button" class="btn btn-warning" onclick="openKnowledgeModal()">
-            <i class="ti ti-plus me-2"></i>Nuevo Documento
+            <i class="fa-solid fa-plus me-2"></i>Nuevo Documento
         </button>
     </div>
 </div>
 
 @if($knowledge->isEmpty())
     <div class="alert alert-info">
-        <i class="ti ti-info-circle me-2"></i>
+        <i class="fa-solid fa-circle-info me-2"></i>
         <strong>No hay documentos en la base de conocimiento</strong>
         <p class="mb-0 mt-2">Añade documentos, FAQs, manuales o artículos para que el agente pueda generar respuestas más precisas y contextuales.</p>
     </div>
@@ -69,9 +69,9 @@
                         @endif
 
                         <div class="d-flex justify-content-between align-items-center text-muted mb-2">
-                            <span><i class="ti ti-eye me-1"></i>{{ $item->usage_count }} usos</span>
+                            <span><i class="fa-solid fa-eye me-1"></i>{{ $item->usage_count }} usos</span>
                             @if($item->embedding_model)
-                                <span class="badge bg-success-subtle text-success"><i class="ti ti-vector me-1"></i>Embedding</span>
+                                <span class="badge bg-success-subtle text-success"><i class="fa-solid fa-bezier-curve me-1"></i>Embedding</span>
                             @endif
                         </div>
 
@@ -85,18 +85,18 @@
                             </div>
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-light" onclick="viewKnowledge({{ $item->id }})" data-bs-toggle="tooltip" title="Ver contenido">
-                                    <i class="ti ti-eye"></i>
+                                    <i class="fa-solid fa-eye"></i>
                                 </button>
                                 <button type="button" class="btn btn-light" onclick="editKnowledge({{ $item->id }})" data-bs-toggle="tooltip" title="Editar">
-                                    <i class="ti ti-edit"></i>
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 @if(!$item->embedding_model)
                                     <button type="button" class="btn btn-light text-success" onclick="generateEmbedding({{ $item->id }})" data-bs-toggle="tooltip" title="Generar Embedding">
-                                        <i class="ti ti-vector"></i>
+                                        <i class="fa-solid fa-bezier-curve"></i>
                                     </button>
                                 @endif
                                 <button type="button" class="btn btn-light text-danger" onclick="deleteKnowledge({{ $item->id }})" data-bs-toggle="tooltip" title="Eliminar">
-                                    <i class="ti ti-trash"></i>
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
                         </div>

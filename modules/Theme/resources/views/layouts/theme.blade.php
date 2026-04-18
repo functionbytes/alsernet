@@ -315,6 +315,12 @@ $(document).ready(function () {
 
 @stack('scripts')
 
+<script>
+$(document).on('change', '.js-auto-submit', function () {
+    $(this).closest('form').submit();
+});
+</script>
+
 @include('media::partials.picker-modal')
 
 @if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1' && !request()->is('setting/*', 'managers/*'))

@@ -38199,12 +38199,12 @@ body {
 
 .body-wrapper {
     margin-top: 72px;
-    margin-left: calc(30px / 2);
-    margin-right: calc(30px / 2);
+    /* margin-left: calc(30px / 2); */
+    /* margin-right: calc(30px / 2); */
     margin-bottom: 30px;
-    border-radius: 20px;
-    background: #f5f6f8;;
-    min-height: calc(100% - 102px)
+    /* border-radius: 20px; */
+    background: #f5f6f8;
+    min-height: calc(100% - 102px);
 }
 
 .body-wrapper .container-fluid,.body-wrapper .container-lg,.body-wrapper .container-md,.body-wrapper .container-sm,.body-wrapper .container-xl,.body-wrapper .container-xxl {
@@ -38314,7 +38314,7 @@ pre.code-view code.hljs {
     height: 100vh;
     z-index: 99;
     position: relative;
-    background: #f5f6f8;
+    background: #ffffff;
 }
 
 .side-mini-panel .mini-nav ul.mini-nav-ul {
@@ -38328,7 +38328,7 @@ pre.code-view code.hljs {
     text-align: center;
     color: var(--bs-body-color);
     position: relative;
-    background: #f5f6f8;;
+    background: #ffffff;
     z-index: 99;
     height: 48px;
     margin-bottom: 8px;

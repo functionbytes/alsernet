@@ -14,29 +14,25 @@ class PublicReviewController extends Controller
 {
     public function index(Request $request): View
     {
-        $rating = $request->integer('rating', 0);
-        $ratingEnum = ($rating >= 1 && $rating <= 5)
-            ? ReviewRating::fromInt($rating)
-            : null;
-
-        $query = Review::query()
+        $reviews = Review::query()
             ->where(fn ($q) => $q
                 ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
                 ->orWhereDoesntHave('moderation')
             )
             ->with('moderation')
             ->orderByDesc('star_rating')
-            ->orderByDesc('review_time');
-
-        if ($ratingEnum !== null) {
-            $query->where('star_rating', $ratingEnum->value);
-        }
-
-        $reviews = $query->paginate(12)->withQueryString();
+            ->orderByDesc('review_time')
+            ->get();
 
         [$totalCount, $avgRating] = $this->aggregateStats();
 
-        return view('template::views.testimonios', compact('reviews', 'avgRating', 'totalCount', 'rating'));
+        $tagCounts = $reviews
+            ->flatMap(fn ($r) => $r->moderation?->tags ?? [])
+            ->countBy()
+            ->sortByDesc(fn ($c) => $c)
+            ->all();
+
+        return view('template::views.testimonios', compact('reviews', 'avgRating', 'totalCount', 'tagCounts'));
     }
 
     public function widget(Request $request): Response

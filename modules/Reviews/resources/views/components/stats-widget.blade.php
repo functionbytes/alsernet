@@ -14,10 +14,12 @@
         <div class="row align-items-center">
             <div class="col-8">
                 <h5 class="card-title fw-semibold mb-3">{{ $title }}</h5>
-                <h4 class="fw-semibold mb-2" {{ $kpi ? "data-kpi=$kpi" : '' }}>{{ $value }}</h4>
-                @if ($subtitle)
-                    <p class="fs-3 mb-0 text-muted">{{ $subtitle }}</p>
-                @endif
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <h4 class="fw-semibold mb-0" {{ $kpi ? "data-kpi=$kpi" : '' }}>{{ $value }}</h4>
+                    @if ($subtitle)
+                        <p class="fs-3 mb-0 text-muted">{{ $subtitle }}</p>
+                    @endif
+                </div>
                 @if ($sparkId)
                     <div id="{{ $sparkId }}-cmp" class="mt-1"></div>
                 @endif

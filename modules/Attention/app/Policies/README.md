@@ -28,18 +28,18 @@ modules/Attention/
 Contiene 14 métodos de autorización:
 
 ### Permisos Básicos
-- `viewAny()` - Ver listado de PQRSF
-- `view()` - Ver PQRSF específico
-- `create()` - Crear PQRSF
-- `update()` - Actualizar PQRSF
-- `delete()` - Eliminar PQRSF
+- `viewAny()` - Ver listado de peticiones
+- `view()` - Ver peticiones específico
+- `create()` - Crear peticiones
+- `update()` - Actualizar peticiones
+- `delete()` - Eliminar peticiones
 
 ### Permisos Avanzados
 - `manage()` - Gestión completa
 - `assign()` - Asignar a usuario/departamento
 - `changeStatus()` - Cambiar estado
-- `resolve()` - Resolver PQRSF
-- `close()` - Cerrar PQRSF
+- `resolve()` - Resolver peticiones
+- `close()` - Cerrar peticiones
 
 ### Permisos Especiales
 - `sendEmail()` - Enviar emails
@@ -81,12 +81,12 @@ Route::middleware('can:update,attention')
 ### Jerarquía de Acceso
 
 1. **Super Admin** → Acceso completo a todo
-2. **Usuario Asignado** → Puede gestionar su PQRSF asignado
-3. **Miembro del Departamento** → Puede gestionar PQRSF del departamento
+2. **Usuario Asignado** → Puede gestionar su peticiones asignado
+3. **Miembro del Departamento** → Puede gestionar peticiones del departamento
 4. **Creador** → Puede ver y actualizar (con limitaciones)
 5. **Permisos Específicos** → Usuarios con permisos de Spatie
 
-### Ejemplo: ¿Quién puede actualizar un PQRSF?
+### Ejemplo: ¿Quién puede actualizar un peticiones?
 
 ```php
 public function update(User $user, Attention $attention): bool
@@ -96,7 +96,7 @@ public function update(User $user, Attention $attention): bool
         return true;
     }
 
-    // No se pueden actualizar PQRSF cerrados
+    // No se pueden actualizar peticiones cerrados
     if ($attention->status === 'closed') {
         return false;
     }
@@ -167,7 +167,7 @@ Gate::policy(Attention::class, AttentionPolicy::class);
 |-----|-------------|----------|
 | `super-admin` | Super administrador | Todos |
 | `attention-admin` | Administrador del módulo | Todos los de attention |
-| `attention-manager` | Supervisor de PQRSF | Ver todo, gestionar, asignar, resolver, cerrar |
+| `attention-manager` | Supervisor de peticiones | Ver todo, gestionar, asignar, resolver, cerrar |
 | `attention-agent` | Agente de atención | Ver asignados, actualizar, resolver |
 | `attention-user` | Usuario básico | Ver propios, crear |
 
@@ -204,7 +204,7 @@ $user->isAssignedTo($attention)
 $user->isAttentionCreator($attention)
 $user->belongsToAttentionDepartment($attention)
 
-// Obtener PQRSF accesibles
+// Obtener peticiones accesibles
 $user->accessibleAttentions() // Query Builder
 
 // Obtener departamentos
@@ -218,10 +218,10 @@ $user->attentionDepartments() // Relación
 pending → in_progress → resolved → closed
 
 // Restricciones
-- No se pueden actualizar PQRSF cerrados
-- Solo PQRSF resueltos se pueden cerrar
-- Creadores no pueden actualizar PQRSF resueltos
-- No se puede resolver un PQRSF ya resuelto o cerrado
+- No se pueden actualizar peticiones cerrados
+- Solo peticiones resueltos se pueden cerrar
+- Creadores no pueden actualizar peticiones resueltos
+- No se puede resolver un peticiones ya resuelto o cerrado
 ```
 
 ## Ejemplos Completos

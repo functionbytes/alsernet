@@ -43,6 +43,10 @@ class SyncGoogleReviewsJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(GoogleReviewService $service): void
     {
+        if ($this->location->sync_strategy?->value === 'manual') {
+            return;
+        }
+
         $count = $service->syncReviews($this->location);
 
         Log::info("Synced {$count} reviews for location {$this->location->id}");

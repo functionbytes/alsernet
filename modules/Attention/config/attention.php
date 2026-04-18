@@ -9,18 +9,18 @@ return [
     |
     | Configure el prefijo y formato de los números de radicado.
     | Formato: {prefix}-{year}-{consecutive}
-    | Ejemplo: PQRSF-2026-000001
+    | Ejemplo: peticiones-2026-000001
     |
     */
 
-    'radicado_prefix' => env('ATTENTION_RADICADO_PREFIX', 'PQRSF'),
+    'radicado_prefix' => env('ATTENTION_RADICADO_PREFIX', 'peticiones'),
 
     /*
     |--------------------------------------------------------------------------
     | File Upload Settings
     |--------------------------------------------------------------------------
     |
-    | Configuración para archivos adjuntos en solicitudes PQRSF.
+    | Configuración para archivos adjuntos en solicitudes peticiones.
     |
     */
 
@@ -73,7 +73,7 @@ return [
     | Captcha Settings
     |--------------------------------------------------------------------------
     |
-    | Habilita captcha en el formulario público de PQRSF.
+    | Habilita captcha en el formulario público de peticiones.
     | Requiere configurar el módulo Captcha (site_key + secret).
     |
     */
@@ -354,7 +354,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Según Ley General de Archivos (Ley 594/2000) y normas del Archivo
-    | General de la Nación, los documentos de PQRSF deben conservarse mínimo:
+    | General de la Nación, los documentos de peticiones deben conservarse mínimo:
     | - Gestión: 5 años (acceso frecuente)
     | - Central: 10 años (acceso ocasional)
     | - Histórico: Permanente (valor histórico)

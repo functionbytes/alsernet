@@ -10,14 +10,14 @@ class AttentionSlaPoliciesSeeder extends Seeder
     /**
      * Run the database seeds.
      *
-     * Seeds SLA policies with different time requirements for PQRSF.
+     * Seeds SLA policies with different time requirements for peticiones.
      */
     public function run(): void
     {
         $policies = [
             [
-                'name' => 'PQRSF Estándar',
-                'description' => 'Política de SLA estándar para PQRSF según normativa colombiana. Respuesta: 2 días, Resolución: 10 días, Cierre: 15 días',
+                'name' => 'peticiones Estándar',
+                'description' => 'Política de SLA estándar para peticiones según normativa colombiana. Respuesta: 2 días, Resolución: 10 días, Cierre: 15 días',
                 'response_time' => 2880, // 2 días (48 horas)
                 'resolution_time' => 14400, // 10 días
                 'closure_time' => 21600, // 15 días
@@ -40,7 +40,7 @@ class AttentionSlaPoliciesSeeder extends Seeder
                 'is_default' => true,
             ],
             [
-                'name' => 'PQRSF Prioritario',
+                'name' => 'peticiones Prioritario',
                 'description' => 'Política acelerada para casos prioritarios o urgentes. Tiempos reducidos en 50%',
                 'response_time' => 1440, // 1 día
                 'resolution_time' => 7200, // 5 días
@@ -73,7 +73,7 @@ class AttentionSlaPoliciesSeeder extends Seeder
                 'is_default' => false,
             ],
             [
-                'name' => 'PQRSF Emergencia',
+                'name' => 'peticiones Emergencia',
                 'description' => 'Política para situaciones críticas que requieren atención inmediata',
                 'response_time' => 480, // 8 horas
                 'resolution_time' => 2880, // 2 días
@@ -98,7 +98,7 @@ class AttentionSlaPoliciesSeeder extends Seeder
                 'is_default' => false,
             ],
             [
-                'name' => 'PQRSF Extendido',
+                'name' => 'peticiones Extendido',
                 'description' => 'Política con tiempos extendidos para casos complejos que requieren investigación',
                 'response_time' => 4320, // 3 días
                 'resolution_time' => 28800, // 20 días

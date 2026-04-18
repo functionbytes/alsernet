@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Modules\Attention\Enums\ResponseType;
 
 /**
- * Request validation for resolving a PQRSF
+ * Request validation for resolving a peticiones
  */
 class ResolveAttentionRequest extends FormRequest
 {
@@ -61,7 +61,7 @@ class ResolveAttentionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'resolution.required' => 'Debe proporcionar una respuesta para resolver el PQRSF',
+            'resolution.required' => 'Debe proporcionar una respuesta para resolver el peticiones',
             'resolution.min' => 'La respuesta debe tener al menos :min caracteres para ser considerada válida',
             'resolution.max' => 'La respuesta no puede exceder :max caracteres',
 

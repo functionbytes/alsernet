@@ -14,6 +14,7 @@
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 // Colores para la terminal
 define('COLOR_GREEN', "\033[32m");
@@ -42,11 +43,11 @@ $warnings = 0;
 echo "\n".BOLD."1. Verificando Tablas de Base de Datos...\n".COLOR_RESET;
 
 $requiredTables = [
-    'attention_types' => 'Tipos de PQRSF',
+    'attention_types' => 'Tipos de peticiones',
     'attention_categories' => 'Categorías temáticas',
     'attention_departments' => 'Departamentos',
     'attention_sedes' => 'Sedes físicas',
-    'attentions' => 'Tabla principal de PQRSF',
+    'attentions' => 'Tabla principal de peticiones',
     'attention_notes' => 'Notas internas',
     'attention_actions' => 'Historial de acciones',
     'attention_mails' => 'Log de emails',
@@ -124,7 +125,7 @@ if (Schema::hasTable('attentions')) {
             echo '   '.WARNING.' Pocas foreign keys: '.COLOR_YELLOW.count($foreignKeys)." (esperadas: 5+)\n".COLOR_RESET;
             $warnings++;
         }
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         echo '   '.WARNING." No se pudieron verificar foreign keys: {$e->getMessage()}\n";
         $warnings++;
     }
@@ -165,7 +166,7 @@ if (Schema::hasTable('attentions')) {
                 echo '      '.CHECK." Índice crítico '{$index->INDEX_NAME}': OK\n";
             }
         }
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         echo '   '.WARNING." No se pudieron verificar índices: {$e->getMessage()}\n";
         $warnings++;
     }
@@ -177,13 +178,13 @@ if (Schema::hasTable('attentions')) {
 echo "\n".BOLD."5. Verificando Datos Iniciales (Seeders)...\n".COLOR_RESET;
 
 try {
-    // Verificar Tipos de PQRSF
+    // Verificar Tipos de peticiones
     $typesCount = DB::table('attention_types')->count();
     if ($typesCount >= 5) {
         $types = DB::table('attention_types')->pluck('code')->toArray();
-        echo '   '.CHECK.' Tipos de PQRSF: '.COLOR_GREEN."$typesCount tipos (".implode(', ', $types).")\n".COLOR_RESET;
+        echo '   '.CHECK.' Tipos de peticiones: '.COLOR_GREEN."$typesCount tipos (".implode(', ', $types).")\n".COLOR_RESET;
     } else {
-        echo '   '.WARNING.' Tipos de PQRSF: '.COLOR_YELLOW."$typesCount tipos (ejecutar seeders)\n".COLOR_RESET;
+        echo '   '.WARNING.' Tipos de peticiones: '.COLOR_YELLOW."$typesCount tipos (ejecutar seeders)\n".COLOR_RESET;
         $warnings++;
     }
 
@@ -213,7 +214,7 @@ try {
         echo '   '.WARNING.' Sedes: '.COLOR_YELLOW."0 registros (ejecutar seeders)\n".COLOR_RESET;
         $warnings++;
     }
-} catch (\Exception $e) {
+} catch (Exception $e) {
     echo '   '.CROSS.' Error verificando datos: '.COLOR_RED.$e->getMessage()."\n".COLOR_RESET;
     $errors++;
 }
@@ -267,7 +268,7 @@ foreach ($enums as $class => $name) {
 // ============================================================================
 // 8. PRUEBA DE CREACIÓN DE REGISTRO
 // ============================================================================
-echo "\n".BOLD."8. Prueba de Creación de PQRSF...\n".COLOR_RESET;
+echo "\n".BOLD."8. Prueba de Creación de peticiones...\n".COLOR_RESET;
 
 try {
     $testType = DB::table('attention_types')->where('code', 'P')->first();
@@ -275,7 +276,7 @@ try {
     if ($testType) {
         // Intentar crear un registro de prueba
         $testId = DB::table('attentions')->insertGetId([
-            'uid' => \Illuminate\Support\Str::uuid(),
+            'uid' => Str::uuid(),
             'radicado' => 'TEST-'.date('Y').'-999999',
             'type_id' => $testType->id,
             'subject' => 'Prueba de instalación',
@@ -289,12 +290,12 @@ try {
         // Eliminar el registro de prueba
         DB::table('attentions')->where('id', $testId)->delete();
 
-        echo '   '.CHECK.' Creación de PQRSF: '.COLOR_GREEN."OK (test exitoso)\n".COLOR_RESET;
+        echo '   '.CHECK.' Creación de peticiones: '.COLOR_GREEN."OK (test exitoso)\n".COLOR_RESET;
     } else {
-        echo '   '.WARNING.' No se puede probar creación: '.COLOR_YELLOW."No hay tipos de PQRSF\n".COLOR_RESET;
+        echo '   '.WARNING.' No se puede probar creación: '.COLOR_YELLOW."No hay tipos de peticiones\n".COLOR_RESET;
         $warnings++;
     }
-} catch (\Exception $e) {
+} catch (Exception $e) {
     echo '   '.CROSS.' Error en prueba de creación: '.COLOR_RED.$e->getMessage()."\n".COLOR_RESET;
     $errors++;
 }

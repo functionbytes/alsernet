@@ -8,7 +8,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email sent to citizen confirming PQRSF submission
+ * Email sent to citizen confirming peticiones submission
  */
 class AttentionConfirmationMail extends Mailable
 {
@@ -41,7 +41,7 @@ class AttentionConfirmationMail extends Mailable
                 'type' => $this->attention->type->name ?? 'N/A',
                 'subject' => $this->attention->subject,
                 'created_at' => $this->attention->created_at->format('d/m/Y H:i'),
-                'tracking_url' => route('pqrsf.tracking.result', $this->attention->radicado),
+                'tracking_url' => route('peticiones.tracking.result', $this->attention->radicado),
             ],
         );
     }

@@ -39,7 +39,7 @@
     </div>
 
     {{-- Formulario --}}
-    <form id="{{ $formId }}" class="forms-form" novalidate data-config="{{ $formId }}">
+    <form id="{{ $formId }}" class="forms-form" method="post" novalidate data-config="{{ $formId }}">
         @csrf
         {{-- Campo honeypot (oculto, debe estar vacío) --}}
         @if($form->honeypot_enabled)
@@ -66,28 +66,39 @@
 
             {{-- Botones de navegación multi-paso --}}
             @if($isMultiStep)
-            <div class="forms-step-nav d-flex justify-content-between mt-4">
-                @if(!$loop->first)
-                <button type="button" class="btn btn-outline-secondary forms-prev-btn" data-step="{{ $step }}">
-                    <i class="fas fa-arrow-left me-1"></i> Anterior
-                </button>
-                @else
-                <div></div>
-                @endif
-
-                @if(!$loop->last)
-                <button type="button" class="btn btn-primary forms-next-btn" data-step="{{ $step }}">
-                    Siguiente <i class="fas fa-arrow-right ms-1"></i>
-                </button>
-                @else
-                    @if(!empty($captchaEnabled) && $captchaEnabled && class_exists('\Modules\Captcha\Facades\Captcha'))
-                    <div class="mb-3 w-100">
-                        {!! \Modules\Captcha\Facades\Captcha::display() !!}
-                    </div>
+                <div class="forms-step-nav mt-4">
+                    @if($loop->first && !$loop->last)
+                        {{-- Solo Siguiente: ancho completo --}}
+                        <button type="button" class="btn btn-primary forms-next-btn w-100" data-step="{{ $step }}">
+                            Siguiente <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    @elseif(!$loop->first && !$loop->last)
+                        {{-- Anterior + Siguiente: mitad y mitad --}}
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary forms-prev-btn w-50" data-step="{{ $step }}">
+                                <i class="fas fa-arrow-left me-1"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-primary forms-next-btn w-50" data-step="{{ $step }}">
+                                Siguiente <i class="fas fa-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    @else
+                        {{-- Último paso: Anterior + Submit --}}
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-secondary forms-prev-btn" data-step="{{ $step }}">
+                                <i class="fas fa-arrow-left me-1"></i> Anterior
+                            </button>
+                            <div>
+                                @if(!empty($captchaEnabled) && $captchaEnabled && class_exists('\Modules\Captcha\Facades\Captcha'))
+                                <div class="mb-3 w-100">
+                                    {!! \Modules\Captcha\Facades\Captcha::display() !!}
+                                </div>
+                                @endif
+                                @include('forms::public.partials.submit-button', compact('form', 'formId', 'buttonText', 'buttonColor'))
+                            </div>
+                        </div>
                     @endif
-                    @include('forms::public.partials.submit-button', compact('form', 'formId', 'buttonText', 'buttonColor'))
-                @endif
-            </div>
+                </div>
             @endif
         </div>
         @endforeach

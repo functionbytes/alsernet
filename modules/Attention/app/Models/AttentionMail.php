@@ -9,7 +9,7 @@ use Modules\Attention\Traits\HasUid;
 use Modules\Mailer\Models\MailerTemplate;
 
 /**
- * Log de emails enviados relacionados con un PQRSF
+ * Log de emails enviados relacionados con un peticiones
  */
 class AttentionMail extends Model
 {

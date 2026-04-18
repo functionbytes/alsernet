@@ -39,7 +39,7 @@
                     {{-- Language selector --}}
                     @if ($langs->count() > 1)
                         <form method="GET" class="d-flex align-items-center gap-2">
-                            <select name="lang_id" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
+                            <select name="lang_id" class="form-select form-select-sm js-auto-submit" style="width: auto;">
                                 @foreach ($langs as $lang)
                                     <option value="{{ $lang->id }}" @selected($lang->id == $langId)>
                                         {{ $lang->name }}

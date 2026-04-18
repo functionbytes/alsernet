@@ -45,8 +45,8 @@ class AttentionClosedNotification extends Notification implements ShouldQueue
     {
         return [
             'type' => 'attention_closed',
-            'title' => 'PQRSF Cerrado',
-            'message' => "El PQRSF {$this->attention->radicado} ha sido cerrado",
+            'title' => 'peticiones Cerrado',
+            'message' => "El peticiones {$this->attention->radicado} ha sido cerrado",
             'attention_id' => $this->attention->id,
             'attention_uid' => $this->attention->uid,
             'radicado' => $this->attention->radicado,

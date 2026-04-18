@@ -18,10 +18,12 @@
 
         var onloadCallback = function() {
             window.recaptchaInputs.forEach(function(item) {
-                if (document.getElementById(item)) {
+                var el = document.getElementById(item);
+                if (!el) { return; }
+                try {
                     grecaptcha.render(item);
-                } else {
-                    console.warn('reCAPTCHA placeholder element not found for ID:', item);
+                } catch (e) {
+                    // Already rendered — safe to ignore in preview/refresh contexts
                 }
             });
         };

@@ -16,6 +16,7 @@ use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormCategory;
 use Modules\Forms\Models\FormField;
+use Modules\Forms\Models\FormFieldTypeSetting;
 use Modules\Forms\Models\FormVersion;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -95,11 +96,13 @@ class FormController extends Controller
         $form->load(['category', 'fields' => fn ($q) => $q->ordered()]);
 
         $categories = FormCategory::query()->active()->ordered()->get();
+        $previewToken = hash_hmac('sha256', (string) $form->id, config('app.key'));
+        $fieldTypeSettings = FormFieldTypeSetting::query()->ordered()->get()->groupBy('group_name');
 
-        return view('forms::forms.edit', compact('form', 'categories'));
+        return view('forms::forms.edit', compact('form', 'categories', 'previewToken', 'fieldTypeSettings'));
     }
 
-    public function update(UpdateFormRequest $request, Form $form): RedirectResponse
+    public function update(UpdateFormRequest $request, Form $form): RedirectResponse|JsonResponse
     {
         $data = $request->validated();
 
@@ -111,6 +114,14 @@ class FormController extends Controller
         }
 
         $form->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'name' => $form->fresh()->name,
+                'slug' => $form->fresh()->slug,
+            ]);
+        }
 
         session()->flash('success', 'Formulario actualizado correctamente.');
 
@@ -221,6 +232,10 @@ class FormController extends Controller
     {
         $this->authorize('Forms.forms.index');
 
+        if (! class_exists(QrCode::class)) {
+            abort(501, 'QR code package not installed.');
+        }
+
         $url = route('forms.public.submit', ['slug' => $form->slug]);
 
         $image = QrCode::format('png')->size(300)->generate($url);
@@ -301,6 +316,52 @@ class FormController extends Controller
 
             return redirect()->back()->with('error', 'Error al importar el formulario. Por favor, verifica el archivo e inténtalo de nuevo.');
         }
+    }
+
+    public function htmlSource(Form $form): JsonResponse
+    {
+        $this->authorize('Forms.forms.edit');
+
+        $form->load(['fields' => fn ($q) => $q->ordered()->visible()]);
+
+        $formId = 'form-preview-'.$form->id;
+        $floatingLabel = $form->floating_label ?? false;
+
+        $html = view('forms::settings.forms.partials.estructura', [
+            'form' => $form,
+            'formId' => $formId,
+            'floatingLabel' => $floatingLabel,
+        ])->render();
+
+        $html = $this->cleanStructureHtml($html);
+
+        return response()->json(['html' => $html]);
+    }
+
+    private function cleanStructureHtml(string $html): string
+    {
+        // Normalize whitespace inside every opening tag (collapse Blade multi-line attributes)
+        $html = preg_replace_callback('/<[^>]+>/s', function ($m) {
+            $tag = preg_replace('/\s+/', ' ', $m[0]);
+
+            return str_replace(' >', '>', $tag);
+        }, $html);
+
+        // Remove instance-specific / noisy attributes
+        $html = preg_replace('/\s+id="[^"]*"/', '', $html);
+        $html = preg_replace('/\s+for="[^"]*"/', '', $html);
+        $html = preg_replace('/\s+value=""/', '', $html);
+        $html = preg_replace('/\s+placeholder=""/', '', $html);
+        $html = preg_replace('/\s+data-auto-populate="[^"]*"/', '', $html);
+        $html = preg_replace('/\s+data-conditions="[^"]*"/', '', $html);
+
+        // Remove empty utility divs left by field partial
+        $html = preg_replace('/<div class="invalid-feedback"><\/div>\s*/', '', $html);
+
+        // Re-indent cleanly: collapse 3+ blank lines to one
+        $html = preg_replace('/(\s*\n){3,}/', "\n\n", $html);
+
+        return trim($html);
     }
 
     public function analytics(Form $form): View

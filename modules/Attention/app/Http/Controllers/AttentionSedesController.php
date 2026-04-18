@@ -171,7 +171,7 @@ class AttentionSedesController extends Controller
     {
         // Check if sede has assigned attentions
         if ($sede->attentions()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar la sede porque tiene PQRSF asignados.');
+            return back()->with('error', 'No se puede eliminar la sede porque tiene peticiones asignados.');
         }
 
         $sede->delete();

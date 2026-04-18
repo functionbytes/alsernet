@@ -20,7 +20,7 @@ use Modules\Mailer\Models\MailerTemplate;
 
 /**
  * AttentionConfigurationController
- * Handles all attention/PQRSF configuration and settings:
+ * Handles all attention/peticiones configuration and settings:
  * - Global settings (radicado prefix, auto-assignment)
  * - Email configuration and templates
  * - SLA policies and configurations
@@ -399,7 +399,7 @@ class AttentionConfigurationController extends Controller
             ->toArray();
 
         return [
-            'radicado_prefix' => Setting::get('attention.radicado_prefix', config('attention.radicado_prefix', 'PQRSF')),
+            'radicado_prefix' => Setting::get('attention.radicado_prefix', config('attention.radicado_prefix', 'peticiones')),
             'auto_assign' => Setting::get('attention.auto_assign', 'no') === 'yes',
             'require_attachments' => Setting::get('attention.require_attachments', 'no') === 'yes',
             'enable_anonymous' => Setting::get('attention.enable_anonymous', 'yes') === 'yes',
@@ -469,7 +469,7 @@ class AttentionConfigurationController extends Controller
             'radicado_prefix' => [
                 'group' => 'general',
                 'type' => 'string',
-                'default' => config('attention.radicado_prefix', 'PQRSF'),
+                'default' => config('attention.radicado_prefix', 'peticiones'),
                 'label' => 'Prefijo de radicado',
                 'description' => 'Prefijo para los numeros de radicado',
             ],

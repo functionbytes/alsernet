@@ -2,6 +2,7 @@
 
 namespace Modules\Newsletter\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Newsletter\Services\MailjetService;
@@ -20,8 +21,13 @@ class NewsletterServiceProvider extends ServiceProvider
         $this->loadViewsFrom(module_path($this->name, 'resources/views'), $this->nameLower);
         $this->mergeConfigFrom(module_path($this->name, 'config/config.php'), $this->nameLower);
 
+        $this->publishes([
+            module_path($this->name, 'public') => public_path('modules/Newsletter'),
+        ], 'newsletter-assets');
+
         $this->registerRoutes();
         $this->registerMenus();
+        $this->registerComponents();
     }
 
     public function register(): void
@@ -46,6 +52,12 @@ class NewsletterServiceProvider extends ServiceProvider
 
         Route::middleware(['web'])
             ->group("{$modulePath}/routes/public.php");
+    }
+
+    protected function registerComponents(): void
+    {
+        Blade::component('newsletter-inline', 'newsletter::components.inline');
+        Blade::component('newsletter-unsubscribe', 'newsletter::shortcodes.unsubscribe');
     }
 
     protected function registerMenus(): void

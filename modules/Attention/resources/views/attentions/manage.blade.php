@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Gestionar PQRSF')
+@section('title', 'Gestionar peticiones')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Gestionar PQRSF'])
+    @include('core::components.card', ['title' => 'Gestionar peticiones'])
 
     @include('core::components.alerts')
 
@@ -14,8 +14,8 @@
             <div class="d-flex align-items-center">
                 <i class="fas fa-lock me-2 fs-4"></i>
                 <div>
-                    <strong>PQRSF cerrado</strong><br>
-                    <small>Este PQRSF ha sido cerrado y no se pueden realizar más modificaciones.</small>
+                    <strong>peticiones cerrado</strong><br>
+                    <small>Este peticiones ha sido cerrado y no se pueden realizar más modificaciones.</small>
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

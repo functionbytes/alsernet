@@ -1,5 +1,5 @@
 @component('mail::message')
-# Nuevo PQRSF Asignado
+# Nuevo peticiones Asignado
 
 Se le ha asignado un nuevo caso de atención al ciudadano para su gestión.
 
@@ -28,10 +28,10 @@ Se le ha asignado un nuevo caso de atención al ciudadano para su gestión.
 
 ## Acciones requeridas
 
-Por favor revise el caso y proceda con la gestión correspondiente. Es importante mantener actualizado el estado del PQRSF para que el ciudadano pueda hacer seguimiento.
+Por favor revise el caso y proceda con la gestión correspondiente. Es importante mantener actualizado el estado del peticiones para que el ciudadano pueda hacer seguimiento.
 
 @component('mail::button', ['url' => $manageUrl, 'color' => 'success'])
-Gestionar PQRSF
+Gestionar peticiones
 @endcomponent
 
 ---
@@ -47,6 +47,6 @@ Asegúrese de dar respuesta dentro de los términos legales establecidos.
 ---
 
 Saludos,
-Sistema de Gestión PQRSF
+Sistema de Gestión peticiones
 {{ config('app.name') }}
 @endcomponent

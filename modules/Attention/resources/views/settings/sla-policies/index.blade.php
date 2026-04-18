@@ -16,7 +16,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Políticas SLA</h5>
-                        <p class="small mb-0 text-muted">Define los tiempos de respuesta, resolución y cierre para las PQRSF</p>
+                        <p class="small mb-0 text-muted">Define los tiempos de respuesta, resolución y cierre para las peticiones</p>
                     </div>
                     <div class="d-flex gap-2">
                         <a href="{{ route('settings.attention.sla-policies.create') }}" class="btn btn-primary">
@@ -76,7 +76,7 @@
                 <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                     <div class="flex-fill">
                         <div class="input-group h-100">
-                            <span class="input-group-text bg-white border-end-0">
+                            <span class="input-group-text bg-white border-end-1">
                                 <i class="fas fa-search text-muted"></i>
                             </span>
                             <input type="search" id="sla-search" class="form-control border-start-0 ps-0"

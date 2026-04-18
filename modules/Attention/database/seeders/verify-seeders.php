@@ -16,7 +16,7 @@ $seedersPath = __DIR__;
 $expectedSeeders = [
     'AttentionTypesSeeder.php' => [
         'required' => true,
-        'description' => 'Crea tipos de PQRSF (P/Q/R/S/F)',
+        'description' => 'Crea tipos de peticiones (P/Q/R/S/F)',
     ],
     'AttentionCategoriesSeeder.php' => [
         'required' => true,

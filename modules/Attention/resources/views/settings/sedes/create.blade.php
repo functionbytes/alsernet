@@ -75,7 +75,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">¿Qué es una sede?</h6>
                     <p class="card-text text-muted">
-                        Las sedes representan los puntos físicos donde los ciudadanos pueden presentar sus solicitudes PQRSF de forma presencial.
+                        Las sedes representan los puntos físicos donde los ciudadanos pueden presentar sus solicitudes peticiones de forma presencial.
                     </p>
                 </div>
                 <hr class="my-0">

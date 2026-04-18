@@ -22,6 +22,8 @@
 
         initStartTime($form, formId);
         initAutoPopulate($form, config);
+        initSelect2($form);
+        initServiceCards($form);
         initConditionalFields($form, config);
         initCalculationFields($form, config);
         initSignatureFields($form);
@@ -33,6 +35,7 @@
         initAbandonTracking($form, config);
         initValidation($form, config);
         initMultiStep($form, config);
+        initEstimateEnhancements($form);
     }
 
     // ==========================================
@@ -55,6 +58,72 @@
             const param = $(this).data('auto-populate');
             const value = urlParams.get(param);
             if (value) $(this).val(value);
+        });
+    }
+
+    // ==========================================
+    // SERVICE CARDS (radio con data-icon)
+    // ==========================================
+    function initServiceCards($form) {
+        var $radiosWithIcon = $form.find('[type="radio"][data-icon]');
+        if (!$radiosWithIcon.length) return;
+
+        $radiosWithIcon.each(function() {
+            var $input = $(this);
+            var icon   = $input.data('icon');
+            var desc   = $input.data('description') || '';
+            var $wrap  = $input.closest('.form-check');
+            var $label = $wrap.find('label.form-check-label');
+            var title  = $label.text().trim();
+
+            $input.addClass('service-radio-input');
+            $label.html(
+                '<i class="' + icon + '"></i>' +
+                '<h5>' + title + '</h5>' +
+                (desc ? '<small class="d-block text-muted mt-1">' + desc + '</small>' : '')
+            ).addClass('service-card-option');
+            $wrap.addClass('service-option');
+
+            $label.on('click', function() {
+                $form.find('.service-card-option').removeClass('selected');
+                $(this).addClass('selected');
+            });
+            if ($input.is(':checked')) $label.addClass('selected');
+        });
+
+        // Envolver todas las .service-option en un grid .service-selection
+        var $options = $form.find('.service-option');
+        var $grid = $('<div class="service-selection"></div>');
+        $options.first().before($grid);
+        $grid.append($options);
+    }
+
+    // ==========================================
+    // SELECT2
+    // ==========================================
+    function initSelect2($form) {
+        if (!$.fn.select2) return;
+
+        if ($.fn.niceSelect) {
+            $form.find('select').niceSelect('destroy');
+        }
+
+        $form.find('select').each(function() {
+            var $select = $(this);
+            var placeholder = $select.data('form-field-placeholder') || $select.find('option[value=""]').first().text() || '-- Seleccionar --';
+
+            $select.select2({
+                width: '100%',
+                minimumResultsForSearch: Infinity,
+                dropdownParent: $select.closest('.forms-wrapper'),
+                placeholder: placeholder,
+            });
+
+            $select.on('change.select2validate', function() {
+                if ($select.closest('form').data('validator')) {
+                    $select.valid();
+                }
+            });
         });
     }
 
@@ -344,16 +413,16 @@
     }
 
     function validateStep($form, step) {
-        const $step = $form.find('[data-step="' + step + '"]');
-        let valid = true;
+        var $step = $form.find('[data-step="' + step + '"]');
+        var validator = $form.data('validator');
+        var valid = true;
 
-        $step.find(':input[required]:visible').each(function() {
-            if (!$(this).val()) {
-                $(this).addClass('is-invalid');
-                $(this).siblings('.invalid-feedback').text('Este campo es obligatorio');
-                valid = false;
-            } else {
-                $(this).removeClass('is-invalid');
+        $step.find(':input').not('[type=hidden][name!="_hp"]').not('.forms-calculation').each(function() {
+            var $el = $(this);
+            if ($el.is('select') || $el.is(':visible')) {
+                if (validator && !validator.element(this)) {
+                    valid = false;
+                }
             }
         });
 
@@ -377,7 +446,16 @@
             $(this).toggleClass('active', parseInt($(this).data('step')) <= targetStep);
         });
         $wrapper.find('.forms-step-label').each(function() {
-            $(this).toggleClass('active', parseInt($(this).data('step')) <= targetStep);
+            const s = parseInt($(this).data('step'));
+            $(this).toggleClass('active', s <= targetStep);
+            const completed = s < targetStep;
+            $(this).toggleClass('step-completed', completed);
+            const $num = $(this).find('.forms-step-number');
+            if (completed) {
+                if (!$num.find('i').length) $num.html('<i class="fa-solid fa-check" style="font-size:13px;"></i>');
+            } else {
+                if ($num.find('i').length) $num.text(s);
+            }
         });
 
         applyLogicJumps($form, config, targetStep);
@@ -405,13 +483,37 @@
     // ==========================================
     function initValidation($form, config) {
         $form.validate({
-            ignore: ':hidden:not([name="_hp"]), .forms-calculation',
+            ignore: ':hidden:not(select):not([name="_hp"]), .forms-calculation',
             errorElement: 'div',
             errorClass: 'invalid-feedback',
-            highlight: function(el) { $(el).addClass('is-invalid'); },
-            unhighlight: function(el) { $(el).removeClass('is-invalid'); },
+            highlight: function(el) {
+                var $el = $(el);
+                $el.addClass('is-invalid');
+                if ($el.is('select') && $el.data('select2')) {
+                    $el.next('.select2-container').addClass('is-invalid');
+                }
+            },
+            unhighlight: function(el) {
+                var $el = $(el);
+                $el.removeClass('is-invalid');
+                if ($el.is('select') && $el.data('select2')) {
+                    $el.next('.select2-container').removeClass('is-invalid');
+                }
+            },
             errorPlacement: function(error, element) {
-                element.closest('.col-12, .col-md-6, .col-md-4, .col-md-3').append(error);
+                var $wrapper = element.closest('[class*="col-"]');
+                if (!$wrapper.length) $wrapper = element.parent();
+                var $fb = $wrapper.find('.invalid-feedback').first();
+                if ($fb.length) {
+                    $fb.text(error.text()).addClass('d-block');
+                    return;
+                }
+                error.appendTo($wrapper);
+            },
+            success: function(label, element) {
+                var $wrapper = $(element).closest('[class*="col-"]');
+                if (!$wrapper.length) $wrapper = $(element).parent();
+                $wrapper.find('.invalid-feedback').text('').removeClass('d-block');
             },
             submitHandler: function(form) {
                 handleSubmit($(form), config);
@@ -534,6 +636,161 @@
         }
 
         draw();
+    }
+
+    // ==========================================
+    // ESTIMATE FORM ENHANCEMENTS (presupuesto)
+    // ==========================================
+    function initEstimateEnhancements($form) {
+        if (!$form.closest('.estimate-form-card').length) return;
+
+        var STEP_META = [
+            { title: 'Sus datos de contacto',        desc: 'Paso 1 de 5 \u2014 Rellene sus datos para que podamos enviarle el presupuesto personalizado y coordinar una visita t\u00e9cnica gratuita.' },
+            { title: '\u00bfQu\u00e9 proyecto tiene en mente?',  desc: 'Paso 2 de 5 \u2014 Seleccione el servicio principal que desea presupuestar. Si necesita m\u00e1s de uno, puede indicarlo en el paso siguiente.' },
+            { title: 'Detalles del proyecto',         desc: 'Paso 3 de 5 \u2014 Cu\u00e9ntenos las caracter\u00edsticas b\u00e1sicas del proyecto. Cuanta m\u00e1s informaci\u00f3n nos facilite, m\u00e1s preciso y ajustado ser\u00e1 el presupuesto.' },
+            { title: 'Informaci\u00f3n adicional',    desc: 'Paso 4 de 5 \u2014 A\u00f1ada cualquier detalle relevante sobre su proyecto: materiales, preferencias, plazos o dudas t\u00e9cnicas. Tambi\u00e9n puede solicitar visita gratuita o consultar opciones de financiaci\u00f3n.' },
+        ];
+
+        // 1. Inject step titles/descriptions into each step panel
+        $form.find('.forms-step').each(function(i) {
+            var meta = STEP_META[i];
+            if (!meta) return;
+            $(this).prepend(
+                '<h3 class="estimate-step-title">' + meta.title + '</h3>' +
+                '<p class="estimate-step-desc">' + meta.desc + '</p>'
+            );
+        });
+
+        // 1b. Step 4 enhancements: textarea help text, checkbox layout, como-conocio help
+        var $step4 = $form.find('.forms-step[data-step="4"]');
+        if ($step4.length) {
+            // Add help text above "Mensaje / Observaciones" textarea
+            var $mensajeLabel = $step4.find('label[for*="mensaje"]');
+            if ($mensajeLabel.length && !$mensajeLabel.next('.estimate-field-hint').length) {
+                $mensajeLabel.after(
+                    '<p class="estimate-field-hint text-muted small mb-2">' +
+                    'Describa su proyecto en detalle: preferencias de materiales, colores, acabados, ' +
+                    'plazos espec\u00edficos, dudas t\u00e9cnicas, etc. Cuanta m\u00e1s informaci\u00f3n nos proporcione, ' +
+                    'm\u00e1s preciso ser\u00e1 el presupuesto.</p>'
+                );
+            }
+
+            // Checkboxes: full-width, bold title, move help_text small inside label
+            $step4.find('[class*="col"]:has(.form-check)').each(function() {
+                var $col = $(this);
+                $col.removeClass('col-md-6').addClass('col-12');
+                $col.find('.form-check').each(function() {
+                    var $check   = $(this);
+                    var $label   = $check.find('.form-check-label');
+                    var $helpSmall = $check.nextAll('small').first();
+                    var txt      = $label.text().trim();
+                    var descHtml = $helpSmall.length ? $helpSmall.prop('outerHTML').replace(/class="[^"]*"/, 'class="d-block text-muted"') : '';
+                    $label.html('<strong>' + txt + '</strong>' + descHtml);
+                    $helpSmall.remove();
+                });
+            });
+        }
+
+        // 2. Convert last step's submit button to "Siguiente", add virtual step 5
+        var $lastStep = $form.find('.forms-step').last();
+        var lastStepNum = parseInt($lastStep.data('step'));
+        var $submitBtn = $lastStep.find('.forms-submit-btn');
+
+        if ($submitBtn.length) {
+            $submitBtn.replaceWith(
+                '<button type="button" class="btn btn-primary forms-next-btn w-100 mt-2" data-step="' + lastStepNum + '">' +
+                'Siguiente <i class="fa-solid fa-arrow-right ms-1"></i></button>'
+            );
+        }
+
+        // 3. Add step 5 to the step indicator
+        var $progressDflex = $form.closest('.forms-wrapper').find('.forms-progress > .d-flex');
+        $progressDflex.append(
+            '<div class="forms-step-label" data-step="5">' +
+            '<span class="forms-step-number">5</span>' +
+            '<span class="forms-step-name">Env\u00edo</span>' +
+            '</div>'
+        );
+
+        // 4. Read WA phone from existing link in the page
+        var waPhone = '';
+        $('a[href*="wa.me/"]').each(function() {
+            var m = ($(this).attr('href') || '').match(/wa\.me\/([0-9]+)/);
+            if (m) { waPhone = m[1]; return false; }
+        });
+
+        // 5. Build and append the virtual step 5
+        var $step5 = $(
+            '<div class="forms-step d-none" data-step="5">' +
+                '<h3 class="estimate-step-title">Revise y env\u00ede su solicitud</h3>' +
+                '<p class="estimate-step-desc">Paso 5 de 5 \u2014 Compruebe el resumen de su solicitud y elija c\u00f3mo prefiere recibir su presupuesto completamente gratuito.</p>' +
+                '<div class="estimate-info-box mb-4">' +
+                    '<div class="d-flex">' +
+                        '<i class="fa-solid fa-circle-check text-success fs-5 me-3 mt-1"></i>' +
+                        '<div>' +
+                            '<h6 class="mb-2 fw-bold">Resumen de su solicitud</h6>' +
+                            '<div class="estimate-resumen"></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<h5 class="mb-3">Elija c\u00f3mo desea recibir su presupuesto:</h5>' +
+                '<div class="submit-options">' +
+                    '<button type="button" class="btn-estimate-submit btn-whatsapp estimate-wa-submit">' +
+                        '<i class="fa-brands fa-whatsapp"></i> Enviar v\u00eda WhatsApp</button>' +
+                    '<button type="submit" class="btn-estimate-submit btn-email-submit forms-submit-btn">' +
+                        '<span class="forms-submit-text"><i class="fa-solid fa-envelope"></i> Enviar por Email</span>' +
+                        '<span class="forms-submit-spinner d-none"><span class="spinner-border spinner-border-sm" role="status"></span></span>' +
+                    '</button>' +
+                '</div>' +
+                '<p class="text-center text-muted mt-3 mb-0 small">Al enviar este formulario, acepta que contactemos con usted para proporcionarle un presupuesto</p>' +
+                '<div class="mt-3">' +
+                    '<button type="button" class="btn-estimate-prev btn-estimate-prev-full forms-prev-btn" data-step="5">' +
+                        '<i class="fa-solid fa-arrow-left"></i> Volver al paso anterior</button>' +
+                '</div>' +
+            '</div>'
+        );
+        $form.append($step5);
+
+        // 6. Build summary when navigating to step 5
+        $form.on('click', '.forms-next-btn[data-step="' + lastStepNum + '"]', function() {
+            var fields = [
+                { label: 'Nombre',            name: 'nombre' },
+                { label: 'Email',             name: 'email' },
+                { label: 'Tel\u00e9fono',     name: 'telefono' },
+                { label: 'Localidad',         name: 'localidad' },
+                { label: 'Servicio',          name: 'servicio', radio: true },
+                { label: 'Tipo inmueble',     name: 'tipo_inmueble' },
+                { label: 'Tipo obra',         name: 'tipo_obra' },
+                { label: 'Cantidad',          name: 'cantidad' },
+                { label: 'Urgencia',          name: 'urgencia' },
+                { label: 'Presupuesto aprox.', name: 'presupuesto_aprox' },
+                { label: 'Mensaje',           name: 'mensaje' },
+            ];
+            var rows = '';
+            fields.forEach(function(f) {
+                var val = f.radio
+                    ? $form.find('[name="' + f.name + '"]:checked').val()
+                    : $form.find('[name="' + f.name + '"]').val();
+                if (val && val.trim() && val !== 'Prefiero no especificar') {
+                    rows += '<div class="mb-1"><strong>' + f.label + ':</strong> ' +
+                        $('<span>').text(val).html() + '</div>';
+                }
+            });
+            $step5.find('.estimate-resumen').html(rows || '<em class="text-muted">Sin informaci\u00f3n adicional</em>');
+        });
+
+        // 7. WhatsApp submit
+        $form.on('click', '.estimate-wa-submit', function() {
+            var t = '\ud83c\udfe0 *Solicitud de Presupuesto \u2014 Caixilharia Blanco*\n\n';
+            t += '\ud83d\udc64 *Nombre:* '    + ($form.find('[name="nombre"]').val() || '\u2014')    + '\n';
+            t += '\ud83d\udce7 *Email:* '     + ($form.find('[name="email"]').val() || '\u2014')     + '\n';
+            t += '\ud83d\udcf1 *Tel\u00e9fono:* '  + ($form.find('[name="telefono"]').val() || '\u2014')  + '\n';
+            t += '\ud83d\udccd *Localidad:* ' + ($form.find('[name="localidad"]').val() || '\u2014') + '\n';
+            t += '\ud83d\udd27 *Servicio:* '  + ($form.find('[name="servicio"]:checked').val() || '\u2014') + '\n';
+            var ms = $form.find('[name="mensaje"]').val();
+            if (ms) t += '\n\ud83d\udcdd *Mensaje:* ' + ms;
+            window.open('https://wa.me/' + waPhone + '?text=' + encodeURIComponent(t), '_blank');
+        });
     }
 
 })(jQuery);

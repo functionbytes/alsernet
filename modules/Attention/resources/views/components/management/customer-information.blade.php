@@ -10,7 +10,7 @@
                 <div class="d-flex align-items-start">
                     <i class="fas fa-user-secret me-2 mt-1"></i>
                     <div>
-                        <strong>PQRSF anónimo</strong><br>
+                        <strong>peticiones anónimo</strong><br>
                         <small>El ciudadano decidió radicar de forma anónima</small>
                     </div>
                 </div>

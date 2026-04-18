@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Factory;
+use Modules\Captcha\Facades\Captcha;
+use Modules\Core\Models\Setting;
+use Modules\Page\Http\Controllers\VisualEditorController;
 use Modules\Template\Console\ClearMenuCacheCommand;
 use Modules\Template\Console\ThemeActivateCommand;
 use Modules\Template\Console\ThemeLinkCommand;
@@ -322,15 +325,64 @@ class TemplateServiceProvider extends ServiceProvider
                         app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
                             $html = $sc->render_template;
 
+                            // Resolve {__key} translation placeholders before attribute substitution.
+                            $html = preg_replace_callback('/\{__([^}]+)\}/', fn ($m) => __($m[1]), $html);
+
+                            // Resolve {route:name} route placeholders.
+                            $html = preg_replace_callback('/\{route:([^}]+)\}/', function ($m) {
+                                try {
+                                    return route($m[1]);
+                                } catch (\Exception) {
+                                    return $m[0];
+                                }
+                            }, $html);
+
+                            // Resolve {captcha} → reCAPTCHA widget si está habilitado, vacío si no.
+                            $captchaHtml = '';
+                            if (
+                                Setting::get('newsletter.recaptcha_enabled') === '1'
+                                && class_exists(Captcha::class)
+                                && Captcha::isEnabled()
+                            ) {
+                                $captchaDisplay = Captcha::display() ?? '';
+                                // The theme footer defines onloadCallback + loads Google API.
+                                // Captcha::display() only injects the push script via add_filter()
+                                // which is not available here. So we extract the ID and push manually.
+                                if ($captchaDisplay && preg_match('/id="([^"]+)"/', $captchaDisplay, $m)) {
+                                    $captchaDisplay .= '<script>window.recaptchaInputs=window.recaptchaInputs||[];window.recaptchaInputs.push("'.$m[1].'");</script>';
+                                }
+                                $captchaHtml = '<div class="mb-3">'.$captchaDisplay.'</div>';
+                            }
+                            $html = str_replace('{captcha}', $captchaHtml, $html);
+
                             foreach ($attrs as $key => $val) {
                                 $html = str_replace('{'.$key.'}', e($val), $html);
                             }
 
                             $html = str_replace('{content}', e($content), $html);
 
-                            if ($sc->js_code) {
-                                $jsCode = str_replace('</script>', '<\/script>', $sc->js_code);
-                                $html .= "\n<script>{$jsCode}</script>";
+                            // CSS → <head> y JS → footer, una sola vez por clave y por request.
+                            // Usamos el contenedor (reset en cada request) en lugar de static (persiste en FPM workers).
+                            $injectedKey = 'sc.assets.'.$sc->key;
+                            if (! app()->bound($injectedKey)) {
+                                app()->instance($injectedKey, true);
+
+                                if ($sc->css_code) {
+                                    app('theme.engine')->append('head', "\n<style id=\"sc-{$sc->key}-css\">\n{$sc->css_code}\n</style>");
+                                }
+
+                                if ($sc->js_code) {
+                                    $jsCode = str_replace('</script>', '<\/script>', $sc->js_code);
+                                    app('theme.engine')->append('footer', "\n<script id=\"sc-{$sc->key}-js\">\n{$jsCode}\n</script>");
+                                }
+                            }
+
+                            // In visual-editor preview mode, wrap output with a sentinel div
+                            // so extractContent() can restore the raw shortcode tag on save.
+                            if (app()->bound('ve_preview_wrap')) {
+                                $safe = VisualEditorController::buildVeScTag($sc->key, $attrs, $content);
+
+                                return '<div data-ve-sc="'.$safe.'">'.$html.'</div>';
                             }
 
                             return $html;
@@ -339,7 +391,15 @@ class TemplateServiceProvider extends ServiceProvider
                         // No render template — register stub so the shortcode appears in the
                         // visual editor panel. The builder inserts the raw shortcode tag,
                         // which the theme compiles on the public-facing page.
-                        app('shortcode')->register($sc->key, fn (): string => '', $meta);
+                        app('shortcode')->register($sc->key, function (array $attrs, string $content) use ($sc): string {
+                            if (app()->bound('ve_preview_wrap')) {
+                                $safe = VisualEditorController::buildVeScTag($sc->key, $attrs, $content);
+
+                                return '<div data-ve-sc="'.$safe.'"></div>';
+                            }
+
+                            return '';
+                        }, $meta);
                     }
                 }
             } catch (\Exception) {

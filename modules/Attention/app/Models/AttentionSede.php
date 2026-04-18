@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Sedes físicas donde se reciben PQRSF
+ * Sedes físicas donde se reciben peticiones
  */
 class AttentionSede extends Model
 {

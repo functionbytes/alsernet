@@ -15,7 +15,7 @@
                     @csrf
                     <div class="card-header border-bottom p-3">
                         <h5 class="mb-0 fw-bold">Nueva categoría</h5>
-                        <small class="text-muted">Complete la información para crear una nueva categoría de PQRSF.</small>
+                        <small class="text-muted">Complete la información para crear una nueva categoría de peticiones.</small>
                     </div>
                     <div class="card-body">
                         @include('core::components.alerts')
@@ -62,7 +62,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">¿Qué es una categoría?</h6>
                     <p class="card-text text-muted">
-                        Las categorías clasifican las PQRSF por tema (Servicios, Infraestructura, Salud, etc.), facilitando el enrutamiento y los reportes.
+                        Las categorías clasifican las peticiones por tema (Servicios, Infraestructura, Salud, etc.), facilitando el enrutamiento y los reportes.
                     </p>
                 </div>
                 <hr class="my-0">

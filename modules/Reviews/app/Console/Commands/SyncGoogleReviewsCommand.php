@@ -19,7 +19,13 @@ class SyncGoogleReviewsCommand extends Command
 
         $query = ReviewGoogleLocation::query()
             ->active()
-            ->whereHas('connection', fn ($q) => $q->active());
+            ->where(function ($q) {
+                // OAuth locations: must have an active connection
+                $q->where('sync_strategy', 'oauth')
+                    ->whereHas('connection', fn ($q) => $q->active());
+                // Non-OAuth strategies (places_api, serpapi) sync automatically too
+                $q->orWhereIn('sync_strategy', ['places_api', 'serpapi']);
+            });
 
         if ($connectionId) {
             $connection = ReviewGoogleConnection::query()->find($connectionId);

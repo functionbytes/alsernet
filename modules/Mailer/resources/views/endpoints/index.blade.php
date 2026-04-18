@@ -259,7 +259,7 @@
 
 {{-- API Documentation Modal --}}
 <div class="modal fade" id="apiDocModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold">
@@ -302,7 +302,7 @@
 
 {{-- Examples Modal --}}
 <div class="modal fade" id="exampleModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title fw-bold">

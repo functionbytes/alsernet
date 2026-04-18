@@ -247,8 +247,11 @@ class PageServiceProvider extends ServiceProvider
                 ['label' => 'Webhooks', 'route' => 'pages.webhooks.index', 'permission' => 'page.manage-webhooks'],
                 ['label' => 'Importar', 'route' => 'pages.import', 'permission' => 'page.import'],
                 ['label' => 'Exportar', 'route' => 'pages.export', 'permission' => 'page.export'],
-                ['label' => 'Configuracion', 'route' => 'settings.pages'],
             ],
+        ]);
+
+        NavService::addItemsToSection('settings', 'Plantillas', [
+            ['label' => 'Configuracion de paginas', 'route' => 'settings.pages'],
         ]);
     }
 

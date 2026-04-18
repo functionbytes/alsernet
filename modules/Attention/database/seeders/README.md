@@ -1,6 +1,6 @@
 # Attention Module - Seeders Documentation
 
-Este documento describe todos los seeders disponibles en el módulo de Atención (PQRSF).
+Este documento describe todos los seeders disponibles en el módulo de Atención (peticiones).
 
 ## Estructura de Seeders
 
@@ -10,7 +10,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 
 #### 1. AttentionTypesSeeder
 **Archivo:** `AttentionTypesSeeder.php`
-**Propósito:** Crea los 5 tipos principales de PQRSF
+**Propósito:** Crea los 5 tipos principales de peticiones
 **Datos creados:**
 - P - Petición
 - Q - Queja
@@ -20,7 +20,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 
 #### 2. AttentionCategoriesSeeder
 **Archivo:** `AttentionCategoriesSeeder.php`
-**Propósito:** Crea las categorías temáticas para clasificar PQRSF
+**Propósito:** Crea las categorías temáticas para clasificar peticiones
 **Datos creados:**
 - Atención al Cliente
 - Facturación
@@ -30,7 +30,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 
 #### 3. AttentionDepartmentsSeeder
 **Archivo:** `AttentionDepartmentsSeeder.php`
-**Propósito:** Crea los departamentos que gestionarán PQRSF
+**Propósito:** Crea los departamentos que gestionarán peticiones
 **Datos creados:**
 - Atención al Ciudadano
 - Jurídica
@@ -40,7 +40,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 
 #### 4. AttentionSedesSeeder
 **Archivo:** `AttentionSedesSeeder.php`
-**Propósito:** Crea las sedes donde se pueden radicar PQRSF
+**Propósito:** Crea las sedes donde se pueden radicar peticiones
 **Datos creados:**
 - Sede Principal (Bogotá)
 - Portal Web (Online)
@@ -49,10 +49,10 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 **Archivo:** `AttentionSlaPoliciesSeeder.php`
 **Propósito:** Crea políticas de SLA (Service Level Agreement) con tiempos de respuesta
 **Datos creados:**
-- PQRSF Estándar (2/10/15 días)
-- PQRSF Prioritario (1/5/7.5 días)
-- PQRSF Emergencia (8h/2/3 días)
-- PQRSF Extendido (3/20/30 días)
+- peticiones Estándar (2/10/15 días)
+- peticiones Prioritario (1/5/7.5 días)
+- peticiones Emergencia (8h/2/3 días)
+- peticiones Extendido (3/20/30 días)
 
 #### 6. AttentionPermissionsSeeder
 **Archivo:** `AttentionPermissionsSeeder.php`
@@ -60,7 +60,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 **Roles creados:**
 - super-admin: Acceso completo
 - attention-admin: Administrador del módulo
-- attention-manager: Supervisor de PQRSF
+- attention-manager: Supervisor de peticiones
 - attention-agent: Agente de atención
 - attention-user: Usuario básico
 
@@ -92,9 +92,9 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 **Archivo:** `AttentionDemoDataSeeder.php`
 **Propósito:** Crea datos de demostración para desarrollo y testing
 **Datos creados:**
-- 50 PQRSF de ejemplo con estados variados
-- 2-5 notas internas por PQRSF
-- 3-8 acciones de historial por PQRSF
+- 50 peticiones de ejemplo con estados variados
+- 2-5 notas internas por peticiones
+- 3-8 acciones de historial por peticiones
 
 **Requisitos previos:**
 - Debe ejecutarse después de los seeders base
@@ -119,7 +119,7 @@ Estos seeders crean los datos esenciales para el funcionamiento del módulo:
 
 Las siguientes factories están disponibles para crear datos de prueba:
 
-- **AttentionFactory:** Crea PQRSF
+- **AttentionFactory:** Crea peticiones
 - **AttentionTypeFactory:** Crea tipos de atención
 - **AttentionCategoryFactory:** Crea categorías
 - **AttentionDepartmentFactory:** Crea departamentos

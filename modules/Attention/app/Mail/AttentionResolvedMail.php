@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email enviado al ciudadano cuando su PQRSF es resuelto
+ * Email enviado al ciudadano cuando su peticiones es resuelto
  *
  * Incluye la respuesta oficial e invitación a encuesta de satisfacción
  */
@@ -44,7 +44,7 @@ class AttentionResolvedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "PQRSF Resuelto - Radicado: {$this->attention->radicado}",
+            subject: "peticiones Resuelto - Radicado: {$this->attention->radicado}",
         );
     }
 

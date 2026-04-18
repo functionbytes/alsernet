@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Encuesta de satisfacción para un PQRSF resuelto
+ * Encuesta de satisfacción para un peticiones resuelto
  */
 class AttentionSatisfaction extends Model
 {

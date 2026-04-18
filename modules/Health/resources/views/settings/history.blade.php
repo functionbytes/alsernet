@@ -81,7 +81,7 @@
                     </div>
                     <div class="flex-fill">
                         <div class="input-group h-100">
-                            <span class="input-group-text bg-white border-end-0">
+                            <span class="input-group-text bg-white border-end-1">
                                 <i class="fas fa-circle-dot text-muted"></i>
                             </span>
                             <div class="form-control border-start-0 d-flex align-items-center gap-2 flex-wrap" id="currentStatusBadges" style="height:auto; min-height:38px;">

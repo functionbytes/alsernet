@@ -1,5 +1,5 @@
 @component('mail::message')
-# PQRSF Cerrado
+# peticiones Cerrado
 
 Estimado/a **{{ $nombreCompleto }}**,
 
@@ -46,7 +46,7 @@ Ver Historial Completo
 
 ### ¿Necesita ayuda adicional?
 
-Si tiene una nueva consulta o solicitud relacionada con este tema, le invitamos a radicar un nuevo PQRSF a través de nuestros canales oficiales:
+Si tiene una nueva consulta o solicitud relacionada con este tema, le invitamos a radicar un nuevo peticiones a través de nuestros canales oficiales:
 
 - Portal web
 - Presencial en nuestras oficinas

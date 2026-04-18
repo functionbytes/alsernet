@@ -23,7 +23,9 @@
                 'totalSteps'     => $steps->count(),
                 'floatingLabel'  => $form->floating_label ?? false,
                 'buttonText'     => $form->submit_button_text ?? 'Enviar',
+                'buttonColor'    => $form->button_color ?? null,
                 'showTitle'      => true,
+                'theme'          => $form->theme ?? 'default',
                 'captchaEnabled' => $form->captcha_enabled && class_exists(\Modules\Captcha\Facades\Captcha::class),
             ])
         </div>

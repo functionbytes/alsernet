@@ -21,7 +21,7 @@ use Modules\Attention\Services\AttentionRoutingService;
 use Throwable;
 
 /**
- * Public-facing controller for PQRSF form and tracking
+ * Public-facing controller for peticiones form and tracking
  * No authentication required - accessible by citizens
  */
 class AttentionPublicController extends Controller
@@ -31,12 +31,12 @@ class AttentionPublicController extends Controller
     ) {}
 
     /**
-     * Show the public PQRSF submission form
-     * GET /pqrsf
+     * Show the public peticiones submission form
+     * GET /peticiones
      */
     public function form(): View
     {
-        return view('template::views.pqrsf.form', [
+        return view('template::views.peticiones.form', [
             'types' => AttentionType::where('is_active', true)->orderBy('name')->get(),
             'categories' => AttentionCategory::where('is_active', true)->orderBy('name')->get(),
             'sedes' => AttentionSede::where('is_active', true)->orderBy('name')->get(),
@@ -45,8 +45,8 @@ class AttentionPublicController extends Controller
     }
 
     /**
-     * Process public PQRSF submission
-     * POST /pqrsf
+     * Process public peticiones submission
+     * POST /peticiones
      */
     public function submit(PublicSubmitAttentionRequest $request): RedirectResponse
     {
@@ -77,7 +77,7 @@ class AttentionPublicController extends Controller
                 }
             }
 
-            $attention->logAction('created', 'PQRSF creado por el ciudadano via formulario publico', null);
+            $attention->logAction('created', 'peticiones creado por el ciudadano via formulario publico', null);
 
             app(AttentionRoutingService::class)->applyRules($attention);
 
@@ -99,7 +99,7 @@ class AttentionPublicController extends Controller
             AttentionCreated::dispatch($attention);
 
             return redirect()
-                ->route('pqrsf.success', $attention->radicado)
+                ->route('peticiones.success', $attention->radicado)
                 ->with('success', 'Su solicitud ha sido radicada exitosamente.');
 
         } catch (Throwable $e) {
@@ -120,7 +120,7 @@ class AttentionPublicController extends Controller
 
     /**
      * Show success page after submission
-     * GET /pqrsf/success/{radicado}
+     * GET /peticiones/success/{radicado}
      */
     public function showSuccess(string $radicado): View
     {
@@ -128,27 +128,27 @@ class AttentionPublicController extends Controller
             ->select(['radicado', 'subject', 'status', 'customer_email', 'is_anonymous', 'created_at'])
             ->firstOrFail();
 
-        return view('template::views.pqrsf.success', [
+        return view('template::views.peticiones.success', [
             'attention' => $attention,
         ]);
     }
 
     /**
      * Show tracking search form (handles ?radicado= query param)
-     * GET /pqrsf/tracking
+     * GET /peticiones/tracking
      */
     public function trackingForm(Request $request): RedirectResponse|View
     {
         if ($radicado = $request->query('radicado')) {
-            return redirect()->route('pqrsf.tracking.result', $radicado);
+            return redirect()->route('peticiones.tracking.result', $radicado);
         }
 
-        return view('template::views.pqrsf.tracking');
+        return view('template::views.peticiones.tracking');
     }
 
     /**
      * Show tracking result
-     * GET /pqrsf/tracking/{radicado}
+     * GET /peticiones/tracking/{radicado}
      */
     public function trackingResult(string $radicado): View
     {
@@ -156,7 +156,7 @@ class AttentionPublicController extends Controller
             ->byRadicado($radicado)
             ->first();
 
-        return view('template::views.pqrsf.tracking', [
+        return view('template::views.peticiones.tracking', [
             'attention' => $attention,
             'radicado' => $radicado,
         ]);

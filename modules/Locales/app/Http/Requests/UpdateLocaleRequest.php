@@ -3,6 +3,7 @@
 namespace Modules\Locales\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateLocaleRequest extends FormRequest
 {
@@ -14,12 +15,12 @@ class UpdateLocaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'alpha_dash', 'max:10', 'unique:locales,code,'.$this->locale->id],
+            'code' => ['required', 'alpha_dash', 'max:10', Rule::unique('locales', 'code')->ignore($this->route('locale'))],
             'name' => ['required', 'string', 'max:100'],
             'native_name' => ['required', 'string', 'max:100'],
             'flag' => ['nullable', 'string', 'max:10'],
             'is_active' => ['boolean'],
-            'order' => ['integer', 'min:0'],
+            'order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

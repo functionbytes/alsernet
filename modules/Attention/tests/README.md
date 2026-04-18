@@ -1,6 +1,6 @@
 # Tests del Módulo Attention
 
-Suite completa de tests para el módulo PQRSF (Attention).
+Suite completa de tests para el módulo peticiones (Attention).
 
 ## Estructura de Tests
 
@@ -72,7 +72,7 @@ vendor/bin/phpunit tests/Feature/AttentionSubmissionTest.php
 
 **Un test específico:**
 ```bash
-vendor/bin/phpunit --filter test_can_submit_pqrsf_successfully
+vendor/bin/phpunit --filter test_can_submit_peticiones_successfully
 ```
 
 ### Con coverage
@@ -88,12 +88,12 @@ Luego abrir `build/coverage/index.html` en el navegador.
 ### Feature Tests (API)
 
 #### AttentionSubmissionTest (13 tests)
-- ✓ test_can_submit_pqrsf_successfully
+- ✓ test_can_submit_peticiones_successfully
 - ✓ test_can_submit_with_files
 - ✓ test_validates_required_fields
 - ✓ test_validates_email_format
 - ✓ test_generates_unique_radicado
-- ✓ test_can_submit_anonymous_pqrsf
+- ✓ test_can_submit_anonymous_peticiones
 - ✓ test_validates_non_anonymous_requires_contact_info
 - ✓ test_normalizes_customer_names_to_uppercase
 - ✓ test_creates_initial_action_log_on_submission
@@ -229,7 +229,7 @@ $department = $this->createDepartment(['name' => 'Atención']);
 // Crear usuarios
 $user = $this->createUser(['email' => 'user@example.com']);
 
-// Crear PQRSF
+// Crear peticiones
 $attention = $this->createAttention(['subject' => 'Mi solicitud']);
 $anonymous = $this->createAnonymousAttention();
 

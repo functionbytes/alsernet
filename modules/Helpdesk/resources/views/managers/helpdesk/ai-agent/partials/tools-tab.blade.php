@@ -1,16 +1,16 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h5 class="mb-1"><i class="ti ti-tool me-2"></i>Herramientas del Agente</h5>
+        <h5 class="mb-1"><i class="fa-solid fa-wrench me-2"></i>Herramientas del Agente</h5>
         <p class="text-muted mb-0">Define funciones y APIs que el agente puede usar para realizar acciones</p>
     </div>
     <button type="button" class="btn btn-success" onclick="openToolModal()">
-        <i class="ti ti-plus me-2"></i>Nueva Herramienta
+        <i class="fa-solid fa-plus me-2"></i>Nueva Herramienta
     </button>
 </div>
 
 @if($tools->isEmpty())
     <div class="alert alert-info">
-        <i class="ti ti-info-circle me-2"></i>
+        <i class="fa-solid fa-circle-info me-2"></i>
         <strong>No hay herramientas configuradas</strong>
         <p class="mb-0 mt-2">Crea herramientas para que el agente pueda realizar acciones como consultar bases de datos, llamar APIs externas, o ejecutar funciones personalizadas.</p>
     </div>
@@ -39,7 +39,7 @@
                             <strong>{{ $tool->name }}</strong>
                             @if($tool->requires_approval)
                                 <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="Requiere aprobación">
-                                    <i class="ti ti-lock"></i>
+                                    <i class="fa-solid fa-lock"></i>
                                 </span>
                             @endif
                         </td>
@@ -63,13 +63,13 @@
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-light" onclick="viewTool({{ $tool->id }})" data-bs-toggle="tooltip" title="Ver detalles">
-                                    <i class="ti ti-eye"></i>
+                                    <i class="fa-solid fa-eye"></i>
                                 </button>
                                 <button type="button" class="btn btn-light" onclick="editTool({{ $tool->id }})" data-bs-toggle="tooltip" title="Editar">
-                                    <i class="ti ti-edit"></i>
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button type="button" class="btn btn-light text-danger" onclick="deleteTool({{ $tool->id }})" data-bs-toggle="tooltip" title="Eliminar">
-                                    <i class="ti ti-trash"></i>
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
                         </td>

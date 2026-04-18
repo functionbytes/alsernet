@@ -9,7 +9,7 @@
         <div class="card-body px-4 py-3">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h4 class="fw-semibold mb-3"><i class="ti ti-robot me-2"></i>Configuración del Agente IA</h4>
+                    <h4 class="fw-semibold mb-3"><i class="fa-solid fa-robot me-2"></i>Configuración del Agente IA</h4>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ route('manager.dashboard') }}">Dashboard</a></li>
@@ -41,7 +41,7 @@
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="ti ti-check me-2"></i>{{ session('success') }}
+            <i class="fa-solid fa-check me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -53,34 +53,34 @@
             <ul class="nav nav-pills user-profile-tab justify-content-start mt-2 bg-light-info rounded-2" role="tablist">
                 <li class="nav-item" role="presentation">
                     <a class="nav-link position-relative rounded-0 active d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-settings" role="tab" aria-selected="true">
-                        <i class="ti ti-settings me-2 fs-6"></i>
+                        <i class="fa-solid fa-gear me-2 fs-6"></i>
                         <span class="d-none d-md-block">Configuración</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-tags" role="tab" aria-selected="false">
-                        <i class="ti ti-tags me-2 fs-6"></i>
+                        <i class="fa-solid fa-tags me-2 fs-6"></i>
                         <span class="d-none d-md-block">Tags</span>
                         <span class="badge bg-primary ms-2" id="tags-count">0</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-tools" role="tab" aria-selected="false">
-                        <i class="ti ti-tool me-2 fs-6"></i>
+                        <i class="fa-solid fa-wrench me-2 fs-6"></i>
                         <span class="d-none d-md-block">Tools</span>
                         <span class="badge bg-success ms-2" id="tools-count">0</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-knowledge" role="tab" aria-selected="false">
-                        <i class="ti ti-brain me-2 fs-6"></i>
+                        <i class="fa-solid fa-brain me-2 fs-6"></i>
                         <span class="d-none d-md-block">Base de Conocimiento</span>
                         <span class="badge bg-warning ms-2" id="knowledge-count">0</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-flows" role="tab" aria-selected="false">
-                        <i class="ti ti-timeline me-2 fs-6"></i>
+                        <i class="fa-solid fa-timeline me-2 fs-6"></i>
                         <span class="d-none d-md-block">Flows</span>
                         <span class="badge bg-info ms-2" id="flows-count">0</span>
                     </a>
@@ -203,7 +203,7 @@ $(document).ready(function() {
                 error: function(xhr) {
                     container.html(`
                         <div class="alert alert-danger">
-                            <i class="ti ti-alert-circle me-2"></i>
+                            <i class="fa-solid fa-circle-exclamation me-2"></i>
                             Error al cargar el contenido. Por favor, intenta de nuevo.
                         </div>
                     `);

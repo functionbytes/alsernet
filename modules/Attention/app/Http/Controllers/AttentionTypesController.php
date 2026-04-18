@@ -189,7 +189,7 @@ class AttentionTypesController extends Controller
     {
         // Check if type has assigned attentions
         if ($type->attentions()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar el tipo porque tiene PQRSF asignados.');
+            return back()->with('error', 'No se puede eliminar el tipo porque tiene peticiones asignados.');
         }
 
         $type->delete();

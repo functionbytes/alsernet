@@ -90,7 +90,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title mb-2">PQRSF asignadas</h6>
+                                        <h6 class="card-title mb-2">peticiones asignadas</h6>
                                         <h4 class="mb-1 fw-bold">{{ $policy->attentions->count() }}</h4>
                                         <small class="text-muted">Con esta política</small>
                                     </div>
@@ -200,7 +200,7 @@
             {{-- Multiplicadores por Tipo --}}
             <div class="card-body border-bottom">
                 <h6 class="fw-bold text-dark mb-1">Multiplicadores por tipo</h6>
-                <p class="text-muted mb-3">Tiempos SLA ajustados según el tipo de PQRSF.</p>
+                <p class="text-muted mb-3">Tiempos SLA ajustados según el tipo de peticiones.</p>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
@@ -234,7 +234,7 @@
             @if(!empty($breachStats['by_type']))
                 <div class="card-body border-bottom">
                     <h6 class="fw-bold text-dark mb-1">Incumplimientos por tipo</h6>
-                    <p class="text-muted mb-3">Distribución de incumplimientos según la categoría de PQRSF.</p>
+                    <p class="text-muted mb-3">Distribución de incumplimientos según la categoría de peticiones.</p>
                     @foreach($breachStats['by_type'] as $type => $count)
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
@@ -259,7 +259,7 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">PQRSF</th>
+                                <th class="ps-4">peticiones</th>
                                 <th>Tipo</th>
                                 <th>Minutos excedidos</th>
                                 <th>Escalado</th>

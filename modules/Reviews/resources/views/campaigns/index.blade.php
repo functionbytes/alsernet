@@ -75,7 +75,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -304,7 +304,7 @@
 
     {{-- Modal estadisticas --}}
     <div class="modal fade" id="modal-stats" tabindex="-1" aria-labelledby="modal-stats-label" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modal-stats-label">Estadísticas</h5>

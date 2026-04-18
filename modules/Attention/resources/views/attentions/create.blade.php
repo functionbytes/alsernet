@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Radicar nuevo PQRSF')
+@section('title', 'Radicar nuevo peticiones')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Radicar nuevo PQRSF'])
+    @include('core::components.card', ['title' => 'Radicar nuevo peticiones'])
 
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
@@ -14,7 +14,7 @@
 
                     <div class="card-body border-top">
                         <div class="d-flex no-block align-items-center mb-4">
-                            <h5 class="mb-0">Formulario de Radicación PQRSF</h5>
+                            <h5 class="mb-0">Formulario de Radicación peticiones</h5>
                         </div>
                         <p class="card-subtitle mb-3">
                             Complete el siguiente formulario para radicar una Petición, Queja, Reclamo, Sugerencia o Felicitación.
@@ -25,7 +25,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label class="control-label col-form-label">Tipo de PQRSF <span class="text-danger">*</span></label>
+                                    <label class="control-label col-form-label">Tipo de peticiones <span class="text-danger">*</span></label>
                                     <select class="form-select select2" name="type_id" id="type_id" required>
                                         <option value="">Seleccione un tipo</option>
                                         @foreach($types ?? [] as $type)
@@ -213,7 +213,7 @@
                                 <div class="border-top pt-3 mt-4">
                                     <div class="d-flex gap-2">
                                         <button type="submit" class="btn btn-primary px-4 waves-effect waves-light">
-                                            <i class="fa-duotone fa-save"></i> Radicar PQRSF
+                                            <i class="fa-duotone fa-save"></i> Radicar peticiones
                                         </button>
                                         <a href="{{ route('attention.index') }}" class="btn btn-outline-secondary px-4">
                                             <i class="fa-duotone fa-times"></i> Cancelar

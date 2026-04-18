@@ -1,5 +1,5 @@
 @component('mail::message')
-# Su PQRSF está en proceso
+# Su peticiones está en proceso
 
 Estimado/a **{{ $nombreCompleto }}**,
 
@@ -29,7 +29,7 @@ Ver Estado Actual
 
 ### Seguimiento
 
-Puede consultar el estado de su PQRSF en cualquier momento usando el número de radicado. Le notificaremos cuando haya novedades o cuando su caso sea resuelto.
+Puede consultar el estado de su peticiones en cualquier momento usando el número de radicado. Le notificaremos cuando haya novedades o cuando su caso sea resuelto.
 
 ---
 

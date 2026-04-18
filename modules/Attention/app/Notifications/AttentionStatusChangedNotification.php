@@ -38,8 +38,8 @@ class AttentionStatusChangedNotification extends Notification implements ShouldB
     public function toDatabase($notifiable): array
     {
         return [
-            'title' => '🔄 Estado de PQRSF actualizado',
-            'message' => "El PQRSF #{$this->attention->radicado} cambió de estado: ".
+            'title' => '🔄 Estado de peticiones actualizado',
+            'message' => "El peticiones #{$this->attention->radicado} cambió de estado: ".
                          "{$this->oldStatus->label()} → {$this->newStatus->label()}",
             'icon' => 'fa-duotone fas fa-exchange-alt',
             'color' => $this->newStatus->color(),
@@ -58,7 +58,7 @@ class AttentionStatusChangedNotification extends Notification implements ShouldB
     {
         return new BroadcastMessage([
             'title' => '🔄 Estado actualizado',
-            'message' => "PQRSF #{$this->attention->radicado}: {$this->newStatus->label()}",
+            'message' => "peticiones #{$this->attention->radicado}: {$this->newStatus->label()}",
             'icon' => 'fa-duotone fas fa-exchange-alt',
             'color' => $this->newStatus->color(),
             'action_url' => url("/attentions/show/{$this->attention->uid}"),

@@ -74,7 +74,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -134,7 +134,7 @@
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="categories-table">
+                        <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
@@ -154,7 +154,7 @@
                                             @if($category->is_active)
                                                 <span class="badge bg-success-subtle text-success">Activa</span>
                                             @else
-                                                <span class="badge bg-light text-black">Inactiva</span>
+                                                <span class="badge bg-light text-dark">Inactiva</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -164,9 +164,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('settings.forms.categories.edit', $category) }}">
-                                                            Editar
-                                                        </a>
+                                                        <a class="dropdown-item" href="{{ route('settings.forms.categories.edit', $category) }}">Editar</a>
                                                     </li>
                                                     <li>
                                                         <a class="dropdown-item toggle-category" href="javascript:void(0)"
@@ -191,18 +189,16 @@
                             </tbody>
                         </table>
                     </div>
-
                 @endif
             </div>
 
-        </div>
-    </div>
+            @if($categories->hasPages())
+                <div class="card-footer">
+                    {{ $categories->links() }}
+                </div>
+            @endif
 
-    {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
-        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
-        </button>
+        </div>
     </div>
 
     {{-- Bulk modal --}}
@@ -225,12 +221,19 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                <div class="modal-footer flex-column">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-2">Aplicar</button>
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionada(s) &mdash; Aplicar acción
+        </button>
     </div>
 
     @include('core::components.delete')

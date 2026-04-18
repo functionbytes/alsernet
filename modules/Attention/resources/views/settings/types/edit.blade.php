@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Editar tipo de PQRSF')
+@section('title', 'Editar tipo de peticiones')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Editar tipo de PQRSF'])
+    @include('core::components.card', ['title' => 'Editar tipo de peticiones'])
 
     <div class="row g-3">
 
@@ -15,7 +15,7 @@
                     @csrf
                     @method('PATCH')
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Editar tipo de PQRSF</h5>
+                        <h5 class="mb-0 fw-bold">Editar tipo de peticiones</h5>
                         <small class="text-muted">Actualice la información del tipo de solicitud.</small>
                     </div>
                     <div class="card-body">
@@ -130,7 +130,7 @@
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">¿Qué es un tipo de PQRSF?</h6>
+                    <h6 class="card-title mb-3">¿Qué es un tipo de peticiones?</h6>
                     <p class="card-text text-muted">
                         Cada tipo representa una modalidad de solicitud ciudadana: Petición (P), Queja (Q), Reclamo (R), Sugerencia (S) o Felicitación (F).
                     </p>

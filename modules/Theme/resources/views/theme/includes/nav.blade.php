@@ -3,11 +3,11 @@
 
     // Obtener todos los datos de navegación procesados desde el backend
     // Esto incluye: miniItems filtrados, sidebars filtrados, y el ID del sidebar activo
-    ['miniItems' => $miniItems, 'sidebars' => $allSidebars, 'activeSidebarId' => $activeSidebarId] = NavService::getNavDataForUser();
+    ['miniItems' => $miniItems, 'sidebars' => $allSidebars, 'activeSidebarId' => $activeSidebarId, 'activeMiniId' => $activeMiniId, 'activeItemRoute' => $activeItemRoute] = NavService::getNavDataForUser();
     $currentRoute = request()->route()?->getName() ?? '';
 @endphp
 
-<aside class="side-mini-panel with-vertical">
+<aside class="side-mini-panel {{ $activeSidebarId ? 'with-vertical' : '' }}">
     <!-- ---------------------------------- -->
     <!-- Start Vertical Layout Sidebar -->
     <!-- ---------------------------------- -->
@@ -25,7 +25,7 @@
                 <ul class="mini-nav-ul" data-simplebar="">
                     @forelse($miniItems as $miniItem)
                         @php
-                            $isActive = $activeSidebarId === $miniItem['sidebar_id'];
+                            $isActive = $activeMiniId === $miniItem['sidebar_id'];
                         @endphp
                         <!-- --------------------------------------------------------------------------------------------------------- -->
                         <!-- {{ $miniItem['tooltip'] }} -->
@@ -59,7 +59,7 @@
             <!-- ---------------------------------- -->
             <!-- Sidebar Menus -->
             <!-- ---------------------------------- -->
-            <div class="sidebarmenu">
+            <div class="sidebarmenu {{ $activeSidebarId ? '' : 'd-none' }}">
                 @forelse($allSidebars as $sidebarId => $sidebar)
                     @php
                         $sidebarIsActive = $activeSidebarId === $sidebarId;
@@ -67,7 +67,7 @@
                     <!-- ---------------------------------- -->
                     <!-- Sidebar: {{ $sidebar['sections'][0]['title'] ?? $sidebarId }} -->
                     <!-- ---------------------------------- -->
-                    <nav class="sidebar-nav scroll-sidebar {{ $sidebarIsActive ? 'd-block' : '' }}"
+                    <nav class="sidebar-nav scroll-sidebar {{ $sidebarIsActive ? 'd-block' : 'd-none' }}"
                          id="menu-right-{{ $sidebarId }}"
                          data-simplebar="">
                         <ul class="sidebar-menu" id="sidebarnav-{{ $sidebarId }}">
@@ -90,7 +90,7 @@
                                 @forelse($section['items'] as $item)
                                     @php
                                         $itemRoute = $item['route'] ?? '';
-                                        $isItemActive = $itemRoute && request()->routeIs($itemRoute . '*');
+                                        $isItemActive = $itemRoute && (request()->routeIs($itemRoute . '*') || $itemRoute === $activeItemRoute);
                                         $canAccessItem = \Modules\Theme\Services\NavService::userCanAccessItem($item, auth()->user());
                                         $hasSubItems = !empty($item['children']) && is_array($item['children']);
                                     @endphp
@@ -193,6 +193,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         'use strict';
 
+        // Reemplazar cada mini-nav-item con un clon para eliminar listeners previos (sidebarmenu.js)
+        document.querySelectorAll('.mini-nav-item').forEach(item => {
+            const clone = item.cloneNode(true);
+            item.parentNode.replaceChild(clone, item);
+        });
+
         // Add click handlers to mini nav items
         document.querySelectorAll('.mini-nav-item').forEach(item => {
             item.addEventListener('click', function(e) {
@@ -232,6 +238,13 @@
                 if (targetSidebar) {
                     targetSidebar.classList.remove('d-none');
                     targetSidebar.classList.add('d-block');
+
+                    // Asegurar que el contenedor y el aside estén visibles
+                    const sidebarmenu = document.querySelector('.sidebarmenu');
+                    if (sidebarmenu) sidebarmenu.classList.remove('d-none');
+
+                    const miniPanel = document.querySelector('aside.side-mini-panel');
+                    if (miniPanel) miniPanel.classList.add('with-vertical');
                 } else {
                     console.warn(`Sidebar not found: menu-right-${sidebarId}`);
                 }

@@ -13,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
 
 /**
- * Controller for managing PQRSF file attachments
+ * Controller for managing peticiones file attachments
  * Handles upload, list, download, and delete operations
  */
 class AttentionFileController extends Controller
@@ -28,8 +28,8 @@ class AttentionFileController extends Controller
     }
 
     /**
-     * Upload multiple files to a PQRSF
-     * POST /api/settings/pqrsf/{radicado}/files
+     * Upload multiple files to a peticiones
+     * POST /api/settings/peticiones/{radicado}/files
      */
     public function upload(UploadFilesRequest $request, string $radicado): JsonResponse
     {
@@ -108,8 +108,8 @@ class AttentionFileController extends Controller
     }
 
     /**
-     * List all files for a PQRSF
-     * GET /api/settings/pqrsf/{radicado}/files
+     * List all files for a peticiones
+     * GET /api/settings/peticiones/{radicado}/files
      */
     public function list(Request $request, string $radicado): JsonResponse
     {
@@ -169,7 +169,7 @@ class AttentionFileController extends Controller
 
     /**
      * Download a specific file
-     * GET /api/settings/pqrsf/{radicado}/files/{mediaId}/download
+     * GET /api/settings/peticiones/{radicado}/files/{mediaId}/download
      */
     public function download(string $radicado, int $mediaId): mixed
     {
@@ -212,8 +212,8 @@ class AttentionFileController extends Controller
     }
 
     /**
-     * Delete a file from a PQRSF
-     * DELETE /api/settings/pqrsf/{radicado}/files/{mediaId}
+     * Delete a file from a peticiones
+     * DELETE /api/settings/peticiones/{radicado}/files/{mediaId}
      */
     public function delete(string $radicado, int $mediaId): JsonResponse
     {
@@ -280,7 +280,7 @@ class AttentionFileController extends Controller
 
     /**
      * Get file information
-     * GET /api/settings/pqrsf/{radicado}/files/{mediaId}
+     * GET /api/settings/peticiones/{radicado}/files/{mediaId}
      */
     public function show(string $radicado, int $mediaId): JsonResponse
     {
@@ -340,7 +340,7 @@ class AttentionFileController extends Controller
 
     /**
      * Bulk delete files
-     * POST /api/settings/pqrsf/{radicado}/files/bulk-delete
+     * POST /api/settings/peticiones/{radicado}/files/bulk-delete
      */
     public function bulkDelete(Request $request, string $radicado): JsonResponse
     {
@@ -416,8 +416,8 @@ class AttentionFileController extends Controller
     }
 
     /**
-     * Get file statistics for a PQRSF
-     * GET /api/settings/pqrsf/{radicado}/files/stats
+     * Get file statistics for a peticiones
+     * GET /api/settings/peticiones/{radicado}/files/stats
      */
     public function stats(string $radicado): JsonResponse
     {

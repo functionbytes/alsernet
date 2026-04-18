@@ -159,7 +159,7 @@
                                 </div>
                             @endif
                             @if ($submission->referrer_url)
-                                <div class="col-sm-12 col-md-6">
+                                <div class="col-sm-12 col-md-12">
                                     <label class="form-label fw-semibold text-muted">Referrer URL</label>
                                     <p class="mb-0 text-truncate" title="{{ $submission->referrer_url }}">
                                         {{ $submission->referrer_url }}
@@ -167,7 +167,7 @@
                                 </div>
                             @endif
                             @if ($submission->time_to_complete)
-                                <div class="col-sm-12 col-md-6">
+                                <div class="col-sm-12 col-md-12">
                                     <label class="form-label fw-semibold text-muted">Tiempo de completado</label>
                                     <p class="mb-0">{{ gmdate('i:s', $submission->time_to_complete) }} min</p>
                                 </div>

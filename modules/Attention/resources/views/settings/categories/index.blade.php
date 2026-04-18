@@ -4,7 +4,7 @@
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Categorías de PQRSF'])
+    @include('core::components.card', ['title' => 'Categorías de peticiones'])
 
     <div class="widget-content searchable-container list">
 
@@ -16,7 +16,7 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Categorías de PQRSF</h5>
+                        <h5 class="mb-1 fw-bold">Categorías de peticiones</h5>
                         <p class="small mb-0 text-muted">Clasifica las solicitudes por temas (Servicios, Infraestructura, Salud, etc.)</p>
                     </div>
                     <div class="d-flex gap-2">
@@ -66,7 +66,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -105,7 +105,7 @@
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
-                                    <th class="text-center">PQRSF</th>
+                                    <th class="text-center">peticiones</th>
                                     <th class="text-center">Estado</th>
                                     <th>Fecha</th>
                                     <th class="text-center">Acciones</th>
@@ -175,7 +175,7 @@
                                 @if(request('search') || request('status'))
                                     No hay resultados para los criterios de búsqueda
                                 @else
-                                    Crea la primera categoría para clasificar las PQRSF
+                                    Crea la primera categoría para clasificar las peticiones
                                 @endif
                             </p>
                             @if(!request('search') && !request('status'))

@@ -5,6 +5,8 @@ use Modules\Forms\Http\Controllers\FormAccessTokenController;
 use Modules\Forms\Http\Controllers\FormCategoryController;
 use Modules\Forms\Http\Controllers\FormController;
 use Modules\Forms\Http\Controllers\FormFieldController;
+use Modules\Forms\Http\Controllers\FormFieldEditorController;
+use Modules\Forms\Http\Controllers\FormFieldTypeSettingController;
 use Modules\Forms\Http\Controllers\FormFollowUpController;
 use Modules\Forms\Http\Controllers\FormPublicController;
 use Modules\Forms\Http\Controllers\FormsDashboardController;
@@ -22,6 +24,7 @@ Route::middleware(['web', 'auth'])
     ->name('forms.inbox.')
     ->group(function () {
         Route::get('/', [FormsInboxController::class, 'index'])->name('index');
+        Route::post('/bulk-action', [FormsInboxController::class, 'bulkAction'])->name('bulk-action');
         Route::get('/dashboard', [FormsDashboardController::class, 'index'])->name('dashboard');
         Route::get('/{submission}/emails', [FormSubmissionEmailController::class, 'index'])->name('emails.index');
         Route::get('/{submission}/emails/{email}/preview', [FormSubmissionEmailController::class, 'preview'])->name('emails.preview');
@@ -50,6 +53,12 @@ Route::middleware(['web', 'throttle:20,1'])
         Route::get('/{slug}', [FormPublicController::class, 'show'])->name('show');
     });
 
+// ─── Visual editor (sin middleware settings) ──────────────────────────────────
+
+Route::middleware(['web', 'auth'])
+    ->patch('panel/forms/fields/{field}/editor', [FormFieldEditorController::class, 'update'])
+    ->name('forms.fields.editor.update');
+
 // ─── Rutas admin ─────────────────────────────────────────────────────────────
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -66,6 +75,17 @@ Route::middleware(['web', 'auth'])->group(function () {
 
             // Import
             Route::post('/import-json', [FormController::class, 'importJson'])->name('import-json');
+
+            // Field type settings
+            Route::prefix('/field-types')->name('field-types.')->group(function () {
+                Route::get('/', [FormFieldTypeSettingController::class, 'index'])->name('index');
+                Route::post('/bulk-action', [FormFieldTypeSettingController::class, 'bulkAction'])->name('bulk-action');
+                Route::post('/reorder', [FormFieldTypeSettingController::class, 'reorder'])->name('reorder');
+                Route::get('/{typeSetting}/edit', [FormFieldTypeSettingController::class, 'edit'])->name('edit');
+                Route::put('/{typeSetting}', [FormFieldTypeSettingController::class, 'updateFull'])->name('update-full');
+                Route::patch('/{typeSetting}', [FormFieldTypeSettingController::class, 'update'])->name('update');
+                Route::patch('/{typeSetting}/toggle', [FormFieldTypeSettingController::class, 'toggle'])->name('toggle');
+            });
 
             // Categorias
             Route::prefix('/categories')->name('categories.')->group(function () {
@@ -103,6 +123,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/{form}/qrcode', [FormController::class, 'qrcode'])->name('qrcode');
             Route::get('/{form}/export-json', [FormController::class, 'exportJson'])->name('export-json');
             Route::get('/{form}/analytics', [FormController::class, 'analytics'])->name('analytics');
+            Route::get('/{form}/html-source', [FormController::class, 'htmlSource'])->name('html-source');
 
             // Configuracion del formulario (tabs)
             Route::prefix('/{form}/settings')->name('settings.')->group(function () {
@@ -125,6 +146,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::delete('/{field}', [FormFieldController::class, 'destroy'])->name('destroy');
                 Route::post('/reorder', [FormFieldController::class, 'reorder'])->name('reorder');
                 Route::post('/{field}/duplicate', [FormFieldController::class, 'duplicate'])->name('duplicate');
+                Route::post('/{field}/translate', [FormFieldController::class, 'translateWithDeepL'])->name('translate');
             });
 
             // Submissions

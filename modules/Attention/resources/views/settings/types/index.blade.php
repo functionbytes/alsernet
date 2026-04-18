@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Tipos de PQRSF')
+@section('title', 'Tipos de peticiones')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Tipos de PQRSF'])
+    @include('core::components.card', ['title' => 'Tipos de peticiones'])
 
     <div class="widget-content searchable-container list">
 
@@ -16,7 +16,7 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Tipos de PQRSF</h5>
+                        <h5 class="mb-1 fw-bold">Tipos de peticiones</h5>
                         <p class="small mb-0 text-muted">Gestiona los tipos de solicitudes disponibles (Petición, Queja, Reclamo, Sugerencia, Felicitación)</p>
                     </div>
                     <div class="d-flex gap-2">
@@ -66,7 +66,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -180,14 +180,14 @@
                                 @if(request('search') || request('status'))
                                     No se encontraron tipos
                                 @else
-                                    No hay tipos de PQRSF creados
+                                    No hay tipos de peticiones creados
                                 @endif
                             </h6>
                             <p class="text-muted mb-3">
                                 @if(request('search') || request('status'))
                                     No hay resultados para los criterios de búsqueda
                                 @else
-                                    Crea el primer tipo de PQRSF para comenzar
+                                    Crea el primer tipo de peticiones para comenzar
                                 @endif
                             </p>
                             @if(!request('search') && !request('status'))

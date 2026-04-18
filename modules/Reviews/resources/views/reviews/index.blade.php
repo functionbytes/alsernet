@@ -81,7 +81,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" id="search-input" class="form-control border-start-0 ps-0"
@@ -182,14 +182,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="select-all"></th>
-                                    <th>Fecha</th>
                                     <th>Ubicación</th>
                                     <th>Cliente</th>
                                     <th>Rating</th>
-                                    <th>Comentario</th>
                                     <th>Respuesta</th>
-                                    <th>Etiquetas</th>
-                                    <th>Visible</th>
+                                    <th>Fecha</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -201,21 +198,9 @@
                                     @endphp
                                     <tr>
                                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $review->id }}"></td>
-                                        <td><small>{{ $review->review_time?->format('d/m/Y') ?? '—' }}</small></td>
-                                        <td><small>{{ $review->location?->name ?? '—' }}</small></td>
-                                        <td><strong>{{ $review->reviewer_name }}</strong></td>
-                                        <td>
-                                            @for($s = 1; $s <= 5; $s++)
-                                                <i class="fas fa-star {{ $s <= $review->star_rating->value() ? 'text-warning' : 'text-muted opacity-25' }}" style="font-size:.8rem;"></i>
-                                            @endfor
-                                        </td>
-                                        <td>
-                                            @if($review->comment)
-                                                <span title="{{ $review->comment }}">{{ \Illuminate\Support\Str::limit($review->comment, 80) }}</span>
-                                            @else
-                                                <em class="text-muted">Sin comentario</em>
-                                            @endif
-                                        </td>
+                                        <td><strong>{{ $review->location?->name ?? '—' }}</strong></td>
+                                        <td>{{ $review->reviewer_name }}</td>
+                                        <td>{{ $review->star_rating->value() }}</td>
                                         <td>
                                             @if($replyStatus === 'published')
                                                 <span class="badge bg-success-subtle text-success">Publicada</span>
@@ -227,20 +212,7 @@
                                                 <span class="badge bg-danger-subtle text-danger">Sin responder</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            @forelse($tags as $tag)
-                                                <span class="tag-badge">{{ $tag }}</span>
-                                            @empty
-                                                <span class="text-muted">—</span>
-                                            @endforelse
-                                        </td>
-                                        <td>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input toggle-visibility" type="checkbox"
-                                                       {{ $review->is_visible ? 'checked' : '' }}
-                                                       data-review-id="{{ $review->id }}">
-                                            </div>
-                                        </td>
+                                        <td><span>{{ $review->review_time?->format('d/m/Y') ?? '—' }}</span></td>
                                         <td class="text-center">
                                             <div class="dropdown">
                                                 <a href="javascript:void(0)" class="text-muted" data-bs-toggle="dropdown">
@@ -256,6 +228,16 @@
                                                                data-comment="{{ $review->comment }}"
                                                                data-location-name="{{ $review->location?->name }}">
                                                                 Responder
+                                                            </a>
+                                                        </li>
+                                                    @endif
+                                                    @if($review->comment)
+                                                        <li>
+                                                            <a class="dropdown-item btn-translate" href="javascript:void(0)"
+                                                               data-review-id="{{ $review->id }}"
+                                                               data-comment="{{ $review->comment }}"
+                                                               data-translations="{{ json_encode($review->translations->keyBy('locale_code')->map(fn($t) => ['text' => $t->translated_text, 'lang' => $t->detected_language, 'date' => $t->translated_at?->format('d/m/Y')])) }}">
+                                                                Traducir
                                                             </a>
                                                         </li>
                                                     @endif
@@ -292,6 +274,84 @@
 
     @include('reviews::saved-filters._save-modal')
 
+    {{-- Translate modal --}}
+    <div class="modal fade" id="translateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Traducir reseña</h5>
+                        <small class="text-muted" id="translate-detected-lang-label">Traducción automática vía DeepL</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-semibold mb-1">Texto original</p>
+                    <div class="p-3 rounded border bg-light mb-4">
+                        <p class="mb-0" id="translate-original-text"></p>
+                    </div>
+                    <p class="fw-semibold mb-2">Traducciones por idioma</p>
+                    @if(($activeLocales ?? collect())->isEmpty())
+                        <div class="alert alert-warning">No hay idiomas activos configurados.</div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0" id="translate-locales-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Idioma</th>
+                                        <th>Traducción</th>
+                                        <th>Fecha</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($activeLocales ?? [] as $locale)
+                                        <tr data-locale-code="{{ $locale->code }}">
+                                            <td class="text-nowrap">
+                                                @if($locale->flag) {{ $locale->flag }} @endif
+                                                {{ $locale->native_name ?? $locale->name }}
+                                                <small class="text-muted">({{ strtoupper($locale->code) }})</small>
+                                            </td>
+                                            <td>
+                                                <span class="translate-result-cell text-muted fst-italic">Sin traducción</span>
+                                                <div class="translate-edit-inline d-none mt-1">
+                                                    <textarea class="form-control form-control-sm translate-manual-input" rows="2"></textarea>
+                                                    <div class="d-flex gap-1 mt-1">
+                                                        <button type="button" class="btn btn-sm btn-primary btn-save-manual-translation">
+                                                            <i class="fas fa-save me-1"></i>Guardar
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary btn-cancel-manual">
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="translate-date-cell text-muted small text-nowrap"></td>
+                                            <td class="text-end text-nowrap">
+                                                <button type="button" class="btn btn-sm btn-outline-primary btn-translate-locale" title="Traducir con DeepL">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-manual-translate" title="Editar manualmente">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="btn-translate-all">
+                        Traducir todos los idiomas
+                    </button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Floating bulk toolbar --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
@@ -319,6 +379,7 @@
                             <option value="unfeature">Quitar destacado</option>
                             <option value="add_tags">Agregar etiquetas...</option>
                             <option value="remove_tags">Quitar etiquetas...</option>
+                            <option value="translate">Traducir a todos los idiomas activos</option>
                         </select>
                     </div>
                 </div>
@@ -355,52 +416,66 @@
 
     {{-- Reply modal --}}
     <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Responder reseña</h5>
+                <div class="modal-header border-bottom">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Responder reseña</h5>
+                        <small class="text-muted">La respuesta se publicará en Google My Business</small>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="card mb-3 bg-light border-0">
-                        <div class="card-body py-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <strong id="modal-reviewer-name"></strong>
-                                <span id="modal-star-rating"></span>
-                            </div>
-                            <p class="mb-0 mt-2 text-muted" id="modal-comment"></p>
+
+                    {{-- Información de la reseña --}}
+                    <div class="mb-1">
+                        <p class="fw-semibold mb-0">Reseña</p>
+                        <small class="text-muted">Información del cliente y contenido de la reseña recibida</small>
+                    </div>
+                    <div class="row g-3 mb-3 mt-0">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Cliente</label>
+                            <input type="text" class="form-control" id="modal-reviewer-name" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Calificación</label>
+                            <input type="text" class="form-control" id="modal-star-rating" disabled>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Comentario</label>
+                            <textarea class="form-control" id="modal-comment" rows="3" disabled></textarea>
                         </div>
                     </div>
 
-                    <div id="suggestions-section">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
-                            <h6 class="mb-0">Sugerencias de plantillas</h6>
-                        </div>
-                        <div id="suggestions-loading" class="text-center py-3">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                            <span class="ms-2 text-muted">Cargando sugerencias...</span>
-                        </div>
-                        <div id="suggestions-container" class="d-none"></div>
-                        <div id="suggestions-empty" class="alert alert-info d-none">
-                            No hay plantillas sugeridas para esta reseña. Puedes escribir tu propia respuesta.
-                        </div>
+                    <hr>
+
+                    {{-- Plantillas --}}
+                    <div class="mb-1">
+                        <p class="fw-semibold mb-0">Sugerencias de plantillas</p>
+                        <small class="text-muted">Selecciona una plantilla predefinida para usar como base de tu respuesta</small>
+                    </div>
+                    <div class="mb-3 mt-2">
+                        <select class="form-select" id="modal-template-select">
+                            <option value="">Seleccionar plantilla...</option>
+                            @foreach($templates ?? [] as $tpl)
+                                <option value="{{ $tpl->id }}" data-body="{{ $tpl->body }}">{{ $tpl->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <div class="mt-3">
-                        <label for="reply-text" class="form-label">Tu respuesta</label>
+                    {{-- Textarea --}}
+                    <div>
+                        <label for="reply-text" class="form-label fw-semibold">Tu respuesta</label>
                         <textarea class="form-control" id="reply-text" rows="5" placeholder="Escribe tu respuesta aquí..."></textarea>
-                        <small class="form-text text-muted">Variables: {reviewer_name}, {location_name}, {star_rating}</small>
+                        <small class="form-text text-muted mt-1 d-block">
+                            Variables disponibles: <code>{reviewer_name}</code>, <code>{location_name}</code>, <code>{star_rating}</code>
+                        </small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100 mb-1" id="publish-reply">
-                        Guardar y publicar
-                    </button>
-                    <button type="button" class="btn btn-secondary w-100 mb-1" id="save-reply-draft">
-                        Guardar borrador
-                    </button>
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer ">
+                    <button type="button" class="btn btn-primary w-100 mb-1" id="publish-reply">Guardar y publicar</button>
+                    <button type="button" class="btn btn-light border w-100 mb-1" id="save-reply-draft">Guardar borrador</button>
+                    <button type="button" class="btn btn-light border w-100 mb-1" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -411,21 +486,24 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Reportar reseña</h5>
+                    <h5 class="modal-title fw-bold">Reportar reseña</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted mb-3">Reportar como inapropiada a Google</p>
-                    @foreach(['SPAM' => 'Spam', 'FAKE_REVIEW' => 'Reseña falsa', 'HATE_SPEECH' => 'Discurso de odio', 'HARASSMENT' => 'Acoso', 'OTHER' => 'Otro'] as $value => $label)
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="report_reason" value="{{ $value }}" id="reason_{{ $value }}">
-                            <label class="form-check-label" for="reason_{{ $value }}">{{ $label }}</label>
-                        </div>
-                    @endforeach
+                    <label for="report-reason-select" class="form-label fw-semibold">Motivo del reporte</label>
+                    <select id="report-reason-select" class="form-select">
+                        <option value="">Seleccionar motivo...</option>
+                        <option value="SPAM">Spam</option>
+                        <option value="FAKE_REVIEW">Reseña falsa</option>
+                        <option value="HATE_SPEECH">Discurso de odio</option>
+                        <option value="HARASSMENT">Acoso</option>
+                        <option value="OTHER">Otro</option>
+                    </select>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100 mb-1" id="submitReportBtn">Reportar</button>
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer d-grid gap-2">
+                    <button type="button" class="btn btn-primary w-100 py-2" id="submitReportBtn">Reportar</button>
+                    <button type="button" class="btn btn-light border w-100 py-2" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -444,6 +522,15 @@
         border-radius: 4px;
         font-size: 0.75rem;
         white-space: nowrap;
+    }
+
+    .reply-review-card {
+        background: #f8f9fa;
+        border-left: 4px solid #b10100;
+    }
+    .bg-light-success {
+        background-color: #f0f9e8;
+        border-color: #c8e6a0 !important;
     }
 </style>
 @endpush
@@ -624,80 +711,24 @@ $(document).ready(function () {
             location_name: btn.data('location-name'),
         };
 
-        $('#modal-reviewer-name').text(window.currentReviewData.reviewer_name);
-        $('#modal-star-rating').html(window.renderStars ? window.renderStars(window.currentReviewData.star_rating) : '');
-        $('#modal-comment').text(window.currentReviewData.comment || 'Sin comentario');
+        const ratingMap = { ONE: '1/5', TWO: '2/5', THREE: '3/5', FOUR: '4/5', FIVE: '5/5' };
+        $('#modal-reviewer-name').val(window.currentReviewData.reviewer_name);
+        $('#modal-star-rating').val(ratingMap[window.currentReviewData.star_rating] || window.currentReviewData.star_rating);
+        $('#modal-comment').val(window.currentReviewData.comment || 'Sin comentario');
         $('#reply-text').val('');
+        $('#modal-template-select').val('').trigger('change');
 
         $('#replyModal').modal('show');
-        loadSuggestions(window.currentReviewId);
     });
-
-    function loadSuggestions(reviewId) {
-        const $loading   = $('#suggestions-loading');
-        const $container = $('#suggestions-container');
-        const $empty     = $('#suggestions-empty');
-
-        $loading.removeClass('d-none');
-        $container.addClass('d-none').empty();
-        $empty.addClass('d-none');
-
-        $.ajax({
-            url: `/reviews/${reviewId}/suggestions`,
-            method: 'GET',
-            success: function (response) {
-                $loading.addClass('d-none');
-                response.suggestions?.length > 0
-                    ? displaySuggestions(response.suggestions)
-                    : $empty.removeClass('d-none');
-            },
-            error: function () {
-                $loading.addClass('d-none');
-                $empty.removeClass('d-none');
-            },
-        });
-    }
-
-    function displaySuggestions(suggestions) {
-        const $container = $('#suggestions-container').empty();
-        const badgeMap = {
-            positive: '<span class="badge bg-success-subtle text-success">Positiva</span>',
-            negative: '<span class="badge bg-danger-subtle text-danger">Negativa</span>',
-            neutral:  '<span class="badge bg-warning-subtle text-warning">Neutral</span>',
-            general:  '<span class="badge bg-secondary-subtle text-secondary">General</span>',
-        };
-
-        suggestions.forEach(function (s) {
-            const preview = s.body.length > 120 ? s.body.substring(0, 120) + '...' : s.body;
-            $container.append(`
-                <div class="card mb-2">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <strong class="small">${s.name}</strong>
-                                    ${badgeMap[s.category] || ''}
-                                </div>
-                                <p class="mb-0 text-muted">${preview}</p>
-                            </div>
-                            <button class="btn btn-sm btn-primary ms-2 use-template" data-template-body="${escapeHtml(s.body)}">
-                                Usar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `);
-        });
-
-        $container.removeClass('d-none');
-    }
 
     function escapeHtml(text) {
         return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
     }
 
-    $(document).on('click', '.use-template', function () {
-        const text = $(this).data('template-body')
+    $('#modal-template-select').on('change', function () {
+        const body = $(this).find(':selected').data('body');
+        if (!body) { return; }
+        const text = body
             .replace(/{reviewer_name}/g, window.currentReviewData.reviewer_name)
             .replace(/{location_name}/g, window.currentReviewData.location_name)
             .replace(/{star_rating}/g, window.currentReviewData.star_rating);
@@ -740,14 +771,27 @@ $(document).ready(function () {
     // Report
     // -----------------------------------------------------------------------
 
+    $('#modal-template-select').select2({
+        dropdownParent: $('#replyModal'),
+        width: '100%',
+        placeholder: 'Seleccionar plantilla...',
+        allowClear: true,
+    });
+
+    $('#report-reason-select').select2({
+        dropdownParent: $('#reportReviewModal'),
+        width: '100%',
+        placeholder: 'Seleccionar motivo...',
+    });
+
     $(document).on('click', '.report-review-btn', function () {
-        $('input[name="report_reason"]').prop('checked', false);
+        $('#report-reason-select').val('').trigger('change');
         $('#reportReviewModal').data('review-id', $(this).data('review-id')).modal('show');
     });
 
     $('#submitReportBtn').on('click', function () {
         const reviewId = $('#reportReviewModal').data('review-id');
-        const reason   = $('input[name="report_reason"]:checked').val();
+        const reason   = $('#report-reason-select').val();
 
         if (!reason) { toastr.warning('Selecciona un motivo'); return; }
 
@@ -780,6 +824,180 @@ $(document).ready(function () {
                .toggleClass('text-danger', len > max - 100)
                .toggleClass('text-muted', len <= max - 100);
         $('#save-reply-draft, #publish-reply').prop('disabled', len > max);
+    });
+
+    // -----------------------------------------------------------------------
+    // Translate
+    // -----------------------------------------------------------------------
+
+    let currentTranslateReviewId = null;
+    const translateBaseUrl = '{{ url("panel/reviews") }}';
+
+    $(document).on('click', '.btn-translate', function () {
+        const btn = $(this);
+        currentTranslateReviewId = btn.data('review-id');
+
+        $('#translate-original-text').text(btn.data('comment') || '');
+        $('#translate-detected-lang-label').text('Traducción automática vía DeepL');
+
+        // Reset all rows
+        $('#translate-locales-table tbody tr').each(function () {
+            $(this).find('.translate-result-cell').text('Sin traducción').addClass('text-muted fst-italic');
+            $(this).find('.translate-date-cell').text('');
+            $(this).find('.btn-translate-locale').prop('disabled', false).text('Traducir');
+        });
+
+        // Populate already-translated rows from data attribute
+        const existing = btn.data('translations') || {};
+        $.each(existing, function (localeCode, data) {
+            const row = $('#translate-locales-table').find('tr[data-locale-code="' + localeCode + '"]');
+            if (data.text) {
+                row.find('.translate-result-cell').text(data.text).removeClass('text-muted fst-italic');
+                row.find('.translate-date-cell').text(data.date || '');
+                row.find('.btn-translate-locale').text('Volver a traducir');
+                if (data.lang) {
+                    $('#translate-detected-lang-label').text('Idioma detectado: ' + data.lang.toUpperCase());
+                }
+            }
+        });
+
+        $('#translateModal').modal('show');
+    });
+
+    function translateLocale(localeCode, btn) {
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+        const row = btn.closest('tr');
+
+        $.ajax({
+            url: translateBaseUrl + '/' + currentTranslateReviewId + '/translate',
+            method: 'POST',
+            data: { target_lang: localeCode },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                if (res.success) {
+                    row.find('.translate-result-cell').text(res.translated || '').removeClass('text-muted fst-italic');
+                    row.find('.translate-date-cell').text(new Date().toLocaleDateString('es-ES'));
+                    if (res.detected_lang) {
+                        $('#translate-detected-lang-label').text('Idioma detectado: ' + res.detected_lang.toUpperCase());
+                    }
+                    btn.text('Volver a traducir');
+                    toastr.success('Traducido a ' + localeCode.toUpperCase());
+                }
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al traducir. Verifica que DeepL esté configurado.');
+                btn.text('Traducir');
+            },
+            complete: function () { btn.prop('disabled', false); },
+        });
+    }
+
+    $(document).on('click', '.btn-translate-locale', function () {
+        if (!currentTranslateReviewId) { return; }
+        translateLocale($(this).closest('tr').data('locale-code'), $(this));
+    });
+
+    $('#btn-translate-all').on('click', function () {
+        if (!currentTranslateReviewId) { return; }
+        $('#translate-locales-table tbody tr').each(function () {
+            translateLocale($(this).data('locale-code'), $(this).find('.btn-translate-locale'));
+        });
+    });
+
+    // Edición manual en modal de traducción
+    $(document).on('click', '.btn-manual-translate', function () {
+        const row = $(this).closest('tr');
+        const currentText = row.find('.translate-result-cell').text().trim();
+        row.find('.translate-manual-input').val(currentText === 'Sin traducción' ? '' : currentText);
+        row.find('.translate-edit-inline').removeClass('d-none');
+        row.find('.translate-result-cell').addClass('d-none');
+    });
+
+    $(document).on('click', '.btn-cancel-manual', function () {
+        const row = $(this).closest('tr');
+        row.find('.translate-edit-inline').addClass('d-none');
+        row.find('.translate-result-cell').removeClass('d-none');
+    });
+
+    $(document).on('click', '.btn-save-manual-translation', function () {
+        const row = $(this).closest('tr');
+        const locale = row.data('locale-code');
+        const text = row.find('.translate-manual-input').val().trim();
+        const btn = $(this);
+        if (!text || !currentTranslateReviewId) { return; }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        $.ajax({
+            url: translateBaseUrl + '/' + currentTranslateReviewId + '/translations/' + locale,
+            method: 'PATCH',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { translated_text: text },
+            success: function (res) {
+                row.find('.translate-result-cell').text(res.translated_text).removeClass('text-muted fst-italic d-none');
+                row.find('.translate-date-cell').text(res.translated_at || '');
+                row.find('.translate-edit-inline').addClass('d-none');
+                toastr.success('Traducción guardada.');
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar.');
+            },
+            complete: function () {
+                btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Guardar');
+            },
+        });
+    });
+
+    // Bulk translate (todos los idiomas activos)
+    $('#bulk-apply-btn').on('click.translate', function () {
+        const action = $('#bulk-action-select').val();
+        if (action !== 'translate') { return; }
+
+        const ids = bulk.getIds();
+        if (!ids.length) { toastr.warning('Selecciona al menos una reseña.'); return; }
+
+        const localeCodes = [];
+        $('#translate-locales-table tbody tr').each(function () {
+            localeCodes.push($(this).data('locale-code'));
+        });
+
+        if (!localeCodes.length) { toastr.warning('No hay idiomas activos configurados.'); return; }
+        if (!confirm('¿Traducir ' + ids.length + ' reseña(s) a ' + localeCodes.length + ' idioma(s)?')) { return; }
+
+        const btn = $(this);
+        btn.prop('disabled', true).text('Traduciendo...');
+
+        const tasks = [];
+        ids.forEach(function (reviewId) {
+            localeCodes.forEach(function (code) {
+                tasks.push({ reviewId: reviewId, code: code });
+            });
+        });
+
+        let done = 0;
+        let errors = 0;
+
+        function runNext(index) {
+            if (index >= tasks.length) {
+                $('#bulk-modal').modal('hide');
+                errors > 0
+                    ? toastr.warning('Completado con ' + errors + ' error(es). Traducciones guardadas: ' + done)
+                    : toastr.success('Se tradujeron ' + done + ' combinaciones correctamente.');
+                setTimeout(() => location.reload(), 1000);
+                return;
+            }
+            const task = tasks[index];
+            $.ajax({
+                url: translateBaseUrl + '/' + task.reviewId + '/translate',
+                method: 'POST',
+                data: { target_lang: task.code },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function () { done++; },
+                error: function () { errors++; },
+                complete: function () { runNext(index + 1); },
+            });
+        }
+
+        runNext(0);
     });
 
     // Flash

@@ -7,7 +7,7 @@
             <span class="ve-panel-title">Estructura de la página</span>
         </div>
         <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-refresh-sections" title="Actualizar">
-            <i class="fa-duotone fa-solid fa-sync"></i>
+            <i class="fa-solid fa-sync"></i>
         </button>
     </div>
 
@@ -28,7 +28,7 @@
     {{-- Navigator view --}}
     <div id="ve-navigator-view" class="ve-tab-content">
         <div id="ve-navigator-empty" class="ve-empty-state">
-            <i class="fa-duotone fa-solid fa-sitemap ve-empty-icon"></i>
+            <i class="fa-solid fa-sitemap ve-empty-icon"></i>
             <div>Haz clic en "Actualizar" para ver el árbol DOM</div>
         </div>
         <div id="ve-navigator-tree" class="ve-navigator-tree-area"></div>

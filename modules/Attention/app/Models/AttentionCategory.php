@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Categorías temáticas para PQRSF
+ * Categorías temáticas para peticiones
  * Ejemplos: Atención al cliente, Facturación, Quejas de producto, etc.
  */
 class AttentionCategory extends Model

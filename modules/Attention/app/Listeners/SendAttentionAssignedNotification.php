@@ -2,6 +2,12 @@
 
 namespace Modules\Attention\Listeners;
 
+use App\Models\User;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Attention\Events\AttentionAssigned;
 
@@ -25,7 +31,7 @@ class SendAttentionAssignedNotification
             return;
         }
 
-        $user = \App\Models\User::find($newUserId);
+        $user = User::find($newUserId);
 
         if (! $user) {
             return;
@@ -35,9 +41,9 @@ class SendAttentionAssignedNotification
         $attention->load(['type', 'category']);
 
         // Crear notificación inline para enviar
-        $notification = new class extends Notification implements \Illuminate\Contracts\Broadcasting\ShouldBroadcast, \Illuminate\Contracts\Queue\ShouldQueue
+        $notification = new class extends Notification implements ShouldBroadcast, ShouldQueue
         {
-            use \Illuminate\Bus\Queueable;
+            use Queueable;
 
             public ?int $recipientUserId = null;
 
@@ -55,8 +61,8 @@ class SendAttentionAssignedNotification
             public function toDatabase($notifiable)
             {
                 return [
-                    'title' => '👤 PQRSF asignado a ti',
-                    'message' => "Se te ha asignado el PQRSF #{$this->attention->radicado}. ".
+                    'title' => '👤 peticiones asignado a ti',
+                    'message' => "Se te ha asignado el peticiones #{$this->attention->radicado}. ".
                                  "Cliente: {$this->attention->full_name}. ".
                                  "Tipo: {$this->attention->type->name}.",
                     'icon' => 'fa-duotone fas fa-user-check',
@@ -72,9 +78,9 @@ class SendAttentionAssignedNotification
 
             public function toBroadcast($notifiable)
             {
-                return new \Illuminate\Notifications\Messages\BroadcastMessage([
-                    'title' => '👤 PQRSF asignado a ti',
-                    'message' => "PQRSF #{$this->attention->radicado} requiere tu atención",
+                return new BroadcastMessage([
+                    'title' => '👤 peticiones asignado a ti',
+                    'message' => "peticiones #{$this->attention->radicado} requiere tu atención",
                     'icon' => 'fa-duotone fas fa-user-check',
                     'color' => 'warning',
                     'action_url' => url("/attentions/show/{$this->attention->uid}"),
@@ -89,7 +95,7 @@ class SendAttentionAssignedNotification
             public function broadcastOn(): array
             {
                 return [
-                    new \Illuminate\Broadcasting\Channel('attentions.assigned'),
+                    new Channel('attentions.assigned'),
                 ];
             }
 

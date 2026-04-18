@@ -17,7 +17,7 @@ class AttentionTrackingTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -44,13 +44,13 @@ class AttentionTrackingTest extends TestCase
     public function test_returns_404_for_invalid_radicado()
     {
         // Act
-        $response = $this->getJson('/api/pqrsf/PQRSF-2026-999999');
+        $response = $this->getJson('/api/peticiones/peticiones-2026-999999');
 
         // Assert
         $response->assertStatus(404)
             ->assertJson([
                 'success' => false,
-                'message' => 'PQRSF no encontrado',
+                'message' => 'peticiones no encontrado',
             ]);
     }
 
@@ -63,7 +63,7 @@ class AttentionTrackingTest extends TestCase
         ]);
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -78,7 +78,7 @@ class AttentionTrackingTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -97,7 +97,7 @@ class AttentionTrackingTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -121,7 +121,7 @@ class AttentionTrackingTest extends TestCase
         ]);
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200);
@@ -145,7 +145,7 @@ class AttentionTrackingTest extends TestCase
         ]);
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -162,7 +162,7 @@ class AttentionTrackingTest extends TestCase
         $attention->addDocument($this->createTestFile('doc2.pdf'));
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -176,7 +176,7 @@ class AttentionTrackingTest extends TestCase
         $attention = $this->createAnonymousAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -196,7 +196,7 @@ class AttentionTrackingTest extends TestCase
         $radicadoLower = strtolower($attention->radicado);
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$radicadoLower}");
+        $response = $this->getJson("/api/peticiones/{$radicadoLower}");
 
         // Assert
         $response->assertStatus(200)
@@ -210,7 +210,7 @@ class AttentionTrackingTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
 
         // Assert
         $response->assertStatus(200)
@@ -230,7 +230,7 @@ class AttentionTrackingTest extends TestCase
 
         // Act - Hacer más de 60 requests en 1 minuto
         for ($i = 0; $i < 61; $i++) {
-            $response = $this->getJson("/api/pqrsf/{$attention->radicado}");
+            $response = $this->getJson("/api/peticiones/{$attention->radicado}");
         }
 
         // Assert - El request 61 debe ser rechazado

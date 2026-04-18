@@ -86,7 +86,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -175,15 +175,6 @@
                                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $form->id }}"></td>
                                         <td>
                                             <div class="fw-semibold">{{ $form->name }}</div>
-                                            <div class="d-flex align-items-center gap-1 mt-1">
-                                                <code class="small text-muted">[form id="{{ $form->id }}"]</code>
-                                                <button type="button"
-                                                        class="btn btn-link btn-sm p-0 btn-copy-shortcode"
-                                                        data-shortcode='[form id="{{ $form->id }}"]'
-                                                        title="Copiar shortcode">
-                                                    <i class="far fa-copy text-muted"></i>
-                                                </button>
-                                            </div>
                                         </td>
                                         <td>
                                             @if ($form->category)

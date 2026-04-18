@@ -104,10 +104,10 @@
 
                     {{-- Acciones --}}
                     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                        <a href="{{ route('pqrsf.tracking.result', $attention->radicado) }}" class="btn btn-primary btn-lg px-4">
+                        <a href="{{ route('peticiones.tracking.result', $attention->radicado) }}" class="btn btn-primary btn-lg px-4">
                             <i class="fas fa-magnifying-glass me-2"></i>Consultar estado
                         </a>
-                        <a href="{{ route('pqrsf.form') }}" class="btn btn-outline-secondary btn-lg px-4">
+                        <a href="{{ route('peticiones.form') }}" class="btn btn-outline-secondary btn-lg px-4">
                             <i class="fas fa-file-pen me-2"></i>Radicar otra solicitud
                         </a>
                     </div>

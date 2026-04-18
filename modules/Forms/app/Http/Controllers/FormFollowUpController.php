@@ -5,12 +5,13 @@ namespace Modules\Forms\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormFollowUp;
 
 class FormFollowUpController extends Controller
 {
-    public function index(Form $form): JsonResponse
+    public function index(Request $request, Form $form): View|JsonResponse
     {
         $this->authorize('Forms.forms.edit');
 
@@ -19,7 +20,11 @@ class FormFollowUpController extends Controller
             ->orderBy('send_after_days')
             ->get();
 
-        return response()->json(['data' => $followUps]);
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $followUps]);
+        }
+
+        return view('forms::settings.forms.follow-ups.index', compact('form', 'followUps'));
     }
 
     public function store(Request $request, Form $form): JsonResponse

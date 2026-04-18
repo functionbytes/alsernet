@@ -3,6 +3,8 @@
 namespace Modules\Newsletter\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Captcha\Facades\Captcha;
+use Modules\Core\Models\Setting;
 
 class PublicSubscribeRequest extends FormRequest
 {
@@ -13,10 +15,16 @@ class PublicSubscribeRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'email' => ['required', 'email', 'max:191'],
             'name' => ['nullable', 'string', 'max:191'],
         ];
+
+        if (Setting::get('newsletter.recaptcha_enabled') === '1' && Captcha::isEnabled()) {
+            $rules = array_merge($rules, Captcha::rules());
+        }
+
+        return $rules;
     }
 
     public function messages(): array
@@ -27,6 +35,8 @@ class PublicSubscribeRequest extends FormRequest
             'email.max' => 'El correo electrónico no puede superar los 191 caracteres.',
             'name.string' => 'El nombre debe ser texto.',
             'name.max' => 'El nombre no puede superar los 191 caracteres.',
+            'g-recaptcha-response.required' => 'Debe completar la verificación de captcha.',
+            'g-recaptcha-response.captcha' => 'La verificación de captcha falló. Inténtelo nuevamente.',
         ];
     }
 }

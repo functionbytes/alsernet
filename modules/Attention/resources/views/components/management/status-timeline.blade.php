@@ -2,7 +2,7 @@
 <div class="card mb-3">
     <div class="card-header p-3 bg-white border-bottom">
         <h5 class="mb-1 fw-bold">Historial de estado</h5>
-        <p class="small mb-0 text-muted" style="font-size: 0.75rem;">Transiciones del PQRSF</p>
+        <p class="small mb-0 text-muted" style="font-size: 0.75rem;">Transiciones del peticiones</p>
     </div>
     <div class="card-body p-2">
 

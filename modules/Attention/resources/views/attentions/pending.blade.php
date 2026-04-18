@@ -1,14 +1,14 @@
 @extends('layouts.theme')
 
-@section('title', 'PQRSF Pendientes')
+@section('title', 'peticiones Pendientes')
 
 @section('content')
 
     @include('core::components.card', [
-        'title' => 'PQRSF Pendientes',
+        'title' => 'peticiones Pendientes',
         'breadcrumbs' => [
             ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'PQRSF', 'url' => ''],
+            ['label' => 'peticiones', 'url' => ''],
             ['label' => 'Pendientes', 'active' => true],
         ]
     ])
@@ -25,7 +25,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Pendientes</h5>
-                        <p class="small mb-0 text-muted">Gestiona, filtra y da seguimiento a las PQRSF</p>
+                        <p class="small mb-0 text-muted">Gestiona, filtra y da seguimiento a las peticiones</p>
                     </div>
                     <div class="ms-auto">
                         <div class="btn-group">
@@ -34,7 +34,7 @@
                                 Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('attention.create') }}">Nueva PQRSF</a>
+                                <a class="dropdown-item" href="{{ route('attention.create') }}">Nueva peticiones</a>
                                 <a class="dropdown-item" href="{{ route('attention.dashboard') }}">Dashboard</a>
                                 <a class="dropdown-item" href="{{ route('import.show', 'attention') }}">Importar</a>
                                 <div class="dropdown-divider"></div>
@@ -55,7 +55,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total pendientes</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['total'] ?? 0 }}</h4>
-                                <small class="text-muted">PQRSF sin finalizar</small>
+                                <small class="text-muted">peticiones sin finalizar</small>
                             </div>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                         {{-- Search --}}
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-info border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input class="form-control border-start-0 ps-0" type="text" name="search"
@@ -128,10 +128,6 @@
                                     </span>
                                 @endif
                             </button>
-                        </div>
-
-                        {{-- Actions --}}
-                        <div class="d-flex gap-2 flex-shrink-0">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -140,7 +136,9 @@
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
+
                         </div>
+
                     </div>
                 </form>
             </div>
@@ -237,12 +235,12 @@
                 @else
                 <div class="text-center py-5">
                     <i class="fa fa-inbox fa-3x mb-3 text-muted opacity-50"></i>
-                    <h5 class="fw-bold mb-2">No hay PQRSF pendientes</h5>
+                    <h5 class="fw-bold mb-2">No hay peticiones pendientes</h5>
                     <p class="text-muted mb-4">
                         @if($searchKey || $typeId || $categoryId || $departmentId || $sedeId || $dateFrom)
                             No se encontraron resultados con los filtros aplicados.
                         @else
-                            No tienes PQRSF pendientes en este momento.
+                            No tienes peticiones pendientes en este momento.
                         @endif
                     </p>
                     @if($searchKey || $typeId || $categoryId || $departmentId || $sedeId || $dateFrom)
@@ -360,13 +358,13 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted mb-3">
-                        Se aplicará la acción sobre <strong><span class="bulk-count-label">0</span> PQRSF</strong> seleccionados.
+                        Se aplicará la acción sobre <strong><span class="bulk-count-label">0</span> peticiones</strong> seleccionados.
                     </p>
                     <div class="mb-3">
                         <label for="bulk-action-select" class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-control select2">
                             <option value="">Seleccionar acción...</option>
-                            <option value="close">Cerrar PQRSF</option>
+                            <option value="close">Cerrar peticiones</option>
                             <option value="change_status">Cambiar estado</option>
                             <option value="delete">Eliminar</option>
                         </select>
@@ -489,9 +487,9 @@ $(document).ready(function () {
         const value  = $('#bulk-status-select').val();
 
         if (!action) { toastr.warning('Selecciona una acción antes de continuar.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una PQRSF.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una peticiones.'); return; }
         if (action === 'change_status' && !value) { toastr.warning('Selecciona un estado.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' PQRSF seleccionados? Esta acción no se puede deshacer.')) { return; }
+        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' peticiones seleccionados? Esta acción no se puede deshacer.')) { return; }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
@@ -503,7 +501,7 @@ $(document).ready(function () {
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (res) {
                 $('#bulk-modal').modal('hide');
-                toastr.success(res.count + ' PQRSF actualizado(s) correctamente.');
+                toastr.success(res.count + ' peticiones actualizado(s) correctamente.');
                 setTimeout(() => location.reload(), 1000);
             },
             error: function (xhr) {

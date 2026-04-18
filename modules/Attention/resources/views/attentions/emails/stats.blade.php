@@ -15,7 +15,7 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Estadísticas de emails PQRSF</h5>
+                        <h5 class="mb-1 fw-bold">Estadísticas de emails peticiones</h5>
                         <p class="small mb-0 text-muted">Resumen de todos los correos enviados por el sistema</p>
                     </div>
                     <a href="{{ route('emails.history') }}" class="btn btn-outline-secondary">
@@ -184,7 +184,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>PQRSF</th>
+                                    <th>peticiones</th>
                                     <th>Asunto</th>
                                     <th>Tipo</th>
                                     <th>Destinatario</th>
@@ -249,7 +249,7 @@
                                 <i class="fas fa-envelope-open-text fs-7"></i>
                             </div>
                             <h6 class="mb-1">No hay emails registrados</h6>
-                            <p class="text-muted mb-0">Aún no se han enviado correos desde el sistema PQRSF.</p>
+                            <p class="text-muted mb-0">Aún no se han enviado correos desde el sistema peticiones.</p>
                         </div>
                     </div>
                 @endif

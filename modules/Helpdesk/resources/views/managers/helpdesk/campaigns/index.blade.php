@@ -209,7 +209,7 @@
                     <div class="row align-items-end g-2">
                         <div class="col-md-4">
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0" style="border-color: #e0e0e0;">
+                                <span class="input-group-text bg-white border-end-1" style="border-color: #e0e0e0;">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0" placeholder="Buscar campañas..." value="{{ $filters['search'] ?? '' }}" style="border-color: #e0e0e0;">

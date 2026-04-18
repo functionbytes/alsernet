@@ -26,7 +26,7 @@ class EmailHistoryExport implements FromCollection, ShouldAutoSize, WithHeadings
     {
         return [
             'Radicado',
-            'Tipo PQRSF',
+            'Tipo peticiones',
             'Destinatario',
             'Asunto',
             'Tipo Email',

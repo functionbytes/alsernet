@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Request validation for submitting a new PQRSF (public endpoint)
+ * Request validation for submitting a new peticiones (public endpoint)
  */
 class SubmitAttentionRequest extends FormRequest
 {

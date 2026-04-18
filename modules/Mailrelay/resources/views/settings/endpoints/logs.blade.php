@@ -204,7 +204,7 @@
 
 {{-- Variables Modal --}}
 <div class="modal fade" id="variablesModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Variables enviadas</h5>
@@ -222,7 +222,7 @@
 
 {{-- Details Modal --}}
 <div class="modal fade" id="detailsModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Detalles del log</h5>

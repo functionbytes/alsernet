@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Reviews\Enums\ConnectionStatus;
 use Modules\Reviews\Enums\ReviewRating;
+use Modules\Reviews\Enums\ReviewSource;
+use Modules\Reviews\Enums\SyncStrategy;
 use Modules\Reviews\Events\ReviewSynced;
 use Modules\Reviews\Exceptions\CircuitBreakerOpenException;
 use Modules\Reviews\Exceptions\RateLimitExceededException;
@@ -19,14 +21,17 @@ use Modules\Reviews\Models\ReviewReply;
 class GoogleReviewService
 {
     public function __construct(
-        private readonly GoogleApiClient $apiClient
+        private readonly GoogleApiClient $apiClient,
+        private readonly ?ReviewFetchOrchestrator $orchestrator = null
     ) {}
 
     public function syncReviews(ReviewGoogleLocation $location): int
     {
         $location->loadMissing('connection.user');
-        $connection = $location->connection;
-        $reviews = $this->fetchReviews($connection, $location->google_location_id);
+
+        $reviews = $location->sync_strategy !== SyncStrategy::Oauth && $this->orchestrator
+            ? $this->orchestrator->fetchReviews($location)
+            : $this->fetchReviews($location->connection, $location->google_location_id);
         $syncedCount = 0;
 
         DB::transaction(function () use ($location, $reviews, &$syncedCount) {
@@ -83,6 +88,7 @@ class GoogleReviewService
     {
         $googleReviewId = $reviewData['reviewId'] ?? $reviewData['name'];
         $starRating = $this->mapStarRating($reviewData['starRating']);
+        $source = $reviewData['_source'] ?? ReviewSource::BusinessProfile->value;
 
         $review = Review::query()->updateOrCreate(
             [
@@ -104,6 +110,7 @@ class GoogleReviewService
                 'google_reply_time' => isset($reviewData['reviewReply']['updateTime'])
                     ? Carbon::parse($reviewData['reviewReply']['updateTime'])
                     : null,
+                'source' => $source,
                 'raw_json' => $reviewData,
                 'synced_at' => now(),
             ]

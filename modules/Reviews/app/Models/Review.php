@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
 use Modules\Reviews\Database\Factories\ReviewFactory;
 use Modules\Reviews\Enums\ReviewRating;
+use Modules\Reviews\Enums\ReviewSource;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -48,6 +49,7 @@ class Review extends Model
         'update_time',
         'google_reply_text',
         'google_reply_time',
+        'source',
         'raw_json',
         'synced_at',
         'sla_alerted_at',
@@ -66,6 +68,7 @@ class Review extends Model
     {
         return [
             'star_rating' => ReviewRating::class,
+            'source' => ReviewSource::class,
             'review_time' => 'datetime',
             'update_time' => 'datetime',
             'google_reply_time' => 'datetime',
@@ -97,6 +100,11 @@ class Review extends Model
     public function replies(): HasMany
     {
         return $this->hasMany(ReviewReply::class, 'review_id');
+    }
+
+    public function translations(): HasMany
+    {
+        return $this->hasMany(ReviewTranslation::class, 'review_id');
     }
 
     public function reply(): HasOne

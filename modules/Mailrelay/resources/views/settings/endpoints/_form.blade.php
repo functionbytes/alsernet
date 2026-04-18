@@ -274,7 +274,7 @@ $(document).ready(function() {
                     // Build modal safely using DOM methods (avoid XSS from api_key)
                     const $modal = $(`
                         <div class="modal fade" id="apiKeyModal" tabindex="-1">
-                            <div class="modal-dialog">
+                            <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header bg-warning">
                                         <h5 class="modal-title">Nueva API Key generada</h5>

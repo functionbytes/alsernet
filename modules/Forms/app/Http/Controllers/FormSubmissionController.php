@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Forms\Jobs\ExportFormSubmissionsJob;
@@ -29,22 +30,22 @@ class FormSubmissionController extends Controller
 
         $query = FormSubmission::query()
             ->where('form_id', $form->id)
-            ->with(['assignedTo']);
+            ->with(['assignedTo', 'values']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('is_read')) {
-            $query->where('is_read', (bool) $request->is_read);
+        if ($request->filled('read')) {
+            $query->where('is_read', (bool) $request->read);
         }
 
-        if ($request->filled('is_spam')) {
-            $query->where('is_spam', (bool) $request->is_spam);
+        if ($request->has('spam') && $request->spam !== '') {
+            $query->where('is_spam', (bool) $request->spam);
         }
 
-        if ($request->filled('is_starred')) {
-            $query->where('is_starred', (bool) $request->is_starred);
+        if ($request->filled('starred')) {
+            $query->where('is_starred', (bool) $request->starred);
         }
 
         if ($request->filled('assigned_to')) {
@@ -268,7 +269,7 @@ class FormSubmissionController extends Controller
         return response()->json(['success' => true, 'message' => 'Email enviado correctamente']);
     }
 
-    public function exportPdf(Form $form, FormSubmission $submission): \Illuminate\Http\Response
+    public function exportPdf(Form $form, FormSubmission $submission): Response
     {
         $this->authorize('Forms.submissions.index');
 

@@ -25,10 +25,10 @@
                         </div>
                         <div class="d-flex gap-2">
                             <a href="{{ route('manager.helpdesk.conversations.show', $conversation) }}" class="btn btn-light">
-                                <i class="ti ti-x me-1"></i> Cancelar
+                                <i class="fa-solid fa-xmark me-1"></i> Cancelar
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="ti ti-check me-1"></i> Guardar Cambios
+                                <i class="fa-solid fa-check me-1"></i> Guardar Cambios
                             </button>
                         </div>
                     </div>
@@ -43,7 +43,7 @@
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
                                             <h6 class="card-title text-{{ $conversation->status->color }} mb-2">
-                                                <i class="ti ti-flag me-1"></i>
+                                                <i class="fa-solid fa-flag me-1"></i>
                                                 Estado
                                             </h6>
                                             <h5 class="mb-1 fw-bold">{{ $conversation->status->name }}</h5>
@@ -59,7 +59,7 @@
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
                                             <h6 class="card-title text-primary mb-2">
-                                                <i class="ti ti-user me-1"></i>
+                                                <i class="fa-solid fa-user me-1"></i>
                                                 Asignado
                                             </h6>
                                             <h6 class="mb-1 fw-bold">{{ $conversation->assignee ? $conversation->assignee->name : 'Sin asignar' }}</h6>
@@ -75,7 +75,7 @@
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
                                             <h6 class="card-title text-info mb-2">
-                                                <i class="ti ti-messages me-1"></i>
+                                                <i class="fa-solid fa-comments me-1"></i>
                                                 Mensajes
                                             </h6>
                                             <h5 class="mb-1 fw-bold">{{ $conversation->getMessageCount() }}</h5>
@@ -91,7 +91,7 @@
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
                                             <h6 class="card-title text-success mb-2">
-                                                <i class="ti ti-clock me-1"></i>
+                                                <i class="fa-solid fa-clock me-1"></i>
                                                 Actualizada
                                             </h6>
                                             <h6 class="mb-1 fw-bold">{{ $conversation->updated_at->diffForHumans() }}</h6>
@@ -116,13 +116,13 @@
                             <div class="fw-semibold">{{ $conversation->customer->name }}</div>
                             <small class="text-muted">{{ $conversation->customer->email }}</small>
                             @if($conversation->customer->phone)
-                                <br><small class="text-muted"><i class="ti ti-phone me-1"></i>{{ $conversation->customer->phone }}</small>
+                                <br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ $conversation->customer->phone }}</small>
                             @endif
                         </div>
                         <a href="{{ route('manager.helpdesk.customers.show', $conversation->customer) }}"
                            class="btn btn-sm btn-light ms-auto"
                            target="_blank">
-                            <i class="ti ti-external-link me-1"></i> Ver perfil
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Ver perfil
                         </a>
                     </div>
                 </div>
@@ -253,21 +253,21 @@
                 <div class="card-footer d-flex justify-content-between align-items-center p-4">
                     <div class="d-flex gap-2">
                         <a href="{{ route('manager.helpdesk.conversations.show', $conversation) }}" class="btn btn-light">
-                            <i class="ti ti-arrow-left me-1"></i> Volver
+                            <i class="fa-solid fa-arrow-left me-1"></i> Volver
                         </a>
 
                         @if($conversation->isOpen())
                             <form action="{{ route('manager.helpdesk.conversations.close', $conversation) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-warning">
-                                    <i class="ti ti-lock me-1"></i> Cerrar conversación
+                                    <i class="fa-solid fa-lock me-1"></i> Cerrar conversación
                                 </button>
                             </form>
                         @else
                             <form action="{{ route('manager.helpdesk.conversations.reopen', $conversation) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-success">
-                                    <i class="ti ti-lock-open me-1"></i> Reabrir conversación
+                                    <i class="fa-solid fa-lock-open me-1"></i> Reabrir conversación
                                 </button>
                             </form>
                         @endif
@@ -281,12 +281,12 @@
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">
-                                <i class="ti ti-trash me-1"></i> Eliminar
+                                <i class="fa-solid fa-trash me-1"></i> Eliminar
                             </button>
                         </form>
 
                         <button type="submit" class="btn btn-primary">
-                            <i class="ti ti-check me-1"></i> Guardar Cambios
+                            <i class="fa-solid fa-check me-1"></i> Guardar Cambios
                         </button>
                     </div>
                 </div>

@@ -245,7 +245,7 @@
     {{-- Modals for Log Details --}}
     @foreach($logs as $log)
         <div class="modal fade" id="logDetailModal{{ $log->id }}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header border-bottom">
                         <h5 class="modal-title fw-bold">

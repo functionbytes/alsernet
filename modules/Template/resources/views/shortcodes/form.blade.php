@@ -184,24 +184,30 @@
 
                     {{-- Toolbar de edición --}}
                     <div class="editor-toolbar-row">
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnFormat" title="Formatear código (Alt+Shift+F)">
-                            <i class="fas fa-wand-magic-sparkles me-1"></i> Formatear
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btnFormat"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Formatear código (Alt+Shift+F)">
+                            <i class="fas fa-wand-magic-sparkles"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnFoldAll" title="Colapsar todo">
-                            <i class="fas fa-compress-alt me-1"></i> Colapsar
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btnFoldAll"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Colapsar todo">
+                            <i class="fas fa-compress-alt"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnUnfoldAll" title="Expandir todo">
-                            <i class="fas fa-expand-alt me-1"></i> Expandir
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btnUnfoldAll"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Expandir todo">
+                            <i class="fas fa-expand-alt"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnWrapLines" title="Ajustar líneas largas">
-                            <i class="fas fa-align-left me-1"></i> Ajuste de línea
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btnWrapLines"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Ajuste de línea">
+                            <i class="fas fa-align-left"></i>
                         </button>
                         <div class="ms-auto d-flex align-items-center gap-2">
                             <small class="text-secondary">Ctrl+F buscar · Ctrl+H reemplazar · F11 pantalla completa</small>
-                            <button type="button" class="btn btn-sm btn-outline-light" id="btnTheme" title="Tema claro / oscuro">
+                            <button type="button" class="btn btn-sm btn-outline-light" id="btnTheme"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tema claro / oscuro">
                                 <i class="fas fa-circle-half-stroke"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-light" id="btnFullscreen" title="Pantalla completa (F11)">
+                            <button type="button" class="btn btn-sm btn-outline-light" id="btnFullscreen"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Pantalla completa (F11)">
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
@@ -452,8 +458,10 @@ $(function () {
     var CSRF          = $('meta[name="csrf-token"]').attr('content');
     var fieldIndex    = {{ count($existingFields) }};
     var previewTimeout;
-    var THEME_CSS     = @json($themeCssUrls ?? []);
-    var THEME_JS      = @json($themeJsUrls ?? []);
+    var THEME_CSS          = @json($themeCssUrls ?? []);
+    var THEME_JS           = @json($themeJsUrls ?? []);
+    var THEME_TRANSLATIONS = @json($themeTranslations ?? []);
+    var SITE_ROUTES        = { 'newsletter.subscribe': '{{ route('newsletter.subscribe') }}' };
 
     // ── Inicializar CodeMirror editors ──────────────────────────────────────
 
@@ -535,9 +543,22 @@ $(function () {
     editorCss.on('change', schedulePreview);
     editorJs.on('change', schedulePreview);
 
+    // ── Resolver placeholders de traducción y rutas ──────────────────────────
+    function resolvePlaceholders(html) {
+        // {__key} → traducción del tema
+        html = html.replace(/\{__([^}]+)\}/g, function (match, key) {
+            return THEME_TRANSLATIONS.hasOwnProperty(key) ? THEME_TRANSLATIONS[key] : match;
+        });
+        // {route:name} → URL de la ruta
+        html = html.replace(/\{route:([^}]+)\}/g, function (match, name) {
+            return SITE_ROUTES.hasOwnProperty(name) ? SITE_ROUTES[name] : match;
+        });
+        return html;
+    }
+
     // ── Renderizar preview en iframe (client-side) ───────────────────────────
     function renderPreview() {
-        var html = editorHtml.getValue();
+        var html = resolvePlaceholders(editorHtml.getValue());
         var css  = editorCss.getValue();
         var js   = editorJs.getValue();
 

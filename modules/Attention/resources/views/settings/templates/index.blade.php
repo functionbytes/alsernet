@@ -68,7 +68,7 @@
                             <div class="text-center py-5">
                                 <div class="d-flex flex-column align-items-center">
                                     <h6 class="mb-1">No hay plantillas disponibles</h6>
-                                    <p class="text-muted mb-3">Crea plantillas en el módulo Mailer para usarlas en las notificaciones de PQRSF</p>
+                                    <p class="text-muted mb-3">Crea plantillas en el módulo Mailer para usarlas en las notificaciones de peticiones</p>
                                     <a href="{{ route('mailers.templates.create') }}" class="btn btn-sm btn-primary" target="_blank">
                                         Crear primera plantilla en Mailer
                                     </a>
@@ -87,7 +87,7 @@
                         <div class="row g-3">
                             @php
                                 $variables = [
-                                    ['var' => 'radicado',    'desc' => 'Número de radicado único',    'example' => 'PQRSF-2026-00123'],
+                                    ['var' => 'radicado',    'desc' => 'Número de radicado único',    'example' => 'peticiones-2026-00123'],
                                     ['var' => 'tipo',        'desc' => 'Tipo de solicitud',           'example' => 'Petición'],
                                     ['var' => 'categoria',   'desc' => 'Categoría de la solicitud',   'example' => 'Servicios públicos'],
                                     ['var' => 'estado',      'desc' => 'Estado actual',               'example' => 'En proceso'],
@@ -138,7 +138,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Configurar notificaciones</h6>
-                        <p class="text-muted mb-3">Define qué plantilla usar para cada evento del ciclo de vida PQRSF.</p>
+                        <p class="text-muted mb-3">Define qué plantilla usar para cada evento del ciclo de vida peticiones.</p>
                         <a href="{{ route('settings.attention.configurations.global') }}?tab=email" class="btn btn-outline-secondary w-100">
                             Configurar emails
                         </a>

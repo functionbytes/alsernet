@@ -17,7 +17,7 @@
                                 <i class="fa-duotone fa-envelope-open-text text-primary me-2"></i>
                                 Historial Global de Emails
                             </h4>
-                            <p class="mb-0 text-muted">Todos los emails enviados del sistema PQRSF</p>
+                            <p class="mb-0 text-muted">Todos los emails enviados del sistema peticiones</p>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-success" id="exportEmailsBtn">
@@ -43,7 +43,7 @@
                     <form method="GET" action="{{ route('emails.history') }}">
                         <div class="row g-3">
                             <div class="col-md-3">
-                                <label class="form-label small fw-semibold">Radicado PQRSF</label>
+                                <label class="form-label small fw-semibold">Radicado peticiones</label>
                                 <input type="text" name="radicado" class="form-control form-control-sm"
                                        value="{{ request('radicado') }}"
                                        placeholder="Buscar por radicado...">

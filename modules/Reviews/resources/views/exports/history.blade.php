@@ -93,19 +93,18 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                                    <th>Fecha</th>
                                     <th>Formato</th>
                                     <th>Filtros</th>
                                     <th>Filas</th>
                                     <th>Estado</th>
                                     <th class="text-center">Acciones</th>
+                                    <th>Fecha</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($exports as $export)
                                     <tr data-id="{{ $export->id }}">
                                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $export->id }}"></td>
-                                        <td>{{ $export->created_at->format('Y-m-d H:i') }}</td>
                                         <td>
                                             <span class="badge bg-secondary">{{ strtoupper($export->format) }}</span>
                                         </td>
@@ -163,6 +162,7 @@
                                                 </ul>
                                             </div>
                                         </td>
+                                        <td>{{ $export->created_at->format('Y-m-d H:i') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

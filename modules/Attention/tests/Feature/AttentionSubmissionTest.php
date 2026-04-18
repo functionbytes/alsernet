@@ -13,13 +13,13 @@ class AttentionSubmissionTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function test_can_submit_pqrsf_successfully()
+    public function test_can_submit_peticiones_successfully()
     {
         // Arrange
         $data = $this->validAttentionData();
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(201)
@@ -48,7 +48,7 @@ class AttentionSubmissionTest extends TestCase
         // Verificar que se generó radicado
         $attention = Attention::where('customer_email', $data['customer_email'])->first();
         $this->assertNotNull($attention->radicado);
-        $this->assertStringStartsWith('PQRSF-', $attention->radicado);
+        $this->assertStringStartsWith('peticiones-', $attention->radicado);
     }
 
     /** @test */
@@ -62,7 +62,7 @@ class AttentionSubmissionTest extends TestCase
         $data['files'] = [$file];
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(201);
@@ -76,7 +76,7 @@ class AttentionSubmissionTest extends TestCase
     public function test_validates_required_fields()
     {
         // Act
-        $response = $this->postJson('/api/pqrsf', []);
+        $response = $this->postJson('/api/peticiones', []);
 
         // Assert
         $response->assertStatus(422)
@@ -97,7 +97,7 @@ class AttentionSubmissionTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(422)
@@ -112,8 +112,8 @@ class AttentionSubmissionTest extends TestCase
         $data2 = $this->validAttentionData(['customer_email' => 'user2@example.com']);
 
         // Act
-        $response1 = $this->postJson('/api/pqrsf', $data1);
-        $response2 = $this->postJson('/api/pqrsf', $data2);
+        $response1 = $this->postJson('/api/peticiones', $data1);
+        $response2 = $this->postJson('/api/peticiones', $data2);
 
         // Assert
         $response1->assertStatus(201);
@@ -123,18 +123,18 @@ class AttentionSubmissionTest extends TestCase
         $attention2 = Attention::where('customer_email', 'user2@example.com')->first();
 
         $this->assertNotEquals($attention1->radicado, $attention2->radicado);
-        $this->assertStringStartsWith('PQRSF-'.date('Y'), $attention1->radicado);
-        $this->assertStringStartsWith('PQRSF-'.date('Y'), $attention2->radicado);
+        $this->assertStringStartsWith('peticiones-'.date('Y'), $attention1->radicado);
+        $this->assertStringStartsWith('peticiones-'.date('Y'), $attention2->radicado);
     }
 
     /** @test */
-    public function test_can_submit_anonymous_pqrsf()
+    public function test_can_submit_anonymous_peticiones()
     {
         // Arrange
         $data = $this->validAnonymousAttentionData();
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(201)
@@ -167,7 +167,7 @@ class AttentionSubmissionTest extends TestCase
         ];
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(422);
@@ -183,7 +183,7 @@ class AttentionSubmissionTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(201);
@@ -200,7 +200,7 @@ class AttentionSubmissionTest extends TestCase
         $data = $this->validAttentionData();
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(201);
@@ -218,7 +218,7 @@ class AttentionSubmissionTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(422)
@@ -234,7 +234,7 @@ class AttentionSubmissionTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(422)
@@ -250,7 +250,7 @@ class AttentionSubmissionTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert
         $response->assertStatus(422)
@@ -265,7 +265,7 @@ class AttentionSubmissionTest extends TestCase
 
         // Act - Hacer más de 60 requests en 1 minuto
         for ($i = 0; $i < 61; $i++) {
-            $response = $this->postJson('/api/pqrsf', array_merge($data, [
+            $response = $this->postJson('/api/peticiones', array_merge($data, [
                 'customer_email' => "user{$i}@example.com",
             ]));
         }

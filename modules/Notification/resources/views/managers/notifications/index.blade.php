@@ -97,7 +97,7 @@
                 <form method="GET" action="{{ route('notifications.index') }}">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-shrink-0" style="min-width: 200px;">
-                            <select name="filter" class="form-select select2 h-100" onchange="this.form.submit()">
+                            <select name="filter" class="form-select select2 h-100">
                                 <option value="all"    {{ $filter === 'all'    ? 'selected' : '' }}>Todas</option>
                                 <option value="unread" {{ $filter === 'unread' ? 'selected' : '' }}>No leídas</option>
                                 <option value="read"   {{ $filter === 'read'   ? 'selected' : '' }}>Leídas</option>
@@ -105,7 +105,7 @@
                         </div>
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"

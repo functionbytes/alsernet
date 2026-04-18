@@ -7,9 +7,9 @@ use Illuminate\Console\Command;
 use Modules\Attention\Models\Attention;
 
 /**
- * Command para archivar PQRSF cerrados según Ley 594/2000
+ * Command para archivar peticiones cerrados según Ley 594/2000
  *
- * Marca como archivados los PQRSF cerrados que han cumplido
+ * Marca como archivados los peticiones cerrados que han cumplido
  * el tiempo de archivo de gestión (por defecto 5 años).
  */
 class ArchiveOldAttentionsCommand extends Command
@@ -28,7 +28,7 @@ class ArchiveOldAttentionsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Archiva PQRSF cerrados hace X años (Ley 594/2000)';
+    protected $description = 'Archiva peticiones cerrados hace X años (Ley 594/2000)';
 
     /**
      * Execute the console command.
@@ -38,7 +38,7 @@ class ArchiveOldAttentionsCommand extends Command
         $dryRun = $this->option('dry-run');
         $years = $this->option('years') ?? config('attention.data_retention.management_archive_years', 5);
 
-        $this->info("🗄️  Archivando PQRSF cerrados hace {$years}+ años...");
+        $this->info("🗄️  Archivando peticiones cerrados hace {$years}+ años...");
 
         if ($dryRun) {
             $this->warn('⚠️  Modo DRY RUN - No se harán cambios');
@@ -47,19 +47,19 @@ class ArchiveOldAttentionsCommand extends Command
         // Fecha de corte
         $cutoffDate = Carbon::now()->subYears($years);
 
-        // Buscar PQRSF que cumplan los criterios de archivo
+        // Buscar peticiones que cumplan los criterios de archivo
         $attentions = Attention::whereNotNull('closed_at')
             ->where('closed_at', '<=', $cutoffDate)
             ->whereNull('archived_at')
             ->get();
 
         if ($attentions->isEmpty()) {
-            $this->info('✅ No hay PQRSF para archivar');
+            $this->info('✅ No hay peticiones para archivar');
 
             return self::SUCCESS;
         }
 
-        $this->info("📋 Encontrados {$attentions->count()} PQRSF para archivar");
+        $this->info("📋 Encontrados {$attentions->count()} peticiones para archivar");
 
         if (! $dryRun) {
             $bar = $this->output->createProgressBar($attentions->count());
@@ -77,7 +77,7 @@ class ArchiveOldAttentionsCommand extends Command
                 // Log de auditoría
                 $attention->logAction(
                     'archived',
-                    'PQRSF archivado automáticamente según política de retención (Ley 594/2000)',
+                    'peticiones archivado automáticamente según política de retención (Ley 594/2000)',
                     null
                 );
 

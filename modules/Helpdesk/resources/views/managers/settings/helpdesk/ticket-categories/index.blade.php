@@ -194,7 +194,7 @@
                     <div class="row align-items-center g-2">
                         <div class="col-md-9">
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0" style="border-color: #e0e0e0;">
+                                <span class="input-group-text bg-white border-end-1" style="border-color: #e0e0e0;">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0" placeholder="Buscar por nombre o slug..." value="{{ request('search') }}" style="border-color: #e0e0e0;">
@@ -279,7 +279,7 @@
                                             <div class="form-check form-switch d-inline-block">
                                                 <input type="checkbox" class="form-check-input toggle-checkbox" role="switch"
                                                        {{ $category->active ? 'checked' : '' }}
-                                                       onchange="this.form.submit()">
+                                                      >
                                             </div>
                                         </form>
                                     </td>

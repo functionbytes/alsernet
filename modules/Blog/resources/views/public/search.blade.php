@@ -19,7 +19,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('blog.public.search') }}">
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
+                    <span class="input-group-text bg-white border-end-1">
                         <i class="fas fa-search text-muted"></i>
                     </span>
                     <input type="text" name="q" class="form-control border-start-0 ps-0"

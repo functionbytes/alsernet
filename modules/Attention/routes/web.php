@@ -19,14 +19,14 @@ use Modules\Attention\Http\Controllers\AttentionWebController;
 |--------------------------------------------------------------------------
 |
 | Rutas web del módulo Attention organizadas en tres secciones:
-| 1. Públicas (pqrsf.*) - Sin autenticación, accesibles por ciudadanos
-| 2. Operaciones PQRSF (attentions.*) - Panel settings
+| 1. Públicas (peticiones.*) - Sin autenticación, accesibles por ciudadanos
+| 2. Operaciones peticiones (attentions.*) - Panel settings
 | 3. Configuración (settings.attention.*) - Usuarios settings (todos los roles internos)
 |
 */
 
-// ===== RUTAS PÚBLICAS (pqrsf.*) - Sin autenticación =====
-Route::middleware(['web', 'throttle:30,1'])->prefix('pqrsf')->name('pqrsf.')->group(function () {
+// ===== RUTAS PÚBLICAS (peticiones.*) - Sin autenticación =====
+Route::middleware(['web', 'throttle:30,1'])->prefix('peticiones')->name('peticiones.')->group(function () {
     Route::get('/', [AttentionPublicController::class, 'form'])->name('form');
     Route::post('/', [AttentionPublicController::class, 'submit'])->name('submit')->middleware('throttle:10,1');
     Route::get('/success/{radicado}', [AttentionPublicController::class, 'showSuccess'])->name('success');
@@ -41,7 +41,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('panel/attentions/dashboard', [AttentionDashboardController::class, 'index'])->name('attention.dashboard');
     Route::get('panel/attentions/dashboard/chart-data', [AttentionDashboardController::class, 'chartData'])->name('attention.dashboard.chart-data');
 
-    // ===== OPERACIONES PQRSF (attention.*) =====
+    // ===== OPERACIONES peticiones (attention.*) =====
     Route::prefix('panel/attentions')->name('attention.')->group(function () {
 
         // Listados
@@ -103,7 +103,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             // HUB
             Route::get('/', [AttentionConfigurationController::class, 'index'])->name('index');
 
-            // TIPOS PQRSF
+            // TIPOS peticiones
             Route::prefix('types')->name('types.')->group(function () {
                 Route::get('/', [AttentionTypesController::class, 'index'])->name('index');
                 Route::get('/create', [AttentionTypesController::class, 'create'])->name('create');

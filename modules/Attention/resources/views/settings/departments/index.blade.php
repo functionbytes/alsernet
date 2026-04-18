@@ -17,7 +17,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Departamentos</h5>
-                        <p class="small mb-0 text-muted">Gestiona los departamentos para asignación de PQRSF</p>
+                        <p class="small mb-0 text-muted">Gestiona los departamentos para asignación de peticiones</p>
                     </div>
                     <div class="d-flex gap-2">
                         @if(request('search') || request('status'))
@@ -80,7 +80,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -120,7 +120,7 @@
                                     <th>Nombre</th>
                                     <th>Email</th>
                                     <th class="text-center">Usuarios</th>
-                                    <th class="text-center">PQRSF</th>
+                                    <th class="text-center">peticiones</th>
                                     <th class="text-center">Estado</th>
                                     <th>Fecha</th>
                                     <th class="text-center">Acciones</th>
@@ -219,7 +219,7 @@
                                 @if(request('search'))
                                     No hay resultados para los criterios de búsqueda
                                 @else
-                                    Crea el primer departamento para organizar la gestión de PQRSF
+                                    Crea el primer departamento para organizar la gestión de peticiones
                                 @endif
                             </p>
                             @if(!request('search'))

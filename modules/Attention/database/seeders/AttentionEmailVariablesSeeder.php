@@ -4,18 +4,19 @@ namespace Modules\Attention\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Lang;
 use Modules\Mailer\Models\MailerVariable;
 use Modules\Mailer\Models\MailerVariableLang;
 
 /**
- * Seeds email template variables specific to the Attention (PQRSF) module.
+ * Seeds email template variables specific to the Attention (peticiones) module.
  * These variables are used in attention email templates for variable replacement.
  */
 class AttentionEmailVariablesSeeder extends Seeder
 {
     public function run(): void
     {
-        $langs = \Modules\Core\Models\Lang::where('available', true)->get();
+        $langs = Lang::where('available', true)->get();
 
         if ($langs->isEmpty()) {
             $this->command->warn('No languages found - skipping attention variable translations');
@@ -71,26 +72,26 @@ class AttentionEmailVariablesSeeder extends Seeder
             ],
 
             // ========================
-            // ATTENTION / PQRSF INFO
+            // ATTENTION / peticiones INFO
             // ========================
             [
                 'key' => 'attention_radicado',
                 'name' => 'ATTENTION_RADICADO',
-                'description' => 'Numero de radicado del PQRSF',
-                'example_value' => 'PQRSF-2026-000123',
+                'description' => 'Numero de radicado del peticiones',
+                'example_value' => 'peticiones-2026-000123',
                 'category' => 'attention_info',
             ],
             [
                 'key' => 'attention_uid',
                 'name' => 'ATTENTION_UID',
-                'description' => 'Identificador unico del PQRSF',
+                'description' => 'Identificador unico del peticiones',
                 'example_value' => 'df8633a9-20dd-46fa-80c6-eba8a139f8a3',
                 'category' => 'attention_info',
             ],
             [
                 'key' => 'attention_subject',
                 'name' => 'ATTENTION_SUBJECT',
-                'description' => 'Asunto de la solicitud PQRSF',
+                'description' => 'Asunto de la solicitud peticiones',
                 'example_value' => 'Solicitud de informacion sobre tramites',
                 'category' => 'attention_info',
             ],
@@ -104,14 +105,14 @@ class AttentionEmailVariablesSeeder extends Seeder
             [
                 'key' => 'attention_status',
                 'name' => 'ATTENTION_STATUS',
-                'description' => 'Estado actual del PQRSF',
+                'description' => 'Estado actual del peticiones',
                 'example_value' => 'En Proceso',
                 'category' => 'attention_info',
             ],
             [
                 'key' => 'attention_type',
                 'name' => 'ATTENTION_TYPE',
-                'description' => 'Tipo de PQRSF (Peticion, Queja, Reclamo, etc.)',
+                'description' => 'Tipo de peticiones (Peticion, Queja, Reclamo, etc.)',
                 'example_value' => 'Peticion',
                 'category' => 'attention_info',
             ],
@@ -154,7 +155,7 @@ class AttentionEmailVariablesSeeder extends Seeder
             [
                 'key' => 'created_date',
                 'name' => 'CREATED_DATE',
-                'description' => 'Fecha de radicacion del PQRSF',
+                'description' => 'Fecha de radicacion del peticiones',
                 'example_value' => '10/02/2026',
                 'category' => 'attention_dates',
             ],
@@ -168,7 +169,7 @@ class AttentionEmailVariablesSeeder extends Seeder
             [
                 'key' => 'resolved_date',
                 'name' => 'RESOLVED_DATE',
-                'description' => 'Fecha de resolucion del PQRSF',
+                'description' => 'Fecha de resolucion del peticiones',
                 'example_value' => '25/02/2026',
                 'category' => 'attention_dates',
             ],
@@ -204,14 +205,14 @@ class AttentionEmailVariablesSeeder extends Seeder
             [
                 'key' => 'tracking_url',
                 'name' => 'TRACKING_URL',
-                'description' => 'URL para consultar el estado del PQRSF',
-                'example_value' => 'https://example.com/pqrsf/tracking/PQRSF-2026-000123',
+                'description' => 'URL para consultar el estado del peticiones',
+                'example_value' => 'https://example.com/peticiones/tracking/peticiones-2026-000123',
                 'category' => 'attention_links',
             ],
             [
                 'key' => 'attention_url',
                 'name' => 'ATTENTION_URL',
-                'description' => 'URL directa al detalle del PQRSF',
+                'description' => 'URL directa al detalle del peticiones',
                 'example_value' => 'https://example.com/attentions/show/abc-123',
                 'category' => 'attention_links',
             ],

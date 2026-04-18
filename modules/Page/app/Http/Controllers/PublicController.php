@@ -25,12 +25,25 @@ class PublicController extends Controller
     ) {}
 
     /**
-     * Display the homepage (page with template = 'homepage').
+     * Display the homepage (page with template = 'homepage' or configured via settings).
      */
     public function showHomepage(): Response|RedirectResponse
     {
-        $page = Page::where('template', 'homepage')->published()->first()
-            ?? abort(404);
+        $page = null;
+
+        // Try to get the configured homepage from settings first
+        $homepagePageId = (int) setting('homepage-page-id');
+
+        if ($homepagePageId > 0) {
+            $page = Page::where('id', $homepagePageId)->published()->first();
+        }
+
+        // Fallback to the page with template='homepage' if not configured or not found
+        if (empty($page)) {
+            $page = Page::where('template', 'homepage')->published()->first();
+        }
+
+        $page = $page ?? abort(404);
 
         $locale = app()->getLocale();
         $langLinks = $this->buildLangLinks($page, '', $locale);
@@ -273,6 +286,17 @@ class PublicController extends Controller
                 ->first();
         }
 
+        // Try full path as slug first (e.g. "servicios/barandillas" stored directly).
+        $fullPathMatch = Page::with('translations')
+            ->where('slug', $slug)
+            ->published()
+            ->first();
+
+        if ($fullPathMatch) {
+            return $fullPathMatch;
+        }
+
+        // Fallback: hierarchical resolution via parent_id chain.
         $parts = array_values(array_filter(explode('/', $slug)));
         $leafSlug = array_pop($parts);
 

@@ -11,7 +11,7 @@
                     Confirmación de recepción
                 </label>
                 <p class="text-muted mb-2">
-                    Enviar confirmación al ciudadano de que su PQRSF fue recibido
+                    Enviar confirmación al ciudadano de que su peticiones fue recibido
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100 send-confirmation-btn"
                         data-uid="{{ $attention->uid }}">
@@ -27,7 +27,7 @@
                     Notificación de trámite
                 </label>
                 <p class="text-muted mb-2">
-                    Notificar al ciudadano que su PQRSF está en proceso
+                    Notificar al ciudadano que su peticiones está en proceso
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100 send-in-process-btn"
                         data-uid="{{ $attention->uid }}">
@@ -43,7 +43,7 @@
                     Notificación de resolución
                 </label>
                 <p class="text-muted mb-2">
-                    Notificar al ciudadano que su PQRSF fue resuelto
+                    Notificar al ciudadano que su peticiones fue resuelto
                 </p>
                 <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
                         data-bs-target="#resolvedModal">

@@ -96,7 +96,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Estado</label>
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="status" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todos</option>
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->id }}" {{ request('status') == $status->id ? 'selected' : '' }}>
@@ -108,7 +108,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Prioridad</label>
-                            <select name="priority" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="priority" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todas</option>
                                 <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>🟢 Baja</option>
                                 <option value="normal" {{ request('priority') == 'normal' ? 'selected' : '' }}>🔵 Normal</option>
@@ -119,7 +119,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Canal</label>
-                            <select name="channel" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="channel" class="form-select form-select-sm js-auto-submit">
                                 <option value="">Todos los canales</option>
                                 <option value="widget" {{ request('channel') === 'widget' ? 'selected' : '' }}>Widget</option>
                                 <option value="whatsapp" {{ request('channel') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>

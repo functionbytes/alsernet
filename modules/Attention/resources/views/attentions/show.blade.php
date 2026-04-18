@@ -1,10 +1,10 @@
 @extends('layouts.theme')
 
-@section('title', 'Ver PQRSF - ' . $attention->radicado)
+@section('title', 'Ver peticiones - ' . $attention->radicado)
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Detalle del PQRSF'])
+    @include('core::components.card', ['title' => 'Detalle del peticiones'])
 
     <div class="row">
         <div class="col-lg-8">
@@ -14,7 +14,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1 fw-bold">Información general</h5>
-                            <p class="small mb-0 text-muted">Detalles del PQRSF radicado</p>
+                            <p class="small mb-0 text-muted">Detalles del peticiones radicado</p>
                         </div>
                         <span class="badge bg-{{ $attention->status->color() }}">
                             {{ $attention->status->label() }}

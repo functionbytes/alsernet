@@ -77,16 +77,16 @@
                                     Configuración de radicado
                                 </h6>
                                 <p class="text-muted mb-3">
-                                    Define el formato del número de radicado para las solicitudes PQRSF.
+                                    Define el formato del número de radicado para las solicitudes peticiones.
                                 </p>
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-bold">Prefijo de radicado</label>
                                         <input type="text" class="form-control" name="radicado_prefix"
-                                               value="{{ old('radicado_prefix', $configurations['radicado_prefix'] ?? 'PQRSF') }}"
-                                               placeholder="PQRSF" required>
-                                        <small class="text-muted">Ejemplo: PQRSF-2024-0001</small>
+                                               value="{{ old('radicado_prefix', $configurations['radicado_prefix'] ?? 'peticiones') }}"
+                                               placeholder="peticiones" required>
+                                        <small class="text-muted">Ejemplo: peticiones-2024-0001</small>
                                     </div>
 
                                     <div class="col-md-6 mb-3">

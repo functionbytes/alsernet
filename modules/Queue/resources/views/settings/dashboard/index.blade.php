@@ -135,7 +135,7 @@
                         <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch border-bottom pb-3 mb-3">
                             <div class="flex-fill">
                                 <div class="input-group h-100">
-                                    <span class="input-group-text bg-white border-end-0">
+                                    <span class="input-group-text bg-white border-end-1">
                                         <i class="fas fa-search text-muted"></i>
                                     </span>
                                     <input type="search" class="form-control border-start-0 ps-0" id="failed-search" placeholder="Buscar por trabajo o error...">

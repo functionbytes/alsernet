@@ -33,7 +33,7 @@
             '<div class="' + iconClass + '">' + block.icon + '</div>' +
             '<div class="ve-block-name">' + escapeHtml(block.name) + '</div>' +
             (block.isCustom
-                ? '<button class="ve-delete-custom-block btn btn-xs btn-outline-danger" data-id="' + escapeHtml(block.id) + '" title="Eliminar"><i class="fa-duotone fa-solid fa-times"></i></button>'
+                ? '<button class="ve-delete-custom-block btn btn-sm btn-outline-danger" data-id="' + escapeHtml(block.id) + '" title="Eliminar"><i class="fa-solid fa-times"></i></button>'
                 : ''
             )
         );
@@ -63,7 +63,7 @@
         const custom = getCustomBlocks();
         const allBlocks = (window.veBlocks || []).concat(
             custom.map(function (b) {
-                return { id: b.id, name: b.label, category: b.category || 'custom', html: b.html, icon: '<i class="fa-duotone fa-solid fa-bookmark"></i>', isCustom: true };
+                return { id: b.id, name: b.label, category: b.category || 'custom', html: b.html, icon: '<i class="fa-solid fa-bookmark"></i>', isCustom: true };
             })
         );
 
@@ -100,7 +100,7 @@
                     'aria-expanded':   isFirst ? 'true' : 'false',
                     'aria-controls':   catId,
                 })
-                .html(escapeHtml(label) + '<i class="fa-duotone fa-solid fa-chevron-down ve-cat-chevron"></i>');
+                .html(escapeHtml(label) + '<i class="fa-solid fa-chevron-down ve-cat-chevron"></i>');
 
             const $collapseDiv = $('<div>').addClass('collapse' + (isFirst ? ' show' : '')).attr({ 'id': catId, 'data-bs-parent': '#ve-blocks-accordion' });
             const $grid = $('<div class="ve-blocks-grid">');
@@ -148,7 +148,7 @@
         const $f = $('<div>')
             .addClass('alert alert-success py-1 px-2 mx-2 mb-2')
             .css('font-size', '11px')
-            .html('<i class="fa-duotone fa-solid fa-check me-1"></i>' + escapeHtml(msg));
+            .html('<i class="fa-solid fa-check me-1"></i>' + escapeHtml(msg));
         $('#ve-blocks-accordion').before($f);
         setTimeout(function () { $f.fadeOut(300, function () { $f.remove(); }); }, 1800);
     }

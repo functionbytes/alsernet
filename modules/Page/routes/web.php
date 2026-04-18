@@ -79,9 +79,12 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::get('pages/{page}/visual-preview', [VisualEditorController::class, 'preview'])->name('pages.visual-preview');
     Route::post('pages/{page}/visual-preview', [VisualEditorController::class, 'preview'])->name('pages.visual-preview.post');
     Route::post('pages/{page}/visual-save', [VisualEditorController::class, 'save'])->name('pages.visual-save');
+    Route::get('pages/{page}/draft', [VisualEditorController::class, 'getDraft'])->name('pages.draft');
     Route::patch('pages/{page}/auto-save', [VisualEditorController::class, 'autoSave'])->name('pages.auto-save');
     Route::get('pages/{page}/locale-content', [VisualEditorController::class, 'getLocaleContent'])->name('pages.locale-content');
     Route::post('pages/{page}/expand-shortcode', [VisualEditorController::class, 'expandShortcode'])->name('pages.expand-shortcode');
+    Route::get('pages/{page}/editor-versions', [VisualEditorController::class, 'getEditorVersions'])->name('pages.editor-versions');
+    Route::get('pages/{page}/editor-versions/{version}', [VisualEditorController::class, 'getEditorVersion'])->name('pages.editor-version');
     Route::get('pages/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
     Route::put('pages/{page}', [PageController::class, 'update'])->name('pages.update');
     Route::delete('pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
@@ -138,4 +141,4 @@ Route::get('/', [PublicController::class, 'showHomepage'])->name('page.home');
 
 // Catchall route for pages - must be last
 Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')
-    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|reviews|templates|reply-templates|blog|helpdesk|forms|mailrelay|testimonios)([\p{L}0-9\-\/]+)$');
+    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|reviews|templates|reply-templates|blog|helpdesk|forms|mailrelay)([\p{L}0-9\-\/]+)$');

@@ -12,7 +12,7 @@ use Modules\Attention\Models\Attention;
 use Throwable;
 
 /**
- * Service for handling PQRSF notifications.
+ * Service for handling peticiones notifications.
  * Tries Mailer templates first, falls back to legacy Mailable classes.
  */
 class AttentionNotificationService
@@ -143,7 +143,7 @@ class AttentionNotificationService
         return match ($type) {
             'confirmation' => "Confirmacion de radicado {$attention->radicado}",
             'assigned' => "Nueva asignacion: {$attention->radicado}",
-            'in_process' => "PQRSF En Proceso - Radicado: {$attention->radicado}",
+            'in_process' => "peticiones En Proceso - Radicado: {$attention->radicado}",
             'resolution' => "Respuesta a su solicitud {$attention->radicado}",
             default => "Notificacion {$attention->radicado}",
         };

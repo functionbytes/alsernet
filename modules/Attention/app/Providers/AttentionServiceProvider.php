@@ -118,14 +118,14 @@ class AttentionServiceProvider extends ServiceProvider
     {
         NavService::registerMiniItem('attentions', [
             'icon' => 'fa-duotone fa-headset',
-            'tooltip' => 'Atenciones PQRSF',
+            'tooltip' => 'Atenciones peticiones',
             'sidebar_id' => 'attentions',
             'order' => 45,
         ]);
 
-        // Sidebar principal de Atenciones (gestion PQRSF)
+        // Sidebar principal de Atenciones (gestion peticiones)
         NavService::registerSidebar('attentions', [
-            'title' => 'Gestion PQRSF',
+            'title' => 'Gestion peticiones',
             'items' => [
                 ['label' => 'Dashboard', 'route' => 'attention.dashboard'],
                 ['label' => 'Pendientes', 'route' => 'attention.pending'],

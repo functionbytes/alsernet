@@ -36,6 +36,7 @@ class SubscriberController extends Controller
             'total' => Subscriber::query()->count(),
             'subscribed' => Subscriber::query()->subscribed()->count(),
             'unsubscribed' => Subscriber::query()->unsubscribed()->count(),
+            'new' => Subscriber::query()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
         ];
 
         return view('newsletter::subscribers.index', compact('subscribers', 'stats', 'search', 'status'));

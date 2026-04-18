@@ -15,12 +15,16 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     @include('forms::public.partials.form-body', [
-                        'formId' => 'form-' . $form->id,
-                        'form' => $form,
-                        'isMultiStep' => $form->is_multi_step,
-                        'steps' => $form->fields->pluck('step_number')->unique()->sort()->values(),
-                        'totalSteps' => $form->fields->pluck('step_number')->unique()->count(),
-                        'floatingLabel' => $form->floating_label ?? false,
+                        'formId'         => 'form-' . $form->id,
+                        'form'           => $form,
+                        'isMultiStep'    => $form->is_multi_step,
+                        'steps'          => $form->fields->pluck('step_number')->unique()->sort()->values(),
+                        'totalSteps'     => $form->fields->pluck('step_number')->unique()->count(),
+                        'floatingLabel'  => $form->floating_label ?? false,
+                        'buttonText'     => $form->submit_button_text ?? 'Enviar',
+                        'buttonColor'    => $form->button_color ?? null,
+                        'showTitle'      => true,
+                        'theme'          => $form->theme ?? 'default',
                         'captchaEnabled' => $form->captcha_enabled && class_exists(\Modules\Captcha\Facades\Captcha::class),
                     ])
                 </div>

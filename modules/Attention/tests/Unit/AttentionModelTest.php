@@ -3,9 +3,13 @@
 namespace Modules\Attention\Tests\Unit;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
 use Modules\Attention\Models\Attention;
+use Modules\Attention\Models\AttentionCategory;
+use Modules\Attention\Models\AttentionSede;
+use Modules\Attention\Models\AttentionType;
 use Modules\Attention\Tests\TestCase;
 
 class AttentionModelTest extends TestCase
@@ -20,7 +24,7 @@ class AttentionModelTest extends TestCase
 
         // Assert
         $this->assertNotNull($attention->uid);
-        $this->assertTrue(\Illuminate\Support\Str::isUuid($attention->uid));
+        $this->assertTrue(Str::isUuid($attention->uid));
     }
 
     /** @test */
@@ -30,11 +34,11 @@ class AttentionModelTest extends TestCase
         $radicado = Attention::generateRadicado();
 
         // Assert
-        $this->assertStringStartsWith('PQRSF-', $radicado);
+        $this->assertStringStartsWith('peticiones-', $radicado);
         $this->assertStringContainsString(date('Y'), $radicado);
 
-        // Format: PQRSF-YYYY-NNNNNN
-        $pattern = '/^PQRSF-\d{4}-\d{6}$/';
+        // Format: peticiones-YYYY-NNNNNN
+        $pattern = '/^peticiones-\d{4}-\d{6}$/';
         $this->assertMatchesRegularExpression($pattern, $radicado);
     }
 
@@ -483,8 +487,8 @@ class AttentionModelTest extends TestCase
         $attention = $this->createAttention();
 
         // Act & Assert
-        $this->assertInstanceOf(\Modules\Attention\Models\AttentionType::class, $attention->type);
-        $this->assertInstanceOf(\Modules\Attention\Models\AttentionCategory::class, $attention->category);
-        $this->assertInstanceOf(\Modules\Attention\Models\AttentionSede::class, $attention->sede);
+        $this->assertInstanceOf(AttentionType::class, $attention->type);
+        $this->assertInstanceOf(AttentionCategory::class, $attention->category);
+        $this->assertInstanceOf(AttentionSede::class, $attention->sede);
     }
 }

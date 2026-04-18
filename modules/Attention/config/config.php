@@ -5,15 +5,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | PQRSF Configuration
+    | peticiones Configuration
     |--------------------------------------------------------------------------
     |
-    | Configuration for PQRSF system (Peticiones, Quejas, Reclamos,
+    | Configuration for peticiones system (Peticiones, Quejas, Reclamos,
     | Sugerencias, Felicitaciones)
     |
     */
 
-    'radicado_prefix' => env('PQRSF_RADICADO_PREFIX', 'PQRSF'),
+    'radicado_prefix' => env('peticiones_RADICADO_PREFIX', 'peticiones'),
 
     'attachments' => [
         'max_size' => 10 * 1024 * 1024, // 10MB
@@ -53,12 +53,12 @@ return [
 
     'settings' => [
         // General Settings
-        'radicado_prefix' => env('PQRSF_RADICADO_PREFIX', 'PQRSF'),
-        'auto_assign' => env('PQRSF_AUTO_ASSIGN', false),
-        'require_attachments' => env('PQRSF_REQUIRE_ATTACHMENTS', false),
-        'enable_anonymous' => env('PQRSF_ENABLE_ANONYMOUS', true),
-        'max_attachments' => env('PQRSF_MAX_ATTACHMENTS', 5),
-        'attachment_max_size' => env('PQRSF_ATTACHMENT_MAX_SIZE', 10240), // KB
+        'radicado_prefix' => env('peticiones_RADICADO_PREFIX', 'peticiones'),
+        'auto_assign' => env('peticiones_AUTO_ASSIGN', false),
+        'require_attachments' => env('peticiones_REQUIRE_ATTACHMENTS', false),
+        'enable_anonymous' => env('peticiones_ENABLE_ANONYMOUS', true),
+        'max_attachments' => env('peticiones_MAX_ATTACHMENTS', 5),
+        'attachment_max_size' => env('peticiones_ATTACHMENT_MAX_SIZE', 10240), // KB
 
         // Email Templates
         'email_templates' => [
@@ -71,7 +71,7 @@ return [
 
         // Email Notifications
         'notifications' => [
-            'enabled' => env('PQRSF_EMAIL_NOTIFICATIONS', true),
+            'enabled' => env('peticiones_EMAIL_NOTIFICATIONS', true),
             'notify_on_received' => true,
             'notify_on_in_process' => true,
             'notify_on_resolved' => true,
@@ -81,15 +81,15 @@ return [
 
         // SLA Defaults
         'sla_defaults' => [
-            'enabled' => env('PQRSF_SLA_ENABLED', true),
-            'response_hours' => env('PQRSF_SLA_RESPONSE_HOURS', 24),
-            'resolution_hours' => env('PQRSF_SLA_RESOLUTION_HOURS', 72),
-            'business_hours_only' => env('PQRSF_SLA_BUSINESS_HOURS_ONLY', true),
-            'business_hours_start' => env('PQRSF_SLA_BUSINESS_START', '09:00'),
-            'business_hours_end' => env('PQRSF_SLA_BUSINESS_END', '17:00'),
-            'exclude_weekends' => env('PQRSF_SLA_EXCLUDE_WEEKENDS', true),
-            'auto_escalate' => env('PQRSF_SLA_AUTO_ESCALATE', true),
-            'escalation_email' => env('PQRSF_SLA_ESCALATION_EMAIL', ''),
+            'enabled' => env('peticiones_SLA_ENABLED', true),
+            'response_hours' => env('peticiones_SLA_RESPONSE_HOURS', 24),
+            'resolution_hours' => env('peticiones_SLA_RESOLUTION_HOURS', 72),
+            'business_hours_only' => env('peticiones_SLA_BUSINESS_HOURS_ONLY', true),
+            'business_hours_start' => env('peticiones_SLA_BUSINESS_START', '09:00'),
+            'business_hours_end' => env('peticiones_SLA_BUSINESS_END', '17:00'),
+            'exclude_weekends' => env('peticiones_SLA_EXCLUDE_WEEKENDS', true),
+            'auto_escalate' => env('peticiones_SLA_AUTO_ESCALATE', true),
+            'escalation_email' => env('peticiones_SLA_ESCALATION_EMAIL', ''),
         ],
     ],
 ];

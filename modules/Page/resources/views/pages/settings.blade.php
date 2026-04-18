@@ -66,6 +66,45 @@
                         <div class="card-header p-3 bg-white border-bottom">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
+                                    <h5 class="mb-1 fw-bold">Página de aterrizaje (Homepage)</h5>
+                                    <p class="small mb-0 text-muted">Selecciona la página que se mostrará en la ruta raíz <code>/</code></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="homepage_page_id" class="form-label fw-semibold">
+                                    Página de inicio
+                                </label>
+                                <select name="homepage_page_id"
+                                        id="homepage_page_id"
+                                        class="form-select @error('homepage_page_id') is-invalid @enderror">
+                                    <option value="">— Usar página con template 'homepage' —</option>
+                                    @foreach ($publishedPages as $page)
+                                        <option value="{{ $page->id }}"
+                                            {{ (int) old('homepage_page_id', setting('homepage-page-id')) === $page->id ? 'selected' : '' }}>
+                                            {{ $page->title }}
+                                            @if ($page->slug) ({{ $page->slug }}) @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text">
+                                    Cuando dejes en blanco, usará la página publicada con <code>template = 'homepage'</code>.
+                                </div>
+                                @error('homepage_page_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header p-3 bg-white border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
                                     <h5 class="mb-1 fw-bold">Idiomas soportados</h5>
                                     <p class="small mb-0 text-muted">Idiomas activos disponibles para traducir páginas</p>
                                 </div>

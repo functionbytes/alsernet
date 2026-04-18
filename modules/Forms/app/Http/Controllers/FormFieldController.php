@@ -3,8 +3,10 @@
 namespace Modules\Forms\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\DeepLTranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Forms\Http\Requests\StoreFormFieldRequest;
 use Modules\Forms\Models\Form;
@@ -90,6 +92,17 @@ class FormFieldController extends Controller
             'likert_rows' => ['nullable', 'array'],
             'show_char_counter' => ['boolean'],
             'label_position' => ['nullable', 'in:top,floating,hidden'],
+            'css_class' => ['nullable', 'string', 'max:255'],
+            'translations' => ['nullable', 'array'],
+            'translations.*' => ['nullable', 'array'],
+            'translations.*.label' => ['nullable', 'string', 'max:255'],
+            'translations.*.placeholder' => ['nullable', 'string', 'max:255'],
+            'translations.*.consent_text' => ['nullable', 'string'],
+            'conditions' => ['nullable', 'array'],
+            'conditions.*.field' => ['required_with:conditions', 'string'],
+            'conditions.*.operator' => ['required_with:conditions', 'string', 'in:equals,not_equals,contains,not_empty,empty,greater_than,less_than'],
+            'conditions.*.value' => ['nullable', 'string'],
+            'conditions.*.logic' => ['nullable', 'string', 'in:OR'],
         ]);
 
         if ($field->isLayoutField()) {
@@ -169,6 +182,69 @@ class FormFieldController extends Controller
             'message' => 'Campo duplicado correctamente.',
             'field' => $cloned,
         ], 201);
+    }
+
+    public function translateWithDeepL(Form $form, FormField $field): JsonResponse
+    {
+        $this->authorize('Forms.forms.edit');
+
+        if ($field->form_id !== $form->id) {
+            return response()->json(['success' => false, 'message' => 'Campo no encontrado.'], 404);
+        }
+
+        $deepl = app(DeepLTranslationService::class);
+
+        if (! $deepl->isConfigured()) {
+            return response()->json(['success' => false, 'message' => 'DeepL no está configurado. Añade DEEPL_API_KEY.'], 422);
+        }
+
+        $locales = DB::table('locales')
+            ->where('is_active', true)
+            ->where('code', '!=', 'es')
+            ->pluck('code')
+            ->all();
+
+        if (empty($locales)) {
+            return response()->json(['success' => false, 'message' => 'No hay idiomas activos configurados.'], 422);
+        }
+
+        $existing = $field->translations ?? [];
+        $errors = [];
+
+        foreach ($locales as $locale) {
+            try {
+                $texts = [
+                    $field->label ?? '',
+                    $field->placeholder ?? '',
+                    $field->consent_text ?? '',
+                ];
+
+                $translated = $deepl->translate($texts, $locale, 'es');
+
+                $localeData = array_filter([
+                    'label' => $translated[0] ?: null,
+                    'placeholder' => $translated[1] ?: null,
+                    'consent_text' => $translated[2] ?: null,
+                ]);
+
+                if (! empty($localeData)) {
+                    $existing[$locale] = array_merge($existing[$locale] ?? [], $localeData);
+                }
+            } catch (\RuntimeException $e) {
+                $errors[$locale] = $e->getMessage();
+            }
+        }
+
+        $field->update(['translations' => $existing]);
+
+        return response()->json([
+            'success' => empty($errors),
+            'translations' => $existing,
+            'errors' => $errors,
+            'message' => empty($errors)
+                ? 'Traducciones generadas correctamente.'
+                : 'Traducción completada con algunos errores.',
+        ]);
     }
 
     private function resolveUniqueKey(StoreFormFieldRequest|string $requestOrBase, Form $form): string

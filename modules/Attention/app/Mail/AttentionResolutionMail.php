@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email sent to citizen with PQRSF resolution
+ * Email sent to citizen with peticiones resolution
  */
 class AttentionResolutionMail extends Mailable implements ShouldQueue
 {
@@ -48,7 +48,7 @@ class AttentionResolutionMail extends Mailable implements ShouldQueue
                 'resolution' => $this->attention->resolution,
                 'response_type' => $this->attention->response_type?->label(),
                 'resolved_at' => $this->attention->resolved_at->format('d/m/Y H:i'),
-                'satisfaction_url' => route('api.pqrsf.satisfaction', ['radicado' => $this->attention->radicado]),
+                'satisfaction_url' => route('api.peticiones.satisfaction', ['radicado' => $this->attention->radicado]),
             ],
         );
     }

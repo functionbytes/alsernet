@@ -1,10 +1,10 @@
 <!-- Knowledge Base Modal -->
 <div class="modal fade" id="knowledgeModal" tabindex="-1" aria-labelledby="knowledgeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title" id="knowledgeModalLabel">
-                    <i class="ti ti-book me-2"></i><span id="knowledgeModalTitle">Nuevo Documento</span>
+                    <i class="fa-solid fa-book me-2"></i><span id="knowledgeModalTitle">Nuevo Documento</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -78,10 +78,10 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-info" id="generateEmbeddingBtn">
-                        <i class="ti ti-vector me-2"></i>Generar Embedding
+                        <i class="fa-solid fa-bezier-curve me-2"></i>Generar Embedding
                     </button>
                     <button type="submit" class="btn btn-warning" id="saveKnowledgeBtn">
-                        <i class="ti ti-check me-2"></i>Guardar Documento
+                        <i class="fa-solid fa-check me-2"></i>Guardar Documento
                     </button>
                 </div>
             </form>

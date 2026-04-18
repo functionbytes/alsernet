@@ -12,7 +12,7 @@ class AttentionPolicy
     use HandlesAuthorization;
 
     /**
-     * Determine if the user can view any PQRSF.
+     * Determine if the user can view any peticiones.
      */
     public function viewAny(User $user): bool
     {
@@ -26,7 +26,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can view a specific PQRSF.
+     * Determine if the user can view a specific peticiones.
      */
     public function view(User $user, Attention $attention): bool
     {
@@ -59,16 +59,16 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can create PQRSF.
+     * Determine if the user can create peticiones.
      */
     public function create(User $user): bool
     {
-        // All authenticated users can create PQRSF
+        // All authenticated users can create peticiones
         return true;
     }
 
     /**
-     * Determine if the user can update a PQRSF.
+     * Determine if the user can update a peticiones.
      */
     public function update(User $user, Attention $attention): bool
     {
@@ -102,7 +102,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can delete a PQRSF.
+     * Determine if the user can delete a peticiones.
      */
     public function delete(User $user, Attention $attention): bool
     {
@@ -120,7 +120,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can fully manage a PQRSF.
+     * Determine if the user can fully manage a peticiones.
      */
     public function manage(User $user, Attention $attention): bool
     {
@@ -148,7 +148,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can assign PQRSF to department/user.
+     * Determine if the user can assign peticiones to department/user.
      */
     public function assign(User $user, Attention $attention): bool
     {
@@ -171,7 +171,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can change status of PQRSF.
+     * Determine if the user can change status of peticiones.
      */
     public function changeStatus(User $user, Attention $attention): bool
     {
@@ -204,7 +204,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can resolve a PQRSF.
+     * Determine if the user can resolve a peticiones.
      */
     public function resolve(User $user, Attention $attention): bool
     {
@@ -237,7 +237,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can close a PQRSF.
+     * Determine if the user can close a peticiones.
      */
     public function close(User $user, Attention $attention): bool
     {
@@ -275,7 +275,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can send emails for a PQRSF.
+     * Determine if the user can send emails for a peticiones.
      */
     public function sendEmail(User $user, Attention $attention): bool
     {
@@ -303,7 +303,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can manage notes for a PQRSF.
+     * Determine if the user can manage notes for a peticiones.
      */
     public function manageNotes(User $user, Attention $attention): bool
     {
@@ -331,7 +331,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can view full history of a PQRSF.
+     * Determine if the user can view full history of a peticiones.
      */
     public function viewHistory(User $user, Attention $attention): bool
     {
@@ -364,7 +364,7 @@ class AttentionPolicy
     }
 
     /**
-     * Determine if the user can view all PQRSF without filters.
+     * Determine if the user can view all peticiones without filters.
      */
     public function viewAll(User $user): bool
     {

@@ -111,7 +111,7 @@
                                 <td class="text-muted">{{ $sc['desc'] }}</td>
                                 <td class="text-center pe-3">
                                     <button type="button"
-                                            class="btn btn-outline-primary btn-xs py-0 px-2 shortcode-insert-btn"
+                                            class="btn btn-outline-primary btn-sm py-0 px-2 shortcode-insert-btn"
                                             data-locale="{{ $locale }}"
                                             data-shortcode="{{ $sc['text'] }}"
                                             title="Insertar en el editor">
@@ -143,7 +143,7 @@
                                 <td class="text-muted">{{ $form->name }}</td>
                                 <td class="text-center pe-3">
                                     <button type="button"
-                                            class="btn btn-outline-primary btn-xs py-0 px-2 shortcode-insert-btn"
+                                            class="btn btn-outline-primary btn-sm py-0 px-2 shortcode-insert-btn"
                                             data-locale="{{ $locale }}"
                                             data-shortcode='[form id="{{ $form->id }}"]'
                                             title="Insertar formulario: {{ $form->name }}">

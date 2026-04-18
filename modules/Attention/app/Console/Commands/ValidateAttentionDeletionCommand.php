@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Modules\Attention\Models\Attention;
 
 /**
- * Command para validar si un PQRSF puede ser eliminado según Ley 594/2000
+ * Command para validar si un peticiones puede ser eliminado según Ley 594/2000
  *
  * Verifica que se cumpla el tiempo mínimo de retención legal antes
  * de permitir la eliminación permanente de registros.
@@ -25,7 +25,7 @@ class ValidateAttentionDeletionCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Valida si un PQRSF puede ser eliminado según Ley 594/2000';
+    protected $description = 'Valida si un peticiones puede ser eliminado según Ley 594/2000';
 
     /**
      * Execute the console command.
@@ -34,13 +34,13 @@ class ValidateAttentionDeletionCommand extends Command
     {
         $radicado = $this->argument('radicado');
 
-        // Buscar el PQRSF incluyendo eliminados suavemente
+        // Buscar el peticiones incluyendo eliminados suavemente
         $attention = Attention::where('radicado', $radicado)
             ->withTrashed()
             ->first();
 
         if (! $attention) {
-            $this->error("❌ PQRSF {$radicado} no encontrado");
+            $this->error("❌ peticiones {$radicado} no encontrado");
 
             return self::FAILURE;
         }
@@ -53,9 +53,9 @@ class ValidateAttentionDeletionCommand extends Command
         $closedAt = $attention->closed_at ?? $attention->created_at;
         $yearsSinceClosed = $closedAt->diffInYears(now());
 
-        // Mostrar información del PQRSF
+        // Mostrar información del peticiones
         $this->newLine();
-        $this->info('📋 Información del PQRSF');
+        $this->info('📋 Información del peticiones');
         $this->table(
             ['Campo', 'Valor'],
             [
@@ -95,7 +95,7 @@ class ValidateAttentionDeletionCommand extends Command
             $this->warn('⚠️  PUEDE ELIMINARSE (CON PRECAUCIÓN)');
             $this->warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             $this->newLine();
-            $this->warn("El PQRSF cumple el plazo legal mínimo de {$minYears} años.");
+            $this->warn("El peticiones cumple el plazo legal mínimo de {$minYears} años.");
             $this->warn("Sin embargo, está cerca del límite ({$yearsSinceClosed} años).");
             $this->newLine();
             $this->info('💡 Recomendación: Verificar si existen procesos legales');
@@ -110,7 +110,7 @@ class ValidateAttentionDeletionCommand extends Command
         $this->info('✅ PUEDE ELIMINARSE PERMANENTEMENTE');
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->newLine();
-        $this->info('El PQRSF cumple con el plazo legal de retención.');
+        $this->info('El peticiones cumple con el plazo legal de retención.');
         $this->info("Tiempo transcurrido: {$yearsSinceClosed} años");
         $this->info("Plazo mínimo legal: {$minYears} años");
         $this->newLine();
@@ -118,7 +118,7 @@ class ValidateAttentionDeletionCommand extends Command
         // Información adicional sobre archivo histórico
         $historicYears = config('attention.data_retention.permanent_archive_years', 15);
         if ($yearsSinceClosed >= $historicYears) {
-            $this->warn('📚 NOTA: Este PQRSF tiene valor histórico');
+            $this->warn('📚 NOTA: Este peticiones tiene valor histórico');
             $this->warn("   (>= {$historicYears} años). Considere su conservación");
             $this->warn('   como archivo histórico antes de eliminar.');
             $this->newLine();

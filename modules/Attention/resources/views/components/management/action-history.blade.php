@@ -2,7 +2,7 @@
 <div class="card mb-3">
     <div class="card-header p-3 bg-white border-bottom">
         <h5 class="mb-1 fw-bold">Historial de acciones</h5>
-        <p class="small mb-0 text-muted">Registro completo de todas las acciones realizadas en este PQRSF</p>
+        <p class="small mb-0 text-muted">Registro completo de todas las acciones realizadas en este peticiones</p>
     </div>
 
     @if($attention->actions && $attention->actions->count() > 0)
@@ -81,7 +81,7 @@
             <p class="text-muted mb-0">
                 <strong>Sin acciones registradas</strong>
                 <br>
-                No hay acciones registradas para este PQRSF aún.
+                No hay acciones registradas para este peticiones aún.
             </p>
         </div>
     @endif

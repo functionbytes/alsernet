@@ -27,13 +27,13 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 /**
- * Web controller for PQRSF views
+ * Web controller for peticiones views
  * Handles web interface for attention management
  */
 class AttentionWebController extends Controller
 {
     /**
-     * Display pending PQRSF list
+     * Display pending peticiones list
      */
     public function pending(Request $request): View
     {
@@ -125,7 +125,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Display all PQRSF list
+     * Display all peticiones list
      */
     public function index(Request $request): View
     {
@@ -178,7 +178,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Show the form for creating a new PQRSF
+     * Show the form for creating a new peticiones
      */
     public function create(): View
     {
@@ -195,7 +195,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Store a newly created PQRSF
+     * Store a newly created peticiones
      */
     public function store(Request $request): RedirectResponse
     {
@@ -230,14 +230,14 @@ class AttentionWebController extends Controller
             }
         }
 
-        $attention->logAction('created', 'PQRSF radicado desde panel administrativo');
+        $attention->logAction('created', 'peticiones radicado desde panel administrativo');
 
         return redirect()->route('attention.show', $attention->uid)
-            ->with('success', "PQRSF radicado exitosamente con número {$attention->radicado}");
+            ->with('success', "peticiones radicado exitosamente con número {$attention->radicado}");
     }
 
     /**
-     * Show the form for editing the specified PQRSF
+     * Show the form for editing the specified peticiones
      */
     public function edit(string $uid): View|RedirectResponse
     {
@@ -248,7 +248,7 @@ class AttentionWebController extends Controller
 
         if (! $attention->canBeEdited()) {
             return redirect()->route('attention.show', $attention->uid)
-                ->with('error', 'Este PQRSF ya no puede ser editado');
+                ->with('error', 'Este peticiones ya no puede ser editado');
         }
 
         $types = AttentionType::orderBy('name')->get();
@@ -272,7 +272,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Display the specified PQRSF
+     * Display the specified peticiones
      */
     public function show(string $uid): View
     {
@@ -298,7 +298,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Show management page for PQRSF
+     * Show management page for peticiones
      */
     public function manage(string $uid): View
     {
@@ -416,7 +416,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Queue a PQRSF export job; user is notified when ready.
+     * Queue a peticiones export job; user is notified when ready.
      * GET /attentions/export
      */
     public function export(Request $request): RedirectResponse|JsonResponse
@@ -443,7 +443,7 @@ class AttentionWebController extends Controller
     }
 
     /**
-     * Download a previously generated PQRSF export by token.
+     * Download a previously generated peticiones export by token.
      * GET /attentions/export/download
      */
     public function exportDownload(Request $request): BinaryFileResponse|RedirectResponse
@@ -479,7 +479,7 @@ class AttentionWebController extends Controller
     // =========================================================================
 
     /**
-     * Execute bulk action on multiple PQRSF
+     * Execute bulk action on multiple peticiones
      * POST /attentions/bulk-action
      */
     public function bulkAction(Request $request): JsonResponse
@@ -524,7 +524,7 @@ class AttentionWebController extends Controller
     // =========================================================================
 
     /**
-     * Add note to a PQRSF
+     * Add note to a peticiones
      * POST /attentions/{uid}/notes
      */
     public function addNote(Request $request, string $uid): JsonResponse

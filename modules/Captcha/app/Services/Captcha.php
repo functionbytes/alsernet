@@ -53,8 +53,8 @@ class Captcha extends CaptchaContract
 
         $captchaContent = view('captcha::v2.html', ['name' => $name, 'siteKey' => $this->siteKey])->render();
 
-        if (request()->ajax()) {
-            $captchaContent .= $footerContent;
+        if (! function_exists('add_filter') || request()->ajax()) {
+            $captchaContent .= $headContent.$footerContent;
         }
 
         return tap(

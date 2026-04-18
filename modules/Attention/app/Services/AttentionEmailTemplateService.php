@@ -172,7 +172,7 @@ class AttentionEmailTemplateService
             $langId = 1;
 
             $variables = self::prepareAttentionVariables($attention);
-            $variables['TRACKING_URL'] = url("/pqrsf/tracking/{$attention->radicado}");
+            $variables['TRACKING_URL'] = url("/peticiones/tracking/{$attention->radicado}");
 
             $translation = $template->translate($langId);
             if (! $translation || ! $translation->subject) {
@@ -320,7 +320,7 @@ class AttentionEmailTemplateService
 
             // URLs
             'ATTENTION_URL' => url("/attentions/show/{$attention->uid}"),
-            'TRACKING_URL' => url("/pqrsf/tracking/{$attention->radicado}"),
+            'TRACKING_URL' => url("/peticiones/tracking/{$attention->radicado}"),
             'PORTAL_URL' => config('app.url'),
         ]);
 

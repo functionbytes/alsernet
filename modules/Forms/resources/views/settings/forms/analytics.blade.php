@@ -2,207 +2,340 @@
 
 @section('title', 'Analytics: ' . $form->name)
 
+@push('css')
+<style>
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .kpi-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .kpi-icon-box-red  { background: #fce8e8; color: #b10100; }
+    .kpi-icon-box-mid  { background: #f0e0e0; color: #c41c1c; }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
 
-            {{-- Header --}}
-            <div class="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
-                <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route('settings.forms.submissions.index', $form) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                    <div>
-                        <h5 class="mb-0 fw-bold">{{ $form->name }}</h5>
-                        <span class="text-muted">Analytics — últimos 30 días</span>
-                    </div>
-                </div>
-                <a href="{{ route('settings.forms.submissions.index', $form) }}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-list me-1"></i> Ver submissions
-                </a>
-            </div>
+    @include('core::components.card', ['title' => 'Analíticas'])
 
-            {{-- Stats cards --}}
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
-                            <div class="fs-3 fw-bold text-primary">{{ $analytics['total_submissions'] }}</div>
-                            <div class="text-muted">Total submissions</div>
+    <div class="widget-content searchable-container list">
+
+        <div class="card mb-4">
+            <div class="card-header border-bottom">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('settings.forms.edit', $form) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h5 class="mb-0 fw-bold">{{ $form->name }}</h5>
+                            <small class="text-muted">{{ $form->slug }}</small>
                         </div>
+                        @if ($form->is_active)
+                            <span class="badge bg-light-success text-success">Activo</span>
+                        @else
+                            <span class="badge bg-light-danger text-danger">Inactivo</span>
+                        @endif
                     </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
-                            <div class="fs-3 fw-bold text-success">{{ number_format($analytics['conversion_rate'], 1) }}%</div>
-                            <div class="text-muted">Tasa de conversión</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
-                            @php $avgMin = $analytics['avg_time_to_complete'] ? gmdate('i:s', $analytics['avg_time_to_complete']) : '—'; @endphp
-                            <div class="fs-3 fw-bold text-info">{{ $avgMin }}</div>
-                            <div class="text-muted">Tiempo promedio</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
-                            <div class="fs-3 fw-bold text-warning">{{ $analytics['unread_count'] }}</div>
-                            <div class="text-muted">No leídas</div>
-                        </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('settings.forms.preview', $form) }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-desktop me-1"></i> Preview
+                        </a>
+                        <a href="{{ route('settings.forms.submissions.index', $form) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-inbox me-1"></i> Submissions
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- Gráfico por día + dona estado --}}
-            <div class="row g-4 mb-4">
-                <div class="col-lg-8">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Submissions por día (últimos 30 días)</h6>
-                            <div id="chartByDay" style="height: 260px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Distribución por estado</h6>
-                            <div id="chartByStatus" style="height: 260px;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Gráfico por hora --}}
-            <div class="row g-4 mb-4">
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Submissions por hora del día</h6>
-                            <div id="chartByHour" style="height: 220px;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Top UTM sources --}}
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Top fuentes de tráfico</h6>
-                            @forelse ($analytics['top_utm_sources'] as $source)
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small text-truncate">{{ $source['source'] ?: 'Directo' }}</span>
-                                    <span class="badge bg-secondary ms-2">{{ $source['count'] }}</span>
-                                </div>
-                            @empty
-                                <p class="text-muted">Sin datos de fuentes UTM.</p>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Por país --}}
-            @if (!empty($analytics['by_country']))
-                <div class="row g-4">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3 border-bottom pb-2">Por país</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>País</th>
-                                                <th class="text-end">Submissions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($analytics['by_country'] as $row)
-                                                <tr>
-                                                    <td class="small">{{ $row['country'] ?: 'Desconocido' }}</td>
-                                                    <td class="text-end small">{{ $row['count'] }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+        {{-- KPI Cards --}}
+        <div class="row mb-4 g-3">
+            <div class="col-md-4">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h5 class="card-title fw-semibold mb-3">Total submissions</h5>
+                                <h4 class="fw-semibold mb-0">{{ $totalSubmissions }}</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="d-flex justify-content-center">
+                                    <div id="spark-submissions"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            @endif
-
+            </div>
+            <div class="col-md-4">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h5 class="card-title fw-semibold mb-3">Tasa de conversión</h5>
+                                <h4 class="fw-semibold mb-0">{{ number_format($conversionRate, 1) }}%</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="d-flex justify-content-end">
+                                    <span class="kpi-icon-box kpi-icon-box-red">
+                                        <i class="fas fa-chart-pie"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h5 class="card-title fw-semibold mb-3">Abandonos</h5>
+                                <h4 class="fw-semibold mb-0">{{ $abandonCount }}</h4>
+                            </div>
+                            <div class="col-4">
+                                <div class="d-flex justify-content-end">
+                                    <span class="kpi-icon-box kpi-icon-box-mid">
+                                        <i class="fas fa-door-open"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-9">
+
+                {{-- Day chart --}}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title fw-semibold mb-0">Submissions por día</h4>
+                        <p class="card-subtitle mt-1">Últimos 30 días</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="chartByDay" style="height: 260px;"></div>
+                    </div>
+                </div>
+
+                {{-- Hour chart --}}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title fw-semibold mb-0">Submissions por hora del día</h4>
+                        <p class="card-subtitle mt-1">Distribución horaria</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="chartByHour" style="height: 220px;"></div>
+                    </div>
+                </div>
+
+                {{-- Status + Resumen row --}}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title fw-semibold mb-0">Distribución por estado</h4>
+                                <p class="card-subtitle mt-1">Por submissions</p>
+                            </div>
+                            <div class="card-body">
+                                <div id="chartByStatus" class="mb-3" style="height: 200px;"></div>
+                                <hr class="my-3">
+                                <div id="statusList"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title fw-semibold mb-0">Resumen</h4>
+                                <p class="card-subtitle mt-1">Últimos 30 días</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted small">Total enviados</span>
+                                    <span class="fw-semibold">{{ $totalSubmissions }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted small">Abandonos</span>
+                                    <span class="fw-semibold">{{ $abandonCount }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <span class="text-muted small">Conversión</span>
+                                    <span class="fw-semibold">{{ number_format($conversionRate, 1) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-3">
+                @include('forms::settings.partials.tabs', ['active' => 'analytics'])
+            </div>
+        </div>
+
     </div>
-</div>
+
 @endsection
 
 @push('scripts')
 <script>
-    const analyticsData = @json($analytics);
+    var submissionsByDay    = @json($submissionsByDay);
+    var submissionsByStatus = @json($submissionsByStatus);
+    var submissionsByHour   = @json($submissionsByHour);
 
-    // Submissions por día
+    var statusLabels = { new: 'Nuevo', in_review: 'En revisión', resolved: 'Resuelto', rejected: 'Rechazado' };
+    var statusColors = { new: '#0d6efd', in_review: '#FEC90F', resolved: '#13C672', rejected: '#FA896B' };
+
+    var NO_DATA_TEXT = 'Sin datos disponibles';
+
+    // ── Sparkline ──────────────────────────────────────────────────────────
+    var sparkData = submissionsByDay.map(function (d) { return { val: parseInt(d.count) }; });
+    if (sparkData.length > 0) {
+        $('#spark-submissions').dxSparkline({
+            dataSource: sparkData,
+            type: 'line',
+            valueField: 'val',
+            showMinMax: false,
+            showFirstLast: false,
+            lineColor: '#b10100',
+            lineWidth: 2,
+            size: { width: 80, height: 40 },
+        });
+    } else {
+        $('#spark-submissions').html('<span class="text-muted small">—</span>');
+    }
+
+    // ── Submissions por día ────────────────────────────────────────────────
+    var dayData = submissionsByDay.map(function (d) {
+        return { date: d.date, count: parseInt(d.count) };
+    });
     $('#chartByDay').dxChart({
-        dataSource: analyticsData.submissions_by_day,
+        dataSource: dayData,
+        noDataText: NO_DATA_TEXT,
         series: [{
             valueField: 'count',
             argumentField: 'date',
             name: 'Submissions',
             type: 'line',
-            color: '#90bb13',
+            color: '#b10100',
+            point: { visible: dayData.length <= 10 },
+            label: {
+                visible: dayData.length > 0 && dayData.length <= 10,
+                backgroundColor: '#b10100',
+                font: { color: '#fff', size: 11 },
+            },
         }],
         argumentAxis: { argumentType: 'string' },
-        valueAxis: { allowDecimals: false },
+        valueAxis: { allowDecimals: false, min: 0 },
         legend: { visible: false },
-        tooltip: { enabled: true, format: '{value} submissions' },
+        tooltip: {
+            enabled: true,
+            customizeTooltip: function (info) {
+                return { text: info.argument + ': ' + info.value + ' envío(s)' };
+            },
+        },
     });
 
-    // Distribución por estado
-    const statusLabels = { new: 'Nuevo', in_review: 'En revisión', resolved: 'Resuelto', rejected: 'Rechazado' };
-    const statusColors = { new: '#0d6efd', in_review: '#FEC90F', resolved: '#13C672', rejected: '#FA896B' };
-    const statusData = Object.entries(analyticsData.submissions_by_status).map(([key, value]) => ({
-        label: statusLabels[key] || key,
-        value: value,
-        color: statusColors[key] || '#6c757d',
-    }));
+    // ── Distribución por estado (donut) ────────────────────────────────────
+    var statusData = submissionsByStatus.map(function (row) {
+        return {
+            label: statusLabels[row.status] || row.status,
+            value: parseInt(row.count),
+            color: statusColors[row.status] || '#6c757d',
+        };
+    });
+    var totalForPercent = statusData.reduce(function (s, d) { return s + d.value; }, 0);
 
     $('#chartByStatus').dxPieChart({
         dataSource: statusData,
+        type: 'doughnut',
+        noDataText: NO_DATA_TEXT,
         series: [{
             argumentField: 'label',
             valueField: 'value',
-            label: { visible: true, format: '{value}' },
+            label: { visible: false },
         }],
         customizePoint: function (point) {
-            const item = statusData.find(d => d.label === point.argument);
+            var item = statusData.find(function (d) { return d.label === point.argument; });
             return item ? { color: item.color } : {};
         },
-        legend: { visible: true, horizontalAlignment: 'center', verticalAlignment: 'bottom' },
-        tooltip: { enabled: true },
+        legend: { visible: false },
+        tooltip: {
+            enabled: true,
+            customizeTooltip: function (info) {
+                var pct = totalForPercent > 0 ? ((info.value / totalForPercent) * 100).toFixed(1) : 0;
+                return { text: info.argument + ': ' + info.value + ' (' + pct + '%)' };
+            },
+        },
     });
 
-    // Submissions por hora
+    // Status list below donut
+    var listHtml = '';
+    statusData.forEach(function (item) {
+        var pct = totalForPercent > 0 ? ((item.value / totalForPercent) * 100).toFixed(1) : '0.0';
+        listHtml += '<div class="d-flex align-items-center justify-content-between py-2 border-bottom">'
+            + '<div class="d-flex align-items-center gap-2">'
+            + '<span class="status-dot" style="background:' + item.color + ';"></span>'
+            + '<span class="small">' + item.label + '</span>'
+            + '</div>'
+            + '<div class="d-flex align-items-center gap-3">'
+            + '<span class="fw-semibold small">' + item.value + '</span>'
+            + '<span class="text-muted small text-end" style="min-width:38px;">' + pct + '%</span>'
+            + '</div>'
+            + '</div>';
+    });
+    $('#statusList').html(listHtml || '<p class="text-muted small mb-0">Sin datos</p>');
+
+    // ── Submissions por hora ───────────────────────────────────────────────
+    // Fill all 24 hours so the axis is always complete
+    var hourMap = {};
+    submissionsByHour.forEach(function (d) { hourMap[parseInt(d.hour)] = parseInt(d.count); });
+    var hourData = [];
+    for (var h = 0; h < 24; h++) {
+        hourData.push({ hour: h, count: hourMap[h] || 0 });
+    }
+
     $('#chartByHour').dxChart({
-        dataSource: analyticsData.submissions_by_hour,
+        dataSource: hourData,
+        noDataText: NO_DATA_TEXT,
         series: [{
             valueField: 'count',
             argumentField: 'hour',
             name: 'Submissions',
             type: 'bar',
-            color: '#90bb13',
+            color: '#b10100',
+            label: {
+                visible: false,
+            },
         }],
-        argumentAxis: { label: { customizeText: function (e) { return e.value + 'h'; } } },
-        valueAxis: { allowDecimals: false },
+        argumentAxis: {
+            label: { customizeText: function (e) { return e.value + 'h'; } },
+        },
+        valueAxis: { allowDecimals: false, min: 0 },
         legend: { visible: false },
-        tooltip: { enabled: true, customizeTooltip: function (info) { return { text: info.argument + ':00 h — ' + info.value + ' envíos' }; } },
+        tooltip: {
+            enabled: true,
+            customizeTooltip: function (info) {
+                return { text: info.argument + ':00 h — ' + info.value + ' envío(s)' };
+            },
+        },
     });
 </script>
 @endpush

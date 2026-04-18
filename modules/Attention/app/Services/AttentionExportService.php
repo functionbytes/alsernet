@@ -8,12 +8,17 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
- * Servicio de exportación de PQRSF
+ * Servicio de exportación de peticiones
  *
- * Gestiona la exportación de PQRSF a diferentes formatos (Excel, PDF, CSV)
+ * Gestiona la exportación de peticiones a diferentes formatos (Excel, PDF, CSV)
  * con generación de tokens de descarga seguros y limpieza automática de archivos antiguos.
  */
 class AttentionExportService
@@ -39,9 +44,9 @@ class AttentionExportService
     }
 
     /**
-     * Exporta PQRSF a formato Excel
+     * Exporta peticiones a formato Excel
      *
-     * @param  Collection  $attentions  Colección de PQRSF
+     * @param  Collection  $attentions  Colección de peticiones
      * @param  array  $columns  Columnas a exportar (vacío = todas por defecto)
      * @return string Ruta del archivo generado
      *
@@ -56,7 +61,7 @@ class AttentionExportService
 
             $columns = empty($columns) ? self::getDefaultColumns() : $columns;
 
-            $export = new class($attentions, $columns) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\ShouldAutoSize, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles
+            $export = new class($attentions, $columns) implements FromCollection, ShouldAutoSize, WithHeadings, WithStyles
             {
                 protected $attentions;
 
@@ -87,7 +92,7 @@ class AttentionExportService
                     }, $this->columns);
                 }
 
-                public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+                public function styles(Worksheet $sheet)
                 {
                     return [
                         1 => ['font' => ['bold' => true, 'size' => 12]],
@@ -118,9 +123,9 @@ class AttentionExportService
     }
 
     /**
-     * Exporta PQRSF a formato PDF
+     * Exporta peticiones a formato PDF
      *
-     * @param  Collection  $attentions  Colección de PQRSF
+     * @param  Collection  $attentions  Colección de peticiones
      * @param  array  $columns  Columnas a exportar (vacío = todas por defecto)
      * @return string Token del archivo generado
      *
@@ -163,9 +168,9 @@ class AttentionExportService
     }
 
     /**
-     * Exporta PQRSF a formato CSV
+     * Exporta peticiones a formato CSV
      *
-     * @param  Collection  $attentions  Colección de PQRSF
+     * @param  Collection  $attentions  Colección de peticiones
      * @param  array  $columns  Columnas a exportar (vacío = todas por defecto)
      * @return string Token del archivo generado
      *

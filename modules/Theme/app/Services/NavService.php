@@ -382,18 +382,28 @@ class NavService
         $miniItems = self::getMiniItemsForUser();
         $sidebars = self::getSidebarsForUser();
 
-        // Determinar el sidebar activo basándose en la ruta actual
-        $activeSidebarId = self::findActiveSidebarForUser($sidebars, $user);
+        // Sidebar candidato por ruta (exacto primero, luego prefijo)
+        $candidateSidebarId = self::findActiveSidebarForUser($sidebars, $user)
+            ?? self::findSidebarByRoutePrefix($sidebars);
 
-        // Si no hay sidebar activo y hay sidebars disponibles, usar el primero
-        if (! $activeSidebarId && count($sidebars) > 0) {
-            $activeSidebarId = array_key_first($sidebars);
-        }
+        // Ítem activo dentro del sidebar candidato
+        $activeItemRoute = $candidateSidebarId
+            ? self::findBestMatchingItemRoute($sidebars[$candidateSidebarId] ?? [])
+            : null;
+
+        // Panel solo se abre si hay ítem coincidente
+        $activeSidebarId = $activeItemRoute ? $candidateSidebarId : null;
+
+        // El ícono mini-nav se resalta con el candidato (aunque no abra panel)
+        // Ej: settings.users.index resalta Settings aunque no abra su panel
+        $activeMiniId = $candidateSidebarId;
 
         return [
             'miniItems' => $miniItems,
             'sidebars' => $sidebars,
             'activeSidebarId' => $activeSidebarId,
+            'activeMiniId' => $activeMiniId,
+            'activeItemRoute' => $activeItemRoute,
         ];
     }
 
@@ -448,6 +458,116 @@ class NavService
         }
 
         return null;
+    }
+
+    /**
+     * Fallback: busca sidebar cuyo prefijo de ruta coincida con el prefijo de la ruta actual.
+     * Útil para rutas como `pages.edit` que no están registradas en el nav pero pertenecen
+     * al mismo módulo que un sidebar (prefijo `pages`).
+     */
+    private static function findSidebarByRoutePrefix(array $sidebars): ?string
+    {
+        $currentRoute = request()->route()?->getName();
+
+        if (! $currentRoute) {
+            return null;
+        }
+
+        $prefix = explode('.', $currentRoute)[0];
+
+        foreach ($sidebars as $sidebarId => $sidebar) {
+            $miniItem = self::getMiniItem($sidebarId);
+            if ($miniItem && ! empty($miniItem['url'])) {
+                continue;
+            }
+
+            $items = isset($sidebar['sections'])
+                ? collect($sidebar['sections'])->flatMap(fn ($s) => $s['items'] ?? [])->all()
+                : ($sidebar['items'] ?? []);
+
+            foreach ($items as $item) {
+                if (isset($item['route']) && str_starts_with($item['route'], $prefix.'.')) {
+                    return $sidebarId;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Encuentra el ítem del sidebar que mejor coincide con la ruta actual.
+     *
+     * Solo acepta dos tipos de relación válida:
+     *  - Ancestro: todos los segmentos del ítem coinciden al inicio de la ruta actual
+     *    (el ítem es padre/abuelo de la ruta). Ej: pages.categories → pages.categories.edit
+     *  - Hermano: misma profundidad y todos los segmentos excepto el último coinciden.
+     *    Ej: pages.index ↔ pages.edit (ambos bajo "pages.")
+     *
+     * Esto evita falsos positivos como settings.storage activándose para settings.users.index.
+     */
+    private static function findBestMatchingItemRoute(array $sidebar): ?string
+    {
+        $currentRoute = request()->route()?->getName();
+
+        if (! $currentRoute) {
+            return null;
+        }
+
+        $currentParts = explode('.', $currentRoute);
+        $currentDepth = count($currentParts);
+        $bestRoute = null;
+        $bestMatchDepth = 0;
+
+        $items = isset($sidebar['sections'])
+            ? collect($sidebar['sections'])->flatMap(fn ($s) => $s['items'] ?? [])->all()
+            : ($sidebar['items'] ?? []);
+
+        foreach ($items as $item) {
+            $itemRoute = $item['route'] ?? '';
+
+            if (! $itemRoute) {
+                continue;
+            }
+
+            // Coincidencia exacta: prioridad máxima
+            if (request()->routeIs($itemRoute.'*')) {
+                return $itemRoute;
+            }
+
+            $itemParts = explode('.', $itemRoute);
+            $itemDepth = count($itemParts);
+
+            // Contar segmentos iniciales coincidentes
+            $matching = 0;
+            foreach ($itemParts as $i => $seg) {
+                if (($currentParts[$i] ?? null) === $seg) {
+                    $matching++;
+                } else {
+                    break;
+                }
+            }
+
+            // Ancestro: todos los segmentos del ítem coinciden y la ruta es más profunda
+            $isAncestor = $matching === $itemDepth && $currentDepth > $itemDepth;
+
+            // Hermano: misma profundidad, todos los segmentos excepto el último coinciden
+            $isSibling = $currentDepth > 1
+                && $itemDepth === $currentDepth
+                && $matching === $itemDepth - 1;
+
+            if (! $isAncestor && ! $isSibling) {
+                continue;
+            }
+
+            // Preferir el match más profundo (más específico)
+            if ($matching > $bestMatchDepth) {
+                $bestMatchDepth = $matching;
+                $bestRoute = $itemRoute;
+            }
+        }
+
+        return $bestRoute;
     }
 
     /**

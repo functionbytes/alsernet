@@ -19,23 +19,29 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Emails enviados</h5>
-                        <p class="small mb-0 text-muted">Historial de correos electronicos enviados para esta submission</p>
+                        <p class=" mb-0 text-muted">Historial de correos electronicos enviados para esta submission</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary position-relative" data-bs-toggle="modal" data-bs-target="#filterModal">
-                            Filtrar
-                            @if($activeFilterCount > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ $activeFilterCount }}
-                                </span>
-                            @endif
-                        </button>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customEmailModal">
-                            Enviar email
-                        </button>
-                        <a href="{{ route('forms.inbox.show', $submission) }}" class="btn btn-secondary">
-                            Volver
-                        </a>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn bg-primary-subtle text-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#customEmailModal">
+                                    Enviar email
+                                </button>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#filterModal">
+                                    Filtrar
+                                    @if($activeFilterCount > 0)
+                                        <span class="badge bg-danger ms-1">{{ $activeFilterCount }}</span>
+                                    @endif
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('forms.inbox.show', $submission) }}">
+                                    Volver
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -189,7 +195,7 @@
                                         <tr class="d-none">
                                             <td colspan="7">
                                                 <div class="modal fade" id="errorModal{{ $email->id }}" tabindex="-1" aria-hidden="true">
-                                                    <div class="modal-dialog">
+                                                    <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-danger text-white">
                                                                 <h5 class="modal-title">Error de envio</h5>
@@ -271,7 +277,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipo de email</label>
-                        <select name="type" class="form-select">
+                        <select name="type" class="form-select" data-no-select2 id="filterType">
                             <option value="">Todos los tipos</option>
                             <option value="confirmation" {{ request('type') === 'confirmation' ? 'selected' : '' }}>Confirmacion</option>
                             <option value="admin" {{ request('type') === 'admin' ? 'selected' : '' }}>Administrador</option>
@@ -281,29 +287,27 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Estado</label>
-                        <select name="status" class="form-select">
+                        <select name="status" class="form-select" data-no-select2 id="filterStatus">
                             <option value="">Todos los estados</option>
                             <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Enviado</option>
                             <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Fallido</option>
                             <option value="queued" {{ request('status') === 'queued' ? 'selected' : '' }}>En cola</option>
                         </select>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Desde</label>
-                            <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Hasta</label>
-                            <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Desde</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hasta</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary w-100">Aplicar filtros</button>
+                <div class="modal-footer flex-column">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Aplicar filtros</button>
                     @if($hasFilters)
-                        <a href="{{ route('forms.inbox.emails.index', $submission) }}" class="btn btn-outline-secondary w-100">
-                            Limpiar
+                        <a href="{{ route('forms.inbox.emails.index', $submission) }}" class="btn btn-outline-secondary w-100 mb-2">
+                            Limpiar filtros
                         </a>
                     @endif
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
@@ -340,8 +344,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="sendEmailBtn">Enviar</button>
+                    <button type="submit" class="btn btn-primary w-100 mb-1" id="sendEmailBtn">Enviar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -352,6 +356,18 @@
 
 @push('scripts')
 <script>
+// Init filter modal selects on show
+$('#filterModal').on('shown.bs.modal', function () {
+    var $modal = $(this);
+    ['#filterType', '#filterStatus'].forEach(function (sel) {
+        var $el = $modal.find(sel);
+        if ($el.hasClass('select2-hidden-accessible')) {
+            $el.select2('destroy');
+        }
+        $el.select2({ dropdownParent: $modal, width: '100%' });
+    });
+});
+
 $(document).ready(function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
 

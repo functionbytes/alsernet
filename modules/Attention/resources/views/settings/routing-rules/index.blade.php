@@ -75,7 +75,7 @@
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-0">
+                                <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control border-start-0 ps-0"
@@ -123,7 +123,7 @@
                                 @if(request('search') || request('status'))
                                     No hay resultados para los criterios de búsqueda
                                 @else
-                                    Crea la primera regla para asignar PQRSF automáticamente
+                                    Crea la primera regla para asignar peticiones automáticamente
                                 @endif
                             </p>
                             @if(! request('search') && ! request('status'))

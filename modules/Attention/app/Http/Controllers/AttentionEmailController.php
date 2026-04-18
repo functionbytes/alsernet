@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
- * Controller for PQRSF email management
+ * Controller for peticiones email management
  * Handles email history, previews, resends, and custom emails
  */
 class AttentionEmailController extends Controller
@@ -39,7 +39,7 @@ class AttentionEmailController extends Controller
     ) {}
 
     /**
-     * Lista historial de emails de un PQRSF
+     * Lista historial de emails de un peticiones
      * GET /attentions/{uid}/emails
      */
     public function index(Request $request, string $uid): JsonResponse|View|RedirectResponse
@@ -447,7 +447,7 @@ class AttentionEmailController extends Controller
             $query = AttentionMail::with(['attention'])
                 ->orderBy('created_at', 'desc');
 
-            // Filter by PQRSF
+            // Filter by peticiones
             if ($request->filled('radicado')) {
                 $query->whereHas('attention', function ($q) use ($request) {
                     $q->where('radicado', 'like', '%'.$request->radicado.'%');
@@ -615,7 +615,7 @@ class AttentionEmailController extends Controller
             $data = $mails->map(function ($mail) {
                 return [
                     'Radicado' => $mail->attention->radicado ?? 'N/A',
-                    'Tipo PQRSF' => $mail->attention->type->name ?? 'N/A',
+                    'Tipo peticiones' => $mail->attention->type->name ?? 'N/A',
                     'Destinatario' => $mail->recipient_email,
                     'Asunto' => $mail->subject,
                     'Tipo Email' => $mail->email_type_label,

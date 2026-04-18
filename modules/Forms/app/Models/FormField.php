@@ -2,6 +2,7 @@
 
 namespace Modules\Forms\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -49,16 +50,21 @@ class FormField extends Model
         'css_class',
         'width',
         'label_position',
+        'html_content',
+        'consent_text',
+        'formula',
+        'auto_populate_param',
+        'translations',
     ];
 
     protected function casts(): array
     {
         return [
-            'options' => 'array',
             'validation_rules' => 'array',
             'conditions' => 'array',
             'logic_jumps' => 'array',
             'likert_rows' => 'array',
+            'translations' => 'array',
             'is_required' => 'boolean',
             'is_visible' => 'boolean',
             'show_char_counter' => 'boolean',
@@ -68,6 +74,49 @@ class FormField extends Model
             'max_value' => 'float',
             'step_value' => 'float',
         ];
+    }
+
+    protected function options(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value): array {
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+                if (is_string($decoded)) {
+                    $decoded = json_decode($decoded, true);
+                }
+
+                if (! is_array($decoded)) {
+                    return [];
+                }
+
+                return array_map(function (mixed $option): array {
+                    if (is_array($option)) {
+                        return $option;
+                    }
+
+                    return ['value' => (string) $option, 'label' => (string) $option];
+                }, $decoded);
+            },
+            set: function (mixed $value): string {
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value = is_array($decoded) ? $decoded : [];
+                }
+
+                if (! is_array($value)) {
+                    return '[]';
+                }
+
+                return json_encode(array_values(array_map(function (mixed $option): array {
+                    if (is_array($option)) {
+                        return $option;
+                    }
+
+                    return ['value' => (string) $option, 'label' => (string) $option];
+                }, $value)));
+            },
+        );
     }
 
     public function form(): BelongsTo
@@ -98,6 +147,21 @@ class FormField extends Model
     public function scopeOfType($query, string|array $type)
     {
         return $query->whereIn('type', (array) $type);
+    }
+
+    public function localizedLabel(string $locale): string
+    {
+        return $this->translations[$locale]['label'] ?? $this->label;
+    }
+
+    public function localizedPlaceholder(string $locale): ?string
+    {
+        return $this->translations[$locale]['placeholder'] ?? $this->placeholder;
+    }
+
+    public function localizedConsentText(string $locale): ?string
+    {
+        return $this->translations[$locale]['consent_text'] ?? $this->consent_text ?? $this->label;
     }
 
     public function isLayoutField(): bool

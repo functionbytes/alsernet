@@ -16,7 +16,7 @@ Este documento proporciona ejemplos prácticos de cómo escribir y ejecutar test
 
 ## Escribir un Test Básico
 
-### Ejemplo: Test de Creación de PQRSF
+### Ejemplo: Test de Creación de peticiones
 
 ```php
 <?php
@@ -29,7 +29,7 @@ use Modules\Attention\Models\Attention;
 class MiNuevoTest extends TestCase
 {
     /** @test */
-    public function test_puede_crear_un_pqrsf()
+    public function test_puede_crear_un_peticiones()
     {
         // Arrange - Preparar datos
         $data = $this->validAttentionData([
@@ -37,7 +37,7 @@ class MiNuevoTest extends TestCase
         ]);
 
         // Act - Ejecutar acción
-        $response = $this->postJson('/api/pqrsf', $data);
+        $response = $this->postJson('/api/peticiones', $data);
 
         // Assert - Verificar resultados
         $response->assertStatus(201);
@@ -65,7 +65,7 @@ public function test_usuario_autenticado_puede_ver_lista()
     $this->createAttention(['subject' => 'Test 2']);
 
     // Act
-    $response = $this->getJson('/api/settings/pqrsf');
+    $response = $this->getJson('/api/settings/peticiones');
 
     // Assert
     $response->assertStatus(200)
@@ -77,14 +77,14 @@ public function test_usuario_autenticado_puede_ver_lista()
 
 ```php
 /** @test */
-public function test_solo_admin_puede_cerrar_pqrsf()
+public function test_solo_admin_puede_cerrar_peticiones()
 {
     // Arrange
     $this->actingAsAdmin();
     $attention = $this->createAttention();
 
     // Act
-    $response = $this->postJson("/api/settings/pqrsf/{$attention->radicado}/close", [
+    $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/close", [
         'comment' => 'Cerrando caso',
     ]);
 
@@ -103,7 +103,7 @@ public function test_solo_admin_puede_cerrar_pqrsf()
 public function test_usuario_no_autenticado_no_puede_acceder()
 {
     // Act - Sin autenticación
-    $response = $this->getJson('/api/settings/pqrsf');
+    $response = $this->getJson('/api/settings/peticiones');
 
     // Assert
     $response->assertStatus(401);
@@ -126,7 +126,7 @@ public function test_puede_subir_documento_pdf()
     $file = $this->createTestFile('contrato.pdf', 2048);
 
     // Act
-    $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+    $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
         'file' => $file,
     ]);
 
@@ -151,7 +151,7 @@ public function test_puede_subir_imagen()
     $image = $this->createTestImage('evidencia.jpg');
 
     // Act
-    $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+    $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
         'file' => $image,
     ]);
 
@@ -175,7 +175,7 @@ public function test_rechaza_archivos_muy_grandes()
     $largeFile = $this->createTestFile('archivo_grande.pdf', 11 * 1024); // 11MB
 
     // Act
-    $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+    $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
         'file' => $largeFile,
     ]);
 
@@ -196,7 +196,7 @@ public function test_rechaza_archivos_muy_grandes()
 public function test_valida_campos_obligatorios()
 {
     // Act - Enviar request vacío
-    $response = $this->postJson('/api/pqrsf', []);
+    $response = $this->postJson('/api/peticiones', []);
 
     // Assert - Verificar que todos los campos requeridos se validan
     $response->assertStatus(422)
@@ -222,7 +222,7 @@ public function test_valida_formato_email()
     ]);
 
     // Act
-    $response = $this->postJson('/api/pqrsf', $data);
+    $response = $this->postJson('/api/peticiones', $data);
 
     // Assert
     $response->assertStatus(422)
@@ -243,7 +243,7 @@ public function test_subject_no_puede_exceder_255_caracteres()
     ]);
 
     // Act
-    $response = $this->postJson('/api/pqrsf', $data);
+    $response = $this->postJson('/api/peticiones', $data);
 
     // Assert
     $response->assertStatus(422)
@@ -393,14 +393,14 @@ public function test_envia_notificacion_cuando_se_resuelve()
 
 ```php
 /** @test */
-public function test_job_se_encola_al_crear_pqrsf()
+public function test_job_se_encola_al_crear_peticiones()
 {
     // Arrange
     Queue::fake();
     $data = $this->validAttentionData();
 
     // Act
-    $this->postJson('/api/pqrsf', $data);
+    $this->postJson('/api/peticiones', $data);
 
     // Assert
     Queue::assertPushed(ProcessAttentionJob::class);
@@ -417,7 +417,7 @@ public function test_job_se_encola_al_crear_pqrsf()
 ```php
 $attention = Attention::create([
     'uid' => Str::uuid(),
-    'radicado' => 'PQRSF-2026-000001',
+    'radicado' => 'peticiones-2026-000001',
     'type_id' => 1,
     // ... muchos más campos
 ]);
@@ -438,8 +438,8 @@ public function test_create() { ... }
 
 ✅ **Bien:**
 ```php
-public function test_puede_crear_pqrsf_con_datos_validos() { ... }
-public function test_rechaza_pqrsf_sin_email_cuando_no_es_anonimo() { ... }
+public function test_puede_crear_peticiones_con_datos_validos() { ... }
+public function test_rechaza_peticiones_sin_email_cuando_no_es_anonimo() { ... }
 ```
 
 ### 3. Agrupar assertions relacionadas
@@ -500,7 +500,7 @@ public function test_puede_actualizar() {
 
 ```bash
 # Ejecutar test específico
-vendor/bin/phpunit --filter test_puede_crear_pqrsf
+vendor/bin/phpunit --filter test_puede_crear_peticiones
 
 # Ejecutar con output detallado
 vendor/bin/phpunit --testdox

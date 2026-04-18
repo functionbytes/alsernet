@@ -1,6 +1,6 @@
 @extends('attention::layouts.public')
 
-@section('title', 'Radicar PQRSF')
+@section('title', 'Radicar peticiones')
 
 @section('content')
 
@@ -9,7 +9,7 @@
 
             {{-- Encabezado --}}
             <div class="text-center mb-4">
-                <h2 class="fw-bold" style="color: #1a2030;">Radicar solicitud PQRSF</h2>
+                <h2 class="fw-bold" style="color: #1a2030;">Radicar solicitud peticiones</h2>
                 <p class="text-muted">
                     Complete el siguiente formulario para radicar una Peticion, Queja, Reclamo, Sugerencia o Felicitacion.
                     <br>Los campos marcados con <span class="text-danger">*</span> son obligatorios.
@@ -38,7 +38,7 @@
 
             <div class="card">
                 <div class="card-body p-4 p-md-5">
-                    <form id="formPqrsf" method="POST" action="{{ route('pqrsf.submit') }}" enctype="multipart/form-data">
+                    <form id="formpeticiones" method="POST" action="{{ route('peticiones.submit') }}" enctype="multipart/form-data">
                         @csrf
 
                         {{-- Tipo, Categoria, Sede --}}
@@ -49,7 +49,7 @@
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label" for="type_id">Tipo de PQRSF <span class="text-danger">*</span></label>
+                                <label class="form-label" for="type_id">Tipo de peticiones <span class="text-danger">*</span></label>
                                 <select class="form-select select2" name="type_id" id="type_id" required>
                                     <option value="">Seleccione un tipo</option>
                                     @foreach($types as $type)
@@ -301,7 +301,7 @@
                                 <button type="submit" class="btn btn-primary btn-lg px-5">
                                     <i class="fas fa-paper-plane me-2"></i>Radicar solicitud
                                 </button>
-                                <a href="{{ route('pqrsf.tracking') }}" class="btn btn-outline-secondary btn-lg px-4">
+                                <a href="{{ route('peticiones.tracking') }}" class="btn btn-outline-secondary btn-lg px-4">
                                     <i class="fas fa-magnifying-glass me-2"></i>Consultar estado
                                 </a>
                             </div>
@@ -321,7 +321,7 @@
                 <div class="card mb-4">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3">
-                            <i class="fas fa-circle-info text-primary me-2"></i>¿Que es una PQRSF?
+                            <i class="fas fa-circle-info text-primary me-2"></i>¿Que es una peticiones?
                         </h6>
                         <ul class="list-unstyled small mb-0">
                             <li class="mb-2">

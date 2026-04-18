@@ -1,5 +1,5 @@
 @component('mail::message')
-# Su PQRSF ha sido resuelto
+# Su peticiones ha sido resuelto
 
 Estimado/a **{{ $nombreCompleto }}**,
 

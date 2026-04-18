@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Departamentos o áreas para asignación de PQRSF
+ * Departamentos o áreas para asignación de peticiones
  */
 class AttentionDepartment extends Model
 {

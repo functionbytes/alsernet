@@ -4,7 +4,7 @@ window.veBlocks = [
     {
         name: 'Hero principal',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-image fa-lg"></i>',
+        icon: '<i class="fa-solid fa-image fa-lg"></i>',
         html: `<section class="py-5 bg-primary text-white">
   <div class="container text-center">
     <h1 class="display-4 fw-bold">Título principal</h1>
@@ -17,7 +17,7 @@ window.veBlocks = [
     {
         name: 'Hero con imagen',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-panorama fa-lg"></i>',
+        icon: '<i class="fa-solid fa-panorama fa-lg"></i>',
         html: `<section class="py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
   <div class="container">
     <div class="row align-items-center">
@@ -36,7 +36,7 @@ window.veBlocks = [
     {
         name: 'Sección de texto',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-align-left fa-lg"></i>',
+        icon: '<i class="fa-solid fa-align-left fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row justify-content-center">
@@ -52,7 +52,7 @@ window.veBlocks = [
     {
         name: '2 Columnas',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-columns fa-lg"></i>',
+        icon: '<i class="fa-solid fa-columns fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row g-4">
@@ -71,7 +71,7 @@ window.veBlocks = [
     {
         name: '3 Columnas',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-table-columns fa-lg"></i>',
+        icon: '<i class="fa-solid fa-table-columns fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row g-4">
@@ -85,7 +85,7 @@ window.veBlocks = [
     {
         name: 'CTA',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-bullhorn fa-lg"></i>',
+        icon: '<i class="fa-solid fa-bullhorn fa-lg"></i>',
         html: `<section class="py-5 bg-light">
   <div class="container text-center">
     <h2 class="fw-bold mb-3">¿Listo para empezar?</h2>
@@ -97,7 +97,7 @@ window.veBlocks = [
     {
         name: 'Separador',
         category: 'sections',
-        icon: '<i class="fa-duotone fa-solid fa-minus fa-lg"></i>',
+        icon: '<i class="fa-solid fa-minus fa-lg"></i>',
         html: `<hr class="my-5">`,
     },
 
@@ -105,7 +105,7 @@ window.veBlocks = [
     {
         name: 'Card simple',
         category: 'cards',
-        icon: '<i class="fa-duotone fa-solid fa-square fa-lg"></i>',
+        icon: '<i class="fa-solid fa-square fa-lg"></i>',
         html: `<div class="card shadow-sm">
   <div class="card-body">
     <h5 class="card-title">Título de la card</h5>
@@ -117,7 +117,7 @@ window.veBlocks = [
     {
         name: 'Card con imagen',
         category: 'cards',
-        icon: '<i class="fa-duotone fa-solid fa-image fa-lg"></i>',
+        icon: '<i class="fa-solid fa-image fa-lg"></i>',
         html: `<div class="card shadow-sm">
   <img src="https://via.placeholder.com/400x200" class="card-img-top" alt="Card image">
   <div class="card-body">
@@ -130,7 +130,7 @@ window.veBlocks = [
     {
         name: 'Grid 3 cards',
         category: 'cards',
-        icon: '<i class="fa-duotone fa-solid fa-grip fa-lg"></i>',
+        icon: '<i class="fa-solid fa-grip fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row g-4">
@@ -165,7 +165,7 @@ window.veBlocks = [
     {
         name: 'Grid 4 cards',
         category: 'cards',
-        icon: '<i class="fa-duotone fa-solid fa-th fa-lg"></i>',
+        icon: '<i class="fa-solid fa-th fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row g-4">
@@ -182,23 +182,23 @@ window.veBlocks = [
     {
         name: 'Features con iconos',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-star fa-lg"></i>',
+        icon: '<i class="fa-solid fa-star fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <h2 class="text-center fw-bold mb-5">Nuestras características</h2>
     <div class="row g-4">
       <div class="col-md-4 text-center">
-        <div class="mb-3"><i class="fa-duotone fa-solid fa-star fa-3x text-warning"></i></div>
+        <div class="mb-3"><i class="fa-solid fa-star fa-3x text-warning"></i></div>
         <h4>Característica 1</h4>
         <p class="text-muted">Descripción de la primera característica de tu producto o servicio.</p>
       </div>
       <div class="col-md-4 text-center">
-        <div class="mb-3"><i class="fa-duotone fa-solid fa-shield-alt fa-3x text-success"></i></div>
+        <div class="mb-3"><i class="fa-solid fa-shield-alt fa-3x text-success"></i></div>
         <h4>Característica 2</h4>
         <p class="text-muted">Descripción de la segunda característica importante.</p>
       </div>
       <div class="col-md-4 text-center">
-        <div class="mb-3"><i class="fa-duotone fa-solid fa-rocket fa-3x text-primary"></i></div>
+        <div class="mb-3"><i class="fa-solid fa-rocket fa-3x text-primary"></i></div>
         <h4>Característica 3</h4>
         <p class="text-muted">Descripción de la tercera característica destacada.</p>
       </div>
@@ -209,7 +209,7 @@ window.veBlocks = [
     {
         name: 'FAQ / Acordeón',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-circle-question fa-lg"></i>',
+        icon: '<i class="fa-solid fa-circle-question fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row justify-content-center">
@@ -245,7 +245,7 @@ window.veBlocks = [
     {
         name: 'Timeline',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-timeline fa-lg"></i>',
+        icon: '<i class="fa-solid fa-timeline fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <h2 class="fw-bold text-center mb-5">Nuestra historia</h2>
@@ -279,7 +279,7 @@ window.veBlocks = [
     {
         name: 'Galería de imágenes',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-images fa-lg"></i>',
+        icon: '<i class="fa-solid fa-images fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <h2 class="text-center fw-bold mb-5">Galería</h2>
@@ -297,7 +297,7 @@ window.veBlocks = [
     {
         name: 'Video embed',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-play-circle fa-lg"></i>',
+        icon: '<i class="fa-solid fa-play-circle fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <div class="row justify-content-center">
@@ -316,7 +316,7 @@ window.veBlocks = [
     {
         name: 'Imagen con pie de foto',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-camera fa-lg"></i>',
+        icon: '<i class="fa-solid fa-camera fa-lg"></i>',
         html: `<figure class="text-center my-4">
   <img src="https://via.placeholder.com/800x400" class="img-fluid rounded shadow" alt="Descripción de la imagen">
   <figcaption class="text-muted mt-2"><small>Pie de foto o descripción de la imagen</small></figcaption>
@@ -325,7 +325,7 @@ window.veBlocks = [
     {
         name: 'Tabla simple',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-table fa-lg"></i>',
+        icon: '<i class="fa-solid fa-table fa-lg"></i>',
         html: `<div class="table-responsive my-4">
   <table class="table table-bordered table-hover">
     <thead class="table-light">
@@ -346,7 +346,7 @@ window.veBlocks = [
     {
         name: 'Tabla de precios',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-tags fa-lg"></i>',
+        icon: '<i class="fa-solid fa-tags fa-lg"></i>',
         html: `<section class="py-5">
   <div class="container">
     <h2 class="text-center fw-bold mb-5">Planes y precios</h2>
@@ -357,9 +357,9 @@ window.veBlocks = [
           <div class="card-body">
             <h3 class="display-6 fw-bold">€29<small class="fs-6 fw-normal text-muted">/mes</small></h3>
             <ul class="list-unstyled mt-3">
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-check text-success me-2"></i>Característica 1</li>
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-check text-success me-2"></i>Característica 2</li>
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-times text-danger me-2"></i>Característica 3</li>
+              <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Característica 1</li>
+              <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Característica 2</li>
+              <li class="mb-2"><i class="fa-solid fa-times text-danger me-2"></i>Característica 3</li>
             </ul>
             <a href="#" class="btn btn-outline-primary w-100 mt-3">Elegir plan</a>
           </div>
@@ -371,9 +371,9 @@ window.veBlocks = [
           <div class="card-body">
             <h3 class="display-6 fw-bold">€79<small class="fs-6 fw-normal text-muted">/mes</small></h3>
             <ul class="list-unstyled mt-3">
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-check text-success me-2"></i>Característica 1</li>
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-check text-success me-2"></i>Característica 2</li>
-              <li class="mb-2"><i class="fa-duotone fa-solid fa-check text-success me-2"></i>Característica 3</li>
+              <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Característica 1</li>
+              <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Característica 2</li>
+              <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Característica 3</li>
             </ul>
             <a href="#" class="btn btn-primary w-100 mt-3">Elegir plan</a>
           </div>
@@ -398,13 +398,13 @@ window.veBlocks = [
     {
         name: 'Párrafo',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-paragraph fa-lg"></i>',
+        icon: '<i class="fa-solid fa-paragraph fa-lg"></i>',
         html: `<p class="mb-3">Escribe tu párrafo aquí. Puedes agregar todo el texto que necesites para describir tu contenido.</p>`,
     },
     {
         name: 'Cita / Blockquote',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-quote-left fa-lg"></i>',
+        icon: '<i class="fa-solid fa-quote-left fa-lg"></i>',
         html: `<blockquote class="blockquote border-start border-4 border-primary ps-4 my-4">
   <p class="mb-1 fst-italic">"Texto de la cita o testimonio que quieres destacar en tu página."</p>
   <footer class="blockquote-footer mt-1">Nombre del autor</footer>
@@ -413,25 +413,25 @@ window.veBlocks = [
     {
         name: 'Alerta info',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-info-circle fa-lg text-info"></i>',
+        icon: '<i class="fa-solid fa-info-circle fa-lg text-info"></i>',
         html: `<div class="alert alert-info" role="alert">
-  <i class="fa-duotone fa-solid fa-info-circle me-2"></i> Mensaje informativo importante para tus visitantes.
+  <i class="fa-solid fa-info-circle me-2"></i> Mensaje informativo importante para tus visitantes.
 </div>`,
     },
     {
         name: 'Alerta éxito',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-check-circle fa-lg text-success"></i>',
+        icon: '<i class="fa-solid fa-check-circle fa-lg text-success"></i>',
         html: `<div class="alert alert-success" role="alert">
-  <i class="fa-duotone fa-solid fa-check-circle me-2"></i> Operación completada con éxito.
+  <i class="fa-solid fa-check-circle me-2"></i> Operación completada con éxito.
 </div>`,
     },
     {
         name: 'Alerta advertencia',
         category: 'content',
-        icon: '<i class="fa-duotone fa-solid fa-triangle-exclamation fa-lg text-warning"></i>',
+        icon: '<i class="fa-solid fa-triangle-exclamation fa-lg text-warning"></i>',
         html: `<div class="alert alert-warning" role="alert">
-  <i class="fa-duotone fa-solid fa-triangle-exclamation me-2"></i> Atención: revisa este punto antes de continuar.
+  <i class="fa-solid fa-triangle-exclamation me-2"></i> Atención: revisa este punto antes de continuar.
 </div>`,
     },
 
@@ -439,7 +439,7 @@ window.veBlocks = [
     {
         name: 'Formulario de contacto',
         category: 'forms',
-        icon: '<i class="fa-duotone fa-solid fa-envelope fa-lg"></i>',
+        icon: '<i class="fa-solid fa-envelope fa-lg"></i>',
         html: `<section class="py-5 bg-light">
   <div class="container">
     <div class="row justify-content-center">
@@ -468,7 +468,7 @@ window.veBlocks = [
     {
         name: 'Newsletter',
         category: 'forms',
-        icon: '<i class="fa-duotone fa-solid fa-paper-plane fa-lg"></i>',
+        icon: '<i class="fa-solid fa-paper-plane fa-lg"></i>',
         html: `<section class="py-5 bg-primary text-white">
   <div class="container">
     <div class="row justify-content-center text-center">

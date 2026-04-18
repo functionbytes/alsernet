@@ -90,7 +90,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Estado</label>
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="status" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todos</option>
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->id }}" {{ request('status') == $status->id ? 'selected' : '' }}>
@@ -102,7 +102,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Prioridad</label>
-                            <select name="priority" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="priority" class="form-select form-select-sm js-auto-submit">
                                 <option value="all">Todas</option>
                                 <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>🟢 Baja</option>
                                 <option value="normal" {{ request('priority') == 'normal' ? 'selected' : '' }}>🔵 Normal</option>
@@ -113,7 +113,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small">Canal</label>
-                            <select name="channel" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select name="channel" class="form-select form-select-sm js-auto-submit">
                                 <option value="">Todos los canales</option>
                                 <option value="widget" {{ request('channel') === 'widget' ? 'selected' : '' }}>Widget</option>
                                 <option value="whatsapp" {{ request('channel') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
@@ -421,7 +421,7 @@
                         <label class="form-label small text-muted mb-1">
                             <i class="fas fa-flag me-1"></i> Prioridad
                         </label>
-                        <select class="form-select form-select-sm" id="prioritySelect" onchange="updatePriority(this.value)">
+                        <select class="form-select form-select-sm js-auto-submit" id="prioritySelect" onchange="updatePriority(this.value)">
                             <option value="low" {{ $conversation->priority == 'low' ? 'selected' : '' }}>Baja</option>
                             <option value="normal" {{ $conversation->priority == 'normal' ? 'selected' : '' }}>Normal</option>
                             <option value="high" {{ $conversation->priority == 'high' ? 'selected' : '' }}>Alta</option>

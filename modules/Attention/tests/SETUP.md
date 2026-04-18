@@ -93,7 +93,7 @@ Asegúrate de que existe el archivo `/modules/Attention/config/attention.php`:
 
 return [
     // Prefijo para números de radicado
-    'radicado_prefix' => env('ATTENTION_RADICADO_PREFIX', 'PQRSF'),
+    'radicado_prefix' => env('ATTENTION_RADICADO_PREFIX', 'peticiones'),
 
     // Configuración de archivos adjuntos
     'attachments' => [
@@ -111,7 +111,7 @@ return [
     // Configuración de emails
     'emails' => [
         'from_address' => env('ATTENTION_FROM_ADDRESS', 'noreply@example.com'),
-        'from_name' => env('ATTENTION_FROM_NAME', 'Sistema PQRSF'),
+        'from_name' => env('ATTENTION_FROM_NAME', 'Sistema peticiones'),
     ],
 ];
 ```

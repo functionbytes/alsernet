@@ -12,12 +12,16 @@
     $autoPopulate = $field->auto_populate_param
         ? 'data-auto-populate="' . htmlspecialchars($field->auto_populate_param, ENT_QUOTES) . '"'
         : '';
+    $locale = app()->getLocale();
+    $fieldLabel = $field->localizedLabel($locale);
+    $fieldPlaceholder = $field->localizedPlaceholder($locale);
+    $fieldConsentText = $field->localizedConsentText($locale);
 @endphp
 
 @switch($field->type)
     @case('section_header')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
-        <h5 class="forms-section-header mt-2 mb-1">{{ $field->label }}</h5>
+        <h5 class="forms-section-header mt-2 mb-1">{{ $fieldLabel }}</h5>
         @if($field->default_value)<p class="text-muted">{{ $field->default_value }}</p>@endif
         <hr class="mt-1">
     </div>
@@ -44,19 +48,23 @@
     @case('textarea')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if(!$isFloating && $labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
-        @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <textarea
             id="{{ $inputId }}"
             name="{{ $field->key }}"
             class="form-control"
-            placeholder="{{ $field->placeholder }}"
+            placeholder="{{ $fieldPlaceholder }}"
+            data-form-field-id="{{ $field->id }}"
+            data-form-field-label="{{ $fieldLabel }}"
+            data-form-field-help="{{ $field->help_text }}"
+            data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
             {{ $field->is_required ? 'required' : '' }}
             @if($field->max_value) maxlength="{{ (int)$field->max_value }}" @endif
             rows="4"
             {!! $autoPopulate !!}
         >{{ $field->default_value }}</textarea>
+        @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
         @if($field->show_char_counter)
         <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} caracteres</small>
         @endif
@@ -67,15 +75,20 @@
     @case('select')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
-        @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
-        <select id="{{ $inputId }}" name="{{ $field->key }}" class="form-select" {{ $field->is_required ? 'required' : '' }}>
-            <option value="">{{ $field->placeholder ?: '-- Seleccionar --' }}</option>
+        <select id="{{ $inputId }}" name="{{ $field->key }}" class="form-select" {{ $field->is_required ? 'required' : '' }}
+            data-form-field-id="{{ $field->id }}"
+            data-form-field-label="{{ $fieldLabel }}"
+            data-form-field-help="{{ $field->help_text }}"
+            data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
+            data-form-field-placeholder="{{ $fieldPlaceholder }}">
+            <option value="">{{ $fieldPlaceholder ?: '-- Seleccionar --' }}</option>
             @foreach($field->options ?? [] as $option)
             <option value="{{ $option['value'] }}" {{ $field->default_value == $option['value'] ? 'selected' : '' }}>{{ $option['label'] }}</option>
             @endforeach
         </select>
+        @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
         <div class="invalid-feedback"></div>
     </div>
     @break
@@ -83,12 +96,21 @@
     @case('radio')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         @foreach($field->options ?? [] as $option)
         <div class="form-check">
-            <input type="radio" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}" value="{{ $option['value'] }}" class="form-check-input" {{ $field->is_required ? 'required' : '' }} {{ $field->default_value == $option['value'] ? 'checked' : '' }}>
+            <input type="radio" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}" value="{{ $option['value'] }}" class="form-check-input"
+                @if($loop->first)
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
+                @endif
+                @if(!empty($option['icon'])) data-icon="{{ $option['icon'] }}" @endif
+                @if(!empty($option['description'])) data-description="{{ $option['description'] }}" @endif
+                {{ $field->is_required ? 'required' : '' }} {{ $field->default_value == $option['value'] ? 'checked' : '' }}>
             <label class="form-check-label" for="{{ $inputId }}-{{ $loop->index }}">{{ $option['label'] }}</label>
         </div>
         @endforeach
@@ -99,15 +121,21 @@
     @case('checkbox')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
-        @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         @foreach($field->options ?? [] as $option)
         <div class="form-check">
-            <input type="checkbox" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}[]" value="{{ $option['value'] }}" class="form-check-input">
+            <input type="checkbox" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}[]" value="{{ $option['value'] }}" class="form-check-input"
+                @if($loop->first)
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
+                @endif>
             <label class="form-check-label" for="{{ $inputId }}-{{ $loop->index }}">{{ $option['label'] }}</label>
         </div>
         @endforeach
+        @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
         <div class="invalid-feedback d-block" id="{{ $inputId }}-error"></div>
     </div>
     @break
@@ -115,7 +143,7 @@
     @case('file')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <input type="file" id="{{ $inputId }}" name="{{ $field->key }}" class="form-control" {{ $field->is_required ? 'required' : '' }}>
@@ -127,7 +155,7 @@
     @case('rating')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="forms-rating" data-field="{{ $field->key }}" data-max="{{ (int)($field->max_value ?? 5) }}">
@@ -143,7 +171,7 @@
     @case('nps')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="forms-nps d-flex gap-1 flex-wrap">
@@ -163,7 +191,7 @@
     @case('slider')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}: <span id="{{ $inputId }}-val">{{ $field->default_value ?? $field->min_value ?? 0 }}</span>@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}: <span id="{{ $inputId }}-val">{{ $field->default_value ?? $field->min_value ?? 0 }}</span>@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <input type="range" id="{{ $inputId }}" name="{{ $field->key }}" class="form-range"
@@ -183,7 +211,7 @@
     @case('signature')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="forms-signature-wrapper border rounded" style="background:#fff">
@@ -202,8 +230,14 @@
     @case('consent')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         <div class="form-check">
-            <input type="checkbox" id="{{ $inputId }}" name="{{ $field->key }}" value="1" class="form-check-input" {{ $field->is_required ? 'required' : '' }}>
-            <label class="form-check-label" for="{{ $inputId }}">{!! clean($field->consent_text ?? $field->label) !!}</label>
+            <input type="checkbox" id="{{ $inputId }}" name="{{ $field->key }}" value="1" class="form-check-input"
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
+                data-form-field-placeholder=""
+                {{ $field->is_required ? 'required' : '' }}>
+            <label class="form-check-label" for="{{ $inputId }}">{!! clean($fieldConsentText) !!}</label>
         </div>
         <div class="invalid-feedback"></div>
     </div>
@@ -212,8 +246,13 @@
     @case('newsletter_consent')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         <div class="form-check">
-            <input type="checkbox" id="{{ $inputId }}" name="{{ $field->key }}" value="1" class="form-check-input">
-            <label class="form-check-label" for="{{ $inputId }}">{{ $field->consent_text ?? $field->label }}</label>
+            <input type="checkbox" id="{{ $inputId }}" name="{{ $field->key }}" value="1" class="form-check-input"
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
+                data-form-field-placeholder="">
+            <label class="form-check-label" for="{{ $inputId }}">{{ $fieldConsentText }}</label>
         </div>
     </div>
     @break
@@ -221,7 +260,7 @@
     @case('likert')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block fw-semibold">{{ $field->label }}</label>
+        <label class="form-label d-block fw-semibold">{{ $fieldLabel }}</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-2">{{ $field->help_text }}</small>@endif
         @php $likertOptions = $field->options ?? [['value'=>'1','label'=>'Muy en desacuerdo'],['value'=>'2','label'=>'En desacuerdo'],['value'=>'3','label'=>'Neutral'],['value'=>'4','label'=>'De acuerdo'],['value'=>'5','label'=>'Muy de acuerdo']]; @endphp
@@ -253,7 +292,7 @@
     @case('address')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="row g-2">
@@ -269,7 +308,7 @@
     @case('image_choice')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label class="form-label d-block">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="d-flex flex-wrap gap-2 forms-image-choice" data-field="{{ $field->key }}">
@@ -288,7 +327,7 @@
     @case('calculation')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}</label>
         @endif
         <input type="text" id="{{ $inputId }}" name="{{ $field->key }}" class="form-control forms-calculation" readonly placeholder="Calculado automáticamente" data-formula="{{ $field->formula }}" value="{{ $field->default_value }}">
     </div>
@@ -297,7 +336,7 @@
     @case('rich_text')
     <div class="{{ $widthClass }}" {!! $conditionAttr !!}>
         @if($labelPos !== 'hidden')
-        <label for="{{ $inputId }}" class="form-label">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+        <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <textarea id="{{ $inputId }}" name="{{ $field->key }}" class="form-control forms-rich-text" rows="5" {{ $field->is_required ? 'required' : '' }}>{{ $field->default_value }}</textarea>
@@ -309,7 +348,7 @@
     <div class="{{ $widthClass ?? 'col-12' }}" {!! $conditionAttr ?? '' !!}>
         @if(($labelPos ?? 'top') !== 'hidden')
             <label for="{{ $inputId }}" class="form-label">
-                {{ $field->label }}
+                {{ $fieldLabel }}
                 @if($field->is_required)<span class="text-danger ms-1">*</span>@endif
             </label>
         @endif
@@ -349,30 +388,38 @@
         <div class="form-floating">
             <input type="{{ $inputType }}" id="{{ $inputId }}" name="{{ $field->key }}"
                 class="form-control"
-                placeholder="{{ $field->placeholder ?? $field->label }}"
+                placeholder="{{ $fieldPlaceholder ?? $fieldLabel }}"
                 value="{{ $field->default_value }}"
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
                 {{ $field->is_required ? 'required' : '' }}
                 @if($field->min_value !== null) min="{{ $field->min_value }}" @endif
                 @if($field->max_value !== null) max="{{ $field->max_value }}" @endif
                 {!! $autoPopulate !!}>
-            <label for="{{ $inputId }}">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+            <label for="{{ $inputId }}">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
             @if($field->help_text)<div class="form-text">{{ $field->help_text }}</div>@endif
             <div class="invalid-feedback"></div>
         </div>
         @else
             @if($labelPos !== 'hidden')
-            <label for="{{ $inputId }}" class="form-label">{{ $field->label }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
+            <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
             @endif
-            @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
             <input type="{{ $inputType }}" id="{{ $inputId }}" name="{{ $field->key }}"
                 class="form-control"
-                placeholder="{{ $field->placeholder }}"
+                placeholder="{{ $fieldPlaceholder }}"
                 value="{{ $field->default_value }}"
+                data-form-field-id="{{ $field->id }}"
+                data-form-field-label="{{ $fieldLabel }}"
+                data-form-field-help="{{ $field->help_text }}"
+                data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
                 {{ $field->is_required ? 'required' : '' }}
                 @if($field->min_value !== null) min="{{ $field->min_value }}" @endif
                 @if($field->max_value !== null) max="{{ $field->max_value }}" @endif
                 @if($field->show_char_counter && $field->max_value) maxlength="{{ (int)$field->max_value }}" @endif
                 {!! $autoPopulate !!}>
+            @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
             @if($field->show_char_counter)
             <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} caracteres</small>
             @endif

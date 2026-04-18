@@ -108,7 +108,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    <small class="form-text text-muted">Usuarios que gestionarán PQRSF de este departamento</small>
+                                    <small class="form-text text-muted">Usuarios que gestionarán peticiones de este departamento</small>
                                 </div>
                             </div>
                         </div>
@@ -127,7 +127,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">¿Qué es un departamento?</h6>
                     <p class="card-text text-muted">
-                        Los departamentos agrupan a los funcionarios responsables de atender solicitudes PQRSF según su área de gestión.
+                        Los departamentos agrupan a los funcionarios responsables de atender solicitudes peticiones según su área de gestión.
                     </p>
                 </div>
                 <hr class="my-0">
@@ -141,7 +141,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">Usuarios asignados</h6>
                     <p class="card-text text-muted mb-0">
-                        Asigna los funcionarios que gestionarán las PQRSF enrutadas a este departamento. Pueden ser modificados en cualquier momento.
+                        Asigna los funcionarios que gestionarán las peticiones enrutadas a este departamento. Pueden ser modificados en cualquier momento.
                     </p>
                 </div>
             </div>

@@ -6,7 +6,7 @@ use Modules\Attention\Http\Controllers\AttentionFileController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - Attention Module (PQRSF)
+| API Routes - Attention Module (peticiones)
 |--------------------------------------------------------------------------
 |
 | Este archivo contiene todas las rutas sugeridas para el módulo Attention.
@@ -19,9 +19,9 @@ use Modules\Attention\Http\Controllers\AttentionFileController;
 // RUTAS PÚBLICAS - Sin autenticación
 // ============================================================================
 
-Route::prefix('pqrsf')->name('api.pqrsf.')->group(function () {
+Route::prefix('peticiones')->name('api.peticiones.')->group(function () {
 
-    // Crear nueva solicitud PQRSF (ciudadano)
+    // Crear nueva solicitud peticiones (ciudadano)
     Route::post('/', [AttentionController::class, 'submit'])
         ->name('submit');
 
@@ -40,8 +40,8 @@ Route::prefix('pqrsf')->name('api.pqrsf.')->group(function () {
 // RUTAS ADMINISTRATIVAS - Requieren autenticación
 // ============================================================================
 
-Route::prefix('settings/pqrsf')
-    ->name('api.settings.pqrsf.')
+Route::prefix('settings/peticiones')
+    ->name('api.settings.peticiones.')
     ->middleware(['auth:sanctum'])
     ->group(function () {
 
@@ -49,7 +49,7 @@ Route::prefix('settings/pqrsf')
         // GESTIÓN PRINCIPAL
         // ========================================================================
 
-        // Listar todos los PQRSF con filtros y paginación
+        // Listar todos los peticiones con filtros y paginación
         Route::get('/', [AttentionController::class, 'index'])
             ->name('index');
 
@@ -57,7 +57,7 @@ Route::prefix('settings/pqrsf')
         Route::get('/stats', [AttentionController::class, 'stats'])
             ->name('stats');
 
-        // Ver detalle completo de un PQRSF
+        // Ver detalle completo de un peticiones
         Route::get('/{radicado}', [AttentionController::class, 'show'])
             ->name('show')
             ->where('radicado', '[A-Z0-9-]+');
@@ -133,7 +133,7 @@ Route::prefix('settings/pqrsf')
             ->name('files.upload')
             ->where('radicado', '[A-Z0-9-]+');
 
-        // Listar archivos del PQRSF
+        // Listar archivos del peticiones
         Route::get('/{radicado}/files', [AttentionFileController::class, 'list'])
             ->name('files.index')
             ->where('radicado', '[A-Z0-9-]+');
@@ -170,14 +170,14 @@ Route::prefix('settings/pqrsf')
 
 /*
 // Ejemplo con middleware de permisos
-Route::prefix('settings/pqrsf')
-    ->middleware(['auth:sanctum', 'can:manage-pqrsf'])
+Route::prefix('settings/peticiones')
+    ->middleware(['auth:sanctum', 'can:manage-peticiones'])
     ->group(function () {
         // Rutas que requieren permiso específico
     });
 
 // Ejemplo con rate limiting
-Route::prefix('pqrsf')
+Route::prefix('peticiones')
     ->middleware('throttle:10,1') // 10 requests por minuto
     ->group(function () {
         Route::post('/', [AttentionController::class, 'submit']);

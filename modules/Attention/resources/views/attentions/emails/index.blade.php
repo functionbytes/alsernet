@@ -20,7 +20,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Emails enviados</h5>
-                        <p class="small mb-0 text-muted">Historial de correos electronicos enviados para esta solicitud PQRSF</p>
+                        <p class="small mb-0 text-muted">Historial de correos electronicos enviados para esta solicitud peticiones</p>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary position-relative" data-bs-toggle="modal" data-bs-target="#filterModal">
@@ -201,7 +201,7 @@
                                 <tr class="d-none">
                                     <td colspan="7">
                                         <div class="modal fade" id="errorModal{{ $mail->id }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog">
+                                            <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content">
                                                     <div class="modal-header bg-danger text-white">
                                                         <h5 class="modal-title">

@@ -38,7 +38,7 @@
 
                         <div class="card-footer">
                             <button type="submit" class="btn btn-primary w-100 mb-1">
-                                <i class="fas fa-save me-1"></i> Actualizar webhook
+                                Actualizar webhook
                             </button>
                             <a href="{{ route('pages.webhooks.index') }}" class="btn btn-light w-100">Cancelar</a>
                         </div>

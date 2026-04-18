@@ -103,7 +103,7 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title mb-3">Información</h6>
-                    <dl class="row g-0 small mb-0">
+                    <dl class="row g-0 mb-0">
                         <dt class="col-5 text-muted">Formularios</dt>
                         <dd class="col-7">{{ $category->forms_count }}</dd>
                         <dt class="col-5 text-muted">Creada</dt>

@@ -27,7 +27,7 @@
                                     <label class="form-label">Nombre <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('name') is-invalid @enderror"
                                            name="name" value="{{ old('name', $policy->name) }}"
-                                           placeholder="ej: PQRSF Estándar" required>
+                                           placeholder="ej: peticiones Estándar" required>
                                     @error('name')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror
@@ -179,7 +179,7 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">¿Qué es una política SLA?</h6>
                     <p class="card-text text-muted">
-                        Una política SLA (Acuerdo de Nivel de Servicio) define los tiempos máximos para responder, resolver y cerrar solicitudes PQRSF.
+                        Una política SLA (Acuerdo de Nivel de Servicio) define los tiempos máximos para responder, resolver y cerrar solicitudes peticiones.
                     </p>
                 </div>
                 <hr class="my-0">

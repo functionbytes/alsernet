@@ -164,7 +164,7 @@ class AttentionCategoriesController extends Controller
     {
         // Check if category has assigned attentions
         if ($category->attentions()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar la categoría porque tiene PQRSF asignados.');
+            return back()->with('error', 'No se puede eliminar la categoría porque tiene peticiones asignados.');
         }
 
         $category->delete();

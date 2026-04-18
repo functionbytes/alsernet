@@ -1,5 +1,5 @@
 @component('mail::message')
-# PQRSF Recibido Exitosamente
+# peticiones Recibido Exitosamente
 
 Estimado/a **{{ $nombreCompleto }}**,
 
@@ -18,7 +18,7 @@ Hemos recibido su {{ $tipo }} y se ha generado el siguiente número de radicado 
 
 ## ¿Cómo hacer seguimiento?
 
-Puede consultar el estado de su PQRSF en cualquier momento utilizando el número de radicado:
+Puede consultar el estado de su peticiones en cualquier momento utilizando el número de radicado:
 
 @component('mail::button', ['url' => $trackingUrl, 'color' => 'primary'])
 Consultar Estado
@@ -37,7 +37,7 @@ Le informamos que su solicitud será atendida en los siguientes tiempos máximos
 - **Sugerencia:** 15 días hábiles
 - **Felicitación:** Acuse de recibo inmediato
 
-Recibirá notificaciones por correo electrónico sobre los cambios en el estado de su PQRSF.
+Recibirá notificaciones por correo electrónico sobre los cambios en el estado de su peticiones.
 
 ---
 

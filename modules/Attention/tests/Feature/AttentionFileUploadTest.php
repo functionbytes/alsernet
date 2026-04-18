@@ -25,7 +25,7 @@ class AttentionFileUploadTest extends TestCase
         $file = $this->createTestFile('documento.pdf', 1024);
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $file,
         ]);
 
@@ -59,8 +59,8 @@ class AttentionFileUploadTest extends TestCase
         $file2 = $this->createTestFile('doc2.pdf', 1024);
 
         // Act
-        $this->postJson("/api/pqrsf/{$attention->radicado}/files", ['file' => $file1]);
-        $this->postJson("/api/pqrsf/{$attention->radicado}/files", ['file' => $file2]);
+        $this->postJson("/api/peticiones/{$attention->radicado}/files", ['file' => $file1]);
+        $this->postJson("/api/peticiones/{$attention->radicado}/files", ['file' => $file2]);
 
         // Assert
         $attention->refresh();
@@ -74,7 +74,7 @@ class AttentionFileUploadTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", []);
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", []);
 
         // Assert
         $response->assertStatus(422)
@@ -90,7 +90,7 @@ class AttentionFileUploadTest extends TestCase
         $largeFile = $this->createTestFile('large.pdf', 11 * 1024); // 11MB
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $largeFile,
         ]);
 
@@ -107,7 +107,7 @@ class AttentionFileUploadTest extends TestCase
         $invalidFile = UploadedFile::fake()->create('script.exe', 100, 'application/x-msdownload');
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $invalidFile,
         ]);
 
@@ -124,7 +124,7 @@ class AttentionFileUploadTest extends TestCase
         $pdfFile = $this->createTestFile('documento.pdf', 100);
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $pdfFile,
         ]);
 
@@ -140,7 +140,7 @@ class AttentionFileUploadTest extends TestCase
         $imageFile = $this->createTestImage('foto.jpg');
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $imageFile,
         ]);
 
@@ -160,7 +160,7 @@ class AttentionFileUploadTest extends TestCase
         );
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $wordFile,
         ]);
 
@@ -177,7 +177,7 @@ class AttentionFileUploadTest extends TestCase
         $attention->addDocument($this->createTestFile('doc2.pdf'));
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}/files");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}/files");
 
         // Assert
         $response->assertStatus(200)
@@ -206,7 +206,7 @@ class AttentionFileUploadTest extends TestCase
         $media = $attention->addDocument($this->createTestFile('doc.pdf'));
 
         // Act
-        $response = $this->deleteJson("/api/pqrsf/{$attention->radicado}/files/{$media->id}");
+        $response = $this->deleteJson("/api/peticiones/{$attention->radicado}/files/{$media->id}");
 
         // Assert
         $response->assertStatus(200)
@@ -226,7 +226,7 @@ class AttentionFileUploadTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->deleteJson("/api/pqrsf/{$attention->radicado}/files/99999");
+        $response = $this->deleteJson("/api/peticiones/{$attention->radicado}/files/99999");
 
         // Assert
         $response->assertStatus(404);
@@ -244,7 +244,7 @@ class AttentionFileUploadTest extends TestCase
         $media = $attention1->addDocument($this->createTestFile('doc.pdf'));
 
         // Act - Intentar eliminar archivo de attention1 usando radicado de attention2
-        $response = $this->deleteJson("/api/pqrsf/{$attention2->radicado}/files/{$media->id}");
+        $response = $this->deleteJson("/api/peticiones/{$attention2->radicado}/files/{$media->id}");
 
         // Assert
         $response->assertStatus(404);
@@ -261,7 +261,7 @@ class AttentionFileUploadTest extends TestCase
         $file = $this->createTestFile('doc.pdf');
 
         // Act
-        $response = $this->postJson('/api/pqrsf/INVALID-RADICADO/files', [
+        $response = $this->postJson('/api/peticiones/INVALID-RADICADO/files', [
             'file' => $file,
         ]);
 
@@ -276,7 +276,7 @@ class AttentionFileUploadTest extends TestCase
         $attention = $this->createAttention();
 
         // Act
-        $response = $this->getJson("/api/pqrsf/{$attention->radicado}/files");
+        $response = $this->getJson("/api/peticiones/{$attention->radicado}/files");
 
         // Assert
         $response->assertStatus(200)
@@ -294,7 +294,7 @@ class AttentionFileUploadTest extends TestCase
         $file = UploadedFile::fake()->create('archivo con espacios y @#$.pdf', 100, 'application/pdf');
 
         // Act
-        $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+        $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
             'file' => $file,
         ]);
 
@@ -318,7 +318,7 @@ class AttentionFileUploadTest extends TestCase
         // Act - Intentar subir más de 60 archivos en 1 minuto
         for ($i = 0; $i < 61; $i++) {
             $file = $this->createTestFile("doc{$i}.pdf", 10);
-            $response = $this->postJson("/api/pqrsf/{$attention->radicado}/files", [
+            $response = $this->postJson("/api/peticiones/{$attention->radicado}/files", [
                 'file' => $file,
             ]);
         }

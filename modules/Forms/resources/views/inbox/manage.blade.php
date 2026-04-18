@@ -76,8 +76,8 @@
                             <textarea id="noteText" class="form-control form-control-sm" rows="3"
                                       placeholder="Añadir nota interna..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-primary w-100">
-                            <i class="fas fa-plus me-1"></i> Guardar nota
+                        <button type="submit" class="btn btn-primary w-100">
+                            Guardar nota
                         </button>
                     </form>
                 </div>
@@ -178,31 +178,52 @@
             <div class="card mb-3">
                 <div class="card-header p-3 bg-white border-bottom">
                     <h5 class="mb-1 fw-bold">Historial de estado</h5>
-                    <p class="small mb-0 text-muted">Transiciones de la solicitud</p>
+                    <p class="small mb-0 text-muted" style="font-size: 0.75rem;">Transiciones de la solicitud</p>
                 </div>
                 <div class="card-body p-2">
-                    @if($statusChanges->count() > 0)
-                        <ul class="list-unstyled mb-0">
-                            @foreach($statusChanges->take(5) as $change)
-                                <li class="p-3 border-bottom small">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="text-muted">Cambio</span>
-                                        <span class="fw-semibold">{{ $change->description }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="text-muted">Por</span>
-                                        <span class="fw-semibold">{{ $change->user->full_name ?? 'Sistema' }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span class="text-muted">Fecha</span>
-                                        <span class="fw-semibold">{{ $change->created_at->format('d/m H:i') }}</span>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                    @php
+                        $totalChanges = $statusChanges->count();
+                        $showLimit    = 5;
+                        $hasMore      = $totalChanges > $showLimit;
+                    @endphp
+
+                    @if($totalChanges > 0)
+                        @if($hasMore)
+                            <div class="alert alert-info py-1 px-2 mb-2" role="alert">
+                                <i class="fas fa-info-circle me-1"></i> Últimos {{ $showLimit }}/{{ $totalChanges }}
+                            </div>
+                        @endif
+
+                        <div class="status-timeline-scroll @if($hasMore) scrollable @endif"
+                             @if($hasMore) style="max-height: 350px; overflow-y: auto;" @endif>
+                            <ul class="timeline-widget mb-0 list-unstyled">
+                                @foreach($statusChanges->take($showLimit) as $change)
+                                    <li class="p-3 border-bottom small">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted">Fecha</span>
+                                            <span class="fw-semibold">{{ $change->created_at->format('d/m H:i') }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted">Cambio</span>
+                                            <span class="fw-semibold">{{ $change->description }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted">Actualizado por</span>
+                                            <span class="fw-semibold">{{ $change->user->full_name ?? 'Sistema' }}</span>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     @else
-                        <div class="alert alert-info py-2 px-3 mb-0">
-                            <small><i class="fas fa-info-circle me-1"></i> Sin cambios de estado registrados</small>
+                        <div class="alert alert-info alert-sm mb-2 mx-3 mt-3" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-circle-info text-black me-1 mt-1" style="font-size: 0.7rem;"></i>
+                                <div>
+                                    <div class="fw-semibold" style="font-size: 0.7rem;">Sin cambios</div>
+                                    <div class="text-muted" style="font-size: 0.65rem; line-height: 1.2;">No hay historial registrado</div>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -383,18 +404,14 @@
                                 <small class="text-muted">Asignar a un usuario específico</small>
                             </div>
                             <div class="col-12">
-                                <button type="submit" class="btn btn-primary w-100" id="saveManageBtn">
+                                <button type="submit" class="btn btn-primary w-100 mb-1" id="saveManageBtn">
                                     Guardar cambios
                                 </button>
-                            </div>
-                            <div class="col-12">
-                                <a href="{{ route('forms.inbox.show', $submission) }}" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-eye me-1"></i> Ver detalles
+                                <a href="{{ route('forms.inbox.show', $submission) }}" class="btn btn-secondary w-100  mb-1">
+                                    Ver detalles
                                 </a>
-                            </div>
-                            <div class="col-12">
                                 <a href="{{ route('forms.inbox.index') }}" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-arrow-left me-1"></i> Volver al inbox
+                                    Volver al inbox
                                 </a>
                             </div>
                         </div>
@@ -461,8 +478,8 @@
                                      id="uploadProgressBar" style="width: 0%"></div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100" id="uploadFileBtn">
-                            <i class="fas fa-upload me-1"></i> Cargar archivo
+                        <button type="submit" class="btn btn-primary w-100 mt-1" id="uploadFileBtn">
+                            Cargar archivo
                         </button>
                     </form>
                 </div>
@@ -543,6 +560,12 @@
     }
     .email-item:hover { background-color: #f8f9fa; }
     .email-item:last-child { border-bottom: none; }
+
+    .status-timeline-scroll { border-radius: 3px; padding-right: 0.25rem; }
+    .status-timeline-scroll::-webkit-scrollbar { width: 4px; }
+    .status-timeline-scroll::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 3px; }
+    .status-timeline-scroll::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; }
+    .status-timeline-scroll::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
 </style>
 @endpush
 

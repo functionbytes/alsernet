@@ -87,7 +87,7 @@
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white border-end-0">
+                        <span class="input-group-text bg-white border-end-1">
                             <i class="fas fa-search text-muted"></i>
                         </span>
                             <input

@@ -416,6 +416,7 @@ class PageController extends Controller
                 'title' => $p->title,
                 'slug' => $p->slug,
                 'status' => $p->status instanceof PageStatus ? $p->status->value : $p->status,
+                'public_url' => $p->url,
                 'url' => route('pages.edit', $p),
                 'badge' => match ($p->status instanceof PageStatus ? $p->status->value : $p->status) {
                     'published' => '<span class="badge bg-success">Publicada</span>',

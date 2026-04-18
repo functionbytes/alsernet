@@ -17,7 +17,10 @@
                         <p class="small mb-0 text-muted">Gestiona las ubicaciones vinculadas y sincroniza sus reseñas automaticamente</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-primary"
+                        <a href="{{ route('settings.reviews.locations.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nueva ubicación
+                        </a>
+                        <button class="btn btn-outline-secondary"
                                 data-bs-toggle="modal"
                                 data-bs-target="#sync-all-modal">
                             <i class="fas fa-sync"></i>
@@ -138,6 +141,7 @@
                                 <tr>
                                     <th width="30"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
+                                    <th>Estrategia</th>
                                     <th class="text-center">Rating</th>
                                     <th class="text-center">Reseñas</th>
                                     <th class="text-center">Estado sync</th>
@@ -153,6 +157,18 @@
                                         </td>
                                         <td>
                                             <strong>{{ $location->name }}</strong>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $strategyLabels = [
+                                                    'oauth'      => ['label' => 'OAuth', 'class' => 'bg-primary'],
+                                                    'places_api' => ['label' => 'Places API', 'class' => 'bg-info text-dark'],
+                                                    'serpapi'    => ['label' => 'SerpAPI', 'class' => 'bg-warning text-dark'],
+                                                    'manual'     => ['label' => 'Manual', 'class' => 'bg-secondary'],
+                                                ];
+                                                $strategy = $strategyLabels[$location->sync_strategy?->value ?? 'oauth'] ?? $strategyLabels['oauth'];
+                                            @endphp
+                                            <span class="badge {{ $strategy['class'] }}">{{ $strategy['label'] }}</span>
                                         </td>
                                         <td class="text-center">
                                             @if($location->average_rating)
@@ -213,6 +229,19 @@
                                                             Sincronizar ahora
                                                         </a>
                                                     </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('settings.reviews.locations.import.create', $location) }}">
+                                                            Importar reseñas
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item manage-tags-btn" href="#"
+                                                           data-location-id="{{ $location->id }}"
+                                                           data-location-name="{{ $location->name }}"
+                                                           data-tags-url="{{ route('settings.reviews.locations.tags.index', $location) }}">
+                                                            Gestionar tags
+                                                        </a>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -271,6 +300,43 @@
                 <div class="modal-footer">
                     <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal gestionar tags de ubicación --}}
+    <div class="modal fade" id="tags-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tags de <span id="tags-modal-location-name"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="tags-list" class="mb-3">
+                        <p class="text-muted text-center py-2">Cargando...</p>
+                    </div>
+                    <hr>
+                    <p class="fw-semibold mb-2">Añadir tag</p>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <input type="text" class="form-control" id="tag-label" placeholder="Etiqueta (ej: Ventanas PVC)">
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" id="tag-slug" placeholder="Slug (ej: ventanas)">
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tag" id="tag-icon-preview"></i></span>
+                                <input type="text" class="form-control" id="tag-icon" placeholder="fa-tag">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-block">
+                    <button type="button" class="btn btn-primary w-100 mb-2" id="tag-add-btn">Añadir tag</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -362,6 +428,106 @@ $(document).ready(function() {
         });
     });
 });
+
+// Tags management modal
+(function () {
+    let currentTagsUrl   = null;
+    let currentStoreUrl  = null;
+    let currentDestroyBaseUrl = null;
+
+    function slugify(str) {
+        return str.toLowerCase().trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-');
+    }
+
+    function renderTags(tags) {
+        if (!tags.length) {
+            $('#tags-list').html('<p class="text-muted text-center py-2">No hay tags definidos.</p>');
+            return;
+        }
+        const items = tags.map(function (t) {
+            return `<div class="d-flex align-items-center justify-content-between p-2 border rounded mb-1" data-slug="${t.slug}">
+                <span><i class="fas ${t.icon ?? 'fa-tag'} me-2 text-muted"></i>${t.label} <small class="text-muted">(${t.slug})</small></span>
+                <button type="button" class="btn btn-sm btn-link text-muted p-0 delete-tag-btn" data-slug="${t.slug}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+        });
+        $('#tags-list').html(items.join(''));
+    }
+
+    function loadTags() {
+        $.get(currentTagsUrl).done(function (res) {
+            renderTags(res.tags || []);
+        }).fail(function () {
+            $('#tags-list').html('<p class="text-danger text-center py-2">Error al cargar tags.</p>');
+        });
+    }
+
+    $(document).on('click', '.manage-tags-btn', function (e) {
+        e.preventDefault();
+        const btn = $(this);
+        currentTagsUrl       = btn.data('tags-url');
+        currentStoreUrl      = currentTagsUrl;
+        currentDestroyBaseUrl = currentTagsUrl + '/';
+
+        $('#tags-modal-location-name').text(btn.data('location-name'));
+        $('#tag-label, #tag-slug, #tag-icon').val('');
+        $('#tag-icon-preview').attr('class', 'fas fa-tag');
+        $('#tags-modal').modal('show');
+        loadTags();
+    });
+
+    $(document).on('input', '#tag-label', function () {
+        if (!$('#tag-slug').val()) {
+            $('#tag-slug').val(slugify($(this).val()));
+        }
+    });
+
+    $(document).on('input', '#tag-icon', function () {
+        const val = $(this).val().trim();
+        $('#tag-icon-preview').attr('class', 'fas ' + (val || 'fa-tag'));
+    });
+
+    $(document).on('click', '#tag-add-btn', function () {
+        const label = $('#tag-label').val().trim();
+        const slug  = $('#tag-slug').val().trim();
+        const icon  = $('#tag-icon').val().trim() || 'fa-tag';
+
+        if (!label || !slug) { toastr.warning('La etiqueta y el slug son obligatorios.'); return; }
+
+        const btn = $(this).prop('disabled', true).text('Guardando...');
+        $.ajax({
+            url: currentStoreUrl,
+            method: 'POST',
+            data: { label, slug, icon, _token: $('meta[name="csrf-token"]').attr('content') },
+        }).done(function () {
+            $('#tag-label, #tag-slug, #tag-icon').val('');
+            $('#tag-icon-preview').attr('class', 'fas fa-tag');
+            toastr.success('Tag añadido');
+            loadTags();
+        }).fail(function (xhr) {
+            toastr.error(xhr.responseJSON?.message ?? 'Error al añadir tag');
+        }).always(function () {
+            btn.prop('disabled', false).text('Añadir tag');
+        });
+    });
+
+    $(document).on('click', '.delete-tag-btn', function () {
+        const slug = $(this).data('slug');
+        $.ajax({
+            url: currentDestroyBaseUrl + slug,
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function () {
+            toastr.success('Tag eliminado');
+            loadTags();
+        }).fail(function () {
+            toastr.error('Error al eliminar tag');
+        });
+    });
+})();
 </script>
 @endpush
 

@@ -131,6 +131,25 @@ class FormSubmission extends Model
         return $value?->value;
     }
 
+    public function getRadicado(): string
+    {
+        return 'FORM-'.$this->created_at->format('Y').'-'.str_pad($this->id, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function getCitizenName(): ?string
+    {
+        foreach ($this->values as $value) {
+            $key = strtolower($value->field_key ?? '');
+
+            if (str_contains($key, 'nombre') || str_contains($key, 'name') ||
+                str_contains($key, 'first') || str_contains($key, 'primer')) {
+                return $value->value;
+            }
+        }
+
+        return null;
+    }
+
     public function emails(): HasMany
     {
         return $this->hasMany(FormSubmissionEmail::class, 'submission_id');

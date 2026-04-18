@@ -5,7 +5,7 @@ namespace Modules\Attention\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Request validation for uploading files to a PQRSF
+ * Request validation for uploading files to a peticiones
  */
 class UploadFilesRequest extends FormRequest
 {

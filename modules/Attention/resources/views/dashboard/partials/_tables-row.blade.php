@@ -4,7 +4,7 @@
         <div class="card w-100">
             <div class="card-header">
                 <h4 class="card-title fw-semibold mb-0">Top categorías</h4>
-                <p class="card-subtitle mt-1">Categorías con mayor número de PQRSF en el período</p>
+                <p class="card-subtitle mt-1">Categorías con mayor número de peticiones en el período</p>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

@@ -15,7 +15,7 @@ class AttentionDepartmentsSeeder extends Seeder
         $departments = [
             [
                 'name' => 'Atención al Ciudadano',
-                'description' => 'Departamento encargado de la atención directa a ciudadanos y gestión de PQRSF',
+                'description' => 'Departamento encargado de la atención directa a ciudadanos y gestión de peticiones',
                 'email' => 'atencion@inoqualab.com',
                 'responsible_name' => null,
                 'responsible_email' => null,

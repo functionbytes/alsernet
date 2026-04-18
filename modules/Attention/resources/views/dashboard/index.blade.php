@@ -107,7 +107,7 @@
         const counts     = data.map(r => parseInt(r.count ?? 0));
 
         chartTrend = new ApexCharts(el, {
-            series: [{ name: 'PQRSF', data: counts }],
+            series: [{ name: 'peticiones', data: counts }],
             chart: {
                 type: 'area',
                 height: 295,
@@ -261,8 +261,8 @@
                 // ── Charts ──
                 renderTrend(data.trend_7days);
                 renderStatusDonut(data.by_status);
-                renderOsList('#list-by-type',       data.by_type,       'label', 'PQRSF');
-                renderOsList('#list-by-department',  data.by_department, 'label', 'PQRSF');
+                renderOsList('#list-by-type',       data.by_type,       'label', 'peticiones');
+                renderOsList('#list-by-department',  data.by_department, 'label', 'peticiones');
 
                 // ── Top categorías ──
                 renderCategories(data.top_categories);

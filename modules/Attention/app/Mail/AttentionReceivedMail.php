@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Modules\Attention\Models\Attention;
 
 /**
- * Email enviado al ciudadano cuando radica un PQRSF
+ * Email enviado al ciudadano cuando radica un peticiones
  *
  * Confirma la recepción y proporciona información de seguimiento
  */
@@ -38,7 +38,7 @@ class AttentionReceivedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "PQRSF Recibido - Radicado: {$this->attention->radicado}",
+            subject: "peticiones Recibido - Radicado: {$this->attention->radicado}",
         );
     }
 

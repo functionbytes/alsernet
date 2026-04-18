@@ -24,13 +24,11 @@ use Modules\Reviews\Http\Controllers\Settings\AiSettingsController;
 use Modules\Reviews\Http\Controllers\Settings\GoogleConnectionController;
 use Modules\Reviews\Http\Controllers\Settings\GoogleLocationController;
 use Modules\Reviews\Http\Controllers\Settings\NotificationPreferenceController;
+use Modules\Reviews\Http\Controllers\Settings\ReviewImportController;
 use Modules\Reviews\Http\Controllers\Settings\ReviewSettingsController;
 
 // Rutas públicas - sin autenticación
 Route::middleware(['web', 'throttle:60,1'])->group(function () {
-    Route::get('/testimonios', [PublicReviewController::class, 'index'])
-        ->name('reviews.public.index');
-
     Route::get('/reviews/widget', [PublicReviewController::class, 'widget'])
         ->name('reviews.widget');
 
@@ -52,11 +50,19 @@ Route::middleware(['web', 'auth'])->group(function () {
         // Resource routes (must be after specific routes)
         Route::resource('connections', GoogleConnectionController::class);
 
-        Route::resource('locations', GoogleLocationController::class)->only(['index', 'update']);
+        // Static location routes must come before resource (avoids {location} shadowing)
         Route::post('locations/bulk-action', [GoogleLocationController::class, 'bulkAction'])->name('locations.bulk-action');
         Route::post('locations/bulk-sync', [GoogleLocationController::class, 'bulkSync'])->name('locations.bulk-sync');
-        Route::post('locations/{location}/sync', [GoogleLocationController::class, 'sync'])->name('locations.sync');
         Route::post('locations/sync-all', [GoogleLocationController::class, 'syncAll'])->name('locations.sync-all');
+        Route::resource('locations', GoogleLocationController::class)->only(['index', 'create', 'store', 'update']);
+        Route::post('locations/{location}/sync', [GoogleLocationController::class, 'sync'])->name('locations.sync');
+        Route::get('locations/{location}/tags', [GoogleLocationController::class, 'tags'])->name('locations.tags.index');
+        Route::post('locations/{location}/tags', [GoogleLocationController::class, 'storeTag'])->name('locations.tags.store');
+        Route::delete('locations/{location}/tags/{slug}', [GoogleLocationController::class, 'destroyTag'])->name('locations.tags.destroy');
+
+        Route::get('locations/{location}/import', [ReviewImportController::class, 'create'])->name('locations.import.create');
+        Route::post('locations/{location}/import/csv', [ReviewImportController::class, 'storeCsv'])->name('locations.import.csv');
+        Route::post('locations/{location}/import/manual', [ReviewImportController::class, 'storeManual'])->name('locations.import.manual');
 
         Route::get('config', [ReviewSettingsController::class, 'index'])->name('config.index');
         Route::match(['PUT', 'PATCH', 'POST'], 'config', [ReviewSettingsController::class, 'update'])->name('config.update');
@@ -217,9 +223,10 @@ Route::middleware(['web', 'auth'])->prefix('panel/reviews')->name('reviews.')->g
     Route::get('analytics/velocity', [ReviewController::class, 'velocityData'])->name('analytics.velocity');
 });
 
-// Review translation route (auth required)
+// Review translation routes (auth required)
 Route::middleware(['web', 'auth'])->prefix('panel/reviews')->name('reviews.')->group(function () {
     Route::post('{review}/translate', [ReviewController::class, 'translate'])->name('translate');
+    Route::patch('{review}/translations/{locale}', [ReviewController::class, 'updateTranslation'])->name('translations.update');
 });
 
 // {review} wildcard routes — must be LAST to avoid shadowing specific routes

@@ -24,7 +24,7 @@ class AttentionDatabaseSeeder extends Seeder
         ]);
 
         // Opcional: Cargar datos de demostración
-        if ($this->command->confirm('Do you want to load demo data? (50 sample PQRSF with notes and actions)', false)) {
+        if ($this->command->confirm('Do you want to load demo data? (50 sample peticiones with notes and actions)', false)) {
             $this->call([
                 AttentionDemoDataSeeder::class,
             ]);

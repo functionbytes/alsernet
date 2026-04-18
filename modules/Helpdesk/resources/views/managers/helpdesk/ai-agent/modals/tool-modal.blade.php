@@ -1,10 +1,10 @@
 <!-- Tool Modal -->
 <div class="modal fade" id="toolModal" tabindex="-1" aria-labelledby="toolModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="toolModalLabel">
-                    <i class="ti ti-tool me-2"></i><span id="toolModalTitle">Nueva Herramienta</span>
+                    <i class="fa-solid fa-wrench me-2"></i><span id="toolModalTitle">Nueva Herramienta</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -86,7 +86,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-success" id="saveToolBtn">
-                        <i class="ti ti-check me-2"></i>Guardar Herramienta
+                        <i class="fa-solid fa-check me-2"></i>Guardar Herramienta
                     </button>
                 </div>
             </form>

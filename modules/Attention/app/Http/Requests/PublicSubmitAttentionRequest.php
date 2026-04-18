@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 use Modules\Captcha\Facades\Captcha;
 
 /**
- * Request validation for public PQRSF submission (external form with captcha)
+ * Request validation for public peticiones submission (external form with captcha)
  */
 class PublicSubmitAttentionRequest extends FormRequest
 {

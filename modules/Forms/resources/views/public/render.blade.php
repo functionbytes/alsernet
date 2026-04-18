@@ -19,6 +19,15 @@
 @if($theme !== 'default')
 <link rel="stylesheet" href="{{ asset('modules/forms/css/themes/' . $theme . '.css') }}">
 @endif
+<link rel="stylesheet" href="{{ asset('core/select2/css/select2.min.css') }}">
+<style>
+.select2-container.is-invalid .select2-selection {
+    border-color: #dc3545 !important;
+}
+.select2-container.is-invalid + .invalid-feedback {
+    display: block;
+}
+</style>
 
 {{-- Wrapper según display mode --}}
 @if($display === 'popup')
@@ -28,7 +37,7 @@
     </button>
     {{-- Modal Bootstrap --}}
     <div class="modal fade forms-popup-modal" id="modal-{{ $formId }}" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ $form->name }}</h5>
@@ -56,16 +65,35 @@
     @include('forms::public.partials.form-body', compact('form', 'formId', 'theme', 'columns', 'isMultiStep', 'steps', 'totalSteps', 'floatingLabel', 'buttonText', 'buttonColor', 'showTitle', 'captchaEnabled'))
 @endif
 
-@push('scripts')
-{{-- jQuery Validate con idioma --}}
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-@if($locale === 'es')
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_es.js"></script>
+@once
+@php
+$validateLocaleMap = [
+    'ar'    => 'ar',    'az' => 'az',    'bg' => 'bg',
+    'bn'    => 'bn_BD', 'ca' => 'ca',    'cs' => 'cs',
+    'da'    => 'da',    'de' => 'de',    'el' => 'el',
+    'es'    => 'es',    'et' => 'et',    'eu' => 'eu',
+    'fa'    => 'fa',    'fi' => 'fi',    'fr' => 'fr',
+    'gl'    => 'gl',    'he' => 'he',    'hr' => 'hr',
+    'hu'    => 'hu',    'hy' => 'hy_AM', 'id' => 'id',
+    'is'    => 'is',    'it' => 'it',    'ja' => 'ja',
+    'ka'    => 'ka',    'kk' => 'kk',    'ko' => 'ko',
+    'lt'    => 'lt',    'lv' => 'lv',    'mk' => 'mk',
+    'my'    => 'my',    'nl' => 'nl',    'no' => 'no',
+    'pl'    => 'pl',    'pt' => 'pt_PT', 'ro' => 'ro',
+    'ru'    => 'ru',    'sk' => 'sk',    'sl' => 'sl',
+    'sr'    => 'sr',    'sv' => 'sv',    'th' => 'th',
+    'tr'    => 'tr',    'uk' => 'uk',    'ur' => 'ur',
+    'vi'    => 'vi',    'zh' => 'zh',
+];
+$validateLocale = $validateLocaleMap[$locale] ?? null;
+@endphp
+<script defer src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+@if($validateLocale)
+<script defer src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_{{ $validateLocale }}.js"></script>
 @endif
-
-{{-- JS del módulo Forms --}}
-<script src="{{ asset('modules/forms/js/forms.js') }}"></script>
-@endpush
+<script defer src="{{ asset('core/select2/js/select2.min.js') }}"></script>
+<script defer src="{{ asset('modules/forms/js/forms.js') }}"></script>
+@endonce
 
 {{-- Configuración del formulario --}}
 <script>

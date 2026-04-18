@@ -72,8 +72,8 @@
                             Resolución
                         </label>
                         <textarea class="form-control" name="resolution" id="resolutionText" rows="4"
-                                  placeholder="Escribir la resolución del PQRSF...">{{ $attention->resolution }}</textarea>
-                        <small class="text-muted">Describir cómo se resolvió el PQRSF</small>
+                                  placeholder="Escribir la resolución del peticiones...">{{ $attention->resolution }}</textarea>
+                        <small class="text-muted">Describir cómo se resolvió el peticiones</small>
                     </div>
 
                     <div class="col-12" id="responseTypeSection" style="display: {{ $attention->isResolved() ? 'block' : 'none' }};">
