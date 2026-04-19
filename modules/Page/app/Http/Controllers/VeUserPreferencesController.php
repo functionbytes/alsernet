@@ -20,6 +20,12 @@ class VeUserPreferencesController extends Controller
         'inspector_collapsed',
         'last_panel',
         'last_breakpoint',
+        // Editor view state (view R).
+        'wireframe_enabled',
+        'ruler_enabled',
+        'split_view_enabled',
+        'zoom_mode',   // fit | manual
+        'zoom_level',  // "1", "1.25", etc. stored as string
     ];
 
     public function show(Request $request, string $key): JsonResponse
@@ -51,6 +57,56 @@ class VeUserPreferencesController extends Controller
             ['user_id' => $request->user()->id, 'key' => $key],
             ['value' => array_values(array_unique(array_filter($data['value'])))],
         );
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Read several preferences in a single request.
+     * Body: { keys: ["last_panel", "last_breakpoint", ...] }.
+     */
+    public function bulkShow(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'keys' => ['required', 'array', 'max:20'],
+            'keys.*' => ['string'],
+        ]);
+
+        $requested = array_values(array_intersect($data['keys'], self::ALLOWED_KEYS));
+        $stored = VeUserPreference::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('key', $requested)
+            ->pluck('value', 'key');
+
+        $out = [];
+        foreach ($requested as $k) {
+            $out[$k] = $stored[$k] ?? [];
+        }
+
+        return response()->json(['success' => true, 'data' => $out]);
+    }
+
+    /**
+     * Write several preferences in a single request.
+     * Body: { values: { "last_panel": ["inspector"], "last_breakpoint": ["tablet"] } }.
+     */
+    public function bulkStore(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'values' => ['required', 'array', 'max:20'],
+            'values.*' => ['required', 'array'],
+            'values.*.*' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        foreach ($data['values'] as $key => $raw) {
+            if (! in_array($key, self::ALLOWED_KEYS, true)) {
+                continue;
+            }
+            VeUserPreference::updateOrCreate(
+                ['user_id' => $request->user()->id, 'key' => $key],
+                ['value' => array_values(array_unique(array_filter($raw)))],
+            );
+        }
 
         return response()->json(['success' => true]);
     }

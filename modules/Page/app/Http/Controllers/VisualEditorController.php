@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Locales\Models\Locale;
 use Modules\Page\Events\PageAutoSaved;
@@ -158,15 +160,69 @@ class VisualEditorController extends Controller
     public function save(Request $request, Page $page): JsonResponse
     {
         $this->authorize('update', $page);
+        $startedAt = microtime(true);
+
+        try {
+            $response = $this->doSave($request, $page);
+            $elapsedMs = (int) ((microtime(true) - $startedAt) * 1000);
+            if ($elapsedMs > 500) {
+                Log::info('visual_editor.save.slow', [
+                    'page_id' => $page->id,
+                    'user_id' => auth()->id(),
+                    'elapsed_ms' => $elapsedMs,
+                    'content_bytes' => strlen($request->input('content') ?? ''),
+                ]);
+            }
+
+            return $response;
+        } catch (\Throwable $e) {
+            Log::error('visual_editor.save.failed', [
+                'page_id' => $page->id,
+                'user_id' => auth()->id(),
+                'exception' => $e->getMessage(),
+                'content_bytes' => strlen($request->input('content') ?? ''),
+                'locale' => $request->input('locale'),
+            ]);
+            throw $e;
+        }
+    }
+
+    private function doSave(Request $request, Page $page): JsonResponse
+    {
+        // Resolve locale_id up-front so we can scope the slug uniqueness rule
+        // to (page_id ≠ current, locale_id = current) and avoid collisions
+        // with other pages' slugs in the same locale.
+        $locale = $request->input('locale');
+        $localeModel = $locale ? Locale::where('code', $locale)->first() : null;
 
         $data = $request->validate([
             'locale' => ['required', 'string', 'max:10'],
             // 2 MB cap protects the DB and PHP memory from accidentally-huge
             // payloads (embedded data URIs, copy-paste of giant tables, etc.).
             'content' => ['nullable', 'string', 'max:2097152'],
-            'template' => ['nullable', 'string', 'max:100'],
+            'template' => [
+                'nullable',
+                'string',
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (! $value) {
+                        return;
+                    }
+                    $tm = app(TemplateManager::class);
+                    if (! $tm->hasTemplate($value)) {
+                        $fail("El template '{$value}' no existe.");
+                    }
+                },
+            ],
             'title' => ['nullable', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('page_translations', 'slug')
+                    ->where(fn ($q) => $q->where('locale_id', $localeModel?->id))
+                    ->ignore($page->id, 'page_id'),
+            ],
             'status' => ['nullable', 'string', 'max:50'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
@@ -224,6 +280,7 @@ class VisualEditorController extends Controller
         ]);
 
         Cache::forget($this->versionsCacheKey($page));
+        $this->pruneOldVersions($page);
 
         return response()->json([
             'success' => true,
@@ -233,6 +290,30 @@ class VisualEditorController extends Controller
                 'version_number' => $version->version_number,
             ],
         ]);
+    }
+
+    /**
+     * Keep at most MAX_VERSIONS_PER_PAGE per page; delete older ones.
+     * Prevents page_versions from growing unbounded on high-churn pages.
+     */
+    private const MAX_VERSIONS_PER_PAGE = 50;
+
+    private function pruneOldVersions(Page $page): void
+    {
+        $count = $page->versions()->count();
+        if ($count <= self::MAX_VERSIONS_PER_PAGE) {
+            return;
+        }
+
+        $idsToDelete = $page->versions()
+            ->orderByDesc('version_number')
+            ->skip(self::MAX_VERSIONS_PER_PAGE)
+            ->take($count - self::MAX_VERSIONS_PER_PAGE)
+            ->pluck('id');
+
+        if ($idsToDelete->isNotEmpty()) {
+            PageVersion::whereIn('id', $idsToDelete)->delete();
+        }
     }
 
     /**

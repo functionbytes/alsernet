@@ -99,6 +99,9 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::delete('pages/{page}/lock', [PageLockController::class, 'release'])->name('pages.lock.release');
 
     // Visual editor user preferences (shortcode favorites, panel states, etc.).
+    // Bulk variants must be registered BEFORE the {key} catch-all so they match first.
+    Route::post('pages/ve/preferences/bulk-show', [VeUserPreferencesController::class, 'bulkShow'])->name('pages.ve.preferences.bulk-show');
+    Route::post('pages/ve/preferences/bulk-store', [VeUserPreferencesController::class, 'bulkStore'])->name('pages.ve.preferences.bulk-store');
     Route::get('pages/ve/preferences/{key}', [VeUserPreferencesController::class, 'show'])->name('pages.ve.preferences.show');
     Route::post('pages/ve/preferences/{key}', [VeUserPreferencesController::class, 'store'])->name('pages.ve.preferences.store');
 

@@ -2507,24 +2507,30 @@
     }
 
     /* ── Full save ───────────────────────────────────────────────────── */
+    // Retries 5xx/0 (network) failures with exponential backoff: 1s → 3s →
+    // give up. 4xx errors (validation, auth) are surfaced immediately.
     function doSave($btn) {
         getContentToSave().then(function (content) {
-            $.ajax({
-                url:         SAVE_URL,
-                method:      'POST',
-                contentType: 'application/json',
-                headers:     { 'X-CSRF-TOKEN': CSRF },
-                data: JSON.stringify({
-                    locale:          LOCALE,
-                    content:         content,
-                    template:        PAGE_DATA.template,
-                    title:           PAGE_DATA.title,
-                    status:          PAGE_DATA.status,
-                    seo_title:       PAGE_DATA.seo_title       || '',
-                    seo_description: PAGE_DATA.seo_description || '',
-                    seo_keywords:    PAGE_DATA.seo_keywords    || '',
-                }),
-                success: function () {
+            var payload = JSON.stringify({
+                locale:          LOCALE,
+                content:         content,
+                template:        PAGE_DATA.template,
+                title:           PAGE_DATA.title,
+                status:          PAGE_DATA.status,
+                seo_title:       PAGE_DATA.seo_title       || '',
+                seo_description: PAGE_DATA.seo_description || '',
+                seo_keywords:    PAGE_DATA.seo_keywords    || '',
+            });
+
+            function attempt(retriesLeft, delayMs) {
+                $.ajax({
+                    url:         SAVE_URL,
+                    method:      'POST',
+                    contentType: 'application/json',
+                    headers:     { 'X-CSRF-TOKEN': CSRF },
+                    data:        payload,
+                })
+                .done(function () {
                     isModified = false;
                     hasInspectorChanges = false;
                     originalContent = content;
@@ -2535,19 +2541,33 @@
                         $btn.html('<i class="fa-solid fa-save me-1"></i>Guardar')
                             .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 2500);
-                },
-                error: function (xhr) {
-                    const msg = xhr.responseJSON?.message || 'Error al guardar';
+                })
+                .fail(function (xhr) {
+                    var retriable = retriesLeft > 0 && (xhr.status === 0 || xhr.status >= 500);
+                    if (retriable) {
+                        if (window.showToast) { showToast('<i class="fa-solid fa-rotate me-1"></i>Reintentando guardar…'); }
+                        setTimeout(function () { attempt(retriesLeft - 1, delayMs * 3); }, delayMs);
+                        return;
+                    }
+                    var msg = xhr.responseJSON?.message || 'Error al guardar';
                     $btn.html('<i class="fa-solid fa-exclamation-triangle me-1"></i>Error')
                         .css({ background: '#FA896B', 'border-color': '#FA896B' });
-                    alert(msg);
+                    if (window.showToast) { showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>' + msg, 'error'); }
+                    else { alert(msg); }
                     setTimeout(function () {
                         $btn.html('<i class="fa-solid fa-save me-1"></i>Guardar')
                             .css({ background: '#b10100', 'border-color': '#b10100' });
                     }, 3000);
-                },
-                complete: function () { isSaving = false; $btn.prop('disabled', false); },
-            });
+                })
+                .always(function (resOrXhr, status) {
+                    // Don't unlock the button while we're still mid-retry.
+                    if (status === 'error') { return; }
+                    isSaving = false;
+                    $btn.prop('disabled', false);
+                });
+            }
+
+            attempt(2, 1000);
         });
     }
 
@@ -3037,10 +3057,13 @@
 
     /* ── Visual editor user preferences (server-side) ────────────────── */
     // Keys allowed on the backend: shortcode_favorites, panel_states,
-    // inspector_collapsed, last_panel, last_breakpoint.
+    // inspector_collapsed, last_panel, last_breakpoint, wireframe_enabled,
+    // ruler_enabled, split_view_enabled, zoom_mode, zoom_level.
     var VE_PREF_URL = {
         show: function (key) { return "{{ url('panel/pages/ve/preferences') }}/" + key; },
         store: function (key) { return "{{ url('panel/pages/ve/preferences') }}/" + key; },
+        bulkShow: "{{ route('pages.ve.preferences.bulk-show') }}",
+        bulkStore: "{{ route('pages.ve.preferences.bulk-store') }}",
     };
     window.veSavePreference = function (key, value) {
         return $.ajax({
@@ -3057,21 +3080,87 @@
             headers: { 'Accept': 'application/json' },
         });
     };
+    window.veLoadPreferences = function (keys) {
+        return $.ajax({
+            url: VE_PREF_URL.bulkShow,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+            data: { keys: keys },
+        });
+    };
+    window.veSavePreferences = function (values) {
+        return $.ajax({
+            url: VE_PREF_URL.bulkStore,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+            data: { values: values },
+        });
+    };
 
-    // Hydrate last-used panel + breakpoint after the editor is ready.
+    // Hydrate all view-state preferences in a single request.
     $(function () {
-        veLoadPreference('last_panel').done(function (res) {
-            var panel = Array.isArray(res && res.value) ? res.value[0] : null;
-            if (!panel || panel === 'shortcodes') { return; }
-            var $btn = $('#ve-sidebar-nav .ve-nav-btn[data-panel="' + panel + '"]');
-            if ($btn.length) { $btn.trigger('click'); }
+        veLoadPreferences([
+            'last_panel',
+            'last_breakpoint',
+            'wireframe_enabled',
+            'ruler_enabled',
+            'split_view_enabled',
+            'zoom_mode',
+            'zoom_level',
+        ]).done(function (res) {
+            var data = (res && res.data) || {};
+            var getFirst = function (k) { return Array.isArray(data[k]) ? data[k][0] : null; };
+
+            var panel = getFirst('last_panel');
+            if (panel && panel !== 'shortcodes') {
+                var $p = $('#ve-sidebar-nav .ve-nav-btn[data-panel="' + panel + '"]');
+                if ($p.length) { $p.trigger('click'); }
+            }
+
+            var bp = getFirst('last_breakpoint');
+            if (bp && bp !== 'desktop') {
+                var $bp = $('.breakpoint-btn[data-breakpoint="' + bp + '"]').first();
+                if ($bp.length) { $bp.trigger('click'); }
+            }
+
+            if (getFirst('wireframe_enabled') === '1') {
+                var $wf = $('#btn-wireframe');
+                if ($wf.length) { $wf.trigger('click'); }
+            }
+            if (getFirst('ruler_enabled') === '1') {
+                var $r = $('#btn-ruler');
+                if ($r.length) { $r.trigger('click'); }
+            }
+            if (getFirst('split_view_enabled') === '1') {
+                var $sv = $('#btn-split-view');
+                if ($sv.length) { $sv.trigger('click'); }
+            }
+
+            var zoomMode = getFirst('zoom_mode');
+            var zoomLevel = parseFloat(getFirst('zoom_level') || '1');
+            if (zoomMode === 'fit' && typeof window.veApplyFit === 'function') {
+                setTimeout(window.veApplyFit, 150);
+            } else if (!isNaN(zoomLevel) && zoomLevel !== 1 && typeof veApplyZoom === 'function') {
+                setTimeout(function () { veApplyZoom(zoomLevel, 'manual'); }, 150);
+            }
         }).fail(function () {});
-        veLoadPreference('last_breakpoint').done(function (res) {
-            var bp = Array.isArray(res && res.value) ? res.value[0] : null;
-            if (!bp || bp === 'desktop') { return; }
-            var $btn = $('.breakpoint-btn[data-breakpoint="' + bp + '"]').first();
-            if ($btn.length) { $btn.trigger('click'); }
-        }).fail(function () {});
+    });
+
+    // Persist wireframe / ruler / split toggles when they change.
+    $(document).on('click', '#btn-wireframe', function () {
+        if (!window.veSavePreference) { return; }
+        var enabled = $(this).hasClass('active') || $('#ve-canvas-wrap').hasClass('ve-wireframe');
+        veSavePreference('wireframe_enabled', [enabled ? '1' : '0']);
+    });
+    $(document).on('click', '#btn-ruler', function () {
+        if (!window.veSavePreference) { return; }
+        var enabled = $(this).hasClass('active') || $('#ve-ruler').hasClass('active');
+        veSavePreference('ruler_enabled', [enabled ? '1' : '0']);
+    });
+    $(document).on('click', '#btn-split-view', function () {
+        if (!window.veSavePreference) { return; }
+        var enabled = $('#ve-canvas-wrap').hasClass('split');
+        veSavePreference('split_view_enabled', [enabled ? '1' : '0']);
     });
 
     /* ── Page lock ───────────────────────────────────────────────────── */
