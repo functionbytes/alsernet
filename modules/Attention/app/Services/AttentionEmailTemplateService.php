@@ -8,6 +8,7 @@ use Modules\Attention\Mail\AttentionCustomMail;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionMail;
 use Modules\Core\Models\Setting;
+use Modules\Locales\Models\Locale;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableValueService;
@@ -39,8 +40,8 @@ class AttentionEmailTemplateService
                 return false;
             }
 
-            // Get lang_id (default to 1 for Spanish)
-            $langId = 1;
+            // Resolver lang_id desde el módulo Locales (respeta is_default/activo)
+            $langId = Locale::resolveLegacyLangId();
 
             $variables = self::prepareAttentionVariables($attention);
 
@@ -101,8 +102,8 @@ class AttentionEmailTemplateService
                 return false;
             }
 
-            // Get lang_id (default to 1 for Spanish)
-            $langId = 1;
+            // Resolver lang_id desde el módulo Locales (respeta is_default/activo)
+            $langId = Locale::resolveLegacyLangId();
 
             $variables = self::prepareAttentionVariables($attention);
 
@@ -229,8 +230,8 @@ class AttentionEmailTemplateService
                 return false;
             }
 
-            // Get lang_id (default to 1 for Spanish)
-            $langId = 1;
+            // Resolver lang_id desde el módulo Locales (respeta is_default/activo)
+            $langId = Locale::resolveLegacyLangId();
 
             $variables = self::prepareAttentionVariables($attention);
 

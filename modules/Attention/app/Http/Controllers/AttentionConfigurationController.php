@@ -16,6 +16,7 @@ use Modules\Attention\Http\Requests\UpdateGlobalSettingsRequest;
 use Modules\Attention\Http\Requests\UpdateSlaSettingsRequest;
 use Modules\Attention\Models\Attention;
 use Modules\Core\Models\Setting;
+use Modules\Locales\Models\Locale;
 use Modules\Mailer\Models\MailerTemplate;
 
 /**
@@ -288,7 +289,7 @@ class AttentionConfigurationController extends Controller
                 })
                 ->select(['id', 'name', 'key'])
                 ->with(['translations' => function ($q) {
-                    $q->where('lang_id', 1)->select('id', 'mailer_template_id', 'lang_id');
+                    $q->where('lang_id', Locale::resolveLegacyLangId())->select('id', 'mailer_template_id', 'lang_id');
                 }])
                 ->orderBy('name')
                 ->limit(50)
@@ -380,7 +381,7 @@ class AttentionConfigurationController extends Controller
             ->enabled()
             ->select(['id', 'name', 'key'])
             ->with(['translations' => function ($q) {
-                $q->where('lang_id', 1)->select('id', 'mailer_template_id', 'lang_id');
+                $q->where('lang_id', Locale::resolveLegacyLangId())->select('id', 'mailer_template_id', 'lang_id');
             }])
             ->orderBy('name')
             ->get()
