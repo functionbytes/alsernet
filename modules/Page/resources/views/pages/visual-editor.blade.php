@@ -12,12 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+    {{-- CodeMirror (CSS + JS) is lazy-loaded the first time the Código panel
+         is opened — keeps first paint ~80 KB lighter for users who never
+         open the code view. See window.veLoadCodeMirror() below. --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
 
@@ -2930,7 +2927,16 @@
             setTimeout(buildDomTree, 150);
         }
         if (panel === 'code') {
-            setTimeout(function () { veInitCodePanel(); }, 80);
+            // Load CodeMirror on demand; init only after scripts are ready.
+            if (typeof window.veLoadCodeMirror === 'function') {
+                window.veLoadCodeMirror().then(function () {
+                    setTimeout(function () { veInitCodePanel(); }, 50);
+                }).catch(function () {
+                    if (window.showToast) { showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Error al cargar el editor de código', 'error'); }
+                });
+            } else {
+                setTimeout(function () { veInitCodePanel(); }, 80);
+            }
             $('#ve-sidebar').css('width', '600px');
         } else {
             if ($('#ve-sidebar').width() > 400) {
@@ -5479,25 +5485,79 @@
 </script>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/html-hint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+<script>
+/**
+ * Lazy-loader for CodeMirror 5. The editor's "Código HTML" panel is opened by
+ * ~10% of users; preloading 80 KB of JS/CSS for the rest is wasteful.
+ *
+ * Returns a Promise resolved once CodeMirror and its addons are ready. Safe
+ * to call multiple times — subsequent calls return the first promise.
+ */
+window.veLoadCodeMirror = (function () {
+    var promise = null;
+    var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/';
+    var CSS = [
+        'codemirror.min.css',
+        'theme/monokai.min.css',
+        'addon/fold/foldgutter.min.css',
+        'addon/display/fullscreen.min.css',
+        'addon/dialog/dialog.min.css',
+        'addon/hint/show-hint.min.css',
+    ];
+    var JS = [
+        'codemirror.min.js',
+        'mode/xml/xml.min.js',
+        'mode/javascript/javascript.min.js',
+        'mode/css/css.min.js',
+        'mode/htmlmixed/htmlmixed.min.js',
+        'addon/edit/closetag.min.js',
+        'addon/edit/matchbrackets.min.js',
+        'addon/fold/foldcode.min.js',
+        'addon/fold/foldgutter.min.js',
+        'addon/fold/xml-fold.min.js',
+        'addon/fold/brace-fold.min.js',
+        'addon/display/fullscreen.min.js',
+        'addon/search/searchcursor.min.js',
+        'addon/search/search.min.js',
+        'addon/dialog/dialog.min.js',
+        'addon/selection/active-line.min.js',
+        'addon/hint/show-hint.min.js',
+        'addon/hint/html-hint.min.js',
+        'addon/hint/css-hint.min.js',
+    ];
+
+    function loadCss(href) {
+        return new Promise(function (resolve) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = link.onerror = resolve;
+            document.head.appendChild(link);
+        });
+    }
+    function loadScript(src) {
+        return new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = function () { reject(new Error('Failed to load ' + src)); };
+            document.head.appendChild(s);
+        });
+    }
+
+    return function () {
+        if (promise) { return promise; }
+        promise = Promise.all(CSS.map(function (f) { return loadCss(CDN + f); }))
+            .then(function () {
+                // Load scripts sequentially to preserve addon registration order.
+                return JS.reduce(function (p, f) {
+                    return p.then(function () { return loadScript(CDN + f); });
+                }, Promise.resolve());
+            });
+        return promise;
+    };
+})();
+</script>
 <script>
 /* ── Bootstrap 5 + Font Awesome 6 class autocomplete for CodeMirror ── */
 (function () {
@@ -10978,6 +11038,8 @@
 
 })(jQuery);
 </script>
+
+@include('page::pages.partials.ve-forms-integration')
 
 </body>
 </html>

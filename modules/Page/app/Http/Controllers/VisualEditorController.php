@@ -295,6 +295,7 @@ class VisualEditorController extends Controller
             });
 
             Cache::forget($this->versionsCacheKey($page));
+            $this->forgetLocaleContentCache($page, $locale);
             $this->pruneOldVersions($page);
         } finally {
             Cache::forget($lockKey);
@@ -426,20 +427,51 @@ class VisualEditorController extends Controller
             'locale' => ['required', 'string', 'in:'.implode(',', PageService::getSupportedLocales())],
         ])['locale'];
 
-        $page->loadMissing('translations');
-        $translation = $page->translations->firstWhere('locale', $locale);
+        // Cache per (page, locale) for 5 min. Invalidated by save() via
+        // forgetLocaleContentCache() — same pattern as versions list.
+        $payload = Cache::remember(
+            $this->localeContentCacheKey($page, $locale),
+            now()->addMinutes(5),
+            function () use ($page, $locale) {
+                $page->loadMissing('translations');
+                $translation = $page->translations->firstWhere('locale', $locale);
 
-        return response()->json([
-            'locale' => $locale,
-            'content' => $translation?->content ?? '',
-            'title' => $translation?->title ?? $page->title,
-            'slug' => $translation?->slug ?? $page->slug,
-            'status' => $translation?->status ?? $page->status->value,
-            'seo_title' => $translation?->seo_title ?? $page->seo_title ?? '',
-            'seo_description' => $translation?->seo_description ?? $page->seo_description ?? '',
-            'seo_keywords' => $translation?->seo_keywords ?? $page->seo_keywords ?? '',
-            'is_new' => $translation === null,
-        ]);
+                return [
+                    'locale' => $locale,
+                    'content' => $translation?->content ?? '',
+                    'title' => $translation?->title ?? $page->title,
+                    'slug' => $translation?->slug ?? $page->slug,
+                    'status' => $translation?->status ?? $page->status->value,
+                    'seo_title' => $translation?->seo_title ?? $page->seo_title ?? '',
+                    'seo_description' => $translation?->seo_description ?? $page->seo_description ?? '',
+                    'seo_keywords' => $translation?->seo_keywords ?? $page->seo_keywords ?? '',
+                    'is_new' => $translation === null,
+                ];
+            }
+        );
+
+        $fromCache = ! Cache::missing($this->localeContentCacheKey($page, $locale));
+
+        return response()
+            ->json($payload)
+            ->header('X-VE-Cache', $fromCache ? 'hit' : 'miss');
+    }
+
+    private function localeContentCacheKey(Page $page, string $locale): string
+    {
+        return "page:{$page->id}:locale:{$locale}:content:v1";
+    }
+
+    private function forgetLocaleContentCache(Page $page, ?string $locale = null): void
+    {
+        if ($locale) {
+            Cache::forget($this->localeContentCacheKey($page, $locale));
+
+            return;
+        }
+        foreach (PageService::getSupportedLocales() as $l) {
+            Cache::forget($this->localeContentCacheKey($page, $l));
+        }
     }
 
     /**
@@ -474,7 +506,16 @@ class VisualEditorController extends Controller
             }
         );
 
-        return response()->json(['success' => true, 'data' => $data]);
+        // ETag: hash the payload so unchanged lists return 304 with 0 bytes.
+        // Saves on both bandwidth and JSON parsing on the client.
+        $etag = '"'.md5(json_encode($data)).'"';
+        if ($request->headers->get('If-None-Match') === $etag) {
+            return response()->json(null, 304)->setEtag(trim($etag, '"'));
+        }
+
+        return response()
+            ->json(['success' => true, 'data' => $data])
+            ->setEtag(trim($etag, '"'));
     }
 
     private function versionsCacheKey(Page $page): string

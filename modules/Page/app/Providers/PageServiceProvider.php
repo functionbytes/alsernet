@@ -10,6 +10,7 @@ use Modules\Page\Console\Commands\CleanOldPageViewsCommand;
 use Modules\Page\Console\Commands\CleanPageAutoSavesCommand;
 use Modules\Page\Console\Commands\CleanPageLocksCommand;
 use Modules\Page\Console\Commands\CleanupPreviewTokensCommand;
+use Modules\Page\Console\Commands\PageAuditCommand;
 use Modules\Page\Console\Commands\PageCacheClearCommand;
 use Modules\Page\Console\Commands\PageCacheStatsCommand;
 use Modules\Page\Console\Commands\PageCacheWarmCommand;
@@ -87,6 +88,7 @@ class PageServiceProvider extends ServiceProvider
             PageCacheStatsCommand::class,
             CleanPageAutoSavesCommand::class,
             CleanPageLocksCommand::class,
+            PageAuditCommand::class,
             CleanOldPageViewsCommand::class,
             WarmPageCacheCommand::class,
             SeedErrorPages::class,

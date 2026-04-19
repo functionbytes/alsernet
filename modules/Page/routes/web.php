@@ -80,7 +80,9 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::get('pages/{page}/visual-editor', [VisualEditorController::class, 'index'])->name('pages.visual-editor');
     Route::get('pages/{page}/visual-preview', [VisualEditorController::class, 'preview'])->name('pages.visual-preview');
     Route::post('pages/{page}/visual-preview', [VisualEditorController::class, 'preview'])->name('pages.visual-preview.post');
-    Route::post('pages/{page}/visual-save', [VisualEditorController::class, 'save'])->name('pages.visual-save');
+    Route::post('pages/{page}/visual-save', [VisualEditorController::class, 'save'])
+        ->middleware('throttle:30,1')
+        ->name('pages.visual-save');
     Route::get('pages/{page}/draft', [VisualEditorController::class, 'getDraft'])->name('pages.draft');
     Route::patch('pages/{page}/auto-save', [VisualEditorController::class, 'autoSave'])
         ->middleware('throttle:30,1')
