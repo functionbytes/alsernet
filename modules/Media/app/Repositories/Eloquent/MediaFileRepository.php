@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
 use Modules\Media\Repositories\Interfaces\MediaFileInterface;
+use Modules\Media\Services\MediaFileService;
 
 class MediaFileRepository implements MediaFileInterface
 {
-    public function __construct(protected MediaFile $model) {}
+    public function __construct(
+        protected MediaFile $model,
+        protected MediaFileService $fileService
+    ) {}
 
     public function getFilesByFolderId(
         int|string|null $folderId,
@@ -92,7 +96,9 @@ class MediaFileRepository implements MediaFileInterface
 
     public function emptyTrash(): bool
     {
-        $this->model->onlyTrashed()->each(fn (MediaFile $file) => $file->forceDelete());
+        $this->model->onlyTrashed()->each(
+            fn (MediaFile $file) => $this->fileService->forceDelete($file)
+        );
 
         return true;
     }

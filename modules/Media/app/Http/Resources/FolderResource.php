@@ -14,11 +14,12 @@ class FolderResource extends JsonResource
             'uid' => $this->uid,
             'name' => $this->name,
             'slug' => $this->slug,
-            'parent_id' => $this->parent_id,
+            'parentId' => $this->parent_id,
             'color' => $this->color,
-            'is_folder' => true,
-            'created_at' => $this->created_at?->format('Y-m-d H:i'),
-            'updated_at' => $this->updated_at?->format('Y-m-d H:i'),
+            'disk' => $this->disk,
+            'filesCount' => $this->whenCounted('files'),
+            'createdAt' => $this->created_at?->toIso8601String(),
+            'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

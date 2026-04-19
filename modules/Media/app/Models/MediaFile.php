@@ -5,14 +5,21 @@ namespace Modules\Media\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Modules\Media\Database\Factories\MediaFileFactory;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class MediaFile extends Model
 {
-    use SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uid',
@@ -28,13 +35,33 @@ class MediaFile extends Model
         'file_hash',
         'metadata',
         'visibility',
-        'is_favorite',
+        'expires_at',
+        'workflow_status',
+        'approved_by_user_id',
+        'approved_at',
     ];
 
-    protected $casts = [
-        'metadata' => 'json',
-        'is_favorite' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'metadata' => 'json',
+            'expires_at' => 'datetime',
+            'approved_at' => 'datetime',
+        ];
+    }
+
+    public function isFavoritedBy(int $userId): bool
+    {
+        return $this->favorites()->where('user_id', $userId)->exists();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'folder_id', 'disk', 'visibility', 'deleted_at'])
+            ->logOnlyDirty()
+            ->useLogName('media.file');
+    }
 
     protected static function booted(): void
     {
@@ -61,6 +88,41 @@ class MediaFile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function favorites(): MorphMany
+    {
+        return $this->morphMany(MediaFavorite::class, 'favoritable');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(MediaFileVersion::class)->orderByDesc('version_number');
+    }
+
+    public function accessLogs(): HasMany
+    {
+        return $this->hasMany(MediaAccessLog::class);
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(MediaTag::class, 'taggable', 'media_taggables');
+    }
+
+    public function shares(): MorphMany
+    {
+        return $this->morphMany(MediaShare::class, 'shareable');
+    }
+
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(MediaComment::class, 'commentable');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_user_id');
     }
 
     protected function humanSize(): Attribute
@@ -96,6 +158,13 @@ class MediaFile extends Model
     public function scopePublic(Builder $query): Builder
     {
         return $query->where('visibility', 'public');
+    }
+
+    public function scopeFavoritedBy(Builder $query, ?int $userId = null): Builder
+    {
+        $userId ??= auth()->id();
+
+        return $query->whereHas('favorites', fn ($q) => $q->where('user_id', $userId));
     }
 
     /**
@@ -146,5 +215,10 @@ class MediaFile extends Model
             $mimeType === 'application/pdf' => 'pdf',
             default => 'document',
         };
+    }
+
+    protected static function newFactory(): MediaFileFactory
+    {
+        return MediaFileFactory::new();
     }
 }

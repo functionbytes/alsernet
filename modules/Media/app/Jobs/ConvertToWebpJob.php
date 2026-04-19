@@ -20,7 +20,10 @@ class ConvertToWebpJob implements ShouldQueue
 
     private const CONVERTIBLE_MIMES = ['image/jpeg', 'image/png'];
 
-    public function __construct(public readonly int $mediaFileId) {}
+    public function __construct(public readonly int $mediaFileId)
+    {
+        $this->onQueue('media-light');
+    }
 
     public function handle(): void
     {

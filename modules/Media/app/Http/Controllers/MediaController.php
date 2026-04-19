@@ -5,19 +5,26 @@ namespace Modules\Media\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Modules\Media\Http\Requests\BulkActionRequest;
+use Modules\Media\Models\MediaFavorite;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
 use Modules\Media\Repositories\Interfaces\MediaFileInterface;
 use Modules\Media\Repositories\Interfaces\MediaFolderInterface;
 use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
+use Modules\Media\Services\MediaFileService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MediaController extends Controller
 {
     public function __construct(
         protected MediaFileInterface $fileRepository,
         protected MediaFolderInterface $folderRepository,
-        protected MediaSettingInterface $settingRepository
+        protected MediaSettingInterface $settingRepository,
+        protected MediaFileService $fileService
     ) {}
 
     public function index(): View
@@ -202,6 +209,87 @@ class MediaController extends Controller
         return response()->json(['success' => true, 'disk' => $disk]);
     }
 
+    public function bulkAction(BulkActionRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $type = $request->validated('type');
+        $ids = $request->validated('ids');
+        $userId = auth()->id();
+
+        return DB::transaction(function () use ($action, $type, $ids, $userId, $request) {
+            $model = $type === 'file' ? MediaFile::class : MediaFolder::class;
+            $items = $model::withTrashed()->whereIn('id', $ids)->where('user_id', $userId)->get();
+
+            foreach ($items as $item) {
+                match ($action) {
+                    'delete' => $item->delete(),
+                    'restore' => $item->restore(),
+                    'move' => $type === 'file'
+                        ? $item->update(['folder_id' => $request->validated('folder_id')])
+                        : $item->update(['parent_id' => $request->validated('folder_id')]),
+                    'favorite' => MediaFavorite::firstOrCreate([
+                        'user_id' => $userId,
+                        'favoritable_id' => $item->id,
+                        'favoritable_type' => $model,
+                    ]),
+                    'unfavorite' => MediaFavorite::where([
+                        'user_id' => $userId,
+                        'favoritable_id' => $item->id,
+                        'favoritable_type' => $model,
+                    ])->delete(),
+                };
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Acción aplicada a '.$items->count().' elementos',
+                'count' => $items->count(),
+            ]);
+        });
+    }
+
+    public function getQuotaUsage(): JsonResponse
+    {
+        $this->authorize('viewAny', MediaFile::class);
+
+        $userId = auth()->id();
+        $used = $this->fileService->getUserUsage($userId);
+        $total = $this->fileService->getUserQuota($userId);
+
+        return response()->json([
+            'used' => $used,
+            'total' => $total,
+            'enabled' => config('media.quota.enabled', false),
+            'percentage' => $total > 0 ? round(($used / $total) * 100, 2) : 0,
+        ]);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', MediaFile::class);
+
+        $request->validate([
+            'query' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'in:image,video,audio,document,pdf,zip'],
+            'min_size' => ['nullable', 'integer', 'min:0'],
+            'max_size' => ['nullable', 'integer', 'min:0'],
+            'mime_type' => ['nullable', 'string', 'max:100'],
+            'min_width' => ['nullable', 'integer', 'min:1'],
+            'min_height' => ['nullable', 'integer', 'min:1'],
+            'created_from' => ['nullable', 'date'],
+            'created_to' => ['nullable', 'date'],
+            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+        ]);
+
+        $results = $this->fileService->search(
+            $request->validated(),
+            auth()->id(),
+            $request->integer('per_page', 20)
+        );
+
+        return response()->json($results);
+    }
+
     public function emptyTrash(): JsonResponse
     {
         $this->authorize('forceDelete', MediaFile::class);
@@ -210,5 +298,131 @@ class MediaController extends Controller
         $this->folderRepository->emptyTrash();
 
         return response()->json(['success' => true, 'message' => 'Papelera vaciada exitosamente']);
+    }
+
+    public function bulkDownload(Request $request): StreamedResponse
+    {
+        $this->authorize('viewAny', MediaFile::class);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:200'],
+            'ids.*' => ['integer'],
+            'type' => ['required', 'in:file,folder'],
+        ]);
+
+        $userId = auth()->id();
+        $type = $request->input('type');
+
+        $files = $type === 'file'
+            ? MediaFile::query()->whereIn('id', $request->input('ids'))->where('user_id', $userId)->get()
+            : MediaFile::query()->whereIn('folder_id', $request->input('ids'))->where('user_id', $userId)->get();
+
+        $zipName = 'media_'.now()->format('Ymd_His').'.zip';
+
+        return response()->stream(function () use ($files): void {
+            $zipPath = tempnam(sys_get_temp_dir(), 'mdl_zip');
+            $zip = new \ZipArchive;
+            $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+            foreach ($files as $file) {
+                $disk = Storage::disk($file->disk);
+                if ($disk->exists($file->url)) {
+                    $zip->addFile($disk->path($file->url), $file->id.'_'.$file->name);
+                }
+            }
+
+            $zip->close();
+            readfile($zipPath);
+            @unlink($zipPath);
+        }, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => "attachment; filename=\"{$zipName}\"",
+        ]);
+    }
+
+    public function duplicates(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', MediaFile::class);
+
+        $userId = auth()->id();
+        $mode = $request->input('mode', 'exact');
+
+        if ($mode === 'exact') {
+            $hashes = MediaFile::query()
+                ->select('file_hash')
+                ->where('user_id', $userId)
+                ->whereNotNull('file_hash')
+                ->groupBy('file_hash')
+                ->havingRaw('count(*) > 1')
+                ->pluck('file_hash');
+
+            $files = MediaFile::query()
+                ->whereIn('file_hash', $hashes)
+                ->where('user_id', $userId)
+                ->orderBy('file_hash')
+                ->orderBy('created_at')
+                ->get();
+
+            $grouped = $files->groupBy('file_hash')->map(fn ($g) => $g->values());
+
+            return response()->json([
+                'mode' => 'exact',
+                'groups' => $grouped,
+                'total_duplicates' => $files->count() - $grouped->count(),
+                'wasted_bytes' => $grouped->sum(fn ($g) => ($g->count() - 1) * $g->first()->size),
+            ]);
+        }
+
+        $files = MediaFile::query()
+            ->where('user_id', $userId)
+            ->whereNotNull('phash')
+            ->get();
+
+        $groups = [];
+        $used = [];
+
+        foreach ($files as $i => $fileA) {
+            if (in_array($fileA->id, $used)) {
+                continue;
+            }
+
+            $group = [$fileA];
+
+            foreach ($files as $j => $fileB) {
+                if ($i >= $j || in_array($fileB->id, $used)) {
+                    continue;
+                }
+
+                if ($this->hammingDistanceHex($fileA->phash, $fileB->phash) <= 5) {
+                    $group[] = $fileB;
+                    $used[] = $fileB->id;
+                }
+            }
+
+            if (count($group) > 1) {
+                $used[] = $fileA->id;
+                $groups[] = $group;
+            }
+        }
+
+        return response()->json([
+            'mode' => 'similar',
+            'groups' => $groups,
+            'total_groups' => count($groups),
+        ]);
+    }
+
+    private function hammingDistanceHex(string $a, string $b): int
+    {
+        if (strlen($a) !== strlen($b)) {
+            return 64;
+        }
+
+        $d = 0;
+        for ($i = 0; $i < strlen($a); $i++) {
+            $d += substr_count(decbin(hexdec($a[$i]) ^ hexdec($b[$i])), '1');
+        }
+
+        return $d;
     }
 }

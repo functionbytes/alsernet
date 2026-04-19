@@ -4,15 +4,21 @@ namespace Modules\Media\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Modules\Media\Database\Factories\MediaFolderFactory;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class MediaFolder extends Model
 {
-    use SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uid',
@@ -23,6 +29,14 @@ class MediaFolder extends Model
         'color',
         'disk',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'parent_id', 'color', 'deleted_at'])
+            ->logOnlyDirty()
+            ->useLogName('media.folder');
+    }
 
     protected static function booted(): void
     {
@@ -73,6 +87,21 @@ class MediaFolder extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function favorites(): MorphMany
+    {
+        return $this->morphMany(MediaFavorite::class, 'favoritable');
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(MediaTag::class, 'taggable', 'media_taggables');
+    }
+
+    public function shares(): MorphMany
+    {
+        return $this->morphMany(MediaShare::class, 'shareable');
+    }
+
     public function scopeRoot(Builder $query): Builder
     {
         return $query->whereNull('parent_id');
@@ -83,6 +112,13 @@ class MediaFolder extends Model
         $userId ??= auth()->id();
 
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeFavoritedBy(Builder $query, ?int $userId = null): Builder
+    {
+        $userId ??= auth()->id();
+
+        return $query->whereHas('favorites', fn ($q) => $q->where('user_id', $userId));
     }
 
     /**
@@ -134,5 +170,10 @@ class MediaFolder extends Model
         $parent = self::getFullPath($folder->parent_id, $path);
 
         return $parent ? rtrim($parent, '/').'/'.$folder->slug : $folder->slug;
+    }
+
+    protected static function newFactory(): MediaFolderFactory
+    {
+        return MediaFolderFactory::new();
     }
 }

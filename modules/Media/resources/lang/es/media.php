@@ -3,6 +3,48 @@
 return [
     'title' => 'Gestor de medios',
     'description' => 'Administrar archivos y carpetas',
+    'search' => 'Buscar archivos...',
+    'upload' => 'Subir archivo',
+    'upload_folder' => 'Subir carpeta',
+    'new_folder' => 'Nueva carpeta',
+    'bulk_actions' => 'Acciones masivas',
+
+    'actions' => [
+        'rename' => 'Renombrar',
+        'move' => 'Mover',
+        'copy' => 'Copiar',
+        'delete' => 'Eliminar',
+        'restore' => 'Restaurar',
+        'favorite_add' => 'Agregar a favoritos',
+        'favorite_remove' => 'Quitar de favoritos',
+        'preview' => 'Vista previa',
+        'share' => 'Compartir',
+        'download' => 'Descargar',
+        'edit_image' => 'Editar imagen',
+        'versions' => 'Historial de versiones',
+        'access_logs' => 'Ver accesos',
+        'set_expiration' => 'Establecer expiración',
+    ],
+
+    'views' => [
+        'all_media' => 'Todos los archivos',
+        'trash' => 'Papelera',
+        'favorites' => 'Favoritos',
+        'recent' => 'Recientes',
+    ],
+
+    'duplicates' => [
+        'title' => 'Detector de duplicados',
+        'mode_exact' => 'Hash exacto (idénticos)',
+        'mode_similar' => 'Visualmente similares (pHash)',
+        'no_duplicates' => 'No se encontraron duplicados.',
+    ],
+
+    'quota' => [
+        'title' => 'Almacenamiento',
+        'used' => ':used / :total',
+        'exceeded' => 'Cuota excedida',
+    ],
 
     'files' => [
         'title' => 'Archivos',
@@ -46,13 +88,18 @@ return [
         'too_large' => 'El archivo supera el tamaño máximo permitido.',
         'invalid_type' => 'El tipo de archivo no está permitido.',
         'folder_not_empty' => 'No se puede eliminar una carpeta que no está vacía.',
+        'quota_exceeded' => 'Cuota de almacenamiento excedida',
+        'invalid_file' => 'Tipo de archivo no permitido',
     ],
 
     'success' => [
         'uploaded' => 'Archivo subido correctamente.',
-        'deleted' => 'Archivo eliminado correctamente.',
+        'deleted' => 'Archivo eliminado',
+        'restored' => 'Archivo restaurado',
         'renamed' => 'Archivo renombrado correctamente.',
         'moved' => 'Archivo movido correctamente.',
+        'copied' => 'Archivo copiado',
+        'shared' => 'Enlace compartido copiado',
     ],
 
     'permissions' => [

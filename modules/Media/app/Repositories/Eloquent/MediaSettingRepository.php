@@ -2,6 +2,9 @@
 
 namespace Modules\Media\Repositories\Eloquent;
 
+use Modules\Media\Models\MediaFavorite;
+use Modules\Media\Models\MediaFile;
+use Modules\Media\Models\MediaFolder;
 use Modules\Media\Models\MediaSetting;
 use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
 
@@ -11,47 +14,35 @@ class MediaSettingRepository implements MediaSettingInterface
 
     public function getFavorites(int $userId): array
     {
-        $setting = $this->model
-            ->where('key', 'favorites')
+        return MediaFavorite::query()
             ->where('user_id', $userId)
-            ->first();
-
-        return $setting?->value ?? [];
+            ->get()
+            ->map(fn (MediaFavorite $f) => [
+                'id' => $f->favoritable_id,
+                'is_folder' => $f->favoritable_type === MediaFolder::class,
+            ])
+            ->all();
     }
 
     public function addFavorites(int $userId, array $items): void
     {
-        $setting = $this->model->firstOrCreate(
-            ['key' => 'favorites', 'user_id' => $userId],
-            ['value' => []]
-        );
-
-        $setting->value = array_merge($setting->value ?? [], $items);
-        $setting->save();
+        foreach ($items as $item) {
+            MediaFavorite::firstOrCreate([
+                'user_id' => $userId,
+                'favoritable_id' => $item['id'],
+                'favoritable_type' => $item['is_folder'] ? MediaFolder::class : MediaFile::class,
+            ]);
+        }
     }
 
     public function removeFavorites(int $userId, array $items): void
     {
-        $setting = $this->model
-            ->where('key', 'favorites')
-            ->where('user_id', $userId)
-            ->first();
-
-        if (! $setting || empty($setting->value)) {
-            return;
+        foreach ($items as $item) {
+            MediaFavorite::query()
+                ->where('user_id', $userId)
+                ->where('favoritable_id', $item['id'])
+                ->where('favoritable_type', $item['is_folder'] ? MediaFolder::class : MediaFile::class)
+                ->delete();
         }
-
-        $value = array_filter($setting->value, function ($existing) use ($items) {
-            foreach ($items as $toRemove) {
-                if ($existing['id'] == $toRemove['id'] && $existing['is_folder'] == $toRemove['is_folder']) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
-        $setting->value = array_values($value);
-        $setting->save();
     }
 }

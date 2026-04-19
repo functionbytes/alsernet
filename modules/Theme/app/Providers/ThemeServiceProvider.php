@@ -4,6 +4,7 @@ namespace Modules\Theme\Providers;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Modules\Theme\Console\Commands\AuditA11yCommand;
 
 class ThemeServiceProvider extends ServiceProvider
 {
@@ -43,6 +44,10 @@ class ThemeServiceProvider extends ServiceProvider
         // Load routes if they exist
         if (file_exists(__DIR__.'/../../routes/web.php')) {
             $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([AuditA11yCommand::class]);
         }
     }
 

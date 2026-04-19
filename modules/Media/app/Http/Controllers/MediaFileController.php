@@ -5,202 +5,92 @@ namespace Modules\Media\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
-use Modules\Media\Jobs\ConvertToWebpJob;
+use Modules\Media\Http\Requests\CopyMediaFileRequest;
+use Modules\Media\Http\Requests\MoveMediaFileRequest;
+use Modules\Media\Http\Requests\UpdateMediaFileRequest;
+use Modules\Media\Http\Requests\UploadFromUrlRequest;
+use Modules\Media\Http\Requests\UploadMediaFileRequest;
+use Modules\Media\Models\MediaAccessLog;
 use Modules\Media\Models\MediaFile;
-use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
-use Symfony\Component\HttpFoundation\File\File;
+use Modules\Media\Models\MediaFileVersion;
+use Modules\Media\Services\MediaFileService;
 
 class MediaFileController extends Controller
 {
-    public function __construct(protected MediaSettingInterface $settingRepository) {}
+    public function __construct(private readonly MediaFileService $fileService) {}
 
-    public function upload(Request $request): JsonResponse
+    public function upload(UploadMediaFileRequest $request): JsonResponse
     {
-        $this->authorize('create', MediaFile::class);
-
-        $request->validate([
-            'file' => 'required|file|max:102400|mimes:jpg,jpeg,png,gif,webp,svg,ico,pdf,doc,docx,xls,xlsx,zip,mp4,mp3,txt,csv',
-            'folder_id' => 'nullable|exists:media_folders,id',
-        ]);
-
-        $file = $request->file('file');
-        $folderId = $request->integer('folder_id') ?: null;
-        $disk = $this->getActiveDisk();
-
-        $hash = hash_file('sha256', $file->getRealPath());
-
-        $existing = MediaFile::query()
-            ->where('file_hash', $hash)
-            ->where('disk', $disk)
-            ->first();
-
-        if ($existing) {
-            return response()->json([
-                'success' => true,
-                'duplicate' => true,
-                'file' => $this->formatFile($existing),
-            ]);
-        }
-
-        $storedPath = $file->store((string) ($folderId ?? 0), $disk);
-
-        $mediaFile = MediaFile::create([
-            'name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'url' => $storedPath,
-            'folder_id' => $folderId,
-            'user_id' => auth()->id(),
-            'disk' => $disk,
-            'file_hash' => $hash,
-            'metadata' => $this->extractImageMetadata($file),
-        ]);
-
-        ConvertToWebpJob::dispatch($mediaFile->id);
+        $disk = $this->fileService->getActiveDisk();
+        $result = $this->fileService->upload(
+            $request->file('file'),
+            $request->integer('folder_id') ?: null,
+            $disk,
+            auth()->id()
+        );
 
         return response()->json([
             'success' => true,
-            'duplicate' => false,
-            'file' => $this->formatFile($mediaFile),
+            'duplicate' => $result['duplicate'],
+            'file' => $this->formatFile($result['file']),
         ]);
     }
 
-    public function uploadFromUrl(Request $request): JsonResponse
+    public function uploadFromUrl(UploadFromUrlRequest $request): JsonResponse
     {
-        $this->authorize('create', MediaFile::class);
+        $rateLimitKey = 'media-url-upload:'.auth()->id();
 
-        $request->validate([
-            'url' => 'required|url|max:2048',
-            'filename' => 'nullable|string|max:255',
-            'folder_id' => 'nullable|exists:media_folders,id',
-        ]);
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            return response()->json(['message' => 'Demasiadas descargas. Intenta más tarde.'], 429);
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         try {
-            $url = $request->string('url');
-            $folderId = $request->integer('folder_id') ?: null;
-            $disk = $this->getActiveDisk();
-
-            $this->validateExternalUrl($url);
-
-            $response = Http::timeout(10)->get($url);
-
-            if (! $response->successful()) {
-                return response()->json(['message' => 'No se pudo descargar el archivo desde la URL'], 400);
-            }
-
-            $content = $response->body();
-
-            $filename = $request->string('filename') ?: basename(parse_url($url, PHP_URL_PATH)) ?: 'descargado-'.time();
-            if (! str_contains($filename, '.')) {
-                $filename .= '.bin';
-            }
-
-            $size = strlen($content);
-            if ($size > 104857600) {
-                return response()->json(['message' => 'El archivo excede el límite de 100MB'], 413);
-            }
-
-            $tempPath = sys_get_temp_dir().'/'.bin2hex(random_bytes(8)).'_'.$filename;
-            file_put_contents($tempPath, $content);
-
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->file($tempPath) ?: 'application/octet-stream';
-
-            $allowedMimes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/zip', 'application/x-zip-compressed',
-                'video/mp4', 'audio/mpeg',
-                'text/plain', 'text/csv',
-            ];
-
-            if (! in_array($mimeType, $allowedMimes, true)) {
-                @unlink($tempPath);
-
-                return response()->json(['message' => 'Tipo de archivo no permitido: '.$mimeType], 422);
-            }
-
-            $storedPath = Storage::disk($disk)->putFileAs(
-                (string) ($folderId ?? 0),
-                new File($tempPath),
-                $filename
+            $mediaFile = $this->fileService->uploadFromUrl(
+                $request->string('url'),
+                $request->string('filename') ?: null,
+                $request->integer('folder_id') ?: null,
+                $this->fileService->getActiveDisk(),
+                auth()->id()
             );
-
-            @unlink($tempPath);
-
-            $mediaFile = MediaFile::create([
-                'name' => $filename,
-                'mime_type' => $mimeType,
-                'size' => $size,
-                'url' => $storedPath,
-                'folder_id' => $folderId,
-                'user_id' => auth()->id(),
-                'disk' => $disk,
-            ]);
 
             return response()->json([
                 'success' => true,
                 'file' => $this->formatFile($mediaFile),
             ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error. Por favor, inténtalo de nuevo.'], 500);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Descarga fallida: '.$e->getMessage()], 422);
         }
     }
 
-    public function rename(Request $request, MediaFile $file): JsonResponse
+    public function rename(UpdateMediaFileRequest $request, MediaFile $file): JsonResponse
     {
         $this->authorize('update', $file);
 
-        $request->validate(['name' => 'required|string|max:255']);
-
-        $file->update(['name' => $request->string('name')]);
+        $this->fileService->rename($file, $request->string('name'));
 
         return response()->json(['success' => true]);
     }
 
-    public function copy(MediaFile $file): JsonResponse
+    public function copy(CopyMediaFileRequest $request, MediaFile $file): JsonResponse
     {
         $this->authorize('create', MediaFile::class);
 
         try {
-            $disk = $file->disk ?? 'media';
-            $originalPath = preg_replace('/^\d+\//', '', $file->url);
-
-            if (! Storage::disk($disk)->exists($originalPath)) {
-                return response()->json(['message' => 'El archivo original no existe'], 404);
-            }
-
-            $ext = pathinfo($file->name, PATHINFO_EXTENSION);
-            $base = pathinfo($file->name, PATHINFO_FILENAME);
-            $newName = $base.'-(copia).'.$ext;
-            $dir = dirname($originalPath);
-            $newPath = $dir.'/'.pathinfo($base, PATHINFO_FILENAME).'-copia-'.uniqid().'.'.$ext;
-
-            Storage::disk($disk)->copy($originalPath, $newPath);
-
-            $newFile = MediaFile::create([
-                'name' => $newName,
-                'mime_type' => $file->mime_type,
-                'size' => $file->size,
-                'url' => $newPath,
-                'folder_id' => $file->folder_id,
-                'user_id' => auth()->id(),
-                'disk' => $disk,
-                'metadata' => $file->metadata ?? [],
-            ]);
+            $newFile = $this->fileService->copy($file, auth()->id());
 
             return response()->json([
                 'success' => true,
                 'file' => $this->formatFile($newFile),
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             Log::error('Media file copy failed', ['error' => $e->getMessage()]);
 
@@ -211,7 +101,8 @@ class MediaFileController extends Controller
     public function delete(MediaFile $file): JsonResponse
     {
         $this->authorize('delete', $file);
-        $file->delete();
+
+        $this->fileService->delete($file);
 
         return response()->json(['success' => true, 'message' => 'Archivo eliminado']);
     }
@@ -219,18 +110,17 @@ class MediaFileController extends Controller
     public function restore(MediaFile $file): JsonResponse
     {
         $this->authorize('update', $file);
-        $file->restore();
+
+        $this->fileService->restore($file);
 
         return response()->json(['success' => true]);
     }
 
-    public function move(Request $request, MediaFile $file): JsonResponse
+    public function move(MoveMediaFileRequest $request, MediaFile $file): JsonResponse
     {
         $this->authorize('update', $file);
 
-        $request->validate(['folder_id' => 'nullable|exists:media_folders,id']);
-
-        $file->update(['folder_id' => $request->integer('folder_id') ?: null]);
+        $this->fileService->move($file, $request->integer('folder_id') ?: null);
 
         return response()->json(['success' => true]);
     }
@@ -239,44 +129,294 @@ class MediaFileController extends Controller
     {
         $this->authorize('update', $file);
 
-        $userId = auth()->id();
-        $favorites = $this->settingRepository->getFavorites($userId);
-        $item = ['id' => $file->id, 'is_folder' => false];
-        $isFavorite = collect($favorites)->contains(fn ($f) => $f['id'] == $file->id && ! $f['is_folder']);
-
-        if ($isFavorite) {
-            $this->settingRepository->removeFavorites($userId, [$item]);
-        } else {
-            $this->settingRepository->addFavorites($userId, [$item]);
-        }
+        $isFavorite = $this->fileService->toggleFavorite($file, auth()->id());
 
         return response()->json([
             'success' => true,
-            'is_favorite' => ! $isFavorite,
-            'message' => ! $isFavorite ? 'Agregado a favoritos' : 'Eliminado de favoritos',
+            'is_favorite' => $isFavorite,
+            'message' => $isFavorite ? 'Agregado a favoritos' : 'Eliminado de favoritos',
         ]);
     }
 
-    private function validateExternalUrl(string $url): void
+    public function uploadChunk(Request $request): JsonResponse
     {
-        $parsed = parse_url($url);
+        $this->authorize('create', MediaFile::class);
 
-        if (! in_array($parsed['scheme'] ?? '', ['http', 'https'], true)) {
-            abort(422, 'Solo se permiten URLs http/https');
-        }
+        $chunkSizeKb = (int) (config('media.chunk.chunk_size', 1048576) * 2 / 1024);
 
-        $host = $parsed['host'] ?? '';
-        $ip = gethostbyname($host);
+        $request->validate([
+            'upload_id' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/'],
+            'chunk_index' => ['required', 'integer', 'min:0'],
+            'total_chunks' => ['required', 'integer', 'min:1', 'max:10000'],
+            'chunk' => ['required', 'file', "max:{$chunkSizeKb}"],
+        ]);
 
-        $isPrivate = ! filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        $uploadId = $request->string('upload_id');
+        $chunkIndex = $request->integer('chunk_index');
+        $chunkDisk = config('media.chunk.storage.disk', 'local');
+        $chunkDir = config('media.chunk.storage.chunks', 'chunks').'/'.$uploadId;
+
+        Storage::disk($chunkDisk)->putFileAs(
+            $chunkDir,
+            $request->file('chunk'),
+            sprintf('%05d.part', $chunkIndex)
         );
 
-        if ($isPrivate) {
-            abort(422, 'No se permiten URLs de redes privadas');
+        return response()->json([
+            'success' => true,
+            'upload_id' => $uploadId,
+            'chunk_index' => $chunkIndex,
+            'received' => count(Storage::disk($chunkDisk)->files($chunkDir)),
+        ]);
+    }
+
+    public function completeChunkUpload(Request $request): JsonResponse
+    {
+        $this->authorize('create', MediaFile::class);
+
+        $request->validate([
+            'upload_id' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/'],
+            'filename' => ['required', 'string', 'max:255'],
+            'total_chunks' => ['required', 'integer', 'min:1'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        return $this->fileService->completeChunkUpload(
+            $request->string('upload_id'),
+            $request->string('filename'),
+            $request->integer('total_chunks'),
+            $request->integer('folder_id') ?: null,
+            $this->fileService->getActiveDisk(),
+            auth()->id()
+        );
+    }
+
+    public function abortChunkUpload(string $uploadId): JsonResponse
+    {
+        $this->authorize('create', MediaFile::class);
+
+        if (! preg_match('/^[A-Za-z0-9_-]{8,64}$/', $uploadId)) {
+            return response()->json(['message' => 'upload_id inválido'], 422);
         }
+
+        $chunkDisk = config('media.chunk.storage.disk', 'local');
+        $chunkDir = config('media.chunk.storage.chunks', 'chunks').'/'.$uploadId;
+
+        Storage::disk($chunkDisk)->deleteDirectory($chunkDir);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function similar(MediaFile $file): JsonResponse
+    {
+        $this->authorize('view', $file);
+
+        $similar = $this->fileService->findSimilar($file);
+
+        return response()->json([
+            'success' => true,
+            'data' => $similar->map(fn (MediaFile $f) => [
+                'id' => $f->id,
+                'name' => $f->name,
+                'url' => $f->url,
+                'distance' => $f->hamming_distance,
+            ]),
+        ]);
+    }
+
+    public function createShareLink(Request $request, MediaFile $file): JsonResponse
+    {
+        $this->authorize('view', $file);
+
+        $request->validate([
+            'ttl_minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
+        ]);
+
+        $ttl = $request->integer('ttl_minutes', 60);
+        $expiresAt = now()->addMinutes($ttl);
+
+        $token = hash_hmac(
+            'sha256',
+            $file->id.'|'.$expiresAt->timestamp,
+            config('app.key')
+        );
+
+        $payload = base64_encode(json_encode([
+            'id' => $file->id,
+            'exp' => $expiresAt->timestamp,
+            'sig' => $token,
+        ]));
+
+        $safe = strtr(rtrim($payload, '='), '+/', '-_');
+
+        return response()->json([
+            'success' => true,
+            'url' => route('media.share', ['token' => $safe]),
+            'expires_at' => $expiresAt->toIso8601String(),
+        ]);
+    }
+
+    public function presignedUpload(Request $request): JsonResponse
+    {
+        $this->authorize('create', MediaFile::class);
+
+        $request->validate([
+            'filename' => ['required', 'string', 'max:255'],
+            'mime_type' => ['required', 'string', 'max:100'],
+            'size' => ['required', 'integer', 'min:1'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $disk = $this->fileService->getActiveDisk();
+        $diskConfig = config("filesystems.disks.{$disk}");
+
+        if (($diskConfig['driver'] ?? '') !== 's3') {
+            return response()->json(['message' => 'Presigned upload solo disponible para disk S3'], 400);
+        }
+
+        $maxBytes = (int) config('media.max_upload_size', 104857600);
+        if ($request->integer('size') > $maxBytes) {
+            return response()->json(['message' => 'Excede tamaño máximo'], 413);
+        }
+
+        $folderId = $request->integer('folder_id') ?: null;
+        $key = ($folderId ?? 0).'/'.uniqid('mdl_', true).'_'.$request->string('filename');
+
+        try {
+            $s3 = Storage::disk($disk)->getClient();
+            $command = $s3->getCommand('PutObject', [
+                'Bucket' => config("filesystems.disks.{$disk}.bucket"),
+                'Key' => $key,
+                'ContentType' => $request->string('mime_type'),
+            ]);
+
+            $presignedUrl = (string) $s3->createPresignedRequest($command, '+15 minutes')->getUri();
+
+            return response()->json([
+                'success' => true,
+                'url' => $presignedUrl,
+                'key' => $key,
+                'expires_in' => 900,
+                'method' => 'PUT',
+                'headers' => ['Content-Type' => $request->string('mime_type')],
+                'callback' => route('media.files.presigned-complete'),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'No se pudo generar URL: '.$e->getMessage()], 500);
+        }
+    }
+
+    public function presignedComplete(Request $request): JsonResponse
+    {
+        $this->authorize('create', MediaFile::class);
+
+        $request->validate([
+            'key' => ['required', 'string', 'max:512'],
+            'filename' => ['required', 'string', 'max:255'],
+            'size' => ['required', 'integer', 'min:1'],
+            'mime_type' => ['required', 'string', 'max:100'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $disk = $this->fileService->getActiveDisk();
+
+        if (! Storage::disk($disk)->exists($request->string('key'))) {
+            return response()->json(['message' => 'Archivo no encontrado en S3'], 404);
+        }
+
+        $mediaFile = MediaFile::create([
+            'name' => $request->string('filename'),
+            'mime_type' => $request->string('mime_type'),
+            'size' => $request->integer('size'),
+            'url' => $request->string('key'),
+            'folder_id' => $request->integer('folder_id') ?: null,
+            'user_id' => auth()->id(),
+            'disk' => $disk,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'file' => [
+                'id' => $mediaFile->id,
+                'uid' => $mediaFile->uid,
+                'name' => $mediaFile->name,
+            ],
+        ], 201);
+    }
+
+    public function versions(MediaFile $file): JsonResponse
+    {
+        $this->authorize('view', $file);
+
+        $versions = MediaFileVersion::query()
+            ->where('media_file_id', $file->id)
+            ->with('user:id,name')
+            ->orderByDesc('version_number')
+            ->get();
+
+        return response()->json(['versions' => $versions]);
+    }
+
+    public function restoreVersion(MediaFile $file, int $versionId): JsonResponse
+    {
+        $this->authorize('update', $file);
+
+        $this->fileService->restoreVersion($file, $versionId);
+
+        return response()->json(['success' => true, 'message' => 'Versión restaurada']);
+    }
+
+    public function accessLogs(MediaFile $file): JsonResponse
+    {
+        $this->authorize('view', $file);
+
+        $logs = MediaAccessLog::query()
+            ->where('media_file_id', $file->id)
+            ->with('user:id,name,email')
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->get();
+
+        return response()->json([
+            'logs' => $logs->map(fn (MediaAccessLog $l) => [
+                'id' => $l->id,
+                'user_id' => $l->user_id,
+                'user_name' => $l->user?->name,
+                'action' => $l->action,
+                'ip_address' => $l->ip_address,
+                'user_agent' => $l->user_agent,
+                'created_at' => $l->created_at?->toIso8601String(),
+            ]),
+        ]);
+    }
+
+    public function setExpiration(Request $request, MediaFile $file): JsonResponse
+    {
+        $this->authorize('update', $file);
+
+        $request->validate(['expires_at' => ['nullable', 'date', 'after:now']]);
+
+        $file->update(['expires_at' => $request->input('expires_at')]);
+
+        return response()->json(['success' => true, 'expires_at' => $file->expires_at?->toIso8601String()]);
+    }
+
+    public function revokeShareLink(Request $request, MediaFile $file): JsonResponse
+    {
+        $this->authorize('update', $file);
+
+        $request->validate(['token' => ['required', 'string']]);
+
+        \DB::table('media_share_revocations')->updateOrInsert(
+            ['token_hash' => hash('sha256', $request->string('token'))],
+            [
+                'revoked_by_user_id' => auth()->id(),
+                'reason' => $request->input('reason'),
+                'revoked_at' => now(),
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 
     private function formatFile(MediaFile $file): array
@@ -291,21 +431,5 @@ class MediaFileController extends Controller
             'url' => $file->url,
             'alt' => $file->alt,
         ];
-    }
-
-    private function extractImageMetadata(UploadedFile $file): array
-    {
-        if (! str_starts_with($file->getMimeType(), 'image/')) {
-            return [];
-        }
-
-        $dimensions = @getimagesize($file->getRealPath());
-
-        return $dimensions ? ['width' => $dimensions[0], 'height' => $dimensions[1]] : [];
-    }
-
-    private function getActiveDisk(): string
-    {
-        return session('media_active_disk', config('media.default_disk', 'media'));
     }
 }

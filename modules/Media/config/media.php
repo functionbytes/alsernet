@@ -109,4 +109,84 @@ return [
 
     'default_image' => env('MEDIA_DEFAULT_IMAGE', null),
 
+    'quota' => [
+        'enabled' => env('MEDIA_QUOTA_ENABLED', false),
+        'default_bytes' => env('MEDIA_QUOTA_DEFAULT_BYTES', 1073741824), // 1GB
+    ],
+
+    'virus_scan' => [
+        'enabled' => env('MEDIA_VIRUS_SCAN_ENABLED', false),
+        'clamscan_path' => env('MEDIA_CLAMSCAN_PATH', 'clamscan'),
+    ],
+
+    'ai' => [
+        'auto_tagging' => [
+            'driver' => env('MEDIA_AUTOTAG_DRIVER', 'null'), // null, claude, openai, google
+            'api_key' => env('MEDIA_AUTOTAG_API_KEY'),
+        ],
+        'pii_detection' => [
+            'driver' => env('MEDIA_PII_DRIVER', 'null'), // null, claude
+            'api_key' => env('MEDIA_PII_API_KEY'),
+        ],
+        'auto_caption' => [
+            'driver' => env('MEDIA_CAPTION_DRIVER', 'null'), // null, claude, openai
+            'api_key' => env('MEDIA_CAPTION_API_KEY'),
+        ],
+        'transcription' => [
+            'driver' => env('MEDIA_TRANSCRIPTION_DRIVER', 'null'), // null, whisper
+            'api_key' => env('MEDIA_TRANSCRIPTION_API_KEY'),
+        ],
+    ],
+
+    'ffmpeg' => [
+        'path' => env('MEDIA_FFMPEG_PATH', 'ffmpeg'),
+        'ffprobe_path' => env('MEDIA_FFPROBE_PATH', 'ffprobe'),
+    ],
+
+    'tesseract' => [
+        'path' => env('MEDIA_TESSERACT_PATH', 'tesseract'),
+        'languages' => env('MEDIA_TESSERACT_LANGS', 'spa+eng'),
+    ],
+
+    'logging' => [
+        'channel' => env('MEDIA_LOG_CHANNEL', 'stack'),
+        'structured' => env('MEDIA_LOG_STRUCTURED', false),
+    ],
+
+    'retention' => [
+        'enabled' => env('MEDIA_RETENTION_ENABLED', false),
+        'policies' => [
+            'pdf' => env('MEDIA_RETENTION_PDF', '7 years'),
+            'document' => env('MEDIA_RETENTION_DOCUMENT', '5 years'),
+            'image' => null,
+            'video' => env('MEDIA_RETENTION_VIDEO', '2 years'),
+            'audio' => env('MEDIA_RETENTION_AUDIO', '2 years'),
+            'zip' => env('MEDIA_RETENTION_ZIP', '1 year'),
+        ],
+    ],
+
+    'user_watermark' => [
+        'enabled' => env('MEDIA_USER_WATERMARK', false),
+        'font_size' => env('MEDIA_USER_WATERMARK_SIZE', 12),
+        'required_for_visibility' => ['private'],
+    ],
+
+    'cloud_import' => [
+        'dropbox' => [
+            'client_id' => env('MEDIA_DROPBOX_CLIENT_ID'),
+            'client_secret' => env('MEDIA_DROPBOX_CLIENT_SECRET'),
+            'redirect_uri' => env('MEDIA_DROPBOX_REDIRECT', '/panel/media/cloud/dropbox/callback'),
+        ],
+        'gdrive' => [
+            'client_id' => env('MEDIA_GDRIVE_CLIENT_ID'),
+            'client_secret' => env('MEDIA_GDRIVE_CLIENT_SECRET'),
+            'redirect_uri' => env('MEDIA_GDRIVE_REDIRECT', '/panel/media/cloud/gdrive/callback'),
+        ],
+        'onedrive' => [
+            'client_id' => env('MEDIA_ONEDRIVE_CLIENT_ID'),
+            'client_secret' => env('MEDIA_ONEDRIVE_CLIENT_SECRET'),
+            'redirect_uri' => env('MEDIA_ONEDRIVE_REDIRECT', '/panel/media/cloud/onedrive/callback'),
+        ],
+    ],
+
 ];

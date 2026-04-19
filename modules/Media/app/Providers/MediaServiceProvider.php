@@ -2,12 +2,30 @@
 
 namespace Modules\Media\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\AliasLoader;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Media\Console\Commands\ApplyRetentionPoliciesCommand;
+use Modules\Media\Console\Commands\BackfillPerceptualHashCommand;
+use Modules\Media\Console\Commands\CleanOrphanedChunksCommand;
+use Modules\Media\Console\Commands\ConvertToWebpCommand;
+use Modules\Media\Console\Commands\GdprDeleteCommand;
+use Modules\Media\Console\Commands\GdprExportCommand;
+use Modules\Media\Console\Commands\MediaStatsCommand;
 use Modules\Media\Console\Commands\PruneOrphanMediaCommand;
+use Modules\Media\Console\Commands\PurgeExpiredMediaCommand;
+use Modules\Media\Console\Commands\PurgeTrashCommand;
+use Modules\Media\Console\Commands\RetentionReportCommand;
+use Modules\Media\Console\Commands\SendMediaDigestCommand;
+use Modules\Media\Console\Commands\VerifyAuditLogCommand;
+use Modules\Media\Facades\Media;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
 use Modules\Media\Models\MediaSetting;
+use Modules\Media\Observers\ActivityLogSignatureObserver;
 use Modules\Media\Policies\MediaFilePolicy;
 use Modules\Media\Policies\MediaFolderPolicy;
 use Modules\Media\Repositories\Eloquent\MediaFileRepository;
@@ -16,8 +34,10 @@ use Modules\Media\Repositories\Eloquent\MediaSettingRepository;
 use Modules\Media\Repositories\Interfaces\MediaFileInterface;
 use Modules\Media\Repositories\Interfaces\MediaFolderInterface;
 use Modules\Media\Repositories\Interfaces\MediaSettingInterface;
+use Modules\Media\Services\MediaFileService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
+use Spatie\Activitylog\Models\Activity;
 
 class MediaServiceProvider extends ServiceProvider
 {
@@ -25,9 +45,17 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/media.php', 'media');
 
-        $this->app->bind(MediaFileInterface::class, fn () => new MediaFileRepository(new MediaFile));
+        $this->app->bind(MediaFileInterface::class, fn ($app) => new MediaFileRepository(
+            new MediaFile,
+            $app->make(MediaFileService::class)
+        ));
         $this->app->bind(MediaFolderInterface::class, fn () => new MediaFolderRepository(new MediaFolder));
         $this->app->bind(MediaSettingInterface::class, fn () => new MediaSettingRepository(new MediaSetting));
+
+        $this->app->booting(function (): void {
+            $loader = AliasLoader::getInstance();
+            $loader->alias('Media', Media::class);
+        });
     }
 
     public function boot(): void
@@ -37,6 +65,10 @@ class MediaServiceProvider extends ServiceProvider
         }
 
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
+
+        Route::prefix('api')
+            ->middleware('api')
+            ->group(__DIR__.'/../../routes/api.php');
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'media');
 
@@ -46,10 +78,41 @@ class MediaServiceProvider extends ServiceProvider
 
         $this->registerPolicies();
         $this->registerMenus();
+        $this->registerBladeDirectives();
+
+        // Immutable audit log HMAC signing for Media activity logs
+        if (class_exists(Activity::class)) {
+            Activity::observe(ActivityLogSignatureObserver::class);
+        }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([PruneOrphanMediaCommand::class]);
+            $this->commands([
+                PruneOrphanMediaCommand::class,
+                CleanOrphanedChunksCommand::class,
+                PurgeTrashCommand::class,
+                GdprExportCommand::class,
+                GdprDeleteCommand::class,
+                BackfillPerceptualHashCommand::class,
+                MediaStatsCommand::class,
+                RetentionReportCommand::class,
+                PurgeExpiredMediaCommand::class,
+                ApplyRetentionPoliciesCommand::class,
+                VerifyAuditLogCommand::class,
+                SendMediaDigestCommand::class,
+                ConvertToWebpCommand::class,
+            ]);
         }
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            if (config('media.chunk.clear.schedule.enabled', true)) {
+                $schedule->command('media:clean-orphaned-chunks')
+                    ->cron(config('media.chunk.clear.schedule.cron', '25 * * * *'));
+            }
+            $schedule->command('media:purge-trash')->daily();
+            $schedule->command('media:purge-expired')->hourly();
+            $schedule->command('media:send-digest --frequency=weekly')->weekly();
+            $schedule->command('media:apply-retention')->dailyAt('03:00');
+        });
     }
 
     protected function registerPolicies(): void
@@ -58,10 +121,25 @@ class MediaServiceProvider extends ServiceProvider
         Gate::policy(MediaFolder::class, MediaFolderPolicy::class);
     }
 
+    protected function registerBladeDirectives(): void
+    {
+        Blade::directive('mediaImage', function (string $expression): string {
+            return "<?php
+                \$_mediaParts = explode(',', {$expression}, 2);
+                \$_mediaId = trim(\$_mediaParts[0] ?? '', ' \\'\"');
+                \$_mediaSize = trim(\$_mediaParts[1] ?? 'thumb', ' \\'\"');
+                \$_mediaUrl = media(\$_mediaId, \$_mediaSize);
+            ?>
+            <?php if (\$_mediaUrl): ?>
+                <img src=\"<?php echo e(\$_mediaUrl); ?>\" alt=\"\" class=\"img-fluid\">
+            <?php endif; ?>";
+        });
+    }
+
     protected function registerMenus(): void
     {
         NavService::registerMiniItem('media', [
-            'icon' => 'fa-duotone fa-regular fa-subtitles-slash',
+            'icon' => 'fas fa-photo-film',
             'tooltip' => 'Gestor de Medios',
             'sidebar_id' => 'media',
             'url' => 'media.index',
