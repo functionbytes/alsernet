@@ -1,0 +1,111 @@
+<?php
+
+namespace Modules\Page\Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Locales\Models\Locale;
+use Modules\Page\Models\Page;
+use Spatie\Permission\Models\Permission;
+use Tests\TestCase;
+
+class PageVisualEditorSaveTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected User $user;
+
+    protected Page $page;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Permission::firstOrCreate(['name' => 'page.update', 'guard_name' => 'web']);
+        $this->user = User::factory()->create();
+        $this->user->givePermissionTo('page.update');
+
+        Locale::firstOrCreate(['code' => 'es'], ['name' => 'Español']);
+        $this->page = Page::factory()->create(['title' => 'Original', 'slug' => 'original']);
+    }
+
+    public function test_save_requires_authentication(): void
+    {
+        $this->postJson(route('pages.visual-save', $this->page), [
+            'locale' => 'es',
+            'content' => '<p>Test</p>',
+        ])->assertStatus(401);
+    }
+
+    public function test_save_updates_translation_and_creates_version(): void
+    {
+        $response = $this->actingAs($this->user)->postJson(route('pages.visual-save', $this->page), [
+            'locale' => 'es',
+            'content' => '<p>Contenido nuevo</p>',
+            'title' => 'Titulo actualizado',
+            'slug' => 'titulo-actualizado',
+            'seo_title' => 'SEO title',
+            'seo_description' => 'SEO desc',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('version.version_number', 1);
+
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $this->page->id,
+            'title' => 'Titulo actualizado',
+            'slug' => 'titulo-actualizado',
+        ]);
+        $this->assertDatabaseHas('page_versions', [
+            'page_id' => $this->page->id,
+            'version_number' => 1,
+            'title' => 'Titulo actualizado',
+            'user_id' => $this->user->id,
+        ]);
+    }
+
+    public function test_save_requires_locale(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('pages.visual-save', $this->page), ['content' => '<p>x</p>'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['locale']);
+    }
+
+    public function test_save_increments_version_number_on_subsequent_saves(): void
+    {
+        $payload = ['locale' => 'es', 'content' => '<p>a</p>', 'title' => 'A'];
+        $this->actingAs($this->user)->postJson(route('pages.visual-save', $this->page), $payload);
+        $this->actingAs($this->user)->postJson(route('pages.visual-save', $this->page), $payload);
+        $response = $this->actingAs($this->user)->postJson(route('pages.visual-save', $this->page), $payload);
+
+        $response->assertJsonPath('version.version_number', 3);
+        $this->assertSame(3, $this->page->versions()->count());
+    }
+
+    public function test_get_draft_returns_empty_response_when_no_draft(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson(route('pages.draft', $this->page))
+            ->assertOk()
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_auto_save_requires_authentication(): void
+    {
+        $this->patchJson(route('pages.auto-save', $this->page), ['content' => '<p>x</p>'])
+            ->assertStatus(401);
+    }
+
+    public function test_auto_save_accepts_minimal_payload(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('pages.auto-save', $this->page), [
+                'locale' => 'es',
+                'content' => '<p>borrador</p>',
+            ]);
+
+        $response->assertOk();
+    }
+}

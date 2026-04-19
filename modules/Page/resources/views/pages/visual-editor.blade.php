@@ -26,7 +26,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <link rel="stylesheet" href="{{ asset('modules/Page/css/visual-editor.css') }}?v=49">
+    @if (app()->isLocal() && filemtime(public_path('modules/Page/css/visual-editor.css')) > filemtime(public_path('modules/Page/css/visual-editor.min.css')))
+        {{-- Local dev: CSS was edited after the minified build. Use the source to avoid stale styles. --}}
+        <link rel="stylesheet" href="{{ asset('modules/Page/css/visual-editor.css') }}?v={{ filemtime(public_path('modules/Page/css/visual-editor.css')) }}">
+    @else
+        <link rel="stylesheet" href="{{ asset('modules/Page/css/visual-editor.min.css') }}?v={{ filemtime(public_path('modules/Page/css/visual-editor.min.css')) }}">
+    @endif
     <style>
         @keyframes vePulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(144,187,19,0.4); }
@@ -2747,6 +2752,9 @@
         if ($('#ve-ruler').hasClass('active') && typeof window.veRenderRuler === 'function') {
             setTimeout(window.veRenderRuler, 50);
         }
+
+        // Persist last-used breakpoint per user (fire-and-forget).
+        if (window.veSavePreference) { window.veSavePreference('last_breakpoint', [bp]); }
     });
 
     /* ── Sidebar panel switching ─────────────────────────────────────── */
@@ -2909,6 +2917,9 @@
                 $('#ve-sidebar').css('width', '350px');
             }
         }
+
+        // Persist last-used panel per user (fire-and-forget).
+        if (window.veSavePreference) { window.veSavePreference('last_panel', [panel]); }
     });
 
     /* ── Bottom bar wiring ───────────────────────────────────────────── */
@@ -3003,6 +3014,45 @@
         .always(function () { $btn.prop('disabled', false); });
     });
 
+    /* ── Visual editor user preferences (server-side) ────────────────── */
+    // Keys allowed on the backend: shortcode_favorites, panel_states,
+    // inspector_collapsed, last_panel, last_breakpoint.
+    var VE_PREF_URL = {
+        show: function (key) { return "{{ url('panel/pages/ve/preferences') }}/" + key; },
+        store: function (key) { return "{{ url('panel/pages/ve/preferences') }}/" + key; },
+    };
+    window.veSavePreference = function (key, value) {
+        return $.ajax({
+            url: VE_PREF_URL.store(key),
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+            data: { value: value },
+        });
+    };
+    window.veLoadPreference = function (key) {
+        return $.ajax({
+            url: VE_PREF_URL.show(key),
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+        });
+    };
+
+    // Hydrate last-used panel + breakpoint after the editor is ready.
+    $(function () {
+        veLoadPreference('last_panel').done(function (res) {
+            var panel = Array.isArray(res && res.value) ? res.value[0] : null;
+            if (!panel || panel === 'shortcodes') { return; }
+            var $btn = $('#ve-sidebar-nav .ve-nav-btn[data-panel="' + panel + '"]');
+            if ($btn.length) { $btn.trigger('click'); }
+        }).fail(function () {});
+        veLoadPreference('last_breakpoint').done(function (res) {
+            var bp = Array.isArray(res && res.value) ? res.value[0] : null;
+            if (!bp || bp === 'desktop') { return; }
+            var $btn = $('.breakpoint-btn[data-breakpoint="' + bp + '"]').first();
+            if ($btn.length) { $btn.trigger('click'); }
+        }).fail(function () {});
+    });
+
     /* ── Page lock ───────────────────────────────────────────────────── */
     var LOCK_URL = '{{ route("pages.lock.acquire", $page) }}';
     var lockRenewTimer = null;
@@ -3035,7 +3085,15 @@
 
     function releaseLock() {
         clearInterval(lockRenewTimer);
-        navigator.sendBeacon && navigator.sendBeacon(LOCK_URL + '?_method=DELETE&_token=' + CSRF_TOKEN);
+        // `keepalive: true` lets the request finish after the page unloads,
+        // the same guarantee sendBeacon offers — but with real DELETE + CSRF
+        // header so the Laravel route resolves without _method spoofing.
+        fetch(LOCK_URL, {
+            method: 'DELETE',
+            keepalive: true,
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
+        }).catch(function () {});
     }
 
     function showLockBanner(user) {

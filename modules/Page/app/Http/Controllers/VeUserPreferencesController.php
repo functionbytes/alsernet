@@ -18,6 +18,8 @@ class VeUserPreferencesController extends Controller
         'shortcode_favorites',
         'panel_states',
         'inspector_collapsed',
+        'last_panel',
+        'last_breakpoint',
     ];
 
     public function show(Request $request, string $key): JsonResponse
