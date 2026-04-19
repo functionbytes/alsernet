@@ -14,6 +14,8 @@ class QueueDashboardController extends Controller
 {
     public function index(): View
     {
+        $this->authorize('queue.view');
+
         $horizonStatus = $this->resolveHorizonStatus();
         $knownQueues = config('queue_module.known_queues', []);
 
@@ -22,6 +24,8 @@ class QueueDashboardController extends Controller
 
     public function failedJobs(Request $request): JsonResponse
     {
+        $this->authorize('queue.view');
+
         try {
             $query = DB::table('failed_jobs');
 
@@ -54,6 +58,8 @@ class QueueDashboardController extends Controller
 
     public function pendingJobs(Request $request): JsonResponse
     {
+        $this->authorize('queue.view');
+
         try {
             $query = DB::table('jobs');
 
@@ -78,6 +84,8 @@ class QueueDashboardController extends Controller
 
     public function stats(): JsonResponse
     {
+        $this->authorize('queue.view');
+
         try {
             $failed24h = DB::table('failed_jobs')->where('failed_at', '>=', now()->subDay())->count();
             $failed7d = DB::table('failed_jobs')->where('failed_at', '>=', now()->subWeek())->count();
@@ -127,6 +135,8 @@ class QueueDashboardController extends Controller
 
     public function retryJob(Request $request, string $uuid): JsonResponse
     {
+        $this->authorize('queue.manage');
+
         try {
             $exists = DB::table('failed_jobs')->where('uuid', $uuid)->exists();
 
@@ -146,6 +156,8 @@ class QueueDashboardController extends Controller
 
     public function deleteFailedJob(Request $request, string $uuid): JsonResponse
     {
+        $this->authorize('queue.manage');
+
         try {
             $deleted = DB::table('failed_jobs')->where('uuid', $uuid)->delete();
 
@@ -163,6 +175,8 @@ class QueueDashboardController extends Controller
 
     public function bulkRetry(Request $request): JsonResponse
     {
+        $this->authorize('queue.manage');
+
         $uuids = $request->input('uuids', []);
 
         if (empty($uuids)) {
@@ -182,6 +196,8 @@ class QueueDashboardController extends Controller
 
     public function bulkDelete(Request $request): JsonResponse
     {
+        $this->authorize('queue.manage');
+
         $uuids = $request->input('uuids', []);
 
         if (empty($uuids)) {
@@ -201,6 +217,8 @@ class QueueDashboardController extends Controller
 
     public function retryAll(Request $request): JsonResponse
     {
+        $this->authorize('queue.manage');
+
         try {
             $options = [];
 
