@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Optimize\Console\Commands\EnableAllCommand;
+use Modules\Optimize\Console\Commands\MinifyThemeAssetsCommand;
 use Modules\Optimize\Http\Middleware\AddImageDimensions;
 use Modules\Optimize\Http\Middleware\AddLoadingLazy;
 use Modules\Optimize\Http\Middleware\CacheControlHeaders;
@@ -22,6 +23,7 @@ use Modules\Optimize\Http\Middleware\MinifyInlineStyles;
 use Modules\Optimize\Http\Middleware\OptimizeResponseCache;
 use Modules\Optimize\Http\Middleware\RemoveComments;
 use Modules\Optimize\Http\Middleware\RemoveQuotes;
+use Modules\Optimize\Http\Middleware\RewriteMinAssets;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -47,6 +49,7 @@ class OptimizeServiceProvider extends ServiceProvider
         'optimize.inject_critical_preload' => InjectCriticalPreload::class,
         'optimize.add_image_dimensions' => AddImageDimensions::class,
         'optimize.cache_control_headers' => CacheControlHeaders::class,
+        'optimize.rewrite_min_assets' => RewriteMinAssets::class,
     ];
 
     public function boot(): void
@@ -61,7 +64,10 @@ class OptimizeServiceProvider extends ServiceProvider
         $this->registerMenus();
 
         if ($this->app->runningInConsole()) {
-            $this->commands([EnableAllCommand::class]);
+            $this->commands([
+                EnableAllCommand::class,
+                MinifyThemeAssetsCommand::class,
+            ]);
         }
 
         $this->app['events']->listen(RouteMatched::class, function (): void {
