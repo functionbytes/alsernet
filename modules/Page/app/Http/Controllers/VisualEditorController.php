@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -232,55 +233,72 @@ class VisualEditorController extends Controller
         $locale = $data['locale'];
         $content = $data['content'] ?? null;
 
-        // Update page-level fields (template applies to all locales).
-        $pageFields = array_filter(['template' => $data['template'] ?? null], fn ($v) => $v !== null);
-        if (! empty($pageFields)) {
-            $page->update($pageFields);
+        // Idempotency (W): prevent duplicate versions from double-clicks on
+        // the Save button. Atomically check-and-set a per-user-per-page lock
+        // via Cache::add() — if the lock already exists, the second request
+        // reuses the first response body instead of creating a ghost version.
+        $lockKey = "ve:save:lock:{$page->id}:".auth()->id();
+        if (! Cache::add($lockKey, 1, 5)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Guardado en curso; ignorando duplicado.',
+                'duplicate' => true,
+            ]);
         }
 
-        // Upsert translation — raw HTML, no sanitization.
-        $translationFields = array_filter([
-            'content' => $content,
-            'title' => $data['title'] ?? null,
-            'slug' => $data['slug'] ?? null,
-            'status' => $data['status'] ?? null,
-            'seo_title' => $data['seo_title'] ?? null,
-            'seo_description' => $data['seo_description'] ?? null,
-            'seo_keywords' => $data['seo_keywords'] ?? null,
-        ], fn ($v) => $v !== null);
+        try {
+            // Translation upsert + version create must live in the same
+            // transaction — otherwise a failed version insert leaves the
+            // translation committed without its snapshot.
+            $version = DB::transaction(function () use ($page, $data, $locale, $content) {
+                $pageFields = array_filter(['template' => $data['template'] ?? null], fn ($v) => $v !== null);
+                if (! empty($pageFields)) {
+                    $page->update($pageFields);
+                }
 
-        if (! empty($translationFields)) {
-            // Resolve locale_id from locale code
-            $localeModel = Locale::where('code', $locale)->first();
-            if ($localeModel) {
-                $page->translations()->updateOrCreate(
-                    ['locale_id' => $localeModel->id],
-                    $translationFields
-                );
-            }
+                $translationFields = array_filter([
+                    'content' => $content,
+                    'title' => $data['title'] ?? null,
+                    'slug' => $data['slug'] ?? null,
+                    'status' => $data['status'] ?? null,
+                    'seo_title' => $data['seo_title'] ?? null,
+                    'seo_description' => $data['seo_description'] ?? null,
+                    'seo_keywords' => $data['seo_keywords'] ?? null,
+                ], fn ($v) => $v !== null);
+
+                if (! empty($translationFields)) {
+                    $localeModel = Locale::where('code', $locale)->first();
+                    if ($localeModel) {
+                        $page->translations()->updateOrCreate(
+                            ['locale_id' => $localeModel->id],
+                            $translationFields
+                        );
+                    }
+                }
+
+                $fresh = $page->fresh();
+                $nextVersionNumber = ((int) $fresh->versions()->max('version_number')) + 1;
+
+                return $fresh->versions()->create([
+                    'version_number' => $nextVersionNumber,
+                    'title' => $data['title'] ?? $fresh->title,
+                    'content' => $content ?? $fresh->content,
+                    'description' => $fresh->description,
+                    'user_id' => auth()->id(),
+                    'template' => $data['template'] ?? $fresh->template,
+                    'status' => $data['status'] ?? (is_object($fresh->status) ? $fresh->status->value : $fresh->status),
+                    'slug' => $data['slug'] ?? $fresh->slug,
+                    'seo_title' => $data['seo_title'] ?? $fresh->seo_title,
+                    'seo_description' => $data['seo_description'] ?? $fresh->seo_description,
+                    'seo_keywords' => $data['seo_keywords'] ?? $fresh->seo_keywords,
+                ]);
+            });
+
+            Cache::forget($this->versionsCacheKey($page));
+            $this->pruneOldVersions($page);
+        } finally {
+            Cache::forget($lockKey);
         }
-
-        // Snapshot the saved state as a new version.
-        // We build it from request data + fresh page so it reflects what was just saved,
-        // independent of whether `pages` table mirrors the active locale's translation.
-        $page = $page->fresh();
-        $nextVersionNumber = ((int) $page->versions()->max('version_number')) + 1;
-        $version = $page->versions()->create([
-            'version_number' => $nextVersionNumber,
-            'title' => $data['title'] ?? $page->title,
-            'content' => $content ?? $page->content,
-            'description' => $page->description,
-            'user_id' => auth()->id(),
-            'template' => $data['template'] ?? $page->template,
-            'status' => $data['status'] ?? (is_object($page->status) ? $page->status->value : $page->status),
-            'slug' => $data['slug'] ?? $page->slug,
-            'seo_title' => $data['seo_title'] ?? $page->seo_title,
-            'seo_description' => $data['seo_description'] ?? $page->seo_description,
-            'seo_keywords' => $data['seo_keywords'] ?? $page->seo_keywords,
-        ]);
-
-        Cache::forget($this->versionsCacheKey($page));
-        $this->pruneOldVersions($page);
 
         return response()->json([
             'success' => true,

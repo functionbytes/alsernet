@@ -4,6 +4,7 @@ namespace Modules\Page\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Modules\Locales\Models\Locale;
 use Modules\Page\Models\Page;
 use Spatie\Permission\Models\Permission;
@@ -107,5 +108,96 @@ class PageVisualEditorSaveTest extends TestCase
             ]);
 
         $response->assertOk();
+    }
+
+    public function test_save_rejects_slug_already_used_by_another_page_in_same_locale(): void
+    {
+        $other = Page::factory()->create();
+        $localeId = Locale::where('code', 'es')->first()->id;
+        $other->translations()->create([
+            'locale_id' => $localeId,
+            'slug' => 'ocupado',
+            'title' => 'Otra',
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson(route('pages.visual-save', $this->page), [
+                'locale' => 'es',
+                'slug' => 'ocupado',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['slug']);
+    }
+
+    public function test_save_allows_same_page_to_keep_its_own_slug(): void
+    {
+        $localeId = Locale::where('code', 'es')->first()->id;
+        $this->page->translations()->create([
+            'locale_id' => $localeId,
+            'slug' => 'mismo',
+            'title' => 'x',
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson(route('pages.visual-save', $this->page), [
+                'locale' => 'es',
+                'slug' => 'mismo',
+                'content' => '<p>y</p>',
+            ])
+            ->assertOk();
+    }
+
+    public function test_save_rejects_nonexistent_template(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('pages.visual-save', $this->page), [
+                'locale' => 'es',
+                'template' => 'this-template-does-not-exist',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['template']);
+    }
+
+    public function test_save_prunes_versions_beyond_the_50_cap(): void
+    {
+        // Seed 50 versions (keep window exactly at the cap)
+        for ($i = 1; $i <= 50; $i++) {
+            $this->page->versions()->create([
+                'version_number' => $i,
+                'title' => 'v'.$i,
+                'content' => '<p>'.$i.'</p>',
+                'user_id' => $this->user->id,
+            ]);
+        }
+        $this->assertSame(50, $this->page->versions()->count());
+
+        // Save → creates version 51 + prunes the oldest.
+        $this->actingAs($this->user)->postJson(route('pages.visual-save', $this->page), [
+            'locale' => 'es',
+            'content' => '<p>new</p>',
+            'title' => 'v51',
+        ])->assertOk();
+
+        $this->page->refresh();
+        $this->assertLessThanOrEqual(50, $this->page->versions()->count());
+        $this->assertSame(51, (int) $this->page->versions()->max('version_number'));
+        // The oldest (version_number = 1) should have been pruned.
+        $this->assertFalse($this->page->versions()->where('version_number', 1)->exists());
+    }
+
+    public function test_save_returns_duplicate_flag_when_called_twice_in_quick_succession(): void
+    {
+        $payload = ['locale' => 'es', 'content' => '<p>x</p>', 'title' => 'A'];
+
+        // Force the lock without releasing — simulates a request that is still
+        // mid-flight. Use the same key format as the controller.
+        Cache::add("ve:save:lock:{$this->page->id}:{$this->user->id}", 1, 5);
+
+        $res = $this->actingAs($this->user)
+            ->postJson(route('pages.visual-save', $this->page), $payload);
+
+        $res->assertOk();
+        $res->assertJsonPath('duplicate', true);
+        $this->assertSame(0, $this->page->versions()->count());
     }
 }
