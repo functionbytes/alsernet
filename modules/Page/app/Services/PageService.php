@@ -41,7 +41,11 @@ class PageService
             }
         }
 
-        $fromSetting = setting('page-supported-locales');
+        try {
+            $fromSetting = setting('page-supported-locales');
+        } catch (Exception) {
+            $fromSetting = null;
+        }
 
         if ($fromSetting) {
             return array_filter(array_map('trim', explode(',', $fromSetting)));

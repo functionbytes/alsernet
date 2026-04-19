@@ -35,11 +35,14 @@ abstract class PageSpeed
         // Track pages processed (once per request regardless of how many middleware run)
         if (! $request->attributes->has('_optimize_tracked')) {
             Cache::increment('optimize.stats.requests');
+            Cache::increment('optimize.stats.daily.'.date('Y-m-d').'.requests');
             $request->attributes->set('_optimize_tracked', true);
         }
 
         if ($before > $after) {
-            Cache::increment('optimize.stats.bytes_saved', $before - $after);
+            $delta = $before - $after;
+            Cache::increment('optimize.stats.bytes_saved', $delta);
+            Cache::increment('optimize.stats.daily.'.date('Y-m-d').'.bytes_saved', $delta);
         }
 
         return $response->setContent($content);

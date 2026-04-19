@@ -34,7 +34,7 @@
                             <small class="text-muted d-block mb-3">Cuando está habilitado, el HTML de las páginas públicas se optimiza automáticamente</small>
 
                             @if($stats['requests'] > 0)
-                            <div class="alert alert-info border-0 mb-0">
+                            <div class="alert alert-info border-0 mb-3">
                                 <small>
                                     <strong>Rendimiento:</strong>
                                     {{ number_format($stats['requests']) }} páginas optimizadas
@@ -54,6 +54,17 @@
                                     </form>
                                 </small>
                             </div>
+
+                            {{-- Gráfico últimos 7 días --}}
+                            @if (array_sum($chartRequests) > 0 || array_sum($chartBytesSaved) > 0)
+                                <div class="border rounded p-3 mb-3">
+                                    <div class="small text-muted mb-2">
+                                        <i class="fa-solid fa-chart-line me-1"></i>
+                                        Últimos 7 días
+                                    </div>
+                                    <canvas id="optimize-chart" height="80"></canvas>
+                                </div>
+                            @endif
                             @endif
                         </div>
 
@@ -298,9 +309,55 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <script>
 $(document).ready(function () {
     $('.select2').select2({ width: '100%' });
+
+    // Chart.js — últimos 7 días (si hay canvas + librería cargada).
+    (function initOptimizeChart() {
+        var canvas = document.getElementById('optimize-chart');
+        if (!canvas) { return; }
+        function draw() {
+            if (typeof Chart === 'undefined') { setTimeout(draw, 100); return; }
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: @json($chartLabels ?? []),
+                    datasets: [
+                        {
+                            label: 'Requests optimizados',
+                            data: @json($chartRequests ?? []),
+                            backgroundColor: 'rgba(144, 187, 19, .6)',
+                            borderColor: '#90bb13',
+                            borderWidth: 1,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Ahorro (KB)',
+                            data: @json($chartBytesSaved ?? []),
+                            type: 'line',
+                            borderColor: '#b10100',
+                            backgroundColor: 'rgba(177, 1, 0, .1)',
+                            tension: .3,
+                            yAxisID: 'y1',
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } },
+                    scales: {
+                        y: { beginAtZero: true, position: 'left', ticks: { font: { size: 10 } } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                        x: { ticks: { font: { size: 10 } } },
+                    },
+                },
+            });
+        }
+        draw();
+    })();
 
     $('#enabled').on('change', function () {
         $('#optimize-settings').toggleClass('d-none', !$(this).is(':checked'));

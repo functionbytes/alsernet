@@ -17,6 +17,17 @@
             <meta name="keywords" content="@yield('meta_keywords', '')">
         @endif
 
+        {{-- JSON-LD: schema.org para formularios embebidos via shortcode --}}
+        @if(isset($page) && class_exists(\Modules\Forms\Services\FormJsonLdGenerator::class) && ! empty($page->content ?? ''))
+            @php
+                $formsLd = app(\Modules\Forms\Services\FormJsonLdGenerator::class)
+                    ->generateForContent((string) $page->content, url()->current());
+            @endphp
+            @foreach($formsLd as $ld)
+                <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+            @endforeach
+        @endif
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

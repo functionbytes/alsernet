@@ -43,7 +43,10 @@ class EnableAllCommand extends Command
             Setting::set($key, '1');
         }
         Setting::set('optimize.cache_control_ttl', (string) max(60, (int) $this->option('ttl')));
-        Setting::save();
+        // Setting::set() already persists each row and invalidates its
+        // per-key cache. No explicit ::save() is needed — calling it
+        // statically throws "Non-static method save() cannot be called
+        // statically" because save is an instance method of Model.
 
         $this->info('✔ '.count(self::ALL_KEYS).' optimizaciones activadas.');
         $this->line('   TTL de Cache-Control: '.$this->option('ttl').'s');

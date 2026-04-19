@@ -28,6 +28,7 @@ use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
 use Modules\Media\Models\MediaSetting;
 use Modules\Media\Observers\ActivityLogSignatureObserver;
+use Modules\Media\Observers\MediaFileOptimizeObserver;
 use Modules\Media\Policies\MediaFilePolicy;
 use Modules\Media\Policies\MediaFolderPolicy;
 use Modules\Media\Repositories\Eloquent\MediaFileRepository;
@@ -86,6 +87,11 @@ class MediaServiceProvider extends ServiceProvider
         if (class_exists(Activity::class)) {
             Activity::observe(ActivityLogSignatureObserver::class);
         }
+
+        // Auto-optimise uploads: generate webp + responsive srcset variants
+        // asynchronously when a new MediaFile is created. Toggleable via
+        // Setting 'optimize.auto_optimize_uploads' (default: 1).
+        MediaFile::observe(MediaFileOptimizeObserver::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

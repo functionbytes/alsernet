@@ -110,11 +110,26 @@ class OptimizeController extends Controller
             'bytes_saved' => (int) Cache::get('optimize.stats.bytes_saved', 0),
         ];
 
+        // Historical series: last 7 days. Tracked by PageSpeed::handle()
+        // via `optimize.stats.daily.YYYY-MM-DD.{requests,bytes_saved}`.
+        $chartLabels = [];
+        $chartRequests = [];
+        $chartBytesSaved = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $chartLabels[] = now()->subDays($i)->format('d M');
+            $chartRequests[] = (int) Cache::get("optimize.stats.daily.{$date}.requests", 0);
+            $chartBytesSaved[] = round(((int) Cache::get("optimize.stats.daily.{$date}.bytes_saved", 0)) / 1024, 1);
+        }
+
         $ttl = Setting::get('optimize.response_cache_ttl', '60');
         $skipPatterns = Setting::get('optimize.skip_patterns', '');
         $commands = self::COMMANDS;
 
-        return view('optimize::settings.index', compact('get', 'stats', 'ttl', 'skipPatterns', 'commands'));
+        return view('optimize::settings.index', compact(
+            'get', 'stats', 'ttl', 'skipPatterns', 'commands',
+            'chartLabels', 'chartRequests', 'chartBytesSaved'
+        ));
     }
 
     public function update(Request $request): RedirectResponse

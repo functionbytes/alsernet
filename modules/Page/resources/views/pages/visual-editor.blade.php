@@ -3054,7 +3054,7 @@
         _veSessionModalShown = true;
         if (window.veConfirm) {
             veConfirm('Tu sesión expiró. Inicia sesión de nuevo en otra pestaña para no perder los cambios, y luego recarga esta página.', function () {
-                window.open('{{ route('login') }}', '_blank');
+                window.open('{{ route('auth.login') }}', '_blank');
             }, { title: 'Sesión expirada', acceptLabel: 'Abrir login', type: 'warning' });
         } else if (window.showToast) {
             showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Tu sesión expiró. Recarga la página tras iniciar sesión.', 'error');
