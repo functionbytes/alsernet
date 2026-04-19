@@ -119,20 +119,23 @@ class AuthServiceProvider extends ServiceProvider
                 require $webPath;
             });
 
-        // 2FA challenge + lock screen (auth required but exempt from 2FA/lock middleware)
-        Route::middleware(['web', 'auth'])->group(function () {
+        // 2FA challenge: user is NOT authenticated yet — only session key guards access
+        Route::middleware(['web'])->group(function () {
             Route::get('/two-factor/challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
             Route::post('/two-factor/challenge', [TwoFactorChallengeController::class, 'verify'])->name('two-factor.verify');
+        });
 
+        // Lock screen + impersonation (requires auth)
+        Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/lock', [LockScreenController::class, 'show'])->name('auth.lock');
             Route::post('/lock/unlock', [LockScreenController::class, 'unlock'])->name('auth.lock.unlock');
             Route::post('/lock', [LockScreenController::class, 'lock'])->name('auth.lock.lock');
 
-            // Impersonation (start requires permission; stop does not)
-            Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])
-                ->name('auth.impersonation.start');
+            // stop must be before {user} to avoid wildcard capture
             Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])
                 ->name('auth.impersonation.stop');
+            Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])
+                ->name('auth.impersonation.start');
         });
 
         Route::middleware(['web', 'auth', CheckSessionLock::class, CheckPasswordExpired::class])

@@ -11,7 +11,6 @@ class PasswordResetTest extends AuthTestCase
     private function makeUser(array $attributes = []): User
     {
         return User::factory()->create(array_merge([
-            'email' => 'reset@example.com',
             'available' => true,
         ], $attributes));
     }
@@ -29,13 +28,15 @@ class PasswordResetTest extends AuthTestCase
         $response->assertSessionHasErrors(['email']);
     }
 
-    public function test_forgot_password_returns_error_for_unknown_user(): void
+    public function test_forgot_password_returns_success_view_for_unknown_user(): void
     {
+        // Controller deliberately shows success to prevent email enumeration
         $response = $this->post(route('auth.password.email'), [
-            'email' => 'unknown@example.com',
+            'email' => 'unknown-'.uniqid().'@example.com',
         ]);
 
-        $response->assertSessionHasErrors(['email']);
+        $response->assertOk();
+        $response->assertSessionMissing('errors');
     }
 
     public function test_forgot_password_sets_reset_token_for_known_user(): void
@@ -52,18 +53,18 @@ class PasswordResetTest extends AuthTestCase
         $this->assertEquals(1, $user->password_reset_max_tries);
     }
 
-    public function test_forgot_password_rate_limits_after_3_attempts(): void
+    public function test_forgot_password_rate_limits_too_many_requests(): void
     {
-        $user = $this->makeUser([
-            'password_reset_max_tries' => 3,
-            'password_reset_last_tried_on' => now(),
-        ]);
+        $user = $this->makeUser();
 
-        $response = $this->post(route('auth.password.email'), [
-            'email' => $user->email,
-        ]);
+        // Hit the Redis rate limiter (max 3 attempts) — 3 allowed, 4th blocked
+        for ($i = 0; $i < 3; $i++) {
+            $this->post(route('auth.password.email'), ['email' => $user->email]);
+        }
 
-        $response->assertSessionHasErrors(['tried']);
+        $response = $this->post(route('auth.password.email'), ['email' => $user->email]);
+
+        $response->assertSessionHasErrors(['email']);
     }
 
     public function test_reset_form_is_shown_with_valid_token(): void
@@ -96,6 +97,16 @@ class PasswordResetTest extends AuthTestCase
         $user = $this->makeUser([
             'password_reset_token' => Hash::make($plainToken),
             'password_reset_last_tried_on' => now(),
+        ]);
+
+        config()->set('auth.auth-policy.password', [
+            'min_length' => 8,
+            'require_uppercase' => false,
+            'require_lowercase' => false,
+            'require_numbers' => false,
+            'require_symbols' => false,
+            'reject_compromised' => false,
+            'history_count' => 0,
         ]);
 
         $response = $this->post(route('auth.password.update'), [

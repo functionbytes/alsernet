@@ -72,7 +72,7 @@ class ExceptionsTest extends TestCase
     /** @test */
     public function provider_exception_connection_failed_with_reason(): void
     {
-        $e = ProviderException::connectionFailed('SendGrid', 'Invalid API key');
+        $e = ProviderException::providerConnectionFailed('SendGrid', 'Invalid API key');
 
         $this->assertInstanceOf(ProviderException::class, $e);
         $this->assertInstanceOf(MailrelayException::class, $e);
@@ -82,7 +82,7 @@ class ExceptionsTest extends TestCase
     /** @test */
     public function provider_exception_connection_failed_without_reason(): void
     {
-        $e = ProviderException::connectionFailed('Postmark');
+        $e = ProviderException::providerConnectionFailed('Postmark');
 
         $this->assertEquals("Provider 'Postmark' connection failed", $e->getMessage());
     }

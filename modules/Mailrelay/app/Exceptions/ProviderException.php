@@ -4,7 +4,7 @@ namespace Modules\Mailrelay\Exceptions;
 
 class ProviderException extends MailrelayException
 {
-    public static function connectionFailed(string $provider, string $reason = ''): self
+    public static function providerConnectionFailed(string $provider, string $reason = ''): self
     {
         $message = "Provider '{$provider}' connection failed";
 

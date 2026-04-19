@@ -62,7 +62,7 @@ class LoginTest extends AuthTestCase
             'password' => 'password123',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(422)
             ->assertJsonFragment(['success' => false]);
 
         $this->assertGuest();

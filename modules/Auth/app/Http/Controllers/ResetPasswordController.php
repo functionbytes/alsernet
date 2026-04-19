@@ -18,7 +18,7 @@ class ResetPasswordController extends Controller
 {
     public function showResetForm(Request $request, string $token): View
     {
-        return view('auth::passwords.reset', [
+        return view('auth::auth.passwords.reset', [
             'token' => $token,
             'email' => $request->query('email', ''),
         ]);
@@ -75,7 +75,7 @@ class ResetPasswordController extends Controller
         PasswordChanged::dispatch($user, $request->ip(), 'reset');
         ResetPasswordCreated::dispatch($user);
 
-        return view('auth::passwords.confirm', ['email' => $user->email]);
+        return view('auth::auth.passwords.confirm', ['email' => $user->email]);
     }
 
     private function isTokenExpired(User $user): bool

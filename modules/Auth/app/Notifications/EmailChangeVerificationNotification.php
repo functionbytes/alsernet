@@ -24,11 +24,9 @@ class EmailChangeVerificationNotification extends Notification implements Should
 
     public function toMail(mixed $notifiable): MailMessage
     {
-        // Deliberately send to the *new* email address, not the current one.
         return (new MailMessage)
-            ->to($this->newEmail)
             ->subject('Confirma tu nuevo correo electrónico')
-            ->greeting("Hola {$notifiable->firstname},")
+            ->greeting('Hola,')
             ->line("Recibimos una solicitud para cambiar el correo de tu cuenta a {$this->newEmail}.")
             ->action('Confirmar cambio', $this->verifyUrl)
             ->line("Este enlace expira en {$this->expiresInMinutes} minutos.")

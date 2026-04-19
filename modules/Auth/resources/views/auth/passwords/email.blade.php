@@ -1,4 +1,4 @@
-@extends('layouts.pages')
+@extends('layouts.auth')
 
 @section('title', 'Ingresar')
 
@@ -16,7 +16,7 @@
                             </div>
                             <!-- account form -->
 
-                            {!! Form::open(['route' => 'password.email', 'class' => 'account__form', 'method' => 'POST', 'id' => 'formPassword']) !!}
+                            <form action="{{ route('auth.password.email') }}" method="POST" class="account__form" id="formPassword">
 
                                 @csrf
                                 <div class="row g-4">
@@ -37,7 +37,7 @@
 
                                 <button type="submit" class="theme-btn w-100 mt-30">Has olvidado tu contraseñas</button>
 
-                            {!! Form::close() !!}
+                            </form>
 
                         </div>
                     </div>

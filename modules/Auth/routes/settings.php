@@ -75,7 +75,7 @@ Route::get('/audit/login-attempts', [AuditController::class, 'loginAttempts'])->
 Route::get('/audit/impersonations', [AuditController::class, 'impersonations'])->name('audit.impersonations');
 Route::post('/audit/users/{user}/force-logout', [AuditController::class, 'forceLogout'])->name('audit.force-logout');
 Route::post('/audit/users/{user}/unlock', [AuditController::class, 'unlockAccount'])->name('audit.unlock');
-Route::post('/audit/users/{user}/restore', [AuditController::class, 'restoreAccount'])->name('audit.restore');
+Route::post('/audit/users/{userId}/restore', [AuditController::class, 'restoreAccount'])->name('audit.restore');
 
 // Email change request (confirmation comes via public route)
 Route::post('/email/change', [EmailChangeController::class, 'request'])->name('email.change.request')->middleware('auth.deny-impersonating');

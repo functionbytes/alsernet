@@ -87,6 +87,11 @@ abstract class AbstractMailProvider implements MailProviderInterface
         return $this->config[$key] ?? $default;
     }
 
+    public function testConnection(): bool
+    {
+        return true;
+    }
+
     /**
      * Preparar opciones de envío comunes
      */

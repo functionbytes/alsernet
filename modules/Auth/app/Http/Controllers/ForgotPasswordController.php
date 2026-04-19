@@ -20,7 +20,7 @@ class ForgotPasswordController extends Controller
 
     public function showLinkRequest(): View
     {
-        return view('auth::passwords.email');
+        return view('auth::auth.passwords.email');
     }
 
     public function sendResetLinkEmail(Request $request): View|RedirectResponse
@@ -47,7 +47,7 @@ class ForgotPasswordController extends Controller
 
         if (! $user) {
             // Return neutral success view to avoid email enumeration.
-            return view('auth::passwords.success', ['email' => $identifier]);
+            return view('auth::auth.passwords.success', ['email' => $identifier]);
         }
 
         $passwordToken = Str::random(50);
@@ -60,7 +60,7 @@ class ForgotPasswordController extends Controller
 
         ForgotPasswordCreated::dispatch($user, $passwordToken);
 
-        return view('auth::passwords.success', ['email' => $user->email]);
+        return view('auth::auth.passwords.success', ['email' => $user->email]);
     }
 
     public function username(): string

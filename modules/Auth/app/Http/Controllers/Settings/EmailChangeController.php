@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\EmailChangeToken;
 use Modules\Auth\Notifications\EmailChangeVerificationNotification;
@@ -32,6 +33,10 @@ class EmailChangeController extends Controller
 
         $newEmail = (string) $request->input('new_email');
 
+        if ($newEmail === $user->email) {
+            return response()->json(['message' => 'El nuevo correo debe ser diferente al actual.'], 422);
+        }
+
         if (User::where('email', $newEmail)->where('id', '!=', $user->id)->exists()) {
             return response()->json(['message' => 'Ese correo ya está en uso.'], 422);
         }
@@ -48,7 +53,7 @@ class EmailChangeController extends Controller
         ]);
 
         $url = route('auth.email-change.confirm', ['token' => $plainToken]);
-        $user->notify(new EmailChangeVerificationNotification($url, $newEmail, $ttl));
+        Notification::route('mail', $newEmail)->notify(new EmailChangeVerificationNotification($url, $newEmail, $ttl));
 
         return response()->json([
             'success' => true,

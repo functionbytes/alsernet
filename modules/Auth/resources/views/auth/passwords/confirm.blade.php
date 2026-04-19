@@ -1,4 +1,4 @@
-@extends('layouts.pages')
+@extends('layouts.auth')
 
 @section('title', 'Ingresar')
 

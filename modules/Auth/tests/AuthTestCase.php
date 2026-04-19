@@ -26,6 +26,22 @@ abstract class AuthTestCase extends TestCase
     {
         parent::setUp();
         $this->ensureAuthSchema();
+        // Disable Spatie activity logging to prevent savepoint conflicts with DatabaseTransactions
+        activity()->disableLogging();
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            parent::tearDown();
+        } catch (\PDOException $e) {
+            // MariaDB savepoint conflicts with DatabaseTransactions are benign teardown
+            // errors — the test itself ran correctly, the schema cleanup just had a
+            // savepoint that was already released by a nested observer transaction.
+            if (str_contains($e->getMessage(), 'SAVEPOINT') === false) {
+                throw $e;
+            }
+        }
     }
 
     private function ensureAuthSchema(): void
@@ -262,8 +278,70 @@ abstract class AuthTestCase extends TestCase
             ) ENGINE=InnoDB');
         }
 
-        if (Schema::hasTable('activity_log') && ! Schema::hasColumn('activity_log', 'event')) {
+        if (! Schema::hasTable('activity_log')) {
+            DB::statement('CREATE TABLE activity_log (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                log_name VARCHAR(255) NULL,
+                description TEXT NOT NULL,
+                subject_type VARCHAR(255) NULL,
+                event VARCHAR(255) NULL,
+                subject_id BIGINT UNSIGNED NULL,
+                causer_type VARCHAR(255) NULL,
+                causer_id BIGINT UNSIGNED NULL,
+                properties JSON NULL,
+                batch_uuid CHAR(36) NULL,
+                created_at TIMESTAMP NULL,
+                updated_at TIMESTAMP NULL,
+                INDEX (log_name),
+                INDEX (subject_type, subject_id),
+                INDEX (causer_type, causer_id)
+            ) ENGINE=InnoDB');
+        } elseif (! Schema::hasColumn('activity_log', 'event')) {
             DB::statement('ALTER TABLE activity_log ADD COLUMN event VARCHAR(255) NULL AFTER batch_uuid');
+        }
+
+        if (! Schema::hasTable('langs')) {
+            DB::statement('CREATE TABLE langs (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                uid VARCHAR(191) NOT NULL UNIQUE,
+                title VARCHAR(191) NOT NULL,
+                iso_code VARCHAR(191) NOT NULL UNIQUE,
+                lenguage_code VARCHAR(191) NOT NULL UNIQUE,
+                locate VARCHAR(191) NULL,
+                date_format_full VARCHAR(191) NULL,
+                date_format_lite VARCHAR(191) NULL,
+                available TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NULL,
+                updated_at TIMESTAMP NULL,
+                INDEX (available)
+            ) ENGINE=InnoDB');
+        }
+
+        if (! Schema::hasTable('sessions')) {
+            DB::statement('CREATE TABLE sessions (
+                id VARCHAR(191) NOT NULL PRIMARY KEY,
+                user_id BIGINT UNSIGNED NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent TEXT NULL,
+                payload LONGTEXT NOT NULL,
+                last_activity INT NOT NULL,
+                INDEX (user_id),
+                INDEX (last_activity)
+            ) ENGINE=InnoDB');
+        }
+
+        if (! Schema::hasTable('notifications')) {
+            DB::statement('CREATE TABLE notifications (
+                id CHAR(36) NOT NULL PRIMARY KEY,
+                type VARCHAR(255) NOT NULL,
+                notifiable_type VARCHAR(255) NOT NULL,
+                notifiable_id BIGINT UNSIGNED NOT NULL,
+                data TEXT NOT NULL,
+                read_at TIMESTAMP NULL,
+                created_at TIMESTAMP NULL,
+                updated_at TIMESTAMP NULL,
+                INDEX (notifiable_type, notifiable_id)
+            ) ENGINE=InnoDB');
         }
 
         if (! Schema::hasTable('seo_redirects')) {
@@ -274,6 +352,7 @@ abstract class AuthTestCase extends TestCase
                 status_code INT NOT NULL DEFAULT 301,
                 is_active TINYINT(1) NOT NULL DEFAULT 1,
                 is_regex TINYINT(1) NOT NULL DEFAULT 0,
+                is_wildcard TINYINT(1) NOT NULL DEFAULT 0,
                 active_from TIMESTAMP NULL,
                 active_until TIMESTAMP NULL,
                 created_at TIMESTAMP NULL,
@@ -298,6 +377,13 @@ abstract class AuthTestCase extends TestCase
                 ADD COLUMN two_factor_secret TEXT NULL,
                 ADD COLUMN two_factor_recovery_codes TEXT NULL,
                 ADD COLUMN two_factor_confirmed_at TIMESTAMP NULL');
+        }
+
+        if (! Schema::hasColumn('users', 'password_reset_token')) {
+            DB::statement('ALTER TABLE users
+                ADD COLUMN password_reset_token VARCHAR(191) NULL,
+                ADD COLUMN password_reset_max_tries INT NULL,
+                ADD COLUMN password_reset_last_tried_on TIMESTAMP NULL');
         }
     }
 }

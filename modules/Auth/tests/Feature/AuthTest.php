@@ -96,7 +96,7 @@ class AuthTest extends AuthTestCase
         // controller's own Auth::check() branch is reached.
         $this->actingAs($this->user)
             ->get(route('auth.login'))
-            ->assertRedirect('/');
+            ->assertRedirect('/panel/dashboard');
     }
 
     // =========================================================================
@@ -139,7 +139,7 @@ class AuthTest extends AuthTestCase
             'password' => 'password',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(422)
             ->assertJsonFragment(['success' => false]);
 
         $this->assertGuest();

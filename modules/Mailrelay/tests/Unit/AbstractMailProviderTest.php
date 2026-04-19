@@ -38,6 +38,7 @@ class AbstractMailProviderTest extends TestCase
                 return [];
             }
 
+            // phpcs:ignore PSR1.Methods.CamelCapsMethodName -- required by interface
             public function test_connection(): bool
             {
                 return true;

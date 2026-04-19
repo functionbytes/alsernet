@@ -1,4 +1,4 @@
-@extends('layouts.pages')
+@extends('layouts.auth')
 
 @section('title', 'Ingresar')
 
@@ -15,7 +15,7 @@
                                 <p>Te enviamos un mensaje al correo electrónico: <u>{{ $email }}</u></p>
                                 <p>¿No recibiste el mensaje?</p>
                             </div>
-                                <a href="{{ route('password.reset') }}" class="theme-btn w-100 mt-30">Enviar nuevamente</a>
+                                <a href="{{ route('auth.password.request') }}" class="theme-btn w-100 mt-30">Enviar nuevamente</a>
                         </div>
                     </div>
                 </div>

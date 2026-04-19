@@ -1,5 +1,5 @@
 
-@extends('layouts.pages')
+@extends('layouts.auth')
 
 @section('title', 'Ingresar')
 
@@ -17,7 +17,7 @@
                             </div>
                             <!-- account form -->
 
-                            {!! Form::open(['route' => 'auth.password.update', 'class' => 'account__form', 'method' => 'POST', 'id' => 'formPassword']) !!}
+                            <form action="{{ route('auth.password.update') }}" method="POST" class="account__form" id="formPassword">
 
                             <input type="hidden" name="token" value="{{ $token }}">
                             <input type="hidden" name="email" value="{{ $email }}">
@@ -57,7 +57,7 @@
 
                             <button type="submit" class="theme-btn w-100 mt-30">Cambiar contraseña</button>
 
-                            {!! Form::close() !!}
+                            </form>
 
                         </div>
                     </div>

@@ -18,7 +18,6 @@ class LockoutTest extends AuthTestCase
         ]);
 
         $user = User::factory()->create([
-            'email' => 'lockout@example.com',
             'password' => Hash::make('correct-password'),
             'available' => true,
         ]);
@@ -28,7 +27,7 @@ class LockoutTest extends AuthTestCase
 
         for ($i = 0; $i < 3; $i++) {
             $result = $service->attempt(
-                ['email' => 'lockout@example.com', 'password' => 'wrong'],
+                ['email' => $user->email, 'password' => 'wrong'],
                 false,
                 $request,
             );
@@ -43,14 +42,13 @@ class LockoutTest extends AuthTestCase
     public function test_locked_user_cannot_login_even_with_correct_password(): void
     {
         $user = User::factory()->create([
-            'email' => 'locked@example.com',
             'password' => Hash::make('correct-password'),
             'available' => true,
             'locked_until' => now()->addMinutes(30),
         ]);
 
         $result = app(AuthService::class)->attempt(
-            ['email' => 'locked@example.com', 'password' => 'correct-password'],
+            ['email' => $user->email, 'password' => 'correct-password'],
             false,
             request(),
         );
@@ -61,14 +59,13 @@ class LockoutTest extends AuthTestCase
     public function test_successful_login_resets_failure_count(): void
     {
         $user = User::factory()->create([
-            'email' => 'reset@example.com',
             'password' => Hash::make('correct-password'),
             'available' => true,
             'failed_login_count' => 5,
         ]);
 
         app(AuthService::class)->attempt(
-            ['email' => 'reset@example.com', 'password' => 'correct-password'],
+            ['email' => $user->email, 'password' => 'correct-password'],
             false,
             request(),
         );
