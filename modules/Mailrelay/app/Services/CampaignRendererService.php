@@ -2,6 +2,7 @@
 
 namespace Modules\Mailrelay\Services;
 
+use Modules\Locales\Models\Locale;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableReplacementService;
@@ -48,8 +49,8 @@ class CampaignRendererService implements CampaignRendererInterface
             throw CampaignRenderException::templateNotFound($campaign->mailer_template_id);
         }
 
-        // Obtener idioma (default a 1 si no está especificado)
-        $langId = $campaign->lang_id ?? 1;
+        // Resolver idioma: el de la campaign o el default del sistema
+        $langId = $campaign->lang_id ?? Locale::resolveLegacyLangId();
 
         // Merge de variables del template + variables custom de la campaign + variables extra
         $allVariables = array_merge(
@@ -149,7 +150,7 @@ class CampaignRendererService implements CampaignRendererInterface
             if ($template) {
                 $previewVars = MailerVariableReplacementService::getPreviewVariablesForTemplate(
                     $template,
-                    $campaign->lang_id ?? 1
+                    $campaign->lang_id ?? Locale::resolveLegacyLangId()
                 );
                 $variables = array_merge($variables, $previewVars);
             }

@@ -4,6 +4,7 @@ namespace Modules\Mailrelay\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Locales\Models\Locale;
 use Modules\Mailrelay\Entities\Campaign;
 use Modules\Mailrelay\Enums\CampaignStatus;
 use Modules\Mailrelay\Jobs\SendCampaignJob;
@@ -41,7 +42,7 @@ class CampaignService
                 'html_content' => $data['html_content'] ?? null,
                 'text_content' => $data['text_content'] ?? null,
                 'mailer_template_id' => $data['mailer_template_id'] ?? null,
-                'lang_id' => $data['lang_id'] ?? 1,
+                'lang_id' => $data['lang_id'] ?? Locale::resolveLegacyLangId(),
                 'mail_provider_id' => $data['mail_provider_id'] ?? null,
                 'template_variables' => $data['template_variables'] ?? [],
                 'track_opens' => $data['track_opens'] ?? true,
