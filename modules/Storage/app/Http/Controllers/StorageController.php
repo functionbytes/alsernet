@@ -4,11 +4,13 @@ namespace Modules\Storage\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
 use Modules\Storage\Http\Requests\StoreDiskRequest;
 use Modules\Storage\Http\Requests\UpdateDiskRequest;
@@ -20,6 +22,8 @@ class StorageController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()->can('storage.view'), 403);
+
         $storageData = $this->getStorageData();
         $statistics = $this->getStorageStatistics($storageData);
 
@@ -36,6 +40,8 @@ class StorageController extends Controller
      */
     public function create(): View
     {
+        abort_unless(auth()->user()->can('storage.create'), 403);
+
         return view('storage::create', [
             'driverOptions' => $this->driverOptions(),
             'pageTitle' => 'Crear disco de almacenamiento',
@@ -74,8 +80,12 @@ class StorageController extends Controller
             $existingDisks[] = $diskData;
             $this->saveCustomDisks($existingDisks);
 
+            activity('storage')->causedBy(auth()->user())
+                ->withProperties(['disk' => $diskData['name'], 'driver' => $diskData['driver']])
+                ->log('Disco de almacenamiento creado: '.$diskData['name']);
+
             return redirect()
-                ->route('settings.storage')
+                ->route('settings.storage.index')
                 ->with('success', 'Disco de almacenamiento creado correctamente');
         } catch (\Exception $e) {
             Log::error('Error creating storage disk', ['error' => $e->getMessage()]);
@@ -89,11 +99,13 @@ class StorageController extends Controller
      */
     public function edit(string $name): View|RedirectResponse
     {
+        abort_unless(auth()->user()->can('storage.update'), 403);
+
         $rawDisk = $this->findCustomDisk($name);
         $isFromConfig = $rawDisk === null && array_key_exists($name, config('filesystems.disks', []));
 
         if ($rawDisk === null && ! $isFromConfig) {
-            return redirect()->route('settings.storage')->with('error', 'El disco solicitado no existe');
+            return redirect()->route('settings.storage.index')->with('error', 'El disco solicitado no existe');
         }
 
         // For config disks, build a display-safe representation
@@ -120,7 +132,7 @@ class StorageController extends Controller
         $isFromConfig = $rawDisk === null && array_key_exists($name, config('filesystems.disks', []));
 
         if ($rawDisk === null && ! $isFromConfig) {
-            return redirect()->route('settings.storage')->with('error', 'El disco solicitado no existe');
+            return redirect()->route('settings.storage.index')->with('error', 'El disco solicitado no existe');
         }
 
         $validated = $request->validated();
@@ -153,7 +165,11 @@ class StorageController extends Controller
 
             $this->saveCustomDisks($existingDisks);
 
-            return redirect()->route('settings.storage')->with('success', 'Disco actualizado correctamente');
+            activity('storage')->causedBy(auth()->user())
+                ->withProperties(['disk' => $diskData['name'], 'driver' => $diskData['driver']])
+                ->log('Disco de almacenamiento actualizado: '.$diskData['name']);
+
+            return redirect()->route('settings.storage.index')->with('success', 'Disco actualizado correctamente');
         } catch (\Exception $e) {
             Log::error('Error updating storage disk', ['error' => $e->getMessage()]);
 
@@ -166,6 +182,8 @@ class StorageController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->can('storage.delete'), 403);
+
         $validated = $request->validate(['disk_name' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]+$/']]);
 
         try {
@@ -182,11 +200,105 @@ class StorageController extends Controller
 
             $this->saveCustomDisks($customDisks);
 
+            activity('storage')->causedBy(auth()->user())
+                ->withProperties(['disk' => $validated['disk_name']])
+                ->log('Disco de almacenamiento eliminado: '.$validated['disk_name']);
+
             return redirect()->back()->with('success', 'Disco de almacenamiento eliminado correctamente');
         } catch (\Exception $e) {
             Log::error('Error deleting storage disk', ['error' => $e->getMessage()]);
 
             return back()->with('error', 'Error al eliminar el disco');
+        }
+    }
+
+    public function testConnection(Request $request): JsonResponse
+    {
+        abort_unless(
+            auth()->user()->can('storage.create') || auth()->user()->can('storage.update'),
+            403
+        );
+
+        $validated = $request->validate([
+            'driver' => ['required', 'string', 'in:ftp,sftp,s3'],
+            'host' => ['required_if:driver,ftp,sftp', 'nullable', 'string'],
+            'username' => ['required_if:driver,ftp,sftp', 'nullable', 'string'],
+            'password' => ['nullable', 'string'],
+            'port' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'bucket' => ['required_if:driver,s3', 'nullable', 'string'],
+            'key' => ['nullable', 'string'],
+            'secret' => ['nullable', 'string'],
+            'region' => ['required_if:driver,s3', 'nullable', 'string'],
+        ]);
+
+        try {
+            $result = $this->verifyConnection($validated);
+
+            if ($result['success']) {
+                return response()->json(['success' => true, 'message' => 'Conexión exitosa']);
+            }
+
+            return response()->json(['success' => false, 'message' => $result['message']], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error al verificar la conexión'], 422);
+        }
+    }
+
+    private function verifyConnection(array $config): array
+    {
+        $driver = $config['driver'];
+        $testDiskName = 'storage_test_'.uniqid();
+
+        $diskConfig = match ($driver) {
+            'ftp' => [
+                'driver' => 'ftp',
+                'host' => $config['host'],
+                'username' => $config['username'],
+                'password' => $config['password'] ?? '',
+                'port' => (int) ($config['port'] ?? 21),
+                'root' => '/',
+                'passive' => true,
+                'ssl' => false,
+                'timeout' => 10,
+                'throw' => true,
+            ],
+            'sftp' => [
+                'driver' => 'sftp',
+                'host' => $config['host'],
+                'username' => $config['username'],
+                'password' => $config['password'] ?? '',
+                'port' => (int) ($config['port'] ?? 22),
+                'root' => '/',
+                'timeout' => 10,
+                'throw' => true,
+            ],
+            's3' => [
+                'driver' => 's3',
+                'key' => $config['key'] ?? '',
+                'secret' => $config['secret'] ?? '',
+                'region' => $config['region'],
+                'bucket' => $config['bucket'],
+                'throw' => true,
+            ],
+            default => null,
+        };
+
+        if ($diskConfig === null) {
+            return ['success' => false, 'message' => 'Driver no soportado para prueba de conexión'];
+        }
+
+        config(["filesystems.disks.{$testDiskName}" => $diskConfig]);
+
+        try {
+            Storage::disk($testDiskName)->exists('.connection_test');
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'No se pudo conectar: '.$e->getMessage()];
+        } finally {
+            $disks = config('filesystems.disks');
+            unset($disks[$testDiskName]);
+            config(['filesystems.disks' => $disks]);
         }
     }
 

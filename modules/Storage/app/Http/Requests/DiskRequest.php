@@ -8,7 +8,7 @@ abstract class DiskRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('storage.manage');
     }
 
     protected function commonRules(): array

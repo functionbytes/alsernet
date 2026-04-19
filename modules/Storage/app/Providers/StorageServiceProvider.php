@@ -68,7 +68,7 @@ class StorageServiceProvider extends ServiceProvider
     {
         // Add storage configuration to settings sidebar
         NavService::addItemsToSection('settings', 'Configuraciones', [
-            ['label' => 'Almacenamiento', 'route' => 'settings.storage'],
+            ['label' => 'Almacenamiento', 'route' => 'settings.storage.index'],
         ]);
 
     }

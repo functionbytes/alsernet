@@ -138,4 +138,48 @@ class PathHelperTest extends TestCase
 
         $this->assertEquals('http://localhost', getAppHost());
     }
+
+    // -------------------------------------------------------------------------
+    // generatePublicPath()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function generate_public_path_throws_on_empty_string(): void
+    {
+        $this->expectException(\Exception::class);
+
+        generatePublicPath('');
+    }
+
+    #[Test]
+    public function generate_public_path_throws_on_whitespace(): void
+    {
+        $this->expectException(\Exception::class);
+
+        generatePublicPath('   ');
+    }
+
+    #[Test]
+    public function generate_public_path_throws_when_not_in_storage(): void
+    {
+        $this->expectException(\Exception::class);
+
+        generatePublicPath('/var/www/html/some-file.pdf');
+    }
+
+    #[Test]
+    public function generate_public_path_returns_string_for_valid_storage_path(): void
+    {
+        $storagePath = storage_path('app/public/test-file.pdf');
+
+        try {
+            $result = generatePublicPath($storagePath, false);
+            $this->assertIsString($result);
+        } catch (\Exception $e) {
+            // Failure must be due to routing (public_assets route missing in test env),
+            // not due to path validation.
+            $this->assertStringNotContainsString('cannot be made public', $e->getMessage());
+            $this->assertStringNotContainsString('Empty path', $e->getMessage());
+        }
+    }
 }

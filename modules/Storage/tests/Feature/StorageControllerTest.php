@@ -3,26 +3,36 @@
 namespace Modules\Storage\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Modules\Core\Models\Setting;
+use Modules\Storage\Tests\StorageTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\TestCase;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
-class StorageControllerTest extends TestCase
+class StorageControllerTest extends StorageTestCase
 {
-    use RefreshDatabase;
-
     private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['storage.view', 'storage.create', 'storage.update', 'storage.delete', 'storage.manage'] as $perm) {
+            Permission::findOrCreate($perm, 'web');
+        }
+
+        $role = Role::findOrCreate('administrative', 'web');
+        $role->givePermissionTo(['storage.view', 'storage.create', 'storage.update', 'storage.delete', 'storage.manage']);
+
         $this->admin = User::factory()->create();
         $this->admin->assignRole('administrative');
 
-        // Start with empty custom disks
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         Setting::set('system.custom_storage_disks', '[]');
         Cache::forget('storage.custom_disks');
     }
@@ -34,14 +44,52 @@ class StorageControllerTest extends TestCase
     #[Test]
     public function index_requires_authentication(): void
     {
-        $this->get(route('settings.storage'))->assertRedirect(route('login'));
+        $this->get(route('settings.storage.index'))->assertRedirect(route('auth.login'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Autorización por permisos
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function index_forbids_user_without_storage_view_permission(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('settings.storage.index'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function store_forbids_user_without_storage_create_permission(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('settings.storage.store'), [
+                'name' => 'test_disk',
+                'driver' => 'local',
+                'storage_type' => 'public',
+            ])
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function destroy_forbids_user_without_storage_delete_permission(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->delete(route('settings.storage.destroy'), ['disk_name' => 'some_disk'])
+            ->assertForbidden();
     }
 
     #[Test]
     public function index_loads_for_admin(): void
     {
         $this->actingAs($this->admin)
-            ->get(route('settings.storage'))
+            ->get(route('settings.storage.index'))
             ->assertOk()
             ->assertViewIs('storage::index')
             ->assertViewHas('storageData')
@@ -75,7 +123,7 @@ class StorageControllerTest extends TestCase
                 'driver' => 'local',
                 'storage_type' => 'public',
             ])
-            ->assertRedirect(route('settings.storage'))
+            ->assertRedirect(route('settings.storage.index'))
             ->assertSessionHas('success');
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
@@ -94,7 +142,7 @@ class StorageControllerTest extends TestCase
                 'driver' => 'local',
                 'storage_type' => 'private',
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals('private', $disks[0]['storage_type']);
@@ -117,7 +165,7 @@ class StorageControllerTest extends TestCase
                 'password' => 'secret123',
                 'port' => 21,
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals('my_ftp', $disks[0]['name']);
@@ -137,7 +185,7 @@ class StorageControllerTest extends TestCase
                 'password' => 'pass456',
                 'port' => 22,
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals('sftp', $disks[0]['driver']);
@@ -154,7 +202,7 @@ class StorageControllerTest extends TestCase
                 'host' => 'ftp.example.com',
                 'username' => 'user',
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals(21, $disks[0]['port']);
@@ -170,7 +218,7 @@ class StorageControllerTest extends TestCase
                 'host' => 'sftp.example.com',
                 'username' => 'user',
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals(22, $disks[0]['port']);
@@ -192,7 +240,7 @@ class StorageControllerTest extends TestCase
                 'key' => 'AKIAIOSFODNN7EXAMPLE',
                 'secret' => 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals('my_s3', $disks[0]['name']);
@@ -330,7 +378,7 @@ class StorageControllerTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->get(route('settings.storage.edit', 'nonexistent'))
-            ->assertRedirect(route('settings.storage'))
+            ->assertRedirect(route('settings.storage.index'))
             ->assertSessionHas('error');
     }
 
@@ -373,7 +421,7 @@ class StorageControllerTest extends TestCase
         ]]);
 
         $storageData = $this->actingAs($this->admin)
-            ->get(route('settings.storage'))
+            ->get(route('settings.storage.index'))
             ->assertOk()
             ->viewData('storageData');
 
@@ -420,7 +468,7 @@ class StorageControllerTest extends TestCase
                 'port' => 2121,
                 'password' => '', // leave blank to keep existing
             ])
-            ->assertRedirect(route('settings.storage'))
+            ->assertRedirect(route('settings.storage.index'))
             ->assertSessionHas('success');
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
@@ -445,7 +493,7 @@ class StorageControllerTest extends TestCase
                 'username' => 'user',
                 'password' => 'newpass',
             ])
-            ->assertRedirect(route('settings.storage'));
+            ->assertRedirect(route('settings.storage.index'));
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
         $this->assertEquals('newpass', decrypt($disks[0]['password']));
@@ -468,7 +516,7 @@ class StorageControllerTest extends TestCase
                 'port' => 2222,
                 'password' => '', // leave blank — keep existing
             ])
-            ->assertRedirect(route('settings.storage'))
+            ->assertRedirect(route('settings.storage.index'))
             ->assertSessionHas('success');
 
         $disks = json_decode(Setting::get('system.custom_storage_disks', '[]'), true);
@@ -517,7 +565,7 @@ class StorageControllerTest extends TestCase
         Cache::forget('storage.custom_disks');
 
         $storageData = $this->actingAs($this->admin)
-            ->get(route('settings.storage'))
+            ->get(route('settings.storage.index'))
             ->assertOk()
             ->viewData('storageData');
 
@@ -535,7 +583,7 @@ class StorageControllerTest extends TestCase
         Cache::forget('storage.custom_disks');
 
         $statistics = $this->actingAs($this->admin)
-            ->get(route('settings.storage'))
+            ->get(route('settings.storage.index'))
             ->assertOk()
             ->viewData('statistics');
 

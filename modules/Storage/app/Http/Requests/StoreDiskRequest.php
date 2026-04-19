@@ -4,6 +4,11 @@ namespace Modules\Storage\Http\Requests;
 
 class StoreDiskRequest extends DiskRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user()->can('storage.create');
+    }
+
     public function rules(): array
     {
         return array_merge($this->commonRules(), [
