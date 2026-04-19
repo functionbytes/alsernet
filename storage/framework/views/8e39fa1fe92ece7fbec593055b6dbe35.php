@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="<?php
-use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Core\Models\Setting;
 
 echo e(str_replace('_', '-', app()->getLocale())); ?>" dir="ltr" data-bs-theme="light" data-color-theme="green" data-layout="vertical" data-boxed-layout="boxed" data-card="shadow">
@@ -101,29 +100,29 @@ echo e(str_replace('_', '-', app()->getLocale())); ?>" dir="ltr" data-bs-theme="
 </div>
 
 <!-- Core Libraries -->
-<script src="<?php echo e(themeAsset('libs/jquery/dist/jquery.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/simplebar/dist/simplebar.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/jquery/dist/jquery.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/simplebar/dist/simplebar.min.js')); ?>"></script>
 
 <!-- Form/Input Libraries -->
-<script src="<?php echo e(themeAsset('libs/taginput/bootstrap-tagsinput.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/daterangepicker/daterangepicker.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/select2/dist/js/select2.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/jquery-validation/dist/jquery.validate.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/dropzone/dist/dropzone.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/toastr/toastr.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('libs/quill/dist/quill.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/taginput/bootstrap-tagsinput.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/daterangepicker/daterangepicker.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/select2/dist/js/select2.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/jquery-validation/dist/jquery.validate.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/dropzone/dist/dropzone.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/toastr/toastr.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('libs/quill/dist/quill.min.js')); ?>"></script>
 
 <!-- Theme & App Scripts (orden importante) -->
-<script src="<?php echo e(themeAsset('js/theme/app.init.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('js/theme/theme.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('js/theme/app.min.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('js/theme/sidebarmenu.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/theme/app.init.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/theme/theme.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/theme/app.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/theme/sidebarmenu.js')); ?>"></script>
 
 <!-- Form Initializers -->
-<script src="<?php echo e(themeAsset('js/forms/select2.init.js')); ?>"></script>
-<script src="<?php echo e(themeAsset('js/forms/quill-init.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/forms/select2.init.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(themeAsset('js/forms/quill-init.js')); ?>"></script>
 <script>
 $(document).ready(function () {
     if ($.fn.daterangepicker && $('.daterange').length) {
@@ -161,20 +160,20 @@ $(document).ready(function () {
 </script>
 
 <!-- Core App Scripts -->
-<script src="<?php echo e(url('core/tooltipster/js/tooltipster.bundle.min.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/functions.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/link.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/box.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/popup.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/list.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/anotify.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/dialog.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/iframe_modal.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/search.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/image_popup.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/app.js')); ?>"></script>
-<script src="<?php echo e(url('core/js/bulk.js')); ?>"></script>
-<script src="<?php echo e(url('modules/Media/js/media-picker.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/tooltipster/js/tooltipster.bundle.min.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/functions.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/link.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/box.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/popup.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/list.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/anotify.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/dialog.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/iframe_modal.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/search.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/image_popup.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/app.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('core/js/bulk.js')); ?>"></script>
+<script data-pagespeed-no-defer src="<?php echo e(url('modules/Media/js/media-picker.js')); ?>"></script>
 
 
 <script>
@@ -331,11 +330,7 @@ $(document).on('change', '.js-auto-submit', function () {
 
 <?php echo $__env->make('media::partials.picker-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-<?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (Setting::get('cookie.enabled') === '1' && ! request()->is('setting/*', 'managers/*')) { ?>
-    <?php echo $__env->make('cookie::index', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
-    <link rel="stylesheet" href="<?php echo e(url('modules/Cookie/css/cookie-consent.css')); ?>">
-    <script src="<?php echo e(url('modules/Cookie/js/cookie-consent.js')); ?>"></script>
-<?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
+
 
 <?php echo Setting::get('theme.custom_footer_html'); ?>
 
