@@ -2,9 +2,9 @@
 
 namespace Modules\Seo\Services;
 
-use App\Services\CircuitBreaker;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Modules\Core\Services\CircuitBreaker;
 use Modules\Seo\Models\SeoAuditLog;
 use Modules\Seo\Models\SeoMeta;
 

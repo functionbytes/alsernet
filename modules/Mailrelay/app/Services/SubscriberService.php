@@ -2,9 +2,9 @@
 
 namespace Modules\Mailrelay\Services;
 
-use App\Services\CircuitBreaker;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Modules\Core\Services\CircuitBreaker;
 
 class SubscriberService
 {

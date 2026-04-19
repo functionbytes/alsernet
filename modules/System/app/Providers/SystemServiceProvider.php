@@ -3,6 +3,10 @@
 namespace Modules\System\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\System\Console\Commands\AuditPermissionsCommand;
+use Modules\System\Console\Commands\CleanupTempExportsCommand;
+use Modules\System\Services\GlobalSearchRegistrar;
+use Modules\System\Services\GlobalSearchService;
 use Modules\System\Services\SystemInfoService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -18,6 +22,10 @@ class SystemServiceProvider extends ServiceProvider
         $this->app->singleton(SystemInfoService::class, function ($app) {
             return new SystemInfoService;
         });
+
+        // GlobalSearch: registrar + servicio compartidos entre módulos.
+        $this->app->singleton(GlobalSearchRegistrar::class);
+        $this->app->singleton(GlobalSearchService::class);
     }
 
     /**
@@ -42,6 +50,13 @@ class SystemServiceProvider extends ServiceProvider
 
         // Register menus
         $this->registerMenus();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                AuditPermissionsCommand::class,
+                CleanupTempExportsCommand::class,
+            ]);
+        }
     }
 
     /**

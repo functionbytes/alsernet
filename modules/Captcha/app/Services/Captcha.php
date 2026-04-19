@@ -2,12 +2,12 @@
 
 namespace Modules\Captcha\Services;
 
-use App\Services\CircuitBreaker;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Captcha\Contracts\Captcha as CaptchaContract;
 use Modules\Captcha\Events\CaptchaRendered;
 use Modules\Captcha\Events\CaptchaRendering;
+use Modules\Core\Services\CircuitBreaker;
 
 class Captcha extends CaptchaContract
 {

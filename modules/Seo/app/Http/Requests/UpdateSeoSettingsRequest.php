@@ -48,6 +48,9 @@ class UpdateSeoSettingsRequest extends FormRequest
 
             // llms.txt
             'llms_txt_enabled' => ['sometimes', 'boolean'],
+
+            // GTM
+            'gtm_container_id' => ['nullable', 'string', 'max:20', 'regex:/^GTM-[A-Z0-9]+$/i'],
         ];
     }
 

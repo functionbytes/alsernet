@@ -55,6 +55,9 @@ class SeoSettingsController extends Controller
 
         // llms.txt
         'llms_txt_enabled' => ['seo.llms_txt.enabled', 'seohelper.llms_txt.enabled'],
+
+        // GTM
+        'gtm_container_id' => ['seo.gtm.container_id', 'Seo.gtm.container_id'],
     ];
 
     /**

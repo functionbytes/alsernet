@@ -1,4 +1,4 @@
-@if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
+@if(\Modules\System\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
     <div class="card-body border-bottom p-4">
         <h6 class="fw-bold mb-1">Estadísticas de caché de páginas</h6>
         <p class="small text-muted mb-3">Resumen del rendimiento del caché para las páginas del sitio</p>

@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            @if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
+            @if(\Modules\System\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
                 {{-- Cache de páginas --}}
                 <div class="card-body border-bottom p-4">
                     <h6 class="fw-bold mb-3">Cache de páginas</h6>

@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Services\DeepLTranslationService;
-use App\Services\GlobalSearchRegistrar;
 use App\Services\GlobalSearchService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Events\MigrationsStarted;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Horizon\Horizon;
 use Modules\Page\Services\PageService;
+use Modules\System\Services\GlobalSearchRegistrar;
 
 class AppServiceProvider extends ServiceProvider
 {

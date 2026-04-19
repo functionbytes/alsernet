@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\HealthController;
 use Illuminate\Support\Facades\Route;
 use Modules\Backup\Http\Controllers\Api\BackupScheduleApiController;
+use Modules\Health\Http\Controllers\Api\HealthController;
 use Modules\Page\Http\Controllers\PublicController;
 use Modules\Reviews\Http\Controllers\Api\ReviewController;
 use Modules\User\Http\Controllers\Api\UserApiController;
@@ -20,7 +20,7 @@ Route::prefix('v1')
 
         // Health checks (public)
         Route::get('ping', [HealthController::class, 'ping'])->name('health.ping');
-        Route::get('health', [HealthController::class, 'status'])->name('health.status');
+        Route::get('health', [HealthController::class, 'health'])->name('health.status');
 
         // Public pages listing
         Route::get('pages', [PublicController::class, 'index'])

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helpers;
+namespace Modules\System\Helpers;
 
 class ModuleStatusHelper
 {

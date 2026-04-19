@@ -5,6 +5,7 @@ namespace Modules\Locales\Providers;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Locales\Console\Commands\SyncLangsCommand;
+use Modules\Locales\Console\Commands\TranslationsMissingCommand;
 use Modules\Locales\Models\Locale;
 use Modules\Locales\Observers\LocaleObserver;
 use Modules\Locales\Services\LocaleService;
@@ -32,7 +33,7 @@ class LocalesServiceProvider extends ServiceProvider
         Locale::observe(LocaleObserver::class);
 
         if ($this->app->runningInConsole()) {
-            $this->commands([SyncLangsCommand::class]);
+            $this->commands([SyncLangsCommand::class, TranslationsMissingCommand::class]);
         }
     }
 

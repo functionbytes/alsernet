@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -213,7 +214,7 @@ class ProcessEmailImportJob implements ShouldQueue
     /**
      * Find the email column index in headers
      *
-     * @param  \Illuminate\Support\Collection  $headers
+     * @param  Collection  $headers
      */
     protected function findEmailColumn($headers): ?int
     {
@@ -232,8 +233,8 @@ class ProcessEmailImportJob implements ShouldQueue
     /**
      * Extract name from row
      *
-     * @param  \Illuminate\Support\Collection  $row
-     * @param  \Illuminate\Support\Collection  $headers
+     * @param  Collection  $row
+     * @param  Collection  $headers
      */
     protected function extractName($row, $headers): ?string
     {
@@ -265,8 +266,8 @@ class ProcessEmailImportJob implements ShouldQueue
     /**
      * Create or update subscriber
      *
-     * @param  \Illuminate\Support\Collection  $row
-     * @param  \Illuminate\Support\Collection  $headers
+     * @param  Collection  $row
+     * @param  Collection  $headers
      */
     protected function createOrUpdateSubscriber(string $email, ?string $name, $row, $headers): Subscriber
     {
@@ -292,8 +293,8 @@ class ProcessEmailImportJob implements ShouldQueue
     /**
      * Extract custom fields from row
      *
-     * @param  \Illuminate\Support\Collection  $row
-     * @param  \Illuminate\Support\Collection  $headers
+     * @param  Collection  $row
+     * @param  Collection  $headers
      */
     protected function extractCustomFields($row, $headers): array
     {
@@ -346,7 +347,7 @@ class ProcessEmailImportJob implements ShouldQueue
     {
         // Check if SyncSubscriberJob exists before dispatching
         if (class_exists('App\Jobs\SyncSubscriberJob')) {
-            \App\Jobs\SyncSubscriberJob::dispatch($subscriber->id);
+            SyncSubscriberJob::dispatch($subscriber->id);
         } else {
             Log::warning('SyncSubscriberJob class not found, skipping sync dispatch', [
                 'subscriber_id' => $subscriber->id,

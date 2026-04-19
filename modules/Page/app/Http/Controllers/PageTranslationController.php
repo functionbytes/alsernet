@@ -3,11 +3,11 @@
 namespace Modules\Page\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DeepLTranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Locales\Services\DeepLTranslationService;
 use Modules\Page\Models\Page;
 use Modules\Page\Services\PageService;
 

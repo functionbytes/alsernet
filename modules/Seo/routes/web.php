@@ -1,15 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Seo\Http\Controllers\GscController;
 use Modules\Seo\Http\Controllers\IndexNowController;
 use Modules\Seo\Http\Controllers\IndexNowKeyController;
 use Modules\Seo\Http\Controllers\LlmsTxtController;
 use Modules\Seo\Http\Controllers\RobotsTxtController;
 use Modules\Seo\Http\Controllers\SchemaOrgController;
 use Modules\Seo\Http\Controllers\Seo404Controller;
+use Modules\Seo\Http\Controllers\SeoAlertsController;
 use Modules\Seo\Http\Controllers\SeoAuditController;
 use Modules\Seo\Http\Controllers\SeoAuditHistoryController;
 use Modules\Seo\Http\Controllers\SeoDashboardController;
+use Modules\Seo\Http\Controllers\SeoHealthController;
 use Modules\Seo\Http\Controllers\SeoMetaWebController;
 use Modules\Seo\Http\Controllers\SeoOrphanController;
 use Modules\Seo\Http\Controllers\SeoPageUrlsController;
@@ -85,6 +88,15 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
 
         Route::get('indexnow', [IndexNowController::class, 'index'])->name('indexnow.index');
         Route::post('indexnow/submit', [IndexNowController::class, 'submit'])->middleware('throttle:10,60')->name('indexnow.submit');
+
+        // Health check (runs `seo:health` and returns JSON)
+        Route::post('health/run', [SeoHealthController::class, 'run'])
+            ->middleware('throttle:10,60')->name('health.run');
+
+        // Persistent alerts timeline
+        Route::get('alerts', [SeoAlertsController::class, 'index'])->name('alerts.index');
+        Route::post('alerts/{alert}/acknowledge', [SeoAlertsController::class, 'acknowledge'])->name('alerts.acknowledge');
+        Route::post('alerts/acknowledge-all', [SeoAlertsController::class, 'acknowledgeAll'])->name('alerts.acknowledge-all');
 
         // Unified SEO settings (admin-editable values, no .env required)
         Route::get('settings', [SeoSettingsController::class, 'edit'])->name('settings.edit');
@@ -175,6 +187,13 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         // Search Console CSV Import
         Route::get('search-console/import', [SeoDashboardController::class, 'showSearchConsoleImport'])->name('search-console.import');
         Route::post('search-console/import', [SeoDashboardController::class, 'importSearchConsole'])->middleware('throttle:5,60')->name('search-console.import.store');
+
+        // Google Search Console OAuth
+        Route::get('gsc', [GscController::class, 'index'])->name('gsc.index');
+        Route::get('gsc/connect', [GscController::class, 'connect'])->name('gsc.connect');
+        Route::get('gsc/callback', [GscController::class, 'callback'])->name('gsc.callback');
+        Route::post('gsc/disconnect', [GscController::class, 'disconnect'])->name('gsc.disconnect');
+        Route::post('gsc/import', [GscController::class, 'import'])->middleware('throttle:5,60')->name('gsc.import');
     });
 });
 

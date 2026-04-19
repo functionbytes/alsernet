@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\GlobalSearchController;
 use Illuminate\Support\Facades\Route;
 use Modules\Forms\Http\Controllers\ContactController;
 use Modules\Health\Http\Controllers\AlertThresholdController;
 use Modules\System\Http\Controllers\ApiDocController;
+use Modules\System\Http\Controllers\GlobalSearchController;
 use Modules\System\Http\Controllers\ImportController;
 use Modules\System\Http\Controllers\Settings\SettingsPanelController;
 

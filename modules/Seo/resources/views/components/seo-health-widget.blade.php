@@ -41,11 +41,19 @@ $vitalColor = fn ($rating) => match ($rating) {
 };
 @endphp
 
-<div class="card mb-3">
+<div class="card mb-3" id="seo-health-widget">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="card-title mb-0"><i class="fas fa-tachometer-alt me-1"></i> Estado SEO</h6>
-        <a href="{{ route('setting.seo.dashboard') }}" class="small">Ver detalle</a>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="seo-health-run" title="Ejecutar chequeo completo">
+                Chequeo
+            </button>
+            <a href="{{ route('setting.seo.dashboard') }}" class="small">Ver detalle</a>
+        </div>
     </div>
+
+    {{-- Inline result of the on-demand health check --}}
+    <div class="card-body border-bottom d-none" id="seo-health-result"></div>
 
     {{-- Score + alerts --}}
     <div class="card-body border-bottom">
@@ -130,3 +138,49 @@ $vitalColor = fn ($rating) => match ($rating) {
     </div>
     @endif
 </div>
+
+@once
+@push('scripts')
+<script>
+$(document).on('click', '[data-action="seo-health-run"]', function () {
+    const $btn = $(this);
+    const $out = $('#seo-health-result');
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Comprobando');
+    $out.removeClass('d-none').html('<div class="text-center text-muted small py-2">Ejecutando seo:health…</div>');
+
+    $.ajax({
+        url: @json(route('setting.seo.health.run')),
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        success: function (res) {
+            if (! res.ok || ! res.checks) {
+                $out.html('<div class="alert alert-danger small mb-0">No se pudo ejecutar: ' + (res.error || 'error desconocido') + '</div>');
+                return;
+            }
+
+            const iconMap = { pass: '✓', warn: '!', fail: '✗', skip: '-' };
+            const classMap = { pass: 'text-success', warn: 'text-warning', fail: 'text-danger', skip: 'text-muted' };
+            const lines = res.checks.map(c =>
+                '<li class="small mb-1"><span class="' + classMap[c.status] + ' me-1">' + iconMap[c.status] + '</span>' +
+                '<strong>' + c.name + '</strong> — ' + $('<div>').text(c.message).html() + '</li>'
+            ).join('');
+            const summary = res.summary;
+            const summaryLine =
+                '<div class="small text-muted mb-2">' +
+                'Pass: ' + summary.pass + ', Warn: ' + summary.warn +
+                ', Fail: ' + summary.fail + ', Skip: ' + summary.skip +
+                ' <span class="text-muted float-end">' + new Date(res.generated_at).toLocaleString() + '</span>' +
+                '</div>';
+            $out.html(summaryLine + '<ul class="list-unstyled mb-0">' + lines + '</ul>');
+        },
+        error: function (xhr) {
+            $out.html('<div class="alert alert-danger small mb-0">HTTP ' + xhr.status + ' — ' + (xhr.responseJSON?.error || 'error') + '</div>');
+        },
+        complete: function () {
+            $btn.prop('disabled', false).html('Chequeo');
+        },
+    });
+});
+</script>
+@endpush
+@endonce

@@ -51,7 +51,7 @@
                     <button type="button" class="btn btn-outline-danger btn-flush" data-type="all">Limpiar todo</button>
                     <button type="button" class="btn btn-outline-warning btn-flush" data-type="menu">Limpiar menu</button>
                     <button type="button" class="btn btn-outline-warning btn-flush" data-type="settings">Limpiar configuracion</button>
-                    @if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
+                    @if(\Modules\System\Helpers\ModuleStatusHelper::isModuleEnabled('Page'))
                         <button type="button" class="btn btn-outline-warning btn-flush" data-type="pages">Limpiar paginas</button>
                     @endif
                 </div>

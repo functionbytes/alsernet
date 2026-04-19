@@ -2,7 +2,6 @@
 
 namespace Modules\Blog\Services;
 
-use App\Services\DeepLTranslationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Blog\Enums\TranslationStatus;
@@ -12,6 +11,7 @@ use Modules\Blog\Models\BlogPost;
 use Modules\Blog\Models\BlogPostTranslation;
 use Modules\Blog\Models\BlogTranslationCache;
 use Modules\Blog\Models\BlogTranslationLog;
+use Modules\Locales\Services\DeepLTranslationService;
 
 class BlogTranslationService
 {

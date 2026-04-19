@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Middleware\ApiVersionHeader;
-use App\Http\Middleware\EnsureModuleEnabled;
 use App\Providers\AppServiceProvider;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -43,8 +41,10 @@ use Modules\Core\Http\Middleware\TrustProxies;
 use Modules\Core\Http\Middleware\ValidateSignature;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
 use Modules\Health\Mail\CriticalErrorMail;
+use Modules\Modules\Http\Middleware\EnsureModuleEnabled;
 use Modules\Page\Http\Middleware\PageCacheMiddleware;
 use Modules\Page\Services\ErrorPageService;
+use Modules\System\Http\Middleware\ApiVersionHeader;
 use Modules\System\Http\Middleware\PreventRequestsDuringMaintenance;
 use Modules\Template\Http\Middleware\RegisterTemplateViewPath;
 use Spatie\Permission\Middleware\PermissionMiddleware;

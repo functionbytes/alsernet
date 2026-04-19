@@ -38,6 +38,9 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        {{-- GTM container script (head) --}}
+        @seoGtmHead
+
         {{-- Additional Styles --}}
         @stack('styles')
 
@@ -46,6 +49,9 @@
     </head>
 
     <body>
+        {{-- GTM noscript fallback — must be right after <body> --}}
+        @seoGtmBody
+
         @yield('content')
         {{ $slot ?? '' }}
 

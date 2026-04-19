@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Modules\Seo\Jobs\SubmitUrlsToIndexNowJob;
 use Modules\Seo\Mail\SeoScoreDropMail;
+use Modules\Seo\Models\SeoAlert;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Services\WebhookNotificationService;
 use Spatie\Activitylog\Models\Activity;
@@ -45,6 +46,15 @@ class SeoMetaObserver
                         $currentScore
                     );
                 }
+
+                SeoAlert::raise(
+                    SeoAlert::TYPE_SCORE_DROP,
+                    SeoAlert::SEVERITY_WARNING,
+                    'Caída de SEO score',
+                    "El score bajó de {$previousScore} a {$currentScore} en \"".($seoMeta->title ?? 'sin título').'".',
+                    $seoMeta->canonical_url,
+                    ['meta_id' => $seoMeta->id, 'previous' => $previousScore, 'current' => $currentScore]
+                );
             }
         }
 

@@ -3,9 +3,9 @@
 namespace Modules\Mailrelay\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\ProcessEmailImportJob;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\ImportJob;
+use Modules\Mailrelay\Jobs\ProcessEmailImportJob;
 
 class ImportWebController extends Controller
 {

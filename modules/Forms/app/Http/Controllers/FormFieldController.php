@@ -3,7 +3,6 @@
 namespace Modules\Forms\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DeepLTranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,6 +11,7 @@ use Modules\Forms\Http\Requests\StoreFormFieldRequest;
 use Modules\Forms\Http\Requests\UpdateFormFieldRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormField;
+use Modules\Locales\Services\DeepLTranslationService;
 
 class FormFieldController extends Controller
 {

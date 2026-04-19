@@ -3,7 +3,6 @@
 namespace Modules\Blog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DeepLTranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +12,7 @@ use Modules\Blog\Models\BlogPost;
 use Modules\Blog\Models\BlogTranslationLog;
 use Modules\Blog\Services\BlogPostService;
 use Modules\Blog\Services\BlogTranslationExportService;
+use Modules\Locales\Services\DeepLTranslationService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BlogPostTranslationController extends Controller

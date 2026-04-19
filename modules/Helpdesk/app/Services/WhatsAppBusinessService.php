@@ -2,11 +2,11 @@
 
 namespace Modules\Helpdesk\Services;
 
-use App\Services\CircuitBreaker;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Services\CircuitBreaker;
 
 class WhatsAppBusinessService
 {

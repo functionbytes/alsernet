@@ -4,6 +4,7 @@ namespace Modules\Media\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\AliasLoader;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,7 @@ use Modules\Media\Console\Commands\RetentionReportCommand;
 use Modules\Media\Console\Commands\SendMediaDigestCommand;
 use Modules\Media\Console\Commands\VerifyAuditLogCommand;
 use Modules\Media\Facades\Media;
+use Modules\Media\Http\Middleware\ModernImageMiddleware;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
 use Modules\Media\Models\MediaSetting;
@@ -82,6 +84,10 @@ class MediaServiceProvider extends ServiceProvider
         $this->registerPolicies();
         $this->registerMenus();
         $this->registerBladeDirectives();
+
+        // Alias for opt-in modern image conversion on image-serving routes
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('media.modern-images', ModernImageMiddleware::class);
 
         // Immutable audit log HMAC signing for Media activity logs
         if (class_exists(Activity::class)) {

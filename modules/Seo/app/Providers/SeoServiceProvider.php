@@ -225,6 +225,16 @@ class SeoServiceProvider extends ServiceProvider
         Blade::directive('seoWebVitalsBeacon', function () {
             return "<?php echo view('Seo::partials.web-vitals-beacon')->render(); ?>";
         });
+
+        // GTM container snippet. Two directives because GTM requires one in
+        // <head> (script) and another immediately after <body> (noscript).
+        // Uso: @seoGtmHead en <head>, @seoGtmBody al inicio de <body>.
+        Blade::directive('seoGtmHead', function () {
+            return "<?php echo view('Seo::partials.gtm-head')->render(); ?>";
+        });
+        Blade::directive('seoGtmBody', function () {
+            return "<?php echo view('Seo::partials.gtm-body')->render(); ?>";
+        });
     }
 
     /**
@@ -263,6 +273,7 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Historial auditorías', 'route' => 'setting.seo.audit.history'],
                 ['label' => 'Redirecciones', 'route' => 'setting.seo.redirects.index'],
                 ['label' => 'Errores 404', 'route' => 'setting.seo.404-logs.index'],
+                ['label' => 'Alertas SEO', 'route' => 'setting.seo.alerts.index'],
                 ['label' => 'Plantillas SEO', 'route' => 'setting.seo.templates.index'],
                 ['label' => 'Contenido sin SEO', 'route' => 'setting.seo.orphans.index'],
                 ['label' => 'URLs del sitio', 'route' => 'setting.seo.page-urls.index'],
@@ -274,7 +285,8 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Sitemap XML', 'route' => 'setting.seo.sitemap.index'],
                 ['label' => 'Reporte SEO', 'route' => 'setting.seo.report.index'],
                 ['label' => 'Verificación', 'route' => 'setting.seo.verification.index'],
-                ['label' => 'Search Console', 'route' => 'setting.seo.search-console.import'],
+                ['label' => 'Search Console (CSV)', 'route' => 'setting.seo.search-console.import'],
+                ['label' => 'Search Console (API)', 'route' => 'setting.seo.gsc.index'],
                 ['label' => 'Configuración SEO', 'route' => 'setting.seo.settings.edit'],
             ],
         ]);

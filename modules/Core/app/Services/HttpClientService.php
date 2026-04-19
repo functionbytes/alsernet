@@ -2,8 +2,6 @@
 
 namespace Modules\Core\Services;
 
-use App\Services\CircuitBreaker;
-
 /**
  * HTTP Client Service
  *

@@ -2,10 +2,10 @@
 
 namespace Modules\Mailrelay\Http\ViewComposers;
 
-use App\Helpers\ModuleStatusHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Modules\System\Helpers\ModuleStatusHelper;
 
 class NavigationComposer
 {

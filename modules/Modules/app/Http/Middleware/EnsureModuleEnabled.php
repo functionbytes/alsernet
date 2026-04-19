@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace Modules\Modules\Http\Middleware;
 
-use App\Helpers\ModuleStatusHelper;
 use Closure;
 use Illuminate\Http\Request;
+use Modules\System\Helpers\ModuleStatusHelper;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureModuleEnabled

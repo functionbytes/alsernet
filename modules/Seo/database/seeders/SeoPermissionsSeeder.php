@@ -45,6 +45,10 @@ class SeoPermissionsSeeder extends Seeder
             'Seo.settings.view' => 'Ver configuración SEO',
             'Seo.settings.update' => 'Editar configuración SEO',
 
+            // SEO Alerts
+            'Seo.alerts.view' => 'Ver alertas SEO',
+            'Seo.alerts.acknowledge' => 'Marcar alertas como revisadas',
+
             // Static URLs
             'Seo.static-urls.index' => 'Ver URLs estáticas del sitemap',
             'Seo.static-urls.create' => 'Crear URLs estáticas del sitemap',

@@ -179,9 +179,18 @@
                             <small class="text-muted">Opcional. Sin key, requests al API están rate-limited.</small>
                             @error('pagespeed_api_key')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="llms_txt_enabled" name="llms_txt_enabled" value="1" @checked($settings['llms_txt_enabled'])>
                             <label class="form-check-label" for="llms_txt_enabled">Servir <code>/llms.txt</code> a crawlers de IA</label>
+                        </div>
+
+                        <div>
+                            <label for="gtm_container_id" class="form-label fw-semibold">Google Tag Manager ID</label>
+                            <input type="text" id="gtm_container_id" name="gtm_container_id"
+                                   class="form-control font-monospace @error('gtm_container_id') is-invalid @enderror"
+                                   value="{{ old('gtm_container_id', $settings['gtm_container_id'] ?? '') }}" placeholder="GTM-XXXXXXX">
+                            <small class="text-muted">Formato <code>GTM-XXXXXXX</code>. Se inyecta vía <code>@seoGtmHead</code> y <code>@seoGtmBody</code>.</small>
+                            @error('gtm_container_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
                 </div>

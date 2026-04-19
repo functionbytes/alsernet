@@ -3,13 +3,13 @@
 namespace Modules\Mailrelay\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\ProcessEmailImportJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Modules\Mailrelay\Entities\ImportJob;
 use Modules\Mailrelay\Enums\ImportStatus;
+use Modules\Mailrelay\Jobs\ProcessEmailImportJob;
 
 /**
  * ImportController

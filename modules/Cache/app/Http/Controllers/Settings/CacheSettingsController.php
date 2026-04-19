@@ -2,7 +2,6 @@
 
 namespace Modules\Cache\Http\Controllers\Settings;
 
-use App\Helpers\ModuleStatusHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Redis;
 use Modules\Cache\Http\Requests\Settings\CacheSettingsRequest;
 use Modules\Core\Models\Setting;
 use Modules\Page\Services\PageCacheService;
+use Modules\System\Helpers\ModuleStatusHelper;
 
 class CacheSettingsController extends Controller
 {

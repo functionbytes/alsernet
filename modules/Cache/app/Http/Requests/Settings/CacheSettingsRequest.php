@@ -2,8 +2,8 @@
 
 namespace Modules\Cache\Http\Requests\Settings;
 
-use App\Helpers\ModuleStatusHelper;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\System\Helpers\ModuleStatusHelper;
 
 class CacheSettingsRequest extends FormRequest
 {

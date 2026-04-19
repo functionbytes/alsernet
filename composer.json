@@ -112,7 +112,7 @@
             "modules/Database/app/Helpers/QueryHelper.php",
             "modules/Storage/app/Helpers/PathHelper.php",
             "modules/Role/app/Helpers/PermissionHelper.php",
-            "app/Helpers/Helper.php"
+            "modules/Core/app/Helpers/Helper.php"
         ]
     },
     "autoload-dev": {
@@ -130,7 +130,7 @@
             "Modules\\Seo\\Tests\\": "Modules/Seo/tests/"
         },
         "files": [
-            "app/Helpers/Helper.php"
+            "modules/Core/app/Helpers/Helper.php"
         ]
     },
     "scripts": {

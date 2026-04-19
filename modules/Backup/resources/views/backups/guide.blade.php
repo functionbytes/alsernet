@@ -37,7 +37,7 @@
                                 <a class="dropdown-item" href="{{ route('settings.backups.index') }}">Ver backups</a>
                                 <a class="dropdown-item" href="{{ route('settings.backup.schedules.index') }}">Ver programaciones</a>
                                 <a class="dropdown-item" href="{{ route('settings.backups.setup') }}">Asistente de configuración</a>
-                                @if(\App\Helpers\ModuleStatusHelper::isModuleEnabled('System'))
+                                @if(\Modules\System\Helpers\ModuleStatusHelper::isModuleEnabled('System'))
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="{{ route('settings.system.supervisor.index') }}">Configurar supervisor</a>
                                 @endif

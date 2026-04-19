@@ -3,9 +3,10 @@
 namespace Modules\Mailrelay\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SyncMailrelaySubscriberJob;
 use Illuminate\Http\Request;
+use Modules\Mailrelay\Entities\MailrelayGroup;
 use Modules\Mailrelay\Entities\Subscriber;
+use Modules\Mailrelay\Jobs\SyncMailrelaySubscriberJob;
 use Modules\Mailrelay\Services\EmailValidation\EmailValidatorService;
 
 class SubscriberController extends Controller
@@ -62,7 +63,7 @@ class SubscriberController extends Controller
      */
     public function create()
     {
-        $mailrelayGroups = \Modules\Mailrelay\Entities\MailrelayGroup::all();
+        $mailrelayGroups = MailrelayGroup::all();
 
         return view('mailrelay::subscribers.create', compact('mailrelayGroups'));
     }
@@ -122,7 +123,7 @@ class SubscriberController extends Controller
     public function edit(string $id)
     {
         $subscriber = Subscriber::with('groups')->findOrFail($id);
-        $mailrelayGroups = \Modules\Mailrelay\Entities\MailrelayGroup::all();
+        $mailrelayGroups = MailrelayGroup::all();
 
         return view('mailrelay::subscribers.edit', compact('subscriber', 'mailrelayGroups'));
     }

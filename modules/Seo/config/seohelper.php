@@ -519,6 +519,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Tag Manager
+    |--------------------------------------------------------------------------
+    | Inject GTM container snippet via @seoGtmHead + @seoGtmBody directives.
+    | Leave empty to disable.
+    */
+    'gtm' => [
+        'container_id' => env('SEO_GTM_CONTAINER_ID', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | SERP Rankings Provider (SerpAPI / ValueSERP / DataForSEO)
     |--------------------------------------------------------------------------
     */

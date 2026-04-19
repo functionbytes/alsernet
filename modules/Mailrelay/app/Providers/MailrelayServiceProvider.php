@@ -2,7 +2,6 @@
 
 namespace Modules\Mailrelay\Providers;
 
-use App\Helpers\ModuleStatusHelper;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -22,6 +21,7 @@ use Modules\Mailrelay\Policies\CampaignPolicy;
 use Modules\Mailrelay\Policies\ImportPolicy;
 use Modules\Mailrelay\Policies\MailProviderPolicy;
 use Modules\Mailrelay\Policies\SubscriberPolicy;
+use Modules\System\Helpers\ModuleStatusHelper;
 use Modules\Theme\Services\NavService;
 
 class MailrelayServiceProvider extends ServiceProvider

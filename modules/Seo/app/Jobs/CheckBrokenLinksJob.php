@@ -2,7 +2,6 @@
 
 namespace Modules\Seo\Jobs;
 
-use App\Services\CircuitBreaker;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Services\CircuitBreaker;
 use Modules\Seo\Models\SeoMeta;
 
 class CheckBrokenLinksJob implements ShouldQueue
