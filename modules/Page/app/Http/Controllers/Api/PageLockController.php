@@ -111,26 +111,26 @@ class PageLockController extends Controller
     }
 
     /**
-     * Liberar un lock
+     * Liberar un lock.
+     * Idempotente: llamar dos veces (o sin lock activo) retorna 200 con
+     * released=false. Evita 404s espurios de `navigator.sendBeacon` /
+     * `fetch(keepalive)` en tabs que ya no tienen lock propio.
      * DELETE /api/v1/pages/{page}/lock
      */
     public function release(Page $page): JsonResponse
     {
         $this->authorize('update', $page);
 
-        if (! $this->lockService->releaseLock($page, auth()->user())) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No hay lock para liberar',
-            ], 404);
-        }
+        $released = $this->lockService->releaseLock($page, auth()->user());
 
-        // Broadcast lock released event
-        PageLockReleased::dispatch($page, auth()->id());
+        if ($released) {
+            PageLockReleased::dispatch($page, auth()->id());
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Lock liberado',
+            'released' => $released,
+            'message' => $released ? 'Lock liberado' : 'No había lock activo para este usuario',
         ]);
     }
 }

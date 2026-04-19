@@ -200,4 +200,21 @@ class PageVisualEditorSaveTest extends TestCase
         $res->assertJsonPath('duplicate', true);
         $this->assertSame(0, $this->page->versions()->count());
     }
+
+    public function test_expand_shortcode_returns_cache_hit_on_second_identical_call(): void
+    {
+        Cache::flush();
+        $payload = ['shortcode' => '[button bc_url="#" bc_style="primary"]'];
+
+        $first = $this->actingAs($this->user)
+            ->postJson(route('pages.expand-shortcode', $this->page), $payload);
+        $first->assertOk();
+        $this->assertSame('miss', $first->headers->get('X-VE-Cache'));
+
+        $second = $this->actingAs($this->user)
+            ->postJson(route('pages.expand-shortcode', $this->page), $payload);
+        $second->assertOk();
+        $this->assertSame('hit', $second->headers->get('X-VE-Cache'));
+        $this->assertSame($first->json('html'), $second->json('html'));
+    }
 }

@@ -400,9 +400,19 @@ class VisualEditorController extends Controller
 
         $data = $request->validate(['shortcode' => ['required', 'string', 'max:10000']]);
 
-        $html = function_exists('shortcode') ? shortcode($data['shortcode']) : $data['shortcode'];
+        // Same input → same HTML. Cache by hash to cut repeated work when the
+        // inspector re-renders the shortcode on every keystroke. 10 min TTL is
+        // long enough for an edit session but short enough that theme/shortcode
+        // changes show up without manual cache clearing.
+        $cacheKey = 've:shortcode:expand:'.sha1($data['shortcode']);
+        $fromCache = Cache::has($cacheKey);
+        $html = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($data) {
+            return function_exists('shortcode') ? shortcode($data['shortcode']) : $data['shortcode'];
+        });
 
-        return response()->json(['html' => $html]);
+        return response()
+            ->json(['html' => $html])
+            ->header('X-VE-Cache', $fromCache ? 'hit' : 'miss');
     }
 
     /**
