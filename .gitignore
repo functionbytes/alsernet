@@ -33,6 +33,9 @@ auth.json
 .DS_Store
 **/.DS_Store
 
+# Module backups
+modules/*.zip
+
 # Claude Code - local files (not shared)
 .claude/settings.local.json
 CLAUDE.local.md
