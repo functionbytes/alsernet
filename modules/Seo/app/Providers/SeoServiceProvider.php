@@ -4,16 +4,15 @@ namespace Modules\Seo\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Database\QueryException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
-use Modules\Seo\Builder\SitemapBuilder;
+use Modules\Blog\Models\BlogCategory;
+use Modules\Blog\Models\BlogTag;
 use Modules\Seo\Console\Commands\CheckBrokenLinksCommand;
 use Modules\Seo\Console\Commands\GenerateSchemasCommand;
-use Modules\Seo\Console\Commands\GenerateSitemapCommand;
 use Modules\Seo\Console\Commands\IndexNowSubmitCommand;
-use Modules\Seo\Console\Commands\PingSitemapCommand;
 use Modules\Seo\Console\Commands\PurgeWebVitalsCommand;
 use Modules\Seo\Console\Commands\SeoCleanupCommand;
 use Modules\Seo\Console\Commands\SeoHealthCommand;
@@ -66,12 +65,11 @@ class SeoServiceProvider extends ServiceProvider
         $this->registerCommands();
         $this->publishResources();
         $this->loadSitemapConfig();
+        $this->registerSitemapCallbacks();
         $this->registerSitemapMiddleware();
         $this->registerTrack404Middleware();
         $this->registerXRobotsTagMiddleware();
         $this->registerAutoPaginationMiddleware();
-        $this->registerSitemapCommands();
-        $this->registerSitemapScheduler();
         $this->registerCleanupScheduler();
         $this->registerMenus();
     }
@@ -92,12 +90,6 @@ class SeoServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(SchemaOrgService::class, 'schema-org');
-
-        $this->app->singleton('sitemap', function ($app) {
-            return new SitemapBuilder;
-        });
-
-        $this->app->alias('sitemap', SitemapBuilder::class);
     }
 
     /**
@@ -301,6 +293,37 @@ class SeoServiceProvider extends ServiceProvider
         }
     }
 
+    protected function registerSitemapCallbacks(): void
+    {
+        $this->app->booted(function () {
+            // Añadir sitemaps especializados al índice
+            config(['sitemap.index_extra' => array_merge(
+                config('sitemap.index_extra', []),
+                [url('/sitemap-images.xml'), url('/sitemap-video.xml'), url('/sitemap-news.xml')]
+            )]);
+
+            $callbacks = config('sitemap.post_callbacks', []);
+
+            if (class_exists(BlogCategory::class)) {
+                $callbacks[] = function ($builder) {
+                    foreach (BlogCategory::published()->get() as $cat) {
+                        $builder->add($cat->url, $cat->updated_at->toAtomString(), '0.6', 'weekly');
+                    }
+                };
+            }
+
+            if (class_exists(BlogTag::class)) {
+                $callbacks[] = function ($builder) {
+                    foreach (BlogTag::published()->get() as $tag) {
+                        $builder->add($tag->url, $tag->updated_at->toAtomString(), '0.4', 'monthly');
+                    }
+                };
+            }
+
+            config(['sitemap.post_callbacks' => $callbacks]);
+        });
+    }
+
     protected function registerSitemapMiddleware(): void
     {
         $router = $this->app->make(Router::class);
@@ -335,23 +358,6 @@ class SeoServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('seo.pagination', AutoPaginationMiddleware::class);
         $router->pushMiddlewareToGroup('web', AutoPaginationMiddleware::class);
-    }
-
-    protected function registerSitemapCommands(): void
-    {
-        $this->commands([
-            GenerateSitemapCommand::class,
-            PingSitemapCommand::class,
-        ]);
-    }
-
-    protected function registerSitemapScheduler(): void
-    {
-        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
-            $schedule->call(function () {
-                Cache::forget('sitemap.xml');
-            })->daily()->name('sitemap:clear-cache');
-        });
     }
 
     protected function registerCleanupScheduler(): void
@@ -391,7 +397,12 @@ class SeoServiceProvider extends ServiceProvider
                 ->withoutOverlapping();
 
             // Weekly PageSpeed snapshot for top URLs (only if API key is configured)
-            if (seo_setting('pagespeed_api_key', config('Seo.pagespeed_api_key'))) {
+            try {
+                $hasKey = seo_setting('pagespeed_api_key', config('Seo.pagespeed_api_key'));
+            } catch (QueryException) {
+                $hasKey = false;
+            }
+            if ($hasKey) {
                 $schedule->command('seo:pagespeed')
                     ->weeklyOn(2, '05:30')
                     ->name('seo:pagespeed-weekly')

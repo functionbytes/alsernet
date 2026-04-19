@@ -6,26 +6,31 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Modules\Blog\Models\BlogCategory;
-use Modules\Blog\Models\BlogPost;
-use Modules\Blog\Models\BlogTag;
-use Modules\Seo\Builder\SitemapBuilder;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Models\SeoStaticUrl;
 use Modules\Seo\Services\SitemapPriorityCalculator;
+use Modules\Sitemap\Builder\SitemapBuilder;
+use Modules\Sitemap\Models\SitemapGeneration;
 
 class SitemapAdminController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:Seo.settings.view')->only(['index', 'verifyUrls', 'calculatePriorities', 'validateSitemap']);
+        $this->middleware('can:Seo.settings.update')->only(['generate', 'clearCache']);
+    }
+
     public function index(): View
     {
         $sitemaps = [
             [
                 'name' => 'Sitemap general',
-                'url' => route('sitemap'),
-                'route_name' => 'sitemap',
+                'url' => route('sitemap.index'),
+                'route_name' => 'sitemap.index',
                 'description' => 'Todas las URLs del sitio',
                 'icon' => 'fas fa-globe',
             ],
@@ -78,21 +83,28 @@ class SitemapAdminController extends Controller
         $sitemapPath = public_path('sitemap.xml');
         $fileExists = file_exists($sitemapPath);
         $lastModified = $fileExists ? filemtime($sitemapPath) : null;
+        $history = SitemapGeneration::query()
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
 
         return view('Seo::settings.sitemap.index', compact(
             'sitemaps',
             'cacheEnabled',
             'cacheDuration',
             'fileExists',
-            'lastModified'
+            'lastModified',
+            'history'
         ));
     }
 
     public function generate(SitemapBuilder $sitemap): RedirectResponse
     {
+        $start = hrtime(true);
+
         try {
             $sitemap->clear();
-            $sitemap->add(url('/'), now()->toAtomString(), '1.0', 'daily');
+            $sitemap->add(url('/'), null, '1.0', 'daily');
 
             foreach (config('sitemap.models', []) as $modelClass) {
                 if (class_exists($modelClass)) {
@@ -100,27 +112,23 @@ class SitemapAdminController extends Controller
                 }
             }
 
-            if (class_exists(BlogPost::class)) {
-                $sitemap->addModel(BlogPost::class);
-            }
-
-            if (class_exists(BlogCategory::class)) {
-                foreach (BlogCategory::published()->get() as $category) {
-                    $sitemap->add($category->url, $category->updated_at->toAtomString(), '0.6', 'weekly');
-                }
-            }
-
-            if (class_exists(BlogTag::class)) {
-                foreach (BlogTag::published()->get() as $tag) {
-                    $sitemap->add($tag->url, $tag->updated_at->toAtomString(), '0.4', 'monthly');
-                }
-            }
-
             foreach (SeoStaticUrl::active()->get() as $staticUrl) {
                 $sitemap->add($staticUrl->url, null, (string) $staticUrl->priority, $staticUrl->changefreq);
             }
 
+            foreach (config('sitemap.post_callbacks', []) as $callback) {
+                if (is_callable($callback)) {
+                    $callback($sitemap);
+                }
+            }
+
             $sitemap->generate();
+            SitemapGeneration::create([
+                'status' => 'success',
+                'url_count' => count($sitemap->getItems()),
+                'duration_ms' => (int) round((hrtime(true) - $start) / 1_000_000),
+                'source' => 'admin',
+            ]);
             Cache::forget('sitemap-xml');
 
             $sitemapUrl = urlencode(url('/sitemap.xml'));
@@ -137,6 +145,13 @@ class SitemapAdminController extends Controller
                 ->with('success', __('seo::sitemap.generated_successfully'));
         } catch (\Exception $e) {
             Log::error('Sitemap generation failed', ['error' => $e->getMessage()]);
+            SitemapGeneration::create([
+                'status' => 'failed',
+                'url_count' => 0,
+                'duration_ms' => (int) round((hrtime(true) - $start) / 1_000_000),
+                'error_message' => $e->getMessage(),
+                'source' => 'admin',
+            ]);
 
             return redirect()
                 ->back()
@@ -209,6 +224,27 @@ class SitemapAdminController extends Controller
             ->values();
 
         return response()->json(['priorities' => $results]);
+    }
+
+    public function validateSitemap(): JsonResponse
+    {
+        try {
+            $exitCode = Artisan::call('sitemap:validate', [
+                '--check-urls' => true,
+                '--sample' => '5',
+            ]);
+            $output = Artisan::output();
+
+            return response()->json([
+                'ok' => $exitCode === 0,
+                'output' => trim($output),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'ok' => false,
+                'output' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function clearCache(): RedirectResponse

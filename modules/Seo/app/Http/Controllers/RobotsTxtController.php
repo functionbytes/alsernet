@@ -50,6 +50,7 @@ User-agent: CCBot
 Disallow: /
 
 Sitemap: {sitemap_url}
+Sitemap: {sitemap_index_url}
 ROBOTS;
 
     public function edit(): View
@@ -190,8 +191,8 @@ ROBOTS;
     protected function getDefaultContent(): string
     {
         return str_replace(
-            '{sitemap_url}',
-            route('sitemap'),
+            ['{sitemap_url}', '{sitemap_index_url}'],
+            [url('/sitemap.xml'), url('/sitemap-index.xml')],
             $this->defaultRobotsTxt
         );
     }

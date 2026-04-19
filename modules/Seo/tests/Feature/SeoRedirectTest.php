@@ -198,7 +198,7 @@ class SeoRedirectTest extends TestCase
     public function test_sitemap_generation_route_exists(): void
     {
         // The sitemap.xml public route exists and returns a response
-        $response = $this->get(route('sitemap'));
+        $response = $this->get(route('sitemap.index'));
 
         // 200 OK (generated) or any non-404 response is acceptable
         $this->assertNotEquals(404, $response->getStatusCode());

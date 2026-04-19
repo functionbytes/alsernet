@@ -122,7 +122,9 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::get('sitemap', [SitemapAdminController::class, 'index'])->name('sitemap.index');
         Route::post('sitemap/generate', [SitemapAdminController::class, 'generate'])->name('sitemap.generate');
         Route::post('sitemap/clear-cache', [SitemapAdminController::class, 'clearCache'])->name('sitemap.clear-cache');
+        Route::get('sitemap/verify-urls', [SitemapAdminController::class, 'verifyUrls'])->name('sitemap.verify-urls');
         Route::get('sitemap/calculate-priorities', [SitemapAdminController::class, 'calculatePriorities'])->name('sitemap.calculate-priorities');
+        Route::post('sitemap/validate', [SitemapAdminController::class, 'validateSitemap'])->name('sitemap.validate');
 
         // SEO Audit
         Route::get('audit', [SeoAuditController::class, 'index'])->name('audit.index');
@@ -150,9 +152,6 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::get('orphans', [SeoOrphanController::class, 'index'])->name('orphans.index');
         Route::post('orphans/generate', [SeoOrphanController::class, 'generate'])->name('orphans.generate');
         Route::post('orphans/bulk-generate', [SeoOrphanController::class, 'bulkGenerate'])->name('orphans.bulk-generate');
-
-        // Verificación de URLs del sitemap
-        Route::get('sitemap/verify-urls', [SitemapAdminController::class, 'verifyUrls'])->name('sitemap.verify-urls');
 
         // Historial de auditorías
         Route::get('audit/history', [SeoAuditHistoryController::class, 'index'])->name('audit.history');
@@ -214,10 +213,8 @@ Route::post('/api/seo/web-vitals', [SeoWebVitalsController::class, 'store'])
     ->middleware(['web', 'throttle:120,1'])
     ->name('seo.web-vitals.store');
 
-// Public Sitemap Routes (sitemap.xml is handled by the Page module as 'sitemap')
-Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
-Route::get('/sitemap-posts.xml', [SitemapController::class, 'posts'])->name('sitemap.posts');
-Route::get('/sitemap-index.xml', [SitemapController::class, 'sitemapIndex'])->name('sitemap.sitemap-index');
+// Public Sitemap Routes — images/video/news are unique to Seo module
+// sitemap.xml, sitemap-pages.xml, sitemap-posts.xml, sitemap-index.xml are handled by the Sitemap module
 Route::get('/sitemap-images.xml', [SitemapController::class, 'images'])->name('sitemap.images');
 Route::get('/sitemap-video.xml', [SitemapController::class, 'videos'])->name('sitemap.videos');
 Route::get('/sitemap-news.xml', [SitemapController::class, 'news'])->name('sitemap.news');

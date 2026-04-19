@@ -39,7 +39,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes
-            $table->index(['seoable_type', 'seoable_id'], 'seoable_index');
             $table->index('robots');
             $table->index('created_at');
         });

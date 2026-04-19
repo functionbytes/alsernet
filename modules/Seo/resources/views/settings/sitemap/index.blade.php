@@ -157,6 +157,49 @@
                             </div>
                         </div>
                     </div>
+                    <hr class="my-0">
+
+                    {{-- Historial de generaciones --}}
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-1">Historial de generaciones</h6>
+                        <p class="text-muted mb-3">Últimas 10 ejecuciones del generador de sitemap.</p>
+
+                        @if($history->isEmpty())
+                            <p class="text-muted text-center py-3 mb-0">Sin historial aún. Regenera el sitemap para registrar la primera entrada.</p>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Estado</th>
+                                            <th class="text-center">URLs</th>
+                                            <th class="text-center">Tiempo</th>
+                                            <th>Origen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($history as $entry)
+                                            <tr>
+                                                <td class="text-nowrap">{{ $entry->created_at->format('d/m/Y H:i') }}</td>
+                                                <td>
+                                                    @if($entry->isSuccess())
+                                                        <span class="badge bg-success-subtle text-success">OK</span>
+                                                    @else
+                                                        <span class="badge bg-danger-subtle text-danger" title="{{ $entry->error_message }}">Error</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">{{ $entry->url_count }}</td>
+                                                <td class="text-center">{{ $entry->durationInSeconds() }}s</td>
+                                                <td><span class="badge bg-light text-dark">{{ $entry->source }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+
                 </div>
 
             </div>
@@ -187,6 +230,19 @@
                                 Limpiar caché
                             </button>
                         </form>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-1">Validar sitemap</h6>
+                        <p class="text-muted mb-3">Verifica que el XML es válido y comprueba la accesibilidad de una muestra de URLs.</p>
+                        <button type="button" id="validate-sitemap-btn" class="btn btn-outline-info w-100">
+                            Validar
+                        </button>
+                        <div id="validate-sitemap-result" class="mt-3" style="display:none;">
+                            <pre id="validate-sitemap-output" class="small bg-light p-2 rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></pre>
+                        </div>
                     </div>
                 </div>
 
@@ -265,6 +321,37 @@ $(document).on('submit', 'form[data-confirm]', function (e) {
             complete: function () {
                 $('#priorities-loading').hide();
                 $('#calculate-priorities-btn').html('Calcular').prop('disabled', false);
+            },
+        });
+    });
+
+    // Validate sitemap
+    $('#validate-sitemap-btn').on('click', function () {
+        var $btn = $(this);
+        var $result = $('#validate-sitemap-result');
+        var $output = $('#validate-sitemap-output');
+
+        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span>Validando...').prop('disabled', true);
+        $result.hide();
+
+        $.ajax({
+            url: '{{ route("setting.seo.sitemap.validate") }}',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (data) {
+                $output.text(data.output);
+                $result.show();
+                if (data.ok) {
+                    toastr.success('Sitemap válido');
+                } else {
+                    toastr.warning('Sitemap con problemas. Revisa los detalles.');
+                }
+            },
+            error: function () {
+                toastr.error('Error al validar el sitemap');
+            },
+            complete: function () {
+                $btn.html('Validar').prop('disabled', false);
             },
         });
     });
