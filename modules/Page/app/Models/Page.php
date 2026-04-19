@@ -18,8 +18,8 @@ use Modules\Page\Enums\PageStatus;
 use Modules\Page\Traits\Versionable;
 use Modules\Seo\Services\SchemaOrgService;
 use Modules\Seo\Traits\HasSeo;
-use Modules\Seo\Traits\HasSitemapItems;
 use Modules\Seo\Traits\HasStructuredData;
+use Modules\Sitemap\Traits\HasSitemapItems;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 

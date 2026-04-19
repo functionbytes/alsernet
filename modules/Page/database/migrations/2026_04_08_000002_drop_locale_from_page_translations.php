@@ -10,9 +10,14 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasColumn('page_translations', 'locale')) {
-            // Drop indexes that reference 'locale' column before dropping the column
+            // Drop indexes that reference 'locale' column before dropping the column.
+            // First add a plain index on page_id so the FK to pages still has support
+            // after we drop the composite unique (page_id, locale) that MariaDB was using.
             $indexes = collect(Schema::getIndexes('page_translations'))->pluck('name');
             Schema::table('page_translations', function (Blueprint $table) use ($indexes) {
+                if (! $indexes->contains('page_translations_page_id_index')) {
+                    $table->index('page_id', 'page_translations_page_id_index');
+                }
                 if ($indexes->contains('page_translations_page_id_locale_unique')) {
                     $table->dropUnique('page_translations_page_id_locale_unique');
                 }

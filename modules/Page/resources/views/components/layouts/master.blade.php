@@ -61,6 +61,12 @@
         {{-- Additional Scripts --}}
         @stack('scripts')
 
+        @if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
+            @include('cookie::index')
+            <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
+            <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
+        @endif
+
         {{-- Core Web Vitals beacon (respects Seo.web_vitals.enabled + sample_rate) --}}
         @seoWebVitalsBeacon
     </body>

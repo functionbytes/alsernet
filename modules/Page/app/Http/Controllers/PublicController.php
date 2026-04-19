@@ -240,7 +240,7 @@ class PublicController extends Controller
             ->first();
 
         if ($matchedTranslation) {
-            $detectedLocale = $matchedTranslation->locale;
+            $detectedLocale = $matchedTranslation->locale ?? $locale;
             $page = Page::with('translations.localeModel')
                 ->where('id', $matchedTranslation->page_id)
                 ->firstOrFail();
@@ -254,7 +254,7 @@ class PublicController extends Controller
                 ->first();
 
             if ($matchedTranslation) {
-                $detectedLocale = $matchedTranslation->locale;
+                $detectedLocale = $matchedTranslation->locale ?? $locale;
                 $page = Page::with('translations.localeModel')
                     ->where('id', $matchedTranslation->page_id)
                     ->firstOrFail();

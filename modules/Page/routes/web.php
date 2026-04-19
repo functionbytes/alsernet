@@ -15,8 +15,6 @@ use Modules\Page\Http\Controllers\PageVersionController;
 use Modules\Page\Http\Controllers\PageWebhookController;
 use Modules\Page\Http\Controllers\PreviewController;
 use Modules\Page\Http\Controllers\PublicController;
-use Modules\Page\Http\Controllers\RobotsController;
-use Modules\Page\Http\Controllers\SitemapController;
 use Modules\Page\Http\Controllers\VeUserPreferencesController;
 use Modules\Page\Http\Controllers\VisualEditorController;
 
@@ -151,12 +149,6 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
 });
 
 Route::get('/preview/{slug}/{token}', [PreviewController::class, 'show'])->name('page.preview')->where('slug', '[\p{L}0-9\-\/]+')->where('token', '[a-zA-Z0-9]{64}');
-
-// robots.txt dinámico
-Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
-
-// Sitemap XML
-Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 // Homepage
 Route::get('/', [PublicController::class, 'showHomepage'])->name('page.home');
