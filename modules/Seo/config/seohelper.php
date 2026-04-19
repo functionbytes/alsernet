@@ -385,4 +385,73 @@ return [
         'notify_redirect_chain' => env('SEO_WEBHOOK_REDIRECT_CHAIN', true),
         'notify_orphans' => env('SEO_WEBHOOK_ORPHANS', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles that receive all SEO permissions when the seeder runs
+    |--------------------------------------------------------------------------
+    */
+    'admin_roles' => ['super-settings', 'settings'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | IndexNow protocol (Bing, Yandex, Seznam)
+    |--------------------------------------------------------------------------
+    |
+    | Permite notificar a los motores de búsqueda cuando publicas o
+    | actualizas una URL para indexación casi inmediata. La `key` debe
+    | tener entre 8 y 128 caracteres y se sirve en `/{key}.txt`.
+    | Google NO soporta IndexNow.
+    |
+    */
+    'indexnow' => [
+        'enabled' => env('SEO_INDEXNOW_ENABLED', false),
+        'key' => env('SEO_INDEXNOW_KEY', ''),
+        'endpoint' => env('SEO_INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
+        'auto_submit' => env('SEO_INDEXNOW_AUTO_SUBMIT', true),
+        'batch_size' => (int) env('SEO_INDEXNOW_BATCH_SIZE', 100),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | llms.txt (guía para AI crawlers)
+    |--------------------------------------------------------------------------
+    |
+    | Archivo en la raíz que ChatGPT/Claude/Perplexity usan para entender
+    | la estructura del sitio y qué contenido es importante.
+    | Ver: https://llmstxt.org
+    |
+    */
+    'llms_txt' => [
+        'enabled' => env('SEO_LLMS_TXT_ENABLED', true),
+        'cache_ttl' => (int) env('SEO_LLMS_TXT_CACHE_TTL', 3600),
+        'min_score' => (int) env('SEO_LLMS_TXT_MIN_SCORE', 70),
+        'max_items' => (int) env('SEO_LLMS_TXT_MAX_ITEMS', 50),
+        'intro' => env('SEO_LLMS_TXT_INTRO', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI crawlers conocidos (para auditar robots.txt)
+    |--------------------------------------------------------------------------
+    |
+    | Usado por RobotsTxtController::aiCrawlersStatus() para reportar si
+    | algún bot de IA está bloqueado accidentalmente. Los admins deciden
+    | si permitir o bloquear cada uno editando robots.txt.
+    |
+    */
+    'ai_crawlers' => [
+        'GPTBot' => 'OpenAI — entrena ChatGPT',
+        'ChatGPT-User' => 'OpenAI — lecturas directas en ChatGPT',
+        'OAI-SearchBot' => 'OpenAI — indexa para SearchGPT',
+        'ClaudeBot' => 'Anthropic — entrena Claude',
+        'Claude-Web' => 'Anthropic — lecturas directas en Claude',
+        'PerplexityBot' => 'Perplexity AI — indexa para respuestas',
+        'Google-Extended' => 'Google — entrena Gemini (no Search)',
+        'Applebot-Extended' => 'Apple — entrena modelos de IA',
+        'CCBot' => 'Common Crawl — datasets públicos',
+        'Bytespider' => 'ByteDance / TikTok — entrena modelos',
+        'anthropic-ai' => 'Anthropic — UA legacy',
+        'cohere-ai' => 'Cohere — entrena modelos',
+    ],
 ];

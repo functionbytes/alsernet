@@ -30,6 +30,14 @@ class SeoPermissionsSeeder extends Seeder
             'Seo.robots.index' => 'Ver robots.txt',
             'Seo.robots.update' => 'Editar robots.txt',
 
+            // llms.txt (AI crawlers)
+            'Seo.llms.index' => 'Ver llms.txt',
+            'Seo.llms.update' => 'Editar llms.txt',
+
+            // IndexNow (Bing/Yandex instant indexing)
+            'Seo.indexnow.index' => 'Ver estado de IndexNow',
+            'Seo.indexnow.submit' => 'Enviar URLs a IndexNow',
+
             // Static URLs
             'Seo.static-urls.index' => 'Ver URLs estáticas del sitemap',
             'Seo.static-urls.create' => 'Crear URLs estáticas del sitemap',
@@ -64,8 +72,10 @@ class SeoPermissionsSeeder extends Seeder
             Permission::findOrCreate($name, 'web');
         }
 
-        foreach (['super-settings', 'settings'] as $roleName) {
-            $role = Role::findByName($roleName, 'web');
+        $adminRoles = (array) config('seohelper.admin_roles', ['super-settings', 'settings']);
+
+        foreach ($adminRoles as $roleName) {
+            $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
 
             if ($role) {
                 $role->givePermissionTo(array_keys($permissions));

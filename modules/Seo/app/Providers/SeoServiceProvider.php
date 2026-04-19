@@ -3,6 +3,7 @@
 namespace Modules\Seo\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
@@ -11,6 +12,7 @@ use Modules\Seo\Builder\SitemapBuilder;
 use Modules\Seo\Console\Commands\CheckBrokenLinksCommand;
 use Modules\Seo\Console\Commands\GenerateSchemasCommand;
 use Modules\Seo\Console\Commands\GenerateSitemapCommand;
+use Modules\Seo\Console\Commands\IndexNowSubmitCommand;
 use Modules\Seo\Console\Commands\PingSitemapCommand;
 use Modules\Seo\Console\Commands\SeoCleanupCommand;
 use Modules\Seo\Console\Commands\SeoWeeklyReportCommand;
@@ -147,11 +149,26 @@ class SeoServiceProvider extends ServiceProvider
     {
         $router = $this->app->make(Router::class);
 
-        // Register middleware alias
+        // Register middleware alias for explicit route usage
         $router->aliasMiddleware('seo.redirect', RedirectMiddleware::class);
 
-        // Add to web middleware group
+        // Add to web middleware group as a baseline
         $router->pushMiddlewareToGroup('web', RedirectMiddleware::class);
+
+        // Also prepend to the HTTP kernel so redirects run BEFORE route matching,
+        // which lets the middleware catch URLs that would otherwise 404. Only do
+        // this when the HTTP kernel is bound (regular web traffic and feature
+        // tests) — skip plain artisan runs to avoid booting the HTTP kernel and
+        // triggering unrelated work during artisan commands / migrations.
+        if (
+            $this->app->bound(Kernel::class)
+            && (! $this->app->runningInConsole() || $this->app->runningUnitTests())
+        ) {
+            $kernel = $this->app->make(Kernel::class);
+            if (method_exists($kernel, 'prependMiddleware')) {
+                $kernel->prependMiddleware(RedirectMiddleware::class);
+            }
+        }
     }
 
     /**
@@ -199,6 +216,7 @@ class SeoServiceProvider extends ServiceProvider
                 CheckBrokenLinksCommand::class,
                 SeoWeeklyReportCommand::class,
                 SeoCleanupCommand::class,
+                IndexNowSubmitCommand::class,
             ]);
         }
     }
@@ -224,6 +242,8 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'URLs del sitio', 'route' => 'setting.seo.page-urls.index'],
                 ['label' => 'URLs estáticas', 'route' => 'setting.seo.static-urls.index'],
                 ['label' => 'Robots.txt', 'route' => 'setting.seo.robots.edit'],
+                ['label' => 'llms.txt (IA)', 'route' => 'setting.seo.llms.edit'],
+                ['label' => 'IndexNow', 'route' => 'setting.seo.indexnow.index'],
                 ['label' => 'Sitemap XML', 'route' => 'setting.seo.sitemap.index'],
                 ['label' => 'Reporte SEO', 'route' => 'setting.seo.report.index'],
                 ['label' => 'Verificación', 'route' => 'setting.seo.verification.index'],

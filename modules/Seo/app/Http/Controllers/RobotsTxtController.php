@@ -14,9 +14,8 @@ class RobotsTxtController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:Seo.robots.index')->only('edit');
+        $this->middleware('can:Seo.robots.index')->only('edit', 'testUrl', 'aiCrawlersStatus');
         $this->middleware('can:Seo.robots.update')->only('update', 'reset');
-        $this->middleware('can:Seo.robots.index')->only('testUrl');
     }
 
     protected string $settingKey = 'seo.robots_txt';
@@ -24,6 +23,31 @@ class RobotsTxtController extends Controller
     protected string $defaultRobotsTxt = <<<'ROBOTS'
 User-agent: *
 Allow: /
+
+# AI crawlers — ajusta Allow/Disallow según tu política de contenido IA
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Disallow: /
 
 Sitemap: {sitemap_url}
 ROBOTS;
@@ -82,6 +106,85 @@ ROBOTS;
             'matching_rule' => $result['rule'],
             'user_agent' => $result['user_agent'],
         ]);
+    }
+
+    /**
+     * Reporta el estado de los AI crawlers conocidos respecto al robots.txt
+     * actual. Facilita detectar bots bloqueados por error y decidir política.
+     */
+    public function aiCrawlersStatus(): JsonResponse
+    {
+        $robotsContent = Setting::get($this->settingKey, $this->getDefaultContent());
+        $bots = (array) config('seohelper.ai_crawlers', []);
+
+        $status = [];
+
+        foreach ($bots as $name => $description) {
+            $state = $this->userAgentState($robotsContent, (string) $name);
+
+            $status[] = [
+                'bot' => $name,
+                'description' => $description,
+                'declared' => $state['declared'],
+                'allowed_root' => $state['allowed_root'],
+                'disallow_rules' => $state['disallow_rules'],
+                'note' => $state['declared']
+                    ? ($state['allowed_root'] ? 'Permitido en /' : 'Bloqueado por Disallow')
+                    : 'No declarado (hereda User-agent: *)',
+            ];
+        }
+
+        return response()->json([
+            'total_bots' => count($status),
+            'bots' => $status,
+        ]);
+    }
+
+    /**
+     * @return array{declared: bool, allowed_root: bool, disallow_rules: array<int, string>}
+     */
+    private function userAgentState(string $robotsContent, string $userAgent): array
+    {
+        $lines = explode("\n", $robotsContent);
+        $declared = false;
+        $allowedRoot = true;
+        $disallowRules = [];
+        $inBlock = false;
+        $targetLower = strtolower($userAgent);
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if (str_starts_with(strtolower($line), 'user-agent:')) {
+                $agent = strtolower(trim(substr($line, 11)));
+                $inBlock = ($agent === $targetLower);
+                if ($inBlock) {
+                    $declared = true;
+                }
+
+                continue;
+            }
+
+            if (! $inBlock) {
+                continue;
+            }
+
+            if (str_starts_with(strtolower($line), 'disallow:')) {
+                $rule = trim(substr($line, 9));
+                if ($rule !== '') {
+                    $disallowRules[] = $rule;
+                    if ($rule === '/') {
+                        $allowedRoot = false;
+                    }
+                }
+            }
+        }
+
+        return [
+            'declared' => $declared,
+            'allowed_root' => $allowedRoot,
+            'disallow_rules' => $disallowRules,
+        ];
     }
 
     protected function getDefaultContent(): string

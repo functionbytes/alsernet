@@ -4,6 +4,7 @@ namespace Modules\Seo\Observers;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Modules\Seo\Jobs\SubmitUrlsToIndexNowJob;
 use Modules\Seo\Mail\SeoScoreDropMail;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Services\WebhookNotificationService;
@@ -21,6 +22,9 @@ class SeoMetaObserver
             $cacheKey = 'seo_render_'.md5(get_class($seoMeta).$seoMeta->seoable_id);
             Cache::forget($cacheKey);
         }
+
+        // Auto-submit URL to IndexNow on meaningful changes
+        $this->maybeSubmitIndexNow($seoMeta);
 
         // Notify on significant SEO score drops
         if ($seoMeta->wasChanged('seo_score')) {
@@ -79,6 +83,39 @@ class SeoMetaObserver
                 ])
                 ->log('seo_meta_created');
         }
+
+        $this->maybeSubmitIndexNow($seoMeta);
+    }
+
+    /**
+     * Enviar la URL canónica a IndexNow cuando cambian campos visibles
+     * (title/description/canonical/robots) y auto-submit está activo.
+     */
+    private function maybeSubmitIndexNow(SeoMeta $seoMeta): void
+    {
+        if (! config('seohelper.indexnow.enabled') || ! config('seohelper.indexnow.auto_submit', true)) {
+            return;
+        }
+
+        $url = $seoMeta->canonical_url;
+        if (! $url || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            return;
+        }
+
+        // En updated() solo disparamos si cambió algo relevante para el bot
+        if ($seoMeta->exists && ! $seoMeta->wasRecentlyCreated) {
+            $meaningful = ['title', 'description', 'canonical_url', 'robots', 'og_title', 'og_description'];
+            if (empty(array_intersect($meaningful, array_keys($seoMeta->getChanges())))) {
+                return;
+            }
+        }
+
+        // robots=noindex → no tiene sentido reclamar indexación
+        if ($seoMeta->robots && str_contains(strtolower((string) $seoMeta->robots), 'noindex')) {
+            return;
+        }
+
+        SubmitUrlsToIndexNowJob::dispatch([$url]);
     }
 
     /**

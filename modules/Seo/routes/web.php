@@ -1,7 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Seo\Http\Controllers\IndexNowController;
+use Modules\Seo\Http\Controllers\IndexNowKeyController;
+use Modules\Seo\Http\Controllers\LlmsTxtController;
 use Modules\Seo\Http\Controllers\RobotsTxtController;
+use Modules\Seo\Http\Controllers\SchemaOrgController;
 use Modules\Seo\Http\Controllers\Seo404Controller;
 use Modules\Seo\Http\Controllers\SeoAuditController;
 use Modules\Seo\Http\Controllers\SeoAuditHistoryController;
@@ -45,7 +49,7 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::post('metas-bulk-robots', [SeoMetaWebController::class, 'bulkUpdateRobots'])->name('metas.bulk-robots');
         Route::get('metas-export', [SeoMetaWebController::class, 'export'])->name('metas.export');
         Route::get('metas-import', [SeoMetaWebController::class, 'showImport'])->name('metas.import');
-        Route::post('metas-import', [SeoMetaWebController::class, 'import'])->name('metas.import.store');
+        Route::post('metas-import', [SeoMetaWebController::class, 'import'])->middleware('throttle:10,60')->name('metas.import.store');
         Route::get('metas-hreflang', [SeoMetaWebController::class, 'hreflangIndex'])->name('metas.hreflang');
         Route::post('metas/{meta}/translate', [SeoMetaWebController::class, 'translateMeta'])->name('metas.translate');
         Route::post('metas/{meta}/create-locale', [SeoMetaWebController::class, 'createLocale'])->name('metas.create-locale');
@@ -53,7 +57,7 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::post('metas-bulk-generate-canonicals', [SeoMetaWebController::class, 'bulkGenerateCanonicals'])->name('metas.bulk-generate-canonicals');
         Route::get('metas-export-json', [SeoMetaWebController::class, 'exportJson'])->name('metas.export-json');
         Route::get('metas-import-json', [SeoMetaWebController::class, 'showImportJson'])->name('metas.import-json');
-        Route::post('metas-import-json', [SeoMetaWebController::class, 'importJson'])->name('metas.import-json.store');
+        Route::post('metas-import-json', [SeoMetaWebController::class, 'importJson'])->middleware('throttle:5,60')->name('metas.import-json.store');
 
         Route::resource('redirects', SeoRedirectController::class);
         Route::patch('redirects/{redirect}/toggle-active', [SeoRedirectController::class, 'toggleActive'])->name('redirects.toggle-active');
@@ -62,14 +66,27 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::get('redirects-detect-chains', [SeoRedirectController::class, 'detectChains'])->name('redirects.detect-chains');
         Route::get('redirects-export', [SeoRedirectController::class, 'export'])->name('redirects.export');
         Route::get('redirects-import', [SeoRedirectController::class, 'showImport'])->name('redirects.import');
-        Route::post('redirects-import', [SeoRedirectController::class, 'import'])->name('redirects.import.store');
+        Route::post('redirects-import', [SeoRedirectController::class, 'import'])->middleware('throttle:10,60')->name('redirects.import.store');
         Route::get('redirects-htaccess-import', [SeoRedirectController::class, 'showHtaccessImport'])->name('redirects.htaccess-import');
-        Route::post('redirects-htaccess-import', [SeoRedirectController::class, 'importHtaccess'])->name('redirects.htaccess-import.store');
+        Route::post('redirects-htaccess-import', [SeoRedirectController::class, 'importHtaccess'])->middleware('throttle:10,60')->name('redirects.htaccess-import.store');
 
         Route::get('robots', [RobotsTxtController::class, 'edit'])->name('robots.edit');
         Route::post('robots', [RobotsTxtController::class, 'update'])->name('robots.update');
         Route::post('robots/reset', [RobotsTxtController::class, 'reset'])->name('robots.reset');
         Route::post('robots/test-url', [RobotsTxtController::class, 'testUrl'])->name('robots.test-url');
+
+        Route::get('llms', [LlmsTxtController::class, 'edit'])->name('llms.edit');
+        Route::post('llms', [LlmsTxtController::class, 'update'])->name('llms.update');
+        Route::post('llms/reset', [LlmsTxtController::class, 'reset'])->name('llms.reset');
+
+        Route::get('indexnow', [IndexNowController::class, 'index'])->name('indexnow.index');
+        Route::post('indexnow/submit', [IndexNowController::class, 'submit'])->middleware('throttle:10,60')->name('indexnow.submit');
+
+        // Schema.org per-page editor
+        Route::get('metas/{meta}/schema-org', [SchemaOrgController::class, 'edit'])->name('schema-org.edit');
+        Route::put('metas/{meta}/schema-org', [SchemaOrgController::class, 'update'])->name('schema-org.update');
+        Route::post('metas/{meta}/schema-org/validate', [SchemaOrgController::class, 'validateJson'])->name('schema-org.validate');
+        Route::get('schema-org/template/{type}', [SchemaOrgController::class, 'template'])->name('schema-org.template');
         Route::post('redirects/{redirect}/test', [SeoRedirectController::class, 'test'])->name('redirects.test');
         Route::get('redirects/{redirect}/analytics', [SeoRedirectController::class, 'analytics'])->name('redirects.analytics');
 
@@ -140,12 +157,21 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
 
         // Search Console CSV Import
         Route::get('search-console/import', [SeoDashboardController::class, 'showSearchConsoleImport'])->name('search-console.import');
-        Route::post('search-console/import', [SeoDashboardController::class, 'importSearchConsole'])->name('search-console.import.store');
+        Route::post('search-console/import', [SeoDashboardController::class, 'importSearchConsole'])->middleware('throttle:5,60')->name('search-console.import.store');
     });
 });
 
 // Public - Robots.txt Service
 Route::get('/robots.txt', [RobotsTxtController::class, 'serve'])->middleware('web')->name('robots-txt.serve');
+
+// Public - llms.txt (AI crawler directives)
+Route::get('/llms.txt', [LlmsTxtController::class, 'serve'])->middleware('web')->name('llms-txt.serve');
+
+// Public - IndexNow key file (permite a los motores verificar la propiedad del dominio)
+Route::get('/{indexnowKey}.txt', IndexNowKeyController::class)
+    ->where('indexnowKey', '[A-Za-z0-9]{8,128}')
+    ->middleware('web')
+    ->name('seo.indexnow.key');
 
 // Public Sitemap Routes (sitemap.xml is handled by the Page module as 'sitemap')
 Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
