@@ -63,7 +63,7 @@ abstract class AbstractMailProvider implements MailProviderInterface
      */
     protected function logError(string $message, array $context = []): void
     {
-        Log::error("[{$this->getName()}] {$message}", array_merge($context, [
+        Log::channel('mailrelay')->error("[{$this->getName()}] {$message}", array_merge($context, [
             'provider' => $this->getName(),
             'timestamp' => now()->toIso8601String(),
         ]));
@@ -74,7 +74,7 @@ abstract class AbstractMailProvider implements MailProviderInterface
      */
     protected function logInfo(string $message, array $context = []): void
     {
-        Log::info("[{$this->getName()}] {$message}", array_merge($context, [
+        Log::channel('mailrelay')->info("[{$this->getName()}] {$message}", array_merge($context, [
             'provider' => $this->getName(),
         ]));
     }

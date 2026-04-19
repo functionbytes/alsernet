@@ -5,6 +5,7 @@ namespace Modules\Mailrelay\Entities;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Configuración de providers de email (Mailrelay, Mailtrap, SendGrid, etc.)
@@ -118,6 +119,10 @@ class MailProvider extends Model
                 }
             }
         });
+
+        // Invalida el cache de providers al guardar o eliminar
+        static::saved(fn () => Cache::forget('mailrelay.providers.all'));
+        static::deleted(fn () => Cache::forget('mailrelay.providers.all'));
     }
 
     /**

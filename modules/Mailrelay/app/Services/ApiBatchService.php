@@ -4,35 +4,41 @@ namespace Modules\Mailrelay\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 
 class ApiBatchService
 {
-    protected $client;
+    private string $apiUrl;
 
-    protected $apiKey;
-
-    protected $apiUrl;
-
-    public function __construct()
+    public function __construct(private readonly Client $client)
     {
-        $this->apiKey = env('MAILRELAY_API_KEY');
-        $this->apiUrl = env('MAILRELAY_URL', 'https://app.mailrelay.com/api');
-        $this->client = new Client;
+        // TODO: migrate api_key to config('mailrelay.api_key') once MailrelayProvider
+        //       removes its own env() call (tracked in MR-002).
+        $this->apiUrl = config('mailrelay.api_url', 'https://app.mailrelay.com/api');
     }
 
-    public function executeBatch($batchData)
+    /**
+     * @param  array<mixed>  $batchData
+     * @return array<mixed>
+     */
+    public function executeBatch(array $batchData): array
     {
         try {
             $response = $this->client->post("{$this->apiUrl}/batches", [
                 'json' => $batchData,
                 'headers' => [
-                    'Authorization' => "Bearer {$this->apiKey}",
+                    'Authorization' => 'Bearer '.config('mailrelay.api_key'),
                 ],
             ]);
 
-            return json_decode($response->getBody()->getContents(), true);
+            return json_decode($response->getBody()->getContents(), true) ?? [];
         } catch (RequestException $e) {
-            return ['error' => $e->getMessage()];
+            Log::channel('mailrelay')->error('Mailrelay batch request failed', [
+                'url' => "{$this->apiUrl}/batches",
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['error' => 'Batch request failed'];
         }
     }
 }

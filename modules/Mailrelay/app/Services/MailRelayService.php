@@ -3,6 +3,7 @@
 namespace Modules\Mailrelay\Services;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Mailrelay\Entities\Campaign;
@@ -93,7 +94,7 @@ class MailRelayService
 
                 if ($statusCode >= 200 && $statusCode < 300) {
                     if (config('mailrelay.logging.enabled')) {
-                        Log::channel(config('mailrelay.logging.channel', 'stack'))
+                        Log::channel('mailrelay')
                             ->info('Mailrelay API request successful', [
                                 'method' => $method,
                                 'endpoint' => $endpoint,
@@ -105,7 +106,7 @@ class MailRelayService
                 }
 
                 throw new \Exception("API returned status code {$statusCode}: {$body}");
-            } catch (\GuzzleHttp\Exception\RequestException $e) {
+            } catch (RequestException $e) {
                 $attempt++;
 
                 if ($attempt >= $this->retryConfig['max_attempts']) {
@@ -114,7 +115,7 @@ class MailRelayService
                         $message .= ' - '.$e->getResponse()->getBody()->getContents();
                     }
 
-                    Log::error('Mailrelay API request failed after retries', [
+                    Log::channel('mailrelay')->error('Mailrelay API request failed after retries', [
                         'method' => $method,
                         'endpoint' => $endpoint,
                         'error' => $message,
@@ -127,7 +128,7 @@ class MailRelayService
                 usleep($delay * 1000);
                 $delay *= $this->retryConfig['multiplier'];
             } catch (\Exception $e) {
-                Log::error('Mailrelay API request failed', [
+                Log::channel('mailrelay')->error('Mailrelay API request failed', [
                     'method' => $method,
                     'endpoint' => $endpoint,
                     'error' => $e->getMessage(),
@@ -244,7 +245,7 @@ class MailRelayService
             return $syncedCount;
 
         } catch (\Exception $e) {
-            Log::error('Failed to sync Mailrelay groups', ['error' => $e->getMessage()]);
+            Log::channel('mailrelay')->error('Failed to sync Mailrelay groups', ['error' => $e->getMessage()]);
 
             return 0;
         }
@@ -385,7 +386,7 @@ class MailRelayService
             return true;
 
         } catch (\Exception $e) {
-            Log::error('Failed to sync campaign analytics', [
+            Log::channel('mailrelay')->error('Failed to sync campaign analytics', [
                 'campaign_id' => $campaign->id,
                 'error' => $e->getMessage(),
             ]);
@@ -457,7 +458,7 @@ class MailRelayService
         try {
             return $this->request('GET', '/account/package');
         } catch (\Exception $e) {
-            Log::error('Failed to get Mailrelay package info', ['error' => $e->getMessage()]);
+            Log::channel('mailrelay')->error('Failed to get Mailrelay package info', ['error' => $e->getMessage()]);
 
             return [];
         }
@@ -535,7 +536,7 @@ class MailRelayService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Failed to delete subscriber from Mailrelay', [
+            Log::channel('mailrelay')->error('Failed to delete subscriber from Mailrelay', [
                 'subscriber_id' => $subscriber->id,
                 'error' => $e->getMessage(),
             ]);
@@ -563,7 +564,7 @@ class MailRelayService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Failed to add subscriber to group', [
+            Log::channel('mailrelay')->error('Failed to add subscriber to group', [
                 'subscriber_id' => $subscriber->id,
                 'group_id' => $groupId,
                 'error' => $e->getMessage(),
@@ -590,7 +591,7 @@ class MailRelayService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Failed to remove subscriber from group', [
+            Log::channel('mailrelay')->error('Failed to remove subscriber from group', [
                 'subscriber_id' => $subscriber->id,
                 'group_id' => $groupId,
                 'error' => $e->getMessage(),

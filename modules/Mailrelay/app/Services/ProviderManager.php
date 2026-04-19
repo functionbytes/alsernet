@@ -36,6 +36,26 @@ class ProviderManager
      */
     private array $instances = [];
 
+    /** Cache key for the full providers collection */
+    private const CACHE_KEY_ALL = 'mailrelay.providers.all';
+
+    /** TTL for provider cache in seconds (1 hour) */
+    private const CACHE_TTL = 3600;
+
+    /**
+     * Obtener la colección completa de providers desde cache (1 query total por hora).
+     *
+     * @return Collection<int, MailProvider>
+     */
+    private function allCached(): Collection
+    {
+        return Cache::remember(
+            self::CACHE_KEY_ALL,
+            self::CACHE_TTL,
+            fn (): Collection => MailProvider::query()->orderBy('priority', 'desc')->orderBy('name')->get()
+        );
+    }
+
     /**
      * Obtener instancia de provider por nombre del driver
      *
@@ -45,13 +65,12 @@ class ProviderManager
      */
     public function driver(string $name): MailProviderInterface
     {
-        // Verificar si ya tenemos una instancia en cache
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
         }
 
-        // Buscar configuración en BD
-        $providerConfig = MailProvider::where('driver', $name)
+        $providerConfig = $this->allCached()
+            ->where('driver', $name)
             ->where('is_active', true)
             ->first();
 
@@ -59,7 +78,6 @@ class ProviderManager
             throw new \Exception("Provider '{$name}' no está configurado o no está activo");
         }
 
-        // Crear y cachear instancia
         $this->instances[$name] = $this->createProvider($providerConfig->driver, $providerConfig->credentials);
 
         return $this->instances[$name];
@@ -74,20 +92,22 @@ class ProviderManager
      */
     public function byId(int $providerId): MailProviderInterface
     {
-        // Verificar cache por ID
         $cacheKey = "mail_provider_{$providerId}";
 
         if (isset($this->instances[$cacheKey])) {
             return $this->instances[$cacheKey];
         }
 
-        $providerConfig = MailProvider::findOrFail($providerId);
+        $providerConfig = $this->allCached()->firstWhere('id', $providerId);
+
+        if (! $providerConfig) {
+            throw new \Exception("Provider con id '{$providerId}' no existe");
+        }
 
         if (! $providerConfig->is_active) {
             throw new \Exception("Provider '{$providerConfig->name}' está desactivado");
         }
 
-        // Crear y cachear instancia
         $this->instances[$cacheKey] = $this->createProvider(
             $providerConfig->driver,
             $providerConfig->credentials
@@ -103,7 +123,8 @@ class ProviderManager
      */
     public function default(): MailProviderInterface
     {
-        $defaultProvider = MailProvider::where('is_default', true)
+        $defaultProvider = $this->allCached()
+            ->where('is_default', true)
             ->where('is_active', true)
             ->first();
 
@@ -145,10 +166,7 @@ class ProviderManager
      */
     public function configured(): Collection
     {
-        return MailProvider::where('is_active', true)
-            ->orderBy('priority', 'desc')
-            ->orderBy('name')
-            ->get();
+        return $this->allCached()->where('is_active', true)->values();
     }
 
     /**
@@ -156,10 +174,11 @@ class ProviderManager
      */
     public function all(): Collection
     {
-        return MailProvider::orderBy('is_default', 'desc')
-            ->orderBy('priority', 'desc')
-            ->orderBy('name')
-            ->get();
+        return $this->allCached()
+            ->sortByDesc('is_default')
+            ->sortByDesc('priority')
+            ->sortBy('name')
+            ->values();
     }
 
     /**
@@ -388,17 +407,16 @@ class ProviderManager
      */
     private function getOrderedProviders(?int $preferredProviderId): Collection
     {
-        $providers = MailProvider::query()
-            ->active()
+        $providers = $this->allCached()
+            ->where('is_active', true)
             ->where('connection_ok', true)
-            ->byPriority()
-            ->get();
+            ->sortByDesc('priority')
+            ->values();
 
         if (! $preferredProviderId) {
             return $providers;
         }
 
-        // Move preferred provider to the front
         $preferred = $providers->firstWhere('id', $preferredProviderId);
 
         if (! $preferred) {
@@ -412,10 +430,11 @@ class ProviderManager
     }
 
     /**
-     * Limpiar cache de instancias
+     * Limpiar cache de instancias en memoria y en Redis
      */
     public function clearCache(): void
     {
         $this->instances = [];
+        Cache::forget(self::CACHE_KEY_ALL);
     }
 }
