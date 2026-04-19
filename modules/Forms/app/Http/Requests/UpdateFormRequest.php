@@ -46,4 +46,57 @@ class UpdateFormRequest extends FormRequest
             'retention_days' => ['nullable', 'integer', 'min:1'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'El nombre es obligatorio.',
+            'name.max' => 'El nombre no puede superar los 150 caracteres.',
+            'category_id.exists' => 'La categoría seleccionada no existe.',
+            'description.max' => 'La descripción no puede superar los 1000 caracteres.',
+            'submit_button_text.max' => 'El texto del botón no puede superar los 100 caracteres.',
+            'button_position.in' => 'La posición del botón no es válida.',
+            'button_size.in' => 'El tamaño del botón no es válido.',
+            'success_animation.in' => 'La animación de éxito no es válida.',
+            'progress_bar_style.in' => 'El estilo de la barra de progreso no es válido.',
+            'webhook_url.url' => 'La URL del webhook no es válida.',
+            'redirect_url.url' => 'La URL de redirección no es válida.',
+            'max_submissions.min' => 'El máximo de envíos debe ser al menos 1.',
+            'retention_days.min' => 'Los días de retención deben ser al menos 1.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nombre',
+            'category_id' => 'categoría',
+            'description' => 'descripción',
+            'success_message' => 'mensaje de éxito',
+            'is_active' => 'estado',
+            'submit_button_text' => 'texto del botón',
+            'button_position' => 'posición del botón',
+            'button_size' => 'tamaño del botón',
+            'button_variant' => 'variante del botón',
+            'button_icon' => 'icono del botón',
+            'success_animation' => 'animación de éxito',
+            'progress_bar_style' => 'estilo barra de progreso',
+            'theme' => 'tema',
+            'custom_css' => 'CSS personalizado',
+            'custom_js' => 'JavaScript personalizado',
+            'floating_label' => 'etiqueta flotante',
+            'send_confirmation' => 'enviar confirmación',
+            'email_field_key' => 'campo de email',
+            'confirmation_subject' => 'asunto de confirmación',
+            'confirmation_message' => 'mensaje de confirmación',
+            'admin_notification_email' => 'correos de notificación',
+            'honeypot_enabled' => 'honeypot',
+            'captcha_enabled' => 'captcha',
+            'webhook_url' => 'URL del webhook',
+            'webhook_secret' => 'secreto del webhook',
+            'redirect_url' => 'URL de redirección',
+            'max_submissions' => 'máximo de envíos',
+            'retention_days' => 'días de retención',
+        ];
+    }
 }

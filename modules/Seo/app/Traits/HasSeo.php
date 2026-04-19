@@ -5,6 +5,14 @@ namespace Modules\Seo\Traits;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Modules\Seo\Models\SeoMeta;
 
+/**
+ * Adds SEO meta accessors to a model.
+ *
+ * IMPORTANT: when using these accessors in a collection/listing, always
+ * eager-load the relation (->with('seoMeta')) to avoid N+1 queries. The
+ * accessors guard against unloaded relations so missing eager-loads
+ * degrade gracefully to fallbacks.
+ */
 trait HasSeo
 {
     /**
@@ -16,11 +24,19 @@ trait HasSeo
     }
 
     /**
+     * Return the loaded seoMeta relation or null if it wasn't eager-loaded.
+     */
+    protected function loadedSeoMeta(): ?SeoMeta
+    {
+        return $this->relationLoaded('seoMeta') ? $this->getRelation('seoMeta') : null;
+    }
+
+    /**
      * Get the SEO title (with fallback to model's title).
      */
     public function getSeoTitleAttribute(): ?string
     {
-        return $this->seoMeta?->title ?? $this->title ?? null;
+        return $this->loadedSeoMeta()?->title ?? $this->title ?? null;
     }
 
     /**
@@ -28,7 +44,7 @@ trait HasSeo
      */
     public function getSeoDescriptionAttribute(): ?string
     {
-        return $this->seoMeta?->description ?? $this->description ?? null;
+        return $this->loadedSeoMeta()?->description ?? $this->description ?? null;
     }
 
     /**
@@ -36,7 +52,7 @@ trait HasSeo
      */
     public function getSeoKeywordsAttribute(): ?string
     {
-        return $this->seoMeta?->keywords ?? null;
+        return $this->loadedSeoMeta()?->keywords ?? null;
     }
 
     /**
@@ -44,7 +60,9 @@ trait HasSeo
      */
     public function getOgTitleAttribute(): ?string
     {
-        return $this->seoMeta?->og_title ?? $this->seoMeta?->title ?? $this->title ?? null;
+        $meta = $this->loadedSeoMeta();
+
+        return $meta?->og_title ?? $meta?->title ?? $this->title ?? null;
     }
 
     /**
@@ -52,7 +70,9 @@ trait HasSeo
      */
     public function getOgDescriptionAttribute(): ?string
     {
-        return $this->seoMeta?->og_description ?? $this->seoMeta?->description ?? $this->description ?? null;
+        $meta = $this->loadedSeoMeta();
+
+        return $meta?->og_description ?? $meta?->description ?? $this->description ?? null;
     }
 
     /**
@@ -60,7 +80,7 @@ trait HasSeo
      */
     public function getOgImageAttribute(): ?string
     {
-        return $this->seoMeta?->og_image ?? config('Seo.default_og_image');
+        return $this->loadedSeoMeta()?->og_image ?? config('Seo.default_og_image');
     }
 
     /**
@@ -68,7 +88,7 @@ trait HasSeo
      */
     public function getOgTypeAttribute(): string
     {
-        return $this->seoMeta?->og_type ?? 'website';
+        return $this->loadedSeoMeta()?->og_type ?? 'website';
     }
 
     /**
@@ -76,7 +96,7 @@ trait HasSeo
      */
     public function getTwitterCardAttribute(): string
     {
-        return $this->seoMeta?->twitter_card ?? 'summary';
+        return $this->loadedSeoMeta()?->twitter_card ?? 'summary';
     }
 
     /**
@@ -84,7 +104,9 @@ trait HasSeo
      */
     public function getTwitterTitleAttribute(): ?string
     {
-        return $this->seoMeta?->twitter_title ?? $this->seoMeta?->title ?? $this->title ?? null;
+        $meta = $this->loadedSeoMeta();
+
+        return $meta?->twitter_title ?? $meta?->title ?? $this->title ?? null;
     }
 
     /**
@@ -92,7 +114,9 @@ trait HasSeo
      */
     public function getTwitterDescriptionAttribute(): ?string
     {
-        return $this->seoMeta?->twitter_description ?? $this->seoMeta?->description ?? $this->description ?? null;
+        $meta = $this->loadedSeoMeta();
+
+        return $meta?->twitter_description ?? $meta?->description ?? $this->description ?? null;
     }
 
     /**
@@ -100,7 +124,9 @@ trait HasSeo
      */
     public function getTwitterImageAttribute(): ?string
     {
-        return $this->seoMeta?->twitter_image ?? $this->seoMeta?->og_image ?? config('Seo.default_og_image');
+        $meta = $this->loadedSeoMeta();
+
+        return $meta?->twitter_image ?? $meta?->og_image ?? config('Seo.default_og_image');
     }
 
     /**
@@ -108,7 +134,7 @@ trait HasSeo
      */
     public function getCanonicalUrlAttribute(): ?string
     {
-        return $this->seoMeta?->canonical_url ?? null;
+        return $this->loadedSeoMeta()?->canonical_url ?? null;
     }
 
     /**
@@ -116,7 +142,7 @@ trait HasSeo
      */
     public function getRobotsAttribute(): string
     {
-        return $this->seoMeta?->robots ?? 'index,follow';
+        return $this->loadedSeoMeta()?->robots ?? 'index,follow';
     }
 
     /**

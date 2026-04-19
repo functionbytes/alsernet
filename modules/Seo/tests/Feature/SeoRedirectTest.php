@@ -15,13 +15,13 @@ class SeoRedirectTest extends TestCase
     public function test_redirect_list_requires_auth(): void
     {
         $this->get(route('setting.seo.redirects.index'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('auth.login'));
     }
 
     public function test_create_form_requires_auth(): void
     {
         $this->get(route('setting.seo.redirects.create'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('auth.login'));
     }
 
     // -------------------------------------------------------------------------
@@ -119,7 +119,7 @@ class SeoRedirectTest extends TestCase
     public function test_detect_chains_requires_auth(): void
     {
         $this->get(route('setting.seo.redirects.detect-chains'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('auth.login'));
     }
 
     public function test_detect_chains_returns_json(): void
@@ -170,14 +170,14 @@ class SeoRedirectTest extends TestCase
     public function test_robots_txt_edit_requires_auth(): void
     {
         $this->get(route('setting.seo.robots.edit'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('auth.login'));
     }
 
     public function test_robots_txt_can_be_edited(): void
     {
-        $user = $this->createUser();
+        $user = $this->createUser(['Seo.robots.index', 'Seo.robots.update']);
 
-        $newContent = "User-agent: *\nDisallow: /admin\n";
+        $newContent = "User-agent: *\nDisallow: /admin";
 
         $this->actingAs($user)
             ->post(route('setting.seo.robots.update'), [
@@ -185,9 +185,10 @@ class SeoRedirectTest extends TestCase
             ])
             ->assertRedirect();
 
-        // Verify the setting was persisted
+        // Verify the setting was persisted (TrimStrings middleware strips
+        // trailing whitespace, so compare against the trimmed content).
         $stored = Setting::get('seo.robots_txt');
-        $this->assertEquals($newContent, $stored);
+        $this->assertEquals(trim($newContent), $stored);
     }
 
     // -------------------------------------------------------------------------
@@ -206,7 +207,7 @@ class SeoRedirectTest extends TestCase
     public function test_sitemap_admin_page_requires_auth(): void
     {
         $this->get(route('setting.seo.sitemap.index'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('auth.login'));
     }
 
     // -------------------------------------------------------------------------

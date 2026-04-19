@@ -7,6 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\BulkActionFieldTypeRequest;
+use Modules\Forms\Http\Requests\ReorderFieldTypeRequest;
+use Modules\Forms\Http\Requests\UpdateFieldTypeFullRequest;
+use Modules\Forms\Http\Requests\UpdateFieldTypeRequest;
 use Modules\Forms\Models\FormFieldTypeSetting;
 
 class FormFieldTypeSettingController extends Controller
@@ -36,21 +40,9 @@ class FormFieldTypeSettingController extends Controller
         return view('forms::settings.field-types.edit', compact('typeSetting'));
     }
 
-    public function updateFull(Request $request, FormFieldTypeSetting $typeSetting): RedirectResponse
+    public function updateFull(UpdateFieldTypeFullRequest $request, FormFieldTypeSetting $typeSetting): RedirectResponse
     {
-        $data = $request->validate([
-            'label' => ['required', 'string', 'max:100'],
-            'icon' => ['required', 'string', 'max:100'],
-            'group_name' => ['required', 'string', 'max:100'],
-            'group_order' => ['required', 'integer', 'min:0'],
-            'sort_order' => ['required', 'integer', 'min:0'],
-            'is_enabled' => ['boolean'],
-            'default_css_class' => ['nullable', 'string', 'max:255'],
-            'default_placeholder' => ['nullable', 'string', 'max:255'],
-            'custom_css' => ['nullable', 'string'],
-            'custom_html' => ['nullable', 'string'],
-        ]);
-
+        $data = $request->validated();
         $data['is_enabled'] = $request->boolean('is_enabled');
 
         $typeSetting->update($data);
@@ -59,20 +51,9 @@ class FormFieldTypeSettingController extends Controller
             ->with('success', 'Tipo de campo actualizado correctamente.');
     }
 
-    public function update(Request $request, FormFieldTypeSetting $typeSetting): JsonResponse
+    public function update(UpdateFieldTypeRequest $request, FormFieldTypeSetting $typeSetting): JsonResponse
     {
-        $data = $request->validate([
-            'label' => ['required', 'string', 'max:100'],
-            'icon' => ['required', 'string', 'max:100'],
-            'is_enabled' => ['boolean'],
-            'default_css_class' => ['nullable', 'string', 'max:255'],
-            'default_placeholder' => ['nullable', 'string', 'max:255'],
-            'default_settings' => ['nullable', 'array'],
-            'sort_order' => ['nullable', 'integer'],
-            'group_name' => ['nullable', 'string', 'max:100'],
-        ]);
-
-        $typeSetting->update($data);
+        $typeSetting->update($request->validated());
 
         return response()->json(['success' => true]);
     }
@@ -84,29 +65,19 @@ class FormFieldTypeSettingController extends Controller
         return response()->json(['success' => true, 'is_enabled' => $typeSetting->is_enabled]);
     }
 
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkActionFieldTypeRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'action' => ['required', 'string', 'in:enable,disable'],
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer'],
-        ]);
+        $validated = $request->validated();
 
-        $count = FormFieldTypeSetting::whereIn('id', $validated['ids'])
+        $count = FormFieldTypeSetting::query()->whereIn('id', $validated['ids'])
             ->update(['is_enabled' => $validated['action'] === 'enable']);
 
         return response()->json(['success' => true, 'count' => $count]);
     }
 
-    public function reorder(Request $request): JsonResponse
+    public function reorder(ReorderFieldTypeRequest $request): JsonResponse
     {
-        $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.id' => ['required', 'integer'],
-            'items.*.sort_order' => ['required', 'integer', 'min:0'],
-        ]);
-
-        foreach ($request->input('items') as $item) {
+        foreach ($request->validated()['items'] as $item) {
             FormFieldTypeSetting::query()
                 ->where('id', $item['id'])
                 ->update(['sort_order' => $item['sort_order']]);

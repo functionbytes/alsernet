@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Modules\Forms\Database\Factories\FormFactory;
+use Modules\Forms\Services\FormPageCacheInvalidator;
+use Modules\Seo\Traits\HasSeo;
 
 class Form extends Model
 {
     use HasFactory;
+    use HasSeo;
 
     protected $table = 'forms';
 
@@ -195,11 +199,73 @@ class Form extends Model
 
     public function getSubmissionsCount(): int
     {
-        return $this->submissions()->count();
+        $ttl = (int) config('forms.cache.counters_ttl_seconds', 60);
+
+        return (int) Cache::remember(
+            "forms:{$this->id}:submissions_count",
+            $ttl,
+            fn () => $this->submissions()->count(),
+        );
     }
 
     public function getUnreadCount(): int
     {
-        return $this->submissions()->where('is_read', false)->count();
+        $ttl = (int) config('forms.cache.counters_ttl_seconds', 60);
+
+        return (int) Cache::remember(
+            "forms:{$this->id}:unread_count",
+            $ttl,
+            fn () => $this->submissions()->where('is_read', false)->count(),
+        );
+    }
+
+    public function flushCountersCache(): void
+    {
+        Cache::forget("forms:{$this->id}:submissions_count");
+        Cache::forget("forms:{$this->id}:unread_count");
+    }
+
+    public function flushShortcodeCache(): void
+    {
+        self::flushShortcodeCacheFor($this->id, $this->slug);
+
+        if ($this->wasChanged('slug') && ($original = $this->getOriginal('slug'))) {
+            self::flushShortcodeCacheFor($this->id, $original);
+        }
+    }
+
+    public static function flushShortcodeCacheFor(int $id, ?string $slug): void
+    {
+        if (self::cacheDriverSupportsTags()) {
+            // Solo flush del tag específico de este form
+            Cache::tags(["forms:shortcode:{$id}"])->flush();
+
+            return;
+        }
+
+        Cache::forget("forms:active:{$id}");
+
+        if ($slug) {
+            Cache::forget("forms:active:slug:{$slug}");
+        }
+    }
+
+    public static function cacheDriverSupportsTags(): bool
+    {
+        return in_array(config('cache.default'), ['redis', 'memcached'], true);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $form) {
+            $form->flushShortcodeCache();
+            app(FormPageCacheInvalidator::class)->invalidate($form);
+        });
+
+        static::deleted(function (self $form) {
+            $form->flushCountersCache();
+            $form->flushShortcodeCache();
+            app(FormPageCacheInvalidator::class)->invalidate($form);
+        });
     }
 }

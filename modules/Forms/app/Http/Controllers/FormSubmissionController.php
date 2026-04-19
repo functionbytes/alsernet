@@ -11,6 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\AddSubmissionNoteRequest;
+use Modules\Forms\Http\Requests\AssignSubmissionRequest;
+use Modules\Forms\Http\Requests\BulkAnonymizeRequest;
+use Modules\Forms\Http\Requests\BulkDeleteSubmissionsRequest;
+use Modules\Forms\Http\Requests\ResendSubmissionEmailRequest;
+use Modules\Forms\Http\Requests\UpdateSubmissionStatusRequest;
 use Modules\Forms\Jobs\ExportFormSubmissionsJob;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
@@ -147,32 +153,19 @@ class FormSubmissionController extends Controller
         return Storage::disk('local')->download($filepath, $file);
     }
 
-    public function bulkDelete(Request $request, Form $form): JsonResponse
+    public function bulkDelete(BulkDeleteSubmissionsRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.submissions.delete');
-
-        $request->validate([
-            'ids' => ['required', 'array'],
-            'ids.*' => ['integer'],
-        ]);
-
         $deleted = FormSubmission::query()
             ->where('form_id', $form->id)
-            ->whereIn('id', $request->ids)
+            ->whereIn('id', $request->validated()['ids'])
             ->delete();
 
         return response()->json(['success' => true, 'deleted' => $deleted]);
     }
 
-    public function updateStatus(Request $request, Form $form, FormSubmission $submission): JsonResponse
+    public function updateStatus(UpdateSubmissionStatusRequest $request, Form $form, FormSubmission $submission): JsonResponse
     {
-        $this->authorize('Forms.submissions.update');
-
-        $request->validate([
-            'status' => ['required', 'in:new,in_review,resolved,rejected'],
-        ]);
-
-        $submission->update(['status' => $request->status]);
+        $submission->update(['status' => $request->validated()['status']]);
 
         return response()->json(['success' => true, 'status' => $submission->status]);
     }
@@ -195,27 +188,19 @@ class FormSubmissionController extends Controller
         return response()->json(['success' => true, 'is_starred' => $submission->is_starred]);
     }
 
-    public function assign(Request $request, Form $form, FormSubmission $submission): JsonResponse
+    public function assign(AssignSubmissionRequest $request, Form $form, FormSubmission $submission): JsonResponse
     {
-        $request->validate([
-            'assigned_to' => ['nullable', 'exists:users,id'],
-        ]);
-
-        $submission->update(['assigned_to' => $request->assigned_to]);
+        $submission->update(['assigned_to' => $request->validated()['assigned_to'] ?? null]);
 
         return response()->json(['success' => true]);
     }
 
-    public function addNote(Request $request, Form $form, FormSubmission $submission): JsonResponse
+    public function addNote(AddSubmissionNoteRequest $request, Form $form, FormSubmission $submission): JsonResponse
     {
-        $request->validate([
-            'note' => ['required', 'string', 'max:5000'],
-        ]);
-
         $note = FormSubmissionNote::query()->create([
             'submission_id' => $submission->id,
             'user_id' => auth()->id(),
-            'note' => $request->note,
+            'note' => $request->validated()['note'],
         ]);
 
         $note->load('user');
@@ -252,15 +237,9 @@ class FormSubmissionController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function resendEmail(Request $request, Form $form, FormSubmission $submission): JsonResponse
+    public function resendEmail(ResendSubmissionEmailRequest $request, Form $form, FormSubmission $submission): JsonResponse
     {
-        $this->authorize('Forms.submissions.update');
-
-        $request->validate([
-            'type' => ['required', 'in:admin,client'],
-        ]);
-
-        if ($request->type === 'admin') {
+        if ($request->validated()['type'] === 'admin') {
             $this->emailService->notifyAdmin($form, $submission);
         } else {
             $this->emailService->sendConfirmation($form, $submission);
@@ -280,18 +259,11 @@ class FormSubmissionController extends Controller
         return $pdf->download("submission-{$submission->id}.pdf");
     }
 
-    public function bulkAnonymize(Request $request, Form $form): JsonResponse
+    public function bulkAnonymize(BulkAnonymizeRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.submissions.delete');
-
-        $request->validate([
-            'ids' => ['required', 'array'],
-            'ids.*' => ['integer'],
-        ]);
-
         $submissions = FormSubmission::query()
             ->where('form_id', $form->id)
-            ->whereIn('id', $request->ids)
+            ->whereIn('id', $request->validated()['ids'])
             ->get();
 
         $piiFieldTypes = ['email', 'tel'];

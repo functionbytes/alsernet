@@ -50,3 +50,74 @@
 /* Theme: minimal */
 .forms-theme-minimal .form-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; }
 .forms-theme-minimal .form-control, .forms-theme-minimal .form-select { border-color: transparent; background: #f8f9fa; }
+
+/* Accesibilidad: :focus-visible para outline solo con teclado */
+.forms-form :focus { outline: none; }
+.forms-form :focus-visible,
+.forms-form .form-control:focus-visible,
+.forms-form .form-select:focus-visible,
+.forms-form .form-check-input:focus-visible,
+.forms-form .btn:focus-visible {
+    outline: 2px solid #90bb13;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.25);
+}
+
+/* Tap targets mobile mínimos 44x44 (WCAG 2.2 AA) */
+@media (max-width: 576px) {
+    .forms-form .form-control,
+    .forms-form .form-select,
+    .forms-form .btn,
+    .forms-form .form-check-input {
+        min-height: 44px;
+    }
+    .forms-form .form-check-input {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* Error summary al top */
+.forms-error-summary {
+    border: 2px solid #dc3545;
+    background: #fff5f5;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+.forms-error-summary h3 {
+    color: #dc3545;
+    font-size: 1rem;
+    margin: 0 0 8px;
+}
+.forms-error-summary ul { margin: 0; padding-left: 20px; }
+.forms-error-summary a { color: #dc3545; text-decoration: underline; }
+
+/* Character counter */
+.forms-char-counter { font-size: 0.8rem; }
+.forms-char-counter.text-danger { font-weight: 600; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .forms-form *,
+    .forms-form *::before,
+    .forms-form *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Utility: visually-hidden (para aria-live regions) */
+.forms-form .visually-hidden,
+.forms-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}

@@ -16,9 +16,13 @@ use Modules\Seo\Console\Commands\IndexNowSubmitCommand;
 use Modules\Seo\Console\Commands\PingSitemapCommand;
 use Modules\Seo\Console\Commands\PurgeWebVitalsCommand;
 use Modules\Seo\Console\Commands\SeoCleanupCommand;
+use Modules\Seo\Console\Commands\SeoHealthCommand;
+use Modules\Seo\Console\Commands\SeoPageSpeedCommand;
+use Modules\Seo\Console\Commands\SeoUpdateRankingsCommand;
 use Modules\Seo\Console\Commands\SeoWeeklyReportCommand;
 use Modules\Seo\Http\Middleware\AutoPaginationMiddleware;
 use Modules\Seo\Http\Middleware\CacheSitemapResponse;
+use Modules\Seo\Http\Middleware\PerformanceHintsMiddleware;
 use Modules\Seo\Http\Middleware\RedirectMiddleware;
 use Modules\Seo\Http\Middleware\Track404Middleware;
 use Modules\Seo\Http\Middleware\XRobotsTagMiddleware;
@@ -181,6 +185,10 @@ class SeoServiceProvider extends ServiceProvider
         Blade::component('Seo::components.seo-tags', 'seo-tags');
         Blade::component('Seo::components.seo-badge', 'seo-badge');
         Blade::component('Seo::components.seo-stats-widget', 'seo-stats-widget');
+        Blade::component('Seo::components.seo-image', 'seo-image');
+        Blade::component('Seo::components.seo-hero-image', 'seo-hero-image');
+        Blade::component('Seo::components.serp-preview', 'serp-preview');
+        Blade::component('Seo::components.seo-health-widget', 'seo-health-widget');
 
         Blade::directive('seoBadge', function (string $expression) {
             return "<?php echo view('Seo::components.seo-badge', ['model' => {$expression}])->render(); ?>";
@@ -232,6 +240,9 @@ class SeoServiceProvider extends ServiceProvider
                 SeoCleanupCommand::class,
                 IndexNowSubmitCommand::class,
                 PurgeWebVitalsCommand::class,
+                SeoHealthCommand::class,
+                SeoPageSpeedCommand::class,
+                SeoUpdateRankingsCommand::class,
             ]);
         }
     }
@@ -264,6 +275,7 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Reporte SEO', 'route' => 'setting.seo.report.index'],
                 ['label' => 'Verificación', 'route' => 'setting.seo.verification.index'],
                 ['label' => 'Search Console', 'route' => 'setting.seo.search-console.import'],
+                ['label' => 'Configuración SEO', 'route' => 'setting.seo.settings.edit'],
             ],
         ]);
     }
@@ -287,6 +299,9 @@ class SeoServiceProvider extends ServiceProvider
     {
         $router = $this->app->make(Router::class);
         $router->pushMiddlewareToGroup('web', Track404Middleware::class);
+
+        // Inject performance hints + security headers on anonymous HTML responses
+        $router->pushMiddlewareToGroup('web', PerformanceHintsMiddleware::class);
     }
 
     /**
@@ -354,6 +369,22 @@ class SeoServiceProvider extends ServiceProvider
                 ->dailyAt('03:45')
                 ->name('seo:purge-web-vitals')
                 ->withoutOverlapping();
+
+            // Daily health check — writes output to storage/logs/seo-health.log
+            // so the ops team can tail it and monitor the exit code.
+            $schedule->command('seo:health')
+                ->dailyAt('07:00')
+                ->name('seo:health')
+                ->appendOutputTo(storage_path('logs/seo-health.log'))
+                ->withoutOverlapping();
+
+            // Weekly PageSpeed snapshot for top URLs (only if API key is configured)
+            if (seo_setting('pagespeed_api_key', config('Seo.pagespeed_api_key'))) {
+                $schedule->command('seo:pagespeed')
+                    ->weeklyOn(2, '05:30')
+                    ->name('seo:pagespeed-weekly')
+                    ->withoutOverlapping();
+            }
         });
     }
 

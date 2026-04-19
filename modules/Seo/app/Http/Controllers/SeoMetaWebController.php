@@ -15,6 +15,13 @@ use Modules\Blog\Models\BlogPost;
 use Modules\Locales\Models\Locale;
 use Modules\Page\Models\Page;
 use Modules\Page\Services\PageService;
+use Modules\Seo\Http\Requests\BulkUpdateRobotsRequest;
+use Modules\Seo\Http\Requests\CreateLocaleSeoMetaRequest;
+use Modules\Seo\Http\Requests\GenerateOgImageRequest;
+use Modules\Seo\Http\Requests\ImportSeoCsvRequest;
+use Modules\Seo\Http\Requests\ImportSeoJsonRequest;
+use Modules\Seo\Http\Requests\InlineUpdateSeoMetaRequest;
+use Modules\Seo\Http\Requests\TranslateSeoMetaRequest;
 use Modules\Seo\Http\Requests\UpdateSeoMetaRequest;
 use Modules\Seo\Models\SeoAuditLog;
 use Modules\Seo\Models\SeoMeta;
@@ -92,15 +99,22 @@ class SeoMetaWebController extends Controller
             ->whereNotNull('seoable_type')
             ->pluck('seoable_type');
 
+        $aggregates = SeoMeta::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN (robots IS NULL OR robots LIKE '%index%') AND robots NOT LIKE '%noindex%' THEN 1 ELSE 0 END) as indexable")
+            ->selectRaw("SUM(CASE WHEN robots LIKE '%noindex%' THEN 1 ELSE 0 END) as noindex")
+            ->selectRaw('SUM(CASE WHEN description IS NULL THEN 1 ELSE 0 END) as missing_description')
+            ->selectRaw('SUM(CASE WHEN og_image IS NULL THEN 1 ELSE 0 END) as missing_og_image')
+            ->selectRaw('AVG(CASE WHEN seo_score IS NOT NULL THEN seo_score ELSE NULL END) as avg_score')
+            ->first();
+
         $stats = [
-            'total' => SeoMeta::count(),
-            'indexable' => SeoMeta::where('robots', 'like', '%index%')
-                ->where('robots', 'not like', '%noindex%')
-                ->count(),
-            'noindex' => SeoMeta::where('robots', 'like', '%noindex%')->count(),
-            'missing_description' => SeoMeta::whereNull('description')->count(),
-            'missing_og_image' => SeoMeta::whereNull('og_image')->count(),
-            'avg_score' => round(SeoMeta::query()->whereNotNull('seo_score')->avg('seo_score') ?? 0),
+            'total' => (int) ($aggregates->total ?? 0),
+            'indexable' => (int) ($aggregates->indexable ?? 0),
+            'noindex' => (int) ($aggregates->noindex ?? 0),
+            'missing_description' => (int) ($aggregates->missing_description ?? 0),
+            'missing_og_image' => (int) ($aggregates->missing_og_image ?? 0),
+            'avg_score' => round((float) ($aggregates->avg_score ?? 0)),
         ];
 
         return view('Seo::settings.metas.index', compact('metas', 'seoableTypes', 'stats', 'tab'));
@@ -152,12 +166,8 @@ class SeoMetaWebController extends Controller
     /**
      * Create a new SeoMeta record for the same seoable with a different locale.
      */
-    public function createLocale(Request $request, SeoMeta $meta): RedirectResponse
+    public function createLocale(CreateLocaleSeoMetaRequest $request, SeoMeta $meta): RedirectResponse
     {
-        $request->validate([
-            'locale' => ['required', 'string', 'max:10'],
-        ]);
-
         $locale = $request->string('locale')->toString();
 
         $existing = SeoMeta::where('seoable_type', $meta->seoable_type)
@@ -208,12 +218,9 @@ class SeoMetaWebController extends Controller
     /**
      * Inline update a single field of a SEO meta record via AJAX.
      */
-    public function inlineUpdate(Request $request, SeoMeta $meta): JsonResponse
+    public function inlineUpdate(InlineUpdateSeoMetaRequest $request, SeoMeta $meta): JsonResponse
     {
-        $validated = $request->validate([
-            'field' => 'required|in:title,description,target_keyword',
-            'value' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $meta->update([$validated['field'] => $validated['value']]);
 
@@ -223,13 +230,8 @@ class SeoMetaWebController extends Controller
     /**
      * Bulk update robots directive for multiple SEO meta records.
      */
-    public function bulkUpdateRobots(Request $request): RedirectResponse
+    public function bulkUpdateRobots(BulkUpdateRobotsRequest $request): RedirectResponse
     {
-        $request->validate([
-            'ids' => 'required|string',
-            'robots' => ['required', 'in:index,follow,noindex,follow,index,nofollow,noindex,nofollow'],
-        ]);
-
         $ids = json_decode($request->ids, true);
 
         if (empty($ids) || ! is_array($ids)) {
@@ -461,15 +463,8 @@ class SeoMetaWebController extends Controller
     /**
      * Generate an OG image for the given meta record using Intervention Image.
      */
-    public function generateOgImage(Request $request, SeoMeta $meta): JsonResponse
+    public function generateOgImage(GenerateOgImageRequest $request, SeoMeta $meta): JsonResponse
     {
-        $request->validate([
-            'text' => 'nullable|string|max:100',
-            'bg_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'text_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'template' => 'nullable|in:default,dark,gradient,minimal',
-        ]);
-
         if (! class_exists(ImageManager::class)) {
             return response()->json([
                 'error' => 'Intervention Image no está instalado. Ejecuta: composer require intervention/image',
@@ -552,13 +547,8 @@ class SeoMetaWebController extends Controller
     /**
      * Process the imported CSV file and upsert SEO meta records.
      */
-    public function import(Request $request): RedirectResponse
+    public function import(ImportSeoCsvRequest $request): RedirectResponse
     {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:4096',
-            'update_existing' => 'boolean',
-        ]);
-
         $handle = fopen($request->file('csv_file')->getPathname(), 'r');
 
         // Skip BOM if present
@@ -678,13 +668,9 @@ class SeoMetaWebController extends Controller
     /**
      * Translate meta fields using the DeepL SDK.
      */
-    public function translateMeta(Request $request, SeoMeta $meta): JsonResponse
+    public function translateMeta(TranslateSeoMetaRequest $request, SeoMeta $meta): JsonResponse
     {
-        $validated = $request->validate([
-            'target_lang' => 'required|string|in:EN,ES,FR,DE,IT,PT,NL,PL,RU,JA,ZH',
-            'fields' => 'required|array|min:1',
-            'fields.*' => 'in:title,description,og_title,og_description,keywords',
-        ]);
+        $validated = $request->validated();
 
         $deeplClass = 'DeepL\Translator';
         if (! class_exists($deeplClass)) {
@@ -833,15 +819,8 @@ class SeoMetaWebController extends Controller
     /**
      * Process an uploaded JSON backup file and import its data.
      */
-    public function importJson(Request $request): RedirectResponse
+    public function importJson(ImportSeoJsonRequest $request): RedirectResponse
     {
-        $request->validate([
-            'json_file' => 'required|file|mimes:json,txt|max:10240',
-            'import_redirects' => 'boolean',
-            'import_templates' => 'boolean',
-            'skip_existing' => 'boolean',
-        ]);
-
         $content = file_get_contents($request->file('json_file')->getPathname());
         $data = json_decode($content, true);
 

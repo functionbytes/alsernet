@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Modales — Rediseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#fafafa; --bg-panel:#fff; --bg-subtle:#f4f4f5; --bg-hover:#f4f4f5;
+  --border:#e8e8e8; --border-strong:#d4d4d8;
+  --text:#18181b; --text-soft:#52525b; --text-muted:#a1a1aa;
+  --success:#16a34a; --warning:#d97706; --danger:#dc2626;
+  --radius:8px; --radius-sm:6px;
+  --shadow-md:0 4px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.08);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  font-family:'Inter',-apple-system,sans-serif; font-size:13px; color:var(--text);
+  background:#e4e4e7;
+  -webkit-font-smoothing:antialiased; letter-spacing:-.005em;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:12.5px;color:var(--text)}
+input:focus,textarea:focus,select:focus{outline:none}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Showcase page */
+.page{ padding:28px 32px 80px; max-width:1640px; margin:0 auto; }
+.page-head{ margin-bottom:22px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+.page-title{ font-size:20px; font-weight:700; letter-spacing:-.02em; }
+.page-sub{ font-size:12px; color:var(--text-muted); margin-top:3px;}
+.tabs{ display:inline-flex; background:var(--bg-panel); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; }
+.tabs button{ padding:5px 10px; font-size:11.5px; font-weight:500; color:var(--text-soft); border-radius:5px; transition:all .12s;}
+.tabs button.active{ background:var(--text); color:#fff;}
+.tabs button:hover:not(.active){ color:var(--text);}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap:22px;
+}
+.card{
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+.card-label{
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+  font-size:10.5px; font-weight:600;
+  color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em;
+  background:linear-gradient(to bottom, #fafafa, #fff);
+}
+.card-label .num{
+  width:18px; height:18px; border-radius:4px; background:var(--text); color:#fff;
+  display:grid; place-items:center; font-size:9.5px; font-weight:700;
+  letter-spacing:0;
+}
+.card-label .tag{ color:var(--text-soft); text-transform:none; letter-spacing:0; font-weight:500; margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10px; }
+
+.stage{
+  background:
+    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+    radial-gradient(circle at 30% 20%, #3f3f46, #18181b 60%);
+  padding:28px 20px;
+  min-height:420px;
+  display:grid; place-items:center;
+  position:relative;
+}
+.stage::after{
+  content:'';
+  position:absolute; inset:0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.05) 1px, transparent 0);
+  background-size:22px 22px;
+  pointer-events:none;
+}
+
+/* ──────────── BASE MODAL ──────────── */
+.modal{
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5), 0 10px 24px rgba(0,0,0,.3);
+  overflow:hidden;
+  width:100%;
+  max-width:480px;
+  position:relative;
+  z-index:1;
+  display:flex; flex-direction:column;
+}
+.modal-head{
+  display:flex; align-items:center;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  gap:10px;
+}
+.modal-icon{
+  width:26px; height:26px; border-radius:6px;
+  background:var(--bg-subtle);
+  display:grid; place-items:center;
+  color:var(--text);
+  font-size:11px;
+  flex-shrink:0;
+}
+.modal-title-wrap{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.modal-label{
+  font-size:9px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.08em;
+}
+.modal-title{
+  font-size:13px; font-weight:600; letter-spacing:-.01em;
+  display:flex; align-items:center; gap:8px;
+}
+.modal-title .chip{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; font-weight:500;
+  padding:1px 6px;
+  background:var(--text); color:#fff;
+  border-radius:3px;
+  letter-spacing:0;
+}
+.modal-sub{ font-size:11px; color:var(--text-muted); }
+.modal-close{
+  width:24px; height:24px; border-radius:5px;
+  display:grid; place-items:center;
+  color:var(--text-muted);
+  transition:background .12s, color .12s;
+}
+.modal-close:hover{ background:var(--bg-subtle); color:var(--text); }
+
+.modal-body{
+  padding:14px;
+  display:flex; flex-direction:column; gap:12px;
+  overflow-y:auto;
+}
+.modal-body.pad-0{ padding:0; }
+
+.modal-foot{
+  padding:10px 14px;
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+  background:#fafafa;
+}
+
+/* Fields */
+.field{ display:flex; flex-direction:column; gap:5px; }
+.flabel{
+  display:flex; align-items:center;
+  font-size:10.5px; font-weight:500;
+  color:var(--text-soft);
+}
+.flabel .hint{
+  margin-left:auto; font-size:10px; color:var(--text-muted); font-weight:400;
+}
+.flabel .req{ color:var(--danger); margin-left:2px; }
+.finput{
+  width:100%;
+  padding:7px 10px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:12px;
+  color:var(--text);
+  transition:border-color .12s, box-shadow .12s;
+}
+.finput:focus{
+  border-color:var(--text);
+  box-shadow:0 0 0 3px rgba(0,0,0,.06);
+}
+.finput::placeholder{ color:var(--text-muted); }
+textarea.finput{ resize:vertical; min-height:60px; font-family:inherit; }
+.finput-mono{ font-family:'JetBrains Mono',monospace; font-size:11.5px; }
+.finput-inline{
+  display:flex; align-items:center; gap:6px;
+  border:1px solid var(--border); border-radius:6px;
+  background:#fff; padding-right:8px;
+}
+.finput-inline .finput{ border:none; flex:1; }
+.finput-inline .finput:focus{ box-shadow:none; }
+.finput-inline .unit{ font-size:10.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+.finput-inline .pre{
+  padding:0 0 0 10px;
+  color:var(--text-muted); font-size:11.5px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+.frow{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.frow-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+/* Code block */
+.code-block{
+  background:#18181b; color:#e4e4e7;
+  font-family:'JetBrains Mono',monospace; font-size:11.5px;
+  padding:12px 14px;
+  border-radius:6px;
+  white-space:pre;
+  overflow-x:auto;
+  line-height:1.6;
+  position:relative;
+}
+.code-block .copy-btn{
+  position:absolute; top:8px; right:8px;
+  background:rgba(255,255,255,.08); color:#d4d4d8;
+  font-size:10px; padding:3px 8px;
+  border-radius:4px;
+  display:inline-flex; align-items:center; gap:5px;
+  transition:background .12s;
+}
+.code-block .copy-btn:hover{ background:rgba(255,255,255,.15); color:#fff; }
+.tok-key{color:#a3e635;}
+.tok-val{color:#fbbf24;}
+.tok-attr{color:#7dd3fc;}
+.tok-com{color:#71717a;}
+.tok-mark{background:rgba(163,230,53,.15); color:#a3e635; padding:0 2px; border-radius:2px;}
+
+.example{
+  background:var(--bg-subtle);
+  border-radius:6px;
+  padding:8px 10px;
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--text-soft);
+  border:1px dashed var(--border-strong);
+}
+
+/* Buttons */
+.btn{
+  padding:7px 12px;
+  font-size:12px; font-weight:500;
+  border-radius:6px;
+  display:inline-flex; align-items:center; gap:6px;
+  transition:background .12s, color .12s, border-color .12s, transform .06s;
+  border:1px solid transparent;
+  letter-spacing:-.005em;
+  white-space:nowrap;
+}
+.btn:active{ transform:translateY(.5px); }
+.btn i{ font-size:11px; }
+.btn-primary{ background:var(--text); color:#fff; }
+.btn-primary:hover{ background:#000; }
+.btn-ghost{ background:transparent; color:var(--text-soft); }
+.btn-ghost:hover{ background:var(--bg-hover); color:var(--text); }
+.btn-secondary{ background:var(--bg-subtle); color:var(--text); }
+.btn-secondary:hover{ background:var(--bg-hover); }
+.btn-outline{ background:#fff; color:var(--text); border-color:var(--border); }
+.btn-outline:hover{ border-color:var(--text); }
+.btn-danger{ background:#fff; color:var(--danger); border-color:var(--border); }
+.btn-danger:hover{ background:#fef2f2; border-color:var(--danger); }
+.btn-danger-solid{ background:var(--danger); color:#fff; }
+.btn-danger-solid:hover{ background:#b91c1c; }
+.btn-full{ width:100%; justify-content:center; }
+.btn-sm{ padding:5px 9px; font-size:11px; }
+.kbd{
+  font-size:9.5px; font-weight:500;
+  padding:1px 5px; border-radius:3px;
+  background:rgba(255,255,255,.12);
+  margin-left:auto;
+  letter-spacing:.02em;
+}
+.btn-outline .kbd, .btn-ghost .kbd{ background:var(--bg-subtle); color:var(--text-muted); }
+
+/* Select */
+.fselect{
+  width:100%;
+  padding:7px 26px 7px 10px;
+  background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path fill='none' stroke='%2352525b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2 4l3 3 3-3'/></svg>") no-repeat right 10px center;
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:12px;
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+}
+.fselect:focus{ border-color:var(--text); box-shadow:0 0 0 3px rgba(0,0,0,.06); }
+
+/* Segmented */
+.seg{
+  display:inline-flex;
+  background:var(--bg-subtle);
+  border-radius:6px;
+  padding:3px;
+  gap:2px;
+  width:100%;
+}
+.seg button{
+  flex:1;
+  padding:5px 8px;
+  font-size:11px; font-weight:500;
+  color:var(--text-soft);
+  border-radius:4px;
+  display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  transition:all .12s;
+}
+.seg button.active{ background:#fff; color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,.05); }
+.seg button i{ font-size:10.5px; }
+.seg button:hover:not(.active){ color:var(--text); }
+
+/* Icon grid */
+.icon-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(56px, 1fr));
+  gap:4px;
+  max-height:260px;
+  overflow-y:auto;
+  padding:2px;
+}
+.icon-cell{
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:4px; padding:10px 4px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .12s, color .12s;
+  color:var(--text-soft);
+  font-size:9.5px;
+  user-select:none;
+}
+.icon-cell i{ font-size:14px; color:var(--text); }
+.icon-cell:hover{ background:var(--bg-subtle); }
+.icon-cell.selected{ background:var(--text); color:#fff; }
+.icon-cell.selected i{ color:#fff; }
+
+/* Snippets layout */
+.snippets-layout{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  min-height:320px;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.snip-side{
+  background:var(--bg-subtle);
+  padding:8px; display:flex; flex-direction:column; gap:2px;
+  border-right:1px solid var(--border);
+}
+.snip-item{
+  padding:6px 9px;
+  font-size:11px;
+  border-radius:5px;
+  color:var(--text-soft);
+  cursor:pointer;
+  display:flex; align-items:center; gap:6px;
+}
+.snip-item:hover{ background:#fff; color:var(--text); }
+.snip-item.active{ background:var(--text); color:#fff; }
+.snip-item.active i{ color:#fff; }
+.snip-item i{ font-size:10px; color:var(--text-muted); }
+.snip-add{
+  margin-top:auto;
+  padding:6px 9px;
+  font-size:11px;
+  color:var(--text-muted);
+  display:flex; align-items:center; gap:6px;
+  border:1px dashed var(--border-strong);
+  border-radius:5px;
+  cursor:pointer;
+}
+.snip-add:hover{ color:var(--text); border-color:var(--text); }
+.snip-main{ padding:10px; display:flex; flex-direction:column; gap:8px; }
+
+/* Accessibility list */
+.a11y-item{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+.a11y-item:last-child{ border-bottom:none; }
+.a11y-sev{
+  width:22px; height:22px; border-radius:50%;
+  display:grid; place-items:center;
+  font-size:10px; flex-shrink:0;
+  margin-top:1px;
+}
+.a11y-sev.err{ background:#fef2f2; color:var(--danger); }
+.a11y-sev.warn{ background:#fef3c7; color:var(--warning); }
+.a11y-sev.ok{ background:#dcfce7; color:var(--success); }
+.a11y-body{ flex:1; min-width:0; }
+.a11y-title{ font-size:11.5px; font-weight:500; color:var(--text); }
+.a11y-desc{ font-size:10.5px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
+.a11y-sel{
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  color:var(--text-soft); margin-top:4px;
+  background:var(--bg-subtle); padding:2px 5px; border-radius:3px;
+  display:inline-block;
+}
+.a11y-action{
+  font-size:10.5px; color:var(--text-muted);
+  padding:3px 8px; border-radius:5px;
+  border:1px solid var(--border);
+  transition:border-color .12s, color .12s;
+  flex-shrink:0;
+  align-self:flex-start;
+  margin-top:2px;
+}
+.a11y-action:hover{ border-color:var(--text); color:var(--text); }
+
+/* Score ring */
+.score-row{
+  padding:12px 14px;
+  display:flex; align-items:center; gap:14px;
+  background:var(--bg-subtle);
+  border-radius:8px;
+}
+.ring{ width:52px; height:52px; position:relative; flex-shrink:0; }
+.ring svg{ transform:rotate(-90deg); }
+.ring-num{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  font-size:14px; font-weight:700;
+}
+.score-label{ flex:1; min-width:0; }
+.score-grade{ font-size:12px; font-weight:600; }
+.score-desc{ font-size:10.5px; color:var(--text-muted); margin-top:2px; }
+.score-counts{
+  display:flex; gap:12px;
+}
+.score-count{ display:flex; flex-direction:column; align-items:center; gap:1px; }
+.score-count .n{ font-size:14px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.score-count .l{ font-size:9.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+.score-count.err .n{ color:var(--danger); }
+.score-count.warn .n{ color:var(--warning); }
+.score-count.ok .n{ color:var(--success); }
+
+/* Tabs inside modal */
+.mtabs{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  gap:0;
+}
+.mtabs button{
+  padding:8px 14px;
+  font-size:11.5px; font-weight:500;
+  color:var(--text-muted);
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.mtabs button.active{ color:var(--text); border-bottom-color:var(--text); }
+.mtabs button:hover:not(.active){ color:var(--text-soft); }
+
+/* Checkbox / radio list */
+.chk-row{
+  display:flex; align-items:center; gap:10px;
+  padding:7px 10px;
+  border-radius:6px;
+  transition:background .12s;
+  cursor:pointer;
+  font-size:12px;
+}
+.chk-row:hover{ background:var(--bg-subtle); }
+.chk{
+  width:16px; height:16px;
+  border:1.5px solid var(--border-strong);
+  border-radius:4px;
+  display:grid; place-items:center;
+  color:#fff;
+  font-size:9px;
+  flex-shrink:0;
+}
+.chk.on{ background:var(--text); border-color:var(--text); }
+.chk-row .desc{ font-size:10.5px; color:var(--text-muted); }
+.chk-row .body{ flex:1; min-width:0; }
+.chk-row .body .t{ font-weight:500; }
+
+/* Diff modal */
+.diff-wrap{
+  display:grid; grid-template-columns:1fr 1fr;
+  min-height:260px;
+  border-top:1px solid var(--border);
+}
+.diff-col{ display:flex; flex-direction:column; min-width:0; }
+.diff-col + .diff-col{ border-left:1px solid var(--border); }
+.diff-head{
+  padding:8px 12px;
+  background:var(--bg-subtle);
+  border-bottom:1px solid var(--border);
+  font-size:10.5px; font-weight:600;
+  display:flex; align-items:center; gap:6px;
+  color:var(--text-soft);
+}
+.diff-head.current{ background:#fafaf5; color:var(--text); }
+.diff-head .dot{ width:6px; height:6px; border-radius:50%; background:var(--text-muted); }
+.diff-head.current .dot{ background:var(--success); }
+.diff-body{
+  flex:1; padding:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  line-height:1.5;
+  color:var(--text-soft);
+  white-space:pre-wrap;
+  overflow:auto;
+}
+.diff-body .add{ background:#dcfce7; color:#15803d; display:block; padding:1px 4px; margin:0 -4px; border-radius:2px; }
+.diff-body .del{ background:#fee2e2; color:#b91c1c; display:block; padding:1px 4px; margin:0 -4px; border-radius:2px; text-decoration:line-through; }
+.diff-body .ctx{ color:var(--text-muted); }
+
+/* Conditions / selectable list */
+.cond-list{ display:flex; flex-direction:column; gap:4px; }
+.cond-pill{
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  cursor:pointer;
+  transition:border-color .12s, background .12s;
+}
+.cond-pill:hover{ border-color:var(--border-strong); background:var(--bg-subtle); }
+.cond-pill.on{ border-color:var(--text); background:var(--bg-subtle); }
+.cond-pill .ico{
+  width:26px; height:26px; border-radius:5px;
+  background:#fff; border:1px solid var(--border);
+  display:grid; place-items:center;
+  color:var(--text);
+  font-size:11px;
+  flex-shrink:0;
+}
+.cond-pill.on .ico{ background:var(--text); color:#fff; border-color:var(--text); }
+.cond-pill .body{ flex:1; min-width:0; }
+.cond-pill .t{ font-size:11.5px; font-weight:500; }
+.cond-pill .s{ font-size:10.5px; color:var(--text-muted); margin-top:1px; }
+
+/* Form builder canvas */
+.fb-canvas{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px;
+  min-height:240px;
+  display:flex; flex-direction:column; gap:6px;
+  background:var(--bg-subtle);
+}
+.fb-field{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:7px 8px 7px 6px;
+  display:flex; align-items:center; gap:8px;
+  font-size:11.5px;
+  cursor:grab;
+}
+.fb-field .grip{ color:var(--text-muted); font-size:10px; width:10px; }
+.fb-field .type{
+  font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:500;
+  padding:1px 5px; background:var(--bg-subtle); color:var(--text-soft);
+  border-radius:3px;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+.fb-field .lbl{ flex:1; min-width:0; font-weight:500; }
+.fb-field .act{
+  display:flex; gap:2px; color:var(--text-muted); opacity:0; transition:opacity .12s;
+}
+.fb-field:hover .act{ opacity:1; }
+.fb-field .act button{
+  width:20px; height:20px; border-radius:4px; display:grid; place-items:center; font-size:9.5px;
+}
+.fb-field .act button:hover{ background:var(--bg-subtle); color:var(--text); }
+.fb-add-btn{
+  padding:7px; background:#fff; border:1px dashed var(--border-strong);
+  border-radius:6px; font-size:11px; color:var(--text-muted);
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  cursor:pointer;
+}
+.fb-add-btn:hover{ border-color:var(--text); color:var(--text); }
+
+/* File drop */
+.drop-zone{
+  border:1.5px dashed var(--border-strong);
+  border-radius:8px;
+  padding:22px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .12s, background .12s;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  color:var(--text-muted);
+}
+.drop-zone:hover{ border-color:var(--text); color:var(--text); background:var(--bg-subtle); }
+.drop-zone i{ font-size:18px; color:var(--text-soft); }
+.drop-zone .t{ font-size:12px; font-weight:500; color:var(--text); }
+.drop-zone .s{ font-size:10.5px; }
+
+/* Popup preview */
+.popup-preview{
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:
+    repeating-linear-gradient(45deg, #f4f4f5 0 4px, #fafafa 4px 8px);
+  height:140px;
+  position:relative;
+  overflow:hidden;
+}
+.popup-preview .mini-pop{
+  position:absolute;
+  left:50%; top:50%; transform:translate(-50%,-50%);
+  background:#fff; border-radius:4px;
+  width:60%; height:60%;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+  padding:10px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.popup-preview .mini-pop .bar{ height:6px; background:var(--bg-subtle); border-radius:2px; width:80%; }
+.popup-preview .mini-pop .bar.sm{ width:50%; height:4px; }
+.popup-preview .mini-pop .btn-sm{
+  margin-top:auto;
+  height:12px; background:var(--text); border-radius:3px; width:40%;
+}
+.popup-preview.bar .mini-pop{
+  left:0; top:auto; bottom:0; transform:none;
+  width:100%; height:36px; border-radius:0;
+}
+.popup-preview.slide .mini-pop{
+  left:auto; right:8px; top:50%; transform:translateY(-50%);
+  width:45%; height:75%;
+}
+
+/* Quick actions config */
+.qa-row{
+  display:flex; align-items:center; gap:10px;
+  padding:7px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .12s;
+  font-size:11.5px;
+}
+.qa-row:hover{ background:var(--bg-subtle); }
+.qa-row .ico{
+  width:24px; height:24px; border-radius:5px;
+  background:var(--bg-subtle);
+  display:grid; place-items:center;
+  color:var(--text-soft); font-size:11px;
+  flex-shrink:0;
+}
+.qa-row.on .ico{ background:var(--text); color:#fff; }
+.qa-row .body{ flex:1; min-width:0; }
+.qa-row .body .t{ font-weight:500; }
+.qa-row .body .s{ font-size:10px; color:var(--text-muted); margin-top:1px;}
+.qa-row .switch{
+  width:28px; height:16px; background:var(--border-strong); border-radius:10px;
+  position:relative; transition:background .12s;
+}
+.qa-row .switch::after{
+  content:''; position:absolute; top:2px; left:2px; width:12px; height:12px;
+  background:#fff; border-radius:50%; transition:transform .15s;
+  box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+.qa-row.on .switch{ background:var(--text); }
+.qa-row.on .switch::after{ transform:translateX(12px); }
+.qa-count{
+  margin-left:auto; font-size:10.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;
+  padding:2px 6px; background:var(--bg-subtle); border-radius:4px;
+}
+
+/* Overlay dim for showcase (shows modal on top of dimmed preview) */
+.dim-bg{
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+
+/* modal sizes */
+.modal.w-sm{ max-width:380px; }
+.modal.w-md{ max-width:460px; }
+.modal.w-lg{ max-width:580px; }
+.modal.w-xl{ max-width:680px; }
+
+/* Search input (with icon) */
+.search-field{
+  position:relative;
+}
+.search-field i{
+  position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  font-size:11px; color:var(--text-muted); pointer-events:none;
+}
+.search-field .finput{ padding-left:30px; }
+
+/* popup style chooser */
+.pop-choice{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.pop-opt{
+  border:1px solid var(--border); border-radius:6px;
+  padding:6px 8px 8px;
+  cursor:pointer;
+  transition:border-color .12s;
+  display:flex; flex-direction:column; gap:5px;
+}
+.pop-opt:hover{ border-color:var(--border-strong); }
+.pop-opt.on{ border-color:var(--text); }
+.pop-opt .mini{
+  height:50px; border-radius:4px;
+  background:var(--bg-subtle);
+  position:relative;
+  overflow:hidden;
+}
+.pop-opt .mini .box{
+  position:absolute; background:var(--text); border-radius:2px;
+}
+.pop-opt[data-s="center"] .box{ left:25%; top:20%; width:50%; height:60%; }
+.pop-opt[data-s="bar"] .box{ left:0; bottom:0; right:0; height:30%; border-radius:0; }
+.pop-opt[data-s="slide"] .box{ right:10%; top:10%; width:35%; height:80%; }
+.pop-opt .n{ font-size:10.5px; font-weight:500; text-align:center; }
+
+/* textarea codemirror-ish */
+.ta-mono{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  background:#fafafa;
+  color:var(--text);
+  line-height:1.6;
+  min-height:90px;
+  resize:vertical;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:9px 11px;
+}
+.ta-mono:focus{ border-color:var(--text); box-shadow:0 0 0 3px rgba(0,0,0,.06); }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="page-title">Modales rediseñados</div>
+      <div class="page-sub">Sistema monocromo minimalista · 10 modales alineados con el rediseño del editor</div>
+    </div>
+    <div class="tabs">
+      <button class="active">Claro</button>
+      <button>Compactos</button>
+    </div>
+  </div>
+
+  <div class="grid">
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 01 · SHORTCODE BUILDER (redraw of attached) -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">01</span> Shortcode builder <span class="tag">ve-shortcode-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-md">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-code"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">SHORTCODE</div>
+            <div class="modal-title">spacer <span class="chip">[spacer]</span></div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:11.5px; color:var(--text-muted); padding:2px 2px 6px; border-bottom:1px solid var(--border); margin:-14px -14px 4px; padding:10px 14px;">
+            Espacio en blanco configurable
+          </div>
+          <div class="field">
+            <label class="flabel">bc_height<span class="hint">integer · px</span></label>
+            <div class="finput-inline">
+              <input class="finput" placeholder="Altura" value="40">
+              <span class="unit">px</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel">Contenido <span class="hint">opcional</span></label>
+            <textarea class="finput" placeholder="Contenido del shortcode…"></textarea>
+          </div>
+          <div class="field">
+            <label class="flabel">Código generado <span class="hint">copia listo</span></label>
+            <div class="code-block">
+<span class="tok-val">[spacer</span> <span class="tok-key">bc_height</span>=<span class="tok-attr">"40"</span><span class="tok-val">]</span><span class="tok-val">[/spacer]</span><button class="copy-btn"><i class="fa-regular fa-copy"></i>Copiar</button></div>
+          </div>
+          <div class="field">
+            <label class="flabel">Ejemplo</label>
+            <div class="example">[spacer bc_height="{bc_height}"]</div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Cancelar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm"><i class="fa-regular fa-copy"></i>Copiar</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right-to-bracket"></i>Insertar en editor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 02 · ICON PICKER -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">02</span> Icon picker <span class="tag">ve-icon-picker-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-md">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-icons"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">ELEMENTO · &lt;i class="fa…"&gt;</div>
+            <div class="modal-title">Seleccionar icono</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="search-field">
+            <i class="fa-solid fa-search"></i>
+            <input class="finput" placeholder="Buscar  star, home, user…">
+          </div>
+          <div class="seg">
+            <button class="active">Todos <span class="kbd" style="margin:0 0 0 4px; background:var(--border); color:var(--text-soft);">3.2k</span></button>
+            <button>Solid</button>
+            <button>Regular</button>
+            <button>Brand</button>
+          </div>
+          <div class="icon-grid">
+            <div class="icon-cell"><i class="fa-solid fa-star"></i><span>star</span></div>
+            <div class="icon-cell selected"><i class="fa-solid fa-house"></i><span>house</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-user"></i><span>user</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-heart"></i><span>heart</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-gear"></i><span>gear</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-bell"></i><span>bell</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-envelope"></i><span>envelope</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-phone"></i><span>phone</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-camera"></i><span>camera</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-image"></i><span>image</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-video"></i><span>video</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-music"></i><span>music</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-check"></i><span>check</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-xmark"></i><span>xmark</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-plus"></i><span>plus</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-minus"></i><span>minus</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-lock"></i><span>lock</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-bolt"></i><span>bolt</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-fire"></i><span>fire</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-map-pin"></i><span>map-pin</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-award"></i><span>award</span></div>
+            <div class="icon-cell"><i class="fa-solid fa-gift"></i><span>gift</span></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted);">
+            Seleccionado: <span class="mono" style="color:var(--text); font-size:11px;">fa-house</span>
+          </div>
+          <div style="flex:1;"></div>
+          <button class="btn btn-ghost btn-sm">Cancelar</button>
+          <button class="btn btn-primary btn-sm">Insertar icono</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 03 · SNIPPETS HTML -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">03</span> Snippets HTML <span class="tag">ve-snippets-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-lg">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-bookmark"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">BIBLIOTECA</div>
+            <div class="modal-title">Snippets HTML</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body pad-0" style="padding:12px;">
+          <div class="snippets-layout">
+            <div class="snip-side">
+              <div class="snip-item"><i class="fa-solid fa-code"></i> Hero CTA</div>
+              <div class="snip-item active"><i class="fa-solid fa-code"></i> Botón WhatsApp</div>
+              <div class="snip-item"><i class="fa-solid fa-code"></i> Bloque FAQ</div>
+              <div class="snip-item"><i class="fa-solid fa-code"></i> Contador 500+</div>
+              <div class="snip-item"><i class="fa-solid fa-code"></i> Footer legal</div>
+              <div class="snip-add"><i class="fa-solid fa-plus"></i>Nuevo snippet</div>
+            </div>
+            <div class="snip-main">
+              <div class="field">
+                <label class="flabel">Nombre</label>
+                <input class="finput" value="Botón WhatsApp">
+              </div>
+              <div class="field">
+                <label class="flabel">HTML <span class="hint">Ctrl+Space → autocompletar</span></label>
+                <textarea class="ta-mono">&lt;a href="https://wa.me/351912345678"
+   class="btn-wa"&gt;
+  &lt;i class="fa-brands fa-whatsapp"&gt;&lt;/i&gt;
+  Hablar por WhatsApp
+&lt;/a&gt;</textarea>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-primary btn-sm" style="flex:1;"><i class="fa-solid fa-floppy-disk"></i>Guardar</button>
+                <button class="btn btn-outline btn-sm" style="flex:1;"><i class="fa-solid fa-arrow-right-to-bracket"></i>Insertar</button>
+                <button class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 04 · ACCESSIBILITY -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">04</span> Accesibilidad <span class="tag">ve-a11y-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-md">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-universal-access"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">ANÁLISIS · 23 nodos escaneados</div>
+            <div class="modal-title">Accesibilidad</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="gap:10px;">
+          <div class="score-row">
+            <div class="ring">
+              <svg width="52" height="52" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="22" stroke="#e4e4e7" stroke-width="4" fill="none"/>
+                <circle cx="26" cy="26" r="22" stroke="#d97706" stroke-width="4" fill="none"
+                        stroke-dasharray="138.23" stroke-dashoffset="41.47" stroke-linecap="round"/>
+              </svg>
+              <div class="ring-num">72</div>
+            </div>
+            <div class="score-label">
+              <div class="score-grade">Mejorable · Grado B</div>
+              <div class="score-desc">5 problemas detectados</div>
+            </div>
+            <div class="score-counts">
+              <div class="score-count err"><span class="n">2</span><span class="l">Error</span></div>
+              <div class="score-count warn"><span class="n">3</span><span class="l">Aviso</span></div>
+              <div class="score-count ok"><span class="n">18</span><span class="l">OK</span></div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+            <div class="a11y-item">
+              <div class="a11y-sev err"><i class="fa-solid fa-xmark"></i></div>
+              <div class="a11y-body">
+                <div class="a11y-title">Imagen sin atributo <span class="mono">alt</span></div>
+                <div class="a11y-desc">Lectores de pantalla no pueden describir la imagen.</div>
+                <div class="a11y-sel">img.hero-form-bg</div>
+              </div>
+              <button class="a11y-action">Reparar</button>
+            </div>
+            <div class="a11y-item">
+              <div class="a11y-sev err"><i class="fa-solid fa-xmark"></i></div>
+              <div class="a11y-body">
+                <div class="a11y-title">Contraste insuficiente</div>
+                <div class="a11y-desc">Ratio 2.8:1 · mínimo WCAG AA 4.5:1</div>
+                <div class="a11y-sel">p.hero-desc · #cbd5e1 on #0a1628</div>
+              </div>
+              <button class="a11y-action">Reparar</button>
+            </div>
+            <div class="a11y-item">
+              <div class="a11y-sev warn"><i class="fa-solid fa-exclamation"></i></div>
+              <div class="a11y-body">
+                <div class="a11y-title">Jerarquía de títulos rota</div>
+                <div class="a11y-desc">h1 seguido de h3 · falta h2</div>
+              </div>
+              <button class="a11y-action">Revisar</button>
+            </div>
+            <div class="a11y-item">
+              <div class="a11y-sev warn"><i class="fa-solid fa-exclamation"></i></div>
+              <div class="a11y-body">
+                <div class="a11y-title">Enlace sin texto descriptivo</div>
+                <div class="a11y-desc">"Haz click aquí" no es descriptivo fuera de contexto.</div>
+                <div class="a11y-sel">a.more-link:nth-of-type(3)</div>
+              </div>
+              <button class="a11y-action">Revisar</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Cerrar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-file-export"></i>Exportar</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-wand-magic-sparkles"></i>Reparar automáticos (2)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 05 · POPUP BUILDER -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">05</span> Popup builder <span class="tag">ve-popup-builder</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-md">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-window-restore"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">CREAR NUEVO</div>
+            <div class="modal-title">Popup</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="flabel">Título<span class="req">*</span></label>
+            <input class="finput" value="Suscríbete a nuestro newsletter">
+          </div>
+          <div class="field">
+            <label class="flabel">Contenido</label>
+            <textarea class="finput">Recibe novedades y ofertas exclusivas cada mes.</textarea>
+          </div>
+          <div class="frow">
+            <div class="field">
+              <label class="flabel">Trigger</label>
+              <select class="fselect">
+                <option>Click en botón</option>
+                <option>Scroll 50%</option>
+                <option selected>Timer · 5s</option>
+                <option>Exit intent</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="flabel">Frecuencia</label>
+              <select class="fselect">
+                <option>Siempre</option>
+                <option selected>Una vez por sesión</option>
+                <option>Una vez por día</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel">Estilo</label>
+            <div class="pop-choice">
+              <div class="pop-opt on" data-s="center">
+                <div class="mini"><div class="box"></div></div>
+                <div class="n">Modal centrado</div>
+              </div>
+              <div class="pop-opt" data-s="bar">
+                <div class="mini"><div class="box"></div></div>
+                <div class="n">Barra inferior</div>
+              </div>
+              <div class="pop-opt" data-s="slide">
+                <div class="mini"><div class="box"></div></div>
+                <div class="n">Slide-in</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-eye"></i>Previsualizar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm">Cancelar</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i>Insertar popup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 06 · FORM BUILDER -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">06</span> Constructor de formularios <span class="tag">ve-form-builder</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-lg">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-rectangle-list"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">FORMULARIO</div>
+            <div class="modal-title">Constructor <span class="chip">contacto</span></div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="mtabs">
+          <button class="active"><i class="fa-solid fa-sliders"></i> Campos</button>
+          <button><i class="fa-solid fa-paper-plane"></i> Envío</button>
+          <button><i class="fa-solid fa-paint-brush"></i> Estilo</button>
+          <button><i class="fa-solid fa-shield-halved"></i> Spam</button>
+        </div>
+        <div class="modal-body">
+          <div class="frow">
+            <div class="field">
+              <label class="flabel">Tipo</label>
+              <select class="fselect">
+                <option selected>Contacto</option>
+                <option>Newsletter</option>
+                <option>Presupuesto</option>
+                <option>Personalizado</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="flabel">Destino</label>
+              <div class="finput-inline">
+                <span class="pre">to:</span>
+                <input class="finput" value="info@caixilhariablanco.pt">
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel">Campos <span class="hint">Arrastra para reordenar</span></label>
+            <div class="fb-canvas">
+              <div class="fb-field"><i class="fa-solid fa-grip-vertical grip"></i><span class="type">text</span><span class="lbl">Nombre</span><span class="type" style="background:#fef3c7;color:#92400e;">req</span><div class="act"><button><i class="fa-solid fa-pen"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></div>
+              <div class="fb-field"><i class="fa-solid fa-grip-vertical grip"></i><span class="type">email</span><span class="lbl">Correo electrónico</span><span class="type" style="background:#fef3c7;color:#92400e;">req</span><div class="act"><button><i class="fa-solid fa-pen"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></div>
+              <div class="fb-field"><i class="fa-solid fa-grip-vertical grip"></i><span class="type">tel</span><span class="lbl">Teléfono</span><div class="act"><button><i class="fa-solid fa-pen"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></div>
+              <div class="fb-field"><i class="fa-solid fa-grip-vertical grip"></i><span class="type">select</span><span class="lbl">Tipo de mosquitera</span><div class="act"><button><i class="fa-solid fa-pen"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></div>
+              <div class="fb-field"><i class="fa-solid fa-grip-vertical grip"></i><span class="type">textarea</span><span class="lbl">Mensaje</span><div class="act"><button><i class="fa-solid fa-pen"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></div>
+              <div class="fb-add-btn"><i class="fa-solid fa-plus"></i>Añadir campo</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Cancelar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-eye"></i>Preview</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i>Insertar formulario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 07 · IMPORT -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">07</span> Importar página <span class="tag">ve-import-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-sm">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-file-import"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">DATOS</div>
+            <div class="modal-title">Importar página</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="drop-zone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <div class="t">Arrastra un archivo aquí</div>
+            <div class="s">o haz clic para seleccionar · .json, .html · máx 5 MB</div>
+          </div>
+          <div class="chk-row">
+            <div class="chk on"><i class="fa-solid fa-check"></i></div>
+            <div class="body">
+              <div class="t">Sobrescribir contenido actual</div>
+              <div class="desc">Se creará un snapshot antes de importar</div>
+            </div>
+          </div>
+          <div class="chk-row">
+            <div class="chk"></div>
+            <div class="body">
+              <div class="t">Incluir configuración SEO</div>
+              <div class="desc">Meta title, descripción, schema…</div>
+            </div>
+          </div>
+          <div class="chk-row">
+            <div class="chk on"><i class="fa-solid fa-check"></i></div>
+            <div class="body">
+              <div class="t">Importar bloques personalizados</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm btn-full">Cancelar</button>
+          <button class="btn btn-primary btn-sm btn-full"><i class="fa-solid fa-upload"></i>Importar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 08 · APPROVAL REQUEST -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">08</span> Solicitar aprobación <span class="tag">ve-approval-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-sm">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-paper-plane"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">FLUJO DE REVISIÓN</div>
+            <div class="modal-title">Solicitar aprobación</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="flabel">Revisor</label>
+            <select class="fselect">
+              <option selected>María López · Editor en jefe</option>
+              <option>Carlos Mendes · Responsable marketing</option>
+              <option>Equipo completo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel">Comentario <span class="hint">opcional</span></label>
+            <textarea class="finput" placeholder="Describe los cambios realizados…" rows="3">Nueva sección hero con CTA doble y formulario de presupuesto. Actualización SEO con keywords locales.</textarea>
+          </div>
+          <div class="chk-row">
+            <div class="chk on"><i class="fa-solid fa-check"></i></div>
+            <div class="body">
+              <div class="t">Notificar por email</div>
+              <div class="desc">Se enviará enlace preview al revisor</div>
+            </div>
+          </div>
+          <div class="chk-row">
+            <div class="chk"></div>
+            <div class="body">
+              <div class="t">Bloquear edición hasta aprobar</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Cancelar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i>Enviar solicitud</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 09 · DIFF / COMPARE -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card" style="grid-column: span 2;">
+    <div class="card-label"><span class="num">09</span> Comparar versiones <span class="tag">ve-diff-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-xl" style="max-width:860px;">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-code-compare"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">DIFF · 18 cambios</div>
+            <div class="modal-title">Comparar versiones</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <div class="seg" style="width:auto;">
+              <button class="active"><i class="fa-solid fa-code"></i> Código</button>
+              <button><i class="fa-solid fa-eye"></i> Visual</button>
+              <button><i class="fa-solid fa-columns"></i> Split</button>
+            </div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="diff-wrap">
+          <div class="diff-col">
+            <div class="diff-head">
+              <span class="dot"></span>
+              <span>Original · hace 2h · María L.</span>
+              <span style="margin-left:auto;" class="mono">v126</span>
+            </div>
+            <div class="diff-body">
+<span class="ctx">1  &lt;section class="hero"&gt;</span>
+<span class="del">2    &lt;h1&gt;Mosquiteras&lt;/h1&gt;</span>
+<span class="del">3    &lt;p&gt;Protección insectos&lt;/p&gt;</span>
+<span class="ctx">4    &lt;div class="cta"&gt;</span>
+<span class="del">5      &lt;button&gt;Contactar&lt;/button&gt;</span>
+<span class="ctx">6    &lt;/div&gt;</span>
+<span class="ctx">7  &lt;/section&gt;</span></div>
+          </div>
+          <div class="diff-col">
+            <div class="diff-head current">
+              <span class="dot"></span>
+              <span>Actual · sin guardar · tú</span>
+              <span style="margin-left:auto;" class="mono">v127*</span>
+            </div>
+            <div class="diff-body">
+<span class="ctx">1  &lt;section class="hero"&gt;</span>
+<span class="add">2    &lt;span class="badge"&gt;500+&lt;/span&gt;</span>
+<span class="add">3    &lt;h1&gt;Mosquiteras profesionales</span>
+<span class="add">4      a medida en Alcobaça&lt;/h1&gt;</span>
+<span class="add">5    &lt;p&gt;Protección total contra...&lt;/p&gt;</span>
+<span class="ctx">6    &lt;div class="cta"&gt;</span>
+<span class="add">7      &lt;button&gt;Presupuesto gratis&lt;/button&gt;</span>
+<span class="add">8      &lt;button&gt;Llamar ahora&lt;/button&gt;</span>
+<span class="ctx">9    &lt;/div&gt;</span>
+<span class="ctx">10 &lt;/section&gt;</span></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <div style="display:flex; gap:12px; font-size:11px; color:var(--text-muted);">
+            <span><span style="color:var(--success); font-weight:600;">+7</span> añadidas</span>
+            <span><span style="color:var(--danger); font-weight:600;">−3</span> eliminadas</span>
+            <span><span style="color:var(--warning); font-weight:600;">~5</span> modificadas</span>
+          </div>
+          <div style="flex:1;"></div>
+          <button class="btn btn-ghost btn-sm">Cerrar</button>
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-rotate-left"></i>Descartar cambios</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i>Aceptar y guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 10 · CONDITIONS -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">10</span> Condiciones de visibilidad <span class="tag">ve-conditions-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-sm">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-filter"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">VISIBILIDAD · section.hero</div>
+            <div class="modal-title">Condiciones</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="flabel">Mostrar cuando…</label>
+            <div class="cond-list">
+              <div class="cond-pill on">
+                <div class="ico"><i class="fa-solid fa-user"></i></div>
+                <div class="body">
+                  <div class="t">Solo usuarios registrados</div>
+                  <div class="s">Requiere sesión iniciada</div>
+                </div>
+                <i class="fa-solid fa-check" style="color:var(--text);"></i>
+              </div>
+              <div class="cond-pill">
+                <div class="ico"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="body">
+                  <div class="t">Solo visitantes</div>
+                  <div class="s">No han iniciado sesión</div>
+                </div>
+              </div>
+              <div class="cond-pill on">
+                <div class="ico"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div class="body">
+                  <div class="t">Solo móvil</div>
+                  <div class="s">Ancho &lt; 768px</div>
+                </div>
+                <i class="fa-solid fa-check" style="color:var(--text);"></i>
+              </div>
+              <div class="cond-pill">
+                <div class="ico"><i class="fa-solid fa-desktop"></i></div>
+                <div class="body">
+                  <div class="t">Solo desktop</div>
+                  <div class="s">Ancho ≥ 1024px</div>
+                </div>
+              </div>
+              <div class="cond-pill">
+                <div class="ico"><i class="fa-regular fa-calendar"></i></div>
+                <div class="body">
+                  <div class="t">Rango de fechas</div>
+                  <div class="s">Mostrar entre fechas específicas</div>
+                </div>
+              </div>
+              <div class="cond-pill">
+                <div class="ico"><i class="fa-solid fa-globe"></i></div>
+                <div class="body">
+                  <div class="t">Por idioma</div>
+                  <div class="s">ES · EN · PT</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Limpiar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm">Cancelar</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i>Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────── -->
+  <!-- 11 · QUICK ACTIONS CONFIG -->
+  <!-- ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-label"><span class="num">11</span> Acciones rápidas <span class="tag">ve-quick-actions-modal</span></div>
+    <div class="stage">
+      <div class="dim-bg"></div>
+      <div class="modal w-sm">
+        <div class="modal-head">
+          <div class="modal-icon"><i class="fa-solid fa-bolt"></i></div>
+          <div class="modal-title-wrap">
+            <div class="modal-label">PERSONALIZAR</div>
+            <div class="modal-title">Acciones rápidas</div>
+          </div>
+          <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:11px; color:var(--text-muted); padding:2px 2px 4px; display:flex; align-items:center; justify-content:space-between;">
+            <span>Selecciona hasta 6 acciones como FAB flotantes</span>
+            <span class="qa-count">4 / 6</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <div class="qa-row on"><div class="ico"><i class="fa-solid fa-floppy-disk"></i></div><div class="body"><div class="t">Guardar</div><div class="s">⌘S</div></div><div class="switch"></div></div>
+            <div class="qa-row on"><div class="ico"><i class="fa-solid fa-eye"></i></div><div class="body"><div class="t">Preview</div><div class="s">⌘P</div></div><div class="switch"></div></div>
+            <div class="qa-row on"><div class="ico"><i class="fa-solid fa-rotate-left"></i></div><div class="body"><div class="t">Deshacer</div><div class="s">⌘Z</div></div><div class="switch"></div></div>
+            <div class="qa-row on"><div class="ico"><i class="fa-solid fa-globe"></i></div><div class="body"><div class="t">Publicar</div><div class="s">⌘⇧P</div></div><div class="switch"></div></div>
+            <div class="qa-row"><div class="ico"><i class="fa-solid fa-code"></i></div><div class="body"><div class="t">Editor de código</div></div><div class="switch"></div></div>
+            <div class="qa-row"><div class="ico"><i class="fa-solid fa-comment"></i></div><div class="body"><div class="t">Comentarios</div></div><div class="switch"></div></div>
+            <div class="qa-row"><div class="ico"><i class="fa-solid fa-magnifying-glass"></i></div><div class="body"><div class="t">Buscar en página</div><div class="s">⌘F</div></div><div class="switch"></div></div>
+            <div class="qa-row"><div class="ico"><i class="fa-solid fa-qrcode"></i></div><div class="body"><div class="t">QR Preview</div></div><div class="switch"></div></div>
+            <div class="qa-row"><div class="ico"><i class="fa-solid fa-universal-access"></i></div><div class="body"><div class="t">Accesibilidad</div></div><div class="switch"></div></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost btn-sm">Restablecer</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-outline btn-sm">Cancelar</button>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i>Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<script>
+// Make switches/checks/cond-pills interactive
+document.querySelectorAll('.qa-row').forEach(r => r.addEventListener('click', () => {
+  r.classList.toggle('on');
+  const list = document.querySelector('.qa-count');
+  if (list) {
+    const n = document.querySelectorAll('.qa-row.on').length;
+    list.textContent = `${n} / 6`;
+  }
+}));
+document.querySelectorAll('.chk-row').forEach(r => r.addEventListener('click', () => {
+  const c = r.querySelector('.chk');
+  c.classList.toggle('on');
+  if (c.classList.contains('on')) c.innerHTML = '<i class="fa-solid fa-check"></i>';
+  else c.innerHTML = '';
+}));
+document.querySelectorAll('.cond-pill').forEach(p => p.addEventListener('click', () => {
+  p.classList.toggle('on');
+  const check = p.querySelector('i.fa-check');
+  if (p.classList.contains('on')) {
+    if (!check) {
+      const c = document.createElement('i');
+      c.className = 'fa-solid fa-check';
+      c.style.color = 'var(--text)';
+      p.appendChild(c);
+    }
+  } else if (check) check.remove();
+}));
+document.querySelectorAll('.pop-opt').forEach(o => o.addEventListener('click', () => {
+  document.querySelectorAll('.pop-opt').forEach(x => x.classList.remove('on'));
+  o.classList.add('on');
+}));
+document.querySelectorAll('.icon-cell').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.icon-cell').forEach(x => x.classList.remove('selected'));
+  c.classList.add('selected');
+}));
+document.querySelectorAll('.snip-item').forEach(s => s.addEventListener('click', () => {
+  document.querySelectorAll('.snip-item').forEach(x => x.classList.remove('active'));
+  s.classList.add('active');
+}));
+</script>
+
+</body>
+</html>

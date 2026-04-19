@@ -7,15 +7,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Captcha\Facades\Captcha;
+use Modules\Forms\Http\Requests\TrackAbandonRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormAbandonTracking;
 use Modules\Forms\Models\FormAccessToken;
 use Modules\Forms\Services\FormSubmissionService;
+use Modules\Forms\Services\FormValidationBuilder;
 
 class FormPublicController extends Controller
 {
     public function __construct(
-        private readonly FormSubmissionService $submissionService
+        private readonly FormSubmissionService $submissionService,
+        private readonly FormValidationBuilder $validationBuilder,
     ) {}
 
     public function show(string $slug): View
@@ -64,37 +68,32 @@ class FormPublicController extends Controller
                 : redirect()->back()->with('success', $form->success_message ?? 'Formulario enviado correctamente.');
         }
 
-        $rules = ['_hp' => 'nullable|size:0'];
-        $attributeNames = [];
+        // Time-based spam check: si el form se completó en <N segundos,
+        // probablemente es un bot. Devolvemos "success" silencioso para no
+        // revelar la detección.
+        $minSeconds = (int) config('forms.min_fill_seconds', 3);
+        $startTime = (int) $request->input('_start_time', 0);
+        $elapsed = $startTime > 0 ? (time() - $startTime) : PHP_INT_MAX;
 
-        $fields = $form->fields()->visible()->ordered()->get();
+        if ($form->honeypot_enabled && $startTime > 0 && $elapsed < $minSeconds) {
+            \Log::info('Forms: submission rechazada por time-check', [
+                'form_id' => $form->id,
+                'elapsed_seconds' => $elapsed,
+                'min_required' => $minSeconds,
+                'ip' => $request->ip(),
+            ]);
 
-        foreach ($fields as $field) {
-            if ($field->isLayoutField()) {
-                continue;
-            }
-
-            $fieldRules = $field->is_required ? ['required'] : ['nullable'];
-
-            match ($field->type) {
-                'email' => $fieldRules[] = 'email',
-                'url' => $fieldRules[] = 'url',
-                'number', 'slider', 'rating', 'nps' => $fieldRules[] = 'numeric',
-                'date' => $fieldRules[] = 'date',
-                'file' => array_push($fieldRules, 'file', 'max:'.(config('forms.max_file_size_mb', 10) * 1024)),
-                default => null,
-            };
-
-            foreach ($field->validation_rules ?? [] as $rule) {
-                $fieldRules[] = $rule;
-            }
-
-            $rules[$field->key] = $fieldRules;
-            $attributeNames[$field->key] = $field->label;
+            return $request->expectsJson()
+                ? response()->json(['success' => true])
+                : redirect()->back()->with('success', $form->success_message ?? 'Formulario enviado correctamente.');
         }
 
-        if ($form->captcha_enabled && class_exists(\Modules\Captcha\Facades\Captcha::class)) {
-            $captchaRules = \Modules\Captcha\Facades\Captcha::rules();
+        $built = $this->validationBuilder->buildForSubmission($form);
+        $rules = $built['rules'];
+        $attributeNames = $built['attributes'];
+
+        if ($form->captcha_enabled && class_exists(Captcha::class)) {
+            $captchaRules = Captcha::rules();
             if (! empty($captchaRules)) {
                 $rules = array_merge($rules, $captchaRules);
             }
@@ -146,7 +145,7 @@ class FormPublicController extends Controller
             ->firstOrFail();
 
         $captchaEnabled = $form->captcha_enabled
-            && class_exists(\Modules\Captcha\Facades\Captcha::class);
+            && class_exists(Captcha::class);
 
         return view('forms::public.embed', compact('form', 'captchaEnabled'));
     }
@@ -169,22 +168,16 @@ class FormPublicController extends Controller
         return redirect()->route('forms.public.embed', ['slug' => $accessToken->form->slug]);
     }
 
-    public function trackAbandon(Request $request, string $slug): JsonResponse
+    public function trackAbandon(TrackAbandonRequest $request, string $slug): JsonResponse
     {
         $form = Form::query()
             ->where('slug', $slug)
             ->active()
             ->firstOrFail();
 
-        $validated = $request->validate([
-            'session_token' => ['required', 'string', 'max:255'],
-            'partial_data' => ['nullable', 'json'],
-            'current_step' => ['nullable', 'integer', 'min:1'],
-            'last_field_key' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email'],
-        ]);
+        $validated = $request->validated();
 
-        $partialData = $validated['partial_data'] ? json_decode($validated['partial_data'], true) : null;
+        $partialData = $validated['partial_data'] ?? null ? json_decode($validated['partial_data'], true) : null;
 
         $existing = FormAbandonTracking::query()
             ->where('form_id', $form->id)

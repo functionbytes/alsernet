@@ -13,7 +13,7 @@ class UpdateSeoStaticUrlRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('Seo.static-urls.update') ?? false;
     }
 
     /**

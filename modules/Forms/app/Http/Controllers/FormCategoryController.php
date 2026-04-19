@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\BulkActionFormCategoryRequest;
+use Modules\Forms\Http\Requests\ReorderFormCategoryRequest;
+use Modules\Forms\Http\Requests\StoreFormCategoryRequest;
+use Modules\Forms\Http\Requests\UpdateFormCategoryRequest;
 use Modules\Forms\Models\FormCategory;
 
 class FormCategoryController extends Controller
@@ -45,24 +50,15 @@ class FormCategoryController extends Controller
         return view('forms::settings.categories.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreFormCategoryRequest $request): RedirectResponse
     {
-        $this->authorize('Forms.categories.manage');
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'color' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'icon' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['boolean'],
-        ]);
-
+        $data = $request->validated();
         $data['slug'] = $this->generateUniqueSlug($data['name']);
         $data['sort_order'] = FormCategory::query()->max('sort_order') + 1;
 
         FormCategory::query()->create($data);
 
-        session()->flash('success', 'Categoría creada correctamente.');
+        session()->flash('success', __('forms::messages.category.created'));
 
         return redirect()->route('settings.forms.categories.index');
     }
@@ -74,46 +70,34 @@ class FormCategoryController extends Controller
         return view('forms::settings.categories.edit', compact('category'));
     }
 
-    public function update(Request $request, FormCategory $category): RedirectResponse
+    public function update(UpdateFormCategoryRequest $request, FormCategory $category): RedirectResponse
     {
-        $this->authorize('Forms.categories.manage');
+        $category->update($request->validated());
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'color' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'icon' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['boolean'],
-        ]);
-
-        $category->update($data);
-
-        session()->flash('success', 'Categoría actualizada correctamente.');
+        session()->flash('success', __('forms::messages.category.updated'));
 
         return redirect()->route('settings.forms.categories.index');
     }
 
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkActionFormCategoryRequest $request): JsonResponse
     {
-        $this->authorize('Forms.categories.manage');
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer'],
-        ]);
+        $count = DB::transaction(function () use ($validated): int {
+            $categories = FormCategory::query()->whereIn('id', $validated['ids'])->get();
+            $processed = 0;
 
-        $categories = FormCategory::whereIn('id', $validated['ids'])->get();
-        $count = 0;
+            foreach ($categories as $category) {
+                match ($validated['action']) {
+                    'activate' => $category->update(['is_active' => true]),
+                    'deactivate' => $category->update(['is_active' => false]),
+                    'delete' => $category->delete(),
+                };
+                $processed++;
+            }
 
-        foreach ($categories as $category) {
-            match ($validated['action']) {
-                'activate' => $category->update(['is_active' => true]),
-                'deactivate' => $category->update(['is_active' => false]),
-                'delete' => $category->delete(),
-            };
-            $count++;
-        }
+            return $processed;
+        });
 
         return response()->json(['success' => true, 'count' => $count]);
     }
@@ -124,12 +108,12 @@ class FormCategoryController extends Controller
 
         if ($category->forms()->where('is_active', true)->exists()) {
             return redirect()->back()
-                ->with('error', 'No se puede eliminar la categoría porque tiene formularios activos.');
+                ->with('error', __('forms::messages.category.delete_has_active_forms'));
         }
 
         $category->delete();
 
-        session()->flash('success', 'Categoría eliminada correctamente.');
+        session()->flash('success', __('forms::messages.category.deleted'));
 
         return redirect()->route('settings.forms.categories.index');
     }
@@ -142,25 +126,19 @@ class FormCategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $category->is_active ? 'Categoría activada' : 'Categoría desactivada',
+            'message' => $category->is_active ? __('forms::messages.category.activated') : __('forms::messages.category.deactivated'),
         ]);
     }
 
-    public function reorder(Request $request): JsonResponse
+    public function reorder(ReorderFormCategoryRequest $request): JsonResponse
     {
-        $this->authorize('Forms.categories.manage');
-
-        $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.id' => ['required', 'integer'],
-            'items.*.sort_order' => ['required', 'integer', 'min:0'],
-        ]);
-
-        foreach ($request->input('items') as $item) {
-            FormCategory::query()
-                ->where('id', $item['id'])
-                ->update(['sort_order' => $item['sort_order']]);
-        }
+        DB::transaction(function () use ($request): void {
+            foreach ($request->validated()['items'] as $item) {
+                FormCategory::query()
+                    ->where('id', $item['id'])
+                    ->update(['sort_order' => $item['sort_order']]);
+            }
+        });
 
         return response()->json(['success' => true]);
     }

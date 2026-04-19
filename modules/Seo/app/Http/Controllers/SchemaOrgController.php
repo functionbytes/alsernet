@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Modules\Seo\Http\Requests\UpdateSchemaOrgRequest;
 use Modules\Seo\Models\SeoMeta;
 
@@ -146,7 +147,37 @@ class SchemaOrgController extends Controller
         ]);
     }
 
-    public function validateJson(UpdateSchemaOrgRequest $request): JsonResponse
+    /**
+     * Apply a Schema.org template to multiple SeoMeta records at once.
+     * Typical use: mark all BlogPost metas as `Article`, all Page metas as
+     * `WebPage`, etc. Only sets `schema_type` — the JSON can be edited later
+     * per-record. Existing custom schemas are NOT overwritten unless `force`.
+     *
+     * Expects JSON: { model_type: 'Modules\\Blog\\Models\\BlogPost', schema_type: 'Article', force: false }
+     */
+    public function bulkApply(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'model_type' => ['required', 'string', 'max:200'],
+            'schema_type' => ['required', 'string', 'in:Article,Product,FAQPage,Recipe,Event,HowTo,WebPage'],
+            'force' => ['sometimes', 'boolean'],
+        ]);
+
+        $query = SeoMeta::query()->where('seoable_type', $data['model_type']);
+
+        if (! ($data['force'] ?? false)) {
+            $query->whereNull('schema_type');
+        }
+
+        $updated = $query->update(['schema_type' => $data['schema_type']]);
+
+        return response()->json([
+            'updated' => $updated,
+            'message' => "Se aplicó schema \"{$data['schema_type']}\" a {$updated} registros del tipo {$data['model_type']}.",
+        ]);
+    }
+
+    public function validateJson(Request $request): JsonResponse
     {
         $schema = $request->input('schema_custom');
         $errors = [];

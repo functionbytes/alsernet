@@ -384,6 +384,9 @@ return [
         'notify_score_drop' => env('SEO_WEBHOOK_SCORE_DROP', true),
         'notify_redirect_chain' => env('SEO_WEBHOOK_REDIRECT_CHAIN', true),
         'notify_orphans' => env('SEO_WEBHOOK_ORPHANS', false),
+        // Shared secret for HMAC-SHA256 signing of outgoing webhooks.
+        // Receivers can verify with X-Seo-Signature header. Empty = no signing.
+        'signing_secret' => env('SEO_WEBHOOK_SIGNING_SECRET', ''),
     ],
 
     /*
@@ -487,5 +490,52 @@ return [
         'Bytespider' => 'ByteDance / TikTok — entrena modelos',
         'anthropic-ai' => 'Anthropic — UA legacy',
         'cohere-ai' => 'Cohere — entrena modelos',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Performance hints (PageSpeed / Core Web Vitals)
+    |--------------------------------------------------------------------------
+    |
+    | Configure third-party origins the browser should pre-connect to early,
+    | and optional preload hints for critical resources. Lower values mean a
+    | faster LCP in PageSpeed Insights.
+    |
+    | - preconnect: origins used for fonts, analytics, CDNs — browser opens a
+    |   TCP+TLS connection before the resource is requested.
+    | - dns_prefetch: cheaper alternative for less-critical origins.
+    | - preload: [['href' => '...', 'as' => 'font', 'type' => 'font/woff2', 'crossorigin' => true]]
+    |
+    */
+    'performance' => [
+        'preconnect' => env('SEO_PRECONNECT', 'https://fonts.googleapis.com,https://fonts.gstatic.com'),
+        'dns_prefetch' => env('SEO_DNS_PREFETCH', ''),
+        'preload' => [
+            // ['href' => '/fonts/main.woff2', 'as' => 'font', 'type' => 'font/woff2', 'crossorigin' => true],
+        ],
+        'html_cache_seconds' => (int) env('SEO_HTML_CACHE_SECONDS', 60),
+        'enable_security_headers' => (bool) env('SEO_SECURITY_HEADERS', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SERP Rankings Provider (SerpAPI / ValueSERP / DataForSEO)
+    |--------------------------------------------------------------------------
+    */
+    'serp' => [
+        'provider' => env('SEO_SERP_PROVIDER', ''),
+        'api_key' => env('SEO_SERP_API_KEY', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Search Console OAuth
+    |--------------------------------------------------------------------------
+    */
+    'gsc' => [
+        'client_id' => env('SEO_GSC_CLIENT_ID', ''),
+        'client_secret' => env('SEO_GSC_CLIENT_SECRET', ''),
+        'redirect_uri' => env('SEO_GSC_REDIRECT_URI', ''),
+        'property_url' => env('SEO_GSC_PROPERTY', ''),
     ],
 ];

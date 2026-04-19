@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Visual Editor — Rediseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #fafafa;
+    --bg-panel: #ffffff;
+    --bg-rail: #f4f4f5;
+    --bg-canvas: #1a1a1a;
+    --bg-subtle: #f4f4f5;
+    --bg-hover: #f4f4f5;
+    --bg-active: #18181b;
+    --border: #e8e8e8;
+    --border-strong: #d4d4d8;
+    --text: #18181b;
+    --text-soft: #52525b;
+    --text-muted: #a1a1aa;
+    --text-on-dark: #e4e4e7;
+    --accent: #18181b;
+    --accent-fg: #ffffff;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --radius: 6px;
+    --radius-sm: 4px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-lg: 0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08);
+    --shadow-canvas: 0 24px 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+    overflow: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, textarea, select { font-family: inherit; font-size: 12px; color: var(--text); }
+  input:focus, textarea:focus, select:focus { outline: none; }
+
+  /* ─────────────────────── LAYOUT ─────────────────────── */
+  .app {
+    display: grid;
+    grid-template-columns: 44px 280px 1fr;
+    grid-template-rows: 40px 1fr 26px;
+    height: 100vh;
+    width: 100vw;
+    gap: 0;
+  }
+  .topbar   { grid-column: 1 / -1; grid-row: 1; }
+  .rail     { grid-column: 1; grid-row: 2; }
+  .panel    { grid-column: 2; grid-row: 2; }
+  .canvas   { grid-column: 3; grid-row: 2; }
+  .statusbar{ grid-column: 1 / -1; grid-row: 3; }
+
+  /* ─────────────────────── TOPBAR ─────────────────────── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    padding: 0 10px 0 14px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    z-index: 10;
+  }
+  .topbar-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 12px; letter-spacing: -0.01em;
+    padding-right: 10px; border-right: 1px solid var(--border);
+    height: 20px; color: var(--text);
+  }
+  .brand-mark {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: var(--text); color: #fff;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-soft);
+  }
+  .breadcrumb .crumb { color: var(--text-muted); }
+  .breadcrumb .sep { color: var(--text-muted); font-size: 9px; }
+  .breadcrumb .current { color: var(--text); font-weight: 500; }
+  .breadcrumb .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success); margin-left: 4px;
+  }
+  .topbar-ctx {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .topbar-end {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .kbd {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px; padding: 2px 5px; border-radius: 3px;
+    background: var(--bg-subtle); color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .search-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 8px 4px 10px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 12px;
+    min-width: 220px;
+    transition: background .15s;
+  }
+  .search-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+  .search-btn i { font-size: 11px; }
+  .search-btn .kbd { margin-left: auto; }
+
+  /* Icon button — universal */
+  .ibtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    transition: background .12s, color .12s;
+    position: relative;
+  }
+  .ibtn i { font-size: 12px; }
+  .ibtn:hover { background: var(--bg-hover); color: var(--text); }
+  .ibtn.active { background: var(--text); color: #fff; }
+  .ibtn[data-tooltip] { position: relative; }
+  .ibtn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--text); color: #fff;
+    font-size: 10.5px; padding: 4px 7px;
+    border-radius: 4px; pointer-events: none;
+    z-index: 100; font-weight: 500;
+    letter-spacing: 0;
+  }
+  .ibtn[data-tooltip][data-tooltip-pos="right"]:hover::after {
+    top: 50%; left: calc(100% + 6px);
+    transform: translateY(-50%);
+  }
+
+  .divider-v { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+
+  /* Segmented control for breakpoints / views in topbar */
+  .seg {
+    display: inline-flex;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    padding: 2px;
+  }
+  .seg button {
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-soft);
+    font-weight: 500;
+    transition: all .12s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .seg button i { font-size: 11px; }
+  .seg button.active {
+    background: var(--bg-panel);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+  .seg button:hover:not(.active) { color: var(--text); }
+
+  /* ─────────────────────── LEFT RAIL ─────────────────────── */
+  .rail {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 2px;
+    z-index: 5;
+  }
+  .rail-btn {
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    position: relative;
+    transition: background .12s, color .12s;
+  }
+  .rail-btn i { font-size: 13px; }
+  .rail-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .rail-btn.active { background: var(--text); color: #fff; }
+  .rail-btn.active::before {
+    content: '';
+    position: absolute;
+    left: -6px; top: 50%; transform: translateY(-50%);
+    width: 2px; height: 16px;
+    background: var(--text);
+    border-radius: 0 2px 2px 0;
+  }
+  .rail-btn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute; top: 50%; left: calc(100% + 10px);
+    transform: translateY(-50%);
+    background: var(--text); color: #fff;
+    font-size: 10.5px; padding: 4px 7px; border-radius: 4px;
+    white-space: nowrap; pointer-events: none; z-index: 200;
+    font-weight: 500;
+  }
+  .rail-spacer { flex: 1; }
+  .rail-sep { width: 20px; height: 1px; background: var(--border); margin: 4px 0; }
+
+  .rail-user {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #d4d4d8, #a1a1aa);
+    color: #fff; display: grid; place-items: center;
+    font-size: 10px; font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  /* ─────────────────────── SIDE PANEL ─────────────────────── */
+  .panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center;
+    padding: 10px 12px 8px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .panel-title {
+    font-size: 12px; font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .panel-label {
+    font-size: 9.5px; font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+  .panel-actions { margin-left: auto; display: flex; gap: 2px; }
+  .panel-body {
+    flex: 1; overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .panel-body::-webkit-scrollbar { width: 6px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  .panel-body::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  .panel-section {
+    padding: 8px 12px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-section:last-child { border-bottom: none; }
+  .section-head {
+    display: flex; align-items: center;
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 0 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-head:hover { color: var(--text-soft); }
+  .section-head .chev {
+    font-size: 9px;
+    margin-right: 5px;
+    transition: transform .15s;
+  }
+  .section-head.collapsed .chev { transform: rotate(-90deg); }
+  .section-count {
+    margin-left: auto;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* search in panel */
+  .pinput-wrap {
+    position: relative;
+    padding: 0 12px 10px;
+  }
+  .pinput {
+    width: 100%;
+    padding: 6px 10px 6px 28px;
+    background: var(--bg-subtle);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text);
+    transition: background .12s, border-color .12s;
+  }
+  .pinput:focus {
+    background: var(--bg-panel);
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+  }
+  .pinput::placeholder { color: var(--text-muted); }
+  .pinput-wrap .pi-icon {
+    position: absolute;
+    left: 21px; top: 50%;
+    transform: translateY(-50%) translateY(-5px);
+    color: var(--text-muted);
+    font-size: 11px;
+    pointer-events: none;
+  }
+
+  /* ─── BLOCKS panel ─── */
+  .blocks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .block-card {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 7px;
+    padding: 14px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
+    cursor: grab;
+    transition: all .12s;
+    user-select: none;
+    position: relative;
+  }
+  .block-card:hover {
+    border-color: var(--text);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .block-card:active { cursor: grabbing; transform: translateY(0); }
+  .block-icon {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .block-name {
+    font-size: 10.5px; font-weight: 500;
+    color: var(--text-soft);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .block-card.is-new::after {
+    content: 'NEW';
+    position: absolute;
+    top: 5px; right: 5px;
+    font-size: 8px; font-weight: 700;
+    color: #fff; background: var(--text);
+    padding: 1px 4px; border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── INSPECTOR panel ─── */
+  .selection-bar {
+    margin: 0 12px 10px;
+    padding: 8px 10px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px;
+  }
+  .sel-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 2px 5px;
+    background: var(--text);
+    color: #fff;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .sel-path {
+    color: var(--text-soft);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .field-row.single { grid-template-columns: 1fr; }
+  .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field {
+    position: relative;
+  }
+  .field-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .finput {
+    width: 100%;
+    padding: 5px 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 11.5px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .finput:focus {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+  }
+  .finput-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 8px 0 0;
+  }
+  .finput-inline .finput {
+    border: none;
+    background: transparent;
+    padding: 5px 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .finput-inline .finput:focus { box-shadow: none; }
+  .finput-inline .unit {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .color-swatch {
+    display: flex; align-items: center;
+    gap: 8px; padding: 5px 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color .12s;
+  }
+  .color-swatch:hover { border-color: var(--text); }
+  .swatch {
+    width: 16px; height: 16px; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+  .swatch-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+  .color-swatch .opacity {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .btn-group {
+    display: flex;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    gap: 2px;
+  }
+  .btn-group button {
+    flex: 1;
+    padding: 5px;
+    border-radius: 3px;
+    color: var(--text-soft);
+    display: grid; place-items: center;
+    transition: all .12s;
+  }
+  .btn-group button i { font-size: 11px; }
+  .btn-group button:hover { color: var(--text); }
+  .btn-group button.active {
+    background: var(--bg-panel);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .slider-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .slider-row input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    background: var(--text);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-panel);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  .slider-row .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text);
+    min-width: 40px; text-align: right;
+  }
+
+  /* Spacing box (margin/padding visual) */
+  .spacing-box {
+    position: relative;
+    padding: 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+    margin-bottom: 8px;
+  }
+  .spacing-box::before {
+    content: 'MARGIN';
+    position: absolute;
+    top: 3px; left: 6px;
+    font-size: 8px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .spacing-inner {
+    padding: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-panel);
+    border-radius: 3px;
+    position: relative;
+    text-align: center;
+  }
+  .spacing-inner::before {
+    content: 'PADDING';
+    position: absolute;
+    top: 3px; left: 6px;
+    font-size: 8px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .spacing-val {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text);
+    background: var(--bg-panel);
+    padding: 1px 3px;
+    border-radius: 2px;
+    cursor: text;
+  }
+  .sv-mt { top: 1px; left: 50%; transform: translateX(-50%); }
+  .sv-mr { right: 1px; top: 50%; transform: translateY(-50%); }
+  .sv-mb { bottom: 1px; left: 50%; transform: translateX(-50%); }
+  .sv-ml { left: 1px; top: 50%; transform: translateY(-50%); }
+  .sv-center {
+    position: static;
+    transform: none;
+    display: inline-block;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  .pv-t { top: 14px; left: 50%; transform: translateX(-50%); }
+  .pv-r { right: 14px; top: 50%; transform: translateY(-50%); }
+  .pv-b { bottom: 14px; left: 50%; transform: translateX(-50%); }
+  .pv-l { left: 14px; top: 50%; transform: translateY(-50%); }
+
+  /* ─── LAYERS (Capas) ─── */
+  .tree-item {
+    display: flex; align-items: center;
+    padding: 3px 12px 3px 10px;
+    font-size: 11.5px;
+    gap: 6px;
+    cursor: pointer;
+    position: relative;
+    color: var(--text-soft);
+    transition: background .08s;
+  }
+  .tree-item:hover { background: var(--bg-hover); }
+  .tree-item.selected {
+    background: var(--text);
+    color: #fff;
+  }
+  .tree-item.selected .tree-tag { color: #a1a1aa; }
+  .tree-item.selected .tree-chev { color: #a1a1aa; }
+  .tree-item .tree-chev {
+    font-size: 8px;
+    color: var(--text-muted);
+    width: 10px;
+    text-align: center;
+  }
+  .tree-item .tree-icon {
+    font-size: 11px;
+    color: var(--text-muted);
+    width: 12px;
+  }
+  .tree-item.selected .tree-icon { color: #d4d4d8; }
+  .tree-item .tree-name {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tree-item .tree-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .tree-indent-1 { padding-left: 22px; }
+  .tree-indent-2 { padding-left: 34px; }
+  .tree-indent-3 { padding-left: 46px; }
+  .tree-item .tree-vis {
+    opacity: 0;
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 2px;
+  }
+  .tree-item:hover .tree-vis { opacity: 1; }
+  .tree-item.selected .tree-vis { opacity: 1; color: #d4d4d8; }
+
+  /* ─── SETTINGS / SEO ─── */
+  .seo-score {
+    display: flex; align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    margin: 0 12px 10px;
+  }
+  .seo-ring {
+    width: 44px; height: 44px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .seo-ring svg { transform: rotate(-90deg); }
+  .seo-ring-num {
+    position: absolute;
+    inset: 0;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+  }
+  .seo-score-text { flex: 1; min-width: 0; }
+  .seo-score-grade {
+    font-size: 11px; font-weight: 600;
+    color: var(--text);
+  }
+  .seo-score-desc {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .serp-preview {
+    padding: 10px 12px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 12px 10px;
+  }
+  .serp-title {
+    color: #1a0dab;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    font-family: Arial, sans-serif;
+  }
+  .serp-url {
+    color: #006621;
+    font-size: 10.5px;
+    margin: 2px 0;
+    font-family: Arial, sans-serif;
+  }
+  .serp-desc {
+    font-size: 10.5px;
+    color: #545454;
+    line-height: 1.35;
+    font-family: Arial, sans-serif;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 11.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .k { color: var(--text-soft); }
+  .stat-row .v {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .stat-row .v.ideal { color: var(--success); }
+  .stat-row .v.warn { color: var(--warning); }
+
+  /* ─────────────────────── CANVAS ─────────────────────── */
+  .canvas {
+    background: var(--bg-canvas);
+    position: relative;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 22px;
+  }
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+  .canvas-frame {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--shadow-canvas);
+    overflow: hidden;
+    transition: width .3s var(--ease), height .3s var(--ease);
+    position: relative;
+    z-index: 1;
+    transform-origin: top center;
+  }
+  .canvas-frame.desktop { width: 1280px; }
+  .canvas-frame.tablet { width: 820px; }
+  .canvas-frame.mobile { width: 390px; }
+
+  /* Mini browser chrome */
+  .mini-chrome {
+    display: flex; align-items: center;
+    padding: 8px 12px;
+    background: #f4f4f5;
+    border-bottom: 1px solid #e4e4e7;
+    gap: 8px;
+  }
+  .mini-chrome .dots { display: flex; gap: 5px; }
+  .mini-chrome .dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #d4d4d8;
+  }
+  .mini-url {
+    flex: 1;
+    background: #fff;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 10.5px;
+    color: #52525b;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; gap: 6px;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+  .mini-url i { font-size: 9px; color: var(--text-muted); }
+
+  /* ───── MOCK PREVIEW (inside iframe-like) ───── */
+  .mock-site { font-family: 'Inter', sans-serif; color: #fff; }
+  .mock-topstrip {
+    background: #b8121a; color: #fff; padding: 8px 32px;
+    font-size: 11px;
+    display: flex; justify-content: space-between;
+    align-items: center;
+  }
+  .mock-topstrip > div { display: flex; gap: 22px; align-items: center; }
+  .mock-topstrip i { opacity: .9; }
+  .mock-header {
+    background: #fff; padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #eee;
+  }
+  .mock-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 800; color: #18181b;
+    letter-spacing: 0.02em;
+  }
+  .mock-logo-mark {
+    width: 22px; height: 22px; background: #b8121a;
+    border-radius: 3px; display: grid; place-items: center;
+    color: #fff; font-size: 12px; font-weight: 800;
+  }
+  .mock-nav { display: flex; gap: 20px; font-size: 11.5px; color: #18181b; }
+  .mock-nav a { cursor: pointer; }
+  .mock-social { display: flex; gap: 10px; color: #18181b; font-size: 12px; }
+  .mock-hero {
+    background: #0a1628;
+    padding: 50px 32px 60px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 30px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08), transparent 50%),
+      repeating-linear-gradient(135deg, transparent 0, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #dc2626; color: #fff;
+    padding: 5px 10px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+    width: fit-content;
+    margin-bottom: 14px;
+  }
+  .hero-title {
+    font-size: 38px; font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+  .hero-desc {
+    font-size: 12px; color: #cbd5e1;
+    line-height: 1.55;
+    margin-bottom: 18px;
+    max-width: 480px;
+  }
+  .hero-checks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; font-size: 12px; }
+  .hero-checks div { display: flex; align-items: center; gap: 8px; }
+  .hero-checks i { color: #dc2626; font-size: 11px; }
+  .hero-cta { display: flex; gap: 10px; }
+  .btn-red {
+    background: #dc2626; color: #fff;
+    padding: 9px 16px; border-radius: 4px;
+    font-size: 11.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-outline {
+    background: transparent; color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 9px 16px; border-radius: 4px;
+    font-size: 11.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mock-form {
+    background: #fff; color: #18181b;
+    border-radius: 8px; padding: 20px;
+    position: relative; z-index: 1;
+  }
+  .form-eyebrow {
+    color: #dc2626; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 5px;
+  }
+  .form-title {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .form-sub {
+    font-size: 11px; color: #52525b;
+    margin-bottom: 14px;
+  }
+  .form-field { margin-bottom: 10px; }
+  .form-field label {
+    font-size: 11px; font-weight: 500;
+    display: block; margin-bottom: 4px;
+  }
+  .form-input {
+    width: 100%; padding: 7px 10px;
+    background: #f4f4f5; border: 1px solid transparent;
+    border-radius: 4px; font-size: 11px;
+    color: #18181b;
+  }
+
+  /* ── Selection indicators on canvas ── */
+  .sel-outline {
+    position: absolute;
+    border: 1.5px solid var(--text);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .sel-outline::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -18px; left: -1.5px;
+    background: var(--text); color: #fff;
+    font-size: 9.5px; font-weight: 500;
+    padding: 1px 5px;
+    border-radius: 2px 2px 0 0;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .sel-outline .handle {
+    position: absolute;
+    width: 7px; height: 7px;
+    background: #fff;
+    border: 1.5px solid var(--text);
+    border-radius: 1px;
+  }
+  .sel-outline .h-tl { top: -3.5px; left: -3.5px; cursor: nwse-resize; }
+  .sel-outline .h-tr { top: -3.5px; right: -3.5px; cursor: nesw-resize; }
+  .sel-outline .h-bl { bottom: -3.5px; left: -3.5px; cursor: nesw-resize; }
+  .sel-outline .h-br { bottom: -3.5px; right: -3.5px; cursor: nwse-resize; }
+  .sel-outline .h-t { top: -3.5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+  .sel-outline .h-b { bottom: -3.5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+  .sel-outline .h-l { left: -3.5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+  .sel-outline .h-r { right: -3.5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+  /* Floating element toolbar */
+  .floating-toolbar {
+    position: absolute;
+    background: var(--text); color: #fff;
+    border-radius: var(--radius);
+    padding: 3px;
+    display: flex; gap: 1px;
+    box-shadow: var(--shadow-lg);
+    z-index: 20;
+  }
+  .floating-toolbar button {
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    color: #d4d4d8;
+    border-radius: 3px;
+    font-size: 10px;
+    transition: background .12s, color .12s;
+  }
+  .floating-toolbar button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .floating-toolbar .sep { width: 1px; background: rgba(255,255,255,0.15); margin: 3px 2px; }
+
+  /* Zoom bar */
+  .zoom-bar {
+    position: absolute;
+    bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(24,24,27,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 4px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    z-index: 20;
+    box-shadow: var(--shadow-lg);
+  }
+  .zoom-bar button {
+    padding: 4px 8px;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #a1a1aa;
+    border-radius: 5px;
+    transition: all .12s;
+    min-width: 32px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .zoom-bar button:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .zoom-bar button.active {
+    background: #fff;
+    color: var(--text);
+  }
+  .zoom-bar .zoom-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.12); margin: 0 3px; }
+  .zoom-bar .zoom-ico {
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    color: #a1a1aa;
+    border-radius: 5px;
+  }
+  .zoom-bar .zoom-ico:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+  /* ─────────────────────── FAB (Save/Publish) ─────────────────────── */
+  .fab-stack {
+    position: fixed;
+    bottom: 38px; right: 18px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fab-status {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    color: var(--text-soft);
+    display: flex; align-items: center; gap: 6px;
+    box-shadow: var(--shadow-md);
+  }
+  .fab-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .fab-status.unsaved .dot { background: var(--warning); animation: pulse 1.8s infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(217,119,6,0); }
+  }
+  .fab-group {
+    display: flex;
+    background: var(--text);
+    color: #fff;
+    border-radius: 20px;
+    padding: 3px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.15);
+    align-items: center;
+    gap: 2px;
+  }
+  .fab-primary {
+    padding: 7px 14px;
+    border-radius: 18px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #fff;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .12s;
+  }
+  .fab-primary:hover { background: rgba(255,255,255,0.1); }
+  .fab-primary.publish {
+    background: #fff;
+    color: var(--text);
+  }
+  .fab-primary.publish:hover { background: #e4e4e7; }
+  .fab-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+  .fab-menu {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    color: #a1a1aa;
+    border-radius: 50%;
+    transition: background .12s, color .12s;
+  }
+  .fab-menu:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  /* ─────────────────────── STATUSBAR ─────────────────────── */
+  .statusbar {
+    display: flex; align-items: center;
+    padding: 0 12px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    gap: 12px;
+  }
+  .status-item {
+    display: flex; align-items: center; gap: 5px;
+  }
+  .status-item i { font-size: 10px; }
+  .status-item .k { font-weight: 500; }
+  .status-dot-inline {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--success);
+  }
+  .status-sep { width: 1px; height: 11px; background: var(--border); }
+  .status-item a { color: var(--text-muted); transition: color .12s; cursor: pointer; }
+  .status-item a:hover { color: var(--text); }
+
+  /* ─────────────────────── COMMAND PALETTE ─────────────────────── */
+  .cmd-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 200;
+    display: grid;
+    place-items: start center;
+    padding-top: 120px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .18s;
+  }
+  .cmd-overlay.open { opacity: 1; pointer-events: auto; }
+  .cmd-palette {
+    width: 560px; max-width: 90vw;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+    overflow: hidden;
+    transform: translateY(-8px);
+    transition: transform .18s var(--ease);
+  }
+  .cmd-overlay.open .cmd-palette { transform: translateY(0); }
+  .cmd-input-wrap {
+    display: flex; align-items: center;
+    padding: 12px 16px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-input-wrap i { color: var(--text-muted); font-size: 13px; }
+  .cmd-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .cmd-input::placeholder { color: var(--text-muted); }
+  .cmd-list {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .cmd-section-label {
+    font-size: 9.5px; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 10px 4px;
+  }
+  .cmd-item {
+    display: flex; align-items: center;
+    padding: 7px 10px;
+    border-radius: 5px;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .cmd-item.active { background: var(--bg-subtle); }
+  .cmd-item i { color: var(--text-muted); font-size: 12px; width: 14px; }
+  .cmd-item .cmd-label { flex: 1; }
+  .cmd-item .cmd-shortcut {
+    display: flex; gap: 3px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  /* ─────────────────────── TWEAKS PANEL ─────────────────────── */
+  #tweaks {
+    position: fixed; bottom: 90px; right: 18px;
+    width: 240px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+    display: none;
+    font-size: 11.5px;
+    overflow: hidden;
+  }
+  #tweaks.open { display: block; }
+  .tweak-head {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: space-between;
+    font-size: 11px; font-weight: 600;
+  }
+  .tweak-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 5px; }
+  .tweak-row label {
+    font-size: 10px; font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .tweak-row .seg { width: 100%; }
+  .tweak-row .seg button { flex: 1; justify-content: center; }
+
+  /* Dark canvas bg alt */
+  .app.bg-graph .canvas::before {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .app.bg-flat .canvas::before { display: none; }
+
+  /* Contextual topbar styles */
+  .ctx-group {
+    display: flex; align-items: center; gap: 2px;
+  }
+  .ctx-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+  .ctx-pill .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text);
+  }
+
+  /* History pill */
+  .hist-pill {
+    display: inline-flex; align-items: center;
+    background: var(--bg-subtle);
+    border-radius: var(--radius);
+    padding: 1px;
+  }
+  .hist-pill button {
+    width: 24px; height: 22px;
+    display: grid; place-items: center;
+    color: var(--text-soft);
+    border-radius: 4px;
+  }
+  .hist-pill button:hover { background: var(--bg-panel); color: var(--text); }
+  .hist-pill button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* panel alignment of section content */
+  .sub-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .sub-row .lbl { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ─────────────── TOPBAR ─────────────── -->
+  <header class="topbar" data-screen-label="01 Topbar">
+    <div class="topbar-brand">
+      <div class="brand-mark">V</div>
+      <span>Visual</span>
+    </div>
+
+    <div class="breadcrumb">
+      <span class="crumb">Caixilharia Blanco</span>
+      <i class="fa-solid fa-chevron-right sep"></i>
+      <span class="crumb">Páginas</span>
+      <i class="fa-solid fa-chevron-right sep"></i>
+      <span class="current">Mosquiteras</span>
+      <span class="status-dot" title="Publicada"></span>
+    </div>
+
+    <!-- Contextual center: changes with active panel -->
+    <div class="topbar-ctx" id="topbar-ctx">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="topbar-end">
+      <button class="search-btn" onclick="openCmd()">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Buscar comando</span>
+        <span class="kbd">⌘K</span>
+      </button>
+      <span class="divider-v"></span>
+      <div class="hist-pill">
+        <button data-tooltip="Deshacer"><i class="fa-solid fa-rotate-left"></i></button>
+        <button data-tooltip="Rehacer" disabled><i class="fa-solid fa-rotate-right"></i></button>
+      </div>
+      <button class="ibtn" data-tooltip="Preview en ventana"><i class="fa-solid fa-up-right-from-square"></i></button>
+      <span class="divider-v"></span>
+      <button class="ibtn" data-tooltip="Comentarios"><i class="fa-solid fa-comment"></i></button>
+      <div class="rail-user" style="margin: 0;">JB</div>
+    </div>
+  </header>
+
+  <!-- ─────────────── LEFT RAIL ─────────────── -->
+  <nav class="rail">
+    <button class="rail-btn" data-tooltip="Volver" data-tooltip-pos="right"><i class="fa-solid fa-arrow-left"></i></button>
+    <div class="rail-sep"></div>
+    <button class="rail-btn active" data-panel="blocks" data-tooltip="Bloques"><i class="fa-solid fa-shapes"></i></button>
+    <button class="rail-btn" data-panel="inspector" data-tooltip="Inspector"><i class="fa-solid fa-sliders"></i></button>
+    <button class="rail-btn" data-panel="layout" data-tooltip="Layout"><i class="fa-solid fa-table-columns"></i></button>
+    <button class="rail-btn" data-panel="layers" data-tooltip="Capas"><i class="fa-solid fa-layer-group"></i></button>
+    <button class="rail-btn" data-panel="history" data-tooltip="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
+    <button class="rail-btn" data-panel="code" data-tooltip="Código"><i class="fa-solid fa-code"></i></button>
+    <button class="rail-btn" data-panel="settings" data-tooltip="Ajustes / SEO"><i class="fa-solid fa-gear"></i></button>
+    <button class="rail-btn" data-panel="tree" data-tooltip="Árbol DOM"><i class="fa-solid fa-sitemap"></i></button>
+
+    <div class="rail-spacer"></div>
+    <button class="rail-btn" data-tooltip="Atajos"><i class="fa-solid fa-keyboard"></i></button>
+    <button class="rail-btn" data-tooltip="Ayuda"><i class="fa-solid fa-circle-question"></i></button>
+  </nav>
+
+  <!-- ─────────────── SIDE PANEL (swappable) ─────────────── -->
+  <aside class="panel" id="side-panel">
+    <!-- populated by JS based on active rail button -->
+  </aside>
+
+  <!-- ─────────────── CANVAS ─────────────── -->
+  <section class="canvas" id="canvas">
+    <div class="canvas-frame desktop" id="canvas-frame" style="margin-top: 8px;">
+      <div class="mini-chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="mini-url">
+          <i class="fa-solid fa-lock"></i>
+          caixilhariablanco.pt/mosquiteras
+        </div>
+        <div style="width: 40px;"></div>
+      </div>
+
+      <div class="mock-site" id="mock-site">
+        <div class="mock-topstrip">
+          <div>
+            <span><i class="fa-solid fa-location-dot"></i> &nbsp;Estrada Nacional 8 N12, Alcobaça, Leiria 2480, Portugal</span>
+            <span><i class="fa-solid fa-envelope"></i> &nbsp;info@caixilhariablanco.pt</span>
+          </div>
+          <div>
+            <span><i class="fa-regular fa-clock"></i> &nbsp;Lun–Vie: 9h–18h · Sáb: 9h–13h</span>
+          </div>
+        </div>
+        <div class="mock-header">
+          <div class="mock-logo">
+            <div class="mock-logo-mark">B</div>
+            <span>CAIXILHARIA<br>BLANCO</span>
+          </div>
+          <div class="mock-nav">
+            <a>Inicio</a><a>Sobre nosotros</a><a>Servicios <i class="fa-solid fa-chevron-down" style="font-size:8px"></i></a><a>Contacto</a>
+          </div>
+          <div class="mock-social">
+            <i class="fa-brands fa-whatsapp"></i>
+            <i class="fa-brands fa-facebook"></i>
+            <i class="fa-brands fa-instagram"></i>
+            <i class="fa-solid fa-bars"></i>
+          </div>
+        </div>
+        <div class="mock-hero">
+          <div style="position: relative; z-index: 1;">
+            <div class="hero-badge">
+              <i class="fa-solid fa-award"></i> 500+ Instalaciones
+            </div>
+            <h1 class="hero-title" id="hero-selectable" style="cursor: pointer;">Mosquiteras profesionales a medida en Alcobaça</h1>
+            <p class="hero-desc">Protección total contra mosquitos, moscas y polen. 4 sistemas de mosquiteras adaptados a cada ventana o puerta en Alcobaça, Leiria y Marinha Grande. Fabricación en PVC y aluminio con instalación garantizada en 24–48h.</p>
+            <div class="hero-checks">
+              <div><i class="fa-solid fa-circle-check"></i> 100% eficaz contra insectos y polen</div>
+              <div><i class="fa-solid fa-circle-check"></i> 4 sistemas: Fija, Enrollable, Plisada y ZIP</div>
+              <div><i class="fa-solid fa-circle-check"></i> Tela Pet-Proof disponible para mascotas</div>
+              <div><i class="fa-solid fa-circle-check"></i> Garantía 2 años — Medición gratuita</div>
+            </div>
+            <div class="hero-cta">
+              <a class="btn-red">Presupuesto gratis <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i></a>
+              <a class="btn-outline">Llamar ahora <i class="fa-solid fa-phone" style="font-size:10px"></i></a>
+            </div>
+          </div>
+          <div class="mock-form">
+            <div class="form-eyebrow">PRESUPUESTO GRATIS</div>
+            <div class="form-title">Solicite su presupuesto</div>
+            <div class="form-sub">Respuesta en menos de 24h · Sin compromiso · Visita técnica gratuita</div>
+            <div class="form-field"><label>Nombre</label><input class="form-input" placeholder=""></div>
+            <div class="form-field"><label>Teléfono</label><input class="form-input"></div>
+            <div class="form-field"><label>Tipo de mosquitera</label><input class="form-input" value="— Seleccionar —"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection outline + floating toolbar for the hero title -->
+      <div class="sel-outline" id="sel-box" data-label="h1.hero-title" style="display: none;">
+        <div class="handle h-tl"></div><div class="handle h-tr"></div>
+        <div class="handle h-bl"></div><div class="handle h-br"></div>
+        <div class="handle h-t"></div><div class="handle h-b"></div>
+        <div class="handle h-l"></div><div class="handle h-r"></div>
+      </div>
+      <div class="floating-toolbar" id="float-toolbar" style="display: none;">
+        <button data-tooltip="Negrita"><i class="fa-solid fa-bold"></i></button>
+        <button data-tooltip="Cursiva"><i class="fa-solid fa-italic"></i></button>
+        <button data-tooltip="Subrayado"><i class="fa-solid fa-underline"></i></button>
+        <span class="sep"></span>
+        <button data-tooltip="Enlace"><i class="fa-solid fa-link"></i></button>
+        <button data-tooltip="Color"><i class="fa-solid fa-palette"></i></button>
+        <span class="sep"></span>
+        <button data-tooltip="Duplicar"><i class="fa-solid fa-clone"></i></button>
+        <button data-tooltip="Más"><i class="fa-solid fa-ellipsis"></i></button>
+      </div>
+    </div>
+
+    <!-- Zoom bar -->
+    <div class="zoom-bar" id="zoom-bar">
+      <button class="zoom-ico" data-tooltip="Ajustar"><i class="fa-solid fa-expand"></i></button>
+      <span class="zoom-sep"></span>
+      <button data-zoom="0.5">50%</button>
+      <button data-zoom="0.75">75%</button>
+      <button class="active" data-zoom="1">100%</button>
+      <button data-zoom="1.25">125%</button>
+      <button data-zoom="1.5">150%</button>
+      <span class="zoom-sep"></span>
+      <button class="zoom-ico" data-tooltip="Regla"><i class="fa-solid fa-ruler-combined"></i></button>
+      <button class="zoom-ico" data-tooltip="Grid 12"><i class="fa-solid fa-table-columns"></i></button>
+    </div>
+  </section>
+
+  <!-- ─────────────── STATUSBAR ─────────────── -->
+  <footer class="statusbar">
+    <span class="status-item"><span class="status-dot-inline"></span><span class="k">Publicada</span></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><i class="fa-solid fa-language"></i> ES · EN · PT</span>
+    <span class="status-sep"></span>
+    <span class="status-item"><i class="fa-solid fa-font"></i> 1.183 palabras</span>
+    <span class="status-sep"></span>
+    <span class="status-item"><i class="fa-solid fa-weight-hanging"></i> 238 KB</span>
+    <span class="status-sep"></span>
+    <span class="status-item"><i class="fa-solid fa-code-branch"></i> v 127</span>
+
+    <span style="flex: 1;"></span>
+
+    <span class="status-item"><i class="fa-solid fa-circle" style="color: var(--success); font-size: 7px;"></i> Sincronizado</span>
+    <span class="status-sep"></span>
+    <span class="status-item"><a>Autosave: hace 2s</a></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><a>SEO 85</a></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><a>A11y OK</a></span>
+  </footer>
+
+</div>
+
+<!-- ─────────────── FAB Save/Publish ─────────────── -->
+<div class="fab-stack">
+  <div class="fab-status" id="fab-status">
+    <span class="dot"></span>
+    <span id="fab-status-text">Guardado</span>
+  </div>
+  <div class="fab-group">
+    <button class="fab-primary" id="btn-save">
+      <i class="fa-solid fa-floppy-disk"></i>
+      Guardar
+    </button>
+    <div class="fab-sep"></div>
+    <button class="fab-primary publish">
+      <i class="fa-solid fa-globe"></i>
+      Publicar
+    </button>
+    <button class="fab-menu" data-tooltip="Más acciones"><i class="fa-solid fa-chevron-up"></i></button>
+  </div>
+</div>
+
+<!-- ─────────────── COMMAND PALETTE ─────────────── -->
+<div class="cmd-overlay" id="cmd-overlay">
+  <div class="cmd-palette">
+    <div class="cmd-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input class="cmd-input" id="cmd-input" placeholder="Buscar comando, bloque, ajuste…" autofocus>
+      <span class="kbd">esc</span>
+    </div>
+    <div class="cmd-list" id="cmd-list"></div>
+  </div>
+</div>
+
+<!-- ─────────────── TWEAKS PANEL ─────────────── -->
+<div id="tweaks">
+  <div class="tweak-head">
+    <span>Tweaks</span>
+    <button class="ibtn" onclick="document.getElementById('tweaks').classList.remove('open')"><i class="fa-solid fa-times"></i></button>
+  </div>
+  <div class="tweak-body">
+    <div class="tweak-row">
+      <label>Fondo del canvas</label>
+      <div class="seg" data-tweak="canvas-bg">
+        <button class="active" data-val="dots">Puntos</button>
+        <button data-val="graph">Grid</button>
+        <button data-val="flat">Sólido</button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <label>Ancho del panel</label>
+      <div class="seg" data-tweak="panel-width">
+        <button data-val="240">Estrecho</button>
+        <button class="active" data-val="280">Normal</button>
+        <button data-val="320">Ancho</button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <label>Canvas</label>
+      <div class="seg" data-tweak="breakpoint">
+        <button class="active" data-val="desktop"><i class="fa-solid fa-desktop"></i></button>
+        <button data-val="tablet"><i class="fa-solid fa-tablet-screen-button"></i></button>
+        <button data-val="mobile"><i class="fa-solid fa-mobile-screen"></i></button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <label>Chrome del canvas</label>
+      <div class="seg" data-tweak="chrome">
+        <button class="active" data-val="on">Mostrar</button>
+        <button data-val="off">Ocultar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── DEFAULT TWEAK KEYS ─────────────── -->
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "canvasBg": "dots",
+  "panelWidth": 280,
+  "breakpoint": "desktop",
+  "chrome": "on"
+}/*EDITMODE-END*/;
+</script>
+
+<script>
+/* ────────────── STATE + PANEL DEFINITIONS ────────────── */
+const state = {
+  activePanel: 'blocks',
+  selection: null,
+  zoom: 1,
+  breakpoint: 'desktop',
+  ...TWEAK_DEFAULTS
+};
+
+// Panel content HTML factories
+const panels = {
+
+  blocks: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Construcción</div>
+        <div class="panel-title">Bloques</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Bloque personalizado"><i class="fa-solid fa-plus"></i></button>
+        <button class="ibtn" data-tooltip="Importar"><i class="fa-solid fa-file-import"></i></button>
+      </div>
+    </div>
+    <div class="pinput-wrap">
+      <i class="fa-solid fa-search pi-icon"></i>
+      <input class="pinput" id="block-search" placeholder="Buscar bloque…">
+    </div>
+    <div class="panel-body" id="blocks-body">
+      ${blockCategories.map(cat => `
+        <div class="panel-section" data-cat="${cat.name}">
+          <div class="section-head" onclick="toggleSection(this)">
+            <i class="fa-solid fa-chevron-down chev"></i>
+            ${cat.name}
+            <span class="section-count">${cat.items.length}</span>
+          </div>
+          <div class="blocks-grid">
+            ${cat.items.map(b => `
+              <div class="block-card ${b.isNew?'is-new':''}" draggable="true" data-name="${b.label.toLowerCase()}">
+                <div class="block-icon"><i class="${b.icon}"></i></div>
+                <div class="block-name">${b.label}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `,
+
+  inspector: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Selección</div>
+        <div class="panel-title">Inspector</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Copiar estilos"><i class="fa-solid fa-copy"></i></button>
+        <button class="ibtn" data-tooltip="Reset"><i class="fa-solid fa-rotate-left"></i></button>
+      </div>
+    </div>
+    <div class="selection-bar">
+      <span class="sel-tag">h1</span>
+      <span class="sel-path">section > div > h1.hero-title</span>
+      <button class="ibtn" style="width:20px;height:20px;"><i class="fa-solid fa-crosshairs"></i></button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Tipografía</div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Familia</div>
+            <div class="finput-inline"><input class="finput" value="Inter"></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Peso</div>
+            <div class="finput-inline"><input class="finput" value="800"></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Tamaño</div>
+            <div class="finput-inline"><input class="finput" value="38"><span class="unit">px</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Interlineado</div>
+            <div class="finput-inline"><input class="finput" value="1.05"></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Letra</div>
+            <div class="finput-inline"><input class="finput" value="-0.02"><span class="unit">em</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Color</div>
+            <div class="color-swatch">
+              <div class="swatch" style="background:#ffffff;"></div>
+              <span class="swatch-val">#FFFFFF</span>
+              <span class="opacity">100</span>
+            </div>
+          </div>
+        </div>
+        <div class="field-row single">
+          <div class="field">
+            <div class="field-label">Alineación</div>
+            <div class="btn-group">
+              <button class="active"><i class="fa-solid fa-align-left"></i></button>
+              <button><i class="fa-solid fa-align-center"></i></button>
+              <button><i class="fa-solid fa-align-right"></i></button>
+              <button><i class="fa-solid fa-align-justify"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row single">
+          <div class="field">
+            <div class="field-label">Transformación</div>
+            <div class="btn-group">
+              <button class="active">Aa</button>
+              <button>AA</button>
+              <button>aa</button>
+              <button>Aa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Espaciado</div>
+        <div class="spacing-box">
+          <div class="spacing-val sv-mt">0</div>
+          <div class="spacing-val sv-mr">0</div>
+          <div class="spacing-val sv-mb">14</div>
+          <div class="spacing-val sv-ml">0</div>
+          <div class="spacing-inner">
+            <div class="spacing-val pv-t">0</div>
+            <div class="spacing-val pv-r">0</div>
+            <div class="spacing-val pv-b">0</div>
+            <div class="spacing-val pv-l">0</div>
+            <span class="spacing-val sv-center">38×<br/>auto</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Gap interno</div>
+            <div class="finput-inline"><input class="finput" value="0"><span class="unit">px</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Modo</div>
+            <div class="btn-group">
+              <button class="active"><i class="fa-solid fa-link"></i></button>
+              <button><i class="fa-solid fa-link-slash"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Fondo y borde</div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Fondo</div>
+            <div class="color-swatch">
+              <div class="swatch" style="background:transparent; background-image: repeating-linear-gradient(45deg, #d4d4d8 0 3px, #fff 3px 6px);"></div>
+              <span class="swatch-val">none</span>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Borde</div>
+            <div class="color-swatch">
+              <div class="swatch" style="background:#e4e4e7;"></div>
+              <span class="swatch-val">0px</span>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Radio</div>
+            <div class="finput-inline"><input class="finput" value="0"><span class="unit">px</span></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Sombra</div>
+            <div class="finput-inline"><input class="finput" value="None"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Capacidad</div>
+        <div class="sub-row">
+          <div class="lbl">Opacidad</div>
+          <div class="slider-row"><input type="range" min="0" max="100" value="100"><span class="val">100%</span></div>
+        </div>
+      </div>
+    </div>
+  `,
+
+  layout: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Sistema</div>
+        <div class="panel-title">Layout</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Grid Bootstrap"><i class="fa-solid fa-border-all"></i></button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Estructuras predefinidas</div>
+        <div class="blocks-grid">
+          ${[
+            {ratio:'1/1', cols:[50,50]},
+            {ratio:'2/1', cols:[66,34]},
+            {ratio:'1/2', cols:[34,66]},
+            {ratio:'1/3', cols:[33,33,34]},
+            {ratio:'1/4', cols:[25,25,25,25]},
+            {ratio:'sidebar', cols:[75,25]},
+          ].map(l => `
+            <div class="block-card">
+              <div style="display:flex; gap:3px; width:60%; height:28px;">
+                ${l.cols.map(c => `<div style="background:#e4e4e7; border-radius:2px; flex: ${c};"></div>`).join('')}
+              </div>
+              <div class="block-name">${l.ratio}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Contenedor actual</div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Display</div>
+            <div class="btn-group">
+              <button><i class="fa-solid fa-square"></i></button>
+              <button class="active"><i class="fa-solid fa-bars"></i></button>
+              <button><i class="fa-solid fa-table-cells"></i></button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Dirección</div>
+            <div class="btn-group">
+              <button class="active"><i class="fa-solid fa-arrow-right"></i></button>
+              <button><i class="fa-solid fa-arrow-down"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Justificar</div>
+            <div class="btn-group">
+              <button class="active"><i class="fa-solid fa-align-left"></i></button>
+              <button><i class="fa-solid fa-grip-lines"></i></button>
+              <button><i class="fa-solid fa-align-right"></i></button>
+              <button><i class="fa-solid fa-arrows-left-right"></i></button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Alinear</div>
+            <div class="btn-group">
+              <button><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="active"><i class="fa-solid fa-minus"></i></button>
+              <button><i class="fa-solid fa-arrow-down"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><div class="field-label">Gap</div><div class="finput-inline"><input class="finput" value="30"><span class="unit">px</span></div></div>
+          <div class="field"><div class="field-label">Wrap</div><div class="btn-group"><button class="active">Sí</button><button>No</button></div></div>
+        </div>
+      </div>
+    </div>
+  `,
+
+  layers: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Estructura</div>
+        <div class="panel-title">Capas</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Expandir todo"><i class="fa-solid fa-expand"></i></button>
+        <button class="ibtn" data-tooltip="Filtrar"><i class="fa-solid fa-filter"></i></button>
+      </div>
+    </div>
+    <div class="pinput-wrap">
+      <i class="fa-solid fa-search pi-icon"></i>
+      <input class="pinput" placeholder="Filtrar capas…">
+    </div>
+    <div class="panel-body" style="padding: 4px 0 12px;">
+      ${layerTree.map(renderLayer).join('')}
+    </div>
+  `,
+
+  history: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Versiones</div>
+        <div class="panel-title">Historial</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Crear snapshot"><i class="fa-solid fa-camera"></i></button>
+      </div>
+    </div>
+    <div class="panel-body">
+      ${historyItems.map((h, i) => `
+        <div class="tree-item ${i===0?'selected':''}" style="padding: 8px 12px; gap: 10px; align-items: flex-start;">
+          <div style="width: 6px; height: 6px; margin-top: 5px; border-radius: 50%; background: ${i===0?'currentColor':'var(--text-muted)'};"></div>
+          <div style="flex:1; min-width: 0;">
+            <div style="font-size: 11.5px; font-weight: 500;">${h.action}</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 1px; font-family: 'JetBrains Mono', monospace;">
+              ${h.ago} · ${h.who}
+            </div>
+          </div>
+          ${h.auto ? '<span style="font-size: 9px; color: var(--text-muted); padding: 1px 4px; border: 1px solid var(--border); border-radius: 2px;">AUTO</span>' : ''}
+        </div>
+      `).join('')}
+    </div>
+  `,
+
+  code: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Fuente</div>
+        <div class="panel-title">Código HTML</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Formatear"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+        <button class="ibtn" data-tooltip="Colapsar"><i class="fa-solid fa-compress-alt"></i></button>
+        <button class="ibtn" data-tooltip="Aplicar"><i class="fa-solid fa-check"></i></button>
+      </div>
+    </div>
+    <div class="panel-body" style="background: #18181b; color: #e4e4e7; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 10px 12px; line-height: 1.6; white-space: pre; tab-size: 2;">
+<span style="color:#71717a;">1  </span><span style="color:#94a3b8;">&lt;section</span> <span style="color:#fbbf24;">class</span>=<span style="color:#a3e635;">"mock-hero"</span><span style="color:#94a3b8;">&gt;</span>
+<span style="color:#71717a;">2  </span>  <span style="color:#94a3b8;">&lt;div</span> <span style="color:#fbbf24;">class</span>=<span style="color:#a3e635;">"hero-badge"</span><span style="color:#94a3b8;">&gt;</span>
+<span style="color:#71717a;">3  </span>    500+ Instalaciones
+<span style="color:#71717a;">4  </span>  <span style="color:#94a3b8;">&lt;/div&gt;</span>
+<span style="color:#71717a;">5  </span>  <span style="color:#94a3b8;">&lt;h1</span> <span style="color:#fbbf24;">class</span>=<span style="color:#a3e635;">"hero-title"</span><span style="color:#94a3b8;">&gt;</span>
+<span style="color:#71717a;">6  </span>    Mosquiteras profesionales a
+<span style="color:#71717a;">7  </span>    medida en Alcobaça
+<span style="color:#71717a;">8  </span>  <span style="color:#94a3b8;">&lt;/h1&gt;</span>
+<span style="color:#71717a;">9  </span>  <span style="color:#94a3b8;">&lt;p</span> <span style="color:#fbbf24;">class</span>=<span style="color:#a3e635;">"hero-desc"</span><span style="color:#94a3b8;">&gt;</span>
+<span style="color:#71717a;">10 </span>    Protección total contra
+<span style="color:#71717a;">11 </span>    mosquitos, moscas y polen…
+<span style="color:#71717a;">12 </span>  <span style="color:#94a3b8;">&lt;/p&gt;</span>
+<span style="color:#71717a;">13 </span><span style="color:#94a3b8;">&lt;/section&gt;</span>
+    </div>
+  `,
+
+  settings: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Página</div>
+        <div class="panel-title">Ajustes y SEO</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> Básico</div>
+        <div class="field-row single">
+          <div class="field"><div class="field-label">Título de página</div><input class="finput" value="Mosquiteras"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><div class="field-label">Estado</div><input class="finput" value="Publicada"></div>
+          <div class="field"><div class="field-label">Plantilla</div><input class="finput" value="Default"></div>
+        </div>
+        <div class="field-row single">
+          <div class="field"><div class="field-label">Permalink</div><input class="finput" value="/servicios/mosquiteras"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head"><i class="fa-solid fa-chevron-down chev"></i> SEO</div>
+        <div class="seo-score">
+          <div class="seo-ring">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" stroke="#e4e4e7" stroke-width="3" fill="none"/>
+              <circle cx="22" cy="22" r="18" stroke="#16a34a" stroke-width="3" fill="none"
+                      stroke-dasharray="113.09" stroke-dashoffset="16.96" stroke-linecap="round"/>
+            </svg>
+            <div class="seo-ring-num">85</div>
+          </div>
+          <div class="seo-score-text">
+            <div class="seo-score-grade">Excelente · Grado A</div>
+            <div class="seo-score-desc">6 recomendaciones menores</div>
+          </div>
+        </div>
+
+        <div class="serp-preview">
+          <div class="serp-title">Mosquiteras en Alcobaça · Caixilharia Blanco</div>
+          <div class="serp-url">caixilhariablanco.pt › servicios › mosquiteras</div>
+          <div class="serp-desc">Mosquiteras a medida en Alcobaça y Leiria. Enrollables, plisadas y fijas. 4 sistemas…</div>
+        </div>
+
+        <div style="padding: 0 12px;">
+          <div class="stat-row"><span class="k">Palabras</span><span class="v">1.183</span></div>
+          <div class="stat-row"><span class="k">Caracteres</span><span class="v">8.392</span></div>
+          <div class="stat-row"><span class="k">Meta title</span><span class="v ideal">Ideal · 44 car.</span></div>
+          <div class="stat-row"><span class="k">Meta descripción</span><span class="v warn">Corta · 114 car.</span></div>
+          <div class="stat-row"><span class="k">Densidad · mosquitera</span><span class="v">2.4 %</span></div>
+          <div class="stat-row"><span class="k">Densidad · alcobaça</span><span class="v">1.1 %</span></div>
+          <div class="stat-row"><span class="k">Imágenes sin alt</span><span class="v warn">2</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head collapsed"><i class="fa-solid fa-chevron-down chev"></i> Redes sociales (OG)</div>
+      </div>
+      <div class="panel-section">
+        <div class="section-head collapsed"><i class="fa-solid fa-chevron-down chev"></i> Schema / JSON-LD</div>
+      </div>
+    </div>
+  `,
+
+  tree: () => `
+    <div class="panel-head">
+      <div>
+        <div class="panel-label">Documento</div>
+        <div class="panel-title">Árbol DOM</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" data-tooltip="Actualizar"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+    </div>
+    <div class="panel-body" style="padding: 4px 0 12px; font-family: 'JetBrains Mono', monospace;">
+      ${domTree.map(renderLayer).join('')}
+    </div>
+  `
+};
+
+// Contextual topbar factories
+const topbarContexts = {
+  blocks: () => `
+    <div class="ctx-group">
+      <div class="seg" data-tb="view">
+        <button class="active"><i class="fa-solid fa-grip"></i> Rejilla</button>
+        <button><i class="fa-solid fa-list"></i> Lista</button>
+      </div>
+      <span class="divider-v"></span>
+      <div class="seg" data-tb="bkind">
+        <button class="active">Todos</button>
+        <button>Sistema</button>
+        <button>Personalizados</button>
+      </div>
+    </div>
+  `,
+  inspector: () => `
+    <div class="ctx-group">
+      <span class="ctx-pill"><i class="fa-solid fa-crosshairs"></i> <span class="mono">h1.hero-title</span></span>
+      <span class="divider-v"></span>
+      <div class="seg" data-tb="device">
+        <button class="active"><i class="fa-solid fa-desktop"></i></button>
+        <button><i class="fa-solid fa-laptop"></i></button>
+        <button><i class="fa-solid fa-tablet-screen-button"></i></button>
+        <button><i class="fa-solid fa-mobile-screen"></i></button>
+      </div>
+      <span class="divider-v"></span>
+      <div class="seg" data-tb="state">
+        <button class="active">Base</button>
+        <button>:hover</button>
+        <button>:focus</button>
+      </div>
+    </div>
+  `,
+  layout: () => `
+    <div class="ctx-group">
+      <div class="seg"><button class="active"><i class="fa-solid fa-desktop"></i></button><button><i class="fa-solid fa-tablet-screen-button"></i></button><button><i class="fa-solid fa-mobile-screen"></i></button></div>
+      <span class="divider-v"></span>
+      <span class="ctx-pill"><i class="fa-solid fa-border-all"></i> 12 cols · 1280 <span class="mono">px</span></span>
+      <span class="ctx-pill"><i class="fa-solid fa-grip-lines"></i> Gap <span class="mono">24px</span></span>
+    </div>
+  `,
+  layers: () => `
+    <div class="ctx-group">
+      <span class="ctx-pill"><i class="fa-solid fa-layer-group"></i> 147 capas · 23 secciones</span>
+      <span class="divider-v"></span>
+      <div class="seg"><button class="active">Todo</button><button>Ocultas</button><button>Con errores</button></div>
+    </div>
+  `,
+  history: () => `
+    <div class="ctx-group">
+      <span class="ctx-pill"><i class="fa-solid fa-clock-rotate-left"></i> <span class="mono">127 versiones</span></span>
+      <span class="divider-v"></span>
+      <div class="seg"><button class="active">Todas</button><button>Solo mías</button><button>Snapshots</button></div>
+    </div>
+  `,
+  code: () => `
+    <div class="ctx-group">
+      <div class="seg"><button class="active">HTML</button><button>CSS</button><button>JS</button></div>
+      <span class="divider-v"></span>
+      <span class="ctx-pill"><i class="fa-solid fa-circle" style="color: var(--success); font-size: 7px;"></i> <span class="mono">Válido</span></span>
+      <span class="ctx-pill"><span class="mono">218 líneas</span></span>
+    </div>
+  `,
+  settings: () => `
+    <div class="ctx-group">
+      <div class="seg"><button class="active">Básico</button><button>SEO</button><button>Social</button><button>Schema</button></div>
+      <span class="divider-v"></span>
+      <span class="ctx-pill"><span class="mono">SEO 85/100</span></span>
+    </div>
+  `,
+  tree: () => `
+    <div class="ctx-group">
+      <span class="ctx-pill"><i class="fa-solid fa-sitemap"></i> <span class="mono">4 secciones · 147 nodos</span></span>
+      <span class="divider-v"></span>
+      <div class="seg"><button class="active">Todos</button><button>Solo bloque</button></div>
+    </div>
+  `
+};
+
+/* ────────────── DATA ────────────── */
+const blockCategories = [
+  { name: 'Básicos', items: [
+    {label:'Contenedor', icon:'fa-regular fa-square'},
+    {label:'Columnas', icon:'fa-solid fa-table-columns'},
+    {label:'Texto', icon:'fa-solid fa-align-left'},
+    {label:'Título', icon:'fa-solid fa-heading'},
+    {label:'Botón', icon:'fa-regular fa-square-plus'},
+    {label:'Imagen', icon:'fa-regular fa-image'},
+    {label:'Icono', icon:'fa-regular fa-star'},
+    {label:'Separador', icon:'fa-solid fa-minus'},
+  ]},
+  { name: 'Secciones', items: [
+    {label:'Hero', icon:'fa-solid fa-mountain-sun'},
+    {label:'Features', icon:'fa-solid fa-grip'},
+    {label:'Precios', icon:'fa-solid fa-tag'},
+    {label:'Testimonios', icon:'fa-regular fa-comment-dots'},
+    {label:'CTA', icon:'fa-solid fa-bullhorn'},
+    {label:'FAQ', icon:'fa-regular fa-circle-question'},
+  ]},
+  { name: 'Formularios', items: [
+    {label:'Contacto', icon:'fa-regular fa-envelope'},
+    {label:'Newsletter', icon:'fa-regular fa-paper-plane'},
+    {label:'Presupuesto', icon:'fa-regular fa-file-lines', isNew:true},
+    {label:'Login', icon:'fa-solid fa-right-to-bracket'},
+  ]},
+  { name: 'Dinámicos', items: [
+    {label:'Shortcode', icon:'fa-solid fa-terminal'},
+    {label:'Carousel', icon:'fa-regular fa-images'},
+    {label:'Mapa', icon:'fa-solid fa-map-location-dot'},
+    {label:'Video', icon:'fa-regular fa-circle-play'},
+    {label:'Cuenta atrás', icon:'fa-regular fa-clock'},
+    {label:'Tabs', icon:'fa-solid fa-list-check', isNew:true},
+  ]}
+];
+
+const layerTree = [
+  {tag: 'section', name: 'Top strip', icon: 'fa-solid fa-border-all'},
+  {tag: 'header', name: 'Header', icon: 'fa-solid fa-window-maximize', children: [
+    {tag: 'div', name: 'Logo', icon: 'fa-regular fa-square'},
+    {tag: 'nav', name: 'Nav desktop', icon: 'fa-solid fa-bars'},
+    {tag: 'div', name: 'Social icons', icon: 'fa-solid fa-share-nodes'},
+  ]},
+  {tag: 'section', name: 'Hero · Mosquiteras', icon: 'fa-solid fa-mountain-sun', open: true, selected: true, children: [
+    {tag: 'div', name: 'Container left', icon: 'fa-regular fa-square', open: true, children: [
+      {tag: 'span', name: 'Badge "500+"', icon: 'fa-solid fa-tag'},
+      {tag: 'h1', name: 'Title principal', icon: 'fa-solid fa-heading', selected: true},
+      {tag: 'p', name: 'Descripción', icon: 'fa-solid fa-align-left'},
+      {tag: 'ul', name: 'Lista beneficios', icon: 'fa-solid fa-list-check'},
+      {tag: 'div', name: 'CTA buttons', icon: 'fa-regular fa-square-plus'},
+    ]},
+    {tag: 'form', name: 'Formulario presupuesto', icon: 'fa-regular fa-file-lines'},
+  ]},
+  {tag: 'section', name: 'Servicios grid', icon: 'fa-solid fa-grip'},
+  {tag: 'section', name: 'CTA footer', icon: 'fa-solid fa-bullhorn'},
+  {tag: 'footer', name: 'Footer', icon: 'fa-solid fa-shoe-prints'},
+];
+
+const domTree = [
+  {tag: 'html', name: 'html', icon: 'fa-solid fa-code', open: true, children: [
+    {tag: 'head', name: 'head', icon: 'fa-solid fa-code'},
+    {tag: 'body', name: 'body', icon: 'fa-solid fa-code', open: true, children: [
+      {tag: 'div', name: '.page', icon: 'fa-regular fa-square', open: true, children: [
+        {tag: 'section', name: '.mock-topstrip', icon: 'fa-solid fa-minus'},
+        {tag: 'header', name: '.mock-header', icon: 'fa-solid fa-window-maximize'},
+        {tag: 'section', name: '.mock-hero', icon: 'fa-solid fa-mountain-sun', open: true, selected: true, children: [
+          {tag: 'div', name: '.hero-badge', icon: 'fa-solid fa-tag'},
+          {tag: 'h1', name: '.hero-title', icon: 'fa-solid fa-heading', selected: true},
+          {tag: 'p', name: '.hero-desc', icon: 'fa-solid fa-align-left'},
+        ]},
+      ]},
+    ]}
+  ]}
+];
+
+const historyItems = [
+  {action: 'Editar título hero', ago: 'hace 12s', who: 'tú'},
+  {action: 'Cambiar color fondo', ago: 'hace 1min', who: 'tú', auto: true},
+  {action: 'Insertar botón CTA', ago: 'hace 3min', who: 'tú'},
+  {action: 'Snapshot — antes de SEO', ago: 'hace 12min', who: 'tú'},
+  {action: 'Editar meta description', ago: 'hace 24min', who: 'tú'},
+  {action: 'Autosave', ago: 'hace 36min', who: 'sistema', auto: true},
+  {action: 'Publicar página', ago: 'ayer 18:41', who: 'María L.'},
+  {action: 'Revisar accesibilidad', ago: 'ayer 18:02', who: 'María L.'},
+  {action: 'Cargar desde plantilla', ago: 'hace 2 días', who: 'tú'},
+];
+
+function renderLayer(node, depth = 0) {
+  const indent = depth > 0 ? `tree-indent-${Math.min(depth, 3)}` : '';
+  const hasKids = node.children && node.children.length > 0;
+  const chev = hasKids ? (node.open?'<i class="fa-solid fa-chevron-down tree-chev"></i>':'<i class="fa-solid fa-chevron-right tree-chev"></i>') : '<span class="tree-chev"></span>';
+  const sel = node.selected ? 'selected' : '';
+  return `
+    <div class="tree-item ${indent} ${sel}" data-depth="${depth}">
+      ${chev}
+      <i class="${node.icon} tree-icon"></i>
+      <span class="tree-name">${node.name}</span>
+      <span class="tree-tag">${node.tag}</span>
+      <button class="tree-vis" data-tooltip="Ocultar"><i class="fa-regular fa-eye"></i></button>
+      <button class="tree-vis" data-tooltip="Bloquear"><i class="fa-solid fa-lock-open"></i></button>
+    </div>
+    ${node.open && hasKids ? node.children.map(c => renderLayer(c, depth + 1)).join('') : ''}
+  `;
+}
+
+/* ────────────── RENDER PANEL ────────────── */
+function setPanel(name) {
+  state.activePanel = name;
+  document.querySelectorAll('.rail-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.panel === name);
+  });
+  const sp = document.getElementById('side-panel');
+  sp.innerHTML = panels[name] ? panels[name]() : `<div style="padding: 20px; color: var(--text-muted);">Panel: ${name}</div>`;
+  const tb = document.getElementById('topbar-ctx');
+  tb.innerHTML = topbarContexts[name] ? topbarContexts[name]() : '';
+  attachPanelHandlers();
+}
+
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const grid = el.nextElementSibling;
+  if (grid) grid.style.display = el.classList.contains('collapsed') ? 'none' : '';
+}
+
+function attachPanelHandlers() {
+  // block search
+  const bs = document.getElementById('block-search');
+  if (bs) {
+    bs.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('#blocks-body .block-card').forEach(c => {
+        const match = !q || c.dataset.name.includes(q);
+        c.style.display = match ? '' : 'none';
+      });
+      document.querySelectorAll('#blocks-body .panel-section').forEach(s => {
+        const visible = s.querySelectorAll('.block-card[style=""], .block-card:not([style])').length;
+        // simple approach: show section if any children have no display:none
+        const anyVisible = Array.from(s.querySelectorAll('.block-card')).some(c => c.style.display !== 'none');
+        s.style.display = anyVisible ? '' : 'none';
+      });
+    });
+  }
+  // section collapse default click handler — section-head has onclick attr in blocks/inspector; ensure existing ones work
+  document.querySelectorAll('.section-head').forEach(h => {
+    if (!h.onclick) h.addEventListener('click', () => toggleSection(h));
+    // collapsed initial state
+    if (h.classList.contains('collapsed')) {
+      const next = h.nextElementSibling;
+      if (next) next.style.display = 'none';
+    }
+  });
+  // tree item select
+  document.querySelectorAll('.tree-item').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tree-item').forEach(x => x.classList.remove('selected'));
+      t.classList.add('selected');
+    });
+  });
+}
+
+/* ────────────── RAIL NAV ────────────── */
+document.querySelectorAll('.rail-btn[data-panel]').forEach(b => {
+  b.addEventListener('click', () => setPanel(b.dataset.panel));
+});
+
+/* ────────────── CANVAS SELECTION ────────────── */
+function showSelection() {
+  const target = document.getElementById('hero-selectable');
+  const frame = document.getElementById('canvas-frame');
+  if (!target || !frame) return;
+  const tRect = target.getBoundingClientRect();
+  const fRect = frame.getBoundingClientRect();
+  const scale = state.zoom;
+  const box = document.getElementById('sel-box');
+  const tb = document.getElementById('float-toolbar');
+  box.style.display = 'block';
+  box.style.left = (tRect.left - fRect.left) / scale + 'px';
+  box.style.top = (tRect.top - fRect.top) / scale + 'px';
+  box.style.width = tRect.width / scale + 'px';
+  box.style.height = tRect.height / scale + 'px';
+
+  tb.style.display = 'flex';
+  tb.style.left = (tRect.left - fRect.left) / scale + 'px';
+  tb.style.top = ((tRect.top - fRect.top) / scale - 36) + 'px';
+}
+function hideSelection() {
+  document.getElementById('sel-box').style.display = 'none';
+  document.getElementById('float-toolbar').style.display = 'none';
+}
+document.getElementById('hero-selectable').addEventListener('click', (e) => {
+  e.stopPropagation();
+  showSelection();
+});
+document.getElementById('canvas').addEventListener('click', (e) => {
+  if (!e.target.closest('#hero-selectable') && !e.target.closest('#sel-box') && !e.target.closest('#float-toolbar')) {
+    hideSelection();
+  }
+});
+
+/* ────────────── ZOOM ────────────── */
+document.querySelectorAll('.zoom-bar button[data-zoom]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.zoom-bar button[data-zoom]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.zoom = parseFloat(b.dataset.zoom);
+    document.getElementById('canvas-frame').style.transform = `scale(${state.zoom})`;
+    hideSelection();
+  });
+});
+
+/* ────────────── COMMAND PALETTE ────────────── */
+const commands = [
+  { section: 'Acciones', items: [
+    { icon:'fa-solid fa-floppy-disk', label:'Guardar página', shortcut:'⌘S' },
+    { icon:'fa-solid fa-globe', label:'Publicar página', shortcut:'⌘⇧P' },
+    { icon:'fa-solid fa-rotate-left', label:'Deshacer', shortcut:'⌘Z' },
+    { icon:'fa-solid fa-camera', label:'Crear snapshot', shortcut:'⌘⇧S' },
+  ]},
+  { section: 'Ir a…', items: [
+    { icon:'fa-solid fa-shapes', label:'Panel Bloques' },
+    { icon:'fa-solid fa-sliders', label:'Panel Inspector' },
+    { icon:'fa-solid fa-gear', label:'Ajustes y SEO' },
+    { icon:'fa-solid fa-code', label:'Editor de código' },
+  ]},
+  { section: 'Insertar', items: [
+    { icon:'fa-solid fa-bullhorn', label:'Insertar sección CTA' },
+    { icon:'fa-regular fa-file-lines', label:'Insertar formulario presupuesto' },
+    { icon:'fa-regular fa-image', label:'Insertar imagen' },
+  ]},
+  { section: 'Vista', items: [
+    { icon:'fa-solid fa-desktop', label:'Vista desktop', shortcut:'⌘1' },
+    { icon:'fa-solid fa-tablet-screen-button', label:'Vista tablet', shortcut:'⌘2' },
+    { icon:'fa-solid fa-mobile-screen', label:'Vista móvil', shortcut:'⌘3' },
+    { icon:'fa-solid fa-table-columns', label:'Alternar grid de 12 columnas' },
+  ]}
+];
+
+function renderCmd(filter='') {
+  const q = filter.toLowerCase().trim();
+  const list = document.getElementById('cmd-list');
+  list.innerHTML = '';
+  let rendered = 0;
+  commands.forEach(sec => {
+    const matches = sec.items.filter(i => !q || i.label.toLowerCase().includes(q));
+    if (!matches.length) return;
+    list.innerHTML += `<div class="cmd-section-label">${sec.section}</div>`;
+    list.innerHTML += matches.map((c, i) => `
+      <div class="cmd-item ${rendered++===0?'active':''}">
+        <i class="${c.icon}"></i>
+        <span class="cmd-label">${c.label}</span>
+        ${c.shortcut ? `<span class="cmd-shortcut"><span class="kbd">${c.shortcut}</span></span>` : ''}
+      </div>
+    `).join('');
+  });
+  if (!rendered) {
+    list.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 12px;">Sin resultados</div>`;
+  }
+}
+
+function openCmd() {
+  document.getElementById('cmd-overlay').classList.add('open');
+  document.getElementById('cmd-input').value = '';
+  renderCmd();
+  setTimeout(() => document.getElementById('cmd-input').focus(), 50);
+}
+function closeCmd() { document.getElementById('cmd-overlay').classList.remove('open'); }
+document.getElementById('cmd-overlay').addEventListener('click', e => {
+  if (e.target.id === 'cmd-overlay') closeCmd();
+});
+document.getElementById('cmd-input').addEventListener('input', e => renderCmd(e.target.value));
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmd(); }
+  if (e.key === 'Escape') closeCmd();
+});
+
+/* ────────────── SAVE STATE SIMULATION ────────────── */
+let saved = true;
+const statusEl = document.getElementById('fab-status');
+const statusText = document.getElementById('fab-status-text');
+function markUnsaved() {
+  saved = false;
+  statusEl.classList.add('unsaved');
+  statusText.textContent = 'Sin guardar · ⌘S';
+}
+function markSaved() {
+  saved = true;
+  statusEl.classList.remove('unsaved');
+  statusText.textContent = 'Guardado';
+}
+document.getElementById('btn-save').addEventListener('click', () => {
+  statusText.textContent = 'Guardando…';
+  setTimeout(markSaved, 500);
+});
+// trigger unsaved when editing anything in the panel
+document.addEventListener('input', e => {
+  if (e.target.closest('.panel') || e.target.closest('.mock-form')) markUnsaved();
+});
+
+/* ────────────── BREAKPOINT / FRAME RESIZE ────────────── */
+function setBreakpoint(bp) {
+  state.breakpoint = bp;
+  const frame = document.getElementById('canvas-frame');
+  frame.classList.remove('desktop','tablet','mobile');
+  frame.classList.add(bp);
+  hideSelection();
+}
+
+/* ────────────── TWEAKS ────────────── */
+function applyTweaks() {
+  const app = document.getElementById('app');
+  // Canvas bg
+  app.classList.remove('bg-graph','bg-flat');
+  if (state.canvasBg === 'graph') app.classList.add('bg-graph');
+  if (state.canvasBg === 'flat') app.classList.add('bg-flat');
+  // Panel width
+  app.style.gridTemplateColumns = `44px ${state.panelWidth}px 1fr`;
+  // Breakpoint
+  setBreakpoint(state.breakpoint);
+  // Chrome
+  const chrome = document.querySelector('.mini-chrome');
+  if (chrome) chrome.style.display = state.chrome === 'off' ? 'none' : '';
+  // update tweak UI selected states
+  document.querySelectorAll('#tweaks .seg').forEach(seg => {
+    const key = seg.dataset.tweak;
+    let val;
+    if (key === 'canvas-bg') val = state.canvasBg;
+    else if (key === 'panel-width') val = String(state.panelWidth);
+    else if (key === 'breakpoint') val = state.breakpoint;
+    else if (key === 'chrome') val = state.chrome;
+    seg.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === val);
+    });
+  });
+}
+
+document.querySelectorAll('#tweaks .seg').forEach(seg => {
+  seg.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-val]');
+    if (!btn) return;
+    const key = seg.dataset.tweak;
+    const val = btn.dataset.val;
+    if (key === 'canvas-bg') state.canvasBg = val;
+    else if (key === 'panel-width') state.panelWidth = parseInt(val);
+    else if (key === 'breakpoint') state.breakpoint = val;
+    else if (key === 'chrome') state.chrome = val;
+    applyTweaks();
+    persistTweaks();
+  });
+});
+
+function persistTweaks() {
+  const edits = {
+    canvasBg: state.canvasBg,
+    panelWidth: state.panelWidth,
+    breakpoint: state.breakpoint,
+    chrome: state.chrome
+  };
+  try {
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits}, '*');
+  } catch(e) {}
+}
+
+/* ────────────── EDIT MODE LISTENER ────────────── */
+window.addEventListener('message', e => {
+  const d = e.data;
+  if (!d || typeof d !== 'object') return;
+  if (d.type === '__activate_edit_mode') document.getElementById('tweaks').classList.add('open');
+  if (d.type === '__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('open');
+});
+try { window.parent.postMessage({type:'__edit_mode_available'}, '*'); } catch(e) {}
+
+/* ────────────── INIT ────────────── */
+setPanel('blocks');
+applyTweaks();
+// Select hero title by default for a populated-looking canvas
+setTimeout(showSelection, 100);
+window.addEventListener('resize', () => { if (document.getElementById('sel-box').style.display === 'block') showSelection(); });
+</script>
+
+</body>
+</html>

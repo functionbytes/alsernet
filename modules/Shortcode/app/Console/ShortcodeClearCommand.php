@@ -7,31 +7,18 @@ use Modules\Shortcode\Facades\Shortcode;
 
 class ShortcodeClearCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'shortcode:clear';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Clear shortcode compilation cache';
+    protected $description = 'Limpiar la caché de compilación de shortcodes';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
-        $this->info('Clearing shortcode cache...');
+        $this->info(__('shortcode::shortcode.cmd_clearing'));
 
         Shortcode::clearCache();
 
-        $this->info('Shortcode cache cleared successfully!');
+        $this->info(__('shortcode::shortcode.cmd_cleared'));
 
-        return 0;
+        return self::SUCCESS;
     }
 }

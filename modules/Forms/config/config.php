@@ -59,9 +59,58 @@ return [
     'default_success_message' => 'Gracias por tu mensaje. Te responderemos pronto.',
     'max_fields_per_form' => 50,
     'max_file_size_mb' => 10,
-    'allowed_file_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'gif', 'zip'],
+    'allowed_file_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'webp', 'txt', 'csv'],
+    'allowed_mime_types' => [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/zip',
+        'text/plain',
+        'text/csv',
+    ],
     'throttle_submissions' => 20,
     'abandon_tracking_ttl_days' => 30,
+    'min_fill_seconds' => 3,
+    'auto_warm_page_cache' => false,
+
+    'signature' => [
+        'max_length' => 524288, // 512 KB de base64
+    ],
+
+    'cache' => [
+        'shortcode_ttl_seconds' => 300,
+        'counters_ttl_seconds' => 60,
+    ],
+
+    'import' => [
+        'max_fields' => 100,
+        'max_file_bytes' => 512 * 1024,
+    ],
+
+    'permissions' => [
+        ['flag' => 'Forms.forms.index', 'label' => 'Ver formularios'],
+        ['flag' => 'Forms.forms.create', 'label' => 'Crear formularios'],
+        ['flag' => 'Forms.forms.edit', 'label' => 'Editar formularios'],
+        ['flag' => 'Forms.forms.delete', 'label' => 'Eliminar formularios'],
+        ['flag' => 'Forms.forms.manage', 'label' => 'Gestionar (bypass ownership)'],
+        ['flag' => 'Forms.submissions.index', 'label' => 'Ver envíos'],
+        ['flag' => 'Forms.submissions.export', 'label' => 'Exportar envíos'],
+        ['flag' => 'Forms.submissions.delete', 'label' => 'Eliminar envíos'],
+        ['flag' => 'Forms.categories.manage', 'label' => 'Gestionar categorías'],
+        ['flag' => 'Forms.analytics.index', 'label' => 'Ver analíticas'],
+        ['flag' => 'Forms.settings.manage', 'label' => 'Configuración avanzada'],
+        ['flag' => 'Forms.inbox.index', 'label' => 'Ver inbox de formularios'],
+        ['flag' => 'Forms.field-types.manage', 'label' => 'Gestionar tipos de campo'],
+        ['flag' => 'Forms.templates.manage', 'label' => 'Gestionar plantillas'],
+        ['flag' => 'Forms.follow-ups.manage', 'label' => 'Gestionar follow-ups'],
+        ['flag' => 'Forms.access-tokens.manage', 'label' => 'Gestionar tokens de acceso'],
+    ],
 
     'template_library' => [
         'contact' => [

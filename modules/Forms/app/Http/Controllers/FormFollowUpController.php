@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\StoreFormFollowUpRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormFollowUp;
 
@@ -27,24 +28,16 @@ class FormFollowUpController extends Controller
         return view('forms::settings.forms.follow-ups.index', compact('form', 'followUps'));
     }
 
-    public function store(Request $request, Form $form): JsonResponse
+    public function store(StoreFormFollowUpRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.forms.edit');
-
-        $validated = $request->validate($this->rules());
-
-        $followUp = $form->followUps()->create($validated);
+        $followUp = $form->followUps()->create($request->validated());
 
         return response()->json(['data' => $followUp], 201);
     }
 
-    public function update(Request $request, Form $form, FormFollowUp $followUp): JsonResponse
+    public function update(StoreFormFollowUpRequest $request, Form $form, FormFollowUp $followUp): JsonResponse
     {
-        $this->authorize('Forms.forms.edit');
-
-        $validated = $request->validate($this->rules());
-
-        $followUp->update($validated);
+        $followUp->update($request->validated());
 
         return response()->json(['data' => $followUp]);
     }
@@ -56,19 +49,5 @@ class FormFollowUpController extends Controller
         $followUp->delete();
 
         return response()->json(['message' => 'Follow-up eliminado correctamente.']);
-    }
-
-    /** @return array<string, mixed> */
-    private function rules(): array
-    {
-        return [
-            'name' => 'required|string|max:150',
-            'send_after_days' => 'required|integer|min:1|max:365',
-            'email_template_id' => 'nullable|integer',
-            'recipient_type' => 'required|in:admin,submitter,both',
-            'condition_field_key' => 'nullable|string|max:100',
-            'condition_value' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
-        ];
     }
 }

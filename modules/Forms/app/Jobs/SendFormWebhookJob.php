@@ -16,18 +16,24 @@ class SendFormWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 4;
 
     public int $timeout = 30;
 
-    public int $maxExceptions = 3;
+    public int $maxExceptions = 4;
 
-    public int $backoff = 60;
+    /** @return array<int,int> backoff exponencial en segundos */
+    public function backoff(): array
+    {
+        return [30, 120, 300, 900];
+    }
 
     public function __construct(
         protected int $formId,
         protected int $submissionId,
-    ) {}
+    ) {
+        $this->onQueue('webhooks');
+    }
 
     public function handle(FormWebhookService $webhookService): void
     {
@@ -38,7 +44,11 @@ class SendFormWebhookJob implements ShouldQueue
             return;
         }
 
-        $webhookService->send($form, $submission);
+        $success = $webhookService->send($form, $submission);
+
+        if (! $success) {
+            throw new \RuntimeException("Webhook failed for form {$this->formId}");
+        }
     }
 
     public function failed(\Throwable $exception): void

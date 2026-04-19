@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Seo\Http\Requests\ImportHtaccessRequest;
+use Modules\Seo\Http\Requests\ImportRedirectsCsvRequest;
 use Modules\Seo\Http\Requests\StoreSeoRedirectRequest;
 use Modules\Seo\Http\Requests\UpdateSeoRedirectRequest;
 use Modules\Seo\Models\SeoRedirect;
@@ -27,7 +29,7 @@ class SeoRedirectController extends Controller
     {
         $this->middleware('can:Seo.redirects.index')->only('index', 'show', 'test', 'clearCache', 'detectChains', 'analytics');
         $this->middleware('can:Seo.redirects.create')->only('create', 'store');
-        $this->middleware('can:Seo.redirects.update')->only('edit', 'update', 'toggleActive');
+        $this->middleware('can:Seo.redirects.update')->only('edit', 'update', 'toggleActive', 'resolveChains');
         $this->middleware('can:Seo.redirects.delete')->only('destroy', 'bulkDelete');
         $this->middleware('can:Seo.redirects.index')->only('export', 'showImport', 'import', 'showHtaccessImport', 'importHtaccess');
     }
@@ -282,6 +284,18 @@ class SeoRedirectController extends Controller
     }
 
     /**
+     * Flatten all detected redirect chains (A→B→C becomes A→C).
+     */
+    public function resolveChains(): RedirectResponse
+    {
+        $updated = (new RedirectChainDetector)->resolveAll();
+
+        SeoRedirect::flushPatternCache();
+
+        return back()->with('success', "Se aplanaron {$updated} cadenas de redirects.");
+    }
+
+    /**
      * Export all redirects as a CSV file.
      */
     public function export(): StreamedResponse
@@ -320,13 +334,8 @@ class SeoRedirectController extends Controller
     /**
      * Import redirects from a CSV file.
      */
-    public function import(Request $request): RedirectResponse
+    public function import(ImportRedirectsCsvRequest $request): RedirectResponse
     {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-            'skip_existing' => 'boolean',
-        ]);
-
         $file = $request->file('csv_file');
         $handle = fopen($file->getPathname(), 'r');
 
@@ -408,13 +417,8 @@ class SeoRedirectController extends Controller
     /**
      * Import redirects from pasted .htaccess content.
      */
-    public function importHtaccess(Request $request): RedirectResponse
+    public function importHtaccess(ImportHtaccessRequest $request): RedirectResponse
     {
-        $request->validate([
-            'htaccess_content' => 'required|string|max:500000',
-            'skip_existing' => 'boolean',
-        ]);
-
         $content = $request->input('htaccess_content');
         $skipExisting = $request->boolean('skip_existing', true);
         $lines = explode("\n", $content);

@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\BackupScheduleController;
 use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
+use Modules\Backup\Http\Controllers\Api\BackupScheduleApiController;
 use Modules\Page\Http\Controllers\PublicController;
 use Modules\Reviews\Http\Controllers\Api\ReviewController;
+use Modules\User\Http\Controllers\Api\UserApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +31,7 @@ Route::prefix('v1')
         Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
             // Current user profile
-            Route::get('me', [UserController::class, 'me'])->name('user.me');
+            Route::get('me', [UserApiController::class, 'me'])->name('user.me');
 
             // Reviews
             Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
@@ -39,8 +39,8 @@ Route::prefix('v1')
 
             // Backup schedules (read-only)
             Route::middleware('can:Backup.schedules.index')->group(function () {
-                Route::get('backup/schedules', [BackupScheduleController::class, 'index'])->name('backup.schedules.index');
-                Route::get('backup/schedules/{schedule}', [BackupScheduleController::class, 'show'])->name('backup.schedules.show');
+                Route::get('backup/schedules', [BackupScheduleApiController::class, 'index'])->name('backup.schedules.index');
+                Route::get('backup/schedules/{schedule}', [BackupScheduleApiController::class, 'show'])->name('backup.schedules.show');
             });
         });
     });

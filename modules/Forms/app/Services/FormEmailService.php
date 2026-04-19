@@ -51,7 +51,11 @@ class FormEmailService
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("FormEmailService: Error enviando notificación admin: {$e->getMessage()}");
+            Log::error('FormEmailService: admin notification error', [
+                'form_id' => $form->id,
+                'submission_id' => $submission->id,
+                'error' => $e->getMessage(),
+            ]);
             foreach ($recipients as $recipient) {
                 FormSubmissionEmail::log($submission, 'admin', $recipient, $subject ?? "Notificación admin #{$submission->id}")->markAsFailed($e->getMessage());
             }
@@ -87,7 +91,12 @@ class FormEmailService
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("FormEmailService: Error enviando confirmación cliente: {$e->getMessage()}");
+            Log::error('FormEmailService: client confirmation error', [
+                'form_id' => $form->id,
+                'submission_id' => $submission->id,
+                'recipient' => $email,
+                'error' => $e->getMessage(),
+            ]);
             FormSubmissionEmail::log($submission, 'confirmation', $email, $subject ?? "Confirmación #{$submission->id}")->markAsFailed($e->getMessage());
 
             return false;
@@ -174,7 +183,11 @@ class FormEmailService
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("FormEmailService: Error con Mailer template {$templateId}: {$e->getMessage()}");
+            Log::error('FormEmailService: Mailer template error', [
+                'template_id' => $templateId,
+                'recipients_count' => count($recipients),
+                'error' => $e->getMessage(),
+            ]);
 
             return false;
         }

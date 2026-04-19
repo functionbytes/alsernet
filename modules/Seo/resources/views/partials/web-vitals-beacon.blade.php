@@ -8,13 +8,13 @@
     Se carga con `defer` y usa `sendBeacon` cuando está disponible para no
     bloquear la descarga ni afectar las propias métricas.
 --}}
-@if(config('Seo.web_vitals.enabled', true))
+@if(seo_setting('web_vitals.enabled', config('Seo.web_vitals.enabled', true)))
 <script defer>
 (function () {
     'use strict';
 
     // Sample rate: skip most sessions to keep DB volume manageable.
-    const SAMPLE_RATE = {{ (float) config('Seo.web_vitals.sample_rate', 0.1) }};
+    const SAMPLE_RATE = {{ (float) seo_setting('web_vitals.sample_rate', config('Seo.web_vitals.sample_rate', 0.1)) }};
     if (Math.random() > SAMPLE_RATE) return;
 
     const ENDPOINT = @json(route('seo.web-vitals.store'));

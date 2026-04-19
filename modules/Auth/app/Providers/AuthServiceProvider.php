@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Auth\Console\Commands\PruneAuthLogsCommand;
+use Modules\Auth\Events\ImpersonationStarted;
 use Modules\Auth\Events\LoginFailed;
 use Modules\Auth\Events\NewDeviceDetected;
 use Modules\Auth\Events\PasswordChanged;
@@ -19,12 +20,14 @@ use Modules\Auth\Http\Controllers\ImpersonationController;
 use Modules\Auth\Http\Controllers\LockScreenController;
 use Modules\Auth\Http\Controllers\LoginController;
 use Modules\Auth\Http\Controllers\TwoFactorChallengeController;
+use Modules\Auth\Http\Middleware\AddRateLimitHeaders;
 use Modules\Auth\Http\Middleware\CheckPasswordExpired;
 use Modules\Auth\Http\Middleware\CheckSessionLock;
 use Modules\Auth\Http\Middleware\DenyWhenImpersonating;
 use Modules\Auth\Listeners\LogLoginActivity;
 use Modules\Auth\Listeners\LogLoginFailure;
 use Modules\Auth\Listeners\LogTwoFactorActivity;
+use Modules\Auth\Listeners\NotifyImpersonated;
 use Modules\Auth\Listeners\RecordPasswordChange;
 use Modules\Auth\Listeners\SendNewDeviceAlert;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -57,6 +60,9 @@ class AuthServiceProvider extends ServiceProvider
         ],
         NewDeviceDetected::class => [
             SendNewDeviceAlert::class,
+        ],
+        ImpersonationStarted::class => [
+            NotifyImpersonated::class,
         ],
     ];
 
@@ -136,7 +142,7 @@ class AuthServiceProvider extends ServiceProvider
                 require $settingsPath;
             });
 
-        Route::middleware(['api'])
+        Route::middleware(['api', AddRateLimitHeaders::class])
             ->prefix('api/auth')
             ->name('api.auth.')
             ->group(function () use ($apiPath) {

@@ -44,13 +44,8 @@ class RedirectMiddleware
             return redirect($redirect->target_path, $redirect->status_code);
         }
 
-        // Wildcard redirects (not cached — evaluated on each request)
-        $wildcardRedirects = SeoRedirect::currentlyActive()
-            ->where('is_wildcard', true)
-            ->where('is_regex', false)
-            ->get(['id', 'source_path', 'target_path', 'status_code', 'hits_count']);
-
-        foreach ($wildcardRedirects as $wildcardRedirect) {
+        // Wildcard redirects (cached list — invalidated on save/delete via model hooks)
+        foreach (SeoRedirect::cachedWildcards() as $wildcardRedirect) {
             $pattern = '/^'.str_replace(['\*', '\/'], ['(.*)', '\/'], preg_quote($wildcardRedirect->source_path, '/')).'$/';
             if (@preg_match($pattern, $currentPath, $matches) === 1) {
                 $target = str_replace('*', $matches[1] ?? '', $wildcardRedirect->target_path);
@@ -60,12 +55,8 @@ class RedirectMiddleware
             }
         }
 
-        // Fall back to regex redirects (not cached — evaluated on each request)
-        $regexRedirects = SeoRedirect::currentlyActive()
-            ->where('is_regex', true)
-            ->get(['id', 'source_path', 'target_path', 'status_code']);
-
-        foreach ($regexRedirects as $regexRedirect) {
+        // Regex redirects (cached list — invalidated on save/delete via model hooks)
+        foreach (SeoRedirect::cachedRegex() as $regexRedirect) {
             if (@preg_match($regexRedirect->source_path, $currentPath) === 1) {
                 $target = @preg_replace($regexRedirect->source_path, $regexRedirect->target_path, $currentPath);
                 $this->incrementHitsAsync($regexRedirect->id);

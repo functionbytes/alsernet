@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Health\Checks\DatabaseCheck;
 use Modules\Health\Checks\RedisCheck;
 use Modules\Health\Checks\StorageCheck;
+use Modules\Health\Console\Commands\CheckAlertThresholdsCommand;
 use Modules\Health\Console\Commands\HealthCheckAlertCommand;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -51,7 +52,10 @@ class HealthServiceProvider extends ServiceProvider
         $this->registerHealthChecks();
 
         // Register commands
-        $this->commands([HealthCheckAlertCommand::class]);
+        $this->commands([
+            HealthCheckAlertCommand::class,
+            CheckAlertThresholdsCommand::class,
+        ]);
 
         // Schedule health checks (saves results to DB via EloquentHealthResultStore)
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {

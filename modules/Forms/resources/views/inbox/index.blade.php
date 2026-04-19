@@ -82,12 +82,13 @@
                 @endphp
                 <form class="form-search" action="{{ route('forms.inbox.index') }}" method="GET" id="inbox-filter-form">
                     {{-- Hidden extra filters --}}
-                    <input type="hidden" name="form_id"     id="h_form_id"     value="{{ $formId ?? '' }}">
-                    <input type="hidden" name="status"      id="h_status"      value="{{ $statusFilter ?? '' }}">
-                    <input type="hidden" name="assigned_to" id="h_assigned_to" value="{{ $assignedTo ?? '' }}">
-                    <input type="hidden" name="is_spam"     id="h_is_spam"     value="{{ $isSpam ?? '0' }}">
-                    <input type="hidden" name="date_from"   id="date_from"     value="{{ $dateFrom ?? '' }}">
-                    <input type="hidden" name="date_to"     id="date_to"       value="{{ $dateTo ?? '' }}">
+                    <input type="hidden" name="form_id"        id="h_form_id"        value="{{ $formId ?? '' }}">
+                    <input type="hidden" name="status"         id="h_status"         value="{{ $statusFilter ?? '' }}">
+                    <input type="hidden" name="assigned_to"    id="h_assigned_to"    value="{{ $assignedTo ?? '' }}">
+                    <input type="hidden" name="source_page_id" id="h_source_page_id" value="{{ $sourcePageId ?? '' }}">
+                    <input type="hidden" name="is_spam"        id="h_is_spam"        value="{{ $isSpam ?? '0' }}">
+                    <input type="hidden" name="date_from"      id="date_from"        value="{{ $dateFrom ?? '' }}">
+                    <input type="hidden" name="date_to"        id="date_to"          value="{{ $dateTo ?? '' }}">
 
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         {{-- Search --}}
@@ -301,6 +302,19 @@
                             <option value="rejected"  {{ ($statusFilter ?? '') === 'rejected'  ? 'selected' : '' }}>Rechazado</option>
                         </select>
                     </div>
+                    @if(! empty($sourcePages) && count($sourcePages))
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Página de origen</label>
+                        <select class="form-select select2-inbox-modal" id="m_source_page_id">
+                            <option value="">Todas las páginas</option>
+                            @foreach ($sourcePages as $p)
+                                <option value="{{ $p->id }}" {{ ($sourcePageId ?? '') == $p->id ? 'selected' : '' }}>
+                                    {{ $p->title }} · {{ $p->submissions_count }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Asignado a</label>
                         <select class="form-select select2-inbox-modal" id="m_assigned_to">
@@ -402,6 +416,7 @@ $(document).ready(function () {
         $('#h_form_id').val($('#m_form_id').val());
         $('#h_status').val($('#m_status').val());
         $('#h_assigned_to').val($('#m_assigned_to').val());
+        $('#h_source_page_id').val($('#m_source_page_id').val() || '');
         $('#h_is_spam').val($('#m_is_spam').val());
         $('#inbox-more-filters-modal').modal('hide');
         $('#inbox-filter-form').submit();
@@ -409,10 +424,10 @@ $(document).ready(function () {
 
     // ── Clear extra filters ───────────────────────────────────────────────
     $('#inbox-filters-clear').on('click', function () {
-        $('#m_form_id, #m_status, #m_assigned_to').val('').trigger('change');
+        $('#m_form_id, #m_status, #m_assigned_to, #m_source_page_id').val('').trigger('change');
         $('#m_is_spam').val('0').trigger('change');
         $('#m_inbox_daterange').val('');
-        $('#h_form_id, #h_status, #h_assigned_to, #date_from, #date_to').val('');
+        $('#h_form_id, #h_status, #h_assigned_to, #h_source_page_id, #date_from, #date_to').val('');
         $('#h_is_spam').val('0');
         $('#inbox-filter-form').submit();
     });

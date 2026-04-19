@@ -36,8 +36,7 @@
                         <button type="submit" class="btn btn-primary w-100 mb-2">
                             Guardar
                         </button>
-                        <button type="button" class="btn btn-outline-secondary w-100"
-                                onclick="if(confirm('¿Restaurar el robots.txt al valor por defecto? Esta acción no se puede deshacer.')) document.getElementById('form-reset-robots').submit();">
+                        <button type="button" class="btn btn-outline-secondary w-100" data-action="reset-robots">
                             Restaurar al default
                         </button>
                     </form>
@@ -140,6 +139,12 @@ Disallow: /admin/</pre>
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/lib/codemirror.min.js"></script>
 <script>
+$(document).on('click', '[data-action="reset-robots"]', function () {
+    if (window.confirm('¿Restaurar el robots.txt al valor por defecto? Esta acción no se puede deshacer.')) {
+        document.getElementById('form-reset-robots').submit();
+    }
+});
+
 $(document).ready(function () {
     var robotsEditor = CodeMirror.fromTextArea(document.getElementById('robots-editor'), {
         mode: null,

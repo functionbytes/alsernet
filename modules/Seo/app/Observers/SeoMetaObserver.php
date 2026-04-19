@@ -30,14 +30,14 @@ class SeoMetaObserver
         if ($seoMeta->wasChanged('seo_score')) {
             $previousScore = (int) $seoMeta->getOriginal('seo_score');
             $currentScore = (int) $seoMeta->seo_score;
-            $threshold = config('Seo.notifications.score_drop_threshold', 10);
+            $threshold = (int) seo_setting('notifications.score_drop_threshold', config('Seo.notifications.score_drop_threshold', 10));
 
             if ($currentScore < $previousScore && ($previousScore - $currentScore) >= $threshold) {
-                $email = config('Seo.notifications.email', config('mail.from.address'));
+                $email = (string) seo_setting('notifications.email', config('Seo.notifications.email', config('mail.from.address')));
 
                 Mail::to($email)->queue(new SeoScoreDropMail($seoMeta, $previousScore, $currentScore));
 
-                if (config('Seo.webhooks.notify_score_drop', true)) {
+                if (seo_setting('webhooks.notify_score_drop', config('Seo.webhooks.notify_score_drop', true))) {
                     (new WebhookNotificationService)->sendScoreDrop(
                         $seoMeta->title ?? 'Sin título',
                         $seoMeta->canonical_url ?? '',
@@ -93,7 +93,7 @@ class SeoMetaObserver
      */
     private function maybeSubmitIndexNow(SeoMeta $seoMeta): void
     {
-        if (! config('seohelper.indexnow.enabled') || ! config('seohelper.indexnow.auto_submit', true)) {
+        if (! seo_setting('indexnow.enabled', config('seohelper.indexnow.enabled')) || ! seo_setting('indexnow.auto_submit', config('seohelper.indexnow.auto_submit', true))) {
             return;
         }
 

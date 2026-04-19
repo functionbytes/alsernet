@@ -244,6 +244,13 @@ class SeoService
                     $this->data['og_image'] = $mediaUrl;
                 }
             }
+
+            // Per-page custom Schema.org JSON-LD — when set by the admin via
+            // the SchemaOrgController, it takes precedence over auto-generated
+            // schemas for this request.
+            if (! empty($seoMeta->schema_custom) && is_array($seoMeta->schema_custom)) {
+                $this->schemas = [$seoMeta->schema_custom];
+            }
         }
 
         // Apply template fallbacks for empty fields

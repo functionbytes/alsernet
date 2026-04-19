@@ -168,10 +168,9 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Regenerar sitemap</h6>
                         <p class="text-muted mb-3">Regenera el archivo sitemap.xml con el contenido actual del sitio.</p>
-                        <form method="POST" action="{{ route('setting.seo.sitemap.generate') }}">
+                        <form method="POST" action="{{ route('setting.seo.sitemap.generate') }}" data-confirm="¿Regenerar el sitemap?">
                             @csrf
-                            <button type="submit" class="btn btn-primary w-100"
-                                    onclick="return confirm('¿Regenerar el sitemap?')">
+                            <button type="submit" class="btn btn-primary w-100">
                                 Regenerar sitemap
                             </button>
                         </form>
@@ -182,10 +181,9 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Limpiar caché</h6>
                         <p class="text-muted mb-3">Limpia la caché del sitemap. Se volverá a cachear automáticamente al acceder.</p>
-                        <form method="POST" action="{{ route('setting.seo.sitemap.clear-cache') }}">
+                        <form method="POST" action="{{ route('setting.seo.sitemap.clear-cache') }}" data-confirm="¿Limpiar la caché del sitemap?">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary w-100"
-                                    onclick="return confirm('¿Limpiar la caché del sitemap?')">
+                            <button type="submit" class="btn btn-outline-secondary w-100">
                                 Limpiar caché
                             </button>
                         </form>
@@ -222,6 +220,11 @@
 
 @push('scripts')
 <script>
+$(document).on('submit', 'form[data-confirm]', function (e) {
+    if (!window.confirm($(this).data('confirm'))) {
+        e.preventDefault();
+    }
+});
 (function () {
     // Calculate priorities
     $('#calculate-priorities-btn').on('click', function () {

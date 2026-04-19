@@ -2,18 +2,40 @@
 
 namespace Modules\Shortcode\Providers;
 
+use App\Services\NavService;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Media\Models\Media;
 use Modules\Shortcode\Compiler\ShortcodeCompiler;
+use Modules\Shortcode\Console\ShortcodeBenchmarkCommand;
 use Modules\Shortcode\Console\ShortcodeClearCommand;
 use Modules\Shortcode\Console\ShortcodeCompileCommand;
+use Modules\Shortcode\Console\ShortcodeFindCommand;
 use Modules\Shortcode\Console\ShortcodeListCommand;
+use Modules\Shortcode\Console\ShortcodeMakeCommand;
+use Modules\Shortcode\Console\ShortcodePreviewCommand;
+use Modules\Shortcode\Console\ShortcodeValidateCommand;
+use Modules\Shortcode\Shortcodes\IntegrationShortcodes;
+use Modules\Shortcode\Shortcodes\LogicShortcodes;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * SEGURIDAD — Política de escape en shortcodes.
+ *
+ * - Los *atributos* (url, class, type, id, etc.) se escapan con htmlspecialchars().
+ * - El *contenido* entre tags ([alert]...[/alert]) se inserta SIN escape, porque
+ *   admite HTML y shortcodes anidados (comportamiento estilo WordPress).
+ *
+ * Por tanto los shortcodes sólo deben procesarse sobre contenido CONFIABLE de
+ * administradores. Nunca pasar input de usuario anónimo a Shortcode::compile()
+ * sin antes sanitizar con HTMLPurifier o strip_tags().
+ */
 class ShortcodeServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -40,6 +62,57 @@ class ShortcodeServiceProvider extends ServiceProvider
         $this->registerHelpers();
         $this->registerBladeDirectives();
         $this->registerShortcodes();
+        $this->registerCompanionShortcodes();
+        $this->registerRateLimiters();
+        $this->registerMenus();
+    }
+
+    /**
+     * Registra la entrada del módulo en la navegación de Settings.
+     */
+    protected function registerMenus(): void
+    {
+        if (! class_exists(NavService::class)) {
+            return;
+        }
+
+        NavService::registerSidebar('settings', [
+            'title' => 'Shortcodes',
+            'items' => [
+                ['label' => 'Listado', 'route' => 'setting.shortcode.index', 'permission' => 'shortcode.view'],
+                ['label' => 'Referencia', 'route' => 'setting.shortcode.reference', 'permission' => 'shortcode.view'],
+                ['label' => 'Tester visual', 'route' => 'setting.shortcode.tester', 'permission' => 'shortcode.view'],
+            ],
+        ]);
+    }
+
+    /**
+     * Define un limitador personalizado para el API de shortcodes: si el
+     * usuario está autenticado, cuenta por user-id; si no, por IP.
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('shortcode-api', function ($request) {
+            $key = $request->user()?->id ?? $request->ip();
+
+            return Limit::perMinute(120)->by('shortcode-api:'.$key);
+        });
+    }
+
+    /**
+     * Registra shortcodes de integración (Forms, Page, Menu, Blog, Media) y
+     * lógicos/contextuales ([if], [for], [user-name], etc.).
+     */
+    protected function registerCompanionShortcodes(): void
+    {
+        if (! config('shortcode.enabled', true) || ! config('shortcode.auto_register', true)) {
+            return;
+        }
+
+        $compiler = app('shortcode');
+
+        (new IntegrationShortcodes($compiler))->registerAll();
+        (new LogicShortcodes($compiler))->registerAll();
     }
 
     /**
@@ -73,14 +146,21 @@ class ShortcodeServiceProvider extends ServiceProvider
      */
     protected function registerBladeDirectives(): void
     {
-        // @shortcode directive
+        // @shortcode('contenido') — compila shortcodes en el string dado.
         Blade::directive('shortcode', function ($expression) {
             return "<?php echo shortcode($expression); ?>";
         });
 
-        // @stripshortcodes directive
+        // @stripshortcodes('contenido') — elimina shortcodes del string dado.
         Blade::directive('stripshortcodes', function ($expression) {
             return "<?php echo strip_shortcodes($expression); ?>";
+        });
+
+        // @shortcodePicker('#targetSelector') — incluye el modal picker.
+        Blade::directive('shortcodePicker', function ($expression) {
+            $expression = trim($expression) !== '' ? $expression : "'#content'";
+
+            return "<?php echo \$__env->make('shortcode::components.picker', ['targetSelector' => $expression], \\Illuminate\\Support\\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>";
         });
     }
 
@@ -89,14 +169,23 @@ class ShortcodeServiceProvider extends ServiceProvider
      */
     protected function registerShortcodes(): void
     {
-        if (! config('shortcode.enabled', true)) {
+        if (! config('shortcode.enabled', true) || ! config('shortcode.auto_register', true)) {
             return;
         }
 
         $shortcode = app('shortcode');
+        $enabled = config('shortcode.default_shortcodes', []);
+
+        // Closure helper: registra sólo si la config permite el shortcode.
+        $register = function (string $name, callable $callback, array $meta = []) use ($shortcode, $enabled) {
+            if (($enabled[$name] ?? true) === false) {
+                return;
+            }
+            $shortcode->register($name, $callback, $meta);
+        };
 
         // Button shortcode: [button url="#" class="primary" target="_blank"]Click Me[/button]
-        $shortcode->register('button', function ($attrs, $content) {
+        $register('button', function ($attrs, $content) {
             $class = $attrs['class'] ?? 'btn-primary';
             $url = $attrs['url'] ?? '#';
             $target = isset($attrs['target']) ? sprintf(' target="%s"', $attrs['target']) : '';
@@ -117,7 +206,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Alert shortcode: [alert type="success" dismissible="true"]Message[/alert]
-        $shortcode->register('alert', function ($attrs, $content) {
+        $register('alert', function ($attrs, $content) {
             $type = $attrs['type'] ?? 'info';
             $dismissible = isset($attrs['dismissible']) && $attrs['dismissible'] === 'true';
             $dismissButton = $dismissible ? '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' : '';
@@ -137,7 +226,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Columns shortcode: [columns count="3" gap="4"]Content[/columns]
-        $shortcode->register('columns', function ($attrs, $content) {
+        $register('columns', function ($attrs, $content) {
             $count = $attrs['count'] ?? 2;
             $gap = $attrs['gap'] ?? 3;
 
@@ -154,7 +243,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Column shortcode: [column]Content[/column]
-        $shortcode->register('column', function ($attrs, $content) {
+        $register('column', function ($attrs, $content) {
             $class = $attrs['class'] ?? '';
 
             return sprintf(
@@ -169,7 +258,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // YouTube shortcode: [youtube id="abc123" width="560" height="315" /]
-        $shortcode->register('youtube', function ($attrs, $content) {
+        $register('youtube', function ($attrs, $content) {
             $id = $attrs['id'] ?? '';
             $width = $attrs['width'] ?? '560';
             $height = $attrs['height'] ?? '315';
@@ -193,20 +282,19 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Image shortcode: [image id="123" size="medium" class="img-fluid" alt="Description" /]
-        $shortcode->register('image', function ($attrs, $content) {
+        $register('image', function ($attrs, $content) {
             $id = $attrs['id'] ?? '';
             $size = $attrs['size'] ?? 'medium';
             $class = $attrs['class'] ?? 'img-fluid';
             $alt = $attrs['alt'] ?? '';
 
-            if (empty($id)) {
+            if (! ctype_digit((string) $id) || (int) $id <= 0) {
                 return '';
             }
 
-            // Try to get image from Media model if exists
             try {
-                if (class_exists('\Modules\Media\Models\Media')) {
-                    $media = Media::find($id);
+                if (class_exists(Media::class)) {
+                    $media = Media::find((int) $id);
                     if ($media) {
                         $url = $media->getUrl($size);
                         $alt = $alt ?: $media->alt_text;
@@ -215,19 +303,19 @@ class ShortcodeServiceProvider extends ServiceProvider
                             '<img src="%s" class="%s" alt="%s" loading="lazy">',
                             htmlspecialchars($url),
                             htmlspecialchars($class),
-                            htmlspecialchars($alt)
+                            htmlspecialchars((string) $alt)
                         );
                     }
                 }
-            } catch (\Exception $e) {
-                \Log::warning('Image shortcode error: '.$e->getMessage());
+            } catch (\Throwable $e) {
+                Log::warning('Image shortcode error: '.$e->getMessage(), ['id' => $id]);
             }
 
             return sprintf(
                 '<img src="#" class="%s" alt="%s" data-id="%s">',
                 htmlspecialchars($class),
-                htmlspecialchars($alt),
-                htmlspecialchars($id)
+                htmlspecialchars((string) $alt),
+                htmlspecialchars((string) $id)
             );
         }, [
             'description' => 'Inserta una imagen del gestor de medios.',
@@ -236,7 +324,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Icon shortcode: [icon name="home" size="24" color="primary" /]
-        $shortcode->register('icon', function ($attrs, $content) {
+        $register('icon', function ($attrs, $content) {
             $name = $attrs['name'] ?? 'circle';
             $size = $attrs['size'] ?? '24';
             $color = $attrs['color'] ?? '';
@@ -258,7 +346,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Badge shortcode: [badge type="primary"]New[/badge]
-        $shortcode->register('badge', function ($attrs, $content) {
+        $register('badge', function ($attrs, $content) {
             $type = $attrs['type'] ?? 'primary';
             $pill = isset($attrs['pill']) && $attrs['pill'] === 'true' ? ' rounded-pill' : '';
 
@@ -275,7 +363,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Card shortcode: [card title="Title" class="mb-3"]Content[/card]
-        $shortcode->register('card', function ($attrs, $content) {
+        $register('card', function ($attrs, $content) {
             $title = $attrs['title'] ?? '';
             $class = $attrs['class'] ?? '';
             $headerClass = $attrs['header_class'] ?? '';
@@ -295,7 +383,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Accordion shortcode: [accordion id="acc1"]Content[/accordion]
-        $shortcode->register('accordion', function ($attrs, $content) {
+        $register('accordion', function ($attrs, $content) {
             $id = $attrs['id'] ?? 'accordion-'.uniqid();
             $class = $attrs['class'] ?? '';
 
@@ -312,7 +400,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Accordion Item shortcode: [accordion-item title="Item 1" parent="acc1"]Content[/accordion-item]
-        $shortcode->register('accordion-item', function ($attrs, $content) {
+        $register('accordion-item', function ($attrs, $content) {
             $title = $attrs['title'] ?? 'Accordion Item';
             $parent = $attrs['parent'] ?? 'accordion';
             $id = $attrs['id'] ?? 'item-'.uniqid();
@@ -347,7 +435,7 @@ class ShortcodeServiceProvider extends ServiceProvider
         ]);
 
         // Quote shortcode: [quote author="John Doe" cite="Book Title"]Quote text[/quote]
-        $shortcode->register('quote', function ($attrs, $content) {
+        $register('quote', function ($attrs, $content) {
             $author = $attrs['author'] ?? '';
             $cite = $attrs['cite'] ?? '';
 
@@ -369,40 +457,39 @@ class ShortcodeServiceProvider extends ServiceProvider
             'attributes' => ['author' => 'Nombre del autor', 'cite' => 'Fuente o título de la obra'],
         ]);
 
-        // Contact Form shortcode: [contact-form title="Contacto" email="admin@site.com"][/contact-form]
-        $shortcode->register('contact-form', function ($attrs, $content) {
+        // Contact Form shortcode (DEMO): HTML-only, sin submit backend.
+        // Para formularios funcionales usa el módulo Forms: [form id="X"].
+        $register('contact-form', function ($attrs, $content) {
             $title = $attrs['title'] ?? 'Contáctenos';
-            $email = $attrs['email'] ?? config('mail.from.address', '');
             $formId = 'contact-form-'.uniqid();
 
             return sprintf(
-                '<div class="contact-form-wrapper my-4">
+                '<div class="contact-form-wrapper my-4 border rounded p-3">
+            <div class="small text-muted mb-2"><i class="fas fa-circle-info me-1"></i>Demo sin envío real — usa [form id="X"] para formularios funcionales</div>
             <h3 class="mb-3">%s</h3>
-            <form id="%s" class="contact-shortcode-form" data-email="%s">
+            <form id="%s" class="contact-shortcode-form" onsubmit="return false;" aria-disabled="true">
                 <div class="mb-3">
                     <label class="form-label">Nombre</label>
-                    <input type="text" name="name" class="form-control" required placeholder="Tu nombre">
+                    <input type="text" name="name" class="form-control" placeholder="Tu nombre" disabled>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Correo electrónico</label>
-                    <input type="email" name="email" class="form-control" required placeholder="tu@email.com">
+                    <input type="email" name="email" class="form-control" placeholder="tu@email.com" disabled>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Mensaje</label>
-                    <textarea name="message" class="form-control" rows="4" required placeholder="Tu mensaje..."></textarea>
+                    <textarea name="message" class="form-control" rows="4" placeholder="Tu mensaje..." disabled></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Enviar mensaje</button>
-                <div class="contact-form-feedback mt-2"></div>
+                <button type="button" class="btn btn-secondary" disabled>Vista previa (no envía)</button>
             </form>
         </div>',
                 htmlspecialchars($title),
-                htmlspecialchars($formId),
-                htmlspecialchars($email)
+                htmlspecialchars($formId)
             );
         }, [
-            'description' => 'Formulario de contacto con envío por email.',
-            'example' => '[contact-form title="Contáctenos" email="info@empresa.com"][/contact-form]',
-            'attributes' => ['title' => 'Título del formulario', 'email' => 'Dirección de email destino'],
+            'description' => 'Formulario de contacto (solo maquetado, sin envío). Usa [form id="X"] del módulo Forms para funcionalidad real.',
+            'example' => '[contact-form title="Contáctenos"][/contact-form]',
+            'attributes' => ['title' => 'Título del formulario'],
         ]);
     }
 
@@ -415,6 +502,11 @@ class ShortcodeServiceProvider extends ServiceProvider
             ShortcodeListCommand::class,
             ShortcodeClearCommand::class,
             ShortcodeCompileCommand::class,
+            ShortcodePreviewCommand::class,
+            ShortcodeFindCommand::class,
+            ShortcodeMakeCommand::class,
+            ShortcodeBenchmarkCommand::class,
+            ShortcodeValidateCommand::class,
         ]);
     }
 

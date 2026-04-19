@@ -65,6 +65,7 @@ return [
         'accordion' => true,
         'accordion-item' => true,
         'quote' => true,
+        'contact-form' => true,
     ],
 
     /*
@@ -73,9 +74,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | How to handle shortcode errors:
-    | - 'silent': Return original shortcode
-    | - 'log': Log error and return original shortcode
-    | - 'display': Display error message
+    | - 'silent':  Return original shortcode
+    | - 'log':     Log error and return original shortcode (default)
+    | - 'display': Reemplaza el shortcode fallido con un span.shortcode-error
+    | - 'throw':   Lanza ShortcodeCompilationException (útil en tests)
     |
     */
     'error_handling' => 'log',
@@ -89,4 +91,41 @@ return [
     |
     */
     'max_nesting_level' => 10,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Track Usage Stats
+    |--------------------------------------------------------------------------
+    |
+    | Si true, registra en cache cuántas veces se compila cada shortcode.
+    | Consultable en /panel/setting/shortcodes y via Shortcode::stats().
+    |
+    */
+    'track_usage' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Output Purify
+    |--------------------------------------------------------------------------
+    |
+    | Si un shortcode declara meta['purify'] = true y HTMLPurifier está
+    | disponible, el output se sanitiza antes de retornar.
+    |
+    */
+    'purify_enabled' => env('SHORTCODE_PURIFY', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate Sources
+    |--------------------------------------------------------------------------
+    |
+    | Tablas/columnas a escanear con `php artisan shortcode:validate` para
+    | detectar shortcodes huérfanos (usados pero no registrados).
+    |
+    */
+    'validate_sources' => [
+        ['table' => 'pages', 'id' => 'id', 'column' => 'content'],
+        ['table' => 'blog_posts', 'id' => 'id', 'column' => 'content'],
+        ['table' => 'template_shortcodes', 'id' => 'id', 'column' => 'content'],
+    ],
 ];

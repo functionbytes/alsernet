@@ -38,6 +38,13 @@ class SeoPermissionsSeeder extends Seeder
             'Seo.indexnow.index' => 'Ver estado de IndexNow',
             'Seo.indexnow.submit' => 'Enviar URLs a IndexNow',
 
+            // Core Web Vitals dashboard
+            'Seo.web-vitals.index' => 'Ver métricas Core Web Vitals',
+
+            // Unified SEO settings
+            'Seo.settings.view' => 'Ver configuración SEO',
+            'Seo.settings.update' => 'Editar configuración SEO',
+
             // Static URLs
             'Seo.static-urls.index' => 'Ver URLs estáticas del sitemap',
             'Seo.static-urls.create' => 'Crear URLs estáticas del sitemap',

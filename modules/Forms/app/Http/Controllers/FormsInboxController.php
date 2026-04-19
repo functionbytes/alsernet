@@ -7,12 +7,16 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\BulkActionInboxRequest;
+use Modules\Forms\Http\Requests\UploadSubmissionFileRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
 use Modules\Forms\Models\FormSubmissionAction;
 use Modules\Forms\Models\FormSubmissionFile;
+use Modules\Page\Models\Page;
 
 class FormsInboxController extends Controller
 {
@@ -29,20 +33,45 @@ class FormsInboxController extends Controller
         $forms = Form::orderBy('name')->get(['id', 'name']);
         $users = User::orderBy('firstname')->get(['id', 'firstname', 'lastname']);
 
+        $sourcePages = $this->topSourcePages();
+
         return view('forms::inbox.index', [
             'submissions' => $submissions,
             'forms' => $forms,
             'users' => $users,
             'stats' => $stats,
+            'sourcePages' => $sourcePages,
             'search' => $request->input('search'),
             'formId' => $request->input('form_id'),
             'statusFilter' => $request->input('status'),
             'assignedTo' => $request->input('assigned_to'),
+            'sourcePageId' => $request->input('source_page_id'),
             'isSpam' => $request->input('is_spam', '0'),
             'isStarred' => $request->input('is_starred'),
             'dateFrom' => $request->input('date_from'),
             'dateTo' => $request->input('date_to'),
         ]);
+    }
+
+    /**
+     * Top 20 Pages con más submissions, para el filtro del inbox.
+     *
+     * @return Collection<int, object{id:int, title:string, submissions_count:int}>
+     */
+    private function topSourcePages(): Collection
+    {
+        if (! class_exists(Page::class)) {
+            return collect();
+        }
+
+        return \DB::table('form_submissions')
+            ->join('pages', 'pages.id', '=', 'form_submissions.source_page_id')
+            ->select('pages.id', 'pages.title', \DB::raw('COUNT(*) as submissions_count'))
+            ->whereNotNull('form_submissions.source_page_id')
+            ->groupBy('pages.id', 'pages.title')
+            ->orderByDesc('submissions_count')
+            ->limit(20)
+            ->get();
     }
 
     public function show(FormSubmission $submission): View
@@ -134,14 +163,8 @@ class FormsInboxController extends Controller
         return response()->json(['success' => true, 'message' => 'Cambios guardados correctamente']);
     }
 
-    public function uploadFile(Request $request, FormSubmission $submission): JsonResponse
+    public function uploadFile(UploadSubmissionFileRequest $request, FormSubmission $submission): JsonResponse
     {
-        $this->authorize('Forms.submissions.edit');
-
-        $request->validate([
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx'],
-        ]);
-
         $file = $request->file('file');
         $filename = $file->getClientOriginalName();
         $path = $file->store("form-submissions/{$submission->id}", 'public');
@@ -175,15 +198,9 @@ class FormsInboxController extends Controller
         ]);
     }
 
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkActionInboxRequest $request): JsonResponse
     {
-        $this->authorize('Forms.submissions.edit');
-
-        $validated = $request->validate([
-            'action' => ['required', 'string', 'in:mark_read,mark_unread,mark_spam,unmark_spam,delete'],
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer'],
-        ]);
+        $validated = $request->validated();
 
         $query = FormSubmission::query()->whereIn('id', $validated['ids']);
         $count = $query->count();
@@ -247,6 +264,10 @@ class FormsInboxController extends Controller
 
         if ($request->filled('assigned_to')) {
             $query->where('assigned_to', $request->integer('assigned_to'));
+        }
+
+        if ($request->filled('source_page_id')) {
+            $query->where('source_page_id', $request->integer('source_page_id'));
         }
 
         if ($request->filled('date_from') && $request->filled('date_to')) {

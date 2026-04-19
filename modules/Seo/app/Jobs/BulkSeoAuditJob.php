@@ -17,9 +17,11 @@ class BulkSeoAuditJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 1;
+    public int $tries = 3;
 
     public int $timeout = 3600;
+
+    public int $backoff = 60;
 
     public function __construct(private readonly string $jobKey = 'bulk_seo_audit')
     {
@@ -29,6 +31,19 @@ class BulkSeoAuditJob implements ShouldQueue
     public function middleware(): array
     {
         return [(new WithoutOverlapping($this->jobKey))->dontRelease()];
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('BulkSeoAuditJob failed', [
+            'job_key' => $this->jobKey,
+            'error' => $exception->getMessage(),
+        ]);
+
+        Cache::put('seo.bulk_audit.progress', [
+            'status' => 'failed',
+            'error' => $exception->getMessage(),
+        ], 3600);
     }
 
     public function handle(SeoAuditService $auditService): void

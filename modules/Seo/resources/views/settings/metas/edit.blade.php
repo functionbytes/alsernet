@@ -520,6 +520,12 @@
                         <button type="submit" class="btn btn-primary w-100 mb-2">
                             <i class="fas fa-save me-1"></i> Guardar cambios
                         </button>
+                        <a href="{{ route('setting.seo.schema-org.edit', $meta) }}" class="btn btn-outline-primary w-100 mb-2">
+                            Editar Schema.org
+                            @if($meta->schema_type)
+                                <span class="badge bg-primary-subtle text-primary ms-1">{{ $meta->schema_type }}</span>
+                            @endif
+                        </a>
                         <a href="{{ route('setting.seo.metas.show', $meta) }}" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-times me-1"></i> Cancelar
                         </a>
@@ -529,6 +535,9 @@
         </div>
 
         <div class="col-lg-4">
+
+            {{-- Live SERP preview --}}
+            <x-serp-preview :meta="$meta" />
 
             {{-- Score badge --}}
             <div class="card mb-3" id="score-summary-card" style="display:none!important;">

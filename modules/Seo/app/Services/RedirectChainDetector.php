@@ -74,4 +74,39 @@ class RedirectChainDetector
             ->filter()
             ->values();
     }
+
+    /**
+     * Flatten all detected chains by pointing the first redirect in each chain
+     * to the final destination. E.g. A→B→C becomes A→C (and we deactivate B).
+     *
+     * Returns the number of redirects updated.
+     */
+    public function resolveAll(): int
+    {
+        $chains = $this->detectAll();
+        $updated = 0;
+
+        foreach ($chains as $entry) {
+            $source = $entry['source'];
+            $chain = $entry['chain'];
+            $final = end($chain);
+
+            // Skip if chain loops back to itself
+            if ($final === $source) {
+                continue;
+            }
+
+            $redirect = SeoRedirect::where('source_path', $source)->first();
+            if (! $redirect) {
+                continue;
+            }
+
+            if ($redirect->target_path !== $final) {
+                $redirect->update(['target_path' => $final]);
+                $updated++;
+            }
+        }
+
+        return $updated;
+    }
 }

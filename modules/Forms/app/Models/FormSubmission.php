@@ -29,6 +29,7 @@ class FormSubmission extends Model
         'ip_address',
         'user_agent',
         'referrer_url',
+        'source_page_id',
         'country',
         'city',
         'utm_source',

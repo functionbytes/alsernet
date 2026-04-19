@@ -11,4 +11,7 @@ Route::middleware(['auth:sanctum'])
         Route::get('/{form}/submissions/{submission}', [FormApiController::class, 'show'])->name('submissions.show');
         Route::delete('/{form}/submissions/{submission}', [FormApiController::class, 'destroy'])->name('submissions.destroy');
         Route::get('/{form}/stats', [FormApiController::class, 'stats'])->name('stats');
+        Route::get('/{form}/preview-html', [FormApiController::class, 'previewHtml'])
+            ->middleware('throttle:60,1')
+            ->name('preview-html');
     });

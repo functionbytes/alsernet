@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Forms\Database\Factories\FormFieldFactory;
+use Modules\Forms\Services\FormPageCacheInvalidator;
 
 class FormField extends Model
 {
@@ -127,6 +128,23 @@ class FormField extends Model
     public function submissionValues(): HasMany
     {
         return $this->hasMany(FormSubmissionValue::class, 'form_field_id');
+    }
+
+    protected static function booted(): void
+    {
+        $invalidate = function (self $field): void {
+            $form = $field->form()->first();
+
+            if (! $form) {
+                return;
+            }
+
+            $form->flushShortcodeCache();
+            app(FormPageCacheInvalidator::class)->invalidate($form);
+        };
+
+        static::saved($invalidate);
+        static::deleted($invalidate);
     }
 
     public function scopeVisible($query)

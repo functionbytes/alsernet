@@ -3,6 +3,7 @@
 namespace Modules\Seo\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreSeoMetaRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class StoreSeoMetaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Adjust based on your authorization logic
+        return $this->user()?->can('Seo.metas.create') ?? false;
     }
 
     /**
@@ -34,7 +35,7 @@ class StoreSeoMetaRequest extends FormRequest
             'twitter_description' => 'nullable|string|max:500',
             'twitter_image' => 'nullable|url|max:500',
             'canonical_url' => 'nullable|url|max:500',
-            'robots' => 'nullable|string|in:index\,follow,noindex\,nofollow,noindex\,follow,index\,nofollow|max:100',
+            'robots' => ['nullable', 'string', 'max:100', Rule::in(['index,follow', 'noindex,nofollow', 'noindex,follow', 'index,nofollow'])],
         ];
     }
 

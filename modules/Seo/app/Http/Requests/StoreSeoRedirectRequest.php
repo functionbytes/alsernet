@@ -13,7 +13,7 @@ class StoreSeoRedirectRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Adjust based on your authorization logic
+        return $this->user()?->can('Seo.redirects.create') ?? false;
     }
 
     /**
@@ -73,8 +73,9 @@ class StoreSeoRedirectRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Normalize plain paths (not regex or wildcard patterns)
-        if ($this->has('source_path') && ! $this->boolean('is_regex') && ! $this->boolean('is_wildcard')) {
+        // Normalize plain paths (not regex or wildcard patterns).
+        // Skip when empty so required/string rules can flag it.
+        if ($this->filled('source_path') && ! $this->boolean('is_regex') && ! $this->boolean('is_wildcard')) {
             $sourcePath = $this->input('source_path');
             if (! str_starts_with($sourcePath, '/')) {
                 $this->merge(['source_path' => '/'.ltrim($sourcePath, '/')]);

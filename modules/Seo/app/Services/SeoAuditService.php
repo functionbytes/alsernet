@@ -149,13 +149,20 @@ class SeoAuditService
             ...$this->checkDescription($html),
             ...$this->checkH1($html),
             ...$this->checkImages($html),
-            $this->checkCanonical($html),
-            $this->checkOpenGraph($html),
-            $this->checkHttps($url),
-            $this->checkStructuredData($html),
-            $this->checkViewport($html),
-            $this->checkTwitterCard($html),
-            $this->checkH1Length($html),
+            ...$this->checkCanonical($html),
+            ...$this->checkOpenGraph($html),
+            ...$this->checkHttps($url),
+            ...$this->checkStructuredData($html),
+            ...$this->checkViewport($html),
+            ...$this->checkTwitterCard($html),
+            ...$this->checkH1Length($html),
+            // PageSpeed / Core Web Vitals performance checks
+            ...$this->checkImagesLazyLoading($html),
+            ...$this->checkImagesDimensions($html),
+            ...$this->checkRenderBlockingScripts($html),
+            ...$this->checkFontPreload($html),
+            ...$this->checkPreconnect($html),
+            ...$this->checkCharset($html),
         ];
     }
 
@@ -311,15 +318,15 @@ class SeoAuditService
     private function checkViewport(string $html): array
     {
         return stripos($html, '<meta name="viewport"') !== false
-            ? $this->ok('viewport_ok', 'Meta viewport presente')
-            : $this->issue('error', 'viewport_missing', 'Falta meta viewport', "Agrega `<meta name='viewport' content='width=device-width, initial-scale=1'>` para compatibilidad móvil", 10);
+            ? [$this->ok('viewport_ok', 'Meta viewport presente')]
+            : [$this->issue('error', 'viewport_missing', 'Falta meta viewport', "Agrega `<meta name='viewport' content='width=device-width, initial-scale=1'>` para compatibilidad móvil", 10)];
     }
 
     private function checkTwitterCard(string $html): array
     {
         return str_contains($html, 'twitter:card')
-            ? $this->ok('twitter_card_ok', 'Twitter Card presente')
-            : $this->issue('warning', 'twitter_card_missing', 'Faltan etiquetas Twitter Card', 'Agrega twitter:card, twitter:title, twitter:description para mejor apariencia en Twitter/X', 5);
+            ? [$this->ok('twitter_card_ok', 'Twitter Card presente')]
+            : [$this->issue('warning', 'twitter_card_missing', 'Faltan etiquetas Twitter Card', 'Agrega twitter:card, twitter:title, twitter:description para mejor apariencia en Twitter/X', 5)];
     }
 
     private function checkH1Length(string $html): array
@@ -327,21 +334,205 @@ class SeoAuditService
         preg_match_all('/<h1[^>]*>(.*?)<\/h1>/si', $html, $matches);
 
         if (count($matches[0]) !== 1) {
-            return $this->ok('h1_length_skip', 'Longitud de H1 no evaluada');
+            return [$this->ok('h1_length_skip', 'Longitud de H1 no evaluada')];
         }
 
         $text = strip_tags($matches[1][0]);
         $len = mb_strlen(trim($text));
 
         if ($len < 10) {
-            return $this->issue('warning', 'h1_short', 'H1 muy corto', 'El H1 debe describir claramente el contenido de la página', 5);
+            return [$this->issue('warning', 'h1_short', 'H1 muy corto', 'El H1 debe describir claramente el contenido de la página', 5)];
         }
 
         if ($len > 70) {
-            return $this->issue('warning', 'h1_long', "H1 muy largo ({$len} caracteres)", 'Reduce el H1 a menos de 70 caracteres para mayor claridad', 5);
+            return [$this->issue('warning', 'h1_long', "H1 muy largo ({$len} caracteres)", 'Reduce el H1 a menos de 70 caracteres para mayor claridad', 5)];
         }
 
-        return $this->ok('h1_length_ok', "Longitud de H1 correcta ({$len} caracteres)");
+        return [$this->ok('h1_length_ok', "Longitud de H1 correcta ({$len} caracteres)")];
+    }
+
+    // -------------------------------------------------------------------------
+    // PageSpeed / Core Web Vitals HTML checks
+    // -------------------------------------------------------------------------
+
+    /**
+     * Below-the-fold images should use loading="lazy" to avoid blocking LCP.
+     */
+    private function checkImagesLazyLoading(string $html): array
+    {
+        preg_match_all('/<img[^>]*>/i', $html, $matches);
+        $imgs = $matches[0] ?? [];
+
+        if (count($imgs) <= 1) {
+            return [$this->ok('lazy_loading_skip', 'Pocas imágenes, lazy-loading no crítico')];
+        }
+
+        // Skip the first 2 images (likely LCP candidate + logo) and check the rest
+        $belowFold = array_slice($imgs, 2);
+        $withoutLazy = array_filter(
+            $belowFold,
+            fn ($img) => ! preg_match('/loading\s*=\s*["\']?(lazy)/i', $img)
+        );
+
+        $total = count($belowFold);
+        $missing = count($withoutLazy);
+
+        if ($missing === 0) {
+            return [$this->ok('lazy_loading_ok', 'Todas las imágenes debajo del fold usan lazy-loading')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'lazy_loading_missing',
+            "{$missing} de {$total} imágenes debajo del fold no usan loading=\"lazy\"",
+            'Agrega `loading="lazy"` y `decoding="async"` a imágenes fuera del viewport inicial para mejorar LCP',
+            8
+        )];
+    }
+
+    /**
+     * Images without width/height cause layout shift (CLS).
+     */
+    private function checkImagesDimensions(string $html): array
+    {
+        preg_match_all('/<img[^>]*>/i', $html, $matches);
+        $imgs = $matches[0] ?? [];
+
+        if (empty($imgs)) {
+            return [$this->ok('img_dimensions_skip', 'Sin imágenes')];
+        }
+
+        $missingDims = array_filter(
+            $imgs,
+            fn ($img) => ! preg_match('/\bwidth\s*=/i', $img) || ! preg_match('/\bheight\s*=/i', $img)
+        );
+
+        $missing = count($missingDims);
+
+        if ($missing === 0) {
+            return [$this->ok('img_dimensions_ok', 'Todas las imágenes tienen width/height')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'img_dimensions_missing',
+            "{$missing} imagen(es) sin width/height — provoca Cumulative Layout Shift",
+            'Define `width` y `height` explícitos en cada <img> para reservar espacio y evitar CLS',
+            10
+        )];
+    }
+
+    /**
+     * Render-blocking scripts in <head> hurt FCP and LCP.
+     */
+    private function checkRenderBlockingScripts(string $html): array
+    {
+        preg_match('/<head[^>]*>(.*?)<\/head>/si', $html, $headMatch);
+        $head = $headMatch[1] ?? '';
+
+        preg_match_all('/<script[^>]*\bsrc=[^>]*>/i', $head, $matches);
+        $scripts = $matches[0] ?? [];
+
+        $blocking = array_filter(
+            $scripts,
+            fn ($tag) => ! preg_match('/\b(async|defer|type\s*=\s*["\']module)/i', $tag)
+        );
+
+        $count = count($blocking);
+
+        if ($count === 0) {
+            return [$this->ok('render_blocking_ok', 'No hay scripts bloqueantes en <head>')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'render_blocking_scripts',
+            "{$count} script(s) bloqueante(s) en <head>",
+            'Agrega `defer`, `async` o `type="module"` a scripts en <head>, o muévelos antes de </body>',
+            8
+        )];
+    }
+
+    /**
+     * Fonts not preloaded delay the LCP when they render text.
+     */
+    private function checkFontPreload(string $html): array
+    {
+        $hasExternalFonts = str_contains($html, 'fonts.googleapis.com') || str_contains($html, 'fonts.gstatic.com') || preg_match('/@font-face/i', $html);
+
+        if (! $hasExternalFonts) {
+            return [$this->ok('font_preload_skip', 'Sin fuentes externas detectadas')];
+        }
+
+        $hasPreload = (bool) preg_match('/<link[^>]+rel=["\']?preload[^>]+as=["\']?font/i', $html);
+
+        if ($hasPreload) {
+            return [$this->ok('font_preload_ok', 'Fuentes críticas preloaded')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'font_preload_missing',
+            'Fuentes externas sin preload',
+            'Agrega `<link rel="preload" as="font" type="font/woff2" crossorigin>` para la fuente principal para evitar FOUT/FOIT y acelerar LCP',
+            5
+        )];
+    }
+
+    /**
+     * Missing preconnect to external origins adds 100-300ms to first paint.
+     */
+    private function checkPreconnect(string $html): array
+    {
+        preg_match('/<head[^>]*>(.*?)<\/head>/si', $html, $headMatch);
+        $head = $headMatch[1] ?? '';
+
+        $externalDomains = [];
+        if (preg_match_all('/https?:\/\/([^\/"\'\s>]+)/i', $html, $matches)) {
+            $host = parse_url((string) request()->url(), PHP_URL_HOST);
+            $externalDomains = array_unique(array_filter(
+                $matches[1],
+                fn ($d) => $d !== $host && ! str_contains($d, 'w3.org') && ! str_contains($d, 'schema.org')
+            ));
+        }
+
+        if (count($externalDomains) < 2) {
+            return [$this->ok('preconnect_skip', 'Pocos dominios externos')];
+        }
+
+        $hasPreconnect = (bool) preg_match('/<link[^>]+rel=["\']?(preconnect|dns-prefetch)/i', $head);
+
+        if ($hasPreconnect) {
+            return [$this->ok('preconnect_ok', 'Preconnect/dns-prefetch configurado')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'preconnect_missing',
+            'Sin preconnect a dominios externos',
+            'Agrega `<link rel="preconnect" href="https://fonts.googleapis.com">` para dominios críticos (fuentes, CDN, analytics) para ahorrar DNS+TLS',
+            5
+        )];
+    }
+
+    /**
+     * Missing charset in first 1024 bytes forces the browser to restart parsing.
+     */
+    private function checkCharset(string $html): array
+    {
+        $firstKb = substr($html, 0, 1024);
+
+        if (preg_match('/<meta[^>]+charset=/i', $firstKb)) {
+            return [$this->ok('charset_ok', 'Charset definido en los primeros 1024 bytes')];
+        }
+
+        return [$this->issue(
+            'warning',
+            'charset_missing',
+            'Charset no declarado al inicio del <head>',
+            'Agrega `<meta charset="utf-8">` como primer elemento dentro de <head> para acelerar el parsing',
+            3
+        )];
     }
 
     private function runMetaChecks(SeoMeta $meta): array

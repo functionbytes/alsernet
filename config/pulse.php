@@ -10,6 +10,7 @@ use Laravel\Pulse\Recorders\SlowJobs;
 use Laravel\Pulse\Recorders\SlowOutgoingRequests;
 use Laravel\Pulse\Recorders\SlowQueries;
 use Laravel\Pulse\Recorders\SlowRequests;
+use Modules\Media\Pulse\Recorders\MediaUploadRecorder;
 use Nwidart\Modules\Facades\Module;
 
 $pulseEnabled = true;
@@ -91,6 +92,8 @@ return [
                 '#^/telescope#',
             ],
         ],
+
+        MediaUploadRecorder::class => [],
     ],
     'storage' => [
         'driver' => $pulseEnabled ? env('PULSE_STORAGE_DRIVER', 'database') : null,

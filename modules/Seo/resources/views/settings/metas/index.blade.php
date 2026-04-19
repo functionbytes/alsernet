@@ -30,7 +30,7 @@
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ route('setting.seo.audit.index') }}">Auditoría SEO</a>
                                 <button class="dropdown-item" type="button" id="btn-bulk-canonical">Generar canónicas faltantes</button>
-                                <button class="dropdown-item" type="button" onclick="window.location.reload()">Actualizar</button>
+                                <button class="dropdown-item" type="button" data-action="reload">Actualizar</button>
                             </div>
                         </div>
                     </div>
@@ -474,6 +474,10 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    $(document).on('click', '[data-action="reload"]', function() {
+        window.location.reload();
+    });
+
     $('.delete-btn').on('click', function() {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));

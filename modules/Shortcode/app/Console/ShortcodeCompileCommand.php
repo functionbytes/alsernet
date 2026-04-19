@@ -3,50 +3,43 @@
 namespace Modules\Shortcode\Console;
 
 use Illuminate\Console\Command;
+use Modules\Shortcode\Compiler\ShortcodeCompiler;
 use Modules\Shortcode\Facades\Shortcode;
 
 class ShortcodeCompileCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'shortcode:compile
-                            {content : The content containing shortcodes}
-                            {--strip : Strip shortcodes instead of compiling}';
+                            {content : Contenido con shortcodes a procesar}
+                            {--strip : Eliminar shortcodes en vez de compilarlos}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Compile or strip shortcodes from content';
+    protected $description = 'Compilar o eliminar shortcodes de un texto';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
-        $content = $this->argument('content');
-        $strip = $this->option('strip');
+        $content = (string) $this->argument('content');
+
+        if (strlen($content) > ShortcodeCompiler::MAX_CONTENT_SIZE) {
+            $this->error('El contenido excede el tamaño máximo permitido ('.ShortcodeCompiler::MAX_CONTENT_SIZE.' bytes).');
+
+            return self::FAILURE;
+        }
 
         $this->line('');
-        $this->info('Original Content:');
+        $this->info(__('shortcode::shortcode.cmd_original'));
         $this->line($content);
         $this->line('');
 
-        if ($strip) {
+        if ($this->option('strip')) {
             $result = Shortcode::strip($content);
-            $this->info('Stripped Content:');
+            $this->info(__('shortcode::shortcode.cmd_stripped'));
         } else {
             $result = Shortcode::compile($content);
-            $this->info('Compiled Content:');
+            $this->info(__('shortcode::shortcode.cmd_compiled'));
         }
 
         $this->line($result);
         $this->line('');
 
-        return 0;
+        return self::SUCCESS;
     }
 }

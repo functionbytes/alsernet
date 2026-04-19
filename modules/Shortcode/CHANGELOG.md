@@ -1,82 +1,96 @@
-# Changelog
+# Changelog — Módulo Shortcode
 
-All notable changes to the Shortcode module will be documented in this file.
+Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [4.0.0] — 2026-04-19
 
-## [1.0.0] - 2026-02-08
+### Agregado
+- Shortcodes de integración con módulos del CMS:
+  - `[form id="X"]` / `[form slug="X"]` — módulo Forms (iframe al form público)
+  - `[page slug="X"]` — inyecta contenido de otra página (con límite anti-recursión)
+  - `[menu location="header"]` — renderiza navegación del módulo Template
+  - `[latest-posts count="5" category="slug"]` y `[post id="X"]` — módulo Blog
+  - `[media id="X" variant="thumb"]` — módulo Media (img/video/audio)
+- Shortcodes lógicos y contextuales:
+  - `[if role="admin"]…[else]…[/if]` con condiciones: `role`, `permission`, `user-logged`, `user-id`
+  - `[for range="1-5"]Item {i}[/for]` con placeholders `{i}` e `{index}`
+  - `[user-name]`, `[user-email]`, `[user-id]` — todos `cacheable=false`
+  - `[site-name]`, `[current-year]`, `[current-date format="d/m/Y"]`
+- UI admin:
+  - Preview interactivo en vivo (textarea + AJAX con debounce 400ms)
+  - Vista `/panel/setting/shortcodes/tester` con todos los ejemplos lado a lado
+  - Badge de deprecation y de alias en la tabla
+- Parser extendido:
+  - Atributos sin comillas: `[button url=/foo class=primary]`
+  - Atributos booleanos: `[input disabled]` → `$attrs['disabled'] === 'true'`
+  - Atributos posicionales: `[embed "https://…"]` → `$attrs[0]`
+- Comando `shortcode:benchmark [--iterations=N] [--name=X]` — mide μs por compilación
+- Job `ShortcodeWarmupJob` — precompila lotes de contenido en background
+- Rate limiter custom `shortcode-api` — per-user si autenticado, per-IP si no (120/min)
+- Servicio `ShortcodeUsageStats` — contador por shortcode en cache
+- Listener `RecordShortcodeUsage` — incrementa stats tras cada ShortcodeCompiled
+- Endpoints API: `GET /api/shortcodes/stats` y `POST /api/shortcodes/stats/reset`
+- Pipeline opcional HTMLPurifier: `meta['purify'] => true` sanitiza output
+- Hook `Shortcode::withCspNonce($nonce)` para shortcodes con `<script>`
+- Tests: `ShortcodeCommandsTest`, `ShortcodeAttributesTest`, `DefaultShortcodesSnapshotTest`
 
-### Added
-- Initial release of Shortcode module
-- ShortcodeCompiler with full parsing and compilation
-- Shortcode Facade for easy access
-- Helper functions: `shortcode()`, `strip_shortcodes()`, `register_shortcode()`, `has_shortcode()`, `all_shortcodes()`
-- Blade directives: `@shortcode`, `@stripshortcodes`
-- Configuration file with caching and performance options
-- Default shortcodes:
-  - `[button]` - Styled buttons with links
-  - `[alert]` - Bootstrap alert messages
-  - `[columns]` and `[column]` - Responsive grid layouts
-  - `[youtube]` - Embedded YouTube videos
-  - `[image]` - Media module integration
-  - `[icon]` - Bootstrap Icons
-  - `[badge]` - Bootstrap badges
-  - `[card]` - Bootstrap cards
-  - `[accordion]` and `[accordion-item]` - Accordion components
-  - `[quote]` - Blockquotes with attribution
-- Support for self-closing shortcodes (`[shortcode /]`)
-- Support for nested shortcodes
-- Built-in caching mechanism for compiled shortcodes
-- Comprehensive documentation (README.md)
-- Usage examples (EXAMPLES.md)
-- Error handling and logging
-- Security features (attribute escaping)
+### Cambiado
+- `contact-form` redefinido como demo HTML-only; referencia al módulo Forms
 
-### Features
-- Regex-based shortcode parsing
-- Attribute parsing with key-value pairs
-- Content enclosure support
-- Cache management (clear, duration control)
-- Shortcode registration and unregistration
-- Check shortcode existence
-- List all registered shortcodes
-- Strip shortcodes from content
-- Bootstrap 5 compatible output
-- Integration with Media module for image shortcodes
+## [3.0.0] — 2026-04-19
 
-### Configuration Options
-- Enable/disable shortcode processing globally
-- Cache control (enable/disable, duration)
-- Auto-register default shortcodes
-- Selective shortcode enabling
-- Error handling modes
-- Maximum nesting level
+### Agregado
+- Escape literal `[[shortcode]]` → `[shortcode]` (patrón WordPress)
+- Skip de shortcodes dentro de comentarios HTML `<!-- [button] -->`
+- Meta `raw => true`: el contenido no se re-procesa como shortcodes
+- Meta `cacheable => false`: bypass del cache si el contenido lo incluye
+- Meta `alias_of => "otro"`: redirige al handler del shortcode objetivo
+- Meta `deprecated => "2.0"`: emite `E_USER_DEPRECATED` al usarse
+- Parser stack-based: soporta nested shortcodes de la misma etiqueta `[card][card]x[/card][/card]`
+- Protección ReDoS: `pcre.backtrack_limit = 100000` durante la compilación
+- Métodos nuevos: `removeAll()`, `getRegex()`, `find($content)`
+- Comandos: `shortcode:preview`, `shortcode:find`, `shortcode:make`
 
-### Developer Features
-- Easy shortcode registration via callback
-- Facade support
-- Helper functions
-- Blade directive integration
-- Service Provider with extensible boot method
-- Clear API for custom shortcodes
+## [2.0.0] — 2026-04-19
 
-## [Unreleased]
+### Agregado
+- Cache persistente con Laravel Cache (reemplaza array in-memory)
+- `clearCache()` funcional (version bump compatible con cualquier store)
+- Método `compileWithContext($content, ?array $allowed)` — whitelist por contexto
+- Constante `MAX_CONTENT_SIZE = 1 MB` previene ReDoS/OOM
+- Método `atts(defaults, atts)` estilo WordPress
+- Método `forgetCachedContent($content)` para invalidación puntual
+- Límite `max_nesting_level` ahora se aplica (antes era decorativo)
+- 4 modos `error_handling`: `silent`, `log`, `display`, `throw`
+- Eventos: `ShortcodeRegistered`, `ShortcodeCompiling`, `ShortcodeCompiled`
+- Excepción `ShortcodeCompilationException`
+- Directiva Blade `@shortcodePicker('#selector')`
+- Traducciones `lang/es/shortcode.php` y `lang/en/shortcode.php`
+- Comandos artisan traducidos al español
+- Helpers: `do_shortcode()`, `all_shortcodes_registered()`, `shortcode_atts()`
+- Facade docblock completo
 
-### Planned Features
-- Visual shortcode builder
-- Shortcode preview in admin
-- Import/export shortcode templates
-- Shortcode validation
-- More default shortcodes (video, audio, gallery, etc.)
-- Shortcode documentation generator
-- Performance optimization
-- Unit tests
-- Integration tests
+### Cambiado
+- Config `default_shortcodes[name => bool]` ahora se respeta (antes era decorativo)
 
----
+## [1.1.0] — 2026-04-19
 
-## Version History
+### Agregado
+- Form Requests: `CompileShortcodeRequest`, `StripShortcodeRequest`, `CheckShortcodeRequest`
+- Permisos propios `shortcode.view` y `shortcode.manage` con seeder
+- Endpoint `/api/shortcodes/registered` — metadata completa
+- Rate limit `throttle:60,1` en todos los endpoints API
+- Dropdown pattern en tabla admin
+- Documentación explícita de política XSS en ServiceProvider
 
-### Version 1.0.0
-First stable release with core functionality and 11 default shortcodes.
+### Corregido
+- Auto-close regex admite guiones: `[contact-form /]`, `[accordion-item /]`
+- `parseAttributes()` admite `data-*`, `aria-*` y comillas simples
+- `strip()` reordenado: self-closing primero
+- Picker Blade autónomo con fallback si módulo Template no está
+- Nombres de ruta API sin duplicar `api.`
+- Shortcode `image` valida `ctype_digit` antes de `Media::find`
+
+## [1.0.0] — 2026-02-08
+
+Versión inicial: parser regex básico, 13 shortcodes default, helpers, Blade directive, 3 comandos artisan, picker modal, vistas admin.

@@ -7,50 +7,41 @@ use Modules\Shortcode\Facades\Shortcode;
 
 class ShortcodeListCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'shortcode:list';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'List all registered shortcodes';
+    protected $description = 'Listar todos los shortcodes registrados';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
         $shortcodes = Shortcode::all();
 
         if (empty($shortcodes)) {
-            $this->warn('No shortcodes registered.');
+            $this->warn(__('shortcode::shortcode.cmd_no_shortcodes'));
 
-            return 0;
+            return self::SUCCESS;
         }
 
-        $this->info('Registered Shortcodes:');
+        $this->info(__('shortcode::shortcode.cmd_registered'));
         $this->line('');
 
         $tableData = [];
         foreach ($shortcodes as $index => $name) {
             $tableData[] = [
-                'Index' => $index + 1,
-                'Name' => $name,
-                'Usage' => "[{$name}]content[/{$name}]",
+                __('shortcode::shortcode.cmd_col_index') => $index + 1,
+                __('shortcode::shortcode.cmd_col_name') => $name,
+                __('shortcode::shortcode.cmd_col_usage') => "[{$name}]content[/{$name}]",
             ];
         }
 
-        $this->table(['Index', 'Name', 'Usage'], $tableData);
+        $this->table([
+            __('shortcode::shortcode.cmd_col_index'),
+            __('shortcode::shortcode.cmd_col_name'),
+            __('shortcode::shortcode.cmd_col_usage'),
+        ], $tableData);
 
         $this->line('');
-        $this->info('Total: '.count($shortcodes).' shortcode(s)');
+        $this->info(__('shortcode::shortcode.cmd_total', ['count' => count($shortcodes)]));
 
-        return 0;
+        return self::SUCCESS;
     }
 }

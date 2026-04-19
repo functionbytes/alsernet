@@ -75,8 +75,25 @@
     const $search      = $('#shortcodeSearchInput');
 
     // ── Load shortcodes on first open ──────────────────────────────────────
+    // Preferimos la ruta del módulo Template (incluye los de BD); si no existe,
+    // caemos al endpoint nativo del módulo Shortcode.
+    @php
+        $shortcodeEndpoint = \Illuminate\Support\Facades\Route::has('api.runtime-shortcodes')
+            ? route('api.runtime-shortcodes')
+            : route('api.shortcode.registered');
+    @endphp
+    const SHORTCODE_ENDPOINT = @json($shortcodeEndpoint);
+
     $modal.one('show.bs.modal', function () {
-        $.getJSON('{{ route("api.runtime-shortcodes") }}')
+        $.ajax({
+            url: SHORTCODE_ENDPOINT,
+            method: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            }
+        })
             .done(function (data) {
                 allShortcodes = data;
                 renderList(data);

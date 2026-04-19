@@ -67,26 +67,24 @@ class WebhookNotificationService
 
     private function sendSlack(string $text): void
     {
-        $url = config('Seo.webhooks.slack_url', '');
+        $url = (string) seo_setting('webhooks.slack_url', config('Seo.webhooks.slack_url', ''));
 
         if (empty($url)) {
             return;
         }
 
-        try {
-            Http::timeout(5)->post($url, [
-                'text' => $text,
-                'username' => config('app.name').' SEO',
-                'icon_emoji' => ':chart_with_upwards_trend:',
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('SEO Slack webhook failed: '.$e->getMessage());
-        }
+        $payload = [
+            'text' => $text,
+            'username' => config('app.name').' SEO',
+            'icon_emoji' => ':chart_with_upwards_trend:',
+        ];
+
+        $this->postSigned($url, $payload, 'slack');
     }
 
     private function sendDiscord(string $text, array $embedData = []): void
     {
-        $url = config('Seo.webhooks.discord_url', '');
+        $url = (string) seo_setting('webhooks.discord_url', config('Seo.webhooks.discord_url', ''));
 
         if (empty($url)) {
             return;
@@ -107,10 +105,35 @@ class WebhookNotificationService
             ];
         }
 
+        $this->postSigned($url, $payload, 'discord');
+    }
+
+    /**
+     * POST a webhook payload, optionally signed with HMAC-SHA256 so the
+     * receiver can verify authenticity. Headers added when a signing secret
+     * is configured:
+     *   - X-Seo-Signature: sha256=<hex digest of raw body>
+     *   - X-Seo-Timestamp: Unix timestamp (prevents replay attacks)
+     */
+    private function postSigned(string $url, array $payload, string $target): void
+    {
+        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $secret = (string) seo_setting('webhooks.signing_secret', config('Seo.webhooks.signing_secret', ''));
+        $timestamp = (string) now()->timestamp;
+
+        $headers = ['Content-Type' => 'application/json'];
+        if ($secret !== '' && $body !== false) {
+            $headers['X-Seo-Signature'] = 'sha256='.hash_hmac('sha256', $timestamp.'.'.$body, $secret);
+            $headers['X-Seo-Timestamp'] = $timestamp;
+        }
+
         try {
-            Http::timeout(5)->post($url, $payload);
+            Http::timeout(5)
+                ->withHeaders($headers)
+                ->withBody($body ?: '{}', 'application/json')
+                ->post($url);
         } catch (\Throwable $e) {
-            Log::warning('SEO Discord webhook failed: '.$e->getMessage());
+            Log::warning("SEO {$target} webhook failed: ".$e->getMessage());
         }
     }
 }

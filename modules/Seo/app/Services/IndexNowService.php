@@ -15,14 +15,14 @@ class IndexNowService
 {
     public function enabled(): bool
     {
-        return (bool) config('seohelper.indexnow.enabled', false)
+        return (bool) seo_setting('indexnow.enabled', config('seohelper.indexnow.enabled', false))
             && $this->key() !== ''
             && $this->host() !== '';
     }
 
     public function key(): string
     {
-        return (string) config('seohelper.indexnow.key', '');
+        return (string) seo_setting('indexnow.key', config('seohelper.indexnow.key', ''));
     }
 
     public function keyLocation(): ?string

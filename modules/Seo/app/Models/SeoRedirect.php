@@ -3,9 +3,12 @@
 namespace Modules\Seo\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
+use Modules\Seo\Database\Factories\SeoRedirectFactory;
 
 class SeoRedirect extends Model
 {
@@ -17,6 +20,14 @@ class SeoRedirect extends Model
      * @var string
      */
     protected $table = 'seo_redirects';
+
+    /**
+     * Use the module's factory namespace.
+     */
+    protected static function newFactory(): SeoRedirectFactory
+    {
+        return SeoRedirectFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -53,6 +64,15 @@ class SeoRedirect extends Model
     ];
 
     /**
+     * Cache keys for pattern-based redirect lookups.
+     */
+    public const CACHE_KEY_WILDCARDS = 'seo_redirects_wildcards';
+
+    public const CACHE_KEY_REGEX = 'seo_redirects_regex';
+
+    public const CACHE_TTL = 3600;
+
+    /**
      * Bootstrap the model.
      */
     protected static function booted(): void
@@ -71,6 +91,53 @@ class SeoRedirect extends Model
                 $redirect->target_path = '/'.$redirect->target_path;
             }
         });
+
+        static::saved(function ($redirect) {
+            static::flushPatternCache();
+            Cache::forget(static::cacheKey($redirect->source_path));
+        });
+        static::deleted(function ($redirect) {
+            static::flushPatternCache();
+            Cache::forget(static::cacheKey($redirect->source_path));
+        });
+    }
+
+    /**
+     * Invalidate cached wildcard and regex redirect lists.
+     */
+    public static function flushPatternCache(): void
+    {
+        Cache::forget(self::CACHE_KEY_WILDCARDS);
+        Cache::forget(self::CACHE_KEY_REGEX);
+    }
+
+    /**
+     * Cached list of currently active wildcard redirects.
+     */
+    public static function cachedWildcards(): Collection
+    {
+        return Cache::remember(
+            self::CACHE_KEY_WILDCARDS,
+            self::CACHE_TTL,
+            fn () => static::currentlyActive()
+                ->where('is_wildcard', true)
+                ->where('is_regex', false)
+                ->get(['id', 'source_path', 'target_path', 'status_code'])
+        );
+    }
+
+    /**
+     * Cached list of currently active regex redirects.
+     */
+    public static function cachedRegex(): Collection
+    {
+        return Cache::remember(
+            self::CACHE_KEY_REGEX,
+            self::CACHE_TTL,
+            fn () => static::currentlyActive()
+                ->where('is_regex', true)
+                ->get(['id', 'source_path', 'target_path', 'status_code'])
+        );
     }
 
     /**
@@ -84,9 +151,9 @@ class SeoRedirect extends Model
     /**
      * Scope to filter redirects that are currently active (respects date range).
      */
-    public function scopeCurrentlyActive(Builder $query): void
+    public function scopeCurrentlyActive(Builder $query): Builder
     {
-        $query->where('is_active', true)
+        return $query->where('is_active', true)
             ->where(fn ($q) => $q->whereNull('active_from')->orWhere('active_from', '<=', now()))
             ->where(fn ($q) => $q->whereNull('active_until')->orWhere('active_until', '>=', now()));
     }

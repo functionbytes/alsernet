@@ -11,6 +11,8 @@ class ShortcodeDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            ShortcodePermissionsSeeder::class,
+        ]);
     }
 }

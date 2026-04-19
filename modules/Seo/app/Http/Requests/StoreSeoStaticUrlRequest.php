@@ -12,7 +12,7 @@ class StoreSeoStaticUrlRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('Seo.static-urls.create') ?? false;
     }
 
     /**

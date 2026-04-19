@@ -5,10 +5,11 @@ namespace Modules\Seo\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Modules\Seo\Http\Requests\ImportSearchConsoleRequest;
+use Modules\Seo\Http\Requests\UpdateVerificationCodesRequest;
 use Modules\Seo\Models\SeoAuditLog;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Models\SeoRedirect;
@@ -218,15 +219,9 @@ class SeoDashboardController extends Controller
         return view('Seo::settings.dashboard.verification', compact('settings'));
     }
 
-    public function verificationUpdate(Request $request): JsonResponse
+    public function verificationUpdate(UpdateVerificationCodesRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'seo_google_verification' => ['nullable', 'string', 'max:255'],
-            'seo_bing_verification' => ['nullable', 'string', 'max:255'],
-            'seo_pinterest_verification' => ['nullable', 'string', 'max:255'],
-            'seo_baidu_verification' => ['nullable', 'string', 'max:255'],
-            'seo_yandex_verification' => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         updateSettings([
             'seo_google_verification' => $data['seo_google_verification'] ?? '',
@@ -247,12 +242,8 @@ class SeoDashboardController extends Controller
         return view('Seo::settings.dashboard.search-console-import');
     }
 
-    public function importSearchConsole(Request $request): RedirectResponse
+    public function importSearchConsole(ImportSearchConsoleRequest $request): RedirectResponse
     {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
-        ]);
-
         $handle = fopen($request->file('csv_file')->getPathname(), 'r');
         $header = fgetcsv($handle);
 

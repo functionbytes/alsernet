@@ -16,9 +16,14 @@
                         <h5 class="mb-1 fw-bold">Shortcodes</h5>
                         <p class="small mb-0 text-muted">Componentes dinamicos que puedes insertar en cualquier contenido</p>
                     </div>
-                    <a href="{{ route('setting.shortcode.reference') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-book me-1"></i> Referencia completa
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('setting.shortcode.tester') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-vial me-1"></i> Tester visual
+                        </a>
+                        <a href="{{ route('setting.shortcode.reference') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-book me-1"></i> Referencia completa
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -76,6 +81,44 @@
                 </div>
             </div>
 
+            @if(!empty($topUsage))
+                <!-- Top de uso -->
+                <div class="card-body border-bottom">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-1 fw-bold">Top 10 shortcodes más usados</h6>
+                            <p class="text-muted small mb-0">Contador acumulado de compilaciones (cache miss únicamente).</p>
+                        </div>
+                        @can('shortcode.manage')
+                            <button type="button" id="btnResetStats" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-rotate-left me-1"></i> Resetear
+                            </button>
+                        @endcan
+                    </div>
+
+                    @php
+                        $max = max($topUsage) ?: 1;
+                    @endphp
+
+                    <div class="row g-2">
+                        @foreach($topUsage as $name => $count)
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <code class="flex-shrink-0" style="min-width: 140px;">[{{ $name }}]</code>
+                                    <div class="progress flex-grow-1" style="height: 18px;">
+                                        <div class="progress-bar bg-primary-subtle text-primary fw-semibold"
+                                             role="progressbar"
+                                             style="width: {{ round(($count / $max) * 100) }}%;">
+                                            {{ $count }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- Tabla de shortcodes -->
             <div class="card-body">
                 <div class="mb-3">
@@ -120,26 +163,43 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <code class="small text-secondary">[{{ $name }}][/{{ $name }}]</code>
-                                                <button type="button"
-                                                        class="btn btn-sm btn-outline-secondary copy-btn"
-                                                        data-syntax="[{{ $name }}][/{{ $name }}]"
-                                                        title="Copiar sintaxis">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
+                                            <code class="small text-secondary">[{{ $name }}][/{{ $name }}]</code>
                                         </td>
                                         <td class="text-center">
-                                            @if($dbId && Route::has('settings.shortcodes.edit'))
-                                                <a href="{{ route('settings.shortcodes.edit', $dbId) }}"
-                                                   class="btn btn-sm btn-outline-primary"
-                                                   title="Editar shortcode">
-                                                    <i class="fas fa-pen"></i>
-                                                </a>
-                                            @else
-                                                <span class="badge bg-light text-dark">Handler PHP</span>
-                                            @endif
+                                            <div class="dropdown">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false"
+                                                        title="Acciones">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <button type="button"
+                                                                class="dropdown-item copy-btn"
+                                                                data-syntax="[{{ $name }}][/{{ $name }}]">
+                                                            Copiar sintaxis
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button type="button"
+                                                                class="dropdown-item copy-btn"
+                                                                data-syntax="[{{ $name }} /]">
+                                                            Copiar auto-cierre
+                                                        </button>
+                                                    </li>
+                                                    @if($dbId && Route::has('settings.shortcodes.edit'))
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <a href="{{ route('settings.shortcodes.edit', $dbId) }}"
+                                                               class="dropdown-item">
+                                                                Editar
+                                                            </a>
+                                                        </li>
+                                                    @endif
+                                                </ul>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -155,6 +215,34 @@
                         <p class="text-muted mb-0">Registra shortcodes en tu aplicacion para verlos aqui</p>
                     </div>
                 @endif
+            </div>
+        </div>
+
+        <!-- Preview interactivo -->
+        <div class="card mt-3">
+            <div class="card-header p-4 border-bottom border-light">
+                <h5 class="mb-1 fw-bold">Preview interactivo</h5>
+                <p class="small mb-0 text-muted">Escribe shortcodes y ve el resultado compilado en tiempo real</p>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold mb-1">Entrada</label>
+                        <textarea id="previewInput"
+                                  class="form-control font-monospace"
+                                  rows="10"
+                                  placeholder='Prueba: [alert type="success"]Funciona[/alert]'>[alert type="success"]Funciona[/alert] [badge type="primary"]Preview[/badge]</textarea>
+                        <small class="text-muted">Se compila al dejar de escribir (debounce 400ms).</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold mb-1">Resultado</label>
+                        <div id="previewOutput"
+                             class="border rounded p-3 bg-light"
+                             style="min-height: 260px;">
+                            <span class="text-muted small">El resultado compilado aparecerá aquí.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -246,21 +334,83 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    $(document).on('click', '.copy-btn', function() {
-        var $btn = $(this);
-        var text = $btn.data('syntax');
+$(document).on('click', '.copy-btn', function() {
+    var text = $(this).data('syntax');
+    if (! text) { return; }
 
-        navigator.clipboard.writeText(text).then(function() {
-            var $icon = $btn.find('i');
-            $icon.removeClass('fa-copy').addClass('fa-check');
-            $btn.removeClass('btn-outline-secondary').addClass('btn-outline-success');
+    navigator.clipboard.writeText(text).then(function() {
+        if (typeof toastr !== 'undefined') {
+            toastr.success('Sintaxis copiada: ' + text);
+        }
+    }).catch(function() {
+        if (typeof toastr !== 'undefined') {
+            toastr.error('No se pudo copiar al portapapeles.');
+        }
+    });
+});
 
-            setTimeout(function() {
-                $icon.removeClass('fa-check').addClass('fa-copy');
-                $btn.removeClass('btn-outline-success').addClass('btn-outline-secondary');
-            }, 1500);
+// Preview interactivo con debounce
+(function () {
+    var $input = $('#previewInput');
+    var $output = $('#previewOutput');
+    if (!$input.length) return;
+
+    var timer = null;
+    var inflight = null;
+
+    function compile() {
+        var value = $input.val() || '';
+        if (value === '') {
+            $output.html('<span class="text-muted small">El resultado compilado aparecerá aquí.</span>');
+            return;
+        }
+
+        if (inflight) { inflight.abort(); }
+
+        inflight = $.ajax({
+            url: '{{ route("setting.shortcode.preview") }}',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            data: { content: value }
+        }).done(function (resp) {
+            $output.html(resp.compiled || '');
+        }).fail(function (xhr) {
+            if (xhr.statusText === 'abort') return;
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Error al compilar';
+            $output.html('<span class="text-danger small">' + msg + '</span>');
         });
+    }
+
+    $input.on('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(compile, 400);
+    });
+
+    compile(); // render inicial
+})();
+
+// Reset stats
+$(document).on('click', '#btnResetStats', function () {
+    if (! confirm('¿Resetear todos los contadores de uso?')) return;
+
+    $.ajax({
+        url: '{{ route("setting.shortcode.stats.reset") }}',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json'
+        }
+    }).done(function () {
+        if (typeof toastr !== 'undefined') {
+            toastr.success('Estadísticas reseteadas.');
+        }
+        setTimeout(function () { location.reload(); }, 800);
+    }).fail(function (xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo resetear.';
+        if (typeof toastr !== 'undefined') { toastr.error(msg); }
     });
 });
 </script>

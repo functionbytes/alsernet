@@ -15,6 +15,7 @@ use Modules\Seo\Http\Controllers\SeoOrphanController;
 use Modules\Seo\Http\Controllers\SeoPageUrlsController;
 use Modules\Seo\Http\Controllers\SeoRedirectController;
 use Modules\Seo\Http\Controllers\SeoReportController;
+use Modules\Seo\Http\Controllers\SeoSettingsController;
 use Modules\Seo\Http\Controllers\SeoStaticUrlController;
 use Modules\Seo\Http\Controllers\SeoTemplateController;
 use Modules\Seo\Http\Controllers\SeoWebVitalsController;
@@ -66,6 +67,7 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::delete('redirects-bulk-delete', [SeoRedirectController::class, 'bulkDelete'])->name('redirects.bulk-delete');
         Route::post('redirects-clear-cache', [SeoRedirectController::class, 'clearCache'])->name('redirects.clear-cache');
         Route::get('redirects-detect-chains', [SeoRedirectController::class, 'detectChains'])->name('redirects.detect-chains');
+        Route::post('redirects-resolve-chains', [SeoRedirectController::class, 'resolveChains'])->name('redirects.resolve-chains');
         Route::get('redirects-export', [SeoRedirectController::class, 'export'])->name('redirects.export');
         Route::get('redirects-import', [SeoRedirectController::class, 'showImport'])->name('redirects.import');
         Route::post('redirects-import', [SeoRedirectController::class, 'import'])->middleware('throttle:10,60')->name('redirects.import.store');
@@ -84,6 +86,12 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::get('indexnow', [IndexNowController::class, 'index'])->name('indexnow.index');
         Route::post('indexnow/submit', [IndexNowController::class, 'submit'])->middleware('throttle:10,60')->name('indexnow.submit');
 
+        // Unified SEO settings (admin-editable values, no .env required)
+        Route::get('settings', [SeoSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [SeoSettingsController::class, 'update'])->name('settings.update');
+        Route::get('settings/export', [SeoSettingsController::class, 'export'])->name('settings.export');
+        Route::post('settings/import', [SeoSettingsController::class, 'import'])->middleware('throttle:5,60')->name('settings.import');
+
         // Core Web Vitals dashboard
         Route::get('web-vitals', [WebVitalsController::class, 'index'])->name('web-vitals.index');
         Route::get('web-vitals/path/{path}', [WebVitalsController::class, 'show'])
@@ -95,6 +103,7 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
         Route::put('metas/{meta}/schema-org', [SchemaOrgController::class, 'update'])->name('schema-org.update');
         Route::post('metas/{meta}/schema-org/validate', [SchemaOrgController::class, 'validateJson'])->name('schema-org.validate');
         Route::get('schema-org/template/{type}', [SchemaOrgController::class, 'template'])->name('schema-org.template');
+        Route::post('schema-org/bulk-apply', [SchemaOrgController::class, 'bulkApply'])->name('schema-org.bulk-apply');
         Route::post('redirects/{redirect}/test', [SeoRedirectController::class, 'test'])->name('redirects.test');
         Route::get('redirects/{redirect}/analytics', [SeoRedirectController::class, 'analytics'])->name('redirects.analytics');
 

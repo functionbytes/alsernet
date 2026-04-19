@@ -31,6 +31,13 @@ class FormWebhookService
             return false;
         }
 
+        $start = microtime(true);
+        $context = [
+            'form_id' => $form->id,
+            'submission_id' => $submission->id,
+            'webhook_url' => $form->webhook_url,
+        ];
+
         try {
             $payload = $this->buildPayload($form, $submission);
 
@@ -38,6 +45,7 @@ class FormWebhookService
                 'Content-Type' => 'application/json',
                 'X-Form-ID' => (string) $form->id,
                 'X-Submission-ID' => (string) $submission->id,
+                'User-Agent' => 'Forms-Webhook/1.0',
             ]);
 
             if ($form->webhook_secret) {
@@ -46,16 +54,25 @@ class FormWebhookService
             }
 
             $response = $pendingRequest->post($form->webhook_url, $payload);
+            $latencyMs = (int) round((microtime(true) - $start) * 1000);
+
+            $context['status'] = $response->status();
+            $context['latency_ms'] = $latencyMs;
 
             if ($response->failed()) {
-                Log::warning("Forms webhook failed for form {$form->id}: HTTP {$response->status()}");
+                $context['response_body'] = mb_substr((string) $response->body(), 0, 500);
+                Log::warning('Forms: webhook respuesta no-2xx', $context);
 
                 return false;
             }
 
+            Log::info('Forms: webhook ok', $context);
+
             return true;
         } catch (\Throwable $e) {
-            Log::error("Forms webhook error for form {$form->id}: {$e->getMessage()}");
+            $context['latency_ms'] = (int) round((microtime(true) - $start) * 1000);
+            $context['error'] = $e->getMessage();
+            Log::error('Forms: webhook exception', $context);
 
             return false;
         }

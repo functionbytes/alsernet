@@ -81,7 +81,7 @@ class Seo404Controller extends Controller
     {
         $request->validate(['confirm' => 'required|in:yes']);
 
-        Seo404Log::truncate();
+        Seo404Log::query()->delete();
 
         return back()->with('success', 'Registros 404 eliminados correctamente.');
     }

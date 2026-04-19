@@ -17,6 +17,12 @@
             <meta name="keywords" content="@yield('meta_keywords', '')">
         @endif
 
+        {{-- JSON-LD: custom schema per meta + auto-generated schemas via SeoService --}}
+        @schemaOrg
+
+        {{-- hreflang alternates for the current URL --}}
+        @hreflang(url()->current())
+
         {{-- JSON-LD: schema.org para formularios embebidos via shortcode --}}
         @if(isset($page) && class_exists(\Modules\Forms\Services\FormJsonLdGenerator::class) && ! empty($page->content ?? ''))
             @php
@@ -48,5 +54,8 @@
 
         {{-- Additional Scripts --}}
         @stack('scripts')
+
+        {{-- Core Web Vitals beacon (respects Seo.web_vitals.enabled + sample_rate) --}}
+        @seoWebVitalsBeacon
     </body>
 </html>

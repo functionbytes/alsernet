@@ -1,10 +1,56 @@
+@php
+    $form->loadMissing('seoMeta');
+    $publicUrl = url()->current();
+    $seoTitle = $form->seo_title ?? $form->name;
+    $seoDescription = $form->seo_description ?? $form->description ?? config('forms.default_success_message');
+    $ogImage = $form->og_image ?? null;
+    $robots = $form->robots ?? 'index,follow';
+@endphp
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $form->name }}</title>
+    <title>{{ $seoTitle }}</title>
+    <meta name="description" content="{{ $seoDescription }}">
+    <meta name="robots" content="{{ $robots }}">
+    <link rel="canonical" href="{{ $form->canonical_url ?? $publicUrl }}">
+
+    {{-- Open Graph --}}
+    <meta property="og:type" content="{{ $form->og_type ?? 'website' }}">
+    <meta property="og:title" content="{{ $form->og_title ?? $seoTitle }}">
+    <meta property="og:description" content="{{ $form->og_description ?? $seoDescription }}">
+    <meta property="og:url" content="{{ $publicUrl }}">
+    @if($ogImage)
+        <meta property="og:image" content="{{ $ogImage }}">
+    @endif
+
+    {{-- Twitter --}}
+    <meta name="twitter:card" content="{{ $form->twitter_card ?? 'summary' }}">
+    <meta name="twitter:title" content="{{ $form->twitter_title ?? $seoTitle }}">
+    <meta name="twitter:description" content="{{ $form->twitter_description ?? $seoDescription }}">
+    @if($form->twitter_image ?? $ogImage)
+        <meta name="twitter:image" content="{{ $form->twitter_image ?? $ogImage }}">
+    @endif
+
+    {{-- JSON-LD: WebPage + CommunicateAction --}}
+    <script type="application/ld+json">
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'WebPage',
+        'name' => $seoTitle,
+        'description' => $seoDescription,
+        'url' => $publicUrl,
+        'inLanguage' => app()->getLocale(),
+        'potentialAction' => [
+            '@type' => 'CommunicateAction',
+            'name' => $form->submit_button_text ?? 'Enviar formulario',
+            'target' => route('forms.public.submit', $form->slug),
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('modules/forms/css/forms.css') }}">
 </head>

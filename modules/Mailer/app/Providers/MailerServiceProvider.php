@@ -6,8 +6,10 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Mailer\Console\Commands\MigrateMailingNamespaces;
 use Modules\Mailer\Console\Commands\PurgeMailerLogsCommand;
 use Modules\Mailer\Console\Commands\PurgeMailerVersionsCommand;
+use Modules\Mailer\Console\Commands\RollbackMailingNamespaces;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
@@ -86,6 +88,8 @@ class MailerServiceProvider extends ServiceProvider
             $this->commands([
                 PurgeMailerLogsCommand::class,
                 PurgeMailerVersionsCommand::class,
+                MigrateMailingNamespaces::class,
+                RollbackMailingNamespaces::class,
             ]);
 
             $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {

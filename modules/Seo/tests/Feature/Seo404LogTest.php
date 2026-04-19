@@ -147,7 +147,7 @@ class Seo404LogTest extends TestCase
         Seo404Log::create(['path' => '/b', 'hit_count' => 2, 'first_seen_at' => now(), 'last_seen_at' => now()]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.404-logs.clear'))
+            ->post(route('setting.seo.404-logs.clear'), ['confirm' => 'yes'])
             ->assertRedirect();
 
         $this->assertEquals(0, Seo404Log::count());

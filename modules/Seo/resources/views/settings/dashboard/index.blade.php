@@ -35,7 +35,7 @@
                                     <button type="submit" class="dropdown-item">Actualizar datos</button>
                                 </form>
                             </li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="window.print()">Imprimir</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" data-action="print">Imprimir</a></li>
                         </ul>
                     </div>
                 </div>
@@ -692,6 +692,9 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js"></script>
 <script>
+$(document).on('click', '[data-action="print"]', function () {
+    window.print();
+});
 (function () {
     'use strict';
 

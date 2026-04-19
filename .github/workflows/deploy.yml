@@ -1,0 +1,53 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Require CI to pass before this workflow can run deploy steps.
+# Configure "Required status checks" in branch protection rules to enforce this.
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------
+      # Add your deployment strategy below.
+      # Common options:
+      #
+      # Option A — Laravel Forge deploy hook:
+      #   - name: Trigger Forge deploy
+      #     run: curl -s "${{ secrets.FORGE_DEPLOY_URL }}"
+      #
+      # Option B — SSH deploy:
+      #   - name: Deploy via SSH
+      #     uses: appleboy/ssh-action@v1
+      #     with:
+      #       host: ${{ secrets.DEPLOY_HOST }}
+      #       username: ${{ secrets.DEPLOY_USER }}
+      #       key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #       script: |
+      #         cd /var/www/system
+      #         git pull origin main
+      #         composer install --no-dev --optimize-autoloader
+      #         php artisan migrate --force
+      #         php artisan config:cache
+      #         php artisan route:cache
+      #         php artisan view:cache
+      #         php artisan queue:restart
+      #
+      # Option C — Docker build & push:
+      #   - name: Build and push Docker image
+      #     run: |
+      #       docker build -t system-app:${{ github.sha }} .
+      #       docker push system-app:${{ github.sha }}
+      # ----------------------------------------------------------------
+
+      - name: Placeholder — configure deployment steps
+        run: echo "Deploy workflow ready. Add your infrastructure-specific steps above."

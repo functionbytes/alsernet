@@ -4,8 +4,12 @@ namespace Modules\Forms\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\UpdateFormAccessRequest;
+use Modules\Forms\Http\Requests\UpdateFormEmailsRequest;
+use Modules\Forms\Http\Requests\UpdateFormGdprRequest;
+use Modules\Forms\Http\Requests\UpdateFormSeoRequest;
+use Modules\Forms\Http\Requests\UpdateFormSettingsRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormCategory;
 use Modules\Forms\Models\FormConditionalEmail;
@@ -24,26 +28,31 @@ class FormSettingsController extends Controller
         return view('forms::settings.general', compact('form', 'categories'));
     }
 
-    public function update(Request $request, Form $form): RedirectResponse
+    public function update(UpdateFormSettingsRequest $request, Form $form): RedirectResponse
     {
-        $this->authorize('Forms.settings.manage');
-
-        $data = $request->validate([
-            'success_message' => ['nullable', 'string'],
-            'redirect_url' => ['nullable', 'url', 'max:500'],
-            'submit_button_text' => ['nullable', 'string', 'max:100'],
-            'allow_multiple' => ['boolean'],
-            'max_submissions' => ['nullable', 'integer', 'min:1'],
-            'expires_at' => ['nullable', 'date'],
-            'is_multi_step' => ['boolean'],
-            'floating_label' => ['boolean'],
-        ]);
-
-        $form->update($data);
+        $form->update($request->validated());
 
         session()->flash('success', 'Configuración general guardada.');
 
         return redirect()->route('settings.forms.settings.edit', $form);
+    }
+
+    public function seo(Form $form): View
+    {
+        $this->authorize('Forms.settings.manage');
+
+        $form->load('seoMeta');
+
+        return view('forms::settings.seo', compact('form'));
+    }
+
+    public function updateSeo(UpdateFormSeoRequest $request, Form $form): RedirectResponse
+    {
+        $form->updateSeoMeta($request->validated());
+
+        session()->flash('success', __('forms::messages.settings.seo_saved'));
+
+        return redirect()->route('settings.forms.settings.seo', $form);
     }
 
     public function emails(Form $form): View
@@ -57,36 +66,9 @@ class FormSettingsController extends Controller
         return view('forms::settings.emails', compact('form', 'mailerTemplates'));
     }
 
-    public function updateEmails(Request $request, Form $form): RedirectResponse
+    public function updateEmails(UpdateFormEmailsRequest $request, Form $form): RedirectResponse
     {
-        $this->authorize('Forms.settings.manage');
-
-        $data = $request->validate([
-            'admin_notification_email' => ['nullable', 'string', 'max:500'],
-            'send_confirmation' => ['boolean'],
-            'email_field_key' => ['nullable', 'string', 'max:100'],
-            'confirmation_subject' => ['nullable', 'string', 'max:255'],
-            'confirmation_message' => ['nullable', 'string'],
-            'honeypot_enabled' => ['boolean'],
-            'captcha_enabled' => ['boolean'],
-            'admin_template_id' => ['nullable', 'integer'],
-            'confirmation_template_id' => ['nullable', 'integer'],
-            'webhook_url' => ['nullable', 'url', 'max:500'],
-            'webhook_secret' => ['nullable', 'string', 'max:255'],
-            'follow_up' => ['nullable', 'array'],
-            'follow_up.name' => ['required_with:follow_up', 'string', 'max:100'],
-            'follow_up.send_after_days' => ['required_with:follow_up', 'integer', 'min:1'],
-            'follow_up.email_template_id' => ['required_with:follow_up', 'integer'],
-            'follow_up.recipient_type' => ['required_with:follow_up', 'in:submitter,admin'],
-            'follow_up.is_active' => ['boolean'],
-            'conditional_email' => ['nullable', 'array'],
-            'conditional_email.condition_field_key' => ['required_with:conditional_email', 'string', 'max:100'],
-            'conditional_email.condition_operator' => ['required_with:conditional_email', 'in:equals,not_equals,contains,starts_with,ends_with'],
-            'conditional_email.condition_value' => ['required_with:conditional_email', 'string'],
-            'conditional_email.admin_template_id' => ['nullable', 'integer'],
-            'conditional_email.client_template_id' => ['nullable', 'integer'],
-            'conditional_email.is_active' => ['boolean'],
-        ]);
+        $data = $request->validated();
 
         $formData = collect($data)->only([
             'admin_notification_email', 'send_confirmation', 'email_field_key',
@@ -125,19 +107,9 @@ class FormSettingsController extends Controller
         return view('forms::settings.access', compact('form', 'roles'));
     }
 
-    public function updateAccess(Request $request, Form $form): RedirectResponse
+    public function updateAccess(UpdateFormAccessRequest $request, Form $form): RedirectResponse
     {
-        $this->authorize('Forms.settings.manage');
-
-        $data = $request->validate([
-            'access_control' => ['required', 'in:public,authenticated,roles'],
-            'allowed_roles' => ['nullable', 'array'],
-            'allowed_roles.*' => ['string'],
-            'is_password_protected' => ['boolean'],
-            'password' => ['nullable', 'string', 'min:6', 'max:100'],
-            'limit_per_user' => ['boolean'],
-            'prevent_duplicate_email' => ['boolean'],
-        ]);
+        $data = $request->validated();
 
         if (! $data['is_password_protected']) {
             $data['password'] = null;
@@ -159,15 +131,10 @@ class FormSettingsController extends Controller
         return view('forms::settings.gdpr', compact('form'));
     }
 
-    public function updateGdpr(Request $request, Form $form): RedirectResponse
+    public function updateGdpr(UpdateFormGdprRequest $request, Form $form): RedirectResponse
     {
-        $this->authorize('Forms.settings.manage');
-
-        $data = $request->validate([
-            'retention_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
-        ]);
-
-        $form->update($data);
+        $data = $request->validated();
+        $form->update(['retention_days' => $data['retention_days'] ?? null]);
 
         if ($request->boolean('anonymize_old')) {
             $cutoff = now()->subDays($data['retention_days'] ?? 365);

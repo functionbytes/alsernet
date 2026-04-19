@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\SendCustomEmailRequest;
 use Modules\Forms\Models\FormSubmission;
 use Modules\Forms\Models\FormSubmissionAction;
 use Modules\Forms\Models\FormSubmissionEmail;
@@ -65,15 +66,9 @@ class FormSubmissionEmailController extends Controller
         return view('forms::inbox.email-preview', compact('submission', 'email'));
     }
 
-    public function sendCustom(Request $request, FormSubmission $submission): JsonResponse
+    public function sendCustom(SendCustomEmailRequest $request, FormSubmission $submission): JsonResponse
     {
-        $this->authorize('update', $submission);
-
-        $data = $request->validate([
-            'recipient' => ['required', 'email'],
-            'subject' => ['required', 'string', 'max:255'],
-            'message' => ['required', 'string'],
-        ]);
+        $data = $request->validated();
 
         $allowedTags = '<p><br><strong><em><b><i><u><ul><ol><li><a><blockquote><pre><code><table><thead><tbody><tr><th><td>';
         $safeMessage = strip_tags($data['message'], $allowedTags);

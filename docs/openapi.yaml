@@ -1,0 +1,938 @@
+openapi: 3.0.3
+
+info:
+  title: Alsernet (Inoqualab) API
+  version: "1.0.0"
+  description: |
+    REST API for the Alsernet system. All endpoints are under the `/api/v1` prefix.
+
+    **Viewing this spec**: Paste this file at https://editor.swagger.io or import it
+    into Postman / Insomnia for an interactive explorer.
+
+    **Authentication**: Protected endpoints require a Laravel Sanctum bearer token.
+    Obtain one by authenticating through the application's login flow and including
+    the token in every request as `Authorization: Bearer <token>`.
+
+servers:
+  - url: "{baseUrl}/api/v1"
+    description: API v1
+    variables:
+      baseUrl:
+        default: "http://localhost"
+        description: Base URL of the application (no trailing slash)
+
+# ---------------------------------------------------------------------------
+# Security schemes
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Laravel Sanctum token obtained after login.
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    # --- Generic wrappers -------------------------------------------------
+
+    SuccessEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "OK"
+        data:
+          description: Present when the endpoint returns a single object or flat payload.
+
+    PaginationMeta:
+      type: object
+      required: [current_page, last_page, per_page, total]
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 5
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 97
+
+    ErrorEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Unauthenticated."
+        errors:
+          type: object
+          description: Field-level validation errors (present on 422 responses).
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # --- Health -----------------------------------------------------------
+
+    PingData:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-02T10:00:00+00:00"
+
+    HealthChecks:
+      type: object
+      required: [database, cache]
+      properties:
+        database:
+          type: boolean
+          description: Whether the database connection is healthy.
+          example: true
+        cache:
+          type: boolean
+          description: Whether the Redis/cache connection is healthy.
+          example: true
+
+    # --- User (me) --------------------------------------------------------
+
+    UserProfile:
+      type: object
+      required: [id, name, email, roles, permissions, created_at]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          example: "jane@example.com"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["admin", "editor"]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["Backup.schedules.index", "Reviews.viewAny"]
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-15T08:30:00+00:00"
+
+    # --- Pages ------------------------------------------------------------
+
+    PublicPage:
+      type: object
+      required: [id, title, slug, url, published_at]
+      properties:
+        id:
+          type: integer
+          example: 42
+        title:
+          type: string
+          example: "Sobre nosotros"
+        slug:
+          type: string
+          example: "sobre-nosotros"
+        description:
+          type: string
+          nullable: true
+          example: "Conoce nuestro equipo y misión."
+        excerpt:
+          type: string
+          nullable: true
+          example: "Somos una empresa dedicada a..."
+        template:
+          type: string
+          nullable: true
+          example: "default"
+        url:
+          type: string
+          format: uri
+          example: "http://localhost/sobre-nosotros"
+        featured_image:
+          type: string
+          format: uri
+          nullable: true
+          example: "http://localhost/storage/pages/sobre-nosotros.jpg"
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-01T00:00:00+00:00"
+
+    # --- Reviews ----------------------------------------------------------
+
+    ReviewLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+        name:
+          type: string
+          example: "Oficina Central"
+
+    ReviewModeration:
+      type: object
+      properties:
+        is_visible:
+          type: boolean
+          example: true
+        is_featured:
+          type: boolean
+          example: false
+
+    ReviewReply:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 3
+        body:
+          type: string
+          example: "Gracias por su comentario."
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-10T09:00:00+00:00"
+
+    Review:
+      type: object
+      required: [id, rating, ratingLabel, reviewTime, hasGoogleReply, hasComment, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 101
+        googleReviewId:
+          type: string
+          nullable: true
+          example: "ChIJN1t_tDeuEmsRUsoyG83frY4"
+        reviewerName:
+          type: string
+          nullable: true
+          example: "Ana García"
+        reviewerPhotoUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://lh3.googleusercontent.com/a/abc123"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Numeric star rating (1–5).
+          example: 5
+        ratingLabel:
+          type: string
+          enum: [ONE, TWO, THREE, FOUR, FIVE]
+          example: "FIVE"
+        comment:
+          type: string
+          nullable: true
+          example: "Excelente servicio, muy recomendable."
+        reviewTime:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-21T09:00:00+00:00"
+        googleReplyText:
+          type: string
+          nullable: true
+          example: "Muchas gracias por su reseña."
+        googleReplyTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-22T10:00:00+00:00"
+        hasGoogleReply:
+          type: boolean
+          example: true
+        hasComment:
+          type: boolean
+          example: true
+        syncedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-20T15:00:00+00:00"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-03-22T10:01:00+00:00"
+        location:
+          $ref: "#/components/schemas/ReviewLocation"
+        moderation:
+          nullable: true
+          description: Only included when the authenticated user has the viewAny permission.
+          allOf:
+            - $ref: "#/components/schemas/ReviewModeration"
+        replies:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewReply"
+
+    ReviewStats:
+      type: object
+      required:
+        - totalReviews
+        - averageRating
+        - ratingDistribution
+        - totalVisible
+        - totalFeatured
+        - totalWithComment
+        - totalWithGoogleReply
+      properties:
+        totalReviews:
+          type: integer
+          example: 248
+        averageRating:
+          type: number
+          format: float
+          example: 4.72
+        ratingDistribution:
+          type: object
+          required: ["1", "2", "3", "4", "5"]
+          properties:
+            "5":
+              type: integer
+              example: 180
+            "4":
+              type: integer
+              example: 40
+            "3":
+              type: integer
+              example: 15
+            "2":
+              type: integer
+              example: 8
+            "1":
+              type: integer
+              example: 5
+        totalVisible:
+          type: integer
+          example: 220
+        totalFeatured:
+          type: integer
+          example: 12
+        totalWithComment:
+          type: integer
+          example: 195
+        totalWithGoogleReply:
+          type: integer
+          example: 130
+
+    # --- Backup schedules ------------------------------------------------
+
+    BackupScheduleSummary:
+      type: object
+      required: [id, name, enabled, frequency, scheduled_time]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Respaldo diario BD"
+        enabled:
+          type: boolean
+          example: true
+        frequency:
+          type: string
+          example: "daily"
+        scheduled_time:
+          type: string
+          example: "02:00"
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-01T02:00:00+00:00"
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-02T02:00:00+00:00"
+
+    BackupScheduleDetail:
+      allOf:
+        - $ref: "#/components/schemas/BackupScheduleSummary"
+        - type: object
+          properties:
+            days_of_week:
+              type: array
+              nullable: true
+              items:
+                type: integer
+                minimum: 0
+                maximum: 6
+              example: [1, 3, 5]
+            days_of_month:
+              type: array
+              nullable: true
+              items:
+                type: integer
+                minimum: 1
+                maximum: 31
+              example: [1, 15]
+            custom_interval_hours:
+              type: integer
+              nullable: true
+              example: null
+            backup_types:
+              type: array
+              nullable: true
+              items:
+                type: string
+              example: ["database", "files"]
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # --- Health -------------------------------------------------------------
+
+  /ping:
+    get:
+      summary: Ping
+      description: Lightweight liveness probe. Returns `ok` with the current server timestamp. No authentication required.
+      operationId: health.ping
+      tags: [Health]
+      responses:
+        "200":
+          description: Application is alive.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PingData"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  status: "ok"
+                  timestamp: "2026-04-02T10:00:00+00:00"
+
+  /health:
+    get:
+      summary: Health status
+      description: |
+        Checks the health of backing services (database and cache).
+        Returns HTTP 200 when all checks pass, or HTTP 503 when one or more checks fail.
+        No authentication required.
+      operationId: health.status
+      tags: [Health]
+      responses:
+        "200":
+          description: All systems operational.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: "#/components/schemas/HealthChecks"
+              example:
+                success: true
+                message: "All systems operational"
+                data:
+                  checks:
+                    database: true
+                    cache: true
+        "503":
+          description: One or more systems are degraded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: "#/components/schemas/HealthChecks"
+              example:
+                success: true
+                message: "Some systems degraded"
+                data:
+                  checks:
+                    database: true
+                    cache: false
+
+  # --- Pages --------------------------------------------------------------
+
+  /pages:
+    get:
+      summary: List published pages
+      description: |
+        Returns a paginated list of published pages. Public endpoint — no authentication required.
+        Rate-limited to **60 requests per minute** per IP.
+      operationId: pages.index
+      tags: [Pages]
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Full-text search term (minimum 3 characters activates full-text search engine; shorter terms use a LIKE fallback).
+          schema:
+            type: string
+            example: "nosotros"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of published pages.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, links, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicPage"
+                  links:
+                    type: object
+                    description: Laravel pagination links (first, last, prev, next).
+                    properties:
+                      first:
+                        type: string
+                        format: uri
+                        nullable: true
+                      last:
+                        type: string
+                        format: uri
+                        nullable: true
+                      prev:
+                        type: string
+                        format: uri
+                        nullable: true
+                      next:
+                        type: string
+                        format: uri
+                        nullable: true
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # --- Current user -------------------------------------------------------
+
+  /me:
+    get:
+      summary: Current user profile
+      description: Returns the profile of the currently authenticated user, including their assigned roles and permissions.
+      operationId: user.me
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user profile.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserProfile"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  id: 1
+                  name: "Jane Doe"
+                  email: "jane@example.com"
+                  roles: ["admin"]
+                  permissions: ["Backup.schedules.index", "Reviews.viewAny"]
+                  created_at: "2025-01-15T08:30:00+00:00"
+        "401":
+          description: Unauthenticated — missing or invalid bearer token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                success: false
+                message: "Unauthenticated."
+
+  # --- Reviews ------------------------------------------------------------
+
+  /reviews:
+    get:
+      summary: List reviews
+      description: |
+        Returns a paginated list of Google reviews. Requires the `viewAny` policy on the Review model.
+
+        All filter parameters are optional and can be combined.
+      operationId: reviews.index
+      tags: [Reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: location_id
+          in: query
+          required: false
+          description: Filter reviews by location ID.
+          schema:
+            type: integer
+            example: 7
+        - name: rating
+          in: query
+          required: false
+          description: Filter by star rating label.
+          schema:
+            type: string
+            enum: [ONE, TWO, THREE, FOUR, FIVE]
+            example: "FIVE"
+        - name: is_visible
+          in: query
+          required: false
+          description: When `true`, return only reviews marked visible by moderation.
+          schema:
+            type: boolean
+        - name: is_featured
+          in: query
+          required: false
+          description: When `true`, return only featured reviews.
+          schema:
+            type: boolean
+        - name: has_reply
+          in: query
+          required: false
+          description: Filter by whether a Google reply exists.
+          schema:
+            type: boolean
+        - name: has_comment
+          in: query
+          required: false
+          description: Filter by whether the reviewer left a written comment.
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          required: false
+          description: Number of results per page (max 100, default 20).
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of reviews.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, message, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reviews retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the viewAny permission on reviews.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /reviews/stats:
+    get:
+      summary: Review statistics
+      description: |
+        Returns aggregate statistics for reviews. Results are cached for up to
+        5 minutes (configurable via `reviews.general.cache.stats_ttl_minutes`).
+
+        Requires the `viewAny` policy on the Review model.
+      operationId: reviews.stats
+      tags: [Reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: location_id
+          in: query
+          required: false
+          description: Scope statistics to a specific location.
+          schema:
+            type: integer
+            example: 7
+        - name: days
+          in: query
+          required: false
+          description: Restrict statistics to the last N days.
+          schema:
+            type: integer
+            example: 30
+      responses:
+        "200":
+          description: Review statistics payload.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ReviewStats"
+              example:
+                success: true
+                message: "Statistics retrieved successfully"
+                data:
+                  totalReviews: 248
+                  averageRating: 4.72
+                  ratingDistribution:
+                    "5": 180
+                    "4": 40
+                    "3": 15
+                    "2": 8
+                    "1": 5
+                  totalVisible: 220
+                  totalFeatured: 12
+                  totalWithComment: 195
+                  totalWithGoogleReply: 130
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the viewAny permission on reviews.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # --- Backup schedules ---------------------------------------------------
+
+  /backup/schedules:
+    get:
+      summary: List backup schedules
+      description: |
+        Returns a paginated list of backup schedules (20 per page, ordered by name).
+
+        Requires **both** a valid bearer token and the `Backup.schedules.index` permission.
+      operationId: backup.schedules.index
+      tags: [Backup]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of backup schedules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BackupScheduleSummary"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+              example:
+                success: true
+                data:
+                  - id: 1
+                    name: "Respaldo diario BD"
+                    enabled: true
+                    frequency: "daily"
+                    scheduled_time: "02:00"
+                    last_run_at: "2026-04-01T02:00:00+00:00"
+                    next_run_at: "2026-04-02T02:00:00+00:00"
+                meta:
+                  current_page: 1
+                  last_page: 1
+                  per_page: 20
+                  total: 3
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `Backup.schedules.index` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /backup/schedules/{id}:
+    get:
+      summary: Get backup schedule
+      description: |
+        Returns full details for a single backup schedule, including scheduling configuration
+        and backup type list.
+
+        Requires **both** a valid bearer token and the `Backup.schedules.index` permission.
+      operationId: backup.schedules.show
+      tags: [Backup]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the backup schedule.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Full backup schedule detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/BackupScheduleDetail"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  id: 1
+                  name: "Respaldo diario BD"
+                  enabled: true
+                  frequency: "daily"
+                  scheduled_time: "02:00"
+                  days_of_week: null
+                  days_of_month: null
+                  custom_interval_hours: null
+                  backup_types: ["database"]
+                  last_run_at: "2026-04-01T02:00:00+00:00"
+                  next_run_at: "2026-04-02T02:00:00+00:00"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `Backup.schedules.index` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Schedule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+# ---------------------------------------------------------------------------
+# Tags (define display order in Swagger UI)
+# ---------------------------------------------------------------------------
+tags:
+  - name: Health
+    description: Liveness and readiness probes. No authentication required.
+  - name: Pages
+    description: Public listing of published CMS pages.
+  - name: User
+    description: Authenticated user profile.
+  - name: Reviews
+    description: Google review data and aggregated statistics.
+  - name: Backup
+    description: Read-only access to backup schedule configuration. Requires the `Backup.schedules.index` permission.

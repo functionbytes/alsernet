@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\AlertThresholdController;
-use App\Http\Controllers\ApiDocController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GlobalSearchController;
-use App\Http\Controllers\ImportController;
-use App\Http\Controllers\Settings\SettingsPanelController;
 use Illuminate\Support\Facades\Route;
+use Modules\Forms\Http\Controllers\ContactController;
+use Modules\Health\Http\Controllers\AlertThresholdController;
+use Modules\System\Http\Controllers\ApiDocController;
+use Modules\System\Http\Controllers\ImportController;
+use Modules\System\Http\Controllers\Settings\SettingsPanelController;
 
 // API documentation — publicly accessible, no authentication required
 Route::prefix('api-docs')->name('api.docs.')->group(function () {

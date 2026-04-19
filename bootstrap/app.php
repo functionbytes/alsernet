@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\ApiVersionHeader;
 use App\Http\Middleware\EnsureModuleEnabled;
-use App\Mail\CriticalErrorMail;
 use App\Providers\AppServiceProvider;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -43,6 +42,7 @@ use Modules\Core\Http\Middleware\TrimStrings;
 use Modules\Core\Http\Middleware\TrustProxies;
 use Modules\Core\Http\Middleware\ValidateSignature;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
+use Modules\Health\Mail\CriticalErrorMail;
 use Modules\Page\Http\Middleware\PageCacheMiddleware;
 use Modules\Page\Services\ErrorPageService;
 use Modules\System\Http\Middleware\PreventRequestsDuringMaintenance;

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Forms\Http\Controllers\Api\FormApiController;
 use Modules\Forms\Http\Controllers\FormAccessTokenController;
 use Modules\Forms\Http\Controllers\FormCategoryController;
 use Modules\Forms\Http\Controllers\FormController;
@@ -44,7 +45,7 @@ Route::middleware(['web', 'throttle:20,1'])
     ->prefix('forms')
     ->name('forms.public.')
     ->group(function () {
-        Route::post('/{slug}/submit', [FormPublicController::class, 'submit'])->name('submit')->middleware('throttle:5,1');
+        Route::post('/{slug}/submit', [FormPublicController::class, 'submit'])->name('submit')->middleware('throttle:forms.submit');
         Route::get('/embed/{slug}', [FormPublicController::class, 'embed'])->name('embed');
         Route::get('/access/{token}', [FormPublicController::class, 'accessByToken'])->name('access');
         Route::post('/abandon/{slug}', [FormPublicController::class, 'trackAbandon'])->name('abandon')->middleware('throttle:30,1');
@@ -58,6 +59,16 @@ Route::middleware(['web', 'throttle:20,1'])
 Route::middleware(['web', 'auth'])
     ->patch('panel/forms/fields/{field}/editor', [FormFieldEditorController::class, 'update'])
     ->name('forms.fields.editor.update');
+
+Route::middleware(['web', 'auth', 'throttle:60,1'])
+    ->prefix('panel/forms/internal')
+    ->name('forms.internal.')
+    ->group(function () {
+        Route::get('/picker', [FormApiController::class, 'picker'])->name('picker');
+        Route::get('/{form}/meta', [FormApiController::class, 'meta'])->name('meta');
+        Route::get('/{form}/preview-html', [FormApiController::class, 'previewHtml'])->name('preview-html');
+        Route::post('/quick-store', [FormApiController::class, 'quickStore'])->name('quick-store');
+    });
 
 // ─── Rutas admin ─────────────────────────────────────────────────────────────
 
@@ -131,6 +142,8 @@ Route::middleware(['web', 'auth'])->group(function () {
                 Route::patch('/', [FormSettingsController::class, 'update'])->name('update');
                 Route::get('/emails', [FormSettingsController::class, 'emails'])->name('emails');
                 Route::patch('/emails', [FormSettingsController::class, 'updateEmails'])->name('emails.update');
+                Route::get('/seo', [FormSettingsController::class, 'seo'])->name('seo');
+                Route::patch('/seo', [FormSettingsController::class, 'updateSeo'])->name('seo.update');
                 Route::get('/access', [FormSettingsController::class, 'access'])->name('access');
                 Route::patch('/access', [FormSettingsController::class, 'updateAccess'])->name('access.update');
                 Route::get('/gdpr', [FormSettingsController::class, 'gdpr'])->name('gdpr');

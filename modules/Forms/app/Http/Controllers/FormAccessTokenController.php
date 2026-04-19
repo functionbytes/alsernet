@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\StoreFormAccessTokenRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormAccessToken;
 
@@ -34,15 +35,9 @@ class FormAccessTokenController extends Controller
         return view('forms::settings.forms.access-tokens.index', compact('form', 'tokens'));
     }
 
-    public function store(Request $request, Form $form): JsonResponse
+    public function store(StoreFormAccessTokenRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.forms.edit');
-
-        $validated = $request->validate([
-            'email' => 'nullable|email',
-            'max_uses' => 'integer|min:1',
-            'expires_at' => 'nullable|date|after:now',
-        ]);
+        $validated = $request->validated();
 
         $accessToken = $form->accessTokens()->create([
             'token' => Str::random(48),

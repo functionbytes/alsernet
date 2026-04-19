@@ -8,23 +8,38 @@ use Modules\Shortcode\Http\Controllers\ShortcodeController;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for the Shortcode module.
+| Rutas API del módulo Shortcode. Todas aplican rate limit y requieren
+| autenticación Sanctum.
 |
 */
 
-Route::prefix('shortcodes')->name('shortcode.api.')->group(function () {
-    // Compile shortcode
-    Route::post('/compile', [ShortcodeController::class, 'compile'])->name('compile');
+// El RouteServiceProvider del módulo ya aplica prefix "api" y name "api.".
+// Aquí sólo añadimos el segmento propio del recurso.
+// Rate limit personalizado 'shortcode-api': per-user si auth, per-IP si no.
+// Definido en ShortcodeServiceProvider::registerRateLimiters.
+Route::middleware(['auth:sanctum', 'throttle:shortcode-api'])
+    ->prefix('shortcodes')
+    ->name('shortcode.')
+    ->group(function () {
+        // Compilar shortcodes en contenido arbitrario
+        Route::post('/compile', [ShortcodeController::class, 'compile'])->name('compile');
 
-    // Strip shortcodes
-    Route::post('/strip', [ShortcodeController::class, 'strip'])->name('strip');
+        // Eliminar shortcodes del contenido
+        Route::post('/strip', [ShortcodeController::class, 'strip'])->name('strip');
 
-    // List registered shortcodes
-    Route::get('/list', [ShortcodeController::class, 'list'])->name('list');
+        // Listar nombres de shortcodes registrados
+        Route::get('/list', [ShortcodeController::class, 'list'])->name('list');
 
-    // Check if shortcode exists
-    Route::post('/check', [ShortcodeController::class, 'check'])->name('check');
+        // Listar shortcodes con metadata (para pickers/UI)
+        Route::get('/registered', [ShortcodeController::class, 'registered'])->name('registered');
 
-    // Clear cache
-    Route::post('/clear-cache', [ShortcodeController::class, 'clearCache'])->name('clear-cache');
-});
+        // Verificar si un shortcode existe
+        Route::post('/check', [ShortcodeController::class, 'check'])->name('check');
+
+        // Limpiar cache del compilador
+        Route::post('/clear-cache', [ShortcodeController::class, 'clearCache'])->name('clear-cache');
+
+        // Stats de uso
+        Route::get('/stats', [ShortcodeController::class, 'stats'])->name('stats');
+        Route::post('/stats/reset', [ShortcodeController::class, 'resetStats'])->name('stats.reset');
+    });

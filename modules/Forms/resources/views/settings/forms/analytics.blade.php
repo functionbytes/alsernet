@@ -183,6 +183,39 @@
                     </div>
                 </div>
 
+                @if(isset($topSourcePages) && $topSourcePages->isNotEmpty())
+                <div class="card mt-3">
+                    <div class="card-header border-bottom p-3">
+                        <h6 class="mb-0 fw-bold">Top páginas que convierten</h6>
+                        <small class="text-muted">Pages del sitio que más generan envíos a este formulario</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Página</th>
+                                        <th class="text-end">Envíos</th>
+                                        <th class="text-end">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php $totalFromPages = $topSourcePages->sum('submissions_count'); @endphp
+                                    @foreach($topSourcePages as $p)
+                                        @php $pct = $totalFromPages > 0 ? round($p->submissions_count / $totalFromPages * 100, 1) : 0; @endphp
+                                        <tr>
+                                            <td><strong>{{ $p->title }}</strong> <small class="text-muted">/{{ $p->slug }}</small></td>
+                                            <td class="text-end">{{ $p->submissions_count }}</td>
+                                            <td class="text-end"><span class="badge bg-light text-dark">{{ $pct }}%</span></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
             </div>
 
             <div class="col-lg-3">

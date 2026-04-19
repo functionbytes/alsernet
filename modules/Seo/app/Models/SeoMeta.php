@@ -3,9 +3,11 @@
 namespace Modules\Seo\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Modules\Seo\Database\Factories\SeoMetaFactory;
 
 class SeoMeta extends Model
 {
@@ -17,6 +19,14 @@ class SeoMeta extends Model
      * @var string
      */
     protected $table = 'seo_metas';
+
+    /**
+     * Use the module's factory namespace.
+     */
+    protected static function newFactory(): SeoMetaFactory
+    {
+        return SeoMetaFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -46,6 +56,8 @@ class SeoMeta extends Model
         'twitter_image',
         'canonical_url',
         'robots',
+        'schema_custom',
+        'schema_type',
         'seo_score',
         'seo_grade',
         'seo_audited_at',
@@ -61,6 +73,7 @@ class SeoMeta extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'schema_custom' => 'array',
         'seo_score' => 'integer',
         'seo_audited_at' => 'datetime',
         'gsc_clicks' => 'integer',
@@ -84,49 +97,71 @@ class SeoMeta extends Model
     /**
      * Get the title for display (with fallback).
      */
-    public function getDisplayTitleAttribute(): ?string
+    protected function displayTitle(): Attribute
     {
-        return $this->title ?? $this->seoable?->title ?? null;
+        return Attribute::make(
+            get: fn () => $this->title ?? $this->seoable?->title ?? null,
+        );
     }
 
     /**
      * Get the description for display (with fallback).
      */
-    public function getDisplayDescriptionAttribute(): ?string
+    protected function displayDescription(): Attribute
     {
-        return $this->description ?? $this->seoable?->description ?? null;
+        return Attribute::make(
+            get: fn () => $this->description ?? $this->seoable?->description ?? null,
+        );
     }
 
     /**
      * Get the Open Graph title (with fallback).
      */
-    public function getOgTitleDisplayAttribute(): ?string
+    protected function ogTitleDisplay(): Attribute
     {
-        return $this->og_title ?? $this->title ?? $this->seoable?->title ?? null;
+        return Attribute::make(
+            get: fn () => $this->og_title ?? $this->title ?? $this->seoable?->title ?? null,
+        );
     }
 
     /**
      * Get the Open Graph description (with fallback).
      */
-    public function getOgDescriptionDisplayAttribute(): ?string
+    protected function ogDescriptionDisplay(): Attribute
     {
-        return $this->og_description ?? $this->description ?? $this->seoable?->description ?? null;
+        return Attribute::make(
+            get: fn () => $this->og_description ?? $this->description ?? $this->seoable?->description ?? null,
+        );
     }
 
     /**
      * Get the Twitter title (with fallback).
      */
-    public function getTwitterTitleDisplayAttribute(): ?string
+    protected function twitterTitleDisplay(): Attribute
     {
-        return $this->twitter_title ?? $this->title ?? $this->seoable?->title ?? null;
+        return Attribute::make(
+            get: fn () => $this->twitter_title ?? $this->title ?? $this->seoable?->title ?? null,
+        );
     }
 
     /**
      * Get the Twitter description (with fallback).
      */
-    public function getTwitterDescriptionDisplayAttribute(): ?string
+    protected function twitterDescriptionDisplay(): Attribute
     {
-        return $this->twitter_description ?? $this->description ?? $this->seoable?->description ?? null;
+        return Attribute::make(
+            get: fn () => $this->twitter_description ?? $this->description ?? $this->seoable?->description ?? null,
+        );
+    }
+
+    /**
+     * Get short class name from seoable_type for display.
+     */
+    protected function shortType(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => class_basename($this->seoable_type ?? ''),
+        );
     }
 
     /**
@@ -160,14 +195,6 @@ class SeoMeta extends Model
     public function scopeWithRobots($query, string $robots)
     {
         return $query->where('robots', $robots);
-    }
-
-    /**
-     * Get short class name from seoable_type for display.
-     */
-    public function getShortTypeAttribute(): string
-    {
-        return class_basename($this->seoable_type ?? '');
     }
 
     /**

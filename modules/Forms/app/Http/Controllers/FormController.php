@@ -9,19 +9,27 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Modules\Forms\Http\Requests\BulkActionFormRequest;
+use Modules\Forms\Http\Requests\ImportFormRequest;
+use Modules\Forms\Http\Requests\RemoveFormStepRequest;
 use Modules\Forms\Http\Requests\StoreFormRequest;
+use Modules\Forms\Http\Requests\UpdateFormProtectionRequest;
 use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormCategory;
-use Modules\Forms\Models\FormField;
 use Modules\Forms\Models\FormFieldTypeSetting;
-use Modules\Forms\Models\FormVersion;
+use Modules\Forms\Services\FormAnalyticsService;
+use Modules\Forms\Services\FormService;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class FormController extends Controller
 {
+    public function __construct(
+        private readonly FormService $service,
+        private readonly FormAnalyticsService $analyticsService,
+    ) {}
+
     public function index(Request $request): View
     {
         $this->authorize('Forms.forms.index');
@@ -68,14 +76,14 @@ class FormController extends Controller
     public function store(StoreFormRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $data['slug'] = $this->generateUniqueSlug($data['name']);
+        $data['slug'] = $this->service->generateUniqueSlug($data['name']);
         $data['success_message'] = $data['success_message'] ?? config('forms.default_success_message');
 
         $form = Form::query()->create($data);
 
-        $this->createInitialVersion($form);
+        $this->service->createInitialVersion($form);
 
-        session()->flash('success', 'Formulario creado correctamente. Ahora puedes añadir campos.');
+        session()->flash('success', __('forms::messages.crud.form_created'));
 
         return redirect()->route('settings.forms.edit', $form);
     }
@@ -110,7 +118,7 @@ class FormController extends Controller
         $hasNoSubmissions = $form->submissions()->doesntExist();
 
         if ($nameChanged && $hasNoSubmissions) {
-            $data['slug'] = $this->generateUniqueSlug($data['name'], $form->id);
+            $data['slug'] = $this->service->generateUniqueSlug($data['name'], $form->id);
         }
 
         $form->update($data);
@@ -123,30 +131,30 @@ class FormController extends Controller
             ]);
         }
 
-        session()->flash('success', 'Formulario actualizado correctamente.');
+        session()->flash('success', __('forms::messages.crud.form_updated'));
 
         return redirect()->route('settings.forms.edit', $form);
     }
 
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkActionFormRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer'],
-        ]);
+        $validated = $request->validated();
 
-        $forms = Form::whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $count = DB::transaction(function () use ($validated): int {
+            $forms = Form::query()->whereIn('id', $validated['ids'])->get();
+            $processed = 0;
 
-        foreach ($forms as $form) {
-            match ($validated['action']) {
-                'activate' => $form->update(['is_active' => true]),
-                'deactivate' => $form->update(['is_active' => false]),
-                'delete' => $form->delete(),
-            };
-            $count++;
-        }
+            foreach ($forms as $form) {
+                match ($validated['action']) {
+                    'activate' => $form->update(['is_active' => true]),
+                    'deactivate' => $form->update(['is_active' => false]),
+                    'delete' => $form->delete(),
+                };
+                $processed++;
+            }
+
+            return $processed;
+        });
 
         return response()->json(['success' => true, 'count' => $count]);
     }
@@ -157,12 +165,12 @@ class FormController extends Controller
 
         if ($form->submissions()->exists()) {
             return redirect()->back()
-                ->with('error', 'No se puede eliminar el formulario porque tiene envíos activos.');
+                ->with('error', __('forms::messages.crud.form_delete_has_submissions'));
         }
 
         $form->delete();
 
-        session()->flash('success', 'Formulario eliminado correctamente.');
+        session()->flash('success', __('forms::messages.crud.form_deleted'));
 
         return redirect()->route('settings.forms.index');
     }
@@ -172,26 +180,11 @@ class FormController extends Controller
         $this->authorize('Forms.forms.create');
 
         try {
-            $cloned = DB::transaction(function () use ($form) {
-                $newForm = $form->replicate(['slug']);
-                $newForm->name = 'Copia de '.$form->name;
-                $newForm->slug = $this->generateUniqueSlug($newForm->name);
-                $newForm->save();
-
-                $form->fields()->ordered()->get()->each(function (FormField $field) use ($newForm) {
-                    $clonedField = $field->replicate(['form_id']);
-                    $clonedField->form_id = $newForm->id;
-                    $clonedField->save();
-                });
-
-                $this->createInitialVersion($newForm);
-
-                return $newForm;
-            });
+            $cloned = $this->service->cloneForm($form);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Formulario clonado correctamente.',
+                'message' => __('forms::messages.crud.form_cloned'),
                 'redirect' => route('settings.forms.edit', $cloned),
             ]);
         } catch (\Throwable $e) {
@@ -199,7 +192,7 @@ class FormController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al clonar el formulario. Por favor, inténtalo de nuevo.',
+                'message' => __('forms::messages.crud.form_clone_error'),
             ], 500);
         }
     }
@@ -220,7 +213,7 @@ class FormController extends Controller
         $expected = hash_hmac('sha256', (string) $form->id, config('app.key'));
 
         if (! hash_equals($expected, $token)) {
-            abort(403, 'Token de preview inválido.');
+            abort(403, __('forms::messages.common.invalid_preview_token'));
         }
 
         $form->load(['fields' => fn ($q) => $q->visible()->ordered(), 'category']);
@@ -233,7 +226,7 @@ class FormController extends Controller
         $this->authorize('Forms.forms.index');
 
         if (! class_exists(QrCode::class)) {
-            abort(501, 'QR code package not installed.');
+            abort(501, __('forms::messages.common.qr_package_missing'));
         }
 
         $url = route('forms.public.submit', ['slug' => $form->slug]);
@@ -261,23 +254,36 @@ class FormController extends Controller
         ]);
     }
 
-    public function importJson(Request $request): RedirectResponse
+    public function importJson(ImportFormRequest $request): RedirectResponse
     {
-        $this->authorize('Forms.forms.create');
-
-        $request->validate([
-            'file' => ['required', 'file', 'mimetypes:application/json,text/plain', 'max:2048'],
-        ]);
+        $maxFields = (int) config('forms.import.max_fields', 100);
+        $maxFileBytes = (int) config('forms.import.max_file_bytes', 512 * 1024);
 
         try {
-            $content = file_get_contents($request->file('file')->getRealPath());
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $realPath = $request->file('file')->getRealPath();
 
-            if (! isset($data['form'])) {
-                return redirect()->back()->with('error', 'Formato de archivo JSON inválido.');
+            if (filesize($realPath) > $maxFileBytes) {
+                return redirect()->back()->with('error', 'El archivo excede el tamaño máximo permitido.');
             }
 
-            $form = DB::transaction(function () use ($data) {
+            $content = file_get_contents($realPath);
+            $data = json_decode($content, true, 32, JSON_THROW_ON_ERROR);
+
+            if (! is_array($data) || ! isset($data['form']) || ! is_array($data['form'])) {
+                return redirect()->back()->with('error', __('forms::messages.crud.import_invalid_format'));
+            }
+
+            $incomingFields = $data['fields'] ?? [];
+
+            if (! is_array($incomingFields)) {
+                return redirect()->back()->with('error', __('forms::messages.crud.import_invalid_fields_section'));
+            }
+
+            if (count($incomingFields) > $maxFields) {
+                return redirect()->back()->with('error', __('forms::messages.crud.import_too_many_fields', ['max' => $maxFields]));
+            }
+
+            $form = DB::transaction(function () use ($data, $incomingFields) {
                 $formData = collect($data['form'])->only([
                     'name', 'category_id', 'description', 'success_message',
                     'redirect_url', 'submit_button_text', 'is_active',
@@ -285,11 +291,15 @@ class FormController extends Controller
                 ]);
 
                 $formData['name'] = $formData['name'].' (importado)';
-                $formData['slug'] = $this->generateUniqueSlug($formData['name']);
+                $formData['slug'] = $this->service->generateUniqueSlug($formData['name']);
 
                 $form = Form::query()->create($formData->all());
 
-                foreach (($data['fields'] ?? []) as $sortOrder => $fieldData) {
+                foreach ($incomingFields as $sortOrder => $fieldData) {
+                    if (! is_array($fieldData)) {
+                        continue;
+                    }
+
                     $form->fields()->create(
                         collect($fieldData)->only([
                             'type', 'name', 'label', 'placeholder', 'help_text',
@@ -301,20 +311,20 @@ class FormController extends Controller
                     );
                 }
 
-                $this->createInitialVersion($form);
+                $this->service->createInitialVersion($form);
 
                 return $form;
             });
 
-            session()->flash('success', 'Formulario importado correctamente.');
+            session()->flash('success', __('forms::messages.crud.form_imported'));
 
             return redirect()->route('settings.forms.edit', $form);
-        } catch (\JsonException $e) {
-            return redirect()->back()->with('error', 'El archivo no contiene JSON válido.');
+        } catch (\JsonException) {
+            return redirect()->back()->with('error', __('forms::messages.crud.import_invalid_json'));
         } catch (\Throwable $e) {
             Log::error('Form import failed', ['error' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'Error al importar el formulario. Por favor, verifica el archivo e inténtalo de nuevo.');
+            return redirect()->back()->with('error', __('forms::messages.crud.import_generic_error'));
         }
     }
 
@@ -333,35 +343,9 @@ class FormController extends Controller
             'floatingLabel' => $floatingLabel,
         ])->render();
 
-        $html = $this->cleanStructureHtml($html);
+        $html = $this->service->cleanStructureHtml($html);
 
         return response()->json(['html' => $html]);
-    }
-
-    private function cleanStructureHtml(string $html): string
-    {
-        // Normalize whitespace inside every opening tag (collapse Blade multi-line attributes)
-        $html = preg_replace_callback('/<[^>]+>/s', function ($m) {
-            $tag = preg_replace('/\s+/', ' ', $m[0]);
-
-            return str_replace(' >', '>', $tag);
-        }, $html);
-
-        // Remove instance-specific / noisy attributes
-        $html = preg_replace('/\s+id="[^"]*"/', '', $html);
-        $html = preg_replace('/\s+for="[^"]*"/', '', $html);
-        $html = preg_replace('/\s+value=""/', '', $html);
-        $html = preg_replace('/\s+placeholder=""/', '', $html);
-        $html = preg_replace('/\s+data-auto-populate="[^"]*"/', '', $html);
-        $html = preg_replace('/\s+data-conditions="[^"]*"/', '', $html);
-
-        // Remove empty utility divs left by field partial
-        $html = preg_replace('/<div class="invalid-feedback"><\/div>\s*/', '', $html);
-
-        // Re-indent cleanly: collapse 3+ blank lines to one
-        $html = preg_replace('/(\s*\n){3,}/', "\n\n", $html);
-
-        return trim($html);
     }
 
     public function analytics(Form $form): View
@@ -369,58 +353,23 @@ class FormController extends Controller
         $this->authorize('Forms.analytics.index');
 
         $form->load(['category']);
+        $data = $this->analyticsService->overview($form);
 
-        $submissionsByDay = DB::table('form_submissions')
-            ->where('form_id', $form->id)
-            ->where('created_at', '>=', now()->subDays(30))
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        $submissionsByStatus = DB::table('form_submissions')
-            ->where('form_id', $form->id)
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->get();
-
-        $submissionsByHour = DB::table('form_submissions')
-            ->where('form_id', $form->id)
-            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get();
-
-        $totalSubmissions = $form->submissions()->count();
-        $abandonCount = DB::table('form_abandon_tracking')
-            ->where('form_id', $form->id)
-            ->count();
-
-        $conversionRate = ($totalSubmissions + $abandonCount) > 0
-            ? round(($totalSubmissions / ($totalSubmissions + $abandonCount)) * 100, 1)
-            : 0;
-
-        return view('forms::settings.forms.analytics', compact(
-            'form',
-            'submissionsByDay',
-            'submissionsByStatus',
-            'submissionsByHour',
-            'totalSubmissions',
-            'abandonCount',
-            'conversionRate',
-        ));
+        return view('forms::settings.forms.analytics', [
+            'form' => $form,
+            'submissionsByDay' => $data['submissions_by_day'],
+            'submissionsByStatus' => $data['submissions_by_status'],
+            'submissionsByHour' => $data['submissions_by_hour'],
+            'totalSubmissions' => $data['total_submissions'],
+            'abandonCount' => $data['abandon_count'],
+            'conversionRate' => $data['conversion_rate'],
+            'topSourcePages' => $data['top_source_pages'] ?? collect(),
+        ]);
     }
 
-    public function updateProtection(Request $request, Form $form): JsonResponse
+    public function updateProtection(UpdateFormProtectionRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.forms.edit');
-
-        $data = $request->validate([
-            'honeypot_enabled' => ['sometimes', 'boolean'],
-            'captcha_enabled' => ['sometimes', 'boolean'],
-        ]);
-
-        $form->update($data);
+        $form->update($request->validated());
 
         return response()->json(['success' => true]);
     }
@@ -438,14 +387,12 @@ class FormController extends Controller
         return response()->json(['success' => true, 'step' => end($steps), 'count' => count($steps)]);
     }
 
-    public function removeStep(Request $request, Form $form): JsonResponse
+    public function removeStep(RemoveFormStepRequest $request, Form $form): JsonResponse
     {
-        $this->authorize('Forms.forms.edit');
-
-        $request->validate(['step_number' => ['required', 'integer', 'min:1']]);
+        $stepNumber = (int) $request->validated()['step_number'];
 
         $steps = collect($form->steps_config ?? [])
-            ->reject(fn ($s) => $s['number'] === $request->step_number)
+            ->reject(fn ($s) => $s['number'] === $stepNumber)
             ->values()
             ->map(fn ($s, $i) => array_merge($s, ['number' => $i + 1]))
             ->all();
@@ -453,37 +400,5 @@ class FormController extends Controller
         $form->update(['steps_config' => $steps]);
 
         return response()->json(['success' => true, 'count' => count($steps)]);
-    }
-
-    private function generateUniqueSlug(string $name, ?int $excludeId = null): string
-    {
-        $base = Str::slug($name);
-        $slug = $base;
-        $counter = 1;
-
-        while (Form::query()
-            ->where('slug', $slug)
-            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
-            ->exists()
-        ) {
-            $slug = $base.'-'.$counter++;
-        }
-
-        return $slug;
-    }
-
-    private function createInitialVersion(Form $form): void
-    {
-        $lastVersion = FormVersion::query()
-            ->where('form_id', $form->id)
-            ->max('version_number') ?? 0;
-
-        FormVersion::query()->create([
-            'form_id' => $form->id,
-            'version_number' => $lastVersion + 1,
-            'form_snapshot' => $form->toArray(),
-            'fields_snapshot' => $form->fields()->ordered()->get()->toArray(),
-            'created_by' => auth()->id(),
-        ]);
     }
 }

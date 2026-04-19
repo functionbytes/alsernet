@@ -1,511 +1,206 @@
-# Shortcode Module
+# Módulo Shortcode
 
-A powerful and flexible shortcode system for Laravel applications, similar to WordPress shortcodes.
+Sistema de shortcodes estilo WordPress para Laravel, integrado con el ecosistema Alsernet (Forms, Page, Menu, Blog, Media).
 
-## Features
+## Características
 
-- Easy shortcode registration and compilation
-- Support for nested shortcodes
-- Self-closing and enclosing shortcode syntax
-- Blade directive integration
-- Built-in caching for performance
-- Multiple default shortcodes included
-- Helper functions for easy usage
-- Facade support
+- Parser stack-based (admite shortcodes anidados de la misma etiqueta)
+- Cache persistente con Laravel Cache e invalidación por versión
+- Eventos, whitelist por contexto, deprecaciones, aliases
+- Integración directa con Forms / Page / Menu / Blog / Media
+- Shortcodes lógicos: `[if]`, `[for]`, `[user-name]`, `[current-year]`
+- Protección ReDoS con `pcre.backtrack_limit` y tamaño máximo 1 MB
+- Escape literal `[[shortcode]]` compatible con WordPress
+- API REST + vistas admin + 7 comandos artisan
+- Pipeline opcional HTMLPurifier y hook CSP nonce
 
-## Installation
-
-The module is automatically registered when enabled in your Laravel application.
-
-## Configuration
-
-Publish the configuration file:
-
-```bash
-php artisan vendor:publish --provider="Modules\Shortcode\Providers\ShortcodeServiceProvider" --tag="config"
-```
-
-Edit `config/shortcode.php` to customize:
+## Uso básico
 
 ```php
-return [
-    'enabled' => true,
-    'cache' => true,
-    'cache_duration' => 3600,
-    'auto_register' => true,
-    'default_shortcodes' => [
-        'button' => true,
-        'alert' => true,
-        // ... more shortcodes
-    ],
-];
-```
-
-## Usage
-
-### Basic Usage
-
-#### Using Helper Functions
-
-```php
-$content = '[button url="/contact"]Contact Us[/button]';
-$compiled = shortcode($content);
-// Output: <a href="/contact" class="btn btn-primary">Contact Us</a>
-```
-
-#### Using Facade
-
-```php
-use Modules\Shortcode\Facades\Shortcode;
-
-$content = '[alert type="success"]Operation completed![/alert]';
-$compiled = Shortcode::compile($content);
-```
-
-#### Using Blade Directive
-
-```blade
-@shortcode('[button url="/register"]Sign Up[/button]')
-
-{{-- Or with variable --}}
+// En una vista Blade:
 @shortcode($post->content)
-```
 
-### Default Shortcodes
+// En PHP:
+$html = shortcode('[button url="/contacto"]Contacto[/button]');
 
-#### 1. Button
-
-Creates styled buttons with links.
-
-```html
-[button url="/contact" class="primary" target="_blank"]Contact Us[/button]
-[button url="#" class="secondary" id="my-button"]Click Me[/button]
-```
-
-**Attributes:**
-- `url` (default: `#`) - Link URL
-- `class` (default: `btn-primary`) - Button class
-- `target` (optional) - Link target (_blank, _self, etc.)
-- `id` (optional) - Button ID
-
-**Output:**
-```html
-<a href="/contact" class="btn btn-primary" target="_blank">Contact Us</a>
-```
-
-#### 2. Alert
-
-Display Bootstrap alert messages.
-
-```html
-[alert type="success"]Your changes have been saved![/alert]
-[alert type="danger" dismissible="true"]Error occurred![/alert]
-```
-
-**Attributes:**
-- `type` (default: `info`) - Alert type: success, danger, warning, info
-- `dismissible` (default: `false`) - Make alert dismissible
-
-**Output:**
-```html
-<div class="alert alert-success" role="alert">Your changes have been saved!</div>
-```
-
-#### 3. Columns
-
-Create responsive column layouts.
-
-```html
-[columns count="3" gap="4"]
-    [column]Column 1[/column]
-    [column]Column 2[/column]
-    [column]Column 3[/column]
-[/columns]
-```
-
-**Attributes:**
-- `count` (default: `2`) - Number of columns
-- `gap` (default: `3`) - Gap size (1-5)
-
-**Output:**
-```html
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    <div class="col">Column 1</div>
-    <div class="col">Column 2</div>
-    <div class="col">Column 3</div>
-</div>
-```
-
-#### 4. YouTube
-
-Embed YouTube videos responsively.
-
-```html
-[youtube id="dQw4w9WgXcQ" /]
-[youtube id="abc123" width="640" height="360" title="My Video" /]
-```
-
-**Attributes:**
-- `id` (required) - YouTube video ID
-- `width` (default: `560`) - Video width
-- `height` (default: `315`) - Video height
-- `title` (default: `YouTube video player`) - Video title
-
-**Output:**
-```html
-<div class="ratio ratio-16x9">
-    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" ...></iframe>
-</div>
-```
-
-#### 5. Image
-
-Display images from Media module.
-
-```html
-[image id="123" size="medium" alt="Description" /]
-[image id="456" size="large" class="rounded" /]
-```
-
-**Attributes:**
-- `id` (required) - Media ID
-- `size` (default: `medium`) - Image size
-- `class` (default: `img-fluid`) - CSS class
-- `alt` (optional) - Alt text
-
-**Output:**
-```html
-<img src="/storage/media/image.jpg" class="img-fluid" alt="Description" loading="lazy">
-```
-
-#### 6. Icon
-
-Display Bootstrap Icons.
-
-```html
-[icon name="heart" size="24" color="danger" /]
-[icon name="star-fill" size="32" class="me-2" /]
-```
-
-**Attributes:**
-- `name` (default: `circle`) - Icon name
-- `size` (default: `24`) - Icon size in pixels
-- `color` (optional) - Bootstrap color class
-- `class` (optional) - Additional CSS classes
-
-**Output:**
-```html
-<i class="bi bi-heart text-danger" style="font-size: 24px;"></i>
-```
-
-#### 7. Badge
-
-Display Bootstrap badges.
-
-```html
-[badge type="primary"]New[/badge]
-[badge type="success" pill="true"]Featured[/badge]
-```
-
-**Attributes:**
-- `type` (default: `primary`) - Badge type
-- `pill` (default: `false`) - Pill style
-
-**Output:**
-```html
-<span class="badge bg-primary">New</span>
-```
-
-#### 8. Card
-
-Create Bootstrap cards.
-
-```html
-[card title="Card Title" class="mb-3"]
-    Card content goes here.
-[/card]
-```
-
-**Attributes:**
-- `title` (optional) - Card title
-- `class` (optional) - Additional CSS classes
-- `header_class` (optional) - Header CSS classes
-
-**Output:**
-```html
-<div class="card mb-3">
-    <div class="card-header"><h5 class="card-title mb-0">Card Title</h5></div>
-    <div class="card-body">Card content goes here.</div>
-</div>
-```
-
-#### 9. Accordion
-
-Create Bootstrap accordion.
-
-```html
-[accordion id="myAccordion"]
-    [accordion-item title="Section 1" parent="myAccordion" show="true"]
-        Content for section 1
-    [/accordion-item]
-    [accordion-item title="Section 2" parent="myAccordion"]
-        Content for section 2
-    [/accordion-item]
-[/accordion]
-```
-
-**Attributes (accordion):**
-- `id` (auto-generated) - Accordion ID
-- `class` (optional) - Additional CSS classes
-
-**Attributes (accordion-item):**
-- `title` (default: `Accordion Item`) - Item title
-- `parent` (default: `accordion`) - Parent accordion ID
-- `show` (default: `false`) - Show by default
-- `id` (auto-generated) - Item ID
-
-#### 10. Quote
-
-Display blockquotes.
-
-```html
-[quote author="John Doe" cite="Book Title"]
-    This is a great quote.
-[/quote]
-```
-
-**Attributes:**
-- `author` (optional) - Quote author
-- `cite` (optional) - Source citation
-
-**Output:**
-```html
-<blockquote class="blockquote">
-    <p>This is a great quote.</p>
-    <footer class="blockquote-footer">John Doe <cite title="Book Title">Book Title</cite></footer>
-</blockquote>
-```
-
-## Creating Custom Shortcodes
-
-### Method 1: In Service Provider
-
-```php
-use Modules\Shortcode\Facades\Shortcode;
-
-public function boot()
-{
-    Shortcode::register('price', function($attrs, $content) {
-        $currency = $attrs['currency'] ?? 'USD';
-        $amount = $attrs['amount'] ?? '0.00';
-
-        return sprintf(
-            '<span class="price">%s %s</span>',
-            $currency,
-            number_format($amount, 2)
-        );
-    });
-}
-```
-
-### Method 2: Using Helper Function
-
-```php
-register_shortcode('highlight', function($attrs, $content) {
-    $color = $attrs['color'] ?? 'yellow';
-
-    return sprintf(
-        '<mark style="background-color: %s;">%s</mark>',
-        htmlspecialchars($color),
-        $content
-    );
-});
-```
-
-### Usage:
-
-```html
-[price currency="EUR" amount="99.99" /]
-[highlight color="lightblue"]Important text[/highlight]
-```
-
-## Advanced Usage
-
-### Nested Shortcodes
-
-Shortcodes can be nested within each other:
-
-```html
-[card title="Pricing"]
-    [columns count="3"]
-        [column]
-            [badge type="primary"]Basic[/badge]
-            [price amount="9.99" /]
-        [/column]
-        [column]
-            [badge type="success"]Pro[/badge]
-            [price amount="29.99" /]
-        [/column]
-        [column]
-            [badge type="danger"]Enterprise[/badge]
-            [price amount="99.99" /]
-        [/column]
-    [/columns]
-[/card]
-```
-
-### Stripping Shortcodes
-
-Remove shortcodes from content:
-
-```php
+// Strip sin compilar:
 $plain = strip_shortcodes($content);
 ```
 
-### Checking Shortcode Existence
+## Registrar un shortcode custom
 
 ```php
-if (has_shortcode('button')) {
-    // Shortcode exists
+use Modules\Shortcode\Facades\Shortcode;
+
+Shortcode::register('highlight', function (array $attrs, string $content) {
+    $attrs = shortcode_atts(['color' => 'yellow'], $attrs);
+
+    return sprintf(
+        '<mark style="background:%s">%s</mark>',
+        htmlspecialchars($attrs['color']),
+        $content
+    );
+}, [
+    'description' => 'Resalta texto con color de fondo',
+    'example' => '[highlight color="yellow"]texto[/highlight]',
+    'attributes' => ['color' => 'Color de fondo CSS'],
+    // Opcionales:
+    // 'raw'        => true,   // el content no se re-procesa
+    // 'cacheable'  => false,  // bypass del cache (útil para datos dinámicos)
+    // 'alias_of'   => 'mark', // redirige al handler de otro
+    // 'deprecated' => '3.0',  // emite E_USER_DEPRECATED al usarse
+    // 'purify'     => true,   // pasa output por HTMLPurifier (si está instalado)
+]);
+```
+
+## Shortcodes default disponibles
+
+### Visuales (14)
+`[button]` `[alert]` `[columns]` `[column]` `[youtube]` `[image]` `[icon]` `[badge]` `[card]` `[accordion]` `[accordion-item]` `[quote]` `[contact-form]` (demo)
+
+### Integración con módulos
+- `[form id="X"]` / `[form slug="X"]` — módulo Forms
+- `[page slug="about"]` — módulo Page
+- `[menu location="header"]` — módulo Template
+- `[latest-posts count="5" category="news"]` — módulo Blog
+- `[post id="X"]` / `[post slug="X"]` — módulo Blog
+- `[media id="X" variant="thumb"]` — módulo Media
+
+### Lógicos y contextuales
+- `[if role="admin"]…[else]…[/if]` (condiciones: `role`, `permission`, `user-logged`, `user-id`)
+- `[for range="1-5"]Item {i}[/for]`
+- `[user-name]` `[user-email]` `[user-id]` `[site-name]` `[current-year]` `[current-date format="d/m/Y"]`
+
+## Sintaxis de atributos
+
+```
+[name="valor"]       comillas dobles
+[name='valor']       comillas simples
+[name=valor]         sin comillas (hasta espacio)
+[name]               booleano → $attrs['name'] === 'true'
+[shortcode "valor"]  posicional → $attrs[0]
+[data-id="42"]       guiones y dos puntos en nombres
+```
+
+## Escapar shortcodes literales
+
+Para mostrar `[button]` como texto sin compilar:
+```
+[[button]]
+```
+
+## API REST
+
+```
+POST /api/shortcodes/compile      {"content": "[alert]x[/alert]"}
+POST /api/shortcodes/strip        {"content": "..."}
+POST /api/shortcodes/check        {"name": "button"}
+GET  /api/shortcodes/list         → ["button", "alert", ...]
+GET  /api/shortcodes/registered   → [{name, description, example, attributes, ...}]
+GET  /api/shortcodes/stats        → {"button": 120, "alert": 34, ...}
+POST /api/shortcodes/clear-cache
+POST /api/shortcodes/stats/reset
+```
+
+Rate limit: 120 req/min por-usuario (si auth) o per-IP.
+
+## Comandos artisan
+
+```bash
+php artisan shortcode:list                     # listar registrados
+php artisan shortcode:compile "[alert]x[/alert]"
+php artisan shortcode:compile "..." --strip    # eliminar shortcodes
+php artisan shortcode:preview button           # renderiza el example
+php artisan shortcode:find resources/views     # escanea archivos
+php artisan shortcode:make my-widget           # genera stub
+php artisan shortcode:benchmark --iterations=1000
+php artisan shortcode:clear                    # invalida cache
+```
+
+## Vistas admin
+
+- `/panel/setting/shortcodes` — lista + stats cards + preview interactivo en vivo
+- `/panel/setting/shortcodes/reference` — documentación detallada
+- `/panel/setting/shortcodes/tester` — todos los ejemplos renderizados lado a lado
+
+## Configuración
+
+Archivo `config/shortcode.php`:
+
+```php
+'enabled' => true,
+'auto_register' => true,
+'cache' => true,
+'cache_duration' => 3600,
+'max_nesting_level' => 10,
+'error_handling' => 'log',          // silent | log | display | throw
+'track_usage' => true,
+'purify_enabled' => true,
+'default_shortcodes' => [
+    'button' => true,
+    'contact-form' => true,
+    // poner false para deshabilitar
+],
+```
+
+## Eventos
+
+```php
+use Modules\Shortcode\Events\{ShortcodeRegistered, ShortcodeCompiling, ShortcodeCompiled};
+
+// En un Listener:
+public function handle(ShortcodeCompiled $event): void
+{
+    $event->original;  // string
+    $event->compiled;  // string
+    $event->passes;    // int
+    $event->fromCache; // bool
 }
-
-// Get all registered shortcodes
-$shortcodes = all_shortcodes();
 ```
 
-### Clearing Cache
+## Pre-warmup con jobs
 
 ```php
-use Modules\Shortcode\Facades\Shortcode;
+use Modules\Shortcode\Jobs\ShortcodeWarmupJob;
 
-Shortcode::clearCache();
+// Tras un clearCache masivo, recalienta cache con los contenidos más leídos:
+ShortcodeWarmupJob::dispatch(
+    Page::published()->orderByDesc('views')->limit(50)->pluck('content')->all()
+);
 ```
 
-### Unregistering Shortcodes
+## Seguridad
 
-```php
-use Modules\Shortcode\Facades\Shortcode;
+- Atributos se escapan con `htmlspecialchars()`
+- Contenido (entre tags) NO se escapa — admite HTML y shortcodes anidados (comportamiento WordPress)
+- **Por tanto**: Solo compilar contenido de **administradores confiables**
+- Límite de tamaño: `ShortcodeCompiler::MAX_CONTENT_SIZE = 1 MB`
+- Límite de nesting: `config('shortcode.max_nesting_level', 10)`
+- Backtrack limit de PCRE ajustado durante compile
+- Rate limit per-user en API
 
-Shortcode::unregister('button');
+Para user-generated content, habilitar `purify` en el shortcode (requiere paquete `ezyang/htmlpurifier`).
+
+## Permisos
+
+```
+shortcode.view    → ver listado, referencia, tester, stats, compile API
+shortcode.manage  → clear cache, reset stats
 ```
 
-## Helper Functions
-
-| Function | Description |
-|----------|-------------|
-| `shortcode($content)` | Compile shortcodes in content |
-| `strip_shortcodes($content)` | Remove all shortcodes |
-| `register_shortcode($name, $callback)` | Register a new shortcode |
-| `has_shortcode($name)` | Check if shortcode exists |
-| `all_shortcodes()` | Get all registered shortcodes |
-
-## Blade Directives
-
-| Directive | Description |
-|-----------|-------------|
-| `@shortcode($content)` | Compile shortcodes |
-| `@stripshortcodes($content)` | Strip shortcodes |
-
-## Facade Methods
-
-| Method | Description |
-|--------|-------------|
-| `Shortcode::register($name, $callback)` | Register shortcode |
-| `Shortcode::compile($content)` | Compile content |
-| `Shortcode::strip($content)` | Strip shortcodes |
-| `Shortcode::has($name)` | Check existence |
-| `Shortcode::all()` | Get all shortcodes |
-| `Shortcode::clearCache()` | Clear cache |
-| `Shortcode::unregister($name)` | Remove shortcode |
-
-## Examples
-
-### Blog Post with Shortcodes
-
-```php
-// In your model or controller
-$post->content = '[alert type="info"]Updated on ' . now()->format('Y-m-d') . '[/alert]
-
-[quote author="Albert Einstein"]
-    Imagination is more important than knowledge.
-[/quote]
-
-[columns count="2"]
-    [column]
-        [card title="Features"]
-            [icon name="check-circle" color="success" /] Feature 1
-            [icon name="check-circle" color="success" /] Feature 2
-        [/card]
-    [/column]
-    [column]
-        [card title="Benefits"]
-            [badge type="primary"]Fast[/badge]
-            [badge type="success"]Reliable[/badge]
-        [/card]
-    [/column]
-[/columns]
-
-[button url="/learn-more" class="primary"]Learn More[/button]';
-
-// In your view
-{!! shortcode($post->content) !!}
+Seedear con:
+```bash
+php artisan module:seed Shortcode --class=ShortcodePermissionsSeeder
 ```
 
-### Custom Newsletter Shortcode
+## Tests
 
-```php
-// Register in ServiceProvider
-Shortcode::register('newsletter', function($attrs, $content) {
-    $placeholder = $attrs['placeholder'] ?? 'Enter your email';
-    $buttonText = $attrs['button'] ?? 'Subscribe';
-
-    return view('shortcode::newsletter', [
-        'placeholder' => $placeholder,
-        'buttonText' => $buttonText,
-        'content' => $content
-    ])->render();
-});
+```bash
+./vendor/bin/phpunit modules/Shortcode/tests
 ```
 
-## Security Considerations
+Suites: unit (parser, attrs, advanced, hyphen, features), feature (defaults, helpers, commands, snapshots, controller).
 
-- All attributes are automatically escaped with `htmlspecialchars()`
-- Content is not automatically escaped (allows HTML)
-- Always validate and sanitize user input
-- Be careful with user-generated shortcodes
+## Licencia
 
-## Performance
-
-- Compiled shortcodes are cached by default
-- Cache duration is configurable
-- Use `clearCache()` when updating shortcode definitions
-- Disable caching in development if needed
-
-## Troubleshooting
-
-### Shortcodes Not Working
-
-1. Check if module is enabled: `config('shortcode.enabled')`
-2. Clear cache: `Shortcode::clearCache()`
-3. Verify shortcode is registered: `has_shortcode('name')`
-
-### Nested Shortcodes Issues
-
-- Ensure proper closing tags
-- Check max nesting level in config
-- Use unique IDs for nested elements
-
-### Performance Issues
-
-- Enable caching in production
-- Increase cache duration
-- Optimize callback functions
-- Avoid database queries in shortcodes
-
-## License
-
-This module is open-sourced software licensed under the MIT license.
-
-## Credits
-
-Developed for Laravel modular applications using nWidart/laravel-modules.
+MIT
