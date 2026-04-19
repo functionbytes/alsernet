@@ -3,17 +3,21 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Role\Http\Controllers\PermissionController;
 use Modules\Role\Http\Controllers\RoleController;
+use Modules\Role\Http\Controllers\UserPermissionController;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 // Model binding for route parameters
 Route::model('role', Role::class);
-Route::model('permission', \Spatie\Permission\Models\Permission::class);
+Route::model('permission', Permission::class);
 
 // Roles management routes
 Route::prefix('roles')->name('roles.')->group(function () {
     Route::get('/', [RoleController::class, 'index'])->name('index');
     Route::get('/create', [RoleController::class, 'create'])->name('create');
     Route::get('/matrix', [RoleController::class, 'showPermissionMatrix'])->name('matrix');
+    Route::get('/compare', [RoleController::class, 'compare'])->name('compare');
+    Route::get('/{role}/export', [RoleController::class, 'export'])->name('export');
     Route::get('/show/{role}', [RoleController::class, 'show'])->name('show');
     Route::get('/edit/{role}', [RoleController::class, 'edit'])->name('edit');
     Route::post('/clone/{role}', [RoleController::class, 'clone'])->name('clone');
@@ -27,4 +31,10 @@ Route::prefix('permissions')->name('permissions.')->group(function () {
     Route::get('/', [PermissionController::class, 'index'])->name('index');
     Route::get('/create', [PermissionController::class, 'create'])->name('create');
     Route::get('/edit/{permission}', [PermissionController::class, 'edit'])->name('edit');
+});
+
+// User direct permissions routes (GET views)
+Route::prefix('user-permissions')->name('user-permissions.')->group(function () {
+    Route::get('/', [UserPermissionController::class, 'index'])->name('index');
+    Route::get('/{user}', [UserPermissionController::class, 'show'])->name('show');
 });

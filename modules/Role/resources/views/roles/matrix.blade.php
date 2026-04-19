@@ -13,7 +13,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Matriz de permisos</h5>
-                        <p class="small mb-0 text-muted">Vista completa de todos los permisos asignados a cada rol del sistema</p>
+                        <p class="small mb-0 text-muted">Permisos de módulos activos asignados a cada rol del sistema</p>
                     </div>
                     <div class="d-flex gap-2">
                         <a href="{{ route('settings.roles.index') }}" class="btn btn-light">
@@ -95,9 +95,13 @@
                         <i class="fa fa-circle-info fs-5 me-3 mt-1"></i>
                         <div>
                             <h6 class="fw-bold mb-2">Control de permisos por rol</h6>
-                            <p class="mb-0">
-                                Esta matriz muestra todos los permisos disponibles en el sistema y su asignación a cada rol.
+                            <p class="mb-1">
+                                Esta matriz muestra los permisos de los módulos activos del sistema y su asignación a cada rol.
                                 Haz clic en las celdas para asignar o revocar permisos en tiempo real.
+                            </p>
+                            <p class="mb-0 small text-muted">
+                                Mostrando permisos de <strong>{{ $totalActiveModules }}</strong> módulos activos.
+                                Los módulos desactivados no aparecen en esta vista.
                             </p>
                         </div>
                     </div>
@@ -190,7 +194,7 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <span class="text-muted">
-                        Total: <strong>{{ count($permissions) }}</strong> permisos | <strong>{{ count($roles) }}</strong> roles
+                        <strong>{{ count($permissions) }}</strong> permisos de <strong>{{ $totalActiveModules }}</strong> módulos activos | <strong>{{ count($roles) }}</strong> roles
                     </span>
                 </div>
             </div>

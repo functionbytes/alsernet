@@ -30,6 +30,9 @@
                             <li>
                                 <a class="dropdown-item" href="{{ route('settings.roles.matrix') }}">Matriz de permisos</a>
                             </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('settings.roles.compare') }}">Comparar roles</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -117,6 +120,7 @@
                                     <th>Guard</th>
                                     <th class="text-center">Usuarios</th>
                                     <th class="text-center">Estado</th>
+                                    <th>Modificado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -150,6 +154,7 @@
                                                 <span class="badge bg-light text-black">Normal</span>
                                             @endif
                                         </td>
+                                        <td><small class="text-muted">{{ $role->updated_at->format('d/m/Y') }}</small></td>
                                         <td class="text-center">
                                             @if(!$isSystem)
                                                 <div class="dropdown">
@@ -183,6 +188,11 @@
                                                                 @csrf
                                                                 <button type="submit" class="dropdown-item">Clonar</button>
                                                             </form>
+                                                        </li>
+                                                        <li>
+                                                            <a href="{{ route('settings.roles.export', $role->id) }}" class="dropdown-item" download>
+                                                                Exportar JSON
+                                                            </a>
                                                         </li>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li>

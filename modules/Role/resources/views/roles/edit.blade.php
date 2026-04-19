@@ -108,6 +108,9 @@
                         <a href="{{ route('settings.roles.show.users', $role->id) }}" class="btn btn-outline-secondary">
                             Ver usuarios
                         </a>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#copyPermsModal">
+                            Copiar permisos de otro rol
+                        </button>
                         <a href="{{ route('settings.roles.index') }}" class="btn btn-outline-secondary">
                             Volver al listado
                         </a>
@@ -147,12 +150,66 @@
 
     </div>
 
+<div class="modal fade" id="copyPermsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Copiar permisos de otro rol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info border-0">
+                    <i class="fas fa-circle-info me-2"></i>
+                    Se agregarán los permisos del rol seleccionado al rol actual. Los permisos existentes no se eliminarán.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Copiar permisos desde</label>
+                    <select id="sourceRoleSelect" class="form-select">
+                        <option value="">Selecciona un rol...</option>
+                        @foreach(\Spatie\Permission\Models\Role::where('id', '!=', $role->id)->orderBy('name')->get() as $r)
+                            <option value="{{ $r->id }}">{{ $r->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="copyPermsBtn" class="btn btn-primary w-100 mb-2">Copiar permisos</button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function () {
     $('.select2').select2({ minimumResultsForSearch: Infinity });
+
+    $('#copyPermsBtn').on('click', function () {
+        var sourceId = $('#sourceRoleSelect').val();
+        if (!sourceId) { toastr.warning('Selecciona un rol de origen.'); return; }
+
+        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Copiando...');
+
+        $.ajax({
+            url: '{{ route("settings.roles.copy-from", $role->id) }}',
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { source_role_id: sourceId },
+            success: function (r) {
+                toastr.success(r.message, 'Éxito', { positionClass: 'toast-bottom-right' });
+                $('#copyPermsModal').modal('hide');
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al copiar permisos.', 'Error', { positionClass: 'toast-bottom-right' });
+            },
+            complete: function () {
+                $btn.prop('disabled', false).html('Copiar permisos');
+            }
+        });
+    });
 
     $('#formRoles').validate({
         rules: {

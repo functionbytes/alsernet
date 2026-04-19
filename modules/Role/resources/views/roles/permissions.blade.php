@@ -76,6 +76,11 @@
                     </div>
 
                     <div class="card-body">
+                        <div class="mb-3">
+                            <input type="search" id="permissionFilter" class="form-control"
+                                   placeholder="Filtrar permisos por nombre...">
+                        </div>
+
                         <div class="row" id="permissionsContainer">
                             @php
                                 $rolePermissionsArray = is_array($rolePermissions) ? $rolePermissions : $rolePermissions->toArray();
@@ -130,6 +135,18 @@
 @push('scripts')
     <script>
         $(function() {
+            $('#permissionFilter').on('input', function () {
+                var term = $(this).val().toLowerCase();
+                $('.form-check').each(function () {
+                    var label = $(this).find('.form-check-label').text().toLowerCase();
+                    $(this).closest('.col-md-4').toggle(term === '' || label.includes(term));
+                });
+                $('.card.shadow-sm').each(function () {
+                    var visible = $(this).find('.col-md-4:visible').length;
+                    $(this).closest('.col-md-12').toggle(visible > 0);
+                });
+            });
+
             $('#assignPermissionsForm').on('submit', function(e) {
                 e.preventDefault();
                 const roleId = $('#role_id').val();

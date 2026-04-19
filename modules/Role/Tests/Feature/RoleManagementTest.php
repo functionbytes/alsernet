@@ -204,4 +204,168 @@ class RoleManagementTest extends TestCase
 
         $response->assertViewHasAll(['roles', 'permissions', 'permissionsByModule', 'rolePermissions']);
     }
+
+    // -------------------------------------------------------------------------
+    // POST /settings/roles/{role}/duplicate
+    // -------------------------------------------------------------------------
+
+    public function test_can_duplicate_role(): void
+    {
+        $user = $this->createAdminUser();
+        $perm = Permission::firstOrCreate(['name' => 'test.duplicate.perm', 'guard_name' => 'web']);
+        $original = $this->createRole(['name' => 'rol_a_duplicar']);
+        $original->givePermissionTo($perm);
+
+        $this->actingAs($user)
+            ->postJson(route('settings.roles.duplicate', $original->id))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $copy = Role::where('name', $original->name.' (Copy)')->first();
+        $this->assertNotNull($copy);
+        $this->assertTrue($copy->hasPermissionTo('test.duplicate.perm'));
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /settings/roles/{role}/export
+    // -------------------------------------------------------------------------
+
+    public function test_can_export_role(): void
+    {
+        $user = $this->createAdminUser();
+        $perm = Permission::firstOrCreate(['name' => 'test.export.perm', 'guard_name' => 'web']);
+        $role = $this->createRole(['name' => 'rol_exportar']);
+        $role->givePermissionTo($perm);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('settings.roles.export', $role->id))
+            ->assertOk();
+
+        $data = $response->json();
+        $this->assertEquals('rol_exportar', $data['name']);
+        $this->assertContains('test.export.perm', $data['permissions']);
+        $this->assertArrayHasKey('exported_at', $data);
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /settings/roles/{role}/copy-from
+    // -------------------------------------------------------------------------
+
+    public function test_can_copy_permissions_from_another_role(): void
+    {
+        $user = $this->createAdminUser();
+        $perm = Permission::firstOrCreate(['name' => 'test.copyfrom.perm', 'guard_name' => 'web']);
+        $source = $this->createRole(['name' => 'rol_origen']);
+        $source->givePermissionTo($perm);
+        $target = $this->createRole(['name' => 'rol_destino']);
+
+        $this->actingAs($user)
+            ->postJson(route('settings.roles.copy-from', $target->id), [
+                'source_role_id' => $source->id,
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertTrue($target->fresh()->hasPermissionTo('test.copyfrom.perm'));
+    }
+
+    public function test_copy_permissions_requires_different_role(): void
+    {
+        $user = $this->createAdminUser();
+        $role = $this->createRole(['name' => 'rol_mismo_origen']);
+
+        $this->actingAs($user)
+            ->postJson(route('settings.roles.copy-from', $role->id), [
+                'source_role_id' => $role->id,
+            ])
+            ->assertUnprocessable();
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /settings/roles/compare
+    // -------------------------------------------------------------------------
+
+    public function test_compare_returns_view_without_roles(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)
+            ->get(route('settings.roles.compare'))
+            ->assertOk()
+            ->assertViewIs('role::roles.compare')
+            ->assertViewHasAll(['roles', 'roleA', 'roleB', 'onlyInA', 'onlyInB', 'inBoth']);
+    }
+
+    public function test_compare_shows_permission_diff(): void
+    {
+        $user = $this->createAdminUser();
+        $permA = Permission::firstOrCreate(['name' => 'test.compare.only_a', 'guard_name' => 'web']);
+        $permB = Permission::firstOrCreate(['name' => 'test.compare.only_b', 'guard_name' => 'web']);
+        $permBoth = Permission::firstOrCreate(['name' => 'test.compare.shared', 'guard_name' => 'web']);
+
+        $roleA = $this->createRole(['name' => 'rol_compare_a']);
+        $roleA->givePermissionTo([$permA, $permBoth]);
+        $roleB = $this->createRole(['name' => 'rol_compare_b']);
+        $roleB->givePermissionTo([$permB, $permBoth]);
+
+        $response = $this->actingAs($user)
+            ->get(route('settings.roles.compare', ['role_a' => $roleA->id, 'role_b' => $roleB->id]))
+            ->assertOk();
+
+        $this->assertTrue($response->viewData('onlyInA')->contains('test.compare.only_a'));
+        $this->assertTrue($response->viewData('onlyInB')->contains('test.compare.only_b'));
+        $this->assertTrue($response->viewData('inBoth')->contains('test.compare.shared'));
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /settings/roles/modules/{role}
+    // -------------------------------------------------------------------------
+
+    public function test_show_modules_returns_view(): void
+    {
+        $user = $this->createAdminUser();
+        $role = $this->createRole();
+
+        $this->actingAs($user)
+            ->get(route('settings.roles.show.modules', $role->id))
+            ->assertOk()
+            ->assertViewIs('role::roles.modules')
+            ->assertViewHasAll(['role', 'modules', 'roleModules']);
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /settings/roles/{role}/modules
+    // -------------------------------------------------------------------------
+
+    public function test_can_update_role_modules(): void
+    {
+        $user = $this->createAdminUser();
+        $role = $this->createRole();
+        Permission::firstOrCreate(['name' => 'modules.view.documents', 'guard_name' => 'web']);
+
+        $this->actingAs($user)
+            ->postJson(route('settings.roles.update.modules', $role->id), [
+                'modules' => ['documents'],
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertTrue($role->fresh()->hasPermissionTo('modules.view.documents'));
+    }
+
+    public function test_update_modules_with_empty_array_removes_all_module_permissions(): void
+    {
+        $user = $this->createAdminUser();
+        $role = $this->createRole();
+        $perm = Permission::firstOrCreate(['name' => 'modules.view.media', 'guard_name' => 'web']);
+        $role->givePermissionTo($perm);
+
+        $this->actingAs($user)
+            ->postJson(route('settings.roles.update.modules', $role->id), [
+                'modules' => [],
+            ])
+            ->assertOk();
+
+        $this->assertFalse($role->fresh()->hasPermissionTo('modules.view.media'));
+    }
 }

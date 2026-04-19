@@ -8,17 +8,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Role\Events\RoleCreated;
 use Modules\Role\Events\RoleDeleted;
 use Modules\Role\Events\RoleUpdated;
 use Modules\Role\Events\UserRoleChanged;
 use Modules\Role\Http\Requests\Systems\RoleRequest;
+use Modules\Role\Services\ActivePermissionService;
+use Nwidart\Modules\Facades\Module;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    public function __construct(
+        private readonly ActivePermissionService $activePermissionService,
+    ) {}
+
     /**
      * Display a listing of roles
      */
@@ -27,7 +35,7 @@ class RoleController extends Controller
         $perPage = $request->get('per_page', $this->getPaginationPerPage());
         $searchKey = $request->get('search', '');
 
-        $roles = Role::withCount('users')
+        $roles = Role::withCount(['users', 'permissions as permissions_count'])
             ->when($searchKey, function ($query) use ($searchKey) {
                 return $query->where(function ($q) use ($searchKey) {
                     $q->where('name', 'like', "%{$searchKey}%")
@@ -97,13 +105,19 @@ class RoleController extends Controller
     {
         $role->load('users', 'permissions');
 
+        $activities = Activity::where('subject_type', Role::class)
+            ->where('subject_id', $role->id)
+            ->latest()
+            ->take(10)
+            ->get();
+
         if (request()->expectsJson()) {
             return $this->success('Role retrieved successfully', [
                 'role' => $role,
             ]);
         }
 
-        return view('role::roles.show', compact('role'));
+        return view('role::roles.show', compact('role', 'activities'));
     }
 
     /**
@@ -284,7 +298,7 @@ class RoleController extends Controller
      */
     public function showPermissions(Role $role): View
     {
-        $permissions = Permission::orderBy('name')->get();
+        $permissions = $this->activePermissionService->getActivePermissions();
         $rolePermissions = $role->permissions->pluck('id')->toArray();
 
         return view('role::roles.permissions', compact('role', 'permissions', 'rolePermissions'));
@@ -297,10 +311,15 @@ class RoleController extends Controller
     {
         // Handle individual permission toggle (from permission matrix)
         if ($request->has('permission_id') && $request->has('action')) {
-            $permissionId = $request->input('permission_id');
+            $request->validate([
+                'permission_id' => ['required', 'integer', 'exists:permissions,id'],
+                'action' => ['required', 'in:attach,detach'],
+            ]);
+
+            $permissionId = $request->integer('permission_id');
             $action = $request->input('action');
 
-            $permission = Permission::findOrFail($permissionId);
+            $permission = Permission::findById($permissionId);
 
             if ($action === 'attach') {
                 $role->givePermissionTo($permission);
@@ -463,7 +482,9 @@ class RoleController extends Controller
     {
         $roles = Role::with('permissions')->orderBy('name')->get();
 
-        $permissions = Permission::orderBy('name')->get();
+        $permissions = $this->activePermissionService->getActivePermissions();
+
+        $allModules = collect(Module::all());
 
         $permissionsByModule = $permissions->groupBy(function (Permission $permission) {
             return explode('.', $permission->name)[0] ?? 'other';
@@ -475,11 +496,14 @@ class RoleController extends Controller
             fn (Role $role) => [$role->id => $role->permissions->pluck('id')->toArray()]
         )->toArray();
 
+        $totalActiveModules = $allModules->filter(fn ($m) => $m->isEnabled())->count();
+
         return view('role::roles.matrix', compact(
             'roles',
             'permissions',
             'permissionsByModule',
-            'rolePermissions'
+            'rolePermissions',
+            'totalActiveModules'
         ));
     }
 
@@ -528,5 +552,78 @@ class RoleController extends Controller
         }
 
         return response()->json(['success' => true, 'count' => $roles->count(), 'message' => $msg]);
+    }
+
+    /**
+     * Export role data as a downloadable JSON file
+     */
+    public function export(Role $role): JsonResponse
+    {
+        $data = [
+            'name' => $role->name,
+            'guard_name' => $role->guard_name,
+            'description' => $role->description,
+            'permissions' => $role->permissions()->pluck('name')->toArray(),
+            'exported_at' => now()->toIso8601String(),
+        ];
+
+        return response()->json($data)
+            ->header('Content-Disposition', 'attachment; filename="role-'.$role->name.'.json"');
+    }
+
+    /**
+     * Copy permissions from another role (merge, no replace)
+     */
+    public function copyPermissionsFrom(Request $request, Role $role): JsonResponse
+    {
+        $request->validate([
+            'source_role_id' => ['required', 'integer', 'exists:roles,id', Rule::notIn([$role->id])],
+        ]);
+
+        $sourceRole = Role::findById($request->integer('source_role_id'));
+        $newPermissions = $sourceRole->permissions;
+
+        $role->givePermissionTo($newPermissions);
+
+        $count = $newPermissions->count();
+
+        activity()
+            ->performedOn($role)
+            ->causedBy(auth()->user())
+            ->withProperties(['source_role' => $sourceRole->name, 'permissions_count' => $count])
+            ->log("Permisos copiados del rol {$sourceRole->name}");
+
+        return $this->success("Se copiaron {$count} permisos del rol '{$sourceRole->name}'.", [
+            'permissions_count' => $role->permissions()->count(),
+        ]);
+    }
+
+    /**
+     * Compare permissions between two roles
+     */
+    public function compare(Request $request): View
+    {
+        $request->validate([
+            'role_a' => ['nullable', 'integer', 'exists:roles,id'],
+            'role_b' => ['nullable', 'integer', 'exists:roles,id'],
+        ]);
+
+        $roles = Role::orderBy('name')->get();
+        $roleA = $request->filled('role_a') ? Role::with('permissions')->find($request->integer('role_a')) : null;
+        $roleB = $request->filled('role_b') ? Role::with('permissions')->find($request->integer('role_b')) : null;
+
+        $onlyInA = collect();
+        $onlyInB = collect();
+        $inBoth = collect();
+
+        if ($roleA && $roleB) {
+            $permA = $roleA->permissions->pluck('name');
+            $permB = $roleB->permissions->pluck('name');
+            $inBoth = $permA->intersect($permB)->values();
+            $onlyInA = $permA->diff($permB)->values();
+            $onlyInB = $permB->diff($permA)->values();
+        }
+
+        return view('role::roles.compare', compact('roles', 'roleA', 'roleB', 'onlyInA', 'onlyInB', 'inBoth'));
     }
 }

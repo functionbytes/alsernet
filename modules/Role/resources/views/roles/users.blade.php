@@ -121,7 +121,7 @@
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <span>{{ Str::title($user->first_name . ' ' . $user->last_name) }}</span>
+                                                <span>{{ Str::title($user->firstname . ' ' . $user->lastname) }}</span>
                                                 @if($user->roles()->count() > 1)
                                                     <small class="text-muted">{{ $user->roles()->count() }} roles</small>
                                                 @endif
@@ -160,7 +160,7 @@
                                                     <li>
                                                         <button type="button" class="dropdown-item remove-user-btn"
                                                                 data-user-id="{{ $user->id }}"
-                                                                data-user-name="{{ $user->first_name }} {{ $user->last_name }}"
+                                                                data-user-name="{{ $user->firstname }} {{ $user->lastname }}"
                                                                 data-role-id="{{ $role->id }}">
                                                             Remover del rol
                                                         </button>

@@ -4,11 +4,11 @@ namespace Modules\Role\Tests;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -19,22 +19,15 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Use real MariaDB — SQLite lacks guard_name on the roles table
-        // due to a conflicting stripped-down migration that runs first.
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.database' => 'inoqualabsystem',
-        ]);
-        DB::purge();
-        DB::reconnect('mysql');
-
-        // Tables are expected to exist in the MariaDB dev database.
-        // Run `php artisan migrate` manually if needed before running these tests.
+        // phpunit.xml routes DB_CONNECTION=mariadb → system_testing which has
+        // all Spatie permission tables. Flush the permission cache so each test
+        // starts with a clean Spatie state (avoids RoleAlreadyExists errors).
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     protected function createAdminUser(): User
     {
-        $role = Role::firstOrCreate(['name' => 'administrative', 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
 
         $user = User::create([
             'uid' => Str::uuid(),

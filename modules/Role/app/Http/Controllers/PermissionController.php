@@ -64,6 +64,7 @@ class PermissionController extends Controller
                 'string',
                 'in:web,api',
             ],
+            'description' => ['nullable', 'string', 'max:500'],
         ], [
             'name.required' => 'El nombre del permiso es requerido.',
             'name.string' => 'El nombre debe ser una cadena de texto.',
@@ -73,11 +74,13 @@ class PermissionController extends Controller
             'name.regex' => 'El nombre solo puede contener letras, números, puntos, guiones y guiones bajos.',
             'guard_name.required' => 'El guard es requerido.',
             'guard_name.in' => 'El guard debe ser "web" o "api".',
+            'description.max' => 'La descripción no puede exceder 500 caracteres.',
         ]);
 
         $permission = Permission::create([
             'name' => Str::lower($validated['name']),
             'guard_name' => Str::lower($validated['guard_name']),
+            'description' => $validated['description'] ?? null,
         ]);
 
         if ($request->expectsJson()) {
@@ -117,6 +120,7 @@ class PermissionController extends Controller
                 'string',
                 'in:web,api',
             ],
+            'description' => ['nullable', 'string', 'max:500'],
         ], [
             'name.required' => 'El nombre del permiso es requerido.',
             'name.string' => 'El nombre debe ser una cadena de texto.',
@@ -126,11 +130,13 @@ class PermissionController extends Controller
             'name.regex' => 'El nombre solo puede contener letras, números, puntos, guiones y guiones bajos.',
             'guard_name.required' => 'El guard es requerido.',
             'guard_name.in' => 'El guard debe ser "web" o "api".',
+            'description.max' => 'La descripción no puede exceder 500 caracteres.',
         ]);
 
         $permission->update([
             'name' => Str::lower($validated['name']),
             'guard_name' => Str::lower($validated['guard_name']),
+            'description' => $validated['description'] ?? null,
         ]);
 
         if ($request->expectsJson()) {

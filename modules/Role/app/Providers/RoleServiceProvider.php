@@ -2,8 +2,15 @@
 
 namespace Modules\Role\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Role\Events\RoleCreated;
+use Modules\Role\Events\RoleDeleted;
+use Modules\Role\Events\RoleUpdated;
+use Modules\Role\Events\UserRoleChanged;
+use Modules\Role\Listeners\ClearRolePermissionCacheListener;
+use Modules\Role\Listeners\UserRoleChangedListener;
 use Modules\Theme\Services\NavService;
 
 class RoleServiceProvider extends ServiceProvider
@@ -13,6 +20,11 @@ class RoleServiceProvider extends ServiceProvider
     public function register()
     {
         // Merge module configs
+        $this->mergeConfigFrom(
+            __DIR__.'/../../config/role.php',
+            'role'
+        );
+
         $this->mergeConfigFrom(
             __DIR__.'/../../config/permission.php',
             'permission'
@@ -34,6 +46,7 @@ class RoleServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'role');
 
         $this->publishes([
@@ -43,10 +56,21 @@ class RoleServiceProvider extends ServiceProvider
         // Register navigation menus
         $this->registerMenus();
 
+        // Register event listeners
+        $this->registerListeners();
+
         // Register routes after all providers have booted
         $this->booted(function () {
             $this->registerRoutes();
         });
+    }
+
+    protected function registerListeners(): void
+    {
+        Event::listen(RoleCreated::class, ClearRolePermissionCacheListener::class);
+        Event::listen(RoleUpdated::class, ClearRolePermissionCacheListener::class);
+        Event::listen(RoleDeleted::class, ClearRolePermissionCacheListener::class);
+        Event::listen(UserRoleChanged::class, UserRoleChangedListener::class);
     }
 
     /**
@@ -83,6 +107,7 @@ class RoleServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Roles', 'route' => 'settings.roles.index'],
                 ['label' => 'Permisos', 'route' => 'settings.permissions.index'],
+                ['label' => 'Permisos directos', 'route' => 'settings.user-permissions.index'],
             ],
         ]);
     }

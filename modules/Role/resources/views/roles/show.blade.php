@@ -209,10 +209,10 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                                              style="width: 40px; height: 40px; background-color: #b10100; color: white; font-weight: bold;">
-                                            {{ strtoupper(substr($user->firstname ?? $user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->lastname ?? $user->last_name ?? 'S', 0, 1)) }}
+                                            {{ strtoupper(substr($user->firstname ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->lastname ?? 'S', 0, 1)) }}
                                         </div>
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-0">{{ $user->firstname ?? $user->first_name }} {{ $user->lastname ?? $user->last_name }}</h6>
+                                            <h6 class="mb-0">{{ $user->firstname }} {{ $user->lastname }}</h6>
                                             <small class="text-muted">{{ $user->email }}</small>
                                         </div>
                                         @if(isset($user->is_active))
@@ -316,6 +316,28 @@
                                 </div>
                             </div>
                         @endif
+
+                        @if($activities->count() > 0)
+                            <hr>
+                            <h6 class="text-muted mb-3">Actividad reciente</h6>
+                            @foreach($activities as $activity)
+                                <div class="timeline-item d-flex position-relative mb-3">
+                                    <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                        <div class="timeline-badge rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width: 35px; height: 35px; background-color: rgba(144,187,19,0.1);">
+                                            <i class="fas fa-history text-primary" style="font-size:0.75rem;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-desc fs-3 text-dark ms-3">
+                                        <h6 class="mb-0" style="font-size:0.8rem;">{{ $activity->description }}</h6>
+                                        @if($activity->causer)
+                                            <small class="text-muted">por {{ $activity->causer->firstname ?? $activity->causer->name }}</small>
+                                        @endif
+                                        <br><small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             </div>
@@ -332,16 +354,24 @@
                         </a>
 
                         @if(!in_array($role->name, ['super-settings', 'customer']))
-                            <button type="button" class="btn btn-outline-warning" onclick="alert('Función duplicar en desarrollo')">
-                                <i class="fas fa-copy me-2"></i> Duplicar rol
-                            </button>
+                            <form method="POST" action="{{ route('settings.roles.clone', $role) }}"
+                                  onsubmit="return confirm('¿Clonar el rol {{ $role->name }}?')">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-warning w-100">
+                                    Duplicar rol
+                                </button>
+                            </form>
 
                             <hr class="my-2">
 
-                            <button type="button" class="btn btn-outline-danger"
-                                    onclick="if(confirm('¿Estás seguro de eliminar este rol?')) { window.location='{{ route('settings.roles.destroy', $role) }}' }">
-                                <i class="fas fa-trash me-2"></i> Eliminar rol
-                            </button>
+                            <form method="POST" action="{{ route('settings.roles.destroy', $role) }}"
+                                  onsubmit="return confirm('¿Eliminar el rol {{ $role->name }}? Esta acción no se puede deshacer.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    Eliminar rol
+                                </button>
+                            </form>
                         @endif
 
                         <a href="{{ route('settings.roles.index') }}" class="btn btn-secondary">
