@@ -382,6 +382,23 @@ class NavService
         $miniItems = self::getMiniItemsForUser();
         $sidebars = self::getSidebarsForUser();
 
+        // Si la ruta actual coincide exactamente con la URL directa de un mini-item,
+        // ese ítem se resalta pero no se abre ningún panel lateral.
+        $currentRoute = request()->route()?->getName();
+        $directMatch = $currentRoute
+            ? $miniItems->first(fn ($item) => ! empty($item['url']) && $item['url'] === $currentRoute)
+            : null;
+
+        if ($directMatch) {
+            return [
+                'miniItems' => $miniItems,
+                'sidebars' => $sidebars,
+                'activeSidebarId' => null,
+                'activeMiniId' => $directMatch['sidebar_id'],
+                'activeItemRoute' => null,
+            ];
+        }
+
         // Sidebar candidato por ruta (exacto primero, luego prefijo)
         $candidateSidebarId = self::findActiveSidebarForUser($sidebars, $user)
             ?? self::findSidebarByRoutePrefix($sidebars);
@@ -394,15 +411,11 @@ class NavService
         // Panel solo se abre si hay ítem coincidente
         $activeSidebarId = $activeItemRoute ? $candidateSidebarId : null;
 
-        // El ícono mini-nav se resalta con el candidato (aunque no abra panel)
-        // Ej: settings.users.index resalta Settings aunque no abra su panel
-        $activeMiniId = $candidateSidebarId;
-
         return [
             'miniItems' => $miniItems,
             'sidebars' => $sidebars,
             'activeSidebarId' => $activeSidebarId,
-            'activeMiniId' => $activeMiniId,
+            'activeMiniId' => $candidateSidebarId,
             'activeItemRoute' => $activeItemRoute,
         ];
     }

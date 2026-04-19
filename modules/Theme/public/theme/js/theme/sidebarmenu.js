@@ -97,14 +97,21 @@ if ((at = "vertical")) {
             // This is for show menu
             //****************************
 
-            var closestNav = elements?.closest("nav[class^=sidebar-nav]");
-            var menuid = (closestNav && closestNav.id) || "menu-right-mini-1";
-            var menu = menuid[menuid.length - 1];
-
-            document
-                .getElementById("menu-right-mini-" + menu)
-                .classList.add("d-block");
-            document.getElementById("mini-" + menu).classList.add("selected");
+            var selectedMiniOnLoad = document.querySelector(".mini-nav-item.selected");
+            if (selectedMiniOnLoad && !selectedMiniOnLoad.dataset.directUrl) {
+                var activeSidebarId = selectedMiniOnLoad.dataset.sidebarId;
+                if (activeSidebarId) {
+                    var activeNavPanel = document.getElementById("menu-right-" + activeSidebarId);
+                    if (activeNavPanel) {
+                        activeNavPanel.classList.remove("d-none");
+                        activeNavPanel.classList.add("d-block");
+                    }
+                }
+                var sidebarMenu = document.querySelector(".sidebarmenu");
+                if (sidebarMenu) {
+                    sidebarMenu.classList.remove("d-none");
+                }
+            }
 
             //****************************
             // This is for mini sidebar
@@ -119,7 +126,10 @@ if ((at = "vertical")) {
                 .querySelectorAll(".mini-nav .mini-nav-item")
                 .forEach(function (item) {
                     item.addEventListener("click", function () {
-                        var id = this.id;
+                        if (this.dataset.directUrl) {
+                            return;
+                        }
+                        var sidebarId = this.dataset.sidebarId || this.id.replace(/^mini-/, "");
                         document
                             .querySelectorAll(".mini-nav .mini-nav-item")
                             .forEach(function (navItem) {
@@ -130,10 +140,17 @@ if ((at = "vertical")) {
                             .querySelectorAll(".sidebarmenu nav")
                             .forEach(function (nav) {
                                 nav.classList.remove("d-block");
+                                nav.classList.add("d-none");
                             });
-                        document
-                            .getElementById("menu-right-" + id)
-                            .classList.add("d-block");
+                        var targetNav = document.getElementById("menu-right-" + sidebarId);
+                        if (targetNav) {
+                            targetNav.classList.remove("d-none");
+                            targetNav.classList.add("d-block");
+                        }
+                        var sidebarMenu = document.querySelector(".sidebarmenu");
+                        if (sidebarMenu) {
+                            sidebarMenu.classList.remove("d-none");
+                        }
                         document.body.setAttribute("data-sidebartype", "full");
                     });
                 });

@@ -30,9 +30,9 @@
 
     </div>
 
-    <script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
-    <script src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
-    <script src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
+    <script data-pagespeed-no-defer src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
+    <script data-pagespeed-no-defer src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
+    <script data-pagespeed-no-defer src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
 
     @stack('scripts')
 

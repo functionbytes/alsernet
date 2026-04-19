@@ -93,29 +93,29 @@
 </div>
 
 <!-- Core Libraries -->
-<script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
-<script src="{{ themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ themeAsset('libs/simplebar/dist/simplebar.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/simplebar/dist/simplebar.min.js') }}"></script>
 
 <!-- Form/Input Libraries -->
-<script src="{{ themeAsset('libs/taginput/bootstrap-tagsinput.js') }}"></script>
-<script src="{{ themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}"></script>
-<script src="{{ themeAsset('libs/daterangepicker/daterangepicker.js') }}"></script>
-<script src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
-<script src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
-<script src="{{ themeAsset('libs/dropzone/dist/dropzone.js') }}"></script>
-<script src="{{ themeAsset('libs/toastr/toastr.min.js') }}"></script>
-<script src="{{ themeAsset('libs/quill/dist/quill.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/taginput/bootstrap-tagsinput.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/daterangepicker/daterangepicker.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/dropzone/dist/dropzone.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/toastr/toastr.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/quill/dist/quill.min.js') }}"></script>
 
 <!-- Theme & App Scripts (orden importante) -->
-<script src="{{ themeAsset('js/theme/app.init.js') }}"></script>
-<script src="{{ themeAsset('js/theme/theme.js') }}"></script>
-<script src="{{ themeAsset('js/theme/app.min.js') }}"></script>
-<script src="{{ themeAsset('js/theme/sidebarmenu.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/theme/app.init.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/theme/theme.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/theme/app.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/theme/sidebarmenu.js') }}"></script>
 
 <!-- Form Initializers -->
-<script src="{{ themeAsset('js/forms/select2.init.js') }}"></script>
-<script src="{{ themeAsset('js/forms/quill-init.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/forms/select2.init.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ themeAsset('js/forms/quill-init.js') }}"></script>
 <script>
 $(document).ready(function () {
     if ($.fn.daterangepicker && $('.daterange').length) {
@@ -153,20 +153,20 @@ $(document).ready(function () {
 </script>
 
 <!-- Core App Scripts -->
-<script src="{{ url('core/tooltipster/js/tooltipster.bundle.min.js') }}"></script>
-<script src="{{ url('core/js/functions.js') }}"></script>
-<script src="{{ url('core/js/link.js') }}"></script>
-<script src="{{ url('core/js/box.js') }}"></script>
-<script src="{{ url('core/js/popup.js') }}"></script>
-<script src="{{ url('core/js/list.js') }}"></script>
-<script src="{{ url('core/js/anotify.js') }}"></script>
-<script src="{{ url('core/js/dialog.js') }}"></script>
-<script src="{{ url('core/js/iframe_modal.js') }}"></script>
-<script src="{{ url('core/js/search.js') }}"></script>
-<script src="{{ url('core/js/image_popup.js') }}"></script>
-<script src="{{ url('core/js/app.js') }}"></script>
-<script src="{{ url('core/js/bulk.js') }}"></script>
-<script src="{{ url('modules/Media/js/media-picker.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/tooltipster/js/tooltipster.bundle.min.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/functions.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/link.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/box.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/popup.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/list.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/anotify.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/dialog.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/iframe_modal.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/search.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/image_popup.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/app.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('core/js/bulk.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ url('modules/Media/js/media-picker.js') }}"></script>
 
 
 <script>
@@ -323,11 +323,7 @@ $(document).on('change', '.js-auto-submit', function () {
 
 @include('media::partials.picker-modal')
 
-@if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1' && !request()->is('setting/*', 'managers/*'))
-    @include('cookie::index')
-    <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
-    <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
-@endif
+{{-- Cookie banner is for public pages only — loaded in template::partials.footer --}}
 
 {!! \Modules\Core\Models\Setting::get('theme.custom_footer_html') !!}
 {!! \Modules\Core\Models\Setting::get('theme.custom_footer_js') !!}
