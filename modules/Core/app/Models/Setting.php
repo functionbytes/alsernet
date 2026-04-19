@@ -3,7 +3,6 @@
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Campaign\Library\Facades\Hook;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -280,7 +279,7 @@ class Setting extends Model implements HasMedia
                 'type' => 'select',
                 'options' => array_map(function ($cap) {
                     return ['value' => $cap['id'], 'text' => $cap['title']];
-                }, class_exists(Hook::class) ? Hook::execute('captcha_method') : []),
+                }, self::captchaMethods()),
             ],
             'login_recaptcha' => [
                 'cat' => 'general',
@@ -937,18 +936,21 @@ class Setting extends Model implements HasMedia
 
         if (in_array(
             $captcha,
-            array_map(
-                function ($cap) {
-                    return $cap['id'];
-                },
-                class_exists(Hook::class) ? Hook::execute('captcha_method') : []
-            )
-        )
-        ) {
+            array_map(fn ($cap) => $cap['id'], self::captchaMethods())
+        )) {
             return $captcha;
         }
 
         return 'recaptcha';
+    }
+
+    /**
+     * Captcha methods registered by modules. Returns an empty array when no
+     * provider is available; callers fall back to the default engine.
+     */
+    protected static function captchaMethods(): array
+    {
+        return [];
     }
 
     public static function isListSignupCaptchaEnabled()

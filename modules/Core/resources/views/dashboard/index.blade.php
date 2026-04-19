@@ -14,6 +14,9 @@
     {{-- Analytics KPI Widget (módulo Analytics) --}}
     @include('analytics::components.dashboard-widget')
 
+    {{-- Cookie consent widget --}}
+    @include('cookie::components.consent-widget')
+
     {{-- KPI Cards --}}
     <div class="row g-3 mb-4" id="dashboard-kpis">
 

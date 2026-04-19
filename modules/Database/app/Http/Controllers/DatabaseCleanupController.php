@@ -20,7 +20,7 @@ class DatabaseCleanupController extends Controller
     public function index(): View|RedirectResponse
     {
         // Check if cleanup is enabled
-        $cleanupEnabled = (bool) Setting::get('cleanup_enabled', env('CMS_ENABLED_CLEANUP_DATABASE', false));
+        $cleanupEnabled = (bool) Setting::get('cleanup_enabled', config('database.cleanup.enabled', false));
 
         if (! $cleanupEnabled) {
             return view('database::cleanup.disabled', [
@@ -84,7 +84,7 @@ class DatabaseCleanupController extends Controller
     public function truncate(Request $request): JsonResponse
     {
         // Check if cleanup is enabled
-        if (! (bool) Setting::get('cleanup_enabled', env('CMS_ENABLED_CLEANUP_DATABASE', false))) {
+        if (! (bool) Setting::get('cleanup_enabled', config('database.cleanup.enabled', false))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Esta característica no está habilitada. Configura DATABASE_CLEANUP_ENABLED=true en el archivo .env',
