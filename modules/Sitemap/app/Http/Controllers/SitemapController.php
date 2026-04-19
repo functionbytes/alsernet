@@ -4,104 +4,110 @@ namespace Modules\Sitemap\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
-use Modules\Page\Models\Page;
-use Modules\Post\Models\Post;
+use Modules\Sitemap\Builder\SitemapBuilder;
 
 class SitemapController extends Controller
 {
-    /**
-     * Display the main sitemap
-     */
     public function index(): Response
     {
-        $sitemap = app('sitemap');
-        $sitemap->clear();
-
         $cacheKey = 'sitemap-xml';
-        $cacheDuration = config('sitemap.cache_duration', 86400);
+        $duration = config('sitemap.cache_duration', 86400);
 
-        // Cache por 24 horas
-        if (config('sitemap.cache_enabled', true)) {
-            return cache()->remember($cacheKey, $cacheDuration, function () use ($sitemap) {
-                return $this->generateSitemap($sitemap);
-            });
-        }
+        $xml = config('sitemap.cache_enabled', true)
+            ? cache()->remember($cacheKey, $duration, fn () => $this->buildMainXml())
+            : $this->buildMainXml();
 
-        return $this->generateSitemap($sitemap);
+        return $this->xmlResponse($xml);
     }
 
-    /**
-     * Display pages sitemap
-     */
     public function pages(): Response
     {
-        $sitemap = app('sitemap');
-        $sitemap->clear();
+        $builder = new SitemapBuilder;
 
-        // Add only pages
-        if (class_exists(Page::class)) {
-            $sitemap->addModel(Page::class);
-        }
-
-        return response($sitemap->render(), 200, [
-            'Content-Type' => 'application/xml',
-        ]);
-    }
-
-    /**
-     * Display posts sitemap
-     */
-    public function posts(): Response
-    {
-        $sitemap = app('sitemap');
-        $sitemap->clear();
-
-        // Add only posts
-        if (class_exists(Post::class)) {
-            $sitemap->addModel(Post::class);
-        }
-
-        return response($sitemap->render(), 200, [
-            'Content-Type' => 'application/xml',
-        ]);
-    }
-
-    /**
-     * Display sitemap index
-     */
-    public function sitemapIndex(): Response
-    {
-        $sitemap = app('sitemap');
-        $sitemap->clear();
-
-        // Add individual sitemaps
-        $sitemap->addSitemap(route('sitemap.pages'));
-        $sitemap->addSitemap(route('sitemap.posts'));
-
-        return response($sitemap->render('index'), 200, [
-            'Content-Type' => 'application/xml',
-        ]);
-    }
-
-    /**
-     * Generate sitemap with all models
-     */
-    protected function generateSitemap(mixed $sitemap): Response
-    {
-        // Add homepage
-        $sitemap->add(url('/'), now()->toAtomString(), '1.0', 'daily');
-
-        // Add models from config
-        $models = config('sitemap.models', []);
-
-        foreach ($models as $modelClass) {
+        foreach (config('sitemap.page_models', []) as $modelClass) {
             if (class_exists($modelClass)) {
-                $sitemap->addModel($modelClass);
+                $builder->addModel($modelClass);
             }
         }
 
-        return response($sitemap->render(), 200, [
+        return $this->xmlResponse($builder->render());
+    }
+
+    public function posts(): Response
+    {
+        $builder = new SitemapBuilder;
+
+        foreach (config('sitemap.post_models', []) as $modelClass) {
+            if (class_exists($modelClass)) {
+                $builder->addModel($modelClass);
+            }
+        }
+
+        foreach (config('sitemap.post_callbacks', []) as $callback) {
+            if (is_callable($callback)) {
+                $callback($builder);
+            }
+        }
+
+        return $this->xmlResponse($builder->render());
+    }
+
+    public function sitemapIndex(): Response
+    {
+        $builder = new SitemapBuilder;
+
+        $hasPages = ! empty(config('sitemap.page_models'));
+        $hasPosts = ! empty(config('sitemap.post_models')) || ! empty(config('sitemap.post_callbacks'));
+
+        if ($hasPages) {
+            $builder->addSitemap(url('/sitemap-pages.xml'));
+        }
+
+        if ($hasPosts) {
+            $builder->addSitemap(url('/sitemap-posts.xml'));
+        }
+
+        if (! $hasPages && ! $hasPosts) {
+            $builder->addSitemap(url('/sitemap.xml'));
+        }
+
+        foreach (config('sitemap.index_extra', []) as $extraUrl) {
+            $builder->addSitemap($extraUrl);
+        }
+
+        return $this->xmlResponse($builder->render('index'));
+    }
+
+    private function buildMainXml(): string
+    {
+        $builder = new SitemapBuilder;
+
+        $builder->add(url('/'), null, '1.0', 'daily');
+
+        foreach (config('sitemap.static_urls', []) as $entry) {
+            $builder->add(
+                url($entry['loc']),
+                null,
+                $entry['priority'] ?? '0.5',
+                $entry['changefreq'] ?? 'weekly'
+            );
+        }
+
+        foreach (config('sitemap.models', []) as $modelClass) {
+            if (class_exists($modelClass)) {
+                $builder->addModel($modelClass);
+            }
+        }
+
+        return $builder->render();
+    }
+
+    private function xmlResponse(string $xml): Response
+    {
+        return response($xml, 200, [
             'Content-Type' => 'application/xml',
+            'Last-Modified' => now()->toRfc7231String(),
+            'Cache-Control' => 'public, max-age='.config('sitemap.cache_duration', 86400),
         ]);
     }
 }

@@ -11,41 +11,40 @@ class PingSitemapCommand extends Command
 
     protected $description = 'Ping search engines about sitemap updates';
 
-    public function handle()
+    public function handle(): int
     {
         $sitemapUrl = $this->option('url') ?? url('/sitemap.xml');
 
-        $this->info('🌐 Pinging search engines...');
-        $this->info("📄 Sitemap URL: {$sitemapUrl}");
+        $this->info("Pinging search engines for: {$sitemapUrl}");
 
         $results = SitemapHelper::pingSearchEngines($sitemapUrl);
+        $successCount = 0;
 
-        $this->newLine();
+        foreach ($results as $engine => $result) {
+            $label = strtoupper($engine);
 
-        foreach ($results as $engine => $success) {
-            $status = $success ? '✅' : '❌';
-            $message = $success ? 'Success' : 'Failed';
-
-            $this->line("{$status} {$engine}: {$message}");
+            if ($result['ok']) {
+                $this->info("  {$label}: OK [{$result['status']}]");
+                $successCount++;
+            } elseif ($result['error']) {
+                $this->warn("  {$label}: Failed (connection error: {$result['error']})");
+            } else {
+                $this->warn("  {$label}: Failed [{$result['status']}]");
+            }
         }
 
-        $this->newLine();
-
-        $successCount = count(array_filter($results));
-        $totalCount = count($results);
-
-        if ($successCount === $totalCount) {
-            $this->info('🎉 All search engines pinged successfully!');
-
-            return self::SUCCESS;
-        } elseif ($successCount > 0) {
-            $this->warn('⚠️  Some search engines could not be reached.');
-
-            return self::SUCCESS;
-        } else {
-            $this->error('❌ Failed to ping any search engines.');
+        if ($successCount === 0) {
+            $this->error('Failed to ping any search engines.');
 
             return self::FAILURE;
         }
+
+        if ($successCount < count($results)) {
+            $this->warn('Some search engines could not be reached.');
+        } else {
+            $this->info('All search engines pinged successfully.');
+        }
+
+        return self::SUCCESS;
     }
 }

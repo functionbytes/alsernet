@@ -3,6 +3,7 @@
 namespace Modules\Sitemap\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Modules\Sitemap\Builder\SitemapBuilder;
 
 /**
  * @method static \Modules\Sitemap\Builder\SitemapBuilder add(string $loc, ?string $lastmod = null, string $priority = '0.5', string $changefreq = 'weekly')
@@ -14,16 +15,14 @@ use Illuminate\Support\Facades\Facade;
  * @method static array getSitemaps()
  * @method static \Modules\Sitemap\Builder\SitemapBuilder clear()
  *
- * @see \Modules\Sitemap\Builder\SitemapBuilder
+ * @see SitemapBuilder
  */
 class Sitemap extends Facade
 {
     /**
      * Get the registered name of the component.
-     *
-     * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
         return 'sitemap';
     }

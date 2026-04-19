@@ -1,9 +1,9 @@
 {
     "name": "Sitemap",
     "alias": "sitemap",
-    "description": "",
-    "keywords": [],
-    "priority": 0,
+    "description": "Generacion automatica de XML Sitemap con soporte para modelos, URLs estaticas, sitemap index y ping a buscadores.",
+    "keywords": ["sitemap", "seo", "xml"],
+    "priority": 10,
     "providers": [
         "modules\\Sitemap\\Providers\\SitemapServiceProvider"
     ],

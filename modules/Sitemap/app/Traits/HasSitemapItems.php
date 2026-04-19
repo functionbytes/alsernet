@@ -2,42 +2,67 @@
 
 namespace Modules\Sitemap\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
+
 trait HasSitemapItems
 {
     /**
-     * Get items for sitemap
+     * Column used to filter published records.
+     * Override in the model: protected static string $sitemapStatusColumn = 'is_active';
      */
-    public static function getSitemapItems()
+    protected static string $sitemapStatusColumn = 'status';
+
+    /**
+     * Value that means "published".
+     * Override in the model: protected static string $sitemapStatusValue = '1';
+     */
+    protected static string $sitemapStatusValue = 'published';
+
+    public static function getSitemapItems(): Collection
     {
-        return static::where('status', 'published')
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        return static::query()
+            ->where(static::$sitemapStatusColumn, static::$sitemapStatusValue)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->filter(fn ($item) => ! $item->excludeFromSitemap())
+            ->values();
+    }
+
+    public static function chunkSitemapItems(int $chunkSize, callable $callback): void
+    {
+        static::query()
+            ->where(static::$sitemapStatusColumn, static::$sitemapStatusValue)
+            ->orderByDesc('updated_at')
+            ->chunk($chunkSize, function ($items) use ($callback) {
+                foreach ($items->filter(fn ($item) => ! $item->excludeFromSitemap()) as $item) {
+                    $callback($item);
+                }
+            });
     }
 
     /**
-     * Get sitemap priority attribute
+     * Return true to exclude this specific record from the sitemap.
+     * Override in the model to add custom logic.
+     *
+     * Example: public function excludeFromSitemap(): bool { return $this->robots_noindex; }
      */
+    public function excludeFromSitemap(): bool
+    {
+        return false;
+    }
+
     public function getSitemapPriorityAttribute(): string
     {
         return '0.8';
     }
 
-    /**
-     * Get sitemap change frequency attribute
-     */
     public function getSitemapChangefreqAttribute(): string
     {
         return 'weekly';
     }
 
-    /**
-     * Get URL attribute for sitemap
-     * Override this method in your model to provide custom URLs
-     */
     public function getUrlAttribute(): string
     {
-        // Default implementation
-        // Override in your model if needed
         if (method_exists($this, 'getRouteKey')) {
             return url('/'.$this->getRouteKey());
         }

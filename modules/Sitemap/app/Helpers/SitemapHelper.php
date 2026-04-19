@@ -2,6 +2,8 @@
 
 namespace Modules\Sitemap\Helpers;
 
+use Illuminate\Support\Facades\Http;
+
 class SitemapHelper
 {
     /**
@@ -112,22 +114,28 @@ class SitemapHelper
      */
     public static function pingSearchEngines(string $sitemapUrl): array
     {
+        $engines = [
+            'google' => 'https://www.google.com/ping?sitemap='.urlencode($sitemapUrl),
+            'bing' => 'https://www.bing.com/ping?sitemap='.urlencode($sitemapUrl),
+        ];
+
         $results = [];
 
-        // Ping Google
-        try {
-            $googleUrl = 'https://www.google.com/ping?sitemap='.urlencode($sitemapUrl);
-            $results['google'] = @file_get_contents($googleUrl) !== false;
-        } catch (\Exception $e) {
-            $results['google'] = false;
-        }
-
-        // Ping Bing
-        try {
-            $bingUrl = 'https://www.bing.com/ping?sitemap='.urlencode($sitemapUrl);
-            $results['bing'] = @file_get_contents($bingUrl) !== false;
-        } catch (\Exception $e) {
-            $results['bing'] = false;
+        foreach ($engines as $name => $url) {
+            try {
+                $response = Http::timeout(10)->get($url);
+                $results[$name] = [
+                    'ok' => $response->successful(),
+                    'status' => $response->status(),
+                    'error' => null,
+                ];
+            } catch (\Exception $e) {
+                $results[$name] = [
+                    'ok' => false,
+                    'status' => 0,
+                    'error' => $e->getMessage(),
+                ];
+            }
         }
 
         return $results;
