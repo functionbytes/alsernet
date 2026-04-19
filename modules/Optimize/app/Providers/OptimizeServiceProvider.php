@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Optimize\Console\Commands\EnableAllCommand;
 use Modules\Optimize\Console\Commands\MinifyThemeAssetsCommand;
+use Modules\Optimize\Console\Commands\PurgeCacheCommand;
 use Modules\Optimize\Http\Middleware\AddImageDimensions;
 use Modules\Optimize\Http\Middleware\AddLoadingLazy;
 use Modules\Optimize\Http\Middleware\CacheControlHeaders;
@@ -67,6 +68,7 @@ class OptimizeServiceProvider extends ServiceProvider
             $this->commands([
                 EnableAllCommand::class,
                 MinifyThemeAssetsCommand::class,
+                PurgeCacheCommand::class,
             ]);
         }
 

@@ -9,3 +9,6 @@ Route::post('reset-stats', [OptimizeController::class, 'resetStats'])->name('res
 Route::post('run-command', [OptimizeController::class, 'runCommand'])
     ->middleware('throttle:10,1')
     ->name('run-command');
+Route::post('run-all', [OptimizeController::class, 'runAll'])
+    ->middleware('throttle:3,1')
+    ->name('run-all');

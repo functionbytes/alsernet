@@ -16,6 +16,7 @@ use Modules\Media\Console\Commands\GdprDeleteCommand;
 use Modules\Media\Console\Commands\GdprExportCommand;
 use Modules\Media\Console\Commands\GenerateSrcsetCommand;
 use Modules\Media\Console\Commands\MediaStatsCommand;
+use Modules\Media\Console\Commands\OptimizeAllCommand;
 use Modules\Media\Console\Commands\PruneOrphanMediaCommand;
 use Modules\Media\Console\Commands\PurgeExpiredMediaCommand;
 use Modules\Media\Console\Commands\PurgeTrashCommand;
@@ -102,6 +103,7 @@ class MediaServiceProvider extends ServiceProvider
                 SendMediaDigestCommand::class,
                 ConvertToWebpCommand::class,
                 GenerateSrcsetCommand::class,
+                OptimizeAllCommand::class,
             ]);
         }
 

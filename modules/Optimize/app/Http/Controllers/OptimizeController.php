@@ -66,6 +66,39 @@ class OptimizeController extends Controller
             'params' => ['slug', 'fix'],
             'description' => 'Reporta imágenes sin alt, enlaces sin nombre, etc.',
         ],
+        'media:optimize-all' => [
+            'label' => 'Optimizar todas las imágenes (webp + srcset)',
+            'params' => ['quality', 'limit'],
+            'description' => 'Macro: convierte a WebP y genera variantes responsive en un pase',
+        ],
+        'optimize:purge-cache' => [
+            'label' => 'Purgar todos los caches',
+            'params' => [],
+            'description' => 'Limpia view, route, config, cache, response cache y opcache',
+        ],
+        'page:audit' => [
+            'label' => 'Auditar integridad de páginas',
+            'params' => ['fix'],
+            'description' => 'Detecta templates inválidos, slugs duplicados, traducciones huérfanas',
+        ],
+        'page:cache-warm' => [
+            'label' => 'Precalentar cache de páginas públicas',
+            'params' => [],
+            'description' => 'Renderiza y cachea todas las páginas publicadas del catálogo',
+        ],
+    ];
+
+    /**
+     * Secuencia del botón "Ejecutar toda la optimización": cada paso usa
+     * un comando del allowlist anterior + parámetros ya sanitizados.
+     */
+    private const RUN_ALL_SEQUENCE = [
+        ['command' => 'optimize:enable-all', 'params' => ['--ttl' => 3600]],
+        ['command' => 'optimize:minify-theme-assets', 'params' => []],  // slug viene del request
+        ['command' => 'media:convert-webp', 'params' => ['--quality' => 82]],
+        ['command' => 'media:generate-srcset', 'params' => ['--quality' => 82]],
+        ['command' => 'theme:audit-a11y', 'params' => ['--fix' => true]],  // slug del request
+        ['command' => 'optimize:purge-cache', 'params' => []],
     ];
 
     public function index(): View
@@ -151,6 +184,63 @@ class OptimizeController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Ejecuta la secuencia "Ejecutar toda la optimización" y devuelve la
+     * salida combinada de todos los pasos. El theme slug se valida como
+     * en sanitizeParams() y se inyecta en los pasos que lo necesitan.
+     */
+    public function runAll(Request $request): JsonResponse
+    {
+        $slug = preg_replace('/[^a-z0-9_-]/i', '', (string) $request->input('slug')) ?: null;
+        $totalStart = microtime(true);
+        $outputs = [];
+
+        foreach (self::RUN_ALL_SEQUENCE as $step) {
+            $cmd = $step['command'];
+            $params = $step['params'];
+
+            // Inyectar slug donde corresponda.
+            if (in_array('slug', self::COMMANDS[$cmd]['params'] ?? [], true)) {
+                if ($slug === null) {
+                    $outputs[] = [
+                        'command' => $cmd,
+                        'skipped' => true,
+                        'reason' => 'slug no provisto',
+                    ];
+
+                    continue;
+                }
+                $params['slug'] = $slug;
+            }
+
+            $stepStart = microtime(true);
+            try {
+                Artisan::call($cmd, $params);
+                $outputs[] = [
+                    'command' => $cmd,
+                    'params' => $params,
+                    'elapsed_ms' => (int) ((microtime(true) - $stepStart) * 1000),
+                    'output' => trim(Artisan::output()),
+                ];
+            } catch (\Throwable $e) {
+                $outputs[] = [
+                    'command' => $cmd,
+                    'params' => $params,
+                    'error' => $e->getMessage(),
+                ];
+                // Seguir con los siguientes — un paso que falla no debería
+                // bloquear los demás (por ejemplo, optimize:purge-cache
+                // siempre debería correr al final).
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'total_elapsed_ms' => (int) ((microtime(true) - $totalStart) * 1000),
+            'steps' => $outputs,
+        ]);
     }
 
     /** @return array<string, mixed> */
