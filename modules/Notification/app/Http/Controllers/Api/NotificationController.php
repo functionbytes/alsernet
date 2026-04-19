@@ -5,6 +5,8 @@ namespace Modules\Notification\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Notification\Http\Requests\Api\RegisterPushTokenRequest;
+use Modules\Notification\Http\Requests\Api\UpdatePreferencesRequest;
 use Modules\Notification\Models\NotificationPreference;
 use Modules\Notification\Models\NotificationPushToken;
 
@@ -121,18 +123,11 @@ class NotificationController extends Controller
     /**
      * Actualizar preferencias de notificaciones
      */
-    public function updatePreferences(Request $request): JsonResponse
+    public function updatePreferences(UpdatePreferencesRequest $request): JsonResponse
     {
         $user = $request->user();
 
-        $validated = $request->validate([
-            'preferences' => 'required|array',
-            'preferences.*.channel' => 'required|in:in_app,push,email,sms',
-            'preferences.*.type' => 'required|string',
-            'preferences.*.enabled' => 'boolean',
-        ]);
-
-        foreach ($validated['preferences'] as $pref) {
+        foreach ($request->validated('preferences') as $pref) {
             NotificationPreference::toggle(
                 $user->id,
                 $pref['channel'],
@@ -149,15 +144,10 @@ class NotificationController extends Controller
     /**
      * Registrar un token de push notification
      */
-    public function registerPushToken(Request $request): JsonResponse
+    public function registerPushToken(RegisterPushTokenRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        $validated = $request->validate([
-            'token' => 'required|string',
-            'device_type' => 'nullable|string',
-            'device_id' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $pushToken = NotificationPushToken::register(
             $user->id,

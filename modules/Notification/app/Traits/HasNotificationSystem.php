@@ -105,6 +105,10 @@ trait HasNotificationSystem
      */
     public function unreadNotificationsCount(): int
     {
+        if ($this->relationLoaded('unreadNotifications')) {
+            return $this->unreadNotifications->count();
+        }
+
         return $this->unreadNotifications()->count();
     }
 

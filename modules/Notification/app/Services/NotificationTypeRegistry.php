@@ -2,6 +2,8 @@
 
 namespace Modules\Notification\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class NotificationTypeRegistry
 {
     /** @var array<string, array{key: string, label: string, description: string, defaultChannels: string[]}> */
@@ -16,6 +18,13 @@ class NotificationTypeRegistry
         string $description = '',
         array $defaultChannels = ['mail', 'database']
     ): void {
+        if (isset($this->types[$key])) {
+            Log::warning("NotificationTypeRegistry: tipo duplicado '{$key}' sobreescrito.", [
+                'existing_label' => $this->types[$key]['label'],
+                'new_label' => $label,
+            ]);
+        }
+
         $this->types[$key] = compact('key', 'label', 'description', 'defaultChannels');
     }
 

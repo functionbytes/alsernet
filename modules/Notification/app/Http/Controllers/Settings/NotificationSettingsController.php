@@ -4,13 +4,18 @@ namespace Modules\Notification\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Modules\Core\Models\Setting;
+use Modules\Notification\Http\Requests\UpdateSettingsRequest;
 
 class NotificationSettingsController extends Controller
 {
     public function index(): View
     {
+        Gate::authorize('notification.settings.view');
+
         $config = [
             'cleanup' => [
                 'enabled' => config('notification.cleanup.enabled', true),
@@ -31,58 +36,33 @@ class NotificationSettingsController extends Controller
         return view('notification::managers.settings.index', compact('config'));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateSettingsRequest $request): JsonResponse
     {
-        $request->validate([
-            'cleanup_enabled' => 'required|boolean',
-            'cleanup_days' => 'required|integer|min:1|max:365',
-            'push_enabled' => 'required|boolean',
-            'push_max_retries' => 'required|integer|min:1|max:10',
-            'channel_database' => 'required|boolean',
-            'channel_mail' => 'required|boolean',
-            'channel_push' => 'required|boolean',
-            'retention_days' => 'required|integer|min:1|max:365',
-        ], [
-            'cleanup_days.min' => 'Los días de limpieza deben ser al menos 1',
-            'cleanup_days.max' => 'Los días de limpieza no pueden exceder 365',
-            'push_max_retries.min' => 'Los reintentos deben ser al menos 1',
-            'push_max_retries.max' => 'Los reintentos no pueden exceder 10',
-            'retention_days.min' => 'Los días de retención deben ser al menos 1',
-            'retention_days.max' => 'Los días de retención no pueden exceder 365',
-        ]);
+        $this->persistSettings($request);
 
-        $this->updateEnvFile([
-            'NOTIFICATION_CLEANUP_ENABLED' => $request->cleanup_enabled ? 'true' : 'false',
-            'NOTIFICATION_CLEANUP_DAYS' => $request->cleanup_days,
-            'PUSH_NOTIFICATIONS_ENABLED' => $request->push_enabled ? 'true' : 'false',
-            'PUSH_NOTIFICATION_MAX_RETRIES' => $request->push_max_retries,
-            'NOTIFICATION_CHANNEL_DATABASE' => $request->channel_database ? 'true' : 'false',
-            'NOTIFICATION_CHANNEL_MAIL' => $request->channel_mail ? 'true' : 'false',
-            'NOTIFICATION_CHANNEL_PUSH' => $request->channel_push ? 'true' : 'false',
-            'NOTIFICATION_RETENTION_DAYS' => $request->retention_days,
-        ]);
+        Artisan::call('config:clear');
 
         return $this->success('Configuración actualizada correctamente');
     }
 
-    protected function updateEnvFile(array $values): void
+    /**
+     * Persist notification settings using the Core Setting model.
+     */
+    private function persistSettings(UpdateSettingsRequest $request): void
     {
-        $path = base_path('.env');
+        $map = [
+            'notification.cleanup.enabled' => $request->boolean('cleanup_enabled'),
+            'notification.cleanup.days' => (int) $request->input('cleanup_days'),
+            'notification.push_notifications.enabled' => $request->boolean('push_enabled'),
+            'notification.push_notifications.max_retries' => (int) $request->input('push_max_retries'),
+            'notification.channels.database' => $request->boolean('channel_database'),
+            'notification.channels.mail' => $request->boolean('channel_mail'),
+            'notification.channels.push' => $request->boolean('channel_push'),
+            'notification.retention_days' => (int) $request->input('retention_days'),
+        ];
 
-        if (! file_exists($path)) {
-            return;
+        foreach ($map as $key => $value) {
+            Setting::set($key, $value);
         }
-
-        $content = file_get_contents($path);
-
-        foreach ($values as $key => $value) {
-            if (env($key) === null) {
-                $content .= "\n{$key}={$value}";
-            } else {
-                $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
-            }
-        }
-
-        file_put_contents($path, $content);
     }
 }

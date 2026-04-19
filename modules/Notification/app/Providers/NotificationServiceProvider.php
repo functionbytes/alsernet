@@ -4,12 +4,14 @@ namespace Modules\Notification\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
 use Modules\Notification\Console\Commands\CleanupNotificationsCommand;
 use Modules\Notification\Console\Commands\SendNotificationDigestCommand;
 use Modules\Notification\Observers\DatabaseNotificationObserver;
+use Modules\Notification\Policies\NotificationSettingsPolicy;
 use Modules\Notification\Services\NotificationTypeRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -65,6 +67,14 @@ class NotificationServiceProvider extends ServiceProvider
             $this->configureWebSocketSettings();
         });
 
+        // Register authorization policies (Gates)
+        $this->registerPolicies();
+
+        // Load persisted notification settings from DB into config
+        $this->app->booted(function () {
+            $this->loadNotificationSettings();
+        });
+
         // Register notification types
         $this->registerNotificationTypes();
 
@@ -110,12 +120,52 @@ class NotificationServiceProvider extends ServiceProvider
             });
     }
 
+    /**
+     * Register authorization policies for the Notification module.
+     */
+    protected function registerPolicies(): void
+    {
+        $policy = new NotificationSettingsPolicy;
+
+        Gate::define('notification.settings.view', fn ($user) => $policy->viewAny($user));
+        Gate::define('notification.settings.update', fn ($user) => $policy->update($user));
+    }
+
     protected function registerCommands(): void
     {
         $this->commands([
             CleanupNotificationsCommand::class,
             SendNotificationDigestCommand::class,
         ]);
+    }
+
+    /**
+     * Load persisted notification settings from DB into the config system
+     * so that config('notification.*') reflects saved values.
+     */
+    protected function loadNotificationSettings(): void
+    {
+        $keys = [
+            'notification.cleanup.enabled',
+            'notification.cleanup.days',
+            'notification.push_notifications.enabled',
+            'notification.push_notifications.max_retries',
+            'notification.channels.database',
+            'notification.channels.mail',
+            'notification.channels.push',
+            'notification.retention_days',
+        ];
+
+        try {
+            foreach ($keys as $key) {
+                $value = Setting::get($key);
+                if ($value !== null) {
+                    config([$key => $value]);
+                }
+            }
+        } catch (\Exception) {
+            // Database not ready — silently skip
+        }
     }
 
     /**

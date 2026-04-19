@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Notification\Http\Requests\BulkActionRequest;
+use Modules\Notification\Http\Requests\BulkDestroyRequest;
 
 class NotificationsController extends Controller
 {
@@ -110,18 +112,12 @@ class NotificationsController extends Controller
     /**
      * Execute a bulk action on selected notifications.
      */
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkActionRequest $request): JsonResponse
     {
-        $request->validate([
-            'action' => 'required|string|in:mark_read,delete',
-            'ids' => 'required|array',
-            'ids.*' => 'string',
-        ]);
-
         $user = $request->user();
-        $query = $user->notifications()->whereIn('id', $request->ids);
+        $query = $user->notifications()->whereIn('id', $request->validated('ids'));
 
-        if ($request->action === 'mark_read') {
+        if ($request->validated('action') === 'mark_read') {
             $count = $query->clone()->whereNull('read_at')->count();
             $query->whereNull('read_at')->get()->each->markAsRead();
         } else {
@@ -139,17 +135,12 @@ class NotificationsController extends Controller
     /**
      * Delete multiple notifications by ID.
      */
-    public function bulkDestroy(Request $request): JsonResponse
+    public function bulkDestroy(BulkDestroyRequest $request): JsonResponse
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'string',
-        ]);
-
         $user = $request->user();
 
         $user->notifications()
-            ->whereIn('id', $request->ids)
+            ->whereIn('id', $request->validated('ids'))
             ->delete();
 
         return response()->json([

@@ -22,6 +22,9 @@
         refreshTimer: null,
         notificationPermission: 'default', // 'granted', 'denied', or 'default'
         shownNotifications: new Set(), // Track which notifications have been shown as desktop notifications
+        retryCount: 0,
+        maxRetries: 3,
+        baseRetryDelay: 2000,
     };
 
     /**
@@ -232,6 +235,7 @@
             },
             success: function(response) {
                 console.log('✅ API Response received:', response);
+                state.retryCount = 0;
                 state.unreadCount = response.unread_count;
                 console.log('📊 Unread count: ' + state.unreadCount);
 
@@ -245,9 +249,21 @@
                 updateUnreadCountText(state.unreadCount);
                 updateRemainingText(state.unreadCount);
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
                 console.error('❌ Error loading notifications:', xhr.status, xhr.statusText);
                 console.error('Response:', xhr.responseText);
+
+                if (xhr.status === 0 || xhr.status >= 500) {
+                    if (state.retryCount < state.maxRetries) {
+                        var delay = state.baseRetryDelay * Math.pow(2, state.retryCount);
+                        state.retryCount++;
+                        console.log('🔄 Retrying in ' + delay + 'ms (attempt ' + state.retryCount + '/' + state.maxRetries + ')');
+                        setTimeout(loadNotifications, delay);
+                        return;
+                    }
+                }
+
+                state.retryCount = 0;
                 handleLoadError();
             },
         });
@@ -448,7 +464,7 @@
         $('#notifications-loading').html(
             '<div class="text-center py-5">' +
             '<i class="fas fa-exclamation-triangle text-warning fs-1 mb-3"></i>' +
-            '<p class="text-muted mb-0 small">Error al cargar notificaciones</p>' +
+            '<p class="text-muted mb-0">Error al cargar notificaciones</p>' +
             '</div>'
         );
     }

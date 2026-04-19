@@ -38,7 +38,11 @@ class PushNotificationService
     {
         $this->projectId = config('services.fcm.project_id', '');
         $this->credentialsPath = config('services.fcm.credentials_path', storage_path('app/firebase-credentials.json'));
-        $this->circuitBreaker = new CircuitBreaker('fcm', 5, 60);
+        $this->circuitBreaker = new CircuitBreaker(
+            'fcm',
+            config('notification.circuit_breaker.fcm.failure_threshold', 5),
+            config('notification.circuit_breaker.fcm.recovery_seconds', 60)
+        );
     }
 
     /**

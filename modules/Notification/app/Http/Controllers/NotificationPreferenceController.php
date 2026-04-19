@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Modules\Notification\Http\Requests\UpdatePreferencesRequest;
 use Modules\Notification\Models\NotificationPreference;
 use Modules\Notification\Services\NotificationTypeRegistry;
 
@@ -33,18 +34,11 @@ class NotificationPreferenceController extends Controller
         return view('notification::preferences.index', compact('types', 'prefs'));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdatePreferencesRequest $request): JsonResponse
     {
-        $request->validate([
-            'preferences' => 'required|array',
-            'preferences.*.notification_type' => 'required|string',
-            'preferences.*.channel' => 'required|in:mail,database,broadcast',
-            'preferences.*.enabled' => 'boolean',
-        ]);
-
         $user = $request->user();
 
-        foreach ($request->input('preferences') as $pref) {
+        foreach ($request->validated('preferences') as $pref) {
             NotificationPreference::toggle(
                 $user->id,
                 $pref['channel'],

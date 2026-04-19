@@ -25,6 +25,13 @@ return [
 
     'retention_days' => env('NOTIFICATION_RETENTION_DAYS', 30),
 
+    'circuit_breaker' => [
+        'fcm' => [
+            'failure_threshold' => env('FCM_CIRCUIT_BREAKER_THRESHOLD', 5),
+            'recovery_seconds' => env('FCM_CIRCUIT_BREAKER_RECOVERY', 60),
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Notification Types
