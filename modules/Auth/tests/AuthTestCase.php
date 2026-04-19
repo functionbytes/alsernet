@@ -225,6 +225,43 @@ abstract class AuthTestCase extends TestCase
                 ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0');
         }
 
+        if (! Schema::hasColumn('users', 'failed_login_count')) {
+            DB::statement('ALTER TABLE users
+                ADD COLUMN failed_login_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+                ADD COLUMN locked_until TIMESTAMP NULL');
+        }
+
+        if (! Schema::hasColumn('users', 'deleted_at')) {
+            DB::statement('ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP NULL');
+        }
+
+        if (! Schema::hasTable('magic_login_tokens')) {
+            DB::statement('CREATE TABLE magic_login_tokens (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT UNSIGNED NOT NULL,
+                token_hash VARCHAR(64) NOT NULL UNIQUE,
+                ip_address VARCHAR(45) NULL,
+                user_agent VARCHAR(500) NULL,
+                expires_at TIMESTAMP NOT NULL,
+                used_at TIMESTAMP NULL,
+                created_at TIMESTAMP NULL,
+                INDEX (user_id, used_at)
+            ) ENGINE=InnoDB');
+        }
+
+        if (! Schema::hasTable('email_change_tokens')) {
+            DB::statement('CREATE TABLE email_change_tokens (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT UNSIGNED NOT NULL,
+                new_email VARCHAR(255) NOT NULL,
+                token_hash VARCHAR(64) NOT NULL UNIQUE,
+                expires_at TIMESTAMP NOT NULL,
+                confirmed_at TIMESTAMP NULL,
+                created_at TIMESTAMP NULL,
+                INDEX (user_id, confirmed_at)
+            ) ENGINE=InnoDB');
+        }
+
         if (Schema::hasTable('activity_log') && ! Schema::hasColumn('activity_log', 'event')) {
             DB::statement('ALTER TABLE activity_log ADD COLUMN event VARCHAR(255) NULL AFTER batch_uuid');
         }

@@ -257,6 +257,11 @@
 
     </div>
 
+    {{-- Security widget (only for admins with audit access) --}}
+    @can('auth.audit.view')
+        @include('auth::components.security-widget')
+    @endcan
+
     {{-- Role-based widgets --}}
     <div class="row">
         <div class="col-md-12 mb-3">

@@ -87,4 +87,35 @@ class AuditController extends Controller
             'message' => 'Cuenta desbloqueada.',
         ]);
     }
+
+    /**
+     * Restore a soft-deleted user account (before the hard-delete job runs).
+     */
+    public function restoreAccount(Request $request, int $userId): JsonResponse
+    {
+        $this->authorize('viewAudit', LoginAttempt::class);
+
+        $user = User::withTrashed()->find($userId);
+
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
+        if (! $user->trashed()) {
+            return response()->json(['success' => false, 'message' => 'El usuario no está eliminado.'], 422);
+        }
+
+        $restoredEmail = preg_replace('/^deleted_\d+_/', '', $user->email);
+
+        $user->restore();
+        $user->forceFill([
+            'email' => $restoredEmail,
+            'available' => true,
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Cuenta {$restoredEmail} restaurada.",
+        ]);
+    }
 }
