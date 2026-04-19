@@ -4,6 +4,9 @@ namespace Modules\Locales\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Locales\Console\Commands\SyncLangsCommand;
+use Modules\Locales\Models\Locale;
+use Modules\Locales\Observers\LocaleObserver;
 use Modules\Locales\Services\LocaleService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -25,6 +28,12 @@ class LocalesServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerMenus();
+
+        Locale::observe(LocaleObserver::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([SyncLangsCommand::class]);
+        }
     }
 
     public function register(): void
