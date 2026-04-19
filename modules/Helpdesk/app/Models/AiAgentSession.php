@@ -12,8 +12,6 @@ class AiAgentSession extends Model
 
     protected $table = 'helpdesk_ai_agent_sessions';
 
-    protected $guarded = [];
-
     protected $casts = [
         'context' => 'array', // Session context/variables
         'metadata' => 'array',

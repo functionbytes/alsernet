@@ -11,8 +11,6 @@ class CampaignImpression extends Model
 
     protected $table = 'helpdesk_campaign_impressions';
 
-    protected $guarded = [];
-
     public $timestamps = false;
 
     protected $casts = [

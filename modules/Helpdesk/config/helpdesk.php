@@ -64,6 +64,22 @@ return [
     'attachments' => [
         'max_size' => 10240,
         'allowed_extensions' => ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'],
+        'allowed_mime_types' => [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/zip',
+            'application/x-rar-compressed',
+            'application/x-7z-compressed',
+            'text/plain',
+            'text/csv',
+        ],
         'disk' => 'local',
         'path' => 'helpdesk/attachments',
     ],
@@ -107,7 +123,8 @@ return [
         'port' => env('HELPDESK_IMAP_PORT', 993),
         'encryption' => env('HELPDESK_IMAP_ENCRYPTION', 'ssl'),
         'username' => env('HELPDESK_IMAP_USERNAME', ''),
-        'password' => env('HELPDESK_IMAP_PASSWORD', ''),
+        // Supports both plaintext and "encrypted:..." payloads (see Core SecretHelper).
+        'password' => secret_env('HELPDESK_IMAP_PASSWORD', ''),
         'folder' => env('HELPDESK_IMAP_FOLDER', 'INBOX'),
         'batch_size' => env('HELPDESK_IMAP_BATCH_SIZE', 50),
     ],
@@ -119,6 +136,19 @@ return [
             'normal' => env('HELPDESK_ESCALATION_NORMAL_HOURS', 24),
             'high' => env('HELPDESK_ESCALATION_HIGH_HOURS', 12),
         ],
+    ],
+
+    'llm_rate_limits' => [
+        'per_user_per_minute' => 10,
+        'per_session_per_5min' => 30,
+        'per_user_per_day' => 1000,
+    ],
+
+    'prompt_injection_patterns' => [
+        '/ignore\s+(all\s+)?previous\s+instructions/i',
+        '/system\s+prompt/i',
+        '/reveal\s+your\s+(system\s+)?prompt/i',
+        '/you\s+are\s+(now\s+)?a/i',
     ],
 
     'integrations' => [

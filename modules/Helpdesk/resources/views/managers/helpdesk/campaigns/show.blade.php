@@ -110,7 +110,7 @@
                                 <li><hr class="dropdown-divider"></li>
                             @endcan
 
-                            @can('create', App\Models\Helpdesk\Campaign::class)
+                            @can('create', Modules\Helpdesk\Models\Campaign::class)
                                 <li>
                                     <form method="POST" action="{{ route('manager.helpdesk.campaigns.duplicate', $campaign) }}">
                                         @csrf

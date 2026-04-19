@@ -14,8 +14,6 @@ class AiAgentTool extends Model
 
     protected $table = 'helpdesk_ai_agent_tools';
 
-    protected $guarded = [];
-
     protected $casts = [
         'parameters' => 'array',
         'auth_config' => 'array',

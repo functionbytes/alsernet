@@ -45,6 +45,7 @@ use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\Helpdesk\Services\InstagramService;
 use Modules\Helpdesk\Services\NotificationService;
 use Modules\Helpdesk\Services\OutboundMessageService;
+use Modules\Helpdesk\Services\PromptSanitizer;
 use Modules\Helpdesk\Services\SlaService;
 use Modules\Helpdesk\Services\TicketService;
 use Modules\Helpdesk\Services\TicketUpdateService;
@@ -99,6 +100,7 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->app->singleton(OutboundMessageService::class);
 
         $this->app->singleton(EscalationService::class);
+        $this->app->singleton(PromptSanitizer::class);
         $this->app->singleton(AiAgentFlowEngine::class);
 
         $this->registerPolicies();

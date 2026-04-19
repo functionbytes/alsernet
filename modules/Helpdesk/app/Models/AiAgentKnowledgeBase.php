@@ -15,8 +15,6 @@ class AiAgentKnowledgeBase extends Model
 
     protected $table = 'helpdesk_ai_agent_knowledge_base';
 
-    protected $guarded = [];
-
     protected $casts = [
         'metadata' => 'array',
         'tags' => 'array',

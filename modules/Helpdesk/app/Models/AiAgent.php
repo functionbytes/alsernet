@@ -14,11 +14,10 @@ class AiAgent extends Model
 
     protected $table = 'helpdesk_ai_agents';
 
-    protected $guarded = [];
-
     protected $casts = [
         'backups' => 'array',
         'metadata' => 'array',
+        'api_key_encrypted' => 'encrypted',
         'enabled_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -32,8 +31,9 @@ class AiAgent extends Model
         'model', // 'gpt-4o', 'claude-3-opus', 'gemini-pro', etc.
         'personality', // System prompt / personality description
         'status', // 'inactive', 'active', 'paused'
-        'backups', // JSON: API keys, temperature, max_tokens, etc.
+        'backups', // JSON: temperature, max_tokens, etc. (api_key removed after migration)
         'metadata',
+        'api_key_encrypted',
         'enabled_at',
     ];
 
@@ -189,11 +189,26 @@ class AiAgent extends Model
     }
 
     /**
-     * Get API key from backups
+     * Get the API key for this agent.
+     *
+     * Reads from the encrypted column first; falls back to the legacy
+     * plaintext backups entry so existing data works before the data
+     * migration runs.
      */
     public function getApiKey(): ?string
     {
-        return $this->backups['api_key'] ?? null;
+        return $this->api_key_encrypted ?? $this->backups['api_key'] ?? null;
+    }
+
+    /**
+     * Persist the API key using the encrypted column.
+     *
+     * Use this instead of writing to backups['api_key'] directly.
+     */
+    public function setApiKey(string $key): void
+    {
+        $this->api_key_encrypted = $key;
+        $this->save();
     }
 
     /**

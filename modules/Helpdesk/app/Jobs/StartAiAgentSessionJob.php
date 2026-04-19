@@ -17,18 +17,20 @@ class StartAiAgentSessionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public string $queue = 'helpdesk-ai';
+    public int $tries = 3;
 
-    public int $tries = 2;
+    public int $timeout = 300;
 
-    public int $timeout = 60;
+    public array $backoff = [60, 180, 300];
 
     public function __construct(
         public AiAgent $agent,
         public Conversation $conversation,
         public ?Customer $customer,
         public string $initialMessage = ''
-    ) {}
+    ) {
+        $this->onQueue('helpdesk-ai');
+    }
 
     public function handle(AiAgentFlowEngine $engine): void
     {

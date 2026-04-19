@@ -195,7 +195,7 @@
                             <i class="fas fa-times me-1"></i> Limpiar filtros
                         </a>
                     @endif
-                    @can('create', App\Models\Helpdesk\Campaign::class)
+                    @can('create', Modules\Helpdesk\Models\Campaign::class)
                         <a href="{{ route('manager.helpdesk.campaigns.create') }}" class="btn-primary-custom">
                             <i class="fas fa-plus"></i> Nueva campaña
                         </a>
@@ -425,7 +425,7 @@
                                 @endif
                             </p>
                             @if(!request()->hasAny(['search', 'status', 'type']))
-                                @can('create', App\Models\Helpdesk\Campaign::class)
+                                @can('create', Modules\Helpdesk\Models\Campaign::class)
                                     <a href="{{ route('manager.helpdesk.campaigns.create') }}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-plus"></i> Crear Primera Campaña
                                     </a>

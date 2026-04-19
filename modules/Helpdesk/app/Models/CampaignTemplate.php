@@ -11,8 +11,6 @@ class CampaignTemplate extends Model
 
     protected $table = 'helpdesk_campaign_templates';
 
-    protected $guarded = [];
-
     protected $casts = [
         'content' => 'array',
         'appearance' => 'array',

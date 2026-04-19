@@ -82,9 +82,13 @@ class AiAgentSettingsController extends Controller
         $agent->personality = $validated['personality'];
         $agent->status = $validated['status'];
 
-        // Update backups (API keys, parameters)
-        $settings = [
-            'api_key' => $validated['api_key'] ?? null,
+        // Store API key in the dedicated encrypted column (never in backups JSON).
+        if (filled($validated['api_key'] ?? null)) {
+            $agent->api_key_encrypted = $validated['api_key'];
+        }
+
+        // All other model parameters live in the backups JSON column.
+        $backups = [
             'temperature' => (float) ($validated['temperature'] ?? 0.7),
             'max_tokens' => (int) ($validated['max_tokens'] ?? 2048),
             'top_p' => (float) ($validated['top_p'] ?? 1.0),
@@ -92,16 +96,16 @@ class AiAgentSettingsController extends Controller
             'presence_penalty' => (float) ($validated['presence_penalty'] ?? 0),
         ];
 
-        // Add provider-specific backups
+        // Provider-specific parameters
         if ($validated['provider'] === 'openai') {
-            $settings['organization_id'] = $validated['organization_id'] ?? null;
+            $backups['organization_id'] = $validated['organization_id'] ?? null;
         } elseif ($validated['provider'] === 'anthropic') {
-            $settings['version'] = $validated['version'] ?? '2023-06-01';
+            $backups['version'] = $validated['version'] ?? '2023-06-01';
         } elseif ($validated['provider'] === 'local') {
-            $settings['base_url'] = $validated['base_url'] ?? 'http://localhost:11434';
+            $backups['base_url'] = $validated['base_url'] ?? 'http://localhost:11434';
         }
 
-        $agent->settings = $settings;
+        $agent->backups = $backups;
 
         // Update status timestamp if status changed to active
         if ($validated['status'] === 'active' && ! $agent->enabled_at) {

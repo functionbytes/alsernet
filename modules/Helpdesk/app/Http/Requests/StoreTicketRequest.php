@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Modules\Core\Rules\ValidMimeMagicBytes;
 
 class StoreTicketRequest extends BaseTicketRequest
 {
@@ -32,7 +33,12 @@ class StoreTicketRequest extends BaseTicketRequest
             'assignee_id' => 'nullable|integer',
             'group_id' => 'nullable|integer|exists:helpdesk_groups,id',
             'attachments' => 'nullable|array|max:10',
-            'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip,rar,txt',
+            'attachments.*' => [
+                'file',
+                'max:'.config('helpdesk.attachments.max_size', 10240),
+                'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip,rar,txt',
+                new ValidMimeMagicBytes(config('helpdesk.attachments.allowed_mime_types', [])),
+            ],
         ];
     }
 }

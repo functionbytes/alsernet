@@ -15,8 +15,6 @@ class AiAgentFlow extends Model
 
     protected $table = 'helpdesk_ai_agent_flows';
 
-    protected $guarded = [];
-
     protected $casts = [
         'nodes' => 'array', // React Flow nodes
         'edges' => 'array', // React Flow edges

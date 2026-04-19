@@ -2,8 +2,12 @@
 
 namespace Modules\Helpdesk\Services;
 
+use Closure;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Modules\Core\Services\CircuitBreaker;
+use Modules\Helpdesk\Exceptions\LlmRateLimitException;
 use Modules\Helpdesk\Models\AiAgent;
 use Modules\Helpdesk\Models\AiAgentFlow;
 use Modules\Helpdesk\Models\AiAgentFlowNode;
@@ -14,6 +18,10 @@ use Modules\Helpdesk\Models\Customer;
 
 class AiAgentFlowEngine
 {
+    public function __construct(
+        private readonly PromptSanitizer $sanitizer,
+    ) {}
+
     /**
      * Start a new session for a given agent + conversation + optional trigger message.
      */
@@ -76,7 +84,13 @@ class AiAgentFlowEngine
                 return null;
             }
 
-            $result = $this->executeNode($node, $session, $userMessage);
+            // HD-003: sanitize user input before passing through the flow
+            $sanitizedMessage = $this->sanitizer->sanitize(
+                $userMessage,
+                $session->customer?->id
+            );
+
+            $result = $this->executeNode($node, $session, $sanitizedMessage);
             $output = $result['output'];
             $nextNodeId = $result['next_node_id'];
 
@@ -99,6 +113,14 @@ class AiAgentFlowEngine
             }
 
             return $output;
+        } catch (LlmRateLimitException $e) {
+            Log::warning('AiAgentFlowEngine: rate limit exceeded', [
+                'session_id' => $session->id,
+                'limit_type' => $e->getLimitType(),
+            ]);
+            $session->fail($e->getMessage());
+
+            return null;
         } catch (\Throwable $e) {
             Log::error('AiAgentFlowEngine: processMessage failed', [
                 'session_id' => $session->id,
@@ -172,11 +194,13 @@ class AiAgentFlowEngine
 
         $agent = $session->agent;
 
-        return $this->callAiProvider($agent, $messages);
+        return $this->callAiProvider($agent, $messages, $session);
     }
 
     /**
      * Execute a 'condition' node — evaluates conditions and returns the matching next_node_id.
+     *
+     * HD-004: regex patterns from node data are validated before use to prevent ReDoS and crashes.
      */
     private function executeConditionNode(array $nodeData, AiAgentSession $session, string $userInput): ?string
     {
@@ -201,7 +225,7 @@ class AiAgentFlowEngine
                 'equals' => strtolower($subject) === strtolower($value),
                 'starts_with' => str_starts_with(strtolower($subject), strtolower($value)),
                 'ends_with' => str_ends_with(strtolower($subject), strtolower($value)),
-                'regex' => (bool) preg_match($value, $subject),
+                'regex' => $this->safeRegexMatch($value, $subject),
                 default => false,
             };
 
@@ -211,6 +235,39 @@ class AiAgentFlowEngine
         }
 
         return $nodeData['default_next_node_id'] ?? null;
+    }
+
+    /**
+     * HD-004: safely execute preg_match with validation, backtrack limit, and error handling.
+     */
+    private function safeRegexMatch(string $pattern, string $subject): bool
+    {
+        // Validate pattern syntax before use
+        if (@preg_match($pattern, '') === false) {
+            Log::channel($this->resolveSecurityChannel())->warning('AiAgentFlowEngine: invalid regex pattern in condition node', [
+                'pattern' => $pattern,
+            ]);
+
+            return false;
+        }
+
+        $previousLimit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '1000000');
+
+        try {
+            $result = @preg_match($pattern, $subject);
+
+            return $result === 1;
+        } catch (\Throwable $e) {
+            Log::warning('AiAgentFlowEngine: regex match error', [
+                'pattern' => $pattern,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        } finally {
+            ini_set('pcre.backtrack_limit', $previousLimit);
+        }
     }
 
     /**
@@ -247,7 +304,7 @@ class AiAgentFlowEngine
     /**
      * Call the appropriate AI provider based on agent configuration.
      */
-    private function callAiProvider(AiAgent $agent, array $messages): string
+    private function callAiProvider(AiAgent $agent, array $messages, AiAgentSession $session): string
     {
         $config = $agent->backups ?? [];
         $provider = $config['provider'] ?? $agent->provider;
@@ -260,14 +317,61 @@ class AiAgentFlowEngine
             throw new \RuntimeException('AI provider API key is not configured for agent ID '.$agent->id);
         }
 
-        return match ($provider) {
-            'openai' => $this->callOpenAi($apiKey, $model, $messages, $temperature, $maxTokens),
-            'anthropic' => $this->callAnthropic($apiKey, $model, $messages, $temperature, $maxTokens),
-            'gemini' => $this->callGemini($apiKey, $model, $messages, $maxTokens),
-            default => throw new \RuntimeException("Unsupported AI provider: {$provider}"),
-        };
+        $userId = $session->customer_id ?? $agent->id;
+
+        return $this->executeWithRateLimit($userId, $session->id, function () use ($provider, $apiKey, $model, $messages, $temperature, $maxTokens) {
+            return match ($provider) {
+                'openai' => $this->callOpenAi($apiKey, $model, $messages, $temperature, $maxTokens),
+                'anthropic' => $this->callAnthropic($apiKey, $model, $messages, $temperature, $maxTokens),
+                'gemini' => $this->callGemini($apiKey, $model, $messages, $maxTokens),
+                default => throw new \RuntimeException("Unsupported AI provider: {$provider}"),
+            };
+        });
     }
 
+    /**
+     * HD-002: enforce per-user and per-session rate limits before executing the LLM call.
+     */
+    private function executeWithRateLimit(int|string $userId, int|string $sessionId, Closure $call): string
+    {
+        $perMinuteLimit = config('helpdesk.llm_rate_limits.per_user_per_minute', 10);
+        $per5minLimit = config('helpdesk.llm_rate_limits.per_session_per_5min', 30);
+        $perDayLimit = config('helpdesk.llm_rate_limits.per_user_per_day', 1000);
+
+        $perMinuteKey = "llm:user:{$userId}:per_minute";
+        $per5minKey = "llm:session:{$sessionId}:per_5min";
+        $perDayKey = "llm:user:{$userId}:per_day";
+
+        if (! RateLimiter::attempt($perMinuteKey, $perMinuteLimit, fn () => true, 60)) {
+            Log::warning('AiAgentFlowEngine: per-minute rate limit exceeded', [
+                'user_id' => $userId,
+                'limit' => $perMinuteLimit,
+            ]);
+            throw new LlmRateLimitException('per_minute', 60);
+        }
+
+        if (! RateLimiter::attempt($per5minKey, $per5minLimit, fn () => true, 300)) {
+            Log::warning('AiAgentFlowEngine: per-session 5-minute rate limit exceeded', [
+                'session_id' => $sessionId,
+                'limit' => $per5minLimit,
+            ]);
+            throw new LlmRateLimitException('per_5min', 300);
+        }
+
+        if (! RateLimiter::attempt($perDayKey, $perDayLimit, fn () => true, 86400)) {
+            Log::warning('AiAgentFlowEngine: daily rate limit exceeded', [
+                'user_id' => $userId,
+                'limit' => $perDayLimit,
+            ]);
+            throw new LlmRateLimitException('per_day', 86400);
+        }
+
+        return $call();
+    }
+
+    /**
+     * HD-006: call OpenAI with timeout, retry, circuit breaker, and structured logging.
+     */
     private function callOpenAi(
         ?string $apiKey,
         string $model,
@@ -275,7 +379,17 @@ class AiAgentFlowEngine
         float $temperature,
         int $maxTokens
     ): string {
+        $circuit = new CircuitBreaker('llm:openai');
+
+        if ($circuit->isOpen()) {
+            throw new \RuntimeException('OpenAI provider is temporarily unavailable (circuit open).');
+        }
+
+        $startedAt = hrtime(true);
+
         $response = Http::withToken($apiKey)
+            ->timeout(30)
+            ->retry(2, 500, throw: false)
             ->post('https://api.openai.com/v1/chat/completions', [
                 'model' => $model,
                 'messages' => $messages,
@@ -283,13 +397,36 @@ class AiAgentFlowEngine
                 'max_tokens' => $maxTokens,
             ]);
 
+        $durationMs = (int) ((hrtime(true) - $startedAt) / 1_000_000);
+
         if ($response->failed()) {
-            throw new \RuntimeException('AI provider call failed: '.$response->status());
+            $circuit->recordFailure();
+            Log::channel('helpdesk')->error('AiAgentFlowEngine: OpenAI call failed', [
+                'provider' => 'openai',
+                'model' => $model,
+                'status' => $response->status(),
+                'duration_ms' => $durationMs,
+            ]);
+            throw new \RuntimeException("OpenAI call failed with status {$response->status()}.");
         }
+
+        $circuit->recordSuccess();
+
+        $tokensUsed = $response->json('usage.total_tokens');
+
+        Log::channel('helpdesk')->info('AiAgentFlowEngine: OpenAI call completed', [
+            'provider' => 'openai',
+            'model' => $model,
+            'duration_ms' => $durationMs,
+            'tokens_used' => $tokensUsed,
+        ]);
 
         return $response->json('choices.0.message.content', '');
     }
 
+    /**
+     * HD-006: call Anthropic with timeout, retry, circuit breaker, and structured logging.
+     */
     private function callAnthropic(
         ?string $apiKey,
         string $model,
@@ -297,6 +434,12 @@ class AiAgentFlowEngine
         float $temperature,
         int $maxTokens
     ): string {
+        $circuit = new CircuitBreaker('llm:anthropic');
+
+        if ($circuit->isOpen()) {
+            throw new \RuntimeException('Anthropic provider is temporarily unavailable (circuit open).');
+        }
+
         $systemMessages = array_filter($messages, fn ($m) => $m['role'] === 'system');
         $chatMessages = array_values(array_filter($messages, fn ($m) => $m['role'] !== 'system'));
         $systemPrompt = implode("\n", array_column($systemMessages, 'content'));
@@ -312,36 +455,92 @@ class AiAgentFlowEngine
             $payload['system'] = $systemPrompt;
         }
 
+        $startedAt = hrtime(true);
+
         $response = Http::withHeaders([
             'x-api-key' => $apiKey,
             'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', $payload);
+        ])
+            ->timeout(30)
+            ->retry(2, 500, throw: false)
+            ->post('https://api.anthropic.com/v1/messages', $payload);
+
+        $durationMs = (int) ((hrtime(true) - $startedAt) / 1_000_000);
 
         if ($response->failed()) {
-            throw new \RuntimeException('AI provider call failed: '.$response->status());
+            $circuit->recordFailure();
+            Log::channel('helpdesk')->error('AiAgentFlowEngine: Anthropic call failed', [
+                'provider' => 'anthropic',
+                'model' => $model,
+                'status' => $response->status(),
+                'duration_ms' => $durationMs,
+            ]);
+            throw new \RuntimeException("Anthropic call failed with status {$response->status()}.");
         }
+
+        $circuit->recordSuccess();
+
+        $tokensUsed = $response->json('usage.input_tokens', 0) + $response->json('usage.output_tokens', 0);
+
+        Log::channel('helpdesk')->info('AiAgentFlowEngine: Anthropic call completed', [
+            'provider' => 'anthropic',
+            'model' => $model,
+            'duration_ms' => $durationMs,
+            'tokens_used' => $tokensUsed ?: null,
+        ]);
 
         return $response->json('content.0.text', '');
     }
 
+    /**
+     * HD-006: call Gemini with timeout, retry, circuit breaker, and structured logging.
+     */
     private function callGemini(?string $apiKey, string $model, array $messages, int $maxTokens): string
     {
+        $circuit = new CircuitBreaker('llm:gemini');
+
+        if ($circuit->isOpen()) {
+            throw new \RuntimeException('Gemini provider is temporarily unavailable (circuit open).');
+        }
+
         $contents = array_map(fn ($m) => [
             'role' => $m['role'] === 'assistant' ? 'model' : 'user',
             'parts' => [['text' => $m['content']]],
         ], array_filter($messages, fn ($m) => $m['role'] !== 'system'));
 
-        $response = Http::post(
-            "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
-            [
-                'contents' => array_values($contents),
-                'generationConfig' => ['maxOutputTokens' => $maxTokens],
-            ]
-        );
+        $startedAt = hrtime(true);
+
+        $response = Http::timeout(30)
+            ->retry(2, 500, throw: false)
+            ->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                [
+                    'contents' => array_values($contents),
+                    'generationConfig' => ['maxOutputTokens' => $maxTokens],
+                ]
+            );
+
+        $durationMs = (int) ((hrtime(true) - $startedAt) / 1_000_000);
 
         if ($response->failed()) {
-            throw new \RuntimeException('AI provider call failed: '.$response->status());
+            $circuit->recordFailure();
+            Log::channel('helpdesk')->error('AiAgentFlowEngine: Gemini call failed', [
+                'provider' => 'gemini',
+                'model' => $model,
+                'status' => $response->status(),
+                'duration_ms' => $durationMs,
+            ]);
+            throw new \RuntimeException("Gemini call failed with status {$response->status()}.");
         }
+
+        $circuit->recordSuccess();
+
+        Log::channel('helpdesk')->info('AiAgentFlowEngine: Gemini call completed', [
+            'provider' => 'gemini',
+            'model' => $model,
+            'duration_ms' => $durationMs,
+            'tokens_used' => null, // Gemini v1beta does not expose token usage in this endpoint
+        ]);
 
         return $response->json('candidates.0.content.parts.0.text', '');
     }
@@ -402,5 +601,12 @@ class AiAgentFlowEngine
         $ticket->update(['closed_at' => now()]);
 
         return 'Ticket closed';
+    }
+
+    private function resolveSecurityChannel(): string
+    {
+        $channels = config('logging.channels', []);
+
+        return isset($channels['security']) ? 'security' : config('logging.default', 'stack');
     }
 }

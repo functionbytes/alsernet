@@ -16,8 +16,6 @@ class Campaign extends Model
 
     protected $table = 'helpdesk_campaigns';
 
-    protected $guarded = [];
-
     protected $casts = [
         'content' => 'array', // Store blocks/nodes for content editor
         'appearance' => 'array', // Colors, fonts, positioning

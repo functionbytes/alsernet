@@ -2,9 +2,10 @@
 
 namespace Tests\Unit\Models\Helpdesk;
 
-use App\Models\Helpdesk\Ticket;
-use App\Models\Helpdesk\TicketComment;
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Modules\Helpdesk\Models\Ticket;
+use Modules\Helpdesk\Models\TicketComment;
 use Tests\TestCase;
 
 class TicketCommentTest extends TestCase
@@ -17,7 +18,7 @@ class TicketCommentTest extends TestCase
         $ticket = Ticket::factory()->create();
 
         // Should fail: no user_id or author_id
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         TicketComment::create([
             'ticket_id' => $ticket->id,
             'body' => 'Test comment',

@@ -55,7 +55,7 @@
                                         class="form-select select2 @error('customer_id') is-invalid @enderror"
                                         required>
                                     <option value="">— Seleccionar cliente —</option>
-                                    @foreach(\App\Models\Helpdesk\Customer::orderBy('name')->get() as $customerOption)
+                                    @foreach(\Modules\Helpdesk\Models\Customer::orderBy('name')->get() as $customerOption)
                                         <option value="{{ $customerOption->id }}" {{ old('customer_id') == $customerOption->id ? 'selected' : '' }}>
                                             {{ $customerOption->name }} ({{ $customerOption->email }})
                                         </option>

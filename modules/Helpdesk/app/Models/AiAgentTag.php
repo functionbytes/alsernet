@@ -14,8 +14,6 @@ class AiAgentTag extends Model
 
     protected $table = 'helpdesk_ai_agent_tags';
 
-    protected $guarded = [];
-
     protected $casts = [
         'is_active' => 'boolean',
         'metadata' => 'array',

@@ -11,8 +11,6 @@ class AiAgentSessionMessage extends Model
 
     protected $table = 'helpdesk_ai_agent_session_messages';
 
-    protected $guarded = [];
-
     protected $casts = [
         'metadata' => 'array',
         'created_at' => 'datetime',

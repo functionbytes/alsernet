@@ -11,8 +11,6 @@ class AiAgentFlowNode extends Model
 
     protected $table = 'helpdesk_ai_agent_flow_nodes';
 
-    protected $guarded = [];
-
     public $timestamps = false;
 
     protected $casts = [

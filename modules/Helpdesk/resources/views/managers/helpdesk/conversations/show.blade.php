@@ -727,7 +727,7 @@
 
                     <div class="row g-3">
                         @php
-                            $cannedReplies = \App\Models\Helpdesk\CannedReply::forUser(auth()->id())
+                            $cannedReplies = \Modules\Helpdesk\Models\CannedReply::forUser(auth()->id())
                                 ->latest()
                                 ->get();
                         @endphp
