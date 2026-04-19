@@ -40,7 +40,9 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Must exceed the longest job timeout (AI agents, campaign batches = 300s)
+            // to prevent the worker re-dispatching a job that's still running.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 360),
             'after_commit' => false,
         ],
 
@@ -68,7 +70,9 @@ return [
             'driver' => 'redis',
             'connection' => env('QUEUE_REDIS_CONNECTION', 'default'),
             'queue' => env('QUEUE_NAME', 'default'),
-            'retry_after' => (int) env('QUEUE_RETRY_AFTER', 90),
+            // Must exceed the longest job timeout (AI agents, campaign batches = 300s)
+            // to prevent the worker re-dispatching a job that's still running.
+            'retry_after' => (int) env('QUEUE_RETRY_AFTER', 360),
             'block_for' => null,
             'after_commit' => false,
         ],

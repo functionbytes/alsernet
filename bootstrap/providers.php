@@ -48,6 +48,18 @@ $allProviders = [
     'Modules\Webhook\Providers\WebhookServiceProvider' => 'Webhook',
     'Modules\Blog\Providers\BlogServiceProvider' => 'Blog',
     'Modules\Newsletter\Providers\NewsletterServiceProvider' => 'Newsletter',
+    'Modules\Attention\Providers\AttentionServiceProvider' => 'Attention',
+    'Modules\Page\Providers\PageServiceProvider' => 'Page',
+    'Modules\Shortcode\Providers\ShortcodeServiceProvider' => 'Shortcode',
+    'Modules\Sitemap\Providers\SitemapServiceProvider' => 'Sitemap',
+    'Modules\Captcha\Providers\CaptchaServiceProvider' => 'Captcha',
+    'Modules\Cookie\Providers\CookieServiceProvider' => 'Cookie',
+    'Modules\Template\Providers\TemplateServiceProvider' => 'Template',
+    'Modules\Reviews\Providers\ReviewsServiceProvider' => 'Reviews',
+    'Modules\Forms\Providers\FormsServiceProvider' => 'Forms',
+    'Modules\Helpdesk\Providers\HelpdeskServiceProvider' => 'Helpdesk',
+    'Modules\Locales\Providers\LocalesServiceProvider' => 'Locales',
+    'Modules\Mailrelay\Providers\MailrelayServiceProvider' => 'Mailrelay',
 ];
 
 // Load module statuses

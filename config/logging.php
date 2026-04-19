@@ -1,5 +1,6 @@
 <?php
 
+use Modules\Core\Logging\MaskSensitiveData;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -138,6 +139,24 @@ return [
             'path' => storage_path('logs/failed-jobs.log'),
             'level' => 'error',
             'days' => 30,
+        ],
+
+        // Mailrelay channel — identical stack but with SensitiveDataMasker applied
+        // to prevent API keys from leaking into log storage.
+        'mailrelay' => [
+            'driver' => 'stack',
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily,syslog')),
+            'ignore_exceptions' => false,
+            'tap' => [MaskSensitiveData::class],
+        ],
+
+        // Helpdesk channel — identical stack with SensitiveDataMasker applied
+        // to redact LLM API tokens (OpenAI/Anthropic/Gemini) from logs.
+        'helpdesk' => [
+            'driver' => 'stack',
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily,syslog')),
+            'ignore_exceptions' => false,
+            'tap' => [MaskSensitiveData::class],
         ],
 
     ],

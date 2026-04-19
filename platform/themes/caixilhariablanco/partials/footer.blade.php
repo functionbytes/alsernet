@@ -141,12 +141,19 @@
         <!-- Footer Copyright Section Start -->
         <div class="footer-copyright">
             <div class="row align-items-center">
-                <div class="col-lg-12">
-                    <!-- Footer Copyright Start -->
+                <div class="col-lg-8">
                     <div class="footer-copyright-text">
                         <p>{!! Theme::getSiteCopyright() !!}</p>
                     </div>
-                    <!-- Footer Copyright End -->
+                </div>
+                <div class="col-lg-4 text-lg-end mt-2 mt-lg-0">
+                    <a href="{{ url('cookie/policy') }}" class="text-white-50 small me-3">Política de cookies</a>
+                    @if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
+                        <button type="button" class="btn btn-link text-white-50 small p-0 border-0 text-decoration-none"
+                                data-bs-toggle="modal" data-bs-target="#cookie-preferences-modal">
+                            Gestionar cookies
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -269,5 +276,11 @@
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit&hl={{ app()->getLocale() }}" async defer></script>
 @endif
 <script src="{{ url('modules/Newsletter/js/newsletter.js') }}"></script>
+
+@if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
+    @include('cookie::index')
+    <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
+    <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
+@endif
 </body>
 </html>

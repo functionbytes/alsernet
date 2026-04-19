@@ -112,6 +112,7 @@
             "modules/Database/app/Helpers/QueryHelper.php",
             "modules/Storage/app/Helpers/PathHelper.php",
             "modules/Role/app/Helpers/PermissionHelper.php",
+            "modules/Core/app/Helpers/SecretHelper.php",
             "modules/Core/app/Helpers/Helper.php"
         ]
     },
