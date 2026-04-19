@@ -46,7 +46,7 @@
                             <h6 class="fw-bold text-dark mb-1">Estructura esperada del módulo</h6>
                             <p class="text-muted mb-3">El archivo ZIP debe contener la siguiente estructura de directorios:</p>
                             <div class="alert alert-info mb-0 p-4">
-                                <pre class="mb-0" style="font-size: 0.875rem; line-height: 1.6;"><code>ModuleName/
+                                <pre class="mb-0 small"><code>ModuleName/
 ├── app/
 │   ├── Http/Controllers/
 │   ├── Models/
@@ -73,7 +73,7 @@
                                 <div class="position-absolute top-0 end-0 m-3">
                                     <span class="badge bg-success">Requerido</span>
                                 </div>
-                                <pre class="mb-0" style="font-size: 0.875rem; line-height: 1.6;"><code>{
+                                <pre class="mb-0 small"><code>{
     "name": "MyModule",
     "alias": "mymodule",
     "description": "Descripción del módulo",

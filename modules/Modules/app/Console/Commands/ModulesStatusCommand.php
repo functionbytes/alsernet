@@ -10,47 +10,41 @@ class ModulesStatusCommand extends Command
 {
     protected $signature = 'modules:status';
 
-    protected $description = 'Display the status of all modules';
+    protected $description = 'Muestra el estado de todos los módulos';
+
+    public function __construct(private readonly ModuleConfigReader $configReader)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
-        $this->info('Module Status Report');
+        $this->info('Reporte de estado de módulos');
         $this->line(str_repeat('=', 80));
 
-        $modules = [];
+        $rows = [];
         $enabledCount = 0;
         $disabledCount = 0;
 
         foreach (Module::all() as $module) {
             $isEnabled = $module->isEnabled();
-            if ($isEnabled) {
-                $enabledCount++;
-            } else {
-                $disabledCount++;
-            }
+            $isEnabled ? $enabledCount++ : $disabledCount++;
 
-            $moduleConfig = ModuleConfigReader::read($module);
-            $version = $moduleConfig['version'] ?? '1.0.0';
-            $priority = $moduleConfig['priority'] ?? 0;
+            $config = $this->configReader->read($module);
 
-            $modules[] = [
+            $rows[] = [
                 $module->getName(),
-                strtolower($module->getName()),
-                $isEnabled ? 'Enabled' : 'Disabled',
-                $priority,
-                $version,
+                $config['alias'] ?? strtolower($module->getName()),
+                $isEnabled ? '<fg=green>Habilitado</>' : '<fg=yellow>Deshabilitado</>',
+                $config['priority'] ?? 0,
+                $config['version'] ?? '1.0.0',
             ];
         }
 
-        $this->table(
-            ['Name', 'Alias', 'Status', 'Priority', 'Version'],
-            $modules
-        );
+        $this->table(['Nombre', 'Alias', 'Estado', 'Prioridad', 'Versión'], $rows);
 
         $this->line(str_repeat('=', 80));
-        $this->info('Total Modules: '.count($modules));
-        $this->line("  <fg=green>Enabled:</> {$enabledCount}");
-        $this->line("  <fg=yellow>Disabled:</> {$disabledCount}");
+        $this->info('Total: '.count($rows)." | Habilitados: {$enabledCount} | Deshabilitados: {$disabledCount}");
 
         return self::SUCCESS;
     }

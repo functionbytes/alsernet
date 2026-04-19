@@ -3,14 +3,21 @@
 namespace Modules\Modules\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
+use Modules\Modules\Services\ModuleService;
 use Nwidart\Modules\Facades\Module;
 
 class ToggleModuleCommand extends Command
 {
-    protected $signature = 'module:toggle {module : The module name or alias} {--action=toggle : Action: toggle, enable, disable}';
+    protected $signature = 'module:toggle {module : Nombre o alias del módulo} {--action=toggle : Acción: toggle, enable, disable}';
 
-    protected $description = 'Toggle the status of a module (enable/disable)';
+    protected $description = 'Habilita, deshabilita o alterna el estado de un módulo';
+
+    protected array $coreModules = ['Role', 'Modules'];
+
+    public function __construct(private readonly ModuleService $moduleService)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -20,57 +27,71 @@ class ToggleModuleCommand extends Command
         $module = Module::find($moduleIdentifier);
 
         if (! $module) {
-            $this->error("Module '{$moduleIdentifier}' not found.");
+            $this->error("Módulo '{$moduleIdentifier}' no encontrado.");
 
             return self::FAILURE;
         }
 
-        // Prevent toggling core modules
-        $coreModules = ['Role', 'Modules'];
-        if (in_array($module->getName(), $coreModules)) {
-            $this->error("Cannot toggle core module '{$module->getName()}'.");
+        if (in_array($module->getName(), $this->coreModules)) {
+            $this->error("No se puede modificar el módulo principal '{$module->getName()}'.");
 
             return self::FAILURE;
         }
 
         try {
-            if ($action === 'toggle') {
-                if ($module->isEnabled()) {
-                    $module->disable();
-                    $this->info("Module '{$module->getName()}' has been disabled.");
-                } else {
-                    $module->enable();
-                    $this->info("Module '{$module->getName()}' has been enabled.");
-                }
-            } elseif ($action === 'enable') {
-                if ($module->isEnabled()) {
-                    $this->warn("Module '{$module->getName()}' is already enabled.");
-                } else {
-                    $module->enable();
-                    $this->info("Module '{$module->getName()}' has been enabled.");
-                }
-            } elseif ($action === 'disable') {
-                if ($module->isDisabled()) {
-                    $this->warn("Module '{$module->getName()}' is already disabled.");
-                } else {
-                    $module->disable();
-                    $this->info("Module '{$module->getName()}' has been disabled.");
-                }
-            } else {
-                $this->error("Invalid action. Use 'toggle', 'enable', or 'disable'.");
+            match ($action) {
+                'toggle' => $this->toggle($module),
+                'enable' => $this->enable($module),
+                'disable' => $this->disable($module),
+                default => throw new \InvalidArgumentException("Acción inválida. Usa 'toggle', 'enable' o 'disable'."),
+            };
 
-                return self::FAILURE;
-            }
-
-            Artisan::call('config:clear');
-            Artisan::call('route:clear');
-            Artisan::call('view:clear');
+            $this->moduleService->clearCache();
 
             return self::SUCCESS;
+        } catch (\InvalidArgumentException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
         } catch (\Exception $e) {
             $this->error("Error: {$e->getMessage()}");
 
             return self::FAILURE;
         }
+    }
+
+    private function toggle(\Nwidart\Modules\Module $module): void
+    {
+        if ($module->isEnabled()) {
+            $module->disable();
+            $this->info("Módulo '{$module->getName()}' deshabilitado.");
+        } else {
+            $module->enable();
+            $this->info("Módulo '{$module->getName()}' habilitado.");
+        }
+    }
+
+    private function enable(\Nwidart\Modules\Module $module): void
+    {
+        if ($module->isEnabled()) {
+            $this->warn("El módulo '{$module->getName()}' ya está habilitado.");
+
+            return;
+        }
+
+        $module->enable();
+        $this->info("Módulo '{$module->getName()}' habilitado.");
+    }
+
+    private function disable(\Nwidart\Modules\Module $module): void
+    {
+        if ($module->isDisabled()) {
+            $this->warn("El módulo '{$module->getName()}' ya está deshabilitado.");
+
+            return;
+        }
+
+        $module->disable();
+        $this->info("Módulo '{$module->getName()}' deshabilitado.");
     }
 }

@@ -84,7 +84,7 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="flex-shrink-0" style="min-width: 200px;">
+                        <div class="flex-shrink-0 w-auto">
                             <select name="status" class="form-select select2 h-100">
                                 <option value="">Todos los estados</option>
                                 <option value="enabled" {{ request('status') == 'enabled' ? 'selected' : '' }}>Habilitados</option>
@@ -289,15 +289,15 @@
                     </div>
                 </div>
                 <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <form id="uninstall-module-form" method="POST" style="display: inline;">
+                    <form id="uninstall-module-form" method="POST" class="w-100">
                         @csrf
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash me-1"></i>Sí, desinstalar
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            Sí, desinstalar
                         </button>
                     </form>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
                 </div>
             </div>
         </div>

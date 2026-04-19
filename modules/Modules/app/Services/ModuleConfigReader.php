@@ -6,7 +6,7 @@ use Nwidart\Modules\Module;
 
 class ModuleConfigReader
 {
-    public static function read(Module $module): array
+    public function read(Module $module): array
     {
         $configPath = $module->getPath().DIRECTORY_SEPARATOR.'module.json';
 
