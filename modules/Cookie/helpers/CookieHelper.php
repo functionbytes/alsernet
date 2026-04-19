@@ -1,19 +1,18 @@
 <?php
 
+use Modules\Core\Models\Setting;
+
 if (! function_exists('cookie_option')) {
-    /**
-     * Get a cookie configuration value from database.
-     * Falls back to default if empty.
-     */
     function cookie_option(string $key, mixed $default = ''): mixed
     {
-        $value = \Modules\Core\Models\Setting::get('cookie.'.$key);
+        static $cache = [];
 
-        // Return default if value is null or empty string
-        if ($value === null || $value === '') {
-            return $default;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
         }
 
-        return $value;
+        $value = Setting::get('cookie.'.$key);
+
+        return $cache[$key] = ($value === null || $value === '') ? $default : $value;
     }
 }

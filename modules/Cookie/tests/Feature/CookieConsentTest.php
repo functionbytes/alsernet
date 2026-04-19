@@ -99,7 +99,7 @@ class CookieConsentTest extends TestCase
 
     public function test_consent_logs_are_visible_to_admin(): void
     {
-        $user = $this->createUser(['Cookie.settings.index']);
+        $user = $this->createUser(['cookie.settings.view']);
 
         CookieConsentLog::create([
             'session_id' => 'test-session-id-123456789012345678901',

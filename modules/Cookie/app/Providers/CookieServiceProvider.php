@@ -2,12 +2,16 @@
 
 namespace Modules\Cookie\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Cookie\Console\Commands\CheckConsentRateCommand;
+use Modules\Cookie\Console\Commands\CleanupCookieLogsCommand;
 use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 
 class CookieServiceProvider extends ServiceProvider
 {
@@ -20,12 +24,23 @@ class CookieServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (Module::find('Cookie')?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
+        $this->registerTranslations();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->loadHelpers();
         $this->registerRoutes();
         $this->registerMenus();
+        $this->registerCommands();
+        $this->registerCommandSchedules();
+
+        $this->publishes([
+            module_path($this->moduleName, 'public') => public_path('modules/'.$this->moduleName),
+        ], 'cookie-assets');
 
         $this->app['events']->listen(RouteMatched::class, function (): void {
             $this->registerCookieAssets();
@@ -65,6 +80,15 @@ class CookieServiceProvider extends ServiceProvider
     protected function isInAdmin(): bool
     {
         return request()->is('panel/*') || request()->is('settings/*') || request()->is('managers/*');
+    }
+
+    protected function registerTranslations(): void
+    {
+        $langPath = module_path($this->moduleName, 'lang');
+
+        if (is_dir($langPath)) {
+            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
+        }
     }
 
     /**
@@ -124,7 +148,7 @@ class CookieServiceProvider extends ServiceProvider
         $publicPath = module_path($this->moduleName, 'routes/public.php');
 
         Route::middleware(['web', 'auth'])
-            ->prefix('panel/setting/cookie')
+            ->prefix('panel/settings/cookie')
             ->name('settings.cookie.')
             ->group(function () use ($webPath) {
                 require $webPath;
@@ -140,6 +164,32 @@ class CookieServiceProvider extends ServiceProvider
         }
     }
 
+    protected function registerCommands(): void
+    {
+        $this->commands([
+            CleanupCookieLogsCommand::class,
+            CheckConsentRateCommand::class,
+        ]);
+    }
+
+    protected function registerCommandSchedules(): void
+    {
+        $this->app->booted(function (): void {
+            $schedule = $this->app->make(Schedule::class);
+
+            $schedule->command('cookie:cleanup-logs')
+                ->daily()
+                ->at('03:00')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            $schedule->command('cookie:check-consent-rate')
+                ->dailyAt('08:00')
+                ->withoutOverlapping()
+                ->onOneServer();
+        });
+    }
+
     /**
      * Register module menus.
      */
@@ -150,6 +200,7 @@ class CookieServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Cookies', 'route' => 'settings.cookie.index'],
                 ['label' => 'Registros de consentimiento', 'route' => 'settings.cookie.logs'],
+                ['label' => 'Inventario de cookies', 'route' => 'settings.cookie.inventory'],
             ],
         ]);
     }

@@ -64,7 +64,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_user_with_view_permission_can_see_settings_page(): void
     {
-        $user = $this->createUser(['Cookie.settings.index']);
+        $user = $this->createUser(['cookie.settings.view']);
 
         $this->actingAs($user)
             ->get(route('settings.cookie.index'))
@@ -76,7 +76,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_user_with_update_permission_can_save_settings(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patch(route('settings.cookie.update'), $this->validPayload())
@@ -86,7 +86,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_settings_are_persisted_to_database(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)->patch(route('settings.cookie.update'), $this->validPayload([
             'message' => 'Mensaje personalizado de cookies.',
@@ -103,7 +103,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_unchecked_enabled_saves_zero(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $payload = $this->validPayload();
         unset($payload['enabled']);
@@ -115,7 +115,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_unchecked_google_analytics_saves_zero(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $payload = $this->validPayload();
         unset($payload['google_analytics_enabled']);
@@ -127,7 +127,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_unchecked_facebook_pixel_saves_zero(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $payload = $this->validPayload();
         unset($payload['facebook_pixel_enabled']);
@@ -141,7 +141,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_bg_color_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['bg_color' => 'rojo']))
@@ -151,7 +151,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_text_color_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['text_color' => '#gg0000']))
@@ -161,7 +161,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_btn_color_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['btn_color' => '90bb13']))
@@ -171,7 +171,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_valid_hex_colors_are_accepted(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload([
@@ -186,7 +186,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_google_analytics_id_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload([
@@ -198,7 +198,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_valid_google_analytics_id_formats_are_accepted(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         foreach (['G-ABCDE12345', 'UA-123456-1', 'AW-123456789'] as $id) {
             $this->actingAs($user)
@@ -209,7 +209,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_facebook_pixel_id_must_be_digits(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload([
@@ -223,7 +223,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_message_exceeding_1000_chars_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload([
@@ -235,7 +235,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_max_width_below_200_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['max_width' => 100]))
@@ -245,7 +245,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_max_width_above_1920_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['max_width' => 2000]))
@@ -255,7 +255,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_position_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['position' => 'left']))
@@ -265,7 +265,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_style_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['style' => 'popup']))
@@ -275,7 +275,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_invalid_more_info_url_is_rejected(): void
     {
-        $user = $this->createUser(['Cookie.settings.update']);
+        $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
             ->patchJson(route('settings.cookie.update'), $this->validPayload(['more_info_url' => 'no-es-url']))
@@ -300,7 +300,7 @@ class CookieSettingsControllerTest extends TestCase
 
     public function test_export_returns_csv(): void
     {
-        $user = $this->createUser(['Cookie.settings.index']);
+        $user = $this->createUser(['cookie.settings.view']);
 
         $logData = [
             'session_id' => str_repeat('a', 40),

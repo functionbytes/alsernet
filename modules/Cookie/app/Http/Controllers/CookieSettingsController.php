@@ -16,8 +16,8 @@ class CookieSettingsController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:Cookie.settings.index')->only('index', 'logs', 'export');
-        $this->middleware('can:Cookie.settings.update')->only('update');
+        $this->middleware('can:cookie.settings.view')->only('index', 'logs', 'export');
+        $this->middleware('can:cookie.settings.update')->only('update');
     }
 
     public function index(): View
@@ -33,7 +33,19 @@ class CookieSettingsController extends Controller
     {
         $data = $request->safe()->all();
 
-        foreach (['enabled', 'google_analytics_enabled', 'facebook_pixel_enabled'] as $checkbox) {
+        $checkboxes = [
+            'enabled',
+            'google_analytics_enabled',
+            'facebook_pixel_enabled',
+            'google_tag_manager_enabled',
+            'microsoft_uet_enabled',
+            'linkedin_insight_enabled',
+            'tiktok_pixel_enabled',
+            'twitter_pixel_enabled',
+            'geo_targeting_enabled',
+        ];
+
+        foreach ($checkboxes as $checkbox) {
             $data[$checkbox] = $request->has($checkbox) ? '1' : '0';
         }
 
@@ -67,14 +79,34 @@ class CookieSettingsController extends Controller
 
         $logs = $query->paginate(50)->withQueryString();
 
+        $rawStats = CookieConsentLog::query()
+            ->selectRaw('action, COUNT(*) as total')
+            ->groupBy('action')
+            ->pluck('total', 'action');
+
         $stats = [
-            'total' => CookieConsentLog::count(),
-            'accept_all' => CookieConsentLog::where('action', 'accept_all')->count(),
-            'reject_all' => CookieConsentLog::where('action', 'reject_all')->count(),
-            'custom' => CookieConsentLog::where('action', 'custom')->count(),
+            'total' => $rawStats->sum(),
+            'accept_all' => $rawStats->get('accept_all', 0),
+            'reject_all' => $rawStats->get('reject_all', 0),
+            'custom' => $rawStats->get('custom', 0),
         ];
 
-        return view('cookie::settings.logs', compact('logs', 'stats'));
+        $trend = CookieConsentLog::query()
+            ->selectRaw('DATE(created_at) as date, action, COUNT(*) as total')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('date', 'action')
+            ->orderBy('date')
+            ->get()
+            ->groupBy('date')
+            ->map(fn ($group) => [
+                'date' => $group->first()->date,
+                'accept_all' => $group->firstWhere('action', 'accept_all')?->total ?? 0,
+                'reject_all' => $group->firstWhere('action', 'reject_all')?->total ?? 0,
+                'custom' => $group->firstWhere('action', 'custom')?->total ?? 0,
+            ])
+            ->values();
+
+        return view('cookie::settings.logs', compact('logs', 'stats', 'trend'));
     }
 
     public function export(): StreamedResponse

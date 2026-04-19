@@ -77,6 +77,12 @@
                 </div>
             </div>
 
+            {{-- Chart: tendencia 30 días --}}
+            <div class="card-body border-bottom">
+                <h6 class="fw-semibold mb-3">Tendencia últimos 30 días</h6>
+                <div id="consent-trend-chart" style="height: 220px;"></div>
+            </div>
+
             {{-- Filters --}}
             <div class="card-body border-bottom">
                 <form method="GET" action="{{ route('settings.cookie.logs') }}">
@@ -206,6 +212,30 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    var consentTrend = @json($trend ?? []);
+
+    if (consentTrend.length) {
+        $('#consent-trend-chart').dxChart({
+            dataSource: consentTrend,
+            series: [
+                { valueField: 'accept_all', name: 'Aceptar todo', color: '#90bb13' },
+                { valueField: 'reject_all', name: 'Rechazar',     color: '#FA896B' },
+                { valueField: 'custom',     name: 'Personalizado', color: '#FEC90F' },
+            ],
+            argumentField: 'date',
+            argumentAxis: { valueMarginsEnabled: false },
+            legend: {
+                position: 'outside',
+                horizontalAlignment: 'center',
+                verticalAlignment: 'bottom',
+            },
+            tooltip: { enabled: true, shared: true },
+        }).dxChart('instance');
+    } else {
+        $('#consent-trend-chart').addClass('d-flex align-items-center justify-content-center text-muted')
+            .html('<i class="fas fa-chart-line me-2"></i>Sin datos en los últimos 30 días');
+    }
 });
 </script>
 @endpush

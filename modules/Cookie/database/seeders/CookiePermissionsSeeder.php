@@ -14,8 +14,12 @@ class CookiePermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            'Cookie.settings.index' => 'Ver configuración de cookies',
-            'Cookie.settings.update' => 'Actualizar configuración de cookies',
+            'cookie.settings.view' => 'Ver configuración de cookies',
+            'cookie.settings.update' => 'Actualizar configuración de cookies',
+            'cookie.inventory.view' => 'Ver inventario de cookies',
+            'cookie.inventory.create' => 'Crear entradas del inventario',
+            'cookie.inventory.update' => 'Actualizar inventario de cookies',
+            'cookie.inventory.delete' => 'Eliminar del inventario de cookies',
         ];
 
         foreach ($permissions as $name => $description) {

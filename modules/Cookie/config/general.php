@@ -55,7 +55,7 @@ return [
     /*
      * Learn more URL (optional)
      */
-    'learn_more_url' => '/cookie-policy',
+    'learn_more_url' => '/cookie/policy',
 
     /*
      * Learn more link text (optional)
@@ -73,18 +73,18 @@ return [
     'cookie_categories' => [
         'essential' => [
             'required' => true,
-            'name' => 'Essential',
-            'description' => 'These cookies are essential for the website to function properly.',
+            'name' => 'cookie::messages.categories.essential.name',
+            'description' => 'cookie::messages.categories.essential.description',
         ],
         'analytics' => [
             'required' => false,
-            'name' => 'Analytics',
-            'description' => 'These cookies help us understand how visitors interact with the website.',
+            'name' => 'cookie::messages.categories.analytics.name',
+            'description' => 'cookie::messages.categories.analytics.description',
         ],
         'marketing' => [
             'required' => false,
-            'name' => 'Marketing',
-            'description' => 'These cookies are used to deliver personalized advertisements.',
+            'name' => 'cookie::messages.categories.marketing.name',
+            'description' => 'cookie::messages.categories.marketing.description',
         ],
     ],
 

@@ -54,7 +54,7 @@
                                         @enderror
                                         <small class="text-muted d-block mt-1">Full Width: banner en toda la pantalla. Minimal: tarjeta flotante en esquina inferior izquierda.</small>
                                     </div>
-                                    <div class="col-md-6 mb-3" id="position-field" {{ old('style', $get('style')) === 'minimal' ? 'style=display:none' : '' }}>
+                                    <div class="col-md-6 mb-3 {{ old('style', $get('style')) === 'minimal' ? 'd-none' : '' }}" id="position-field">
                                         <label for="position" class="form-label">Posición del banner</label>
                                         <select class="form-select @error('position') is-invalid @enderror select2" id="position" name="position">
                                             <option value="bottom" {{ old('position', $get('position')) === 'bottom' ? 'selected' : '' }}>Inferior</option>
@@ -206,6 +206,146 @@
                                     @enderror
                                     <small class="text-muted d-block mt-1">Tu ID de pixel de Facebook (solo números).</small>
                                 </div>
+
+                                <hr class="my-3">
+
+                                {{-- Google Tag Manager --}}
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="google_tag_manager_enabled"
+                                               id="google_tag_manager_enabled" value="1"
+                                               {{ old('google_tag_manager_enabled', $get('google_tag_manager_enabled')) === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold" for="google_tag_manager_enabled">
+                                            Habilitar Google Tag Manager
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Carga GTM con soporte de consentimiento. Complementa GA4 con control centralizado de tags.
+                                    </small>
+                                </div>
+
+                                <div id="gtm-fields" class="mb-3 {{ old('google_tag_manager_enabled', $get('google_tag_manager_enabled')) === '1' ? '' : 'd-none' }}">
+                                    <label for="google_tag_manager_id" class="form-label">Google Tag Manager ID</label>
+                                    <input type="text" class="form-control @error('google_tag_manager_id') is-invalid @enderror"
+                                           id="google_tag_manager_id" name="google_tag_manager_id"
+                                           placeholder="GTM-XXXXXXX" value="{{ old('google_tag_manager_id', $get('google_tag_manager_id')) }}">
+                                    @error('google_tag_manager_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">Ejemplo: GTM-ABC1234. Encuéntralo en tu cuenta de Google Tag Manager.</small>
+                                </div>
+
+                                <hr class="my-3">
+
+                                {{-- Microsoft UET --}}
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="microsoft_uet_enabled"
+                                               id="microsoft_uet_enabled" value="1"
+                                               {{ old('microsoft_uet_enabled', $get('microsoft_uet_enabled')) === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold" for="microsoft_uet_enabled">
+                                            Habilitar Microsoft/Bing UET
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Universal Event Tracking para campañas de Microsoft Advertising (Bing Ads).
+                                    </small>
+                                </div>
+
+                                <div id="ms-uet-fields" class="mb-3 {{ old('microsoft_uet_enabled', $get('microsoft_uet_enabled')) === '1' ? '' : 'd-none' }}">
+                                    <label for="microsoft_uet_id" class="form-label">Microsoft UET Tag ID</label>
+                                    <input type="text" class="form-control @error('microsoft_uet_id') is-invalid @enderror"
+                                           id="microsoft_uet_id" name="microsoft_uet_id"
+                                           placeholder="XXXXXXXXXXXXXXX" value="{{ old('microsoft_uet_id', $get('microsoft_uet_id')) }}">
+                                    @error('microsoft_uet_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">ID numérico de tu etiqueta UET en Microsoft Advertising.</small>
+                                </div>
+
+                                <hr class="my-3">
+
+                                {{-- LinkedIn Insight Tag --}}
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="linkedin_insight_enabled"
+                                               id="linkedin_insight_enabled" value="1"
+                                               {{ old('linkedin_insight_enabled', $get('linkedin_insight_enabled')) === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold" for="linkedin_insight_enabled">
+                                            Habilitar LinkedIn Insight Tag
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Habilita conversiones y audiencias para campañas de LinkedIn Ads.
+                                    </small>
+                                </div>
+
+                                <div id="linkedin-fields" class="mb-3 {{ old('linkedin_insight_enabled', $get('linkedin_insight_enabled')) === '1' ? '' : 'd-none' }}">
+                                    <label for="linkedin_partner_id" class="form-label">LinkedIn Partner ID</label>
+                                    <input type="text" class="form-control @error('linkedin_partner_id') is-invalid @enderror"
+                                           id="linkedin_partner_id" name="linkedin_partner_id"
+                                           placeholder="1234567" value="{{ old('linkedin_partner_id', $get('linkedin_partner_id')) }}">
+                                    @error('linkedin_partner_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">ID numérico de tu cuenta de LinkedIn Campaign Manager.</small>
+                                </div>
+
+                                <hr class="my-3">
+
+                                {{-- TikTok Pixel --}}
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="tiktok_pixel_enabled"
+                                               id="tiktok_pixel_enabled" value="1"
+                                               {{ old('tiktok_pixel_enabled', $get('tiktok_pixel_enabled')) === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold" for="tiktok_pixel_enabled">
+                                            Habilitar TikTok Pixel
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Permite rastrear conversiones y audiencias para campañas de TikTok Ads.
+                                    </small>
+                                </div>
+
+                                <div id="tiktok-fields" class="mb-3 {{ old('tiktok_pixel_enabled', $get('tiktok_pixel_enabled')) === '1' ? '' : 'd-none' }}">
+                                    <label for="tiktok_pixel_id" class="form-label">TikTok Pixel ID</label>
+                                    <input type="text" class="form-control @error('tiktok_pixel_id') is-invalid @enderror"
+                                           id="tiktok_pixel_id" name="tiktok_pixel_id"
+                                           placeholder="CXXXXXXXXXXXXXXXXXX" value="{{ old('tiktok_pixel_id', $get('tiktok_pixel_id')) }}">
+                                    @error('tiktok_pixel_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">Encuéntralo en TikTok Ads Manager → Activos → Eventos.</small>
+                                </div>
+
+                                <hr class="my-3">
+
+                                {{-- Twitter/X Pixel --}}
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="twitter_pixel_enabled"
+                                               id="twitter_pixel_enabled" value="1"
+                                               {{ old('twitter_pixel_enabled', $get('twitter_pixel_enabled')) === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold" for="twitter_pixel_enabled">
+                                            Habilitar Twitter/X Pixel
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        Permite rastrear conversiones y audiencias para campañas de Twitter/X Ads.
+                                    </small>
+                                </div>
+
+                                <div id="twitter-fields" class="mb-0 {{ old('twitter_pixel_enabled', $get('twitter_pixel_enabled')) === '1' ? '' : 'd-none' }}">
+                                    <label for="twitter_pixel_id" class="form-label">Twitter/X Pixel ID</label>
+                                    <input type="text" class="form-control @error('twitter_pixel_id') is-invalid @enderror"
+                                           id="twitter_pixel_id" name="twitter_pixel_id"
+                                           placeholder="o1234" value="{{ old('twitter_pixel_id', $get('twitter_pixel_id')) }}">
+                                    @error('twitter_pixel_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">Encuéntralo en Twitter/X Ads Manager → Herramientas → Pixel.</small>
+                                </div>
                             </div>
 
                             {{-- Apariencia --}}
@@ -216,10 +356,9 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="bg_color" class="form-label">Color de fondo</label>
                                         <div class="input-group">
-                                            <input type="color" class="form-control form-control-color color-picker"
+                                            <input type="color" class="form-control form-control-color color-picker color-swatch"
                                                    id="bg_color_picker"
-                                                   value="{{ old('bg_color', $get('bg_color', '#ffffff')) }}"
-                                                   style="max-width:46px;">
+                                                   value="{{ old('bg_color', $get('bg_color', '#ffffff')) }}">
                                             <input type="text" class="form-control color-text @error('bg_color') is-invalid @enderror"
                                                    id="bg_color" name="bg_color"
                                                    placeholder="#ffffff" value="{{ old('bg_color', $get('bg_color', '#ffffff')) }}">
@@ -231,10 +370,9 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="text_color" class="form-label">Color de texto</label>
                                         <div class="input-group">
-                                            <input type="color" class="form-control form-control-color color-picker"
+                                            <input type="color" class="form-control form-control-color color-picker color-swatch"
                                                    id="text_color_picker"
-                                                   value="{{ old('text_color', $get('text_color', '#000000')) }}"
-                                                   style="max-width:46px;">
+                                                   value="{{ old('text_color', $get('text_color', '#000000')) }}">
                                             <input type="text" class="form-control color-text @error('text_color') is-invalid @enderror"
                                                    id="text_color" name="text_color"
                                                    placeholder="#000000" value="{{ old('text_color', $get('text_color', '#000000')) }}">
@@ -246,10 +384,9 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="btn_color" class="form-label">Color de botones</label>
                                         <div class="input-group">
-                                            <input type="color" class="form-control form-control-color color-picker"
+                                            <input type="color" class="form-control form-control-color color-picker color-swatch"
                                                    id="btn_color_picker"
-                                                   value="{{ old('btn_color', $get('btn_color', '#90bb13')) }}"
-                                                   style="max-width:46px;">
+                                                   value="{{ old('btn_color', $get('btn_color', '#90bb13')) }}">
                                             <input type="text" class="form-control color-text @error('btn_color') is-invalid @enderror"
                                                    id="btn_color" name="btn_color"
                                                    placeholder="#90bb13" value="{{ old('btn_color', $get('btn_color', '#90bb13')) }}">
@@ -291,6 +428,59 @@
                                                     style="border:none; border-radius:4px; padding:6px 14px; font-size:13px; color:#fff; cursor:default;">
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Geo-targeting (GDPR) --}}
+                            <div class="card-body border-bottom p-4">
+                                <h6 class="fw-bold mb-1">Geo-targeting GDPR</h6>
+                                <p class="text-muted mb-3">Muestra el banner solo a visitantes de la Unión Europea y países GDPR.</p>
+
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="geo_targeting_enabled" id="geo_targeting_enabled" value="1"
+                                           {{ old('geo_targeting_enabled', $get('geo_targeting_enabled')) === '1' ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-semibold" for="geo_targeting_enabled">
+                                        Habilitar geo-targeting (solo UE/GDPR)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block">Cuando está activo, el banner solo se muestra a visitantes de países con regulación GDPR. Los visitantes de otros países no verán el banner.</small>
+                            </div>
+
+                            {{-- Control de re-consentimiento --}}
+                            <div class="card-body border-bottom p-4">
+                                <h6 class="fw-bold mb-3">Control de re-consentimiento</h6>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="consent_version" class="form-label">Versión de política de cookies</label>
+                                        <input type="text" class="form-control @error('consent_version') is-invalid @enderror"
+                                               id="consent_version" name="consent_version"
+                                               placeholder="1.0" value="{{ old('consent_version', $get('consent_version', '1.0')) }}">
+                                        @error('consent_version')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="text-muted d-block mt-1">Cambia esta versión para forzar que todos los visitantes vean el banner nuevamente.</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="log_retention_days" class="form-label">Retención de logs (días)</label>
+                                        <input type="number" class="form-control @error('log_retention_days') is-invalid @enderror"
+                                               id="log_retention_days" name="log_retention_days"
+                                               min="7" max="3650" value="{{ old('log_retention_days', $get('log_retention_days', 90)) }}">
+                                        @error('log_retention_days')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="text-muted d-block mt-1">Los registros más antiguos se eliminan automáticamente.</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="alert_threshold" class="form-label">Umbral de alerta (%)</label>
+                                        <input type="number" class="form-control @error('alert_threshold') is-invalid @enderror"
+                                               id="alert_threshold" name="alert_threshold"
+                                               min="0" max="100" value="{{ old('alert_threshold', $get('alert_threshold', 30)) }}">
+                                        @error('alert_threshold')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="text-muted d-block mt-1">Recibe una notificación si la tasa de aceptación cae por debajo de este porcentaje.</small>
                                     </div>
                                 </div>
                             </div>
@@ -383,6 +573,26 @@ $(document).ready(function () {
 
     $('#facebook_pixel_enabled').on('change', function () {
         $('#fb-fields').toggleClass('d-none', !this.checked);
+    });
+
+    $('#google_tag_manager_enabled').on('change', function () {
+        $('#gtm-fields').toggleClass('d-none', !this.checked);
+    });
+
+    $('#microsoft_uet_enabled').on('change', function () {
+        $('#ms-uet-fields').toggleClass('d-none', !this.checked);
+    });
+
+    $('#linkedin_insight_enabled').on('change', function () {
+        $('#linkedin-fields').toggleClass('d-none', !this.checked);
+    });
+
+    $('#tiktok_pixel_enabled').on('change', function () {
+        $('#tiktok-fields').toggleClass('d-none', !this.checked);
+    });
+
+    $('#twitter_pixel_enabled').on('change', function () {
+        $('#twitter-fields').toggleClass('d-none', !this.checked);
     });
 
     // Color picker → actualiza el texto (fuente de verdad) y el preview

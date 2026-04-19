@@ -3,24 +3,26 @@
 namespace Modules\Cookie\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Cookie\Http\Requests\StoreConsentRequest;
 use Modules\Cookie\Models\CookieConsentLog;
+use Modules\Cookie\Models\CookieInventory;
 
 class CookieConsentController extends Controller
 {
-    private const VALID_ACTIONS = ['accept_all', 'reject_all', 'custom'];
-
-    private const VALID_CATEGORIES = ['analytics', 'marketing', 'preferences'];
-
-    public function store(Request $request): JsonResponse
+    public function policy(): View
     {
-        $data = $request->validate([
-            'action' => ['required', 'in:'.implode(',', self::VALID_ACTIONS)],
-            'accepted_categories' => ['nullable', 'array'],
-            'accepted_categories.*' => ['string', 'in:'.implode(',', self::VALID_CATEGORIES)],
-            'is_update' => ['nullable', 'boolean'],
-        ]);
+        $inventory = CookieInventory::query()->active()->ordered()->get()->groupBy('category');
+        $categories = config('Cookie.general.cookie_categories', []);
+
+        return view('cookie::policy', compact('inventory', 'categories'));
+    }
+
+    public function store(StoreConsentRequest $request): JsonResponse
+    {
+        $data = $request->safe()->all();
 
         $ipHash = hash('sha256', $request->ip());
 
@@ -52,9 +54,18 @@ class CookieConsentController extends Controller
         $cookieName = config('Cookie.general.cookie_name', 'cookie_for_consent');
         $consent = $request->cookie($cookieName);
 
-        return response()->json([
-            'has_consent' => $consent !== null,
-            'consent' => $consent ? json_decode($consent, true) : null,
-        ]);
+        if ($consent === null) {
+            return response()->json(['has_consent' => false]);
+        }
+
+        $decoded = json_decode($consent, true);
+        $allowed = ['action', 'categories'];
+        $safe = array_intersect_key($decoded ?? [], array_flip($allowed));
+
+        if (isset($safe['categories']) && ! is_array($safe['categories'])) {
+            $safe['categories'] = [];
+        }
+
+        return response()->json(['has_consent' => true, 'data' => $safe]);
     }
 }

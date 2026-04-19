@@ -10,7 +10,7 @@ $(() => {
         const COOKIE_NAME   = $banner.data('cookie-name') || 'cookie_for_consent'
         const COOKIE_DOMAIN = $banner.data('cookie-domain') || window.location.hostname
         const COOKIE_SECURE = $banner.data('cookie-secure') === '1' ? ';secure' : ''
-        const COOKIE_DAYS   = parseInt($banner.data('cookie-lifetime'), 10) || 365
+        const COOKIE_DAYS   = 365
 
         // ── Cookie helpers ──────────────────────────────────────
 
@@ -33,21 +33,27 @@ $(() => {
             return null
         }
 
-        // ── GA consent ──────────────────────────────────────────
+        // ── GA consent (Google Consent Mode v2) ─────────────────
 
         function updateGtagConsent(categories) {
             if (typeof gtag !== 'function') { return }
 
+            const marketing  = categories.includes('marketing')
+            const analytics  = categories.includes('analytics')
+            const prefs      = categories.includes('preferences')
+
             gtag('consent', 'update', {
-                ad_storage: categories.includes('marketing') ? 'granted' : 'denied',
-                analytics_storage: categories.includes('analytics') ? 'granted' : 'denied',
-                personalization_storage: categories.includes('preferences') ? 'granted' : 'denied',
-                functionality_storage: 'granted',
-                security_storage: 'granted',
+                ad_storage:              marketing ? 'granted' : 'denied',
+                analytics_storage:       analytics ? 'granted' : 'denied',
+                ad_user_data:            marketing ? 'granted' : 'denied',
+                ad_personalization:      marketing ? 'granted' : 'denied',
+                functionality_storage:   'granted',
+                personalization_storage: prefs     ? 'granted' : 'denied',
+                security_storage:        'granted',
             })
 
-            if (categories.includes('analytics') && window._cookieGaId) {
-                gtag('config', window._cookieGaId)
+            if (analytics && window._cookieGaId) {
+                gtag('config', window._cookieGaId, { send_page_view: true })
             }
         }
 
@@ -68,7 +74,7 @@ $(() => {
 
         // ── Log to server ────────────────────────────────────────
 
-        function logConsent(action, categories, isUpdate) {
+        function logConsent(action, categories) {
             const csrfToken = $('meta[name="csrf-token"]').attr('content')
             if (!csrfToken) { return }
 
@@ -77,15 +83,15 @@ $(() => {
                 method: 'POST',
                 contentType: 'application/json',
                 headers: { 'X-CSRF-TOKEN': csrfToken },
-                data: JSON.stringify({ action, accepted_categories: categories, is_update: isUpdate }),
+                data: JSON.stringify({ action, accepted_categories: categories }),
             })
         }
 
         // ── Save consent ─────────────────────────────────────────
 
-        function saveConsent(action, categories, isUpdate) {
+        function saveConsent(action, categories) {
             setCookie(COOKIE_NAME, JSON.stringify({ action, categories }), COOKIE_DAYS)
-            logConsent(action, categories, isUpdate)
+            logConsent(action, categories)
             updateGtagConsent(categories)
 
             if (categories.includes('marketing')) {
@@ -105,24 +111,26 @@ $(() => {
 
         function showBanner() {
             $banner.removeClass('d-none')
+            requestAnimationFrame(() => $banner.addClass('cookie-consent--visible'))
         }
 
         function hideBanner() {
-            $banner.addClass('d-none')
+            $banner.removeClass('cookie-consent--visible')
+            setTimeout(() => $banner.addClass('d-none'), 350)
         }
 
         // ── Actions ──────────────────────────────────────────────
 
-        function acceptAll(isUpdate) {
+        function acceptAll() {
             const allCategories = []
             $('.cookie-category-toggle').each(function () {
                 allCategories.push($(this).data('category'))
             })
-            saveConsent('accept_all', allCategories, isUpdate || false)
+            saveConsent('accept_all', allCategories)
         }
 
         function rejectAll() {
-            saveConsent('reject_all', [], false)
+            saveConsent('reject_all', [])
         }
 
         function savePreferences() {
@@ -130,13 +138,24 @@ $(() => {
             $('.cookie-category-toggle:checked:not(:disabled)').each(function () {
                 selected.push($(this).data('category'))
             })
-            saveConsent('custom', selected, !!getCookie(COOKIE_NAME))
+            saveConsent('custom', selected)
         }
 
         // ── Init ─────────────────────────────────────────────────
 
-        if (!getCookie(COOKIE_NAME)) {
+        const _saved = getCookie(COOKIE_NAME)
+
+        if (!_saved) {
             showBanner()
+        } else {
+            // Restore consent signals for returning visitors so GCM fires correctly
+            try {
+                const { categories } = JSON.parse(_saved)
+                updateGtagConsent(Array.isArray(categories) ? categories : [])
+                if (Array.isArray(categories) && categories.includes('marketing')) {
+                    initFacebookPixel()
+                }
+            } catch (_) {}
         }
 
         // ── Events ───────────────────────────────────────────────
@@ -153,7 +172,7 @@ $(() => {
 
         $(document).on('click', '.js-cookie-accept-modal', function (e) {
             e.preventDefault()
-            acceptAll(!!getCookie(COOKIE_NAME))
+            acceptAll()
         })
 
         $(document).on('click', '.js-cookie-save-preferences', function (e) {
