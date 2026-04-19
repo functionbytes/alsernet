@@ -12,6 +12,14 @@ use Illuminate\View\View;
 use Modules\System\Http\Requests\StoreLangRequest;
 use Modules\System\Http\Requests\UpdateLangRequest;
 
+/**
+ * @deprecated La gestión de idiomas se hace en el módulo Locales
+ *             (tabla `locales`, controller Modules\Locales\Http\Controllers\LocaleController).
+ *             Esta clase opera sobre la tabla legacy `langs` que ahora se
+ *             sincroniza automáticamente vía LocaleObserver.
+ *             Se mantiene por si hay comandos/jobs legacy que la referencian,
+ *             pero NO debe usarse para UI nueva y no está registrada en rutas.
+ */
 class LangsController extends Controller
 {
     public function index(Request $request): View
