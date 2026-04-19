@@ -155,15 +155,13 @@ class AttentionPermissionsSeeder extends Seeder
     {
         // Super Admin - Has all permissions
         $superAdmin = Role::firstOrCreate(
-            ['name' => 'super-settings', 'guard_name' => 'web'],
-            ['description' => 'Super Administrador con acceso completo']
+            ['name' => 'super-settings', 'guard_name' => 'web']
         );
         $this->command->info('Rol creado: super-settings');
 
         // Attention Administrator - Full module control
         $attentionAdmin = Role::firstOrCreate(
-            ['name' => 'attention-settings', 'guard_name' => 'web'],
-            ['description' => 'Administrador del módulo de atención']
+            ['name' => 'attention-settings', 'guard_name' => 'web']
         );
         $attentionAdmin->givePermissionTo([
             'attention.view-all',
@@ -187,8 +185,7 @@ class AttentionPermissionsSeeder extends Seeder
 
         // Attention Manager - Can manage assigned attentions
         $attentionManager = Role::firstOrCreate(
-            ['name' => 'attention-manager', 'guard_name' => 'web'],
-            ['description' => 'Supervisor de peticiones']
+            ['name' => 'attention-manager', 'guard_name' => 'web']
         );
         $attentionManager->givePermissionTo([
             'attention.view-all',
@@ -208,8 +205,7 @@ class AttentionPermissionsSeeder extends Seeder
 
         // Attention Agent - Can handle assigned attentions
         $attentionAgent = Role::firstOrCreate(
-            ['name' => 'attention-agent', 'guard_name' => 'web'],
-            ['description' => 'Agente de atención al cliente']
+            ['name' => 'attention-agent', 'guard_name' => 'web']
         );
         $attentionAgent->givePermissionTo([
             'attention.view',
@@ -225,8 +221,7 @@ class AttentionPermissionsSeeder extends Seeder
 
         // Attention User - Basic user (can create and view own)
         $attentionUser = Role::firstOrCreate(
-            ['name' => 'attention-user', 'guard_name' => 'web'],
-            ['description' => 'Usuario básico del módulo']
+            ['name' => 'attention-user', 'guard_name' => 'web']
         );
         $attentionUser->givePermissionTo([
             'attention.view',

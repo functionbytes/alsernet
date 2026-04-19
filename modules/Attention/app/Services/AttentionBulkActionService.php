@@ -11,6 +11,8 @@ use Modules\Attention\Events\AttentionAssigned;
 use Modules\Attention\Events\AttentionClosed;
 use Modules\Attention\Events\AttentionStatusChanged;
 use Modules\Attention\Models\Attention;
+use Modules\Attention\Notifications\AttentionClosedNotification;
+use Modules\Attention\Notifications\AttentionStatusChangedNotification;
 
 /**
  * Servicio de acciones masivas para peticiones
@@ -398,16 +400,41 @@ class AttentionBulkActionService
      */
     protected static function sendBulkNotifications(Collection $attentions, string $action): void
     {
-        try {
-            // TODO: Implementar notificaciones según configuración del sistema
-            // Puede incluir emails, notificaciones in-app, webhooks, etc.
+        Log::info('Bulk notifications queued', [
+            'action' => $action,
+            'count' => $attentions->count(),
+        ]);
 
-            Log::info('Bulk notifications queued', [
-                'action' => $action,
-                'count' => $attentions->count(),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to send bulk notifications', ['error' => $e->getMessage()]);
+        $attentions->loadMissing('assignedUser');
+
+        foreach ($attentions as $attention) {
+            $notifiable = $attention->assignedUser;
+
+            if (! $notifiable) {
+                continue;
+            }
+
+            try {
+                $notification = match ($action) {
+                    'close' => new AttentionClosedNotification($attention),
+                    'status_change' => new AttentionStatusChangedNotification(
+                        $attention,
+                        AttentionStatus::RECEIVED,
+                        $attention->status
+                    ),
+                    default => null,
+                };
+
+                if ($notification) {
+                    $notifiable->notify($notification);
+                }
+            } catch (Exception $e) {
+                Log::warning('Failed to send bulk notification for attention', [
+                    'attention_id' => $attention->id,
+                    'action' => $action,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
