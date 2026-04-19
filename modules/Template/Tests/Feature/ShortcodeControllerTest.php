@@ -3,15 +3,12 @@
 namespace Modules\Template\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Modules\Template\Models\Shortcode;
-use Tests\TestCase;
+use Modules\Template\Tests\TestCase;
 
 class ShortcodeControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected User $user;
 
     protected function setUp(): void

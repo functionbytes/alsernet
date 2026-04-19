@@ -171,6 +171,18 @@ class MenuController extends Controller
     }
 
     /**
+     * AJAX: Search available references (pages, posts, categories) for menu items.
+     */
+    public function references(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Menu::class);
+
+        $results = $this->menuService->getAvailableReferences($request->input('search', ''));
+
+        return response()->json($results);
+    }
+
+    /**
      * Remove the specified menu.
      */
     public function destroy(Menu $menu): RedirectResponse

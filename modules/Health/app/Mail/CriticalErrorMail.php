@@ -43,7 +43,7 @@ class CriticalErrorMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'mail.critical-error',
+            view: 'health::mail.critical-error',
         );
     }
 }

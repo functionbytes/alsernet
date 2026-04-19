@@ -60,12 +60,16 @@
 
                             {{-- Contenido (Blade/HTML) --}}
                             <div class="mb-3">
-                                <label class="form-label">{{ __('template::template.content') }} *</label>
-                                <textarea name="content" class="form-control @error('content') is-invalid @enderror"
-                                          rows="12" id="template-content" required
-                                          placeholder="Ingresa contenido Blade o HTML...">{{ old('content', $template->content ?? '') }}</textarea>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0">{{ __('template::template.content') }} *</label>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-fullscreen-editor">
+                                        <i class="fas fa-expand me-1"></i>Pantalla completa
+                                    </button>
+                                </div>
+                                <div id="monaco-editor-container" style="height: 400px; border: 1px solid #ced4da; border-radius: 4px;"></div>
+                                <textarea name="content" id="template-content" class="d-none @error('content') is-invalid @enderror" required>{{ old('content', $template->content ?? '') }}</textarea>
                                 @error('content')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                                 <small class="text-muted d-block mt-2">
                                     <i class="fas fa-info-circle me-1"></i>
@@ -303,11 +307,44 @@
     </div>
     @endif
 
+    @push('css')
+    <style>
+        #monaco-editor-container.fullscreen-editor {
+            height: calc(100vh - 200px) !important;
+        }
+    </style>
+    @endpush
+
     @push('footer-scripts')
+        <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
         <script>
-            $(document).ready(function() {
+            let monacoEditor = null;
+
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } });
+
+            require(['vs/editor/editor.main'], function () {
+                const textarea = document.getElementById('template-content');
+
+                monacoEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+                    value: textarea.value,
+                    language: 'html',
+                    theme: 'vs',
+                    fontSize: 13,
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    wordWrap: 'on',
+                    scrollBeyondLastLine: false,
+                });
+
+                // Sync Monaco → textarea on form submit
+                $('form').on('submit', function () {
+                    textarea.value = monacoEditor.getValue();
+                });
+            });
+
+            $(document).ready(function () {
                 // Generar slug desde nombre
-                $('#btn-generate-slug').click(function() {
+                $('#btn-generate-slug').click(function () {
                     const name = $('input[name="name"]').val();
                     if (!name) {
                         toastr.warning('Por favor ingresa un nombre primero');
@@ -325,28 +362,56 @@
                 });
 
                 // Auto-generar slug cuando cambias el nombre
-                $('input[name="name"]').on('change', function() {
+                $('input[name="name"]').on('change', function () {
                     if (!$('input[name="slug"]').val()) {
                         $('#btn-generate-slug').click();
                     }
                 });
 
-                // Insertar shortcode en el textarea al cursor
-                $(document).on('click', '.btn-insert-shortcode', function() {
+                // Insertar shortcode en Monaco editor
+                $(document).on('click', '.btn-insert-shortcode', function () {
                     const shortcode = $(this).data('shortcode');
+
+                    if (monacoEditor) {
+                        const selection = monacoEditor.getSelection();
+                        monacoEditor.executeEdits('shortcode', [{
+                            range: selection,
+                            text: shortcode,
+                            forceMoveMarkers: true,
+                        }]);
+                        monacoEditor.focus();
+                        return;
+                    }
+
+                    // Fallback to textarea if Monaco not ready
                     const textarea = document.getElementById('template-content');
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
-                    const value = textarea.value;
-
-                    textarea.value = value.substring(0, start) + shortcode + value.substring(end);
+                    textarea.value = textarea.value.substring(0, start) + shortcode + textarea.value.substring(end);
                     textarea.selectionStart = textarea.selectionEnd = start + shortcode.length;
                     textarea.focus();
                 });
 
+                // Botón pantalla completa
+                $('#btn-fullscreen-editor').on('click', function () {
+                    const $container = $('#monaco-editor-container');
+                    const isFullscreen = $container.hasClass('fullscreen-editor');
+
+                    $container.toggleClass('fullscreen-editor');
+                    $(this).html(
+                        isFullscreen
+                            ? '<i class="fas fa-expand me-1"></i>Pantalla completa'
+                            : '<i class="fas fa-compress me-1"></i>Salir de pantalla completa'
+                    );
+
+                    if (monacoEditor) {
+                        monacoEditor.layout();
+                    }
+                });
+
                 // Vista previa del template
-                $('#btn-preview-template').click(function() {
-                    const content = $('#template-content').val().trim();
+                $('#btn-preview-template').click(function () {
+                    const content = monacoEditor ? monacoEditor.getValue().trim() : $('#template-content').val().trim();
 
                     if (!content) {
                         toastr.warning('El contenido está vacío. Ingresa algo para previsualizar.');
@@ -367,14 +432,14 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                             'Accept': 'application/json',
                         },
-                        data: { content: content },
-                        success: function(response) {
+                        data: { content },
+                        success: function (response) {
                             const iframe = document.getElementById('preview-frame');
                             iframe.srcdoc = response.html;
                             $('#preview-loading').addClass('d-none');
                             $('#preview-frame').removeClass('d-none');
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             const msg = xhr.responseJSON?.error || 'Error al generar la vista previa.';
                             $('#preview-loading').addClass('d-none');
                             $('#preview-error').text(msg).removeClass('d-none');
@@ -383,7 +448,7 @@
                 });
 
                 // Limpiar preview al cerrar el modal
-                document.getElementById('modal-preview').addEventListener('hidden.bs.modal', function() {
+                document.getElementById('modal-preview').addEventListener('hidden.bs.modal', function () {
                     $('#preview-frame').attr('srcdoc', '').addClass('d-none');
                     $('#preview-loading').removeClass('d-none');
                     $('#preview-error').addClass('d-none');

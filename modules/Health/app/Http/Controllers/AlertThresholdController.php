@@ -16,7 +16,7 @@ class AlertThresholdController extends Controller
     {
         $thresholds = AlertThreshold::query()->latest()->get();
 
-        return view('settings.alerts.index', compact('thresholds'));
+        return view('health::settings.alerts.index', compact('thresholds'));
     }
 
     public function store(StoreAlertThresholdRequest $request): RedirectResponse

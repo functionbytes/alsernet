@@ -35,7 +35,7 @@ class ImportController extends Controller
     {
         abort_unless(array_key_exists($type, $this->importers), 404);
 
-        return view('imports.show', compact('type'));
+        return view('system::imports.show', compact('type'));
     }
 
     public function store(Request $request, string $type): RedirectResponse

@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,7 +19,7 @@ return new class extends Migration
                     ->after('place_id');
             }
 
-            $table->dropForeign('review_google_locations_connection_id_foreign');
+            $table->dropForeign(['connection_id']);
             $table->unsignedBigInteger('connection_id')->nullable()->change();
             $table->foreign('connection_id')
                 ->references('id')
@@ -28,16 +27,16 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        $existingIndexes = collect(DB::select('SHOW INDEX FROM review_google_locations'))
-            ->pluck('Key_name')
+        $existingIndexNames = collect(Schema::getIndexes('review_google_locations'))
+            ->pluck('name')
             ->all();
 
-        Schema::table('review_google_locations', function (Blueprint $table) use ($existingIndexes) {
-            if (! in_array('review_google_locations_place_id_index', $existingIndexes)) {
+        Schema::table('review_google_locations', function (Blueprint $table) use ($existingIndexNames) {
+            if (! in_array('review_google_locations_place_id_index', $existingIndexNames)) {
                 $table->index('place_id');
             }
 
-            if (! in_array('review_google_locations_sync_strategy_index', $existingIndexes)) {
+            if (! in_array('review_google_locations_sync_strategy_index', $existingIndexNames)) {
                 $table->index('sync_strategy');
             }
         });
@@ -50,7 +49,7 @@ return new class extends Migration
             $table->dropIndex(['sync_strategy']);
             $table->dropColumn(['place_id', 'sync_strategy']);
 
-            $table->dropForeign('review_google_locations_connection_id_foreign');
+            $table->dropForeign(['connection_id']);
             $table->unsignedBigInteger('connection_id')->nullable(false)->change();
             $table->foreign('connection_id')
                 ->references('id')

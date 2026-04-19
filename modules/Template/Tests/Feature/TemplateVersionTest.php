@@ -3,16 +3,13 @@
 namespace Modules\Template\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Template\Models\Template;
 use Modules\Template\Models\TemplateVersion;
 use Modules\Template\Services\TemplateService;
-use Tests\TestCase;
+use Modules\Template\Tests\TestCase;
 
 class TemplateVersionTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected User $user;
 
     protected function setUp(): void

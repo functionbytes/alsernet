@@ -176,6 +176,9 @@ Route::prefix('panel/settings/menus')
         // Menu structure update (drag & drop)
         Route::post('/{menu}/structure', [MenuController::class, 'updateStructure'])->name('structure.update');
 
+        // References search (AJAX autocomplete)
+        Route::get('/references', [MenuController::class, 'references'])->name('references');
+
         // Menu items
         Route::post('/{menu}/items', [MenuController::class, 'storeItem'])->name('items.store');
         Route::put('/{menu}/items/{item}', [MenuController::class, 'updateItem'])->name('items.update');

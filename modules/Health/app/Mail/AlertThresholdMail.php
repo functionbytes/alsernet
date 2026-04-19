@@ -29,7 +29,7 @@ class AlertThresholdMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'mail.alert-threshold',
+            view: 'health::mail.alert-threshold',
         );
     }
 }

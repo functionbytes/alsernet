@@ -167,9 +167,14 @@ if (! function_exists('parse_args')) {
     }
 }
 
-// Nota: dynamic_sidebar() la provee el módulo Widget (priority 10).
-// No la definimos aquí para no bloquear la implementación real.
-// El tema carga functions/functions.php via app()->booted(), después de que Widget ya bootó.
+// dynamic_sidebar() la provee el módulo Widget cuando está activo.
+// Este fallback vacío evita errores fatales cuando Widget está desactivado.
+if (! function_exists('dynamic_sidebar')) {
+    function dynamic_sidebar(string $id = 'sidebar-1'): string
+    {
+        return '';
+    }
+}
 
 if (! function_exists('do_shortcode')) {
     /**

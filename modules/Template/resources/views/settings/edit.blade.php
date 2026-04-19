@@ -1,4 +1,1 @@
-@extends('template::settings.form', [
-    'template' => $template,
-    'templates' => $templates ?? []
-])
+@include('template::settings.form', ['template' => $template, 'templates' => $templates ?? []])

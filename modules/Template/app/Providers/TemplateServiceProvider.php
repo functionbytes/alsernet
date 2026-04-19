@@ -12,13 +12,16 @@ use Modules\Captcha\Facades\Captcha;
 use Modules\Core\Models\Setting;
 use Modules\Page\Http\Controllers\VisualEditorController;
 use Modules\Template\Console\ClearMenuCacheCommand;
+use Modules\Template\Console\ExportTemplateCommand;
 use Modules\Template\Console\ThemeActivateCommand;
 use Modules\Template\Console\ThemeLinkCommand;
 use Modules\Template\Facades\Menu;
 use Modules\Template\Helpers\BaseHelper;
 use Modules\Template\Helpers\RvMedia;
 use Modules\Template\Helpers\SeoHelper;
+use Modules\Template\Models\MenuItem;
 use Modules\Template\Models\Shortcode;
+use Modules\Template\Observers\MenuItemObserver;
 use Modules\Template\Services\MenuService;
 use Modules\Template\Services\TemplateManager;
 use Modules\Template\Services\TemplateService;
@@ -48,6 +51,7 @@ class TemplateServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerObservers();
         $this->registerMenus();
         $this->loadMenuHelpers();
         $this->loadTemplateFunctions();
@@ -142,14 +146,23 @@ class TemplateServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register model observers.
+     */
+    protected function registerObservers(): void
+    {
+        MenuItem::observe(MenuItemObserver::class);
+    }
+
+    /**
      * Register commands in the format of Command::class
      */
     protected function registerCommands(): void
     {
         $this->commands([
             ClearMenuCacheCommand::class,
-            ThemeLinkCommand::class,
+            ExportTemplateCommand::class,
             ThemeActivateCommand::class,
+            ThemeLinkCommand::class,
         ]);
     }
 

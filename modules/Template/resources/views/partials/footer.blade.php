@@ -1,3 +1,9 @@
+@if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
+    @include('cookie::index')
+    <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
+    <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
+@endif
+
 <footer class="footer bg-light border-top mt-5 py-4">
     <div class="container">
         <div class="row">

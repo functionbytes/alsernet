@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Template\Models\Template;
 use Modules\Template\Services\TemplateManager;
 use Modules\Template\Services\TemplateService;
-use Tests\TestCase;
+use Modules\Template\Tests\TestCase;
 
 class TemplateControllerTest extends TestCase
 {

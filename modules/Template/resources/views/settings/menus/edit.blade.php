@@ -232,13 +232,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-0">
+                    {{-- Search bar --}}
+                    <div class="p-3 border-bottom">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="ref-search" class="form-control" placeholder="Buscar páginas, artículos, categorías...">
+                            <span class="input-group-text d-none" id="ref-search-spinner">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </span>
+                        </div>
+                    </div>
+
                     {{-- Tabs --}}
                     <ul class="nav nav-tabs nav-fill border-bottom px-3 pt-3" id="contentTabs" role="tablist">
                         @if(isset($references['pages']) && $references['pages']->isNotEmpty())
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-pages" type="button">
                                     <i class="fas fa-file-alt me-1"></i> Páginas
-                                    <span class="badge bg-secondary ms-1">{{ $references['pages']->count() }}</span>
+                                    <span class="badge bg-secondary ms-1 ref-count" id="count-pages">{{ $references['pages']->count() }}</span>
                                 </button>
                             </li>
                         @endif
@@ -247,7 +258,7 @@
                                 <button class="nav-link {{ !isset($references['pages']) || $references['pages']->isEmpty() ? 'active' : '' }}"
                                         data-bs-toggle="tab" data-bs-target="#tab-posts" type="button">
                                     <i class="fas fa-newspaper me-1"></i> Artículos
-                                    <span class="badge bg-secondary ms-1">{{ $references['posts']->count() }}</span>
+                                    <span class="badge bg-secondary ms-1 ref-count" id="count-posts">{{ $references['posts']->count() }}</span>
                                 </button>
                             </li>
                         @endif
@@ -256,16 +267,16 @@
                                 <button class="nav-link {{ !isset($references['pages']) || $references['pages']->isEmpty() ? (isset($references['posts']) && $references['posts']->isNotEmpty() ? '' : 'active') : '' }}"
                                         data-bs-toggle="tab" data-bs-target="#tab-categories" type="button">
                                     <i class="fas fa-tags me-1"></i> Categorías
-                                    <span class="badge bg-secondary ms-1">{{ $references['categories']->count() }}</span>
+                                    <span class="badge bg-secondary ms-1 ref-count" id="count-categories">{{ $references['categories']->count() }}</span>
                                 </button>
                             </li>
                         @endif
                     </ul>
 
-                    <div class="tab-content p-3" style="max-height: 380px; overflow-y: auto;">
+                    <div class="tab-content p-3" id="ref-tab-content" style="max-height: 380px; overflow-y: auto;">
                         @if(isset($references['pages']) && $references['pages']->isNotEmpty())
                             <div class="tab-pane fade show active" id="tab-pages" role="tabpanel">
-                                <ul class="list-unstyled mb-0">
+                                <ul class="list-unstyled mb-0 ref-list" data-type="pages">
                                     @foreach($references['pages'] as $page)
                                         <li class="py-1 border-bottom">
                                             <div class="form-check">
@@ -287,7 +298,7 @@
                         @if(isset($references['posts']) && $references['posts']->isNotEmpty())
                             <div class="tab-pane fade {{ !isset($references['pages']) || $references['pages']->isEmpty() ? 'show active' : '' }}"
                                  id="tab-posts" role="tabpanel">
-                                <ul class="list-unstyled mb-0">
+                                <ul class="list-unstyled mb-0 ref-list" data-type="posts">
                                     @foreach($references['posts'] as $post)
                                         <li class="py-1 border-bottom">
                                             <div class="form-check">
@@ -308,7 +319,7 @@
                         @endif
                         @if(isset($references['categories']) && $references['categories']->isNotEmpty())
                             <div class="tab-pane fade" id="tab-categories" role="tabpanel">
-                                <ul class="list-unstyled mb-0">
+                                <ul class="list-unstyled mb-0 ref-list" data-type="categories">
                                     @foreach($references['categories'] as $category)
                                         <li class="py-1 border-bottom">
                                             <div class="form-check">
@@ -626,6 +637,78 @@ $(function () {
     // Select2 for static selects
     $('.select2').select2({ width: '100%' });
     $('#item-target').select2({ width: '100%', dropdownParent: $('#modalCustomLink') });
+
+    // Reference search with debounce
+    let searchTimer = null;
+
+    $('#ref-search').on('input', function () {
+        clearTimeout(searchTimer);
+        const query = $(this).val().trim();
+
+        searchTimer = setTimeout(function () {
+            if (query.length > 0 && query.length < 2) { return; }
+            searchReferences(query);
+        }, 350);
+    });
+
+    // Clear search when modal closes
+    $('#modalContent').on('hidden.bs.modal', function () {
+        $('#ref-search').val('');
+    });
+
+    function searchReferences(query) {
+        $('#ref-search-spinner').removeClass('d-none');
+
+        $.ajax({
+            url: '{{ route("settings.menus.references") }}',
+            method: 'GET',
+            data: { search: query },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (data) {
+                renderReferenceList('pages', data.pages ?? []);
+                renderReferenceList('posts', data.posts ?? []);
+                renderReferenceList('categories', data.categories ?? []);
+            },
+            error: function () {
+                toastr.error('Error al buscar referencias.');
+            },
+            complete: function () {
+                $('#ref-search-spinner').addClass('d-none');
+            },
+        });
+    }
+
+    function renderReferenceList(type, items) {
+        const $list = $('.ref-list[data-type="' + type + '"]');
+        if (!$list.length) { return; }
+
+        const typeMap = { pages: 'page', posts: 'post', categories: 'category' };
+        const itemType = typeMap[type];
+
+        if (!items.length) {
+            $list.html('<li class="py-2 text-muted text-center small">Sin resultados</li>');
+            $('#count-' + type).text(0);
+            return;
+        }
+
+        const html = items.map(function (item) {
+            const id = 'modal-' + itemType + '-' + item.id;
+            return `<li class="py-1 border-bottom">
+                <div class="form-check">
+                    <input class="form-check-input ref-checkbox" type="checkbox"
+                           id="${id}"
+                           data-reference-type="${item.reference_type}"
+                           data-reference-id="${item.id}"
+                           data-title="${item.title}"
+                           data-type="${itemType}">
+                    <label class="form-check-label" for="${id}">${item.title}</label>
+                </div>
+            </li>`;
+        }).join('');
+
+        $list.html(html);
+        $('#count-' + type).text(items.length);
+    }
 });
 </script>
 @endpush

@@ -3,19 +3,16 @@
 namespace Modules\Template\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Modules\Template\Models\Menu;
 use Modules\Template\Models\MenuItem;
 use Modules\Template\Models\Template;
 use Modules\Template\Models\TemplateVersion;
 use Modules\Template\Services\TemplateService;
-use Tests\TestCase;
+use Modules\Template\Tests\TestCase;
 
 class MenuTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected User $user;
 
     protected function setUp(): void

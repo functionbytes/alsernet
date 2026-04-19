@@ -11,7 +11,7 @@ class SettingsPanelController extends Controller
     {
         $groups = $this->getSettingsGroups();
 
-        return view('settings.panel.index', compact('groups'));
+        return view('system::settings.panel.index', compact('groups'));
     }
 
     /** @return array<string, array{label: string, icon: string, color: string, items: list<array{label: string, description: string, route: string, icon: string, badge?: string}>}> */
