@@ -19,7 +19,9 @@ use Symfony\Component\Finder\Finder;
  */
 class AuditA11yCommand extends Command
 {
-    protected $signature = 'theme:audit-a11y {slug : nombre de la carpeta del theme, p. ej. caixilhariablanco}';
+    protected $signature = 'theme:audit-a11y
+                            {slug : nombre de la carpeta del theme, p. ej. caixilhariablanco}
+                            {--fix : Aplicar correcciones automáticas seguras (alt="" en <img>, aria-label="Cerrar" en .btn-close)}';
 
     protected $description = 'Auditar accesibilidad de blades de un theme: alt en imágenes, nombres accesibles en enlaces/botones, lang en <html>';
 
@@ -36,6 +38,7 @@ class AuditA11yCommand extends Command
         $this->info("Escaneando {$themeDir}/**/*.blade.php…");
         $this->newLine();
 
+        $fix = (bool) $this->option('fix');
         $finder = (new Finder)->files()->in($themeDir)->name('*.blade.php');
 
         $issues = [
@@ -44,10 +47,16 @@ class AuditA11yCommand extends Command
             'button_without_name' => [],
             'html_without_lang' => [],
         ];
+        $fixesApplied = [
+            'img_without_alt' => 0,
+            'button_without_name' => 0,
+        ];
 
         foreach ($finder as $file) {
-            $relative = str_replace(base_path().'/', '', $file->getRealPath());
-            $lines = file($file->getRealPath());
+            $realPath = $file->getRealPath();
+            $relative = str_replace(base_path().'/', '', $realPath);
+            $lines = file($realPath);
+            $changed = false;
 
             foreach ($lines as $i => $line) {
                 $lineNo = $i + 1;
@@ -57,6 +66,16 @@ class AuditA11yCommand extends Command
                 if (preg_match('/<img\s[^>]*\bsrc=[^>]*>/i', $line)
                     && ! preg_match('/<img[^>]+\balt=/i', $line)) {
                     $issues['img_without_alt'][] = "{$relative}:{$lineNo}  ".self::snippet($trim);
+
+                    if ($fix) {
+                        // Auto-añadir alt="" justo después de <img
+                        $newLine = preg_replace('/(<img)(\s)/i', '$1 alt=""$2', $line, 1);
+                        if ($newLine !== null && $newLine !== $line) {
+                            $lines[$i] = $newLine;
+                            $changed = true;
+                            $fixesApplied['img_without_alt']++;
+                        }
+                    }
                 }
 
                 // <a href="..."> sin texto, sin aria-label, sin título.
@@ -69,12 +88,26 @@ class AuditA11yCommand extends Command
                 if (preg_match('/<button\b[^>]*>\s*(?:<i[^>]*>[^<]*<\/i>\s*)?<\/button>/i', $line)
                     && ! preg_match('/<button[^>]+(?:aria-label|title)=/i', $line)) {
                     $issues['button_without_name'][] = "{$relative}:{$lineNo}  ".self::snippet($trim);
+
+                    if ($fix && preg_match('/<button\b[^>]*\bclass=["\'][^"\']*btn-close[^"\']*["\']/i', $line)) {
+                        // btn-close → aria-label="Cerrar"
+                        $newLine = preg_replace('/(<button\b)(\s)/i', '$1 aria-label="Cerrar"$2', $line, 1);
+                        if ($newLine !== null && $newLine !== $line) {
+                            $lines[$i] = $newLine;
+                            $changed = true;
+                            $fixesApplied['button_without_name']++;
+                        }
+                    }
                 }
 
                 // <html> sin lang.
                 if (preg_match('/<html\b/i', $line) && ! preg_match('/<html[^>]*\blang=/i', $line)) {
                     $issues['html_without_lang'][] = "{$relative}:{$lineNo}  ".self::snippet($trim);
                 }
+            }
+
+            if ($fix && $changed) {
+                file_put_contents($realPath, implode('', $lines));
             }
         }
 
@@ -91,7 +124,8 @@ class AuditA11yCommand extends Command
                 continue;
             }
             $this->newLine();
-            $this->warn('▸ '.$labels[$k].' ('.count($rows).')');
+            $fixInfo = isset($fixesApplied[$k]) && $fix ? ' — '.$fixesApplied[$k].' corregidos' : '';
+            $this->warn('▸ '.$labels[$k].' ('.count($rows).')'.$fixInfo);
             foreach ($rows as $row) {
                 $this->line('   · '.$row);
             }
