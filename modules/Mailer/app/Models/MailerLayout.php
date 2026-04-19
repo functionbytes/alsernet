@@ -23,10 +23,13 @@ class MailerLayout extends Model
         'is_enabled',
     ];
 
-    protected $casts = [
-        'is_protected' => 'boolean',
-        'is_enabled' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_protected' => 'boolean',
+            'is_enabled' => 'boolean',
+        ];
+    }
 
     /**
      * Get all translations for this layout
@@ -37,17 +40,21 @@ class MailerLayout extends Model
     }
 
     /**
-     * Get translation for a specific language
+     * Get translation for a specific language.
+     * Si no se pasa $langId, usa la session como hint y si no, 1.
+     * Reutiliza la relación ya cargada cuando existe para evitar queries extra.
      */
     public function translate(?int $langId = null): ?MailerLayoutLang
     {
-        if ($langId === null) {
-            // Try to get from session, request, or default to first available
-            $langId = session('lang_id') ?? request()->get('lang_id') ?? 1;
+        $langId ??= (int) (session('lang_id') ?? MailerLang::resolveDefaultId());
+
+        if ($this->relationLoaded('translations')) {
+            return $this->translations->firstWhere('lang_id', $langId)
+                ?? $this->translations->first();
         }
 
         return $this->translations()->where('lang_id', $langId)->first()
-            ?? $this->translations()->first(); // Fallback to first available translation
+            ?? $this->translations()->first();
     }
 
     /**

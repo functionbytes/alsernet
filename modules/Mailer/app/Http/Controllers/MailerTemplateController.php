@@ -19,9 +19,12 @@ use Modules\Mailer\Models\MailerTemplateVersion;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableReplacementService;
 use Modules\Mailer\Services\MailerVariableService;
+use Modules\Mailer\Traits\BuildsJsonResponses;
 
 class MailerTemplateController extends Controller
 {
+    use BuildsJsonResponses;
+
     /**
      * Listar todos los templates de email (únicos por key, no por idioma)
      */
@@ -30,7 +33,7 @@ class MailerTemplateController extends Controller
         $this->authorize('viewAny', MailerTemplate::class);
         $search = $request->input('search');
         $module = $request->input('module');
-        $langId = $request->input('lang_id', 1); // Default to first language for preview
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId()); // Default to first language for preview
 
         $query = MailerTemplate::distinct('key')
             ->select('mailer_templates.*')
@@ -206,7 +209,7 @@ class MailerTemplateController extends Controller
             $langId = $translation->lang_id;
         } else {
             // Obtener idioma actual (del request o default a 1)
-            $langId = $request->input('lang_id', 1);
+            $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
             // Obtener la traducción para el idioma actual
             $translation = $template->translate($langId);
         }
@@ -328,7 +331,7 @@ class MailerTemplateController extends Controller
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
 
         // Obtener idioma actual (del request o default a 1)
-        $langId = $request->input('lang_id', 1);
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
 
         // Obtener traducción para el idioma especificado
         $translation = $template->translate($langId);
@@ -354,53 +357,52 @@ class MailerTemplateController extends Controller
      */
     public function previewAjax(Request $request, string $uid): JsonResponse
     {
-        $originalLayoutId = null;
-        $originalContent = null;
         $template = null;
         $translation = null;
+        $originalLayoutId = null;
+        $originalContent = null;
+        $layoutOverridden = false;
+        $contentOverridden = false;
 
         try {
             $template = MailerTemplate::where('uid', $uid)->firstOrFail();
-            $langId = $request->input('lang_id', 1);
+            $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
             $overrideLayoutId = $request->input('layout_id');
             $customContent = $request->input('content');
 
-            // Temporarily override layout_id for live preview
-            $originalLayoutId = $template->layout_id;
             if ($overrideLayoutId !== null) {
+                $originalLayoutId = $template->layout_id;
                 $template->layout_id = $overrideLayoutId;
+                $layoutOverridden = true;
             }
 
-            // Temporarily override translation content for live preview
             if ($customContent !== null) {
                 $translation = $template->translate($langId);
                 if ($translation) {
                     $originalContent = $translation->content;
                     $translation->content = $customContent;
+                    $contentOverridden = true;
                 }
             }
 
             $variables = $this->getPreviewVariables($template, $langId);
             $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            return response()->json([
-                'success' => true,
-                'html' => $html,
-            ]);
+            return $this->jsonSuccess(['html' => $html], 200, ['html' => $html]);
         } catch (\Exception $e) {
             Log::error('Error en previewAjax: '.$e->getMessage());
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al generar el preview.',
-                'html' => '<div class="alert alert-danger p-3">Error al generar el preview. Intente nuevamente.</div>',
-            ], 500);
+            return $this->jsonError(
+                'preview_failed',
+                'Error al generar el preview.',
+                500,
+                ['html' => '<div class="alert alert-danger p-3">Error al generar el preview. Intente nuevamente.</div>']
+            );
         } finally {
-            // Always restore original values to avoid polluting the model
-            if ($template !== null && $originalLayoutId !== null) {
+            if ($layoutOverridden && $template !== null) {
                 $template->layout_id = $originalLayoutId;
             }
-            if ($translation !== null && $originalContent !== null) {
+            if ($contentOverridden && $translation !== null) {
                 $translation->content = $originalContent;
             }
         }
@@ -411,7 +413,7 @@ class MailerTemplateController extends Controller
      */
     private function getPreviewVariables(MailerTemplate $template, ?int $langId = null): array
     {
-        $langId = $langId ?? 1;
+        $langId ??= MailerLang::resolveDefaultId();
 
         return MailerVariableReplacementService::getPreviewVariablesForTemplate($template, $langId);
     }
@@ -424,7 +426,7 @@ class MailerTemplateController extends Controller
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
         $this->authorize('update', $template);
 
-        $langId = $request->integer('lang_id', 1);
+        $langId = $request->integer('lang_id') ?: MailerLang::resolveDefaultId();
 
         $versions = MailerTemplateVersion::where('mailer_template_id', $template->id)
             ->where('lang_id', $langId)
@@ -526,15 +528,9 @@ class MailerTemplateController extends Controller
         try {
             $formatted = MailerTemplateRendererService::beautifyHtml($validated['html']);
 
-            return response()->json([
-                'success' => true,
-                'formatted' => $formatted,
-            ]);
+            return $this->jsonSuccess(['formatted' => $formatted], 200, ['formatted' => $formatted]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al formatear HTML',
-            ], 500);
+            return $this->jsonError('format_failed', 'Error al formatear HTML', 500);
         }
     }
 

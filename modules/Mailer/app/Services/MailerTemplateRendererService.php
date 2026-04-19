@@ -9,7 +9,9 @@ use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
 use Twig\Environment;
+use Twig\Extension\SandboxExtension;
 use Twig\Loader\ArrayLoader;
+use Twig\Sandbox\SecurityPolicy;
 
 /**
  * TemplateRendererService
@@ -26,9 +28,30 @@ class MailerTemplateRendererService
         if (self::$twigEnv === null) {
             $loader = new ArrayLoader;
             self::$twigEnv = new Environment($loader, [
+                // autoescape desactivado: las plantillas son HTML producido por admins
+                // (la sanitización de variables externas ocurre en SendEndpointEmailJob)
                 'autoescape' => false,
                 'strict_variables' => false,
             ]);
+
+            // Sandbox: limita tags y filtros que un admin malicioso podría abusar
+            $policy = new SecurityPolicy(
+                allowedTags: ['if', 'for', 'set', 'block'],
+                allowedFilters: [
+                    'upper', 'lower', 'title', 'capitalize', 'trim',
+                    'escape', 'e', 'raw',
+                    'length', 'default', 'replace', 'split', 'join',
+                    'date', 'date_modify',
+                    'number_format', 'abs', 'round',
+                    'url_encode', 'json_encode',
+                    'striptags', 'nl2br',
+                ],
+                allowedMethods: [],
+                allowedProperties: [],
+                allowedFunctions: ['range', 'max', 'min', 'random']
+            );
+
+            self::$twigEnv->addExtension(new SandboxExtension($policy, true));
         }
 
         return self::$twigEnv;
@@ -51,8 +74,8 @@ class MailerTemplateRendererService
      */
     private static function render($template, array $variables = [], string $type = 'email', ?int $langId = null): string
     {
-        // Si no se especifica langId, usar el idioma Por defecto (1)
-        $langId = $langId ?? 1;
+        // Si no se especifica langId, resolver el default a partir de locales activos
+        $langId ??= MailerLang::resolveDefaultId();
 
         // 1. Obtener contenido base (usando traducción si está disponible)
         if (method_exists($template, 'translate')) {
@@ -96,8 +119,10 @@ class MailerTemplateRendererService
      * @param  array  $variables  Variables para reemplazar
      * @param  int  $langId  ID del idioma para obtener traducciones
      */
-    private static function renderLayoutTags(string $content, array $variables = [], int $langId = 1): string
+    private static function renderLayoutTags(string $content, array $variables = [], ?int $langId = null): string
     {
+        $langId ??= MailerLang::resolveDefaultId();
+
         // Procesar {{ header }}
         if (str_contains($content, '{{ header }}')) {
             $headerContent = self::getCachedLayoutContent('email_template_header', $langId);
@@ -296,6 +321,12 @@ class MailerTemplateRendererService
             }
         }
 
+        // Valores derivados de la configuración de la app para evitar hardcodeo
+        $appName = (string) config('app.name', 'Alsernet');
+        $appUrl = rtrim((string) config('app.url', 'https://example.com'), '/');
+        $appHost = parse_url($appUrl, PHP_URL_HOST) ?: 'example.com';
+        $fromAddress = (string) config('mail.from.address', "noreply@{$appHost}");
+
         // Ejemplos fallback para otras variables
         $examples = [
             // Globales
@@ -305,7 +336,7 @@ class MailerTemplateRendererService
 
             // Documentos
             'CUSTOMER_NAME' => 'Juan García',
-            'CUSTOMER_EMAIL' => 'juan@example.com',
+            'CUSTOMER_EMAIL' => "juan@{$appHost}",
             'ORDER_ID' => '12345',
             'ORDER_NUMBER' => 'ORD-2025-001',
             'ORDER_DATE' => date('d/m/Y'),
@@ -314,7 +345,7 @@ class MailerTemplateRendererService
             'ORDER_REFERENCE' => 'ORD-2025-001',
             'DOCUMENT_TYPE' => 'Cédula de Ciudadanía',
             'DOCUMENT_TYPE_LABEL' => 'Cédula de Ciudadanía',
-            'UPLOAD_LINK' => 'https://Alsernet.test/upload/doc-12345',
+            'UPLOAD_LINK' => "{$appUrl}/upload/doc-12345",
             'EXPIRATION_DATE' => date('d/m/Y', strtotime('+7 days')),
             'MISSING_DOCUMENTS' => '• Cédula de Ciudadanía<br>• Comprobante de domicilio',
             'REQUIRED_DOCUMENTS_LIST' => '<ul><li>Cédula de Ciudadanía</li><li>Comprobante de domicilio</li></ul>',
@@ -327,34 +358,34 @@ class MailerTemplateRendererService
             'UPLOADED_DOCUMENTS_COUNT' => '3',
 
             // Sistema
-            'SITE_NAME' => 'Alsernet',
-            'SITE_URL' => config('app.url'),
-            'SITE_EMAIL' => 'info@Alsernet.test',
-            'COMPANY_NAME' => config('app.name'),
-            'SUPPORT_EMAIL' => config('mail.from.address'),
+            'SITE_NAME' => $appName,
+            'SITE_URL' => $appUrl,
+            'SITE_EMAIL' => $fromAddress,
+            'COMPANY_NAME' => $appName,
+            'SUPPORT_EMAIL' => $fromAddress,
             'SUPPORT_PHONE' => '+1 (555) 000-0000',
 
             // Notificaciones
             'RECIPIENT_NAME' => 'María López',
-            'RECIPIENT_EMAIL' => 'maria@example.com',
+            'RECIPIENT_EMAIL' => "maria@{$appHost}",
             'NOTIFICATION_TYPE' => 'Información General',
             'NOTIFICATION_DATE' => date('d/m/Y H:i'),
 
             // Campañas
-            'SUBSCRIBER_EMAIL' => 'subscriber@example.com',
+            'SUBSCRIBER_EMAIL' => "subscriber@{$appHost}",
             'SUBSCRIBER_UID' => 'abc123def456',
-            'UNSUBSCRIBE_URL' => 'https://Alsernet.test/unsubscribe/abc123',
-            'WEB_VIEW_URL' => 'https://Alsernet.test/view/abc123',
-            'UPDATE_PROFILE_URL' => 'https://Alsernet.test/profile/abc123',
+            'UNSUBSCRIBE_URL' => "{$appUrl}/unsubscribe/abc123",
+            'WEB_VIEW_URL' => "{$appUrl}/view/abc123",
+            'UPDATE_PROFILE_URL' => "{$appUrl}/profile/abc123",
             'CAMPAIGN_NAME' => 'Newsletter Noviembre 2025',
             'CAMPAIGN_UID' => 'campaign123',
             'CAMPAIGN_SUBJECT' => 'Novedad importantes',
-            'CAMPAIGN_FROM_EMAIL' => 'noreply@Alsernet.test',
-            'CAMPAIGN_FROM_NAME' => 'Alsernet',
-            'CAMPAIGN_REPLY_TO' => 'support@Alsernet.test',
+            'CAMPAIGN_FROM_EMAIL' => "noreply@{$appHost}",
+            'CAMPAIGN_FROM_NAME' => $appName,
+            'CAMPAIGN_REPLY_TO' => "support@{$appHost}",
             'LIST_NAME' => 'Suscriptores Premium',
-            'LIST_FROM_NAME' => 'Alsernet',
-            'LIST_FROM_EMAIL' => 'info@Alsernet.test',
+            'LIST_FROM_NAME' => $appName,
+            'LIST_FROM_EMAIL' => $fromAddress,
         ];
 
         return $examples[$variableName] ?? '{{'.$variableName.'}}';

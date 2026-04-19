@@ -87,4 +87,14 @@ class MailerEndpointLog extends Model
             default => now()->subYear(),
         });
     }
+
+    /**
+     * Logs anteriores a X días (para comandos de purga).
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeOlderThan($query, int $days): void
+    {
+        $query->where('created_at', '<', now()->subDays($days));
+    }
 }

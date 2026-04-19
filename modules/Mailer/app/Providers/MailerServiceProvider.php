@@ -2,9 +2,12 @@
 
 namespace Modules\Mailer\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Mailer\Console\Commands\PurgeMailerLogsCommand;
+use Modules\Mailer\Console\Commands\PurgeMailerVersionsCommand;
 use Modules\Mailer\Models\MailerEndpoint;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
@@ -77,6 +80,26 @@ class MailerServiceProvider extends ServiceProvider
 
         // Load views
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'mailer');
+
+        // Register console commands and nightly purge schedule
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PurgeMailerLogsCommand::class,
+                PurgeMailerVersionsCommand::class,
+            ]);
+
+            $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+                $schedule->command('mailer:purge-logs')
+                    ->dailyAt('03:15')
+                    ->onOneServer()
+                    ->withoutOverlapping();
+
+                $schedule->command('mailer:purge-versions')
+                    ->weeklyOn(0, '03:30')
+                    ->onOneServer()
+                    ->withoutOverlapping();
+            });
+        }
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Modules\Mailer\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class MailerPermissionsSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class MailerPermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Define all Mailer permissions
         $permissions = $this->getMailerPermissions();
@@ -48,6 +49,7 @@ class MailerPermissionsSeeder extends Seeder
             'mailer.components.update' => 'Actualizar componentes de correo',
             'mailer.components.delete' => 'Eliminar componentes de correo',
             'mailer.components.preview' => 'Previsualizar componentes',
+            'mailer.components.duplicate' => 'Duplicar componentes de correo',
             'mailer.components.manage' => 'Gestionar componentes de correo',
 
             // Email Variables
@@ -55,6 +57,7 @@ class MailerPermissionsSeeder extends Seeder
             'mailer.variables.create' => 'Crear variables de correo',
             'mailer.variables.update' => 'Actualizar variables de correo',
             'mailer.variables.delete' => 'Eliminar variables de correo',
+            'mailer.variables.toggleStatus' => 'Cambiar estado de variables',
             'mailer.variables.manage' => 'Gestionar variables de correo',
 
             // Email Endpoints (API)
@@ -95,9 +98,11 @@ class MailerPermissionsSeeder extends Seeder
             'mailer.components.create',
             'mailer.components.update',
             'mailer.components.preview',
+            'mailer.components.duplicate',
             'mailer.variables.view',
             'mailer.variables.create',
             'mailer.variables.update',
+            'mailer.variables.toggleStatus',
             'mailer.endpoints.view',
             'mailer.endpoints.create',
             'mailer.endpoints.update',

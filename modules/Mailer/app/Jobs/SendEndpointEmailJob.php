@@ -26,6 +26,12 @@ class SendEndpointEmailJob implements ShouldQueue
     /** @var array<int> */
     public array $backoff = [60, 120, 300];
 
+    private const MAX_PAYLOAD_BYTES = 262144;      // 256 KB
+
+    private const MAX_SUBJECT_LENGTH = 255;
+
+    private const MAX_BODY_BYTES = 5242880;        // 5 MB
+
     protected MailerEndpointLog $log;
 
     /**
@@ -34,6 +40,7 @@ class SendEndpointEmailJob implements ShouldQueue
     public function __construct(MailerEndpointLog $log)
     {
         $this->log = $log;
+        $this->onQueue((string) config('mailer-module.queue', 'emails'));
     }
 
     /**
@@ -41,12 +48,30 @@ class SendEndpointEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Correlacionar el log con el ID del job para cruzarlo con failed_jobs
+        $jobId = $this->job?->getJobId();
+        if ($jobId && $this->log->job_id !== $jobId) {
+            $this->log->update(['job_id' => $jobId]);
+        }
+
+        $payloadMax = (int) config('mailer-module.limits.payload_max_bytes', self::MAX_PAYLOAD_BYTES);
+        $subjectMax = (int) config('mailer-module.limits.subject_max_length', self::MAX_SUBJECT_LENGTH);
+        $bodyMax = (int) config('mailer-module.limits.body_max_bytes', self::MAX_BODY_BYTES);
+
         try {
             $endpoint = $this->log->endpoint;
             $payload = $this->log->payload;
 
             if (! $endpoint->is_active) {
                 throw new \Exception('Endpoint is inactive');
+            }
+
+            if (! is_array($payload)) {
+                throw new \Exception('Payload must be a JSON object');
+            }
+
+            if (strlen((string) json_encode($payload)) > $payloadMax) {
+                throw new \Exception('Payload size exceeds '.$payloadMax.' bytes');
             }
 
             $template = $endpoint->template;
@@ -61,10 +86,8 @@ class SendEndpointEmailJob implements ShouldQueue
                 throw new \Exception('No valid recipient email found in payload');
             }
 
-            // Resolve language: use endpoint's configured lang_id, or fallback to iso_code match, or default 1
-            $langId = $endpoint->lang_id
-                ?? MailerLang::where('iso_code', app()->getLocale())->value('id')
-                ?? 1;
+            // Resolve language: usa el configurado en el endpoint o cae al default del sistema
+            $langId = $endpoint->lang_id ?? MailerLang::resolveDefaultId();
 
             $translation = $template->translate($langId);
 
@@ -73,9 +96,18 @@ class SendEndpointEmailJob implements ShouldQueue
                 $translation?->subject ?? $template->name,
                 $variables
             );
+
+            if (mb_strlen($subject) > $subjectMax) {
+                $subject = mb_substr($subject, 0, $subjectMax);
+            }
+
             $body = MailerTemplateRendererService::renderEmailTemplate(
                 $template, $variables, $langId
             );
+
+            if (strlen($body) > $bodyMax) {
+                throw new \Exception('Rendered body exceeds '.$bodyMax.' bytes');
+            }
 
             $plainText = MailerTemplateRendererService::htmlToPlainText($body);
 

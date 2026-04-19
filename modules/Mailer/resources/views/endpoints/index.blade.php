@@ -2,6 +2,13 @@
 
 @section('title', 'Email Endpoints')
 
+@push('styles')
+<style>
+    .endpoint-progress { width: 60px; height: 6px; }
+    .endpoint-code-block { font-size: 11px; overflow-x: auto; }
+</style>
+@endpush
+
 @section('content')
 
     @include('core::components.card', ['title' => 'Email Endpoints API'])
@@ -171,8 +178,8 @@
                                             @if($total > 0)
                                                 <div class="d-flex align-items-center justify-content-center gap-2">
                                                     <small class="fw-semibold">{{ $successRate }}%</small>
-                                                    <div class="progress" style="width: 60px; height: 6px;">
-                                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ $successRate }}%"></div>
+                                                    <div class="progress endpoint-progress">
+                                                        <div class="progress-bar bg-success endpoint-progress-bar" role="progressbar" data-width="{{ $successRate }}" aria-valuenow="{{ $successRate }}" aria-valuemin="0" aria-valuemax="100"></div>
                                                     </div>
                                                 </div>
                                             @else
@@ -280,7 +287,7 @@
                 </ul>
 
                 <h6 class="fw-bold mb-2">Body (JSON)</h6>
-                <div class="bg-black text-light p-3 rounded mb-3" style="font-size: 11px; overflow-x: auto;">
+                <div class="bg-black text-light p-3 rounded mb-3 endpoint-code-block">
                     <code><pre>{
   "customer_email": "user@example.com",
   "customer_name": "Juan Pérez",
@@ -312,7 +319,7 @@
             </div>
             <div class="modal-body">
                 <h6 class="fw-bold mb-2">cURL</h6>
-                <div class="bg-black text-light p-3 rounded mb-3" style="font-size: 11px; overflow-x: auto;">
+                <div class="bg-black text-light p-3 rounded mb-3 endpoint-code-block">
                     <code><pre>curl -X POST https://tu-dominio.com/api/email-endpoints/password-reset/send \
   -H "X-API-Token: abc123xyz..." \
   -H "Content-Type: application/json" \
@@ -324,7 +331,7 @@
                 </div>
 
                 <h6 class="fw-bold mb-2">JavaScript (Fetch)</h6>
-                <div class="bg-black text-light p-3 rounded" style="font-size: 11px; overflow-x: auto;">
+                <div class="bg-black text-light p-3 rounded endpoint-code-block">
                     <code><pre>fetch('/api/email-endpoints/password-reset/send', {
   method: 'POST',
   headers: {
@@ -348,6 +355,12 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Apply progress bar width from data attribute
+    $('.endpoint-progress-bar').each(function() {
+        var width = Math.max(0, Math.min(100, parseFloat($(this).data('width')) || 0));
+        $(this).css('width', width + '%');
+    });
+
     // Initialize Select2
     $('.select2').select2({
         allowClear: false,

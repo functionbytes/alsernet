@@ -32,15 +32,18 @@ class MailerEndpoint extends Model
         'last_request_at',
     ];
 
-    protected $casts = [
-        'expected_variables' => 'array',
-        'required_variables' => 'array',
-        'variable_mappings' => 'array',
-        'is_active' => 'boolean',
-        'last_request_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'expected_variables' => 'array',
+            'required_variables' => 'array',
+            'variable_mappings' => 'array',
+            'is_active' => 'boolean',
+            'last_request_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     /**
      * Generate a unique API token
@@ -108,6 +111,33 @@ class MailerEndpoint extends Model
     public function failedLogs(): HasMany
     {
         return $this->logs()->where('status', EndpointLogStatus::Failed);
+    }
+
+    /**
+     * Calcular success rate en base a success_logs_count (withCount) o requests_count
+     * Soporta ambos caminos: listings con withCount y vistas detalle con successLogs()
+     */
+    public function successRate(?int $successCount = null, ?int $totalCount = null): float
+    {
+        $total = $totalCount ?? $this->requests_count ?? 0;
+
+        if ($total <= 0) {
+            return 0.0;
+        }
+
+        if ($successCount === null) {
+            $successCount = $this->success_logs_count ?? $this->successLogs()->count();
+        }
+
+        return round(($successCount / $total) * 100, 1);
+    }
+
+    /**
+     * Accessor: $endpoint->success_rate
+     */
+    public function getSuccessRateAttribute(): float
+    {
+        return $this->successRate();
     }
 
     /**

@@ -46,4 +46,12 @@ class MailerVariablePolicy
     {
         return $user->hasPermissionTo('mailer.variables.delete');
     }
+
+    /**
+     * Determine if the user can toggle status of a mailer variable
+     */
+    public function toggleStatus(User $user, MailerVariable $variable): bool
+    {
+        return $user->hasPermissionTo('mailer.variables.toggleStatus');
+    }
 }

@@ -55,8 +55,7 @@ modules/Mailer/
 │   ├── Jobs/
 │   │   └── SendEndpointEmailJob.php
 │   └── Providers/
-│       ├── MailerServiceProvider.php
-│       └── RouteServiceProvider.php
+│       └── MailerServiceProvider.php
 ├── database/
 │   ├── migrations/ - Database schema for all mailer tables
 │   └── seeders/ - Initial data and example seeders

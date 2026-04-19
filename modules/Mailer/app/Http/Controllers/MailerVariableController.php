@@ -10,18 +10,15 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerVariable;
-use Modules\Mailer\Traits\AuthorizesMailerActions;
 
 class MailerVariableController extends Controller
 {
-    use AuthorizesMailerActions;
-
     /**
      * Display a listing of email variables
      */
     public function index(Request $request): View
     {
-        $this->authorizeMailerAction('mailer.variables.view');
+        $this->authorize('viewAny', MailerVariable::class);
 
         $pageTitle = 'Gestionar Variables de Email';
         $breadcrumb = 'Configuración / Correos / Variables';
@@ -60,7 +57,7 @@ class MailerVariableController extends Controller
      */
     public function create(): View
     {
-        $this->authorizeMailerAction('mailer.variables.create');
+        $this->authorize('create', MailerVariable::class);
 
         $pageTitle = 'Crear Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Crear';
@@ -83,7 +80,7 @@ class MailerVariableController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.variables.create');
+        $this->authorize('create', MailerVariable::class);
 
         $validated = $request->validate([
             'key' => 'required|string|unique:mailer_variables,key|regex:/^[A-Z_]+$/',
@@ -120,7 +117,7 @@ class MailerVariableController extends Controller
      */
     public function edit(MailerVariable $variable): View
     {
-        $this->authorizeMailerAction('mailer.variables.view');
+        $this->authorize('view', $variable);
 
         $pageTitle = 'Editar Variable de Email';
         $breadcrumb = 'Configuración / Correos / Variables / Editar';
@@ -146,7 +143,7 @@ class MailerVariableController extends Controller
      */
     public function update(Request $request, MailerVariable $variable): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.variables.update');
+        $this->authorize('update', $variable);
 
         // For system variables, key and category are not validated (they're fixed)
         // For custom variables, they must follow strict validation rules
@@ -207,7 +204,7 @@ class MailerVariableController extends Controller
      */
     public function destroy(MailerVariable $variable): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.variables.delete');
+        $this->authorize('delete', $variable);
 
         if ($variable->is_system) {
             return redirect()
@@ -228,7 +225,7 @@ class MailerVariableController extends Controller
      */
     public function toggleStatus(MailerVariable $variable): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.variables.update');
+        $this->authorize('toggleStatus', $variable);
 
         $variable->update(['is_enabled' => ! $variable->is_enabled]);
 
@@ -246,7 +243,7 @@ class MailerVariableController extends Controller
      */
     public function getByModule(Request $request): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.variables.view');
+        $this->authorize('viewAny', MailerVariable::class);
 
         $module = $request->get('module', 'core');
         $category = $request->get('category');
@@ -268,7 +265,7 @@ class MailerVariableController extends Controller
      */
     public function getGroupedByCategory(Request $request): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.variables.view');
+        $this->authorize('viewAny', MailerVariable::class);
 
         $module = $request->get('module', 'core');
 
@@ -300,7 +297,7 @@ class MailerVariableController extends Controller
      */
     public function getAvailableKeys(Request $request): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.variables.view');
+        $this->authorize('viewAny', MailerVariable::class);
 
         $module = $request->get('module', 'core');
 

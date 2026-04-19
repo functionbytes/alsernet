@@ -54,4 +54,12 @@ class MailerComponentPolicy
     {
         return $user->hasPermissionTo('mailer.components.preview');
     }
+
+    /**
+     * Determine if the user can duplicate a mailer component
+     */
+    public function duplicate(User $user, MailerLayout $component): bool
+    {
+        return $user->hasPermissionTo('mailer.components.duplicate');
+    }
 }

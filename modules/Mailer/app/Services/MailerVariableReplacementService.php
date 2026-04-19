@@ -2,6 +2,7 @@
 
 namespace Modules\Mailer\Services;
 
+use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerTemplate;
 
 /**
@@ -17,8 +18,10 @@ class MailerVariableReplacementService
      * @param  int  $langId  ID del idioma para obtener valores traducidos
      * @return array Variables de preview con valores de ejemplo
      */
-    public static function getPreviewVariablesForTemplate(MailerTemplate $template, int $langId = 1): array
+    public static function getPreviewVariablesForTemplate(MailerTemplate $template, ?int $langId = null): array
     {
+        $langId ??= MailerLang::resolveDefaultId();
+
         // Obtener valores reales traducidos desde la base de datos
         $realValues = MailerVariableValueService::getTranslatedValues($langId, $template->module);
 
@@ -104,6 +107,22 @@ class MailerVariableReplacementService
     public static function replaceVariables(string $content, array $variables = []): string
     {
         return MailerTemplateRendererService::replaceVariables($content, $variables);
+    }
+
+    /**
+     * Reemplazar variables presentes en el contenido con valores de ejemplo
+     * Centraliza la lógica que antes se duplicaba en los controllers de componentes
+     */
+    public static function replaceWithExamples(string $content): string
+    {
+        preg_match_all('/\{([A-Z_][A-Z0-9_]*)\}/', $content, $matches);
+
+        $variables = [];
+        foreach (array_unique($matches[1] ?? []) as $varName) {
+            $variables[$varName] = MailerTemplateRendererService::getExampleValue($varName);
+        }
+
+        return self::replaceVariables($content, $variables);
     }
 
     /**

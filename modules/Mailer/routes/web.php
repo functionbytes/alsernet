@@ -54,18 +54,24 @@ Route::middleware(['web', 'auth', 'settings'])
             Route::get('/variables/{uid}', [MailerTemplateController::class, 'variables'])->name('variables');
             Route::get('/variables-by-module', [MailerTemplateController::class, 'variablesByModule'])->name('variables-by-module');
 
-            // Actions - POST, PATCH, DELETE
-            Route::post('/', [MailerTemplateController::class, 'store'])->name('store');
-            Route::patch('/{uid}', [MailerTemplateController::class, 'update'])->name('update');
-            Route::delete('/{uid}', [MailerTemplateController::class, 'destroy'])->name('destroy');
-            Route::post('/toggle-status/{uid}', [MailerTemplateController::class, 'toggleStatus'])->name('toggle-status');
-            Route::post('/send-test/{uid}', [MailerTemplateController::class, 'sendTest'])->name('send-test');
-            Route::post('/format-html', [MailerTemplateController::class, 'formatHtml'])->name('format-html');
-            Route::post('/bulk-action', [MailerTemplateController::class, 'bulkAction'])->name('bulk-action');
-
-            // Version history
+            // Version history (GET)
             Route::get('/{uid}/versions', [MailerTemplateController::class, 'versions'])->name('versions');
-            Route::post('/{uid}/versions/{version}/restore', [MailerTemplateController::class, 'restoreVersion'])->name('versions.restore');
+
+            // Actions - POST, PATCH, DELETE (rate limited)
+            Route::middleware('throttle:60,1')->group(function () {
+                Route::post('/', [MailerTemplateController::class, 'store'])->name('store');
+                Route::patch('/{uid}', [MailerTemplateController::class, 'update'])->name('update');
+                Route::delete('/{uid}', [MailerTemplateController::class, 'destroy'])->name('destroy');
+                Route::post('/toggle-status/{uid}', [MailerTemplateController::class, 'toggleStatus'])->name('toggle-status');
+                Route::post('/format-html', [MailerTemplateController::class, 'formatHtml'])->name('format-html');
+                Route::post('/bulk-action', [MailerTemplateController::class, 'bulkAction'])->name('bulk-action');
+                Route::post('/{uid}/versions/{version}/restore', [MailerTemplateController::class, 'restoreVersion'])->name('versions.restore');
+            });
+
+            // Send test emails (stricter limit)
+            Route::post('/send-test/{uid}', [MailerTemplateController::class, 'sendTest'])
+                ->middleware('throttle:10,1')
+                ->name('send-test');
         });
 
         // ====================================================================
@@ -80,11 +86,13 @@ Route::middleware(['web', 'auth', 'settings'])
             Route::get('/preview-ajax/{uid}', [MailerComponentController::class, 'previewAjax'])->name('preview-ajax');
             Route::get('/variables', [MailerComponentController::class, 'variables'])->name('variables');
 
-            // Actions - POST, PATCH, DELETE
-            Route::post('/', [MailerComponentController::class, 'store'])->name('store');
-            Route::patch('/{uid}', [MailerComponentController::class, 'update'])->name('update');
-            Route::delete('/{uid}', [MailerComponentController::class, 'destroy'])->name('destroy');
-            Route::post('/duplicate/{uid}', [MailerComponentController::class, 'duplicate'])->name('duplicate');
+            // Actions - POST, PATCH, DELETE (rate limited)
+            Route::middleware('throttle:60,1')->group(function () {
+                Route::post('/', [MailerComponentController::class, 'store'])->name('store');
+                Route::patch('/{uid}', [MailerComponentController::class, 'update'])->name('update');
+                Route::delete('/{uid}', [MailerComponentController::class, 'destroy'])->name('destroy');
+                Route::post('/duplicate/{uid}', [MailerComponentController::class, 'duplicate'])->name('duplicate');
+            });
         });
 
         // ====================================================================
@@ -99,11 +107,13 @@ Route::middleware(['web', 'auth', 'settings'])
             Route::get('/grouped-by-category', [MailerVariableController::class, 'getGroupedByCategory'])->name('grouped-by-category');
             Route::get('/available-keys', [MailerVariableController::class, 'getAvailableKeys'])->name('available-keys');
 
-            // Actions - POST, PATCH, DELETE
-            Route::post('/', [MailerVariableController::class, 'store'])->name('store');
-            Route::patch('/{variable}', [MailerVariableController::class, 'update'])->name('update');
-            Route::delete('/{variable}', [MailerVariableController::class, 'destroy'])->name('destroy');
-            Route::post('/toggle-status/{variable}', [MailerVariableController::class, 'toggleStatus'])->name('toggle-status');
+            // Actions - POST, PATCH, DELETE (rate limited)
+            Route::middleware('throttle:60,1')->group(function () {
+                Route::post('/', [MailerVariableController::class, 'store'])->name('store');
+                Route::patch('/{variable}', [MailerVariableController::class, 'update'])->name('update');
+                Route::delete('/{variable}', [MailerVariableController::class, 'destroy'])->name('destroy');
+                Route::post('/toggle-status/{variable}', [MailerVariableController::class, 'toggleStatus'])->name('toggle-status');
+            });
         });
 
         // ====================================================================
@@ -115,13 +125,17 @@ Route::middleware(['web', 'auth', 'settings'])
             Route::get('/', [MailerEndpointController::class, 'index'])->name('index');
             Route::get('/create', [MailerEndpointController::class, 'create'])->name('create');
             Route::get('/edit/{emailEndpoint}', [MailerEndpointController::class, 'edit'])->name('edit');
-            Route::get('/logs/{emailEndpoint}', [MailerEndpointController::class, 'logs'])->name('logs');
+            Route::get('/logs/{emailEndpoint}', [MailerEndpointController::class, 'logs'])
+                ->middleware('throttle:60,1')
+                ->name('logs');
 
-            // Actions - POST, PATCH, DELETE
-            Route::post('/', [MailerEndpointController::class, 'store'])->name('store');
-            Route::patch('/{emailEndpoint}', [MailerEndpointController::class, 'update'])->name('update');
-            Route::delete('/{emailEndpoint}', [MailerEndpointController::class, 'destroy'])->name('destroy');
-            Route::post('/regenerate-token/{emailEndpoint}', [MailerEndpointController::class, 'regenerateToken'])->name('regenerate-token');
+            // Actions - POST, PATCH, DELETE (rate limited)
+            Route::middleware('throttle:60,1')->group(function () {
+                Route::post('/', [MailerEndpointController::class, 'store'])->name('store');
+                Route::patch('/{emailEndpoint}', [MailerEndpointController::class, 'update'])->name('update');
+                Route::delete('/{emailEndpoint}', [MailerEndpointController::class, 'destroy'])->name('destroy');
+                Route::post('/regenerate-token/{emailEndpoint}', [MailerEndpointController::class, 'regenerateToken'])->name('regenerate-token');
+            });
         });
 
     });

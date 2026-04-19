@@ -46,11 +46,14 @@ class MailerTemplate extends Model
         'description',
     ];
 
-    protected $casts = [
-        'variables' => 'array',
-        'is_enabled' => 'boolean',
-        'is_protected' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'variables' => 'array',
+            'is_enabled' => 'boolean',
+            'is_protected' => 'boolean',
+        ];
+    }
 
     /**
      * Relación con Layout (header/footer)
@@ -77,27 +80,31 @@ class MailerTemplate extends Model
     }
 
     /**
-     * Obtener traducción para un idioma específico con fallback
-     * Si no existe la traducción, intenta con lang_id 1 (idioma Por defecto)
+     * Obtener traducción para un idioma específico con fallback al idioma
+     * por defecto del sistema (MailerLang::resolveDefaultId()).
+     * Reutiliza la relación ya cargada (eager loading) cuando está disponible
+     * para evitar N+1 al acceder a magic getters $subject / $content.
      */
     public function translate(?int $langId = null): ?MailerTemplateLang
     {
-        $langId = $langId ?? 1;
+        $langId ??= MailerLang::resolveDefaultId();
+        $defaultId = MailerLang::resolveDefaultId();
 
-        // Buscar traducción para el idioma solicitado
-        $translation = $this->translations()
-            ->where('lang_id', $langId)
-            ->first();
+        if ($this->relationLoaded('translations')) {
+            $translations = $this->translations;
+
+            return $translations->firstWhere('lang_id', $langId)
+                ?? ($langId !== $defaultId ? $translations->firstWhere('lang_id', $defaultId) : null);
+        }
+
+        $translation = $this->translations()->where('lang_id', $langId)->first();
 
         if ($translation) {
             return $translation;
         }
 
-        // Si no existe, intentar con el idioma Por defecto (1)
-        if ($langId !== 1) {
-            return $this->translations()
-                ->where('lang_id', 1)
-                ->first();
+        if ($langId !== $defaultId) {
+            return $this->translations()->where('lang_id', $defaultId)->first();
         }
 
         return null;

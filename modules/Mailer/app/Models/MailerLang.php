@@ -4,12 +4,18 @@ namespace Modules\Mailer\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Locales\Models\Locale;
 
 class MailerLang extends Model
 {
     use HasFactory;
 
     protected $table = 'langs';
+
+    /**
+     * Cache por request del lang_id por defecto ya resuelto.
+     */
+    private static ?int $cachedDefaultId = null;
 
     protected $fillable = [
         'uid',
@@ -54,9 +60,26 @@ class MailerLang extends Model
         return $query->where('locate', $iso);
     }
 
+    /**
+     * Available = marcado como disponible en langs Y activo en el módulo Locales.
+     * Si la tabla locales no existe aún (tests/migraciones a medias) degrada al
+     * comportamiento legacy (solo available=1).
+     */
     public function scopeAvailable($query)
     {
-        return $query->where('available', 1);
+        $query->where('langs.available', 1);
+
+        try {
+            $activeCodes = Locale::active()->pluck('code')->all();
+
+            if (! empty($activeCodes)) {
+                $query->whereIn('langs.iso_code', $activeCodes);
+            }
+        } catch (\Throwable) {
+            // Fallback silencioso: si locales no está disponible, mantener solo available=1
+        }
+
+        return $query;
     }
 
     public static function getSelectOptions()
@@ -103,6 +126,24 @@ class MailerLang extends Model
 
     public static function getDefaultLangId(): int
     {
-        return self::available()->first()?->id ?? 1;
+        return self::resolveDefaultId();
+    }
+
+    /**
+     * Resolver el lang_id por defecto. Delegamos al helper canónico
+     * en el módulo Locales para que los módulos Attention/Mailrelay/Mailer
+     * compartan la misma lógica.
+     */
+    public static function resolveDefaultId(): int
+    {
+        return Locale::resolveLegacyLangId();
+    }
+
+    /**
+     * Vaciar cache en memoria (usado por el LocaleObserver).
+     */
+    public static function clearResolvedDefault(): void
+    {
+        Locale::clearResolvedLegacyLangId();
     }
 }

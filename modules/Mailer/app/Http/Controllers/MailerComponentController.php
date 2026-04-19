@@ -11,24 +11,20 @@ use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerLayoutLang;
 use Modules\Mailer\Models\MailerVariable;
-use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Mailer\Services\MailerVariableReplacementService;
-use Modules\Mailer\Traits\AuthorizesMailerActions;
 
 class MailerComponentController extends Controller
 {
-    use AuthorizesMailerActions;
-
     /**
      * Listar todos los componentes de email (header, footer, etc.)
      */
     public function index(Request $request): View
     {
-        $this->authorizeMailerAction('mailer.components.view');
+        $this->authorize('viewAny', MailerLayout::class);
 
         $search = $request->input('search');
         $type = $request->input('type');
-        $langId = $request->input('lang_id', 1); // Default to first language
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId()); // Default to first language
 
         $query = MailerLayout::where('group_name', 'mail_templates');
 
@@ -80,7 +76,7 @@ class MailerComponentController extends Controller
      */
     public function create(Request $request): View
     {
-        $this->authorizeMailerAction('mailer.components.create');
+        $this->authorize('create', MailerLayout::class);
 
         // Obtener idioma del request (default: primer idioma disponible)
         $langId = $request->input('lang_id');
@@ -103,7 +99,7 @@ class MailerComponentController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.components.create');
+        $this->authorize('create', MailerLayout::class);
 
         $validated = $request->validate([
             'alias' => 'required|string',
@@ -182,9 +178,9 @@ class MailerComponentController extends Controller
      */
     public function edit(Request $request, $uid): View
     {
-        $this->authorizeMailerAction('mailer.components.view');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
+
+        $this->authorize('view', $layout);
 
         // Verificar que sea un componente de email
         if ($layout->group_name !== 'mail_templates') {
@@ -192,7 +188,7 @@ class MailerComponentController extends Controller
         }
 
         // Obtener idioma actual (del request o default a 1)
-        $langId = $request->input('lang_id', 1);
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
 
         // Obtener la traducción para el idioma actual
         $translation = $layout->translations()->where('lang_id', $langId)->first();
@@ -231,9 +227,9 @@ class MailerComponentController extends Controller
      */
     public function update(Request $request, $uid): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.components.update');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
+
+        $this->authorize('update', $layout);
 
         $validated = $request->validate([
             'subject' => 'nullable|string|max:255',
@@ -295,12 +291,12 @@ class MailerComponentController extends Controller
      */
     public function preview(Request $request, $uid): View
     {
-        $this->authorizeMailerAction('mailer.components.view');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
+        $this->authorize('preview', $layout);
+
         // Obtener idioma actual (del request o default a 1)
-        $langId = $request->input('lang_id', 1);
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
 
         // Obtener la traducción para el idioma actual
         $translation = $layout->translate($langId);
@@ -310,7 +306,7 @@ class MailerComponentController extends Controller
         }
 
         // Reemplazar variables con datos de ejemplo
-        $html = $this->replaceExampleVariables($translation->content);
+        $html = MailerVariableReplacementService::replaceWithExamples($translation->content);
 
         return view('mailer::components.preview', [
             'component' => $layout, // Keep for backwards compatibility
@@ -325,12 +321,12 @@ class MailerComponentController extends Controller
      */
     public function previewAjax(Request $request, $uid): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.components.view');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
 
+        $this->authorize('preview', $layout);
+
         // Obtener idioma actual (del request o default a 1)
-        $langId = $request->input('lang_id', 1);
+        $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
 
         // Obtener la traducción para el idioma actual
         $translation = $layout->translate($langId);
@@ -343,7 +339,7 @@ class MailerComponentController extends Controller
         }
 
         // Reemplazar variables con datos de ejemplo
-        $html = $this->replaceExampleVariables($translation->content);
+        $html = MailerVariableReplacementService::replaceWithExamples($translation->content);
 
         return response()->json([
             'success' => true,
@@ -356,9 +352,9 @@ class MailerComponentController extends Controller
      */
     public function destroy(string $uid): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.components.delete');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
+
+        $this->authorize('delete', $layout);
 
         // Verificar si el componente está protegido
         if ($layout->is_protected) {
@@ -401,9 +397,9 @@ class MailerComponentController extends Controller
      */
     public function duplicate(Request $request, $uid): RedirectResponse
     {
-        $this->authorizeMailerAction('mailer.components.create');
-
         $layout = MailerLayout::where('uid', $uid)->firstOrFail();
+
+        $this->authorize('duplicate', $layout);
 
         try {
             // Replicar el layout (sin translations)
@@ -421,7 +417,7 @@ class MailerComponentController extends Controller
             }
 
             // Get the current language from request to redirect properly
-            $langId = $request->input('lang_id', 1);
+            $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
 
             return redirect()
                 ->route('mailers.components.edit', [
@@ -437,27 +433,11 @@ class MailerComponentController extends Controller
     }
 
     /**
-     * Reemplazar variables con valores de ejemplo usando el servicio centralizado
-     */
-    private function replaceExampleVariables(string $content): string
-    {
-        // Extraer variables del contenido
-        preg_match_all('/\{([A-Z_][A-Z0-9_]*)\}/', $content, $matches);
-
-        $variables = [];
-        foreach ($matches[1] as $varName) {
-            $variables[$varName] = MailerTemplateRendererService::getExampleValue($varName);
-        }
-
-        return MailerVariableReplacementService::replaceVariables($content, $variables);
-    }
-
-    /**
      * Listar variables disponibles para componentes (desde la base de datos)
      */
     public function variables(): JsonResponse
     {
-        $this->authorizeMailerAction('mailer.components.view');
+        $this->authorize('viewAny', MailerLayout::class);
 
         try {
             // Obtener todas las variables habilitadas desde la base de datos
