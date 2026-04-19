@@ -35,6 +35,7 @@ class EnableAllCommand extends Command
         'optimize.add_image_dimensions',
         'optimize.cache_control_headers',
         'optimize.rewrite_min_assets',
+        'optimize.link_preload_header',
     ];
 
     public function handle(): int

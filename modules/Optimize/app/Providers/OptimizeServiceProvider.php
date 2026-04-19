@@ -2,6 +2,7 @@
 
 namespace Modules\Optimize\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +20,7 @@ use Modules\Optimize\Http\Middleware\InjectCriticalPreload;
 use Modules\Optimize\Http\Middleware\InjectFontDisplay;
 use Modules\Optimize\Http\Middleware\InlineCss;
 use Modules\Optimize\Http\Middleware\InsertDNSPrefetch;
+use Modules\Optimize\Http\Middleware\LinkPreloadHeader;
 use Modules\Optimize\Http\Middleware\MinifyInlineScripts;
 use Modules\Optimize\Http\Middleware\MinifyInlineStyles;
 use Modules\Optimize\Http\Middleware\OptimizeResponseCache;
@@ -51,6 +53,7 @@ class OptimizeServiceProvider extends ServiceProvider
         'optimize.add_image_dimensions' => AddImageDimensions::class,
         'optimize.cache_control_headers' => CacheControlHeaders::class,
         'optimize.rewrite_min_assets' => RewriteMinAssets::class,
+        'optimize.link_preload_header' => LinkPreloadHeader::class,
     ];
 
     public function boot(): void
@@ -74,6 +77,24 @@ class OptimizeServiceProvider extends ServiceProvider
 
         $this->app['events']->listen(RouteMatched::class, function (): void {
             $this->registerOptimizationMiddleware();
+        });
+
+        // Schedules para mantener el sitio optimizado sin intervención manual.
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            // Purga semanal del response cache — evita servir HTML viejo tras
+            // cambios de catálogo/shortcodes que pasen desapercibidos.
+            $schedule->command('optimize:purge-cache')
+                ->weekly()->mondays()->at('04:00')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            // Asegura que cualquier imagen subida sin .webp / srcset (p.ej.
+            // si el job falló o la optimize auto estaba off) termine con sus
+            // variantes. Idempotente — saltea las ya convertidas.
+            $schedule->command('media:optimize-all --quality=82')
+                ->weekly()->sundays()->at('03:00')
+                ->withoutOverlapping()
+                ->onOneServer();
         });
     }
 
