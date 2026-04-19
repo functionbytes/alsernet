@@ -6,10 +6,15 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
+use Modules\Optimize\Console\Commands\EnableAllCommand;
+use Modules\Optimize\Http\Middleware\AddImageDimensions;
 use Modules\Optimize\Http\Middleware\AddLoadingLazy;
+use Modules\Optimize\Http\Middleware\CacheControlHeaders;
 use Modules\Optimize\Http\Middleware\CollapseWhitespace;
 use Modules\Optimize\Http\Middleware\DeferJavascript;
 use Modules\Optimize\Http\Middleware\ElideAttributes;
+use Modules\Optimize\Http\Middleware\InjectCriticalPreload;
+use Modules\Optimize\Http\Middleware\InjectFontDisplay;
 use Modules\Optimize\Http\Middleware\InlineCss;
 use Modules\Optimize\Http\Middleware\InsertDNSPrefetch;
 use Modules\Optimize\Http\Middleware\MinifyInlineScripts;
@@ -38,6 +43,10 @@ class OptimizeServiceProvider extends ServiceProvider
         'optimize.add_loading_lazy' => AddLoadingLazy::class,
         'optimize.inline_css' => InlineCss::class,
         'optimize.insert_dns_prefetch' => InsertDNSPrefetch::class,
+        'optimize.inject_font_display' => InjectFontDisplay::class,
+        'optimize.inject_critical_preload' => InjectCriticalPreload::class,
+        'optimize.add_image_dimensions' => AddImageDimensions::class,
+        'optimize.cache_control_headers' => CacheControlHeaders::class,
     ];
 
     public function boot(): void
@@ -50,6 +59,10 @@ class OptimizeServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->registerRoutes();
         $this->registerMenus();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([EnableAllCommand::class]);
+        }
 
         $this->app['events']->listen(RouteMatched::class, function (): void {
             $this->registerOptimizationMiddleware();
