@@ -82,7 +82,9 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::post('pages/{page}/visual-preview', [VisualEditorController::class, 'preview'])->name('pages.visual-preview.post');
     Route::post('pages/{page}/visual-save', [VisualEditorController::class, 'save'])->name('pages.visual-save');
     Route::get('pages/{page}/draft', [VisualEditorController::class, 'getDraft'])->name('pages.draft');
-    Route::patch('pages/{page}/auto-save', [VisualEditorController::class, 'autoSave'])->name('pages.auto-save');
+    Route::patch('pages/{page}/auto-save', [VisualEditorController::class, 'autoSave'])
+        ->middleware('throttle:30,1')
+        ->name('pages.auto-save');
     Route::get('pages/{page}/locale-content', [VisualEditorController::class, 'getLocaleContent'])->name('pages.locale-content');
     Route::post('pages/{page}/expand-shortcode', [VisualEditorController::class, 'expandShortcode'])->name('pages.expand-shortcode');
     Route::get('pages/{page}/editor-versions', [VisualEditorController::class, 'getEditorVersions'])->name('pages.editor-versions');

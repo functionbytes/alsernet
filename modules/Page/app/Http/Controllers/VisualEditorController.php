@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Locales\Models\Locale;
 use Modules\Page\Events\PageAutoSaved;
@@ -160,7 +161,9 @@ class VisualEditorController extends Controller
 
         $data = $request->validate([
             'locale' => ['required', 'string', 'max:10'],
-            'content' => ['nullable', 'string'],
+            // 2 MB cap protects the DB and PHP memory from accidentally-huge
+            // payloads (embedded data URIs, copy-paste of giant tables, etc.).
+            'content' => ['nullable', 'string', 'max:2097152'],
             'template' => ['nullable', 'string', 'max:100'],
             'title' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
@@ -220,6 +223,8 @@ class VisualEditorController extends Controller
             'seo_keywords' => $data['seo_keywords'] ?? $page->seo_keywords,
         ]);
 
+        Cache::forget($this->versionsCacheKey($page));
+
         return response()->json([
             'success' => true,
             'message' => 'Página guardada correctamente.',
@@ -260,7 +265,8 @@ class VisualEditorController extends Controller
         $this->authorize('update', $page);
 
         $data = $request->validate([
-            'content' => ['nullable', 'string'],
+            // Same 2 MB cap as save() to keep drafts proportional to saves.
+            'content' => ['nullable', 'string', 'max:2097152'],
             'locale' => ['nullable', 'string', 'max:10'],
             'title' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
@@ -334,24 +340,37 @@ class VisualEditorController extends Controller
     {
         $this->authorize('update', $page);
 
-        $versions = PageVersion::query()
-            ->where('page_id', $page->id)
-            ->with('user:id,name')
-            ->orderByDesc('version_number')
-            ->limit(20)
-            ->get(['id', 'version_number', 'title', 'user_id', 'created_at']);
+        // Cache the versions list per page for 5 minutes. Invalidated from
+        // save() whenever a new version is created (see cache forget below).
+        $data = Cache::remember(
+            $this->versionsCacheKey($page),
+            now()->addMinutes(5),
+            function () use ($page) {
+                return PageVersion::query()
+                    ->where('page_id', $page->id)
+                    ->with('user:id,name')
+                    ->orderByDesc('version_number')
+                    ->limit(20)
+                    ->get(['id', 'version_number', 'title', 'user_id', 'created_at'])
+                    ->map(fn (PageVersion $v) => [
+                        'id' => $v->id,
+                        'version_number' => $v->version_number,
+                        'title' => $v->title,
+                        'user' => $v->user?->name ?? '—',
+                        'created_at' => $v->created_at->toIso8601String(),
+                        'created_at_human' => $v->created_at->diffForHumans(),
+                    ])
+                    ->values()
+                    ->all();
+            }
+        );
 
-        return response()->json([
-            'success' => true,
-            'data' => $versions->map(fn (PageVersion $v) => [
-                'id' => $v->id,
-                'version_number' => $v->version_number,
-                'title' => $v->title,
-                'user' => $v->user?->name ?? '—',
-                'created_at' => $v->created_at->toIso8601String(),
-                'created_at_human' => $v->created_at->diffForHumans(),
-            ]),
-        ]);
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    private function versionsCacheKey(Page $page): string
+    {
+        return "page:{$page->id}:versions:list:v1";
     }
 
     /**

@@ -3014,6 +3014,27 @@
         .always(function () { $btn.prop('disabled', false); });
     });
 
+    /* ── Session-expired handler (419 / 401) ─────────────────────────── */
+    // Session tokens expire silently; catch any jQuery AJAX that comes back
+    // with a fresh-login requirement and nudge the user instead of failing
+    // silently or saving against a now-invalid session.
+    var _veSessionModalShown = false;
+    $(document).ajaxError(function (event, xhr) {
+        if (_veSessionModalShown) { return; }
+        if (xhr.status !== 419 && xhr.status !== 401) { return; }
+        // Don't block on preview or iframe asset 401s.
+        var url = xhr && xhr.responseURL ? xhr.responseURL : '';
+        if (url.indexOf('/visual-preview') !== -1) { return; }
+        _veSessionModalShown = true;
+        if (window.veConfirm) {
+            veConfirm('Tu sesión expiró. Inicia sesión de nuevo en otra pestaña para no perder los cambios, y luego recarga esta página.', function () {
+                window.open('{{ route('login') }}', '_blank');
+            }, { title: 'Sesión expirada', acceptLabel: 'Abrir login', type: 'warning' });
+        } else if (window.showToast) {
+            showToast('<i class="fa-solid fa-triangle-exclamation me-1"></i>Tu sesión expiró. Recarga la página tras iniciar sesión.', 'error');
+        }
+    });
+
     /* ── Visual editor user preferences (server-side) ────────────────── */
     // Keys allowed on the backend: shortcode_favorites, panel_states,
     // inspector_collapsed, last_panel, last_breakpoint.
