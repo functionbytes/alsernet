@@ -14,6 +14,7 @@ use Modules\Media\Console\Commands\CleanOrphanedChunksCommand;
 use Modules\Media\Console\Commands\ConvertToWebpCommand;
 use Modules\Media\Console\Commands\GdprDeleteCommand;
 use Modules\Media\Console\Commands\GdprExportCommand;
+use Modules\Media\Console\Commands\GenerateSrcsetCommand;
 use Modules\Media\Console\Commands\MediaStatsCommand;
 use Modules\Media\Console\Commands\PruneOrphanMediaCommand;
 use Modules\Media\Console\Commands\PurgeExpiredMediaCommand;
@@ -100,6 +101,7 @@ class MediaServiceProvider extends ServiceProvider
                 VerifyAuditLogCommand::class,
                 SendMediaDigestCommand::class,
                 ConvertToWebpCommand::class,
+                GenerateSrcsetCommand::class,
             ]);
         }
 

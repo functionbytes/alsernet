@@ -56,6 +56,11 @@ class OptimizeController extends Controller
             'params' => ['quality', 'limit'],
             'description' => 'Genera .webp para imágenes del Media (25-35 % menos peso)',
         ],
+        'media:generate-srcset' => [
+            'label' => 'Generar variantes responsive',
+            'params' => ['quality', 'limit'],
+            'description' => 'Crea -480w, -768w, -1024w, -1920w .webp para cada imagen',
+        ],
         'theme:audit-a11y' => [
             'label' => 'Auditar accesibilidad del theme',
             'params' => ['slug', 'fix'],

@@ -60,19 +60,59 @@ class RvMedia
 
         $imgTag = '<img '.$imgAttrs.'>';
 
-        // Si hay un .webp hermano, envolver en <picture> para que el
-        // navegador lo prefiera sobre el original JPEG/PNG.
-        $webp = $this->deriveWebpUrl($src);
-        if ($webp !== null) {
-            return new HtmlString(
-                '<picture>'
-                .'<source type="image/webp" srcset="'.e($webp).'">'
-                .$imgTag
-                .'</picture>'
-            );
+        // Si hay variantes `-480w.webp`, `-768w.webp`, etc. generadas por
+        // `media:generate-srcset`, emitimos `<source srcset>` responsive
+        // para que mobile no descargue la versión full-HD. El primer
+        // `<source>` es el responsive; el segundo es el .webp simple como
+        // fallback; el `<img>` queda como último fallback universal.
+        $responsiveSrcset = $this->buildResponsiveSrcset($src);
+        $webpSimple = $this->deriveWebpUrl($src);
+
+        if ($responsiveSrcset !== null || $webpSimple !== null) {
+            $sources = '';
+            if ($responsiveSrcset !== null) {
+                $sources .= '<source type="image/webp" srcset="'.e($responsiveSrcset).'" '
+                    .'sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw">';
+            } elseif ($webpSimple !== null) {
+                $sources .= '<source type="image/webp" srcset="'.e($webpSimple).'">';
+            }
+
+            return new HtmlString('<picture>'.$sources.$imgTag.'</picture>');
         }
 
         return new HtmlString($imgTag);
+    }
+
+    /**
+     * Construye el atributo srcset con las variantes `-{W}w.webp` que
+     * existan en `public/`. Devuelve null si no encuentra ninguna.
+     */
+    private function buildResponsiveSrcset(string $src): ?string
+    {
+        if (! preg_match('/\.(jpe?g|png)(\?.*)?$/i', $src)) {
+            return null;
+        }
+        $host = parse_url(config('app.url', ''), PHP_URL_HOST) ?: '';
+        $parsed = parse_url($src);
+        if (isset($parsed['host']) && $host && $parsed['host'] !== $host) {
+            return null;
+        }
+
+        $widths = [480, 768, 1024, 1920];
+        $entries = [];
+
+        foreach ($widths as $w) {
+            $variantUrl = preg_replace('/\.(jpe?g|png)(\?.*)?$/i', '-'.$w.'w.webp$2', $src);
+            if (! is_string($variantUrl)) {
+                continue;
+            }
+            $path = ltrim((string) parse_url($variantUrl, PHP_URL_PATH), '/');
+            if (is_file(public_path($path))) {
+                $entries[] = $variantUrl.' '.$w.'w';
+            }
+        }
+
+        return $entries === [] ? null : implode(', ', $entries);
     }
 
     /**
