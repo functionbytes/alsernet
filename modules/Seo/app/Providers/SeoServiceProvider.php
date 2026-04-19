@@ -14,6 +14,7 @@ use Modules\Seo\Console\Commands\GenerateSchemasCommand;
 use Modules\Seo\Console\Commands\GenerateSitemapCommand;
 use Modules\Seo\Console\Commands\IndexNowSubmitCommand;
 use Modules\Seo\Console\Commands\PingSitemapCommand;
+use Modules\Seo\Console\Commands\PurgeWebVitalsCommand;
 use Modules\Seo\Console\Commands\SeoCleanupCommand;
 use Modules\Seo\Console\Commands\SeoWeeklyReportCommand;
 use Modules\Seo\Http\Middleware\AutoPaginationMiddleware;
@@ -24,6 +25,7 @@ use Modules\Seo\Http\Middleware\XRobotsTagMiddleware;
 use Modules\Seo\Jobs\BulkSeoAuditJob;
 use Modules\Seo\Jobs\CleanupOld404Logs;
 use Modules\Seo\Jobs\CleanupOldAuditLogs;
+use Modules\Seo\Jobs\DetectContentDecayJob;
 use Modules\Seo\Jobs\SendSeoWeeklyReport;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Observers\SeoMetaObserver;
@@ -203,6 +205,18 @@ class SeoServiceProvider extends ServiceProvider
         Blade::directive('seoForm', function ($expression) {
             return "<?php echo view('Seo::partials.seo-form', ['model' => $expression])->render(); ?>";
         });
+
+        // Emite <link rel="alternate" hreflang="..."> para la URL indicada
+        // Uso: @hreflang('https://site.com/en/about')
+        Blade::directive('hreflang', function ($expression) {
+            return "<?php echo app(\\Modules\\Seo\\Services\\HreflangService::class)->render({$expression}); ?>";
+        });
+
+        // Inyecta el beacon de Core Web Vitals (LCP/INP/CLS) en <head>
+        // Uso: @seoWebVitalsBeacon
+        Blade::directive('seoWebVitalsBeacon', function () {
+            return "<?php echo view('Seo::partials.web-vitals-beacon')->render(); ?>";
+        });
     }
 
     /**
@@ -217,6 +231,7 @@ class SeoServiceProvider extends ServiceProvider
                 SeoWeeklyReportCommand::class,
                 SeoCleanupCommand::class,
                 IndexNowSubmitCommand::class,
+                PurgeWebVitalsCommand::class,
             ]);
         }
     }
@@ -244,6 +259,7 @@ class SeoServiceProvider extends ServiceProvider
                 ['label' => 'Robots.txt', 'route' => 'setting.seo.robots.edit'],
                 ['label' => 'llms.txt (IA)', 'route' => 'setting.seo.llms.edit'],
                 ['label' => 'IndexNow', 'route' => 'setting.seo.indexnow.index'],
+                ['label' => 'Core Web Vitals', 'route' => 'setting.seo.web-vitals.index'],
                 ['label' => 'Sitemap XML', 'route' => 'setting.seo.sitemap.index'],
                 ['label' => 'Reporte SEO', 'route' => 'setting.seo.report.index'],
                 ['label' => 'Verificación', 'route' => 'setting.seo.verification.index'],
@@ -325,6 +341,18 @@ class SeoServiceProvider extends ServiceProvider
                 ->sundays()
                 ->at('02:00')
                 ->name('seo:weekly-audit')
+                ->withoutOverlapping();
+
+            $schedule->job(new DetectContentDecayJob)
+                ->weekly()
+                ->mondays()
+                ->at('04:00')
+                ->name('seo:content-decay')
+                ->withoutOverlapping();
+
+            $schedule->command('seo:purge-web-vitals')
+                ->dailyAt('03:45')
+                ->name('seo:purge-web-vitals')
                 ->withoutOverlapping();
         });
     }

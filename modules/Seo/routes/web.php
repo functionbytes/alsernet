@@ -17,8 +17,10 @@ use Modules\Seo\Http\Controllers\SeoRedirectController;
 use Modules\Seo\Http\Controllers\SeoReportController;
 use Modules\Seo\Http\Controllers\SeoStaticUrlController;
 use Modules\Seo\Http\Controllers\SeoTemplateController;
+use Modules\Seo\Http\Controllers\SeoWebVitalsController;
 use Modules\Seo\Http\Controllers\SitemapAdminController;
 use Modules\Seo\Http\Controllers\SitemapController;
+use Modules\Seo\Http\Controllers\WebVitalsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +83,12 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
 
         Route::get('indexnow', [IndexNowController::class, 'index'])->name('indexnow.index');
         Route::post('indexnow/submit', [IndexNowController::class, 'submit'])->middleware('throttle:10,60')->name('indexnow.submit');
+
+        // Core Web Vitals dashboard
+        Route::get('web-vitals', [WebVitalsController::class, 'index'])->name('web-vitals.index');
+        Route::get('web-vitals/path/{path}', [WebVitalsController::class, 'show'])
+            ->where('path', '.*')
+            ->name('web-vitals.show');
 
         // Schema.org per-page editor
         Route::get('metas/{meta}/schema-org', [SchemaOrgController::class, 'edit'])->name('schema-org.edit');
@@ -172,6 +180,11 @@ Route::get('/{indexnowKey}.txt', IndexNowKeyController::class)
     ->where('indexnowKey', '[A-Za-z0-9]{8,128}')
     ->middleware('web')
     ->name('seo.indexnow.key');
+
+// Public - Beacon ingest de Core Web Vitals (LCP / INP / CLS / FCP / TTFB)
+Route::post('/api/seo/web-vitals', [SeoWebVitalsController::class, 'store'])
+    ->middleware(['web', 'throttle:120,1'])
+    ->name('seo.web-vitals.store');
 
 // Public Sitemap Routes (sitemap.xml is handled by the Page module as 'sitemap')
 Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');

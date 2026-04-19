@@ -2,8 +2,10 @@
 
 namespace Modules\Seo\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Seo\Models\SeoMeta;
 
 class WebhookNotificationService
 {
@@ -37,6 +39,24 @@ class WebhookNotificationService
         $message = "📄 *SEO Alert* — {$count} páginas de tipo `{$modelType}` sin configuración SEO.";
 
         $this->send($message, ['title' => 'Orphan Pages Detected', 'color' => 0x90BB13]);
+    }
+
+    /**
+     * @param  Collection<int, SeoMeta>  $pages
+     */
+    public function sendContentDecay(Collection $pages, int $daysStale): void
+    {
+        $count = $pages->count();
+        $message = "📉 *SEO Alert* — {$count} páginas con content decay (sin actualizar hace ".$daysStale." días).\nRevisa y refresca el contenido para recuperar posición en SERP.";
+
+        $this->send($message, [
+            'title' => 'Content Decay Detected',
+            'color' => 0xFA896B,
+            'fields' => [
+                ['name' => 'Páginas afectadas', 'value' => (string) $count, 'inline' => true],
+                ['name' => 'Umbral (días)', 'value' => (string) $daysStale, 'inline' => true],
+            ],
+        ]);
     }
 
     private function send(string $text, array $embedData = []): void

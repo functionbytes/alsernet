@@ -440,6 +440,40 @@ return [
     | si permitir o bloquear cada uno editando robots.txt.
     |
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Content decay detection
+    |--------------------------------------------------------------------------
+    |
+    | Parámetros del DetectContentDecayJob que se ejecuta semanalmente.
+    | Una página se considera en "decay" cuando lleva N días sin updated_at
+    | y sus datos de GSC sugieren pérdida de visibilidad.
+    |
+    */
+    'content_decay' => [
+        'days_stale' => (int) env('SEO_DECAY_DAYS_STALE', 90),
+        'min_clicks_baseline' => (int) env('SEO_DECAY_MIN_CLICKS', 50),
+        'position_drop' => (float) env('SEO_DECAY_POSITION_DROP', 5.0),
+        'max_report_items' => (int) env('SEO_DECAY_MAX_REPORT', 50),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Core Web Vitals tracking
+    |--------------------------------------------------------------------------
+    |
+    | Configuración del beacon JS que recoge LCP/INP/CLS y los envía al
+    | endpoint interno. `sample_rate` entre 0.0 y 1.0 controla qué fracción
+    | de visitas reportan (0.1 = 10%).
+    |
+    */
+    'web_vitals' => [
+        'enabled' => env('SEO_WEB_VITALS_ENABLED', true),
+        'sample_rate' => (float) env('SEO_WEB_VITALS_SAMPLE_RATE', 0.1),
+        'retention_days' => (int) env('SEO_WEB_VITALS_RETENTION_DAYS', 90),
+        'cdn' => env('SEO_WEB_VITALS_CDN', 'https://unpkg.com/web-vitals@4/dist/web-vitals.iife.js'),
+    ],
+
     'ai_crawlers' => [
         'GPTBot' => 'OpenAI — entrena ChatGPT',
         'ChatGPT-User' => 'OpenAI — lecturas directas en ChatGPT',

@@ -476,6 +476,89 @@ class SchemaOrgService
     }
 
     /**
+     * Generate VideoObject schema (rich result en resultados de vídeo).
+     *
+     * @param  array{name: string, description: string, thumbnail_url: string|array<int, string>, upload_date: string|\DateTimeInterface, content_url?: string, embed_url?: string, duration?: string, publisher?: array<string, mixed>}  $data
+     */
+    public function generateVideoObjectSchema(array $data): array
+    {
+        $schema = [
+            '@context' => $this->context,
+            '@type' => 'VideoObject',
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'thumbnailUrl' => $data['thumbnail_url'],
+            'uploadDate' => $this->toIso8601($data['upload_date']),
+        ];
+
+        if (! empty($data['content_url'])) {
+            $schema['contentUrl'] = $data['content_url'];
+        }
+
+        if (! empty($data['embed_url'])) {
+            $schema['embedUrl'] = $data['embed_url'];
+        }
+
+        if (! empty($data['duration'])) {
+            // Formato ISO 8601 duration, por ejemplo PT1M33S
+            $schema['duration'] = $data['duration'];
+        }
+
+        if (! empty($data['publisher'])) {
+            $schema['publisher'] = $data['publisher'];
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Generate HowTo schema (pasos numerados que aparecen en SERP).
+     *
+     * @param  array{name: string, description?: string, total_time?: string, steps: array<int, array{name: string, text: string, image?: string, url?: string}>}  $data
+     */
+    public function generateHowToSchema(array $data): array
+    {
+        $schema = [
+            '@context' => $this->context,
+            '@type' => 'HowTo',
+            'name' => $data['name'],
+        ];
+
+        if (! empty($data['description'])) {
+            $schema['description'] = $data['description'];
+        }
+
+        if (! empty($data['total_time'])) {
+            // Formato ISO 8601 duration (PT30M)
+            $schema['totalTime'] = $data['total_time'];
+        }
+
+        $steps = [];
+        foreach ($data['steps'] ?? [] as $position => $step) {
+            $stepSchema = [
+                '@type' => 'HowToStep',
+                'position' => $position + 1,
+                'name' => $step['name'],
+                'text' => $step['text'],
+            ];
+
+            if (! empty($step['image'])) {
+                $stepSchema['image'] = $step['image'];
+            }
+
+            if (! empty($step['url'])) {
+                $stepSchema['url'] = $step['url'];
+            }
+
+            $steps[] = $stepSchema;
+        }
+
+        $schema['step'] = $steps;
+
+        return $schema;
+    }
+
+    /**
      * Generate multiple schemas wrapped in a graph.
      */
     public function generateGraphSchema(array $schemas): array
@@ -484,6 +567,19 @@ class SchemaOrgService
             '@context' => $this->context,
             '@graph' => array_values($schemas),
         ];
+    }
+
+    private function toIso8601(string|\DateTimeInterface $value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(\DateTimeInterface::ATOM);
+        }
+
+        try {
+            return (new \DateTimeImmutable($value))->format(\DateTimeInterface::ATOM);
+        } catch (\Throwable) {
+            return $value;
+        }
     }
 
     /**
