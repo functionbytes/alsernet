@@ -43,7 +43,7 @@
 .ve-category-header:hover { background: var(--ve-bg-muted); }
 .ve-category-header[aria-expanded="true"],
 .ve-category-header:not(.collapsed) {
-    background: rgba(99, 102, 241, 0.08);
+    background: var(--ve-hover);
 }
 .ve-category-header i.ve-cat-chevron { font-size: 10px; color: var(--ve-text-muted); transition: transform .2s; }
 .ve-category-header.collapsed i.ve-cat-chevron { transform: rotate(-90deg); }

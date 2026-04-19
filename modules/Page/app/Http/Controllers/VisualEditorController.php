@@ -201,7 +201,33 @@ class VisualEditorController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'Página guardada correctamente.']);
+        // Snapshot the saved state as a new version.
+        // We build it from request data + fresh page so it reflects what was just saved,
+        // independent of whether `pages` table mirrors the active locale's translation.
+        $page = $page->fresh();
+        $nextVersionNumber = ((int) $page->versions()->max('version_number')) + 1;
+        $version = $page->versions()->create([
+            'version_number' => $nextVersionNumber,
+            'title' => $data['title'] ?? $page->title,
+            'content' => $content ?? $page->content,
+            'description' => $page->description,
+            'user_id' => auth()->id(),
+            'template' => $data['template'] ?? $page->template,
+            'status' => $data['status'] ?? (is_object($page->status) ? $page->status->value : $page->status),
+            'slug' => $data['slug'] ?? $page->slug,
+            'seo_title' => $data['seo_title'] ?? $page->seo_title,
+            'seo_description' => $data['seo_description'] ?? $page->seo_description,
+            'seo_keywords' => $data['seo_keywords'] ?? $page->seo_keywords,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Página guardada correctamente.',
+            'version' => [
+                'id' => $version->id,
+                'version_number' => $version->version_number,
+            ],
+        ]);
     }
 
     /**
@@ -372,13 +398,14 @@ class VisualEditorController extends Controller
 .ve-sc-active{ outline: 2px dashed #90bb13 !important; outline-offset: 4px !important; }
 @keyframes veScFlash { 0%{outline-color:#90bb13;outline-width:2px} 40%{outline-color:#13C672;outline-width:4px} 100%{outline-color:#90bb13;outline-width:2px} }
 .ve-sc-flash { animation: veScFlash .55s ease-out; }
-.ve-quick-bar { position:absolute; display:flex; gap:2px; padding:3px; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.12); z-index:99999; pointer-events:auto; }
-.ve-quick-bar button { width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:5px; color:#666; font-size:13px; cursor:pointer; transition:all .12s; }
-.ve-quick-bar button:hover { background:#f4f6f8; color:#333; }
-.ve-quick-bar button.ve-qb-danger:hover { background:#fdf2f2; color:#b10100; }
-.ve-quick-bar .qb-bold { font-weight:900; }
+.ve-quick-bar { position:absolute; display:inline-flex; gap:1px; padding:4px; background:#18181b; border:1px solid rgba(255,255,255,.08); border-radius:8px; box-shadow:0 12px 28px rgba(0,0,0,.25); z-index:99999; pointer-events:auto; font-family:'Inter',sans-serif; }
+.ve-quick-bar button { width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:5px; color:#d4d4d8; font-size:11.5px; cursor:pointer; transition:background .1s,color .1s; }
+.ve-quick-bar button:hover { background:rgba(255,255,255,.08); color:#fff; }
+.ve-quick-bar button.ve-qb-danger:hover { background:rgba(239,68,68,.2); color:#f87171; }
+.ve-quick-bar .qb-bold { font-weight:700; }
 .ve-quick-bar .qb-italic { font-style:italic; }
-.ve-quick-bar .qb-edit-block { color:#90bb13; font-size:11px; font-weight:700; }
+.ve-quick-bar .qb-edit-block { color:#a3e635; font-size:11px; font-weight:700; }
+.ve-quick-bar .ve-qb-sep { width:1px; background:rgba(255,255,255,.1); margin:4px 2px; display:inline-block; flex-shrink:0; }
 .ve-sc-hover { outline: 2px dashed #FEC90F !important; outline-offset: 4px !important; background: rgba(254,201,15,0.05) !important; }
 #ve-grid-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -393,6 +420,16 @@ class VisualEditorController extends Controller
 }
 #ve-grid-overlay.active { display: block; }
 </style>
+<!-- Font Awesome (only loaded if not already present in host page) -->
+<script>(function () {
+    if (document.querySelector('link[href*="fontawesome"], script[src*="fontawesome"]')) return;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+    link.crossOrigin = 'anonymous';
+    link.referrerPolicy = 'no-referrer';
+    document.head.appendChild(link);
+})();</script>
 <div id="ve-grid-overlay"></div>
 <script>
 (function () {
@@ -449,23 +486,26 @@ class VisualEditorController extends Controller
             qbCur = qbCur.parentElement;
         }
 
-        var btns = '<button title="Mover arriba" data-action="move-up">&#8593;</button>' +
-            '<button title="Mover abajo" data-action="move-down">&#8595;</button>' +
-            '<button title="Duplicar" data-action="duplicate">&#10697;</button>';
+        var btns = '<button title="Mover arriba" data-action="move-up"><i class="fa-solid fa-arrow-up"></i></button>' +
+            '<button title="Mover abajo" data-action="move-down"><i class="fa-solid fa-arrow-down"></i></button>' +
+            '<button title="Duplicar" data-action="duplicate"><i class="fa-regular fa-copy"></i></button>' +
+            '<span class="ve-qb-sep"></span>';
 
         if (isText) {
-            btns += '<button title="Negrita" data-action="bold" class="qb-bold">B</button>' +
-                '<button title="Cursiva" data-action="italic" class="qb-italic">I</button>' +
-                '<button title="Color" data-action="color">&#127912;</button>';
+            btns += '<button title="Negrita" data-action="bold" class="qb-bold"><i class="fa-solid fa-bold"></i></button>' +
+                '<button title="Cursiva" data-action="italic" class="qb-italic"><i class="fa-solid fa-italic"></i></button>' +
+                '<button title="Color" data-action="color"><i class="fa-solid fa-palette"></i></button>' +
+                '<span class="ve-qb-sep"></span>';
         }
         if (isLink) {
-            btns += '<button title="Editar enlace" data-action="edit-link">&#128279;</button>';
+            btns += '<button title="Editar enlace" data-action="edit-link"><i class="fa-solid fa-link"></i></button>';
         }
         if (hasSentinel) {
-            btns += '<button title="Editar bloque" data-action="edit-block" class="qb-edit-block">&#9632;</button>';
+            btns += '<button title="Editar bloque" data-action="edit-block" class="qb-edit-block"><i class="fa-solid fa-puzzle-piece"></i></button>';
         }
-        btns += '<button title="Inspeccionar" data-action="inspect">&#9881;</button>' +
-            '<button class="ve-qb-danger" title="Eliminar" data-action="delete">&#10005;</button>';
+        btns += '<button title="Condiciones de visibilidad" data-action="conditions"><i class="fa-solid fa-filter"></i></button>' +
+            '<button title="Inspeccionar" data-action="inspect"><i class="fa-solid fa-gear"></i></button>' +
+            '<button class="ve-qb-danger" title="Eliminar" data-action="delete"><i class="fa-solid fa-xmark"></i></button>';
         bar.innerHTML = btns;
         var top = window.scrollY + rect.top - 38;
         if (top < 4) top = window.scrollY + rect.bottom + 4;
@@ -503,6 +543,17 @@ class VisualEditorController extends Controller
             else if (act === 'edit-block') window.parent.postMessage({type:'ve-open-sc-editor'},'*');
             else if (act === 'edit-link') {
                 window.parent.postMessage({type:'ve-open-link-editor', nodeId: selectedEl ? selectedEl.id : ''},'*');
+            }
+            else if (act === 'conditions') {
+                var cur = (selectedEl && selectedEl.getAttribute)
+                    ? (selectedEl.getAttribute('data-condition') || '')
+                    : '';
+                var tagLabel = selectedEl && selectedEl.tagName ? selectedEl.tagName.toLowerCase() : 'elemento';
+                if (selectedEl && selectedEl.className && typeof selectedEl.className === 'string') {
+                    var firstClass = selectedEl.className.split(' ').filter(Boolean)[0];
+                    if (firstClass) tagLabel += '.' + firstClass;
+                }
+                window.parent.postMessage({type:'ve-open-conditions', tag: tagLabel, current: cur},'*');
             }
         });
     }
@@ -559,33 +610,47 @@ class VisualEditorController extends Controller
     // ── Dummy link popover (link editing handled via postMessage) ────────
     var linkPopover = { contains: function () { return false; } };
 
-    // ── Inject floating inline toolbar ──────────────────────────────────
+    // ── Inject floating inline toolbar (Notion-style, monochrome) ───────
+    var tbStyleTag = document.createElement('style');
+    tbStyleTag.textContent = [
+        '#ve-inline-toolbar { display:none; position:fixed; z-index:99999; background:#18181b; border:1px solid rgba(255,255,255,.08); border-radius:8px; padding:4px; align-items:center; gap:1px; box-shadow:0 12px 28px rgba(0,0,0,.25); font-family:"Inter",sans-serif; }',
+        '#ve-inline-toolbar button { width:28px; height:28px; border-radius:5px; color:#d4d4d8; font-size:11.5px; display:grid; place-items:center; background:transparent; border:none; cursor:pointer; transition:background .1s, color .1s; padding:0; }',
+        '#ve-inline-toolbar button:hover { background:rgba(255,255,255,.08); color:#fff; }',
+        '#ve-inline-toolbar button.on { background:#fff; color:#18181b; }',
+        '#ve-inline-toolbar .ve-tb-sep { width:1px; background:rgba(255,255,255,.1); margin:4px 2px; align-self:stretch; }',
+        '#ve-inline-toolbar select { background:transparent; color:#d4d4d8; border:none; font-size:11px; padding:4px 6px; cursor:pointer; border-radius:5px; font-family:"Inter",sans-serif; }',
+        '#ve-inline-toolbar select:hover { background:rgba(255,255,255,.06); color:#fff; }',
+        '#ve-inline-toolbar select option { background:#18181b; color:#fff; }',
+        '#ve-inline-toolbar input[type="color"] { width:24px; height:24px; padding:0; border:none; border-radius:5px; background:transparent; cursor:pointer; }',
+        '#ve-inline-toolbar button.ve-tb-done { background:#fff; color:#18181b; font-weight:600; }',
+        '#ve-inline-toolbar button.ve-tb-done:hover { background:#e4e4e7; color:#18181b; }',
+    ].join('\n');
+    document.head.appendChild(tbStyleTag);
+
     var toolbar = document.createElement('div');
     toolbar.id = 've-inline-toolbar';
-    toolbar.style.cssText = 'display:none;position:fixed;z-index:99999;background:#1e1e2e;border-radius:6px;padding:4px 6px;gap:4px;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.4);';
-    var tbBtnStyle = 'background:transparent;border:1px solid #444;border-radius:4px;color:#ddd;padding:3px 8px;cursor:pointer;font-size:12px;transition:all .1s;';
-    var tbSep = '<span class="ve-tb-sep" style="width:1px;background:#444;height:16px;display:inline-block;margin:0 2px;"></span>';
+    var tbSep = '<span class="ve-tb-sep"></span>';
     toolbar.innerHTML = [
-        '<button data-cmd="bold" title="Negrita" style="' + tbBtnStyle + 'font-weight:700;">B</button>',
-        '<button data-cmd="italic" title="Cursiva" style="' + tbBtnStyle + 'font-style:italic;">I</button>',
-        '<button data-cmd="underline" title="Subrayado" style="' + tbBtnStyle + 'text-decoration:underline;">U</button>',
-        '<button data-cmd="strikeThrough" title="Tachado" style="' + tbBtnStyle + 'text-decoration:line-through;">S</button>',
-        tbSep,
-        '<select id="ve-tb-tag" title="Cambiar tag" style="background:#2a2a3a;border:1px solid #444;border-radius:4px;color:#ddd;padding:2px 4px;font-size:11px;cursor:pointer;">',
-        '<option value="">Tag</option><option value="p">P</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="h5">H5</option><option value="h6">H6</option><option value="blockquote">Quote</option><option value="div">Div</option>',
+        '<select id="ve-tb-tag" title="Cambiar tag">',
+        '<option value="">Párrafo</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="p">P</option><option value="blockquote">Quote</option>',
         '</select>',
-        '<select id="ve-tb-size" title="Tamaño" style="background:#2a2a3a;border:1px solid #444;border-radius:4px;color:#ddd;padding:2px 4px;font-size:11px;cursor:pointer;">',
+        tbSep,
+        '<button data-cmd="bold" title="Negrita"><i class="fa-solid fa-bold"></i></button>',
+        '<button data-cmd="italic" title="Cursiva"><i class="fa-solid fa-italic"></i></button>',
+        '<button data-cmd="underline" title="Subrayado"><i class="fa-solid fa-underline"></i></button>',
+        '<button data-cmd="strikeThrough" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>',
+        tbSep,
+        '<button id="ve-tb-link" title="Enlace"><i class="fa-solid fa-link"></i></button>',
+        '<button title="Color de texto" style="position:relative;overflow:hidden;"><i class="fa-solid fa-palette"></i><input type="color" id="ve-tb-color" value="#000000" style="position:absolute;inset:0;opacity:0;cursor:pointer;"></button>',
+        '<select id="ve-tb-size" title="Tamaño" style="min-width:58px;">',
         '<option value="">Tamaño</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="24px">24</option><option value="28px">28</option><option value="32px">32</option><option value="36px">36</option><option value="48px">48</option>',
         '</select>',
-        '<input type="color" id="ve-tb-color" value="#000000" title="Color de texto" style="width:24px;height:24px;border:1px solid #444;border-radius:4px;padding:1px;cursor:pointer;background:#2a2a3a;">',
         tbSep,
-        '<button data-cmd="justifyLeft" title="Izquierda" style="' + tbBtnStyle + '">&#8676;</button>',
-        '<button data-cmd="justifyCenter" title="Centro" style="' + tbBtnStyle + '">&#8633;</button>',
-        '<button data-cmd="justifyRight" title="Derecha" style="' + tbBtnStyle + '">&#8677;</button>',
+        '<button data-cmd="justifyLeft" title="Izquierda"><i class="fa-solid fa-align-left"></i></button>',
+        '<button data-cmd="justifyCenter" title="Centro"><i class="fa-solid fa-align-center"></i></button>',
+        '<button data-cmd="justifyRight" title="Derecha"><i class="fa-solid fa-align-right"></i></button>',
         tbSep,
-        '<button id="ve-tb-link" title="Enlace" style="' + tbBtnStyle + '">&#128279;</button>',
-        tbSep,
-        '<button id="ve-tb-done" title="Guardar" style="background:#b10100;border:1px solid #b10100;border-radius:4px;color:#fff;padding:3px 8px;cursor:pointer;font-size:12px;font-weight:600;">&#10003;</button>',
+        '<button id="ve-tb-done" class="ve-tb-done" title="Guardar (Esc)"><i class="fa-solid fa-check"></i></button>',
     ].join('');
     document.body.appendChild(toolbar);
 
@@ -816,6 +881,26 @@ class VisualEditorController extends Controller
                 break;
             }
 
+            case 've-insert-html': {
+                // Insert a snippet/HTML fragment: after the selected element if any,
+                // otherwise at the end of the body.
+                if (!d.html) break;
+                var wrapperIns = document.createElement('div');
+                wrapperIns.innerHTML = d.html;
+                var nodes = Array.from(wrapperIns.childNodes);
+                var anchor = selectedEl && selectedEl !== document.body ? selectedEl : null;
+                nodes.forEach(function (n) {
+                    if (anchor && anchor.parentNode) {
+                        anchor.parentNode.insertBefore(n, anchor.nextSibling);
+                        anchor = n;
+                    } else {
+                        document.body.appendChild(n);
+                    }
+                });
+                window.parent.postMessage({ type: 've-block-dropped', html: extractContent() }, '*');
+                break;
+            }
+
             case 've-drop-block': {
                 var target = window._veDropTargetId ? document.getElementById(window._veDropTargetId) : null;
                 if (!target) {
@@ -1031,7 +1116,59 @@ class VisualEditorController extends Controller
             }
 
             case 've-set-zoom': {
-                document.body.style.zoom = (d.zoom || 1);
+                var zoomVal = d.zoom || 1;
+                // Use zoom where supported (Chrome/Safari), fallback to transform: scale
+                if (CSS && CSS.supports && CSS.supports('zoom', '1')) {
+                    document.body.style.zoom = zoomVal;
+                    document.body.style.transform = '';
+                    document.body.style.transformOrigin = '';
+                } else {
+                    document.body.style.zoom = '';
+                    document.body.style.transform = 'scale(' + zoomVal + ')';
+                    document.body.style.transformOrigin = 'top left';
+                    document.body.style.width = (100 / zoomVal) + '%';
+                }
+                window.parent.postMessage({ type: 've-zoom-applied', zoom: zoomVal }, '*');
+                break;
+            }
+
+            case 've-set-zoom-fit': {
+                // Reset internal zoom to 1 — actual fit scaling is handled by the parent on the iframe element
+                document.body.style.zoom = '';
+                document.body.style.transform = '';
+                document.body.style.transformOrigin = '';
+                document.body.style.width = '';
+                window.parent.postMessage({ type: 've-zoom-applied', zoom: 1 }, '*');
+                break;
+            }
+
+            case 've-wireframe-toggle': {
+                var wfId = 've-wireframe-style';
+                var existing = document.getElementById(wfId);
+                if (d.enabled && !existing) {
+                    var s = document.createElement('style');
+                    s.id = wfId;
+                    s.textContent = '.ve-wireframe-active, .ve-wireframe-active * {' +
+                        'background-image: none !important;' +
+                        'background-color: transparent !important;' +
+                        'color: #374151 !important;' +
+                        'text-shadow: none !important;' +
+                        'box-shadow: none !important;' +
+                        'outline: 1px dashed #9ca3af !important;' +
+                        'outline-offset: -1px !important;' +
+                    '}' +
+                    '.ve-wireframe-active img, .ve-wireframe-active video, .ve-wireframe-active picture {' +
+                        'filter: grayscale(1) opacity(.15) !important;' +
+                        'background: repeating-linear-gradient(45deg,#e5e7eb,#e5e7eb 6px,#f3f4f6 6px,#f3f4f6 12px) !important;' +
+                        'border: 1px solid #9ca3af !important;' +
+                    '}' +
+                    '.ve-wireframe-active svg { fill: #9ca3af !important; stroke: #9ca3af !important; }';
+                    document.head.appendChild(s);
+                    document.body.classList.add('ve-wireframe-active');
+                } else if (!d.enabled && existing) {
+                    existing.remove();
+                    document.body.classList.remove('ve-wireframe-active');
+                }
                 break;
             }
 
@@ -1545,6 +1682,22 @@ class VisualEditorController extends Controller
 
         if (!el.id || el.id === '') el.id = generateId();
 
+        // ── Single click on <i> icon → open Icon Picker directly ──
+        var _tag = el.tagName.toLowerCase();
+        if (_tag === 'i' || _tag === 'svg') {
+            var _cls = (typeof el.className === 'string' ? el.className : (el.getAttribute('class') || ''));
+            if (/(^|\s)(fa-|fas|far|fab|fal|fad|fa-solid|fa-regular|fa-brands|material-icons|icon-|bi-)/i.test(_cls)) {
+                selectedEl = el;
+                selectedId = el.id;
+                window.parent.postMessage({
+                    type: 've-open-icon-picker',
+                    nodeId: el.id,
+                    currentClass: _cls
+                }, '*');
+                return; // skip normal selection + quick-bar
+            }
+        }
+
         // Shift+click: multi-select
         if (e.shiftKey) {
             var alreadyIdx = multiSelected.indexOf(el);
@@ -1664,6 +1817,38 @@ class VisualEditorController extends Controller
             y: Math.round(selRect.top)
         }, '*');
 
+        // ── Show link popover when selecting an anchor ────────────────
+        // First clear any previous link-active marker
+        try {
+            var prev = document.querySelector('[data-ve-link-active]');
+            if (prev) prev.removeAttribute('data-ve-link-active');
+        } catch (e) {}
+        if (el.tagName === 'A') {
+            el.setAttribute('data-ve-link-active', '1');
+            // Get iframe-relative rect and convert to window-absolute via parent
+            var iframeRect = el.getBoundingClientRect();
+            window.parent.postMessage({
+                type: 've-show-link-popover',
+                href:  el.getAttribute('href') || '',
+                attrs: {
+                    target:   el.getAttribute('target') || '',
+                    rel:      el.getAttribute('rel')    || '',
+                    download: el.hasAttribute('download') ? (el.getAttribute('download') || '') : undefined
+                },
+                rect: {
+                    top:    iframeRect.top,
+                    left:   iframeRect.left,
+                    right:  iframeRect.right,
+                    bottom: iframeRect.bottom,
+                    width:  iframeRect.width,
+                    height: iframeRect.height
+                },
+                nodeId: selectedId
+            }, '*');
+        } else {
+            window.parent.postMessage({ type: 've-hide-link-popover' }, '*');
+        }
+
         // Show dims tooltip in iframe
         var dimsTooltip = document.getElementById('ve-dims-tooltip');
         if (!dimsTooltip) {
@@ -1757,6 +1942,28 @@ class VisualEditorController extends Controller
         selectedEl = el;
         selectedId = el.id;
         window.parent.postMessage({ type: 've-open-media-picker', nodeId: el.id, currentSrc: el.src }, '*');
+    });
+
+    // E5: Double-click on icon <i> → open Icon Picker in parent
+    document.addEventListener('dblclick', function (e) {
+        var el = e.target;
+        // Match <i> or <svg> (for icon fonts and inline SVG icons)
+        var tag = el ? el.tagName.toLowerCase() : '';
+        if (!el || (tag !== 'i' && tag !== 'svg')) return;
+        // Only treat as icon if has icon class (fa-*, material-icons, etc.) or parent suggests icon
+        var cls = (typeof el.className === 'string' ? el.className : (el.getAttribute('class') || ''));
+        var isIcon = /(^|\s)(fa-|material-icons|icon-|bi-|fas|far|fab|fal|fad|fa-solid|fa-regular|fa-brands)/i.test(cls);
+        if (!isIcon) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!el.id) el.id = generateId();
+        selectedEl = el;
+        selectedId = el.id;
+        window.parent.postMessage({
+            type: 've-open-icon-picker',
+            nodeId: el.id,
+            currentClass: cls
+        }, '*');
     });
 
     // E6: Image resize handles

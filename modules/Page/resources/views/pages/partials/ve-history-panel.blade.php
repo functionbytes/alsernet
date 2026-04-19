@@ -2,25 +2,21 @@
 
     <div class="ve-panel-header">
         <div>
-            <div class="ve-panel-label">Historial</div>
-            <span class="ve-panel-title">Cambios recientes</span>
+            <div class="ve-panel-label">Versiones</div>
+            <span class="ve-panel-title">Historial</span>
         </div>
         <div class="ve-panel-actions">
-            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-undo-hist" title="Deshacer">
-                <i class="fa-solid fa-undo"></i>
-            </button>
-            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-redo-hist" title="Rehacer">
-                <i class="fa-solid fa-redo"></i>
-            </button>
-            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-save-snapshot" title="Guardar snapshot">
+            <span class="ve-hist-counter" id="ve-hist-counter">0 / 60</span>
+            <button type="button" class="btn btn-outline-secondary ve-panel-action-btn" id="btn-save-snapshot" title="Crear snapshot">
                 <i class="fa-solid fa-camera"></i>
             </button>
         </div>
     </div>
 
     <div id="ve-history-empty" class="ve-empty-state ve-hidden">
-        <i class="fa-solid fa-history ve-empty-icon"></i>
-        <div class="ve-empty-text">El historial aparecerá<br>cuando hagas cambios</div>
+        <div class="ve-es-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="ve-es-title">Sin historial todavía</div>
+        <div class="ve-es-desc">Los cambios que hagas aparecerán aquí. Haz clic para deshacer.</div>
     </div>
 
     <div id="ve-history-list" class="ve-scrollable-area"></div>

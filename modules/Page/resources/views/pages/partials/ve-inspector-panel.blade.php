@@ -4,11 +4,12 @@
     <div class="ve-panel-header">
         <div class="ve-panel-header-row">
             <div>
-                <div class="ve-label-tag">Elemento</div>
-                <span id="ve-inspector-element-name" class="ve-element-name">Ninguno</span>
+                <div class="ve-panel-label">Selección</div>
+                <span id="ve-inspector-element-name" class="ve-panel-title">Inspector</span>
                 <div id="ve-sc-context-label" class="ve-hidden ve-sc-context-label"></div>
             </div>
-            <div class="ve-btn-row-gap4">
+            {{-- Acciones sobre la selección — sólo visibles cuando hay elemento seleccionado --}}
+            <div class="ve-btn-row-gap4 ve-inspector-actions ve-hidden" id="ve-inspector-actions">
                 <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-copy-styles"
                         title="Copiar estilos">
                     <i class="fa-solid fa-copy"></i>
@@ -17,10 +18,9 @@
                         title="Pegar estilos" disabled>
                     <i class="fa-solid fa-paste"></i>
                 </button>
-                {{-- Improvement 12: Undo CSS button --}}
-                <button type="button" class="btn btn-outline-secondary ve-btn-icon ve-hidden" id="btn-undo-style"
-                        title="Deshacer último cambio CSS">
-                    <i class="fa-solid fa-undo-alt"></i>
+                <button type="button" class="btn btn-outline-secondary ve-btn-icon" id="btn-undo-style"
+                        title="Reset estilos">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
                 <button type="button" class="btn btn-outline-secondary ve-btn-icon ve-hidden" id="btn-hide-element"
                         title="Ocultar elemento">
@@ -32,16 +32,22 @@
                 </button>
             </div>
         </div>
-        {{-- Breadcrumb + dims --}}
-        <div class="ve-breadcrumb-row">
-            <div id="ve-inspector-breadcrumb" class="ve-breadcrumb ve-hidden ve-breadcrumb-text"></div>
-            <span id="ve-element-dims-display" class="ve-breadcrumb-path ve-monospace ve-dims-display"></span>
+        {{-- Selection bar (chip tag + path + crosshair) --}}
+        <div class="ve-selection-bar ve-hidden" id="ve-selection-bar">
+            <span class="ve-sel-tag" id="ve-sel-chip-tag">h1</span>
+            <span class="ve-sel-path" id="ve-inspector-breadcrumb"></span>
+            <span class="ve-sel-dims-inline" id="ve-element-dims-display"></span>
+            <button type="button" class="ve-sel-target" id="ve-sel-target-btn" title="Localizar en canvas">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
         </div>
     </div>
 
     {{-- Empty state --}}
     <div id="ve-inspector-empty" class="ve-empty-state">
-        <div class="ve-empty-text">Haz click en un elemento<br>del preview para inspeccionarlo</div>
+        <div class="ve-es-icon"><i class="fa-solid fa-arrow-pointer"></i></div>
+        <div class="ve-es-title">Ningún elemento seleccionado</div>
+        <div class="ve-es-desc">Haz clic en cualquier elemento del preview para inspeccionar y editar sus estilos. Pulsa <span class="kbd">Esc</span> para deseleccionar.</div>
     </div>
 
     {{-- Sections (shown when element selected) --}}
@@ -446,38 +452,52 @@
                 </div>
             </div>
             <div id="ve-sect-spacing" class="ve-hidden ve-sect-body">
-                <div class="ve-spacing-presets mb-1">
-                    <span class="ve-spacing-quick-label">Quick:</span>
+                {{-- Spacing box — prototype layout: MARGIN (yellow) > PADDING (green) > CENTER (dims) --}}
+                <div class="ve-spacing-box">
+                    <input type="number" class="ve-sp-val sv-mt ve-css-prop" data-prop="margin-top" data-unit="px" placeholder="0">
+                    <input type="number" class="ve-sp-val sv-mr ve-css-prop" data-prop="margin-right" data-unit="px" placeholder="0">
+                    <input type="number" class="ve-sp-val sv-mb ve-css-prop" data-prop="margin-bottom" data-unit="px" placeholder="0">
+                    <input type="number" class="ve-sp-val sv-ml ve-css-prop" data-prop="margin-left" data-unit="px" placeholder="0">
+                    <div class="ve-spacing-inner">
+                        <input type="number" class="ve-sp-val pv-t ve-css-prop" data-prop="padding-top" data-unit="px" placeholder="0" min="0">
+                        <input type="number" class="ve-sp-val pv-r ve-css-prop" data-prop="padding-right" data-unit="px" placeholder="0" min="0">
+                        <input type="number" class="ve-sp-val pv-b ve-css-prop" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0">
+                        <input type="number" class="ve-sp-val pv-l ve-css-prop" data-prop="padding-left" data-unit="px" placeholder="0" min="0">
+                        <span class="ve-sp-val ve-sp-center" id="ve-bm-dims">—×<br>auto</span>
+                    </div>
+                </div>
+
+                {{-- Gap interno + Modo link --}}
+                <div class="ve-sp-row mt-2">
+                    <div class="ve-field ve-sp-field">
+                        <label class="ve-sp-label">Gap interno</label>
+                        <div class="ve-sp-input-wrap">
+                            <input type="number" class="ve-sp-input ve-css-prop" data-prop="gap" data-unit="px" placeholder="0" min="0">
+                            <span class="ve-sp-unit">px</span>
+                        </div>
+                    </div>
+                    <div class="ve-field ve-sp-field">
+                        <label class="ve-sp-label">Modo</label>
+                        <div class="ve-sp-mode">
+                            <button type="button" class="ve-sp-mode-btn active" id="ve-sp-link" data-mode="link" title="Vincular">
+                                <i class="fa-solid fa-link"></i>
+                            </button>
+                            <button type="button" class="ve-sp-mode-btn" id="ve-sp-unlink" data-mode="unlink" title="Independiente">
+                                <i class="fa-solid fa-link-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Quick presets --}}
+                <div class="ve-spacing-presets mt-2">
+                    <span class="ve-spacing-quick-label">Preset:</span>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="0">0</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="4px">4</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="8px">8</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="16px">16</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="24px">24</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm ve-spacing-preset" data-value="32px">32</button>
-                </div>
-                <div class="ve-spacing-title">Padding (interior)</div>
-                <div class="ve-box-model ve-box-model-mb">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-top" data-unit="px" placeholder="0" min="0">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-left" data-unit="px" placeholder="0" min="0">
-                    <div class="ve-box-center">P</div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-right" data-unit="px" placeholder="0" min="0">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="padding-bottom" data-unit="px" placeholder="0" min="0">
-                    <div></div>
-                </div>
-                <div class="ve-spacing-title">Margin (exterior)</div>
-                <div class="ve-box-model">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-top" data-unit="px" placeholder="0">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-left" data-unit="px" placeholder="0">
-                    <div class="ve-box-center">M</div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-right" data-unit="px" placeholder="0">
-                    <div></div>
-                    <input type="number" class="form-control text-center ve-css-prop ve-box-input" data-prop="margin-bottom" data-unit="px" placeholder="0">
-                    <div></div>
                 </div>
             </div>
         </div>
@@ -1902,6 +1922,18 @@
             } else {
                 $('#ve-section-link-wrapper').addClass('ve-hidden');
             }
+        }
+    });
+
+    // Locate-in-canvas: tell the iframe to re-select + scroll-to-view the
+    // currently inspected element (the iframe already handles scrollIntoView
+    // on 've-select-by-id').
+    $(document).on('click', '#ve-sel-target-btn', function () {
+        var nodeId = window._veCurrentNodeId;
+        if (!nodeId) { return; }
+        var frame = document.getElementById('ve-preview-frame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 've-select-by-id', nodeId: nodeId }, '*');
         }
     });
 

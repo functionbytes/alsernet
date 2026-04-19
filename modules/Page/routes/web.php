@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Page\Http\Controllers\Api\PageLockController;
 use Modules\Page\Http\Controllers\PageAnalyticsController;
 use Modules\Page\Http\Controllers\PageApprovalController;
 use Modules\Page\Http\Controllers\PageCacheDashboardController;
@@ -16,6 +17,7 @@ use Modules\Page\Http\Controllers\PreviewController;
 use Modules\Page\Http\Controllers\PublicController;
 use Modules\Page\Http\Controllers\RobotsController;
 use Modules\Page\Http\Controllers\SitemapController;
+use Modules\Page\Http\Controllers\VeUserPreferencesController;
 use Modules\Page\Http\Controllers\VisualEditorController;
 
 /*
@@ -85,6 +87,19 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::post('pages/{page}/expand-shortcode', [VisualEditorController::class, 'expandShortcode'])->name('pages.expand-shortcode');
     Route::get('pages/{page}/editor-versions', [VisualEditorController::class, 'getEditorVersions'])->name('pages.editor-versions');
     Route::get('pages/{page}/editor-versions/{version}', [VisualEditorController::class, 'getEditorVersion'])->name('pages.editor-version');
+
+    // Page lock (session-authenticated aliases of the Sanctum API routes — the
+    // visual editor runs on web guard and cannot reach /api/v1/* without
+    // SANCTUM_STATEFUL_DOMAINS including the panel host).
+    Route::get('pages/{page}/lock', [PageLockController::class, 'check'])->name('pages.lock.check');
+    Route::post('pages/{page}/lock', [PageLockController::class, 'acquire'])->name('pages.lock.acquire');
+    Route::patch('pages/{page}/lock', [PageLockController::class, 'renew'])->name('pages.lock.renew');
+    Route::delete('pages/{page}/lock', [PageLockController::class, 'release'])->name('pages.lock.release');
+
+    // Visual editor user preferences (shortcode favorites, panel states, etc.).
+    Route::get('pages/ve/preferences/{key}', [VeUserPreferencesController::class, 'show'])->name('pages.ve.preferences.show');
+    Route::post('pages/ve/preferences/{key}', [VeUserPreferencesController::class, 'store'])->name('pages.ve.preferences.store');
+
     Route::get('pages/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
     Route::put('pages/{page}', [PageController::class, 'update'])->name('pages.update');
     Route::delete('pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');

@@ -78,15 +78,28 @@ foreach ($shortcodes as $sc) {
 <div id="ve-shortcodes-panel" class="ve-panel-root">
 
     {{-- Header --}}
-    <div class="ve-sc-header">
-        <div class="ve-panel-label">Bloques</div>
-        <div class="position-relative mt-2">
-            <i class="fas fa-search ve-search-icon"></i>
-            <input type="text" id="ve-sc-search" class="form-control form-control-sm ve-search-input" placeholder="Buscar bloque..." autocomplete="off">
-            <button type="button" id="ve-sc-search-clear" class="ve-search-clear-btn">
-                <i class="fas fa-times"></i>
+    <div class="ve-panel-head">
+        <div>
+            <div class="ve-panel-head-label">Construcción</div>
+            <div class="ve-panel-head-title">Bloques</div>
+        </div>
+        <div class="ve-panel-head-actions">
+            <button type="button" class="ve-ibtn" id="btn-add-custom-block" title="Agregar bloque personalizado">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <button type="button" class="ve-ibtn" id="btn-import-block" title="Importar bloque">
+                <i class="fa-solid fa-file-import"></i>
             </button>
         </div>
+    </div>
+
+    {{-- Search --}}
+    <div class="ve-pinput-wrap">
+        <i class="fa-solid fa-magnifying-glass ve-pinput-icon"></i>
+        <input type="text" id="ve-sc-search" class="ve-pinput" placeholder="Buscar bloque..." autocomplete="off">
+        <button type="button" id="ve-sc-search-clear" class="ve-pinput-clear">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
     {{-- Blocks in page section --}}
@@ -214,23 +227,23 @@ foreach ($shortcodes as $sc) {
 .ve-sc-empty-msg { font-size: 12px; }
 
 /* Grid preset visual cards */
-.ve-sc-grid-presets-title { padding:8px 10px; font-size:13px; font-weight:600; color:#444; border-top:1px solid #eee; }
+.ve-sc-grid-presets-title { padding:8px 10px; font-size:13px; font-weight:600; color:var(--ve-text); border-top:1px solid var(--ve-border); }
 .ve-sc-grid-presets-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:6px 10px 12px; }
 .ve-grid-card {
     display:flex; flex-direction:column; align-items:stretch; gap:6px;
-    padding:10px 10px 8px; background:#f8f9fa; border:1px solid #eee;
+    padding:10px 10px 8px; background:var(--ve-bg); border:1px solid var(--ve-border);
     border-radius:8px; cursor:pointer; transition:all .15s; text-align:center;
 }
-.ve-grid-card:hover { background:#fff; border-color:#ccc; box-shadow:0 2px 6px rgba(0,0,0,.06); }
-.ve-grid-card.ve-insert-active { border-color:#b10100; background:#fdf2f2; }
+.ve-grid-card:hover { background:var(--ve-bg-subtle); border-color:var(--ve-text-muted); box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.ve-grid-card.ve-insert-active { border-color:var(--ve-text); background:var(--ve-hover); }
 .ve-grid-card-vis { display:flex; gap:3px; height:22px; border-radius:4px; overflow:hidden; }
-.ve-grid-col-block { background:#ddd; border-radius:3px; min-width:8px; }
-.ve-grid-col-wide { background:#ccc; }
+.ve-grid-col-block { background:var(--ve-border); border-radius:3px; min-width:8px; }
+.ve-grid-col-wide { background:var(--ve-text-muted); }
 .ve-grid-col-f1 { flex: 1; }
 .ve-grid-col-f2 { flex: 2; }
-.ve-grid-card:hover .ve-grid-col-block { background:#bbb; }
-.ve-grid-card:hover .ve-grid-col-wide { background:#aaa; }
-.ve-grid-card-label { font-size:10px; font-weight:600; color:#666; }
+.ve-grid-card:hover .ve-grid-col-block { background:var(--ve-text-muted); }
+.ve-grid-card:hover .ve-grid-col-wide { background:var(--ve-text-soft); }
+.ve-grid-card-label { font-size:10px; font-weight:600; color:var(--ve-text-soft); }
 
 /* ── Accordion categories ─────────── */
 .ve-blocks-category { border-bottom: none; }
@@ -238,79 +251,79 @@ foreach ($shortcodes as $sc) {
     display: flex; align-items: center; justify-content: space-between;
     width: 100%; padding: 8px 10px;
     background: transparent; border: none; border-bottom: none;
-    font-size: 10px; font-weight: 700; color: #888; cursor: pointer;
+    font-size: 10px; font-weight: 700; color: var(--ve-text-muted); cursor: pointer;
     text-transform: uppercase; letter-spacing: .8px;
 }
-.ve-category-header:hover { background: #fafafa; color: #555; }
+.ve-category-header:hover { background: var(--ve-hover); color: var(--ve-text-soft); }
 .ve-category-header[aria-expanded="true"],
-.ve-category-header:not(.collapsed) { background: transparent; color: #b10100; }
-.ve-category-header i.ve-cat-chevron { font-size: 9px; color: #bbb; transition: transform .2s; }
+.ve-category-header:not(.collapsed) { background: transparent; color: var(--ve-text); }
+.ve-category-header i.ve-cat-chevron { font-size: 9px; color: var(--ve-border); transition: transform .2s; }
 .ve-category-header.collapsed i.ve-cat-chevron { transform: rotate(-90deg); }
-.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: #b10100; }
+.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: var(--ve-text-muted); }
 
 .ve-blocks-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px 6px 8px;
 }
 .ve-block-item {
-    cursor: grab; border: 1px solid #eee; border-radius: 8px;
+    cursor: grab; border: 1px solid var(--ve-border); border-radius: 8px;
     padding: 12px 6px 8px; text-align: center;
     transition: all .15s;
     user-select: none; display: flex; flex-direction: column;
-    align-items: center; gap: 4px; background: #f8f9fa;
+    align-items: center; gap: 4px; background: var(--ve-bg);
 }
-.ve-block-item .ve-block-icon { font-size: 22px; color: #b10100; line-height: 1; }
-.ve-block-item .ve-block-name { font-size: 10px; color: #666; font-weight: 600; line-height: 1.3; }
-.ve-block-item:hover { background: #fff; border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.ve-block-item:hover .ve-block-icon { color: #b10100; }
+.ve-block-item .ve-block-icon { font-size: 22px; color: var(--ve-text-muted); line-height: 1; }
+.ve-block-item .ve-block-name { font-size: 10px; color: var(--ve-text-soft); font-weight: 600; line-height: 1.3; }
+.ve-block-item:hover { background: var(--ve-bg-subtle); border-color: var(--ve-text); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.ve-block-item:hover .ve-block-icon { color: var(--ve-text); }
 .ve-block-item:active { cursor: grabbing; transform: scale(.97); }
 /* Custom blocks — same style as regular */
-.ve-block-item-custom { background: #f8f9fa; position: relative; }
+.ve-block-item-custom { background: var(--ve-bg-subtle); position: relative; }
 .ve-block-item .ve-block-icon .fa-lg { font-size: inherit; }
-/* Force ALL block icons to brand color (override FA color classes) */
+/* Force ALL block icons to monochrome (override FA color classes) */
 .ve-block-item .ve-block-icon,
 .ve-block-item .ve-block-icon i,
 .ve-block-item .ve-block-icon .fas,
 .ve-block-item .ve-block-icon .far,
-.ve-block-item .ve-block-icon .fa-solid { color: #b10100 !important; }
+.ve-block-item .ve-block-icon .fa-solid { color: var(--ve-text-muted) !important; }
 .ve-block-item:hover .ve-block-icon,
 .ve-block-item:hover .ve-block-icon i,
 .ve-block-item:hover .ve-block-icon .fas,
 .ve-block-item:hover .ve-block-icon .far,
-.ve-block-item:hover .ve-block-icon .fa-solid { color: #7b0000 !important; }
+.ve-block-item:hover .ve-block-icon .fa-solid { color: var(--ve-text) !important; }
 
 /* ── Shortcode-specific ────────────────────────────────────────────── */
 .ve-sc-item { position: relative; cursor: grab; }
-.ve-sc-item .ve-block-name { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 9px; color: #555; font-weight: 600; }
+.ve-sc-item .ve-block-name { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace; font-size: 9px; color: var(--ve-text-soft); font-weight: 600; }
 .ve-sc-cfg-badge {
     position: absolute;
     top: 6px;
     right: 6px;
     font-size: 11px;
-    color: #555;
+    color: var(--ve-text-soft);
     line-height: 1;
 }
-.ve-sc-item:hover .ve-sc-cfg-badge { color: #333; }
+.ve-sc-item:hover .ve-sc-cfg-badge { color: var(--ve-text); }
 .ve-sc-item.dragging { opacity: .5; transform: scale(.97); }
 .ve-sc-delete-btn {
     position: absolute;
     top: 6px; right: 6px;
-    background: #f4f6f8;
-    border: 1px solid #eee;
+    background: var(--ve-bg-subtle);
+    border: 1px solid var(--ve-border);
     border-radius: 4px;
     font-size: 10px;
     padding: 2px 5px;
-    color: #999;
+    color: var(--ve-text-muted);
     cursor: pointer;
     line-height: 1.2;
 }
-.ve-sc-delete-btn:hover { background: #b10100; border-color: #b10100; color: #fff; }
+.ve-sc-delete-btn:hover { background: var(--ve-text); border-color: var(--ve-text); color: #fff; }
 
 /* ── Blocks in page section ─────────────────────────────────────── */
 .ve-blocks-in-page-section {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ve-border);
     padding: 8px 10px;
     flex-shrink: 0;
-    background: #fafafa;
+    background: var(--ve-bg-subtle);
 }
 .ve-blocks-in-page-toggle {
     display: flex;
@@ -318,37 +331,37 @@ foreach ($shortcodes as $sc) {
     align-items: center;
     font-size: 10px;
     font-weight: 700;
-    color: #888;
+    color: var(--ve-text-muted);
     letter-spacing: .8px;
     text-transform: uppercase;
 }
-.ve-blocks-refresh-icon { font-size: 10px; color: #aaa; }
+.ve-blocks-refresh-icon { font-size: 10px; color: var(--ve-text-muted); }
 .ve-blocks-in-page-list { margin-top: 6px; }
 .ve-blocks-in-page-list .btn { font-size: 10px; text-align: left; }
-.ve-blocks-empty-msg { font-size: 10px; color: #aaa; margin: 0; }
+.ve-blocks-empty-msg { font-size: 10px; color: var(--ve-text-muted); margin: 0; }
 
 /* Category header — same style as inspector sections */
 .ve-category-header {
     display: flex; align-items: center; justify-content: space-between;
     width: 100%; padding: 10px 12px;
-    background: #fff; border: none; border-bottom: 1px solid #eee;
-    font-size: 13px; font-weight: 700; color: #333; cursor: pointer;
+    background: var(--ve-panel-bg); border: none; border-bottom: 1px solid var(--ve-border);
+    font-size: 13px; font-weight: 700; color: var(--ve-text); cursor: pointer;
     text-transform: none; letter-spacing: 0;
 }
-.ve-category-header:hover { background: #fafafa; }
+.ve-category-header:hover { background: var(--ve-hover); }
 .ve-category-header[aria-expanded="true"],
-.ve-category-header:not(.collapsed) { background: #fff; color: #333; }
-.ve-category-header i.ve-cat-chevron { font-size: 11px; color: #ccc; transition: transform .2s; }
+.ve-category-header:not(.collapsed) { background: var(--ve-panel-bg); color: var(--ve-text); }
+.ve-category-header i.ve-cat-chevron { font-size: 11px; color: var(--ve-border); transition: transform .2s; }
 .ve-category-header.collapsed i.ve-cat-chevron { transform: rotate(-90deg); }
-.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: #999; }
+.ve-category-header:not(.collapsed) i.ve-cat-chevron { color: var(--ve-text-muted); }
 /* Remove blue focus border */
 .ve-blocks-category { border: none; }
 .ve-category-header:focus { outline: none; box-shadow: none; }
 
 /* ── Improvement 8: Block entry hover styles ────────────────────── */
 .ve-block-entry-btn.ve-block-entry-hover {
-    background: #f0f7e0;
-    border-color: #90bb13;
+    background: var(--ve-hover);
+    border-color: var(--ve-text);
 }
 
 /* ── Improvement 10: Modified sentinel badge ────────────────────── */
@@ -371,17 +384,17 @@ foreach ($shortcodes as $sc) {
     opacity: .4;
     transition: opacity .15s, color .15s;
     font-size: 11px;
-    color: #999;
+    color: var(--ve-text-muted);
     line-height: 1;
     z-index: 1;
 }
 .ve-sc-fav-btn:hover,
-.ve-sc-fav-btn.active { opacity: 1; color: #FEC90F; }
+.ve-sc-fav-btn.active { opacity: 1; color: var(--ve-text); }
 .ve-sc-category-header {
     padding: 8px 10px;
     font-size: 10px;
     font-weight: 700;
-    color: #888;
+    color: var(--ve-text-muted);
     letter-spacing: .8px;
     text-transform: uppercase;
 }
@@ -389,7 +402,7 @@ foreach ($shortcodes as $sc) {
 /* ── Improvement 9: Position number in block list ───────────────── */
 .ve-block-position-num {
     font-size: 9px;
-    color: #bbb;
+    color: var(--ve-border);
     font-weight: 700;
     margin-right: 3px;
     min-width: 14px;
@@ -411,7 +424,7 @@ foreach ($shortcodes as $sc) {
     $('#ve-sc-search').on('input', function () {
         clearTimeout(searchTimer);
         const q = $(this).val().toLowerCase();
-        $('#ve-sc-search-clear').toggle(q.length > 0);
+        $('#ve-sc-search-clear').css('display', q.length > 0 ? 'block' : 'none');
         searchTimer = setTimeout(function () { filterShortcodes(q); }, 150);
     });
     $(document).on('click', '#ve-sc-search-clear', function () {
@@ -809,11 +822,64 @@ foreach ($shortcodes as $sc) {
 
     /* ── Expose globally for after-save refresh ──────────────────────── */
     window.veRenderCustomShortcodes = renderCustomShortcodes;
+    window.veRefreshBlocksInPage    = refreshBlocksInPage;
+
+    /* ── Add custom block button ──────────────────────────────────────── */
+    $('#btn-add-custom-block').on('click', function () {
+        $('#save-block-name').val('');
+        if (typeof bootstrap !== 'undefined') {
+            new bootstrap.Modal(document.getElementById('ve-save-block-modal')).show();
+        }
+    });
+
+    /* ── Import block from HTML paste ──────────────────────────────── */
+    $('#btn-import-block').on('click', function () {
+        var existingModal = document.getElementById('ve-import-block-modal');
+        if (existingModal) {
+            new bootstrap.Modal(existingModal).show();
+            return;
+        }
+
+        var modalHtml = [
+            '<div class="modal fade" id="ve-import-block-modal" tabindex="-1" aria-hidden="true">',
+            '<div class="modal-dialog modal-dialog-centered">',
+            '<div class="modal-content">',
+            '<div class="modal-header"><h6 class="modal-title fw-bold">Importar bloque HTML</h6>',
+            '<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>',
+            '<div class="modal-body">',
+            '<div class="mb-3"><label class="form-label">Nombre del bloque</label>',
+            '<input type="text" class="form-control" id="ve-import-block-name" placeholder="Nombre del bloque"></div>',
+            '<div class="mb-2"><label class="form-label">Código HTML</label>',
+            '<textarea class="form-control" id="ve-import-block-html" rows="8" placeholder="Pega aquí el HTML del bloque..."></textarea></div>',
+            '</div>',
+            '<div class="modal-footer flex-column align-items-stretch">',
+            '<button type="button" class="btn btn-primary w-100 mb-2" id="ve-import-block-confirm">Guardar como bloque</button>',
+            '<button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>',
+            '</div></div></div></div>',
+        ].join('');
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        new bootstrap.Modal(document.getElementById('ve-import-block-modal')).show();
+    });
+
+    $(document).on('click', '#ve-import-block-confirm', function () {
+        var name = $('#ve-import-block-name').val().trim() || 'Bloque importado';
+        var html = $('#ve-import-block-html').val().trim();
+        if (!html) { if (window.showToast) showToast('<i class="fas fa-exclamation-triangle me-1"></i>El HTML no puede estar vacío.'); return; }
+
+        var stored = JSON.parse(localStorage.getItem('ve-custom-shortcodes') || '[]');
+        stored.push({ id: 'custom-' + Date.now(), label: name, category: 'custom', html: html });
+        localStorage.setItem('ve-custom-shortcodes', JSON.stringify(stored));
+
+        bootstrap.Modal.getInstance(document.getElementById('ve-import-block-modal'))?.hide();
+        renderCustomShortcodes();
+        if (window.showToast) showToast('<i class="fa-solid fa-check me-1"></i>Bloque "' + name + '" importado.');
+    });
 
     /* ── Blocks in page list ─────────────────────────────────────────── */
     // querySelectorAll returns elements in DOM order (top to bottom) — no sorting needed.
     function refreshBlocksInPage() {
-        var frame = window.parent ? window.parent.document.getElementById('ve-preview-frame') : null;
+        var frame = document.getElementById('ve-preview-frame');
         var $list = $('#ve-blocks-in-page-list').empty();
 
         if (!frame || !frame.contentDocument) {
@@ -821,9 +887,30 @@ foreach ($shortcodes as $sc) {
             return;
         }
 
+        // CTA handlers (bound once via document delegation, safe to rebind)
+        $(document).off('click.empty-add-block').on('click.empty-add-block', '#btn-empty-add-block', function () {
+            // Focus the block search to encourage picking
+            var $search = $('#ve-sidebar-panels [data-panel="shortcodes"] input[type="search"], #ve-sidebar-panels .ve-block-search input').first();
+            if ($search.length) { $search.trigger('focus'); }
+            else if ($('#btn-slash-menu').length) { $('#btn-slash-menu').trigger('click'); }
+        });
+        $(document).off('click.empty-palette').on('click.empty-palette', '#btn-empty-open-palette', function () {
+            if ($('#btn-open-cmd-palette').length) $('#btn-open-cmd-palette').trigger('click');
+        });
+
         var sentinels = frame.contentDocument.querySelectorAll('[data-ve-sc]');
         if (!sentinels.length) {
-            $list.append('<p class="ve-blocks-empty-msg">No hay bloques en la página</p>');
+            $list.append(
+                '<div class="ve-empty-state" style="padding:24px 12px;">'
+                + '<div class="ve-es-icon"><i class="fa-solid fa-layer-group"></i></div>'
+                + '<div class="ve-es-title">Página vacía</div>'
+                + '<div class="ve-es-desc">Arrastra bloques desde la izquierda o usa <span class="kbd">⌘K</span> para abrir el buscador.</div>'
+                + '<div class="ve-es-cta-row">'
+                + '<button type="button" class="ve-es-cta-btn primary" id="btn-empty-add-block"><i class="fa-solid fa-plus"></i>Añadir bloque</button>'
+                + '<button type="button" class="ve-es-cta-btn outline" id="btn-empty-open-palette"><i class="fa-solid fa-terminal"></i>⌘K</button>'
+                + '</div>'
+                + '</div>'
+            );
             return;
         }
 
@@ -854,9 +941,7 @@ foreach ($shortcodes as $sc) {
                 setTimeout(function () {
                     var target = el.firstElementChild || el;
                     target.click();
-                    if (window.parent && window.parent.$) {
-                        window.parent.$('[data-panel="inspector"]').trigger('click');
-                    }
+                    $('[data-panel="inspector"]').trigger('click');
                 }, 300);
             });
 
