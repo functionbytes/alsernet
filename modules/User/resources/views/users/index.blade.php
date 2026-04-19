@@ -202,6 +202,19 @@
                                                             Editar
                                                         </a>
                                                     </li>
+                                                    @can('auth.impersonate')
+                                                        @if ($user->id !== auth()->id())
+                                                            <li>
+                                                                <form action="{{ route('auth.impersonation.start', $user->id) }}" method="POST" class="d-inline">
+                                                                    @csrf
+                                                                    <button type="submit" class="dropdown-item impersonate-btn"
+                                                                            data-name="{{ $user->firstname }} {{ $user->lastname }}">
+                                                                        Impersonar
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
+                                                    @endcan
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <button type="button" class="dropdown-item delete-btn"
@@ -385,6 +398,14 @@ $(document).ready(function () {
         e.preventDefault();
         $('#delete-form').attr('action', $(this).data('url'));
         $('#delete-modal').modal('show');
+    });
+
+    // ── Confirm impersonation ──────────────────────────────────────────────
+    $(document).on('click', '.impersonate-btn', function (e) {
+        const name = $(this).data('name');
+        if (!confirm('¿Impersonar a ' + name + '?\n\nPodrás volver a tu cuenta desde el banner superior.')) {
+            e.preventDefault();
+        }
     });
 });
 </script>

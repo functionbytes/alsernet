@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
+use Modules\Auth\Models\PasswordHistory;
 use Modules\Auth\Models\Session;
+use Modules\Auth\Models\TrustedDevice;
 
 /**
  * Trait HasBasicRelations
@@ -30,6 +32,22 @@ trait HasBasicRelations
     public function session(): HasOne
     {
         return $this->hasOne(Session::class, 'user_id')->latestOfMany('last_activity');
+    }
+
+    /**
+     * Get user's trusted devices
+     */
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(TrustedDevice::class, 'user_id');
+    }
+
+    /**
+     * Get user's password history entries
+     */
+    public function passwordHistories(): HasMany
+    {
+        return $this->hasMany(PasswordHistory::class, 'user_id');
     }
 
     /**

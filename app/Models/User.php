@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -27,7 +28,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     // Core Laravel traits
-    use HasApiTokens, HasFactory, HasRoles, HasUid, LogsActivity;
+    use HasApiTokens, HasFactory, HasRoles, HasUid, LogsActivity, SoftDeletes;
 
     // Custom User traits organized by responsibility
     use HasBasicRelations;
@@ -118,6 +119,8 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
+        'failed_login_count',
+        'locked_until',
     ];
 
     /*
@@ -158,11 +161,17 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_recovery_codes' => 'encrypted:array',
             'two_factor_secret' => 'encrypted',
+            'locked_until' => 'datetime',
         ];
     }
 
     public function hasTwoFactorEnabled(): bool
     {
         return ! is_null($this->two_factor_confirmed_at);
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
     }
 }

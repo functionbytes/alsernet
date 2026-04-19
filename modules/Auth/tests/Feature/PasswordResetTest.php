@@ -3,14 +3,11 @@
 namespace Modules\Auth\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
+use Modules\Auth\Tests\AuthTestCase;
 
-class PasswordResetTest extends TestCase
+class PasswordResetTest extends AuthTestCase
 {
-    use RefreshDatabase;
-
     private function makeUser(array $attributes = []): User
     {
         return User::factory()->create(array_merge([

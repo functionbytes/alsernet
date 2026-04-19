@@ -74,6 +74,14 @@
                                         <a href="{{ route('settings.auth.profile') }}" class="p-2 dropdown-item h6 rounded-1">
                                             Configuración
                                         </a>
+                                        @if (config('auth.auth-policy.lock_screen.enabled', true))
+                                            <form method="POST" action="{{ route('auth.lock.lock') }}" class="mb-2">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-secondary px-4 waves-effect waves-light w-100">
+                                                    <i class="fas fa-lock me-1"></i> Bloquear sesión
+                                                </button>
+                                            </form>
+                                        @endif
                                         <form method="POST" action="{{ route('auth.logout') }}">
                                             @csrf
                                             <button type="submit" class="btn btn-info px-4 waves-effect waves-light w-100">Salir</button>

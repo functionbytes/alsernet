@@ -31,7 +31,10 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->environment('testing')) {
             $this->app['events']->listen(MigrationsStarted::class, function () {
-                DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
+                // MySQL/MariaDB — sqlite no soporta FOREIGN_KEY_CHECKS
+                if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+                    DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
+                }
             });
         }
 

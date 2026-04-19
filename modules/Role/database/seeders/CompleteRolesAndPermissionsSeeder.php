@@ -115,6 +115,14 @@ class CompleteRolesAndPermissionsSeeder extends Seeder
             'permissions.edit' => 'Editar permisos',
             'permissions.delete' => 'Eliminar permisos',
 
+            // Módulo Auth (autenticación, impersonación, dispositivos, tokens API)
+            'auth.impersonate' => 'Impersonar a otros usuarios',
+            'auth.settings.view' => 'Ver configuraciones de autenticación',
+            'auth.settings.update' => 'Actualizar configuraciones de autenticación',
+            'auth.audit.view' => 'Ver registros de actividad de autenticación',
+            'auth.devices.manage' => 'Gestionar dispositivos de confianza',
+            'auth.api-tokens.manage' => 'Gestionar tokens de API personales',
+
             'backups.langs' => 'Gestionar idiomas del manager', // Added description
             'backups.langs.create' => 'Crear idiomas del manager', // Added description
             'backups.langs.store' => 'Almacenar idiomas del manager', // Added description

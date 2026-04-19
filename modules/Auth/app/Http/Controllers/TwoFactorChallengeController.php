@@ -8,23 +8,21 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
+use Modules\Auth\Events\TwoFactorFailed;
+use Modules\Auth\Events\TwoFactorVerified;
+use Modules\Auth\Services\AuthRateLimiter;
+use Modules\Auth\Services\AuthService;
 use Modules\Auth\Services\TwoFactorService;
 
 class TwoFactorChallengeController extends Controller
 {
-    private const MAX_ATTEMPTS = 5;
-
-    private const DECAY_SECONDS = 300; // 5 minutes
-
     public function __construct(
-        private readonly TwoFactorService $twoFactor
+        private readonly TwoFactorService $twoFactor,
+        private readonly AuthRateLimiter $limiter,
+        private readonly AuthService $auth,
     ) {}
 
-    /**
-     * Show the 2FA challenge form.
-     */
     public function show(Request $request): View|RedirectResponse
     {
         if (! $request->session()->has('two_factor_user_id')) {
@@ -34,9 +32,6 @@ class TwoFactorChallengeController extends Controller
         return view('auth::auth.two-factor-challenge');
     }
 
-    /**
-     * Verify the submitted OTP or recovery code.
-     */
     public function verify(Request $request): JsonResponse|RedirectResponse
     {
         $userId = $request->session()->get('two_factor_user_id');
@@ -49,11 +44,10 @@ class TwoFactorChallengeController extends Controller
             return redirect()->route('auth.login');
         }
 
-        $throttleKey = '2fa:'.$userId.'|'.$request->ip();
+        $check = $this->limiter->check('two_factor', (string) $userId, $request);
 
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
-            $message = "Demasiados intentos. Inténtalo de nuevo en {$seconds} segundos.";
+        if (! $check['allowed']) {
+            $message = "Demasiados intentos. Inténtalo de nuevo en {$check['seconds']} segundos.";
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => $message], 429);
@@ -62,18 +56,33 @@ class TwoFactorChallengeController extends Controller
             return back()->withErrors(['code' => $message]);
         }
 
+        /** @var User $user */
         $user = User::findOrFail($userId);
 
-        if ($this->isValidOtp($request, $user) || $this->isValidRecoveryCode($request, $user)) {
-            RateLimiter::clear($throttleKey);
+        $method = null;
 
+        if ($this->isValidOtp($request, $user)) {
+            $method = 'otp';
+        } elseif ($this->isValidRecoveryCode($request, $user)) {
+            $method = 'recovery_code';
+        }
+
+        if ($method !== null) {
+            $this->limiter->clear('two_factor', (string) $userId, $request);
+
+            $remember = (bool) $request->session()->pull('two_factor_remember', false);
             $request->session()->forget('two_factor_user_id');
             $request->session()->put('two_factor_passed', true);
 
-            Auth::login($user);
+            Auth::login($user, $remember);
             $request->session()->regenerate();
 
-            $redirect = route($user->redirectRouteName());
+            TwoFactorVerified::dispatch($user, $request->ip(), $method);
+            $this->auth->completeLogin($user, $request, $remember);
+
+            $redirect = $user->must_change_password
+                ? route('settings.auth.password.edit')
+                : route($user->redirectRouteName());
 
             if ($request->expectsJson()) {
                 return response()->json(['redirect' => $redirect]);
@@ -82,7 +91,8 @@ class TwoFactorChallengeController extends Controller
             return redirect()->intended($redirect);
         }
 
-        RateLimiter::hit($throttleKey, self::DECAY_SECONDS);
+        $this->limiter->hit('two_factor', (string) $userId, $request);
+        TwoFactorFailed::dispatch($user, $request->ip());
 
         $message = 'Código incorrecto. Inténtalo de nuevo.';
 
@@ -95,16 +105,16 @@ class TwoFactorChallengeController extends Controller
 
     private function isValidOtp(Request $request, User $user): bool
     {
-        $code = $request->input('code', '');
+        $code = (string) $request->input('code', '');
 
-        return $code && $this->twoFactor->verify($user->two_factor_secret, $code);
+        return $code !== '' && $this->twoFactor->verify($user->two_factor_secret, $code);
     }
 
     private function isValidRecoveryCode(Request $request, User $user): bool
     {
-        $recovery = trim($request->input('recovery_code', ''));
+        $recovery = trim((string) $request->input('recovery_code', ''));
 
-        if (! $recovery || ! $user->two_factor_recovery_codes) {
+        if ($recovery === '' || ! $user->two_factor_recovery_codes) {
             return false;
         }
 

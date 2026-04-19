@@ -3,34 +3,25 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\ThrottlesLogins;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Modules\Auth\Services\AuthRateLimiter;
+use Modules\Auth\Services\AuthService;
 
 class LoginController extends Controller
 {
-    use ThrottlesLogins;
+    public function __construct(
+        private readonly AuthService $auth,
+        private readonly AuthRateLimiter $limiter,
+    ) {}
 
-    /**
-     * The maximum number of login attempts
-     */
-    protected int $maxAttempts = 5;
-
-    /**
-     * The number of minutes to throttle for
-     */
-    protected int $decayMinutes = 1;
-
-    /**
-     * Show the login form or redirect to dashboard if authenticated
-     */
     public function showLoginForm(): View|RedirectResponse
     {
-        // Redirect if already authenticated
         if (Auth::check()) {
             return redirect()->route(Auth::user()->redirectRouteName());
         }
@@ -38,115 +29,53 @@ class LoginController extends Controller
         return view('auth::auth.login');
     }
 
-    /**
-     * Handle root route - redirect based on authentication status
-     */
     public function home(): RedirectResponse
     {
-        // If authenticated, redirect to user's dashboard
         if (Auth::check()) {
             return redirect()->route(Auth::user()->redirectRouteName());
         }
 
-        // If not authenticated, show login form
         return redirect()->route('auth.login');
     }
 
-    /**
-     * Handle login attempt (supports both JSON and form submission)
-     */
     public function login(Request $request): JsonResponse|RedirectResponse
     {
-        $this->validateLogin($request);
-
-        // Check if too many login attempts
-        if ($this->hasTooManyLoginAttempts($request)) {
-            $this->fireLockoutEvent($request);
-
-            return $this->sendLockoutResponse($request);
-        }
-
-        // Attempt login
-        if ($this->attemptLogin($request)) {
-            return $this->sendLoginResponse($request);
-        }
-
-        // Increment login attempts
-        $this->incrementLoginAttempts($request);
-
-        return $this->sendFailedLoginResponse($request);
-    }
-
-    /**
-     * Validate the login request
-     */
-    protected function validateLogin(Request $request): void
-    {
         $request->validate([
-            $this->username() => 'required|string',
-            'password' => 'required|string',
+            'email' => ['required', 'string'],
+            'password' => ['required', 'string'],
         ]);
-    }
 
-    /**
-     * Attempt to log the user into the application
-     */
-    protected function attemptLogin(Request $request): bool
-    {
-        return Auth::attempt(
-            $this->credentials($request),
-            $request->boolean('remember')
+        $identifier = (string) $request->input('email');
+        $check = $this->limiter->check('login', $identifier, $request);
+
+        if (! $check['allowed']) {
+            return $this->lockoutResponse($request, $check['seconds']);
+        }
+
+        $user = $this->auth->attempt(
+            ['email' => $identifier, 'password' => $request->input('password')],
+            $request->boolean('remember'),
+            $request,
         );
-    }
 
-    /**
-     * Get the login credentials from the request
-     */
-    protected function credentials(Request $request): array
-    {
-        return [
-            $this->username() => $request->input($this->username()),
-            'password' => $request->input('password'),
-        ];
-    }
+        if (! $user) {
+            $this->limiter->hit('login', $identifier, $request);
 
-    /**
-     * Send the response after the user was authenticated
-     */
-    protected function sendLoginResponse(Request $request): JsonResponse|RedirectResponse
-    {
-        $request->session()->regenerate();
-        $this->clearLoginAttempts($request);
-
-        $user = Auth::user();
-
-        // Check if user account is available/enabled
-        if (! $user->available) {
-            Auth::logout();
-            $request->session()->invalidate();
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tu cuenta está deshabilitada. Contacta al administrador.',
-                ], 403);
+            $existing = User::where('email', $identifier)->first();
+            if ($existing && $existing->isLocked()) {
+                return $this->lockedAccountResponse($request, $existing);
             }
 
-            return back()->withErrors([
-                'email' => 'Tu cuenta está deshabilitada. Contacta al administrador.',
-            ])->onlyInput('email');
+            return $this->failedResponse($request);
         }
 
-        // Update last login metadata
-        $user->forceFill([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ])->save();
+        $this->limiter->clear('login', $identifier, $request);
+        $request->session()->regenerate();
 
-        // If 2FA is enabled, don't fully log in yet — redirect to challenge
         if ($user->hasTwoFactorEnabled()) {
             Auth::logout();
             $request->session()->put('two_factor_user_id', $user->id);
+            $request->session()->put('two_factor_remember', $request->boolean('remember'));
 
             $challengeUrl = route('two-factor.challenge');
 
@@ -161,77 +90,63 @@ class LoginController extends Controller
             return redirect($challengeUrl);
         }
 
+        $this->auth->completeLogin($user, $request, $request->boolean('remember'));
+
+        if ($user->must_change_password) {
+            $redirect = route('settings.auth.password.edit');
+        } else {
+            $redirect = route($user->redirectRouteName());
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Inicio de sesión exitoso.',
-                'redirect' => route($user->redirectRouteName()),
+                'redirect' => $redirect,
             ]);
         }
 
-        return redirect()->intended(route($user->redirectRouteName()));
+        return redirect()->intended($redirect);
     }
 
-    /**
-     * Send the failed login response
-     */
-    protected function sendFailedLoginResponse(Request $request): JsonResponse|RedirectResponse
-    {
-        $message = 'Las credenciales proporcionadas no son correctas.';
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $message,
-            ], 422);
-        }
-
-        throw ValidationException::withMessages([
-            $this->username() => [$message],
-        ]);
-    }
-
-    /**
-     * Send the lockout response
-     */
-    protected function sendLockoutResponse(Request $request): JsonResponse|RedirectResponse
-    {
-        $seconds = $this->limiter()->availableIn(
-            $this->throttleKey($request)
-        );
-
-        $message = 'Demasiados intentos de inicio de sesión. Inténtelo de nuevo en '.$seconds.' segundos.';
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $message,
-            ], 429);
-        }
-
-        throw ValidationException::withMessages([
-            $this->username() => [$message],
-        ])->status(429);
-    }
-
-    /**
-     * Handle logout
-     */
     public function logout(Request $request): RedirectResponse
     {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $this->auth->logout($request);
 
         return redirect()->route('auth.login');
     }
 
-    /**
-     * Get the login username to be used by the controller
-     */
-    public function username(): string
+    private function failedResponse(Request $request): JsonResponse|RedirectResponse
     {
-        return 'email';
+        $message = 'Las credenciales proporcionadas no son correctas.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+
+        throw ValidationException::withMessages(['email' => [$message]]);
+    }
+
+    private function lockoutResponse(Request $request, int $seconds): JsonResponse|RedirectResponse
+    {
+        $message = "Demasiados intentos de inicio de sesión. Inténtelo de nuevo en {$seconds} segundos.";
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => $message], 429);
+        }
+
+        throw ValidationException::withMessages(['email' => [$message]])->status(429);
+    }
+
+    private function lockedAccountResponse(Request $request, User $user): JsonResponse|RedirectResponse
+    {
+        $minutes = (int) ceil(now()->diffInSeconds($user->locked_until, false) / 60);
+        $message = "Tu cuenta está bloqueada por seguridad. Inténtalo de nuevo en {$minutes} minuto(s) o restablece la contraseña.";
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => $message, 'locked' => true], 423);
+        }
+
+        throw ValidationException::withMessages(['email' => [$message]])->status(423);
     }
 }

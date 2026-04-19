@@ -3,8 +3,7 @@
 namespace Modules\Auth\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Modules\Auth\Tests\AuthTestCase;
 
 /**
  * AuthTest
@@ -13,10 +12,8 @@ use Tests\TestCase;
  * Covers guest access, credential validation, session handling,
  * and redirection behaviour for authenticated users.
  */
-class AuthTest extends TestCase
+class AuthTest extends AuthTestCase
 {
-    use RefreshDatabase;
-
     protected User $user;
 
     protected function setUp(): void

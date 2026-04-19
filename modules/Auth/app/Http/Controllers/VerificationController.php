@@ -3,110 +3,62 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Artesaos\SEOTools\Facades\JsonLd;
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\SEOMeta;
-use Artesaos\SEOTools\Facades\SEOTools;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\Core\Models\Setting;
+use Illuminate\View\View;
 
 class VerificationController extends Controller
 {
-    protected $redirectTo = '/home';
-
     public function __construct()
     {
-        // $this->middleware('auth');
-        // $this->middleware('signed')->only('verify');
-        // $this->middleware('throttle:120,1')->only('verify', 'resend');
+        $this->middleware('auth')->except(['verify']);
+        $this->middleware('signed')->only('verify');
+        $this->middleware('throttle:6,1')->only(['verify', 'resend']);
     }
 
-    public function redirectPath()
+    public function show(Request $request): View|RedirectResponse
     {
-
-        if (method_exists($this, 'redirectTo')) {
-            return $this->redirectTo();
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route($request->user()->redirectRouteName());
         }
 
-        return property_exists($this, 'redirectTo') ? $this->redirectTo : '/home';
+        return view('auth::auth.verify');
     }
 
-    public function show(Request $request)
+    public function verify(EmailVerificationRequest $request): RedirectResponse
     {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route($request->user()->redirectRouteName())
+                ->with('verified', true);
+        }
 
-        $setting = Setting::first();
+        if ($request->user()->markEmailAsVerified()) {
+            event(new Verified($request->user()));
+        }
 
-        SEOMeta::setTitle(getSetting()->meta_title);
-        SEOMeta::setDescription(getSetting()->meta_description);
-        SEOMeta::setCanonical(getUrl());
-
-        SEOTools::setTitle(getSetting()->meta_title);
-        SEOTools::setDescription(getSetting()->meta_description);
-        SEOTools::opengraph()->setUrl(getUrl());
-        SEOTools::setCanonical(getUrl());
-        SEOTools::opengraph()->addProperty('type', 'articles');
-        SEOTools::twitter()->setSite('@bpmsandiego');
-        SEOTools::jsonLd()->addImage(getMeta());
-
-        OpenGraph::setTitle(getSetting()->meta_title);
-        OpenGraph::setDescription(getSetting()->meta_description);
-        OpenGraph::setUrl(getUrl());
-        OpenGraph::addProperty('type', 'article');
-        OpenGraph::addProperty('locale', 'en-En');
-        OpenGraph::addImage(getMeta());
-
-        JsonLd::setTitle(getSetting()->meta_title);
-        JsonLd::setDescription(getSetting()->meta_description);
-        JsonLd::addImage(getMeta());
-
-        // if ($request->user()->hasVerifiedEmail()) {
-        return redirect($this->redirectPath());
-        // }else{
-        // VerificationMails::dispatch($request->user())->onQueue('verification');
-        // return view('auth::verify');
-        // }
+        return redirect()->route($request->user()->redirectRouteName())
+            ->with('verified', true);
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function resend(Request $request): JsonResponse|RedirectResponse
     {
-        $request->fulfill();
+        if ($request->user()->hasVerifiedEmail()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Tu correo ya está verificado.']);
+            }
 
-        return redirect()->route('verified')->with('verified', true);
+            return redirect()->route($request->user()->redirectRouteName());
+        }
 
+        $request->user()->sendEmailVerificationNotification();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Enlace de verificación enviado.']);
+        }
+
+        return back()->with('resent', true);
     }
-
-    public function verified()
-    {
-
-        $setting = Setting::first();
-
-        SEOMeta::setTitle(getSetting()->meta_title);
-        SEOMeta::setDescription(getSetting()->meta_description);
-        SEOMeta::setCanonical(getUrl());
-
-        SEOTools::setTitle(getSetting()->meta_title);
-        SEOTools::setDescription(getSetting()->meta_description);
-        SEOTools::opengraph()->setUrl(getUrl());
-        SEOTools::setCanonical(getUrl());
-        SEOTools::opengraph()->addProperty('type', 'articles');
-        SEOTools::twitter()->setSite('@bpmsandiego');
-        SEOTools::jsonLd()->addImage(getMeta());
-
-        OpenGraph::setTitle(getSetting()->meta_title);
-        OpenGraph::setDescription(getSetting()->meta_description);
-        OpenGraph::setUrl(getUrl());
-        OpenGraph::addProperty('type', 'article');
-        OpenGraph::addProperty('locale', 'en-En');
-        OpenGraph::addImage(getMeta());
-
-        JsonLd::setTitle(getSetting()->meta_title);
-        JsonLd::setDescription(getSetting()->meta_description);
-        JsonLd::addImage(getMeta());
-
-        return view('pages.views.verified.verified');
-
-    }
-
-    public function resend(Request $request) {}
 }

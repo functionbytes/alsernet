@@ -113,6 +113,19 @@
                         <span class="d-none d-md-block">Actividad</span>
                     </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $activeTab === 'api-tokens' ? 'active' : '' }}"
+                            id="api-tokens-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#api-tokens"
+                            type="button"
+                            role="tab"
+                            aria-controls="api-tokens"
+                            aria-selected="{{ $activeTab === 'api-tokens' ? 'true' : 'false' }}">
+
+                        <span class="d-none d-md-block">Tokens API</span>
+                    </button>
+                </li>
             </ul>
 
             {{-- Tab Content --}}
@@ -147,6 +160,11 @@
                     {{-- Tab: Actividad --}}
                     <div class="tab-pane fade {{ $activeTab === 'activity' ? 'show active' : '' }}" id="activity" role="tabpanel" aria-labelledby="activity-tab">
                         @include('auth::settings.profile.tabs.activity')
+                    </div>
+
+                    {{-- Tab: Tokens API --}}
+                    <div class="tab-pane fade {{ $activeTab === 'api-tokens' ? 'show active' : '' }}" id="api-tokens" role="tabpanel" aria-labelledby="api-tokens-tab">
+                        @include('auth::settings.profile.tabs.api-tokens')
                     </div>
                 </div>
             </div>

@@ -3,15 +3,12 @@
 namespace Modules\Auth\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
+use Modules\Auth\Tests\AuthTestCase;
 
-class SessionManagementTest extends TestCase
+class SessionManagementTest extends AuthTestCase
 {
-    use RefreshDatabase;
-
     private function makeUser(): User
     {
         return User::factory()->create([

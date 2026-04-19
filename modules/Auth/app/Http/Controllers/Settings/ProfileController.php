@@ -45,6 +45,11 @@ class ProfileController extends Controller
         return $this->index($request->merge(['tab' => 'devices']));
     }
 
+    public function apiTokens(Request $request): View
+    {
+        return $this->index($request->merge(['tab' => 'api-tokens']));
+    }
+
     /**
      * Update the authenticated user's personal information.
      */

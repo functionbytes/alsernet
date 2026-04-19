@@ -3,14 +3,11 @@
 namespace Modules\Auth\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Services\TwoFactorService;
-use Tests\TestCase;
+use Modules\Auth\Tests\AuthTestCase;
 
-class TwoFactorChallengeTest extends TestCase
+class TwoFactorChallengeTest extends AuthTestCase
 {
-    use RefreshDatabase;
-
     private TwoFactorService $twoFactor;
 
     protected function setUp(): void

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events\Auth\Password;
+namespace Modules\Auth\Events\Password;
 
 use App\Models\User;
 use Illuminate\Foundation\Events\Dispatchable;

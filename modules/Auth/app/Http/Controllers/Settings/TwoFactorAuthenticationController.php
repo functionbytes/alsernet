@@ -3,9 +3,12 @@
 namespace Modules\Auth\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Modules\Auth\Notifications\TwoFactorChangedNotification;
 use Modules\Auth\Services\TwoFactorService;
 
 class TwoFactorAuthenticationController extends Controller
@@ -64,6 +67,8 @@ class TwoFactorAuthenticationController extends Controller
             'two_factor_recovery_codes' => $recoveryCodes,
         ])->save();
 
+        $user->notify(new TwoFactorChangedNotification('enabled', $request->ip()));
+
         return response()->json([
             'message' => 'Autenticación de dos factores activada correctamente.',
             'recovery_codes' => $recoveryCodes,
@@ -91,6 +96,8 @@ class TwoFactorAuthenticationController extends Controller
             'two_factor_confirmed_at' => null,
         ])->save();
 
+        $user->notify(new TwoFactorChangedNotification('disabled', $request->ip()));
+
         return response()->json(['message' => 'Autenticación de dos factores desactivada.']);
     }
 
@@ -116,9 +123,32 @@ class TwoFactorAuthenticationController extends Controller
         $recoveryCodes = $this->twoFactor->generateRecoveryCodes();
         $user->forceFill(['two_factor_recovery_codes' => $recoveryCodes])->save();
 
+        $user->notify(new TwoFactorChangedNotification('recovery_regenerated', $request->ip()));
+
         return response()->json([
             'message' => 'Códigos de recuperación regenerados.',
             'recovery_codes' => $recoveryCodes,
         ]);
+    }
+
+    /**
+     * Download recovery codes as PDF.
+     */
+    public function downloadRecoveryCodes(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (! $user->hasTwoFactorEnabled() || ! $user->two_factor_recovery_codes) {
+            abort(404, 'No hay códigos de recuperación disponibles.');
+        }
+
+        $pdf = Pdf::loadView('auth::settings.two-factor.recovery-codes-pdf', [
+            'user' => $user,
+            'codes' => $user->two_factor_recovery_codes,
+            'generatedAt' => now(),
+            'appName' => config('app.name', 'Alsernet'),
+        ])->setPaper('a4');
+
+        return $pdf->download("recovery-codes-{$user->email}.pdf");
     }
 }

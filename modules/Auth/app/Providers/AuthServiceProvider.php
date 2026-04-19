@@ -4,12 +4,29 @@ namespace Modules\Auth\Providers;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Auth\Console\Commands\PruneAuthLogsCommand;
+use Modules\Auth\Events\LoginFailed;
+use Modules\Auth\Events\NewDeviceDetected;
+use Modules\Auth\Events\PasswordChanged;
+use Modules\Auth\Events\UserLoggedIn;
+use Modules\Auth\Http\Controllers\ImpersonationController;
+use Modules\Auth\Http\Controllers\LockScreenController;
 use Modules\Auth\Http\Controllers\LoginController;
 use Modules\Auth\Http\Controllers\TwoFactorChallengeController;
+use Modules\Auth\Http\Middleware\CheckPasswordExpired;
+use Modules\Auth\Http\Middleware\CheckSessionLock;
+use Modules\Auth\Http\Middleware\DenyWhenImpersonating;
+use Modules\Auth\Listeners\LogLoginActivity;
+use Modules\Auth\Listeners\LogLoginFailure;
+use Modules\Auth\Listeners\LogTwoFactorActivity;
+use Modules\Auth\Listeners\RecordPasswordChange;
+use Modules\Auth\Listeners\SendNewDeviceAlert;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -23,17 +40,33 @@ class AuthServiceProvider extends ServiceProvider
     protected string $nameLower = 'auth';
 
     /**
-     * Event listeners for the Auth module
+     * Event → listeners map.
      */
     protected array $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        UserLoggedIn::class => [
+            LogLoginActivity::class,
+        ],
+        LoginFailed::class => [
+            LogLoginFailure::class,
+        ],
+        PasswordChanged::class => [
+            RecordPasswordChange::class,
+        ],
+        NewDeviceDetected::class => [
+            SendNewDeviceAlert::class,
+        ],
     ];
 
     /**
-     * Boot the application events.
+     * Event subscribers.
      */
+    protected array $subscribe = [
+        LogTwoFactorActivity::class,
+    ];
+
     public function boot(): void
     {
         $this->registerCommands();
@@ -44,18 +77,13 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerEvents();
         $this->registerGates();
+        $this->registerMiddleware();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
-
-        // Register routes directly (Laravel 12 compatible)
         $this->registerRoutes();
     }
 
-    /**
-     * Register the service provider.
-     */
     public function register(): void
     {
-        // Merge module configs
         $this->mergeConfigFrom(
             __DIR__.'/../../config/verification.php',
             'verification'
@@ -68,7 +96,7 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register module routes
+     * Register module routes.
      */
     protected function registerRoutes(): void
     {
@@ -76,33 +104,38 @@ class AuthServiceProvider extends ServiceProvider
         $settingsPath = module_path($this->name, 'routes/settings.php');
         $apiPath = module_path($this->name, 'routes/api.php');
 
-        // Root route - handles both authenticated and guest users
         Route::middleware(['web'])
             ->get('/', [LoginController::class, 'home'])
             ->name('auth.home');
 
-        // Public authentication routes (login, register, password reset)
         Route::middleware(['web', 'guest'])
             ->group(function () use ($webPath) {
                 require $webPath;
             });
 
-        // 2FA challenge routes (auth required, but exempt from 2FA middleware)
-        Route::middleware(['web', 'auth'])
-            ->group(function () {
-                Route::get('/two-factor/challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
-                Route::post('/two-factor/challenge', [TwoFactorChallengeController::class, 'verify'])->name('two-factor.verify');
-            });
+        // 2FA challenge + lock screen (auth required but exempt from 2FA/lock middleware)
+        Route::middleware(['web', 'auth'])->group(function () {
+            Route::get('/two-factor/challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
+            Route::post('/two-factor/challenge', [TwoFactorChallengeController::class, 'verify'])->name('two-factor.verify');
 
-        // Auth settings routes (2FA, sessions, security)
-        Route::middleware(['web', 'auth'])
+            Route::get('/lock', [LockScreenController::class, 'show'])->name('auth.lock');
+            Route::post('/lock/unlock', [LockScreenController::class, 'unlock'])->name('auth.lock.unlock');
+            Route::post('/lock', [LockScreenController::class, 'lock'])->name('auth.lock.lock');
+
+            // Impersonation (start requires permission; stop does not)
+            Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])
+                ->name('auth.impersonation.start');
+            Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])
+                ->name('auth.impersonation.stop');
+        });
+
+        Route::middleware(['web', 'auth', CheckSessionLock::class, CheckPasswordExpired::class])
             ->prefix('panel/setting/auth')
             ->name('settings.auth.')
             ->group(function () use ($settingsPath) {
                 require $settingsPath;
             });
 
-        // API routes
         Route::middleware(['api'])
             ->prefix('api/auth')
             ->name('api.auth.')
@@ -111,56 +144,58 @@ class AuthServiceProvider extends ServiceProvider
             });
     }
 
-    /**
-     * Register menus del módulo Auth
-     */
     protected function registerMenus(): void {}
 
-    /**
-     * Register event listeners for the Auth module
-     */
     protected function registerEvents(): void
     {
         foreach ($this->listen as $event => $listeners) {
             foreach ($listeners as $listener) {
-                $this->app['events']->listen($event, $listener);
+                Event::listen($event, $listener);
             }
+        }
+
+        foreach ($this->subscribe as $subscriber) {
+            Event::subscribe($subscriber);
         }
     }
 
-    /**
-     * Register authorization gates for the Auth module
-     */
     protected function registerGates(): void
     {
-        // Super settings gate - grants all permissions to users with super-settings role
         Gate::before(function ($user, $ability) {
             return $user->hasRole('super-settings') ? true : null;
         });
+
+        Gate::define('viewAudit', fn ($user) => $user->can('auth.audit.view'));
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register middleware aliases used by module routes.
      */
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app['router'];
+
+        $router->aliasMiddleware('auth.session.lock', CheckSessionLock::class);
+        $router->aliasMiddleware('auth.deny-impersonating', DenyWhenImpersonating::class);
+        $router->aliasMiddleware('auth.password.expired', CheckPasswordExpired::class);
+    }
+
     protected function registerCommands(): void
     {
-        // $this->commands([]);
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PruneAuthLogsCommand::class,
+            ]);
+        }
     }
 
-    /**
-     * Register command Schedules.
-     */
     protected function registerCommandSchedules(): void
     {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->command('auth:prune')->weekly()->sundays()->at('03:00');
+        });
     }
 
-    /**
-     * Register translations.
-     */
     public function registerTranslations(): void
     {
         $langPath = resource_path('lang/modules/'.$this->nameLower);
@@ -174,9 +209,6 @@ class AuthServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register config.
-     */
     protected function registerConfig(): void
     {
         $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
@@ -190,7 +222,6 @@ class AuthServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -207,9 +238,6 @@ class AuthServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Merge config from the given path recursively.
-     */
     protected function merge_config_from(string $path, string $key): void
     {
         $existing = config($key, []);
@@ -220,9 +248,6 @@ class AuthServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register views.
-     */
     public function registerViews(): void
     {
         $viewPath = resource_path('views/modules/'.$this->nameLower);
@@ -235,9 +260,6 @@ class AuthServiceProvider extends ServiceProvider
         Blade::componentNamespace(config('modules.namespace').'\\'.$this->name.'\\View\\Components', $this->nameLower);
     }
 
-    /**
-     * Get the services provided by the provider.
-     */
     public function provides(): array
     {
         return [];

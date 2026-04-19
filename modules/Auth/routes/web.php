@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\ForgotPasswordController;
 use Modules\Auth\Http\Controllers\LoginController;
-use Modules\Auth\Http\Controllers\RegisterController;
+use Modules\Auth\Http\Controllers\MagicLinkController;
 use Modules\Auth\Http\Controllers\ResetPasswordController;
+use Modules\Auth\Http\Controllers\Settings\EmailChangeController as PublicEmailChangeController;
 use Modules\Auth\Http\Controllers\ValidationController;
 use Modules\Auth\Http\Controllers\VerificationController;
 
@@ -38,6 +39,12 @@ Route::get('/email/resend', [VerificationController::class, 'resend'])->name('au
 // Validation route
 Route::get('/validation', [ValidationController::class, 'show'])->name('auth.validation');
 
-// Register routes (uncomment when ready to enable registration)
-// Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-// Route::post('/register', [RegisterController::class, 'register'])->name('register.post')->middleware('throttle:registration');
+// Magic link login (passwordless)
+Route::get('/magic-link', [MagicLinkController::class, 'show'])->name('auth.magic-link');
+Route::post('/magic-link', [MagicLinkController::class, 'request'])->name('auth.magic-link.request')->middleware('throttle:5,15');
+Route::get('/magic-link/consume/{token}', [MagicLinkController::class, 'consume'])->name('auth.magic-link.consume')->middleware('throttle:10,15');
+
+// Email change confirmation (public, linked from email)
+Route::get('/email/change/confirm/{token}', [PublicEmailChangeController::class, 'confirm'])
+    ->name('auth.email-change.confirm')
+    ->middleware('throttle:10,60');
