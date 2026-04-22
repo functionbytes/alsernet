@@ -172,7 +172,7 @@
                                                 </small>
                                                 <div class="progress" style="height: 6px;">
                                                     <div class="progress-bar bg-success" role="progressbar"
-                                                         style="width: {{ ($completedTranslations / $totalLangs) * 100 }}%"
+                                                         style="width: {{ $totalLangs > 0 ? ($completedTranslations / $totalLangs) * 100 : 0 }}%"
                                                          aria-valuenow="{{ $completedTranslations }}" aria-valuemin="0"
                                                          aria-valuemax="{{ $totalLangs }}">
                                                     </div>
