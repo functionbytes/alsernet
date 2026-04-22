@@ -36,6 +36,10 @@ class AnalyticsSettingController extends Controller
             'analytics_reports_weekly_enabled' => setting('analytics_reports_weekly_enabled', false),
             'analytics_reports_monthly_enabled' => setting('analytics_reports_monthly_enabled', false),
             'analytics_report_email' => setting('analytics_report_email', ''),
+            'meta_pixel_id' => setting('meta_pixel_id', ''),
+            'microsoft_clarity_id' => setting('microsoft_clarity_id', ''),
+            'tiktok_pixel_id' => setting('tiktok_pixel_id', ''),
+            'linkedin_insight_tag_id' => setting('linkedin_insight_tag_id', ''),
         ];
 
         // Decrypt credentials — metadata for display, raw JSON for textarea.
@@ -82,6 +86,10 @@ class AnalyticsSettingController extends Controller
                 'analytics_reports_weekly_enabled' => $validated['analytics_reports_weekly_enabled'] ?? false,
                 'analytics_reports_monthly_enabled' => $validated['analytics_reports_monthly_enabled'] ?? false,
                 'analytics_report_email' => $validated['analytics_report_email'] ?? '',
+                'meta_pixel_id' => $validated['meta_pixel_id'] ?? '',
+                'microsoft_clarity_id' => $validated['microsoft_clarity_id'] ?? '',
+                'tiktok_pixel_id' => $validated['tiktok_pixel_id'] ?? '',
+                'linkedin_insight_tag_id' => $validated['linkedin_insight_tag_id'] ?? '',
             ];
 
             // Only include credentials when a non-empty value is submitted.

@@ -136,6 +136,79 @@
                     </div>
 
                 </form>
+
+                {{-- Pixels de redes sociales --}}
+                <form method="POST" action="{{ route('settings.analytics.update') }}" id="pixelsForm" class="mt-4">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-1">Pixels de seguimiento</h6>
+                            <p class="text-muted mb-0">Ingresa los IDs de cada plataforma. Deja en blanco los que no uses.</p>
+                        </div>
+
+                        <hr class="my-0">
+
+                        {{-- Meta Pixel --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-2">Meta Pixel (Facebook / Instagram)</h6>
+                            <input type="text" class="form-control font-monospace" name="meta_pixel_id"
+                                   placeholder="123456789012345"
+                                   value="{{ $settings['meta_pixel_id'] }}">
+                            <small class="text-muted d-block mt-1">
+                                Meta Ads Manager → Fuentes de datos → Pixels → ID numérico (15 dígitos).
+                            </small>
+                        </div>
+
+                        <hr class="my-0">
+
+                        {{-- Microsoft Clarity --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-2">Microsoft Clarity</h6>
+                            <input type="text" class="form-control font-monospace" name="microsoft_clarity_id"
+                                   placeholder="abcd1efgh2"
+                                   value="{{ $settings['microsoft_clarity_id'] }}">
+                            <small class="text-muted d-block mt-1">
+                                <a href="https://clarity.microsoft.com" target="_blank">clarity.microsoft.com</a> → tu proyecto → Configuración → ID del proyecto. Gratis.
+                            </small>
+                        </div>
+
+                        <hr class="my-0">
+
+                        {{-- TikTok Pixel --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-2">TikTok Pixel</h6>
+                            <input type="text" class="form-control font-monospace" name="tiktok_pixel_id"
+                                   placeholder="XXXXXXXXXXXXXXXXXXXXXXXX"
+                                   value="{{ $settings['tiktok_pixel_id'] }}">
+                            <small class="text-muted d-block mt-1">
+                                TikTok Ads Manager → Activos → Eventos → Pixel web → ID del pixel.
+                            </small>
+                        </div>
+
+                        <hr class="my-0">
+
+                        {{-- LinkedIn Insight Tag --}}
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark mb-2">LinkedIn Insight Tag</h6>
+                            <input type="text" class="form-control font-monospace" name="linkedin_insight_tag_id"
+                                   placeholder="1234567"
+                                   value="{{ $settings['linkedin_insight_tag_id'] }}">
+                            <small class="text-muted d-block mt-1">
+                                LinkedIn Campaign Manager → Activos → Insight Tag → Partner ID numérico.
+                            </small>
+                        </div>
+
+                        @can('analytics.settings.update')
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary w-100" id="savePixelsBtn">
+                                Guardar pixels
+                            </button>
+                        </div>
+                        @endcan
+                    </div>
+                </form>
             </div>
 
             {{-- Columna derecha --}}
@@ -246,13 +319,11 @@
             .catch(() => toastr.error('Error al validar credenciales', 'Error'));
         });
 
-        // Form submission
-        analyticsForm?.addEventListener('submit', function (e) {
-            e.preventDefault();
-            fetch(this.action, {
+        function submitForm(form) {
+            fetch(form.action, {
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-                body: new FormData(this)
+                body: new FormData(form)
             })
             .then(r => r.json())
             .then(data => {
@@ -264,7 +335,10 @@
                 }
             })
             .catch(() => toastr.error('Error al guardar configuración', 'Error'));
-        });
+        }
+
+        analyticsForm?.addEventListener('submit', function (e) { e.preventDefault(); submitForm(this); });
+        document.getElementById('pixelsForm')?.addEventListener('submit', function (e) { e.preventDefault(); submitForm(this); });
     })();
     </script>
     @endpush

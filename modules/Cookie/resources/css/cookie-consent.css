@@ -260,6 +260,24 @@
     opacity: 1;
 }
 
+.cookie-consent--position-bottom-center {
+    bottom: 1.5rem;
+    left: 50%;
+    right: auto;
+    width: 90%;
+    max-width: 620px;
+    border-radius: 10px;
+    border-top: 3px solid var(--cookie-btn, #b10100);
+    transform: translateX(-50%) translateY(calc(100% + 2rem));
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.cookie-consent--position-bottom-center.cookie-consent--visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
 /* -- Responsive ----------------------------------------------- */
 
 @media (max-width: 767px) {

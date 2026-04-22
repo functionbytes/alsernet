@@ -51,11 +51,7 @@
     $cookieLifetime = config('Cookie.general.cookie_lifetime', 7300);
     $consentVersion = cookie_option('consent_version', '1.0');
 
-    $positionClass = match($position) {
-        'top'    => 'cookie-consent--position-top',
-        'center' => 'cookie-consent--position-center',
-        default  => '',
-    };
+    $positionClass = 'cookie-consent--position-bottom-center';
 @endphp
 
 @if ($enabled && $allowedRegion)

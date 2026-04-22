@@ -3,7 +3,8 @@
 $(() => {
     window.CookieConsent = (function () {
 
-        const $banner = $('#cookie-banner')
+        const $banner   = $('#cookie-banner')
+        const $backdrop = $('#cookie-backdrop')
 
         if (!$banner.length) { return {} }
 
@@ -110,11 +111,13 @@ $(() => {
         // ── Banner visibility ────────────────────────────────────
 
         function showBanner() {
+            $backdrop.fadeIn(200)
             $banner.removeClass('d-none')
             requestAnimationFrame(() => $banner.addClass('cookie-consent--visible'))
         }
 
         function hideBanner() {
+            $backdrop.fadeOut(200)
             $banner.removeClass('cookie-consent--visible')
             setTimeout(() => $banner.addClass('d-none'), 350)
         }
@@ -168,6 +171,10 @@ $(() => {
         $(document).on('click', '.js-cookie-reject', function (e) {
             e.preventDefault()
             rejectAll()
+        })
+
+        $(document).on('click', '.js-cookie-customize', function () {
+            hideBanner()
         })
 
         $(document).on('click', '.js-cookie-accept-modal', function (e) {

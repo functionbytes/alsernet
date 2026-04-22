@@ -74,6 +74,10 @@ class AnalyticsSettingRequest extends FormRequest
                 'email',
                 'max:255',
             ],
+            'meta_pixel_id' => ['nullable', 'string', 'max:25', 'regex:/^[0-9]+$/'],
+            'microsoft_clarity_id' => ['nullable', 'string', 'max:20', 'regex:/^[a-z0-9]+$/i'],
+            'tiktok_pixel_id' => ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'],
+            'linkedin_insight_tag_id' => ['nullable', 'string', 'max:15', 'regex:/^[0-9]+$/'],
         ];
     }
 
@@ -93,6 +97,10 @@ class AnalyticsSettingRequest extends FormRequest
             'analytics_reports_monthly_enabled' => 'reporte mensual',
             'analytics_dashboard_widgets' => 'widgets del dashboard',
             'analytics_report_email' => 'Email de reportes',
+            'meta_pixel_id' => 'Meta Pixel ID',
+            'microsoft_clarity_id' => 'Microsoft Clarity ID',
+            'tiktok_pixel_id' => 'TikTok Pixel ID',
+            'linkedin_insight_tag_id' => 'LinkedIn Insight Tag ID',
         ];
     }
 
@@ -110,6 +118,10 @@ class AnalyticsSettingRequest extends FormRequest
             'analytics_cache_lifetime.min' => 'El tiempo de vida de caché debe ser al menos :min minuto.',
             'analytics_cache_lifetime.max' => 'El tiempo de vida de caché no puede exceder :max minutos (24 horas).',
             'analytics_dashboard_widgets.*.in' => 'El widget seleccionado no es válido.',
+            'meta_pixel_id.regex' => 'El Meta Pixel ID debe contener solo números.',
+            'microsoft_clarity_id.regex' => 'El Clarity ID debe ser alfanumérico (ej: abcd1234).',
+            'tiktok_pixel_id.regex' => 'El TikTok Pixel ID debe ser alfanumérico.',
+            'linkedin_insight_tag_id.regex' => 'El LinkedIn Partner ID debe contener solo números.',
         ];
     }
 

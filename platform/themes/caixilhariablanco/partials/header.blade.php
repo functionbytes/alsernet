@@ -13,6 +13,7 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#b10100">
     <meta name="msapplication-TileColor" content="#b10100">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Caixilharia Blanco">
@@ -64,8 +65,15 @@
     @endphp
 
     @seoWebVitalsBeacon
+    @seoGtmHead
+    @includeIf('analytics::partials._gtag')
+    @includeIf('analytics::partials._meta_pixel')
+    @includeIf('analytics::partials._microsoft_clarity')
+    @includeIf('analytics::partials._tiktok_pixel')
+    @includeIf('analytics::partials._linkedin_insight')
 </head>
 <body {!! Theme::bodyAttributes() !!} class="@if (BaseHelper::isRtlEnabled()) rtl @endif  @if (Theme::get('bodyClass')) {{ Theme::get('bodyClass') }} @endif">
+@seoGtmBody
 {!! apply_filters(THEME_FRONT_BODY, null) !!}
 <div id="alert-container"></div>
 
