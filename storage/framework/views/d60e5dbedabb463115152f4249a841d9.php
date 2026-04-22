@@ -4,7 +4,7 @@ use Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Cookie\Models\CookieInventory;
 
-    $categories = config('Cookie.general.cookie_categories', []);
+$categories = config('Cookie.general.cookie_categories', []);
 $saveText = __('cookie::messages.modal.save');
 $acceptText = __('cookie::messages.modal.accept_all');
 $btnColor = '#b10100';

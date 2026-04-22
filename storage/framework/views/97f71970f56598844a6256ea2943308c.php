@@ -4,7 +4,7 @@ use Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Page\Models\Page;
 
-    $seoPage = $page ?? null;
+$seoPage = $page ?? null;
 $seoMeta = ($seoPage instanceof Page) ? $seoPage->seoMeta : null;
 $seoLocale = $detectedLocale ?? app()->getLocale();
 $seoLocaleMap = ['es' => 'es_ES', 'en' => 'en_US', 'fr' => 'fr_FR', 'pt' => 'pt_PT'];

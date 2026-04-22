@@ -3,7 +3,7 @@
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Captcha\Facades\Captcha;
 
-    $formId = 'form-'.$form->id.'-'.uniqid();
+$formId = 'form-'.$form->id.'-'.uniqid();
 $theme = $shortcodeConfig['theme'] ?? $form->theme ?? 'default';
 $display = $shortcodeConfig['display'] ?? 'inline';
 $columns = $shortcodeConfig['columns'] ?? null;

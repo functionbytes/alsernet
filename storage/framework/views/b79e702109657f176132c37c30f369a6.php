@@ -162,8 +162,8 @@ $hasLangLinks = collect($pageLangLinks ?? [])
                 <div class="collapse navbar-collapse main-menu">
 
                             <?php echo Menu::renderMenuLocation('main-menu', [
-                        'view' => 'main-menu',
-                    ]); ?>
+                                'view' => 'main-menu',
+                            ]); ?>
 
 
                             <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (($socialLinks = theme_option('social_links')) && $socialLinks = json_decode($socialLinks, true)) { ?>

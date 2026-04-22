@@ -3,7 +3,7 @@
 use Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
-    $widthClass = match ($field->width) {
+$widthClass = match ($field->width) {
     'half' => 'col-md-6',
     'third' => 'col-md-4',
     'quarter' => 'col-md-3',

@@ -5,7 +5,7 @@ use Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Page\Models\Page;
 
-    $geoEnabled = cookie_option('geo_targeting_enabled') === '1';
+$geoEnabled = cookie_option('geo_targeting_enabled') === '1';
 $allowedRegion = true;
 
 if ($geoEnabled && function_exists('geoip')) {

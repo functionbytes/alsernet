@@ -2,7 +2,7 @@
 
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
-    $ctaPhone = theme_option('phone', '+351913893833');
+$ctaPhone = theme_option('phone', '+351913893833');
 $ctaPhoneDigits = preg_replace('/[^0-9+]/', '', $ctaPhone);
 $ctaPhoneIntl = preg_replace('/[^0-9]/', '', $ctaPhone);
 $ctaWhatsappUrl = 'https://api.whatsapp.com/send?phone='.$ctaPhoneIntl;

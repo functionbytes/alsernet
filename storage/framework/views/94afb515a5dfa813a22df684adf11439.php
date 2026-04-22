@@ -3,7 +3,7 @@
 use Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
-    $activeLang = $currentPageLocale ?? app()->getLocale();
+$activeLang = $currentPageLocale ?? app()->getLocale();
 $localeNames = ['es' => 'Español', 'pt' => 'Português', 'en' => 'English', 'fr' => 'Français'];
 $availableLinks = collect($pageLangLinks ?? [])
     ->filter(fn ($info, $lang) => $lang !== $activeLang && ! empty($info['url']) && $info['published'])

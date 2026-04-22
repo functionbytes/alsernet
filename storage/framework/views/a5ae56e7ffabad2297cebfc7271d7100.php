@@ -2,7 +2,7 @@
 
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
-    Theme::set('page', $page);
+Theme::set('page', $page);
 $template = $page->template ?? 'default';
 ?>
 
