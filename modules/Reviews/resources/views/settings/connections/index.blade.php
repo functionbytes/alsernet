@@ -99,12 +99,11 @@
                         @if(request('search'))
                             <a href="{{ route('settings.reviews.connections.index') }}"
                                class="btn btn-outline-secondary"
-                               title="Limpiar filtros"
-                               style="min-width: 45px;">
+                               title="Limpiar filtros">
                                 <i class="fas fa-times"></i>
                             </a>
                         @endif
-                        <button type="submit" class="btn btn-primary" style="min-width: 45px;">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -272,7 +271,7 @@
     </div>
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none bulk-toolbar-zindex">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
@@ -363,8 +362,6 @@ $(document).ready(function() {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una conexión.'); return; }
-        if (action === 'revoke' && !confirm('¿Revocar las ' + ids.length + ' conexión(es) seleccionadas? Esta acción no se puede deshacer.')) { return; }
-
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
         $.ajax({
@@ -388,3 +385,8 @@ $(document).ready(function() {
 </script>
 @endpush
 
+@push('css')
+<style>
+.bulk-toolbar-zindex { z-index: 1050; }
+</style>
+@endpush

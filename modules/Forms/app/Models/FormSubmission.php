@@ -30,6 +30,7 @@ class FormSubmission extends Model
         'user_agent',
         'referrer_url',
         'source_page_id',
+        'locale',
         'country',
         'city',
         'utm_source',

@@ -31,7 +31,7 @@
                         </div>
                     </div>
                     <div class="card-body p-0">
-                        <div class="preview-wrapper" style="background-color: #f5f5f5; min-height: 600px;">
+                        <div class="preview-wrapper" style="background-color: #f9f9f9; min-height: 600px;">
                             <iframe id="previewContainer" class="preview-email-container"
                                     srcdoc="{{ $html }}"
                                     sandbox="allow-same-origin"

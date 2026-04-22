@@ -12,14 +12,14 @@
                     <p class="text-muted mb-0">Define filtros personalizados para organizar conversaciones</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('manager.helpdesk.backups.tickets.views.index') }}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Cancelar</a>
+                    <a href="{{ route('manager.helpdesk.settings.ticket-views.index') }}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Cancelar</a>
                     <button type="submit" form="viewForm" class="btn btn-primary"><i class="fa fa-check"></i> Crear Vista</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.views.store') }}" id="viewForm">
+    <form method="POST" action="{{ route('manager.helpdesk.settings.ticket-views.store') }}" id="viewForm">
         @csrf
         <div class="row">
             <div class="col-lg-8">

@@ -320,7 +320,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un filtro.'); return; }
-        if (!confirm('¿Eliminar los ' + ids.length + ' filtro(s) seleccionados?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

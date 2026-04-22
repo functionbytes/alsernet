@@ -10,11 +10,11 @@ return [
             ['label' => 'Reports', 'route' => 'manager.helpdesk.reports.index', 'icon' => 'fas fa-chart-bar'],
             ['label' => 'Help Center', 'route' => 'manager.helpdesk.helpcenter.index', 'icon' => 'fas fa-book'],
             ['label' => 'AI Agents', 'route' => 'manager.helpdesk.ai.flows.index', 'icon' => 'fas fa-robot'],
-            ['label' => 'Campaigns', 'route' => 'manager.helpdesk.campaigns.index', 'icon' => 'fas fa-bullhorn'],
+            ['label' => 'Campaigns', 'route' => 'manager.helpdesk-campaigns.index', 'icon' => 'fas fa-bullhorn'],
             ['label' => 'Templates', 'route' => 'manager.helpdesk.ticket-templates.index', 'icon' => 'fas fa-file-alt'],
             ['label' => 'Recurring', 'route' => 'manager.helpdesk.recurring-tickets.index', 'icon' => 'fas fa-redo'],
             ['label' => 'Agents', 'route' => 'manager.helpdesk.agents.index', 'icon' => 'fas fa-headset'],
-            ['label' => 'Settings', 'route' => 'manager.helpdesk.backups.tickets', 'icon' => 'fas fa-cog'],
+            ['label' => 'Settings', 'route' => 'manager.helpdesk.settings.tickets', 'icon' => 'fas fa-cog'],
         ],
         'agent' => [
             ['label' => 'Dashboard', 'route' => 'agent.helpdesk.dashboard', 'icon' => 'fas fa-tachometer-alt'],
@@ -31,7 +31,7 @@ return [
         'social_integrations' => [
             'icon' => 'fas fa-share-alt',
             'title' => 'Integraciones sociales',
-            'route' => 'manager.helpdesk.backups.social-integrations.index',
+            'route' => 'manager.helpdesk.settings.social-integrations.index',
             'permission' => 'manage_helpdesk_settings',
         ],
         'agent_menu' => [
@@ -127,6 +127,10 @@ return [
         'password' => secret_env('HELPDESK_IMAP_PASSWORD', ''),
         'folder' => env('HELPDESK_IMAP_FOLDER', 'INBOX'),
         'batch_size' => env('HELPDESK_IMAP_BATCH_SIZE', 50),
+    ],
+
+    'email_inbound' => [
+        'mailgun_signing_key' => env('HELPDESK_MAILGUN_WEBHOOK_SIGNING_KEY', env('MAILGUN_WEBHOOK_SIGNING_KEY', '')),
     ],
 
     'escalation' => [

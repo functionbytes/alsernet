@@ -33,7 +33,7 @@
         <div class="row g-3">
             <!-- Main Form (left side) -->
             <div class="col-lg-8">
-                <form method="POST" action="{{ route('manager.helpdesk.backups.livechat.update') }}" id="livechatForm">
+                <form method="POST" action="{{ route('manager.helpdesk.settings.livechat.update') }}" id="livechatForm">
                     @csrf
                     @method('PUT')
 
@@ -597,7 +597,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-body p-0" style="background: #f5f5f5;">
+                    <div class="card-body p-0" style="background: #f9f9f9;">
                         <!-- Widget Container -->
                         <div class="d-flex justify-content-center align-items-center" style="min-height: 600px; padding: 20px;">
                             <!-- Widget Preview iframe -->
@@ -726,7 +726,7 @@ $(document).ready(function() {
         // Create fullscreen modal with jQuery
         var $modal = $('<div class="modal fade" id="previewModal" tabindex="-1">' +
             '<div class="modal-dialog modal-dialog-centered modal-lg">' +
-                '<div class="modal-content" style="background: #f5f5f5; border: none;">' +
+                '<div class="modal-content" style="background: #f9f9f9; border: none;">' +
                     '<div class="modal-header border-bottom">' +
                         '<h5 class="modal-title fw-bold">Vista Previa - ' + modalTitle + '</h5>' +
                         '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +

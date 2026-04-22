@@ -310,6 +310,7 @@ class FormsServiceProvider extends ServiceProvider
             'description' => 'Inserta un formulario publicado por ID o slug. Soporta modo popup/slide y multi-idioma.',
             'example' => '[form id="1" display="inline" /]',
             'category' => 'formularios',
+            'cacheable' => false,
             'attributes' => [
                 'id' => ['type' => 'number', 'description' => 'ID del formulario (usar id o slug, no ambos).'],
                 'slug' => ['type' => 'text', 'description' => 'Slug del formulario.'],

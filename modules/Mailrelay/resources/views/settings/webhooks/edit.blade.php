@@ -3,7 +3,7 @@
 @section('title', 'Editar Webhook')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">Editar Webhook</h5>

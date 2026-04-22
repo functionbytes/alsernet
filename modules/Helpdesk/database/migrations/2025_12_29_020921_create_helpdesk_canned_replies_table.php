@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_canned_replies', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_canned_replies', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('conversation_id')->nullable();
             $table->string('title');
@@ -25,6 +27,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_canned_replies');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_canned_replies');
     }
 };

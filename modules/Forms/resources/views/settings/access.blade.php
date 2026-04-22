@@ -99,14 +99,12 @@
 
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="is_password_protected" value="0">
-                                        <input class="form-check-input" type="checkbox" id="is_password_protected"
-                                               name="is_password_protected" value="1"
-                                               {{ old('is_password_protected', $form->is_password_protected) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_password_protected">
-                                            Proteger el formulario con contraseña
-                                        </label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="is_password_protected">Protección con contraseña</label>
+                                        <select class="form-select" name="is_password_protected" id="is_password_protected">
+                                            <option value="1" {{ old('is_password_protected', $form->is_password_protected) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('is_password_protected', $form->is_password_protected) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -129,23 +127,23 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="limit_per_user" value="0">
-                                        <input class="form-check-input" type="checkbox" id="limit_per_user"
-                                               name="limit_per_user" value="1"
-                                               {{ old('limit_per_user', $form->limit_per_user) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="limit_per_user">Limitar 1 envío por usuario</label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="limit_per_user">Limitar 1 envío por usuario</label>
+                                        <select class="form-select" name="limit_per_user" id="limit_per_user">
+                                            <option value="1" {{ old('limit_per_user', $form->limit_per_user) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('limit_per_user', $form->limit_per_user) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                     <div class="form-text small">Requiere autenticación para funcionar.</div>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="prevent_duplicate_email" value="0">
-                                        <input class="form-check-input" type="checkbox" id="prevent_duplicate_email"
-                                               name="prevent_duplicate_email" value="1"
-                                               {{ old('prevent_duplicate_email', $form->prevent_duplicate_email) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="prevent_duplicate_email">Prevenir emails duplicados</label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="prevent_duplicate_email">Prevenir emails duplicados</label>
+                                        <select class="form-select" name="prevent_duplicate_email" id="prevent_duplicate_email">
+                                            <option value="1" {{ old('prevent_duplicate_email', $form->prevent_duplicate_email) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('prevent_duplicate_email', $form->prevent_duplicate_email) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                     <div class="form-text small">Rechaza envíos con un email ya registrado.</div>
                                 </div>
@@ -190,7 +188,7 @@
     });
 
     $('#is_password_protected').on('change', function () {
-        $('#passwordGroup').toggleClass('d-none', !this.checked);
+        $('#passwordGroup').toggleClass('d-none', this.value !== '1');
     });
 </script>
 @endpush

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
-  pull_request:
     branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 jobs:
   lint:
@@ -64,6 +64,21 @@ jobs:
       matrix:
         php: ['8.4']
 
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: password
+          MARIADB_DATABASE: system_testing
+        ports:
+          - 3306:3306
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=5
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v4
 
@@ -92,8 +107,11 @@ jobs:
         env:
           APP_ENV: testing
           APP_KEY: base64:placeholder==
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
+          DB_CONNECTION: mariadb
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: system_testing
+          DB_USERNAME: root
+          DB_PASSWORD: password
           CACHE_STORE: array
           QUEUE_CONNECTION: sync
           SESSION_DRIVER: array
@@ -107,6 +125,13 @@ jobs:
         with:
           file: coverage.xml
           fail_ci_if_error: false
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: matrix.php == '8.4'
+        with:
+          name: coverage-report
+          path: coverage/
 
   frontend:
     name: Frontend Build

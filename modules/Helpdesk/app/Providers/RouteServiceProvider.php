@@ -24,42 +24,35 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapWebhookRoutes(): void
     {
         // Public routes — no auth, no CSRF (already excluded via VerifyCsrfToken::$except)
-        Route::middleware('web')
+        Route::middleware('api')
             ->group(module_path($this->name, 'routes/webhooks.php'));
     }
 
     protected function mapWebRoutes(): void
     {
-        // Customer self-service portal (no auth — customers authenticate themselves)
-        Route::middleware('web')
-            ->prefix('portal')
-            ->name('portal.')
-            ->group(module_path($this->name, 'routes/portal.php'));
-
         // Helpdesk settings routes
-        Route::middleware(['web', 'auth', 'role:super-admin'])
-            ->prefix('panel/settings/helpdesk')
+        Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
+            ->prefix('panel/helpdesk/settings')
             ->name('helpdesk.backups.')
             ->group(module_path($this->name, 'routes/web.php'));
 
         // Manager routes (admin interface for helpdesk)
-        Route::middleware(['web', 'auth', 'role:super-admin'])
-            ->prefix('panel/manager/helpdesk')
-            ->name('manager.helpdesk.')
+        Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
+            ->prefix('panel/helpdesk')
             ->group(module_path($this->name, 'routes/managers.php'));
 
-        // Agent routes
-        Route::middleware(['web', 'auth', 'role:helpdesk-agent|super-admin'])
-            ->prefix('panel/helpdesk/agent')
-            ->name('agent.helpdesk.')
-            ->group(module_path($this->name, 'routes/agents.php'));
+        // Portal + Agent routes moved to HelpdeskTickets module.
+
+        // Public routes (feedback/CSAT survey — no auth)
+        Route::middleware(['web'])
+            ->group(module_path($this->name, 'routes/public.php'));
     }
 
     protected function mapApiRoutes(): void
     {
         Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
-            ->prefix('api/helpdesk')
-            ->name('api.helpdesk.')
+            ->prefix('api/v1/helpdesk')
+            ->name('api.v1.helpdesk.')
             ->group(module_path($this->name, 'routes/api.php'));
 
         // Widget/Live chat routes (public — no auth required)

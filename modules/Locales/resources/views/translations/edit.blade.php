@@ -16,7 +16,10 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Traducciones</h5>
+                        <h5 class="mb-1 fw-bold">
+                            {{ $currentGroup['module_label'] ?? 'Traducciones' }}
+                            <span class="text-muted fw-normal">/ {{ $currentGroup['file'] ?? $group }}</span>
+                        </h5>
                         <p class="small mb-0 text-muted">
                             Traducir de <strong>{{ $sourceLocaleName }}</strong>
                             a <strong>{{ $targetLocaleName }}</strong>
@@ -137,6 +140,22 @@
                                        placeholder="Buscar clave o texto..."
                                        value="{{ $search }}">
                             </div>
+                        </div>
+                        <div style="min-width:260px">
+                            <select id="group-switcher" class="form-select" data-locale="{{ $locale }}">
+                                @php
+                                    $byModule = collect($groups)->groupBy('module');
+                                @endphp
+                                @foreach ($byModule as $moduleKey => $items)
+                                    <optgroup label="{{ $items->first()['module_label'] ?? $moduleKey }}">
+                                        @foreach ($items as $g)
+                                            <option value="{{ $g['name'] }}" {{ $g['name'] === $group ? 'selected' : '' }}>
+                                                {{ $g['file'] }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="d-flex gap-2 flex-shrink-0">
                             <button type="submit" class="btn btn-primary">
@@ -392,6 +411,15 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    // ── Group switcher ───────────────────────────────────────────────
+    $('#group-switcher').select2({ width: '100%' }).on('change', function () {
+        const newGroup = $(this).val();
+        const locale = $(this).data('locale');
+        if (!newGroup) return;
+        const baseUrl = '{{ url('panel/settings/locales/translations') }}';
+        window.location.href = baseUrl + '/' + locale + '/' + newGroup;
+    });
 
     // ── Edit translation modal ───────────────────────────────────────
     let $editingRow = null;

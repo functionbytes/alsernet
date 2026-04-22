@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
         if (config('database.connections.helpdesk') === null) {

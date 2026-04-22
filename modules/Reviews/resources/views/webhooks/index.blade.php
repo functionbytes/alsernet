@@ -276,7 +276,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una suscripcion.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' suscripcion(es) seleccionadas?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

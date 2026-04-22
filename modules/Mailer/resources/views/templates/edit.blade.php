@@ -253,7 +253,7 @@
                                 </div>
                             </div>
 
-                            <textarea class="form-control" id="content" name="content" style="display: none;">{{ old('content', $translation->content ?? '') }}</textarea>
+                            <textarea class="form-control d-none" id="content" name="content">{{ old('content', $translation->content ?? '') }}</textarea>
 
                         </div>
 

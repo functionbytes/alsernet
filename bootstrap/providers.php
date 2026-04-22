@@ -13,6 +13,7 @@
 $allProviders = [
     // Core framework modules (always loaded)
     'App\Providers\AppServiceProvider' => true,
+    'App\Providers\SentryServiceProvider' => true,
 
     // Module providers - mapped by module name for dynamic loading
     'Modules\Activity\Providers\ActivityServiceProvider' => 'Activity',
@@ -58,6 +59,9 @@ $allProviders = [
     'Modules\Reviews\Providers\ReviewsServiceProvider' => 'Reviews',
     'Modules\Forms\Providers\FormsServiceProvider' => 'Forms',
     'Modules\Helpdesk\Providers\HelpdeskServiceProvider' => 'Helpdesk',
+    'Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider' => 'HelpdeskTickets',
+    'Modules\HelpdeskAgents\Providers\HelpdeskAgentsServiceProvider' => 'HelpdeskAgents',
+    'Modules\HelpdeskCampaigns\Providers\HelpdeskCampaignsServiceProvider' => 'HelpdeskCampaigns',
     'Modules\Locales\Providers\LocalesServiceProvider' => 'Locales',
     'Modules\Mailrelay\Providers\MailrelayServiceProvider' => 'Mailrelay',
 ];

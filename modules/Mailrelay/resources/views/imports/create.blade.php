@@ -84,16 +84,11 @@
                         </div>
 
                         <div class="mb-4">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       id="has_headers"
-                                       name="has_headers"
-                                       {{ old('has_headers', true) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="has_headers">
-                                    First row contains column headers
-                                </label>
-                            </div>
+                            <label class="form-label" for="has_headers">Primera fila</label>
+                            <select class="form-select" name="has_headers" id="has_headers">
+                                <option value="1" {{ old('has_headers', 1) == 1 ? 'selected' : '' }}>Contiene encabezados de columna</option>
+                                <option value="0" {{ old('has_headers', 1) == 0 ? 'selected' : '' }}>No contiene encabezados</option>
+                            </select>
                         </div>
 
                         <div class="mb-4">

@@ -21,11 +21,11 @@
                     </div>
                     <div class="d-flex gap-2">
                         @if(request('search'))
-                            <a href="{{ route('manager.helpdesk.backups.tickets.statuses.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('manager.helpdesk.settings.ticket-statuses.index') }}" class="btn btn-secondary">
                                 Limpiar búsqueda
                             </a>
                         @endif
-                        <a href="{{ route('manager.helpdesk.backups.tickets.statuses.create') }}" class="btn btn-primary">
+                        <a href="{{ route('manager.helpdesk.settings.ticket-statuses.create') }}" class="btn btn-primary">
                             Nuevo estado
                         </a>
                     </div>
@@ -100,7 +100,7 @@
 
             <!-- Search Section -->
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('manager.helpdesk.backups.tickets.statuses.index') }}">
+                <form method="GET" action="{{ route('manager.helpdesk.settings.ticket-statuses.index') }}">
                     <div class="row align-items-center">
                         <div class="col-md-9">
                             <div class="input-group">
@@ -165,7 +165,7 @@
                                         <small class="text-muted">{{ $status->description ? Str::limit($status->description, 60) : '-' }}</small>
                                     </td>
                                     <td class="text-center">
-                                        <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.statuses.toggle', $status->id) }}" class="toggle-form">
+                                        <form method="POST" action="{{ route('manager.helpdesk.settings.ticket-statuses.toggle', $status->id) }}" class="toggle-form">
                                             @csrf
                                             @method('PATCH')
                                             <div class="form-check form-switch d-inline-block">
@@ -182,14 +182,14 @@
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ route('manager.helpdesk.backups.tickets.statuses.edit', $status->id) }}">
+                                                    <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.ticket-statuses.edit', $status->id) }}">
                                                         Editar
                                                     </a>
                                                 </li>
                                                 @if($status->canDelete())
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.statuses.destroy', $status->id) }}"
+                                                        <form method="POST" action="{{ route('manager.helpdesk.settings.ticket-statuses.destroy', $status->id) }}"
                                                               onsubmit="return confirm('¿Estás seguro de eliminar este estado?')">
                                                             @csrf
                                                             @method('DELETE')
@@ -223,7 +223,7 @@
                                 @endif
                             </p>
                             @if(!request('search'))
-                                <a href="{{ route('manager.helpdesk.backups.tickets.statuses.create') }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('manager.helpdesk.settings.ticket-statuses.create') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus"></i> Crear Primer Estado
                                 </a>
                             @endif
@@ -307,7 +307,7 @@ $(document).ready(function() {
 
             // Save new order
             $.ajax({
-                url: '{{ route('manager.helpdesk.backups.tickets.statuses.reorder') }}',
+                url: '{{ route('manager.helpdesk.settings.ticket-statuses.reorder') }}',
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',

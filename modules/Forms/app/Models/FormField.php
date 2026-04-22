@@ -182,6 +182,18 @@ class FormField extends Model
         return $this->translations[$locale]['consent_text'] ?? $this->consent_text ?? $this->label;
     }
 
+    public function localizedOptions(string $locale): array
+    {
+        $optionTranslations = $this->translations[$locale]['options'] ?? [];
+        if (empty($optionTranslations)) {
+            return $this->options;
+        }
+
+        return array_map(function (array $option) use ($optionTranslations): array {
+            return array_merge($option, ['label' => $optionTranslations[$option['value']] ?? $option['label']]);
+        }, $this->options);
+    }
+
     public function isLayoutField(): bool
     {
         return in_array($this->type, self::LAYOUT_TYPES, true);

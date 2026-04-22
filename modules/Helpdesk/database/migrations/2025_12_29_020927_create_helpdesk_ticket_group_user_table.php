@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_group_user', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_group_user', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('group_id');
             $table->unsignedBigInteger('user_id');
@@ -24,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_group_user');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_group_user');
     }
 };

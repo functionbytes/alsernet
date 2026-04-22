@@ -60,7 +60,7 @@
 @endsection
 
 @section('content')
-<div class="container-fluid">
+<div>
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">

@@ -6,7 +6,11 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 
 class Conversation extends Model
@@ -34,24 +38,25 @@ class Conversation extends Model
         'tags',
     ];
 
-    protected $casts = [
-        'assigned_at' => 'datetime',
-        'closed_at' => 'datetime',
-        'first_response_at' => 'datetime',
-        'last_message_at' => 'datetime',
-        'is_archived' => 'boolean',
-        'tags' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
-
-    protected $with = ['status'];
+    protected function casts(): array
+    {
+        return [
+            'assigned_at' => 'datetime',
+            'closed_at' => 'datetime',
+            'first_response_at' => 'datetime',
+            'last_message_at' => 'datetime',
+            'is_archived' => 'boolean',
+            'tags' => 'array',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the customer that owns this conversation
      */
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
@@ -59,7 +64,7 @@ class Conversation extends Model
     /**
      * Get the status of this conversation
      */
-    public function status()
+    public function status(): BelongsTo
     {
         return $this->belongsTo(ConversationStatus::class, 'status_id');
     }
@@ -86,7 +91,7 @@ class Conversation extends Model
     /**
      * Get all messages/items in this conversation
      */
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(ConversationItem::class, 'conversation_id')
             ->orderBy('created_at', 'asc');
@@ -113,7 +118,7 @@ class Conversation extends Model
     /**
      * Get canned replies available for this conversation
      */
-    public function cannedReplies()
+    public function cannedReplies(): HasMany
     {
         return $this->hasMany(CannedReply::class, 'conversation_id');
     }
@@ -121,7 +126,7 @@ class Conversation extends Model
     /**
      * Get tags assigned to this conversation
      */
-    public function conversationTags()
+    public function conversationTags(): BelongsToMany
     {
         return $this->belongsToMany(
             ConversationTag::class,
@@ -248,9 +253,7 @@ class Conversation extends Model
      */
     public function close()
     {
-        $closedStatus = ConversationStatus::where('is_open', false)
-            ->orderBy('order')
-            ->first();
+        $closedStatus = Cache::remember('helpdesk:conv-closed-status', 3600, fn () => ConversationStatus::where('is_open', false)->orderBy('order')->first());
 
         $this->update([
             'status_id' => $closedStatus->id ?? $this->status_id,

@@ -595,7 +595,6 @@ $(document).ready(function () {
             return;
         }
 
-        if (!confirm('¿Aplicar "' + action + '" sobre ' + ids.length + ' reseña(s)?')) { return; }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
@@ -737,7 +736,7 @@ $(document).ready(function () {
 
     $('#save-reply-draft').on('click', function () { saveReply('draft'); });
     $('#publish-reply').on('click', function () {
-        if (confirm('¿Publicar esta respuesta en Google? Esta acción no se puede deshacer.')) {
+        if (true) {
             saveReply('published');
         }
     });
@@ -961,7 +960,7 @@ $(document).ready(function () {
         });
 
         if (!localeCodes.length) { toastr.warning('No hay idiomas activos configurados.'); return; }
-        if (!confirm('¿Traducir ' + ids.length + ' reseña(s) a ' + localeCodes.length + ' idioma(s)?')) { return; }
+        
 
         const btn = $(this);
         btn.prop('disabled', true).text('Traduciendo...');

@@ -18,8 +18,8 @@
                         <label class="form-label required" for="popup-email">{{ __('newsletter_field_email') }}</label>
                         <input class="form-control" placeholder="{{ __('newsletter_placeholder_email') }}" required name="email" type="email" id="popup-email" autocomplete="email">
                     </div>
-                    <div class="newsletter-message newsletter-success-message mb-3" style="display:none"></div>
-                    <div class="newsletter-message newsletter-error-message mb-3" style="display:none"></div>
+                    <div class="newsletter-message newsletter-success-message mb-3" class="d-none"></div>
+                    <div class="newsletter-message newsletter-error-message mb-3" class="d-none"></div>
                     @if(\Modules\Core\Models\Setting::get('newsletter.recaptcha_enabled') === '1' && \Modules\Captcha\Facades\Captcha::isEnabled())
                     <div class="mb-3" id="newsletter-popup-captcha-wrapper">
                         <div class="g-recaptcha" id="newsletter-popup-captcha"

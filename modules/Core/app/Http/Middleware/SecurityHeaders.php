@@ -36,6 +36,28 @@ class SecurityHeaders
             );
         }
 
+        if ($this->shouldBlockIndexing($request)) {
+            $response->headers->set(
+                'X-Robots-Tag',
+                'noindex, nofollow, noarchive, nosnippet'
+            );
+        }
+
         return $response;
+    }
+
+    private function shouldBlockIndexing(Request $request): bool
+    {
+        $path = $request->path();
+
+        foreach (['panel', 'panel/*', 'admin', 'admin/*', 'login', 'logout', 'register', 'password/*', 'api/*', 'auth/*'] as $pattern) {
+            if ($request->is($pattern)) {
+                return true;
+            }
+        }
+
+        return str_starts_with($path, 'panel')
+            || str_starts_with($path, 'admin')
+            || str_starts_with($path, 'auth');
     }
 }

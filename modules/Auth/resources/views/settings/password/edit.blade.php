@@ -3,7 +3,7 @@
 @section('title', 'Cambiar Contraseña')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-key me-2"></i>Cambiar contraseña</h5>

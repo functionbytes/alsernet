@@ -24,7 +24,7 @@ export function TestWidget() {
             </div>
 
             <div style={{
-                background: '#f5f5f5',
+                background: '#f9f9f9',
                 padding: '20px',
                 borderRadius: '8px'
             }}>

@@ -117,18 +117,14 @@
                                     {{ __('core::core.back') }}
                                 </a>
 
-                                <button type="button" class="btn btn-danger w-100"
-                                        onclick="if(confirm('{{ __('template::template.confirm_delete') }}')) {
-                                                document.getElementById('delete-form').submit();
-                                        }">
-                                    <i class="fas fa-trash me-2"></i>{{ __('template::template.delete') }}
-                                </button>
-
-                                <form id="delete-form"
-                                      action="{{ route('settings.templates.destroy', $template) }}"
-                                      method="POST" style="display: none;">
+                                <form action="{{ route('settings.templates.destroy', $template) }}"
+                                      method="POST" class="needs-confirm"
+                                      data-confirm-msg="{{ __('template::template.confirm_delete') }}">
                                     @csrf
                                     @method('DELETE')
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fas fa-trash me-2"></i>{{ __('template::template.delete') }}
+                                    </button>
                                 </form>
                             </div>
                         </div>

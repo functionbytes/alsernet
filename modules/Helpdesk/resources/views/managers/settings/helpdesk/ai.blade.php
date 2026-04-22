@@ -10,7 +10,7 @@
 
         @include('core::components.alerts')
 
-        <form method="POST" action="{{ route('manager.helpdesk.backups.ai.update') }}" id="aiForm">
+        <form method="POST" action="{{ route('manager.helpdesk.settings.ai.update') }}" id="aiForm">
             @csrf
             @method('PUT')
 

@@ -188,7 +188,7 @@
                         @endif
                     @endforeach
                 </ul>
-                <div id="diff-container" style="max-height:600px;overflow-y:auto;"></div>
+                <div id="diff-container" class="diff-container-scroll"></div>
             </div>
         </div>
 
@@ -254,11 +254,31 @@
 
     </div>
 
+    {{-- Modal confirmar restaurar --}}
+    <div class="modal fade" id="modal-restore-version" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Restaurar versión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Restaurar <strong id="confirm-restore-version-num"></strong>? La versión actual se guardará automáticamente.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-restore" class="btn btn-primary w-100 mb-2">Restaurar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/css/diff2html.min.css">
 <style>
+.diff-container-scroll { max-height: 600px; overflow-y: auto; }
 .diff-old {
     background-color: #fff5f5;
     border-left: 3px solid #dc3545;
@@ -340,12 +360,19 @@ $(document).ready(function () {
         renderDiff($(this).data('field'));
     });
 
+    var $pendingRestoreForm = null;
+
     $('.restore-btn').on('click', function (e) {
         e.preventDefault();
         const version = $(this).data('version');
-        const $form = $(this).closest('form');
-        if (!confirm('¿Restaurar v' + version + '? La versión actual se guardará automáticamente.')) return;
-        $form.submit();
+        $pendingRestoreForm = $(this).closest('form');
+        $('#confirm-restore-version-num').text('v' + version);
+        $('#modal-restore-version').modal('show');
+    });
+
+    $('#btn-confirm-restore').on('click', function () {
+        $('#modal-restore-version').modal('hide');
+        if ($pendingRestoreForm) $pendingRestoreForm.submit();
     });
 
     @if(session('success'))

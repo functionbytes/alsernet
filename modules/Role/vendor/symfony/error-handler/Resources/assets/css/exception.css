@@ -15,7 +15,7 @@
     --tab-color: #444;
     --tab-active-background: #fff;
     --tab-active-color: var(--color-text);
-    --tab-disabled-background: #f5f5f5;
+    --tab-disabled-background: #f9f9f9;
     --tab-disabled-color: #999;
     --selected-badge-background: #e5e5e5;
     --selected-badge-color: #525252;
@@ -45,7 +45,7 @@
     --highlight-keyword: #a71d5d;
     --highlight-string: #183691;
     --base-0: #fff;
-    --base-1: #f5f5f5;
+    --base-1: #f9f9f9;
     --base-2: #e0e0e0;
     --base-3: #ccc;
     --base-4: #666;
@@ -100,7 +100,7 @@
     --base-3: #666;
     --base-4: #666;
     --base-5: #e0e0e0;
-    --base-6: #f5f5f5;
+    --base-6: #f9f9f9;
     --card-label-background: var(--tab-active-background);
     --card-label-color: var(--tab-active-color);
 }

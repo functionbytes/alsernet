@@ -33,7 +33,7 @@
         }
         .meta-table td:first-child {
             font-weight: bold;
-            background-color: #f5f5f5;
+            background-color: #f9f9f9;
             width: 35%;
         }
         .fields-table {

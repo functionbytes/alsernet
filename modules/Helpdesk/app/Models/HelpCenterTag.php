@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 class HelpCenterTag extends Model
 {
+    protected $connection = 'helpdesk';
+
     protected $table = 'helpdesk_helpcenter_tags';
 
     protected $fillable = [

@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ConversationRead extends Model
 {
@@ -22,14 +23,17 @@ class ConversationRead extends Model
         'read_at',
     ];
 
-    protected $casts = [
-        'read_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'read_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the conversation item this read receipt belongs to
      */
-    public function item()
+    public function item(): BelongsTo
     {
         return $this->belongsTo(ConversationItem::class, 'conversation_item_id');
     }
@@ -38,7 +42,7 @@ class ConversationRead extends Model
      * Get the user who read the message
      * Note: User model is in the default connection, not helpdesk
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id')
             ->setConnection(config('database.default'));

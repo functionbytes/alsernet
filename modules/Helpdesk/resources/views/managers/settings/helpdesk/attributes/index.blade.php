@@ -16,7 +16,7 @@
                 <div class="mb-0 border-bottom pb-3">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <a href="{{ route('manager.helpdesk.backups.tickets.attributes.create') }}" class="btn btn-primary w-100">
+                            <a href="{{ route('manager.helpdesk.settings.tickets.attributes.create') }}" class="btn btn-primary w-100">
                                 <i class="fa fa-plus"></i> Nuevo Atributo
                             </a>
                         </div>
@@ -143,7 +143,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.attributes.toggle', $attribute->id) }}" class="d-inline toggle-form">
+                                    <form method="POST" action="{{ route('manager.helpdesk.settings.tickets.attributes.toggle', $attribute->id) }}" class="d-inline toggle-form">
                                         @csrf
                                         @method('PATCH')
                                         <div class="form-check form-switch d-inline-block">
@@ -160,13 +160,13 @@
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('manager.helpdesk.backups.tickets.attributes.edit', $attribute->id) }}">
+                                                <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.tickets.attributes.edit', $attribute->id) }}">
                                                    Editar
                                                 </a>
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.attributes.destroy', $attribute->id) }}"
+                                                <form method="POST" action="{{ route('manager.helpdesk.settings.tickets.attributes.destroy', $attribute->id) }}"
                                                       onsubmit="return confirm('¿Estás seguro de eliminar este atributo? Esta acción no se puede deshacer.')">
                                                     @csrf
                                                     @method('DELETE')
@@ -185,7 +185,7 @@
                                     <i class="fas fa-cog fs-1 text-muted mb-3 d-block"></i>
                                     <h5 class="text-muted mb-2">No hay atributos creados</h5>
                                     <p class="text-muted mb-4">Crea tu primer atributo personalizado para extender la funcionalidad</p>
-                                    <a href="{{ route('manager.helpdesk.backups.tickets.attributes.create') }}" class="btn btn-primary">
+                                    <a href="{{ route('manager.helpdesk.settings.tickets.attributes.create') }}" class="btn btn-primary">
                                         <i class="fa fa-plus"></i> Crear primer atributo
                                     </a>
                                 </td>

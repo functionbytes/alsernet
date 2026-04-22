@@ -1,4 +1,4 @@
-@extends('layouts.helpdesk')
+@extends('layouts.theme')
 
 @section('title', 'Dashboard')
 

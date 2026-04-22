@@ -72,6 +72,7 @@ class FormSubmissionService
             'utm_campaign' => $utmData['utm_campaign'],
             'utm_term' => $utmData['utm_term'],
             'utm_content' => $utmData['utm_content'],
+            'locale' => app()->getLocale(),
             'time_to_complete' => $request->input('_time_to_complete') !== null
                 ? (int) $request->input('_time_to_complete')
                 : null,

@@ -1,0 +1,955 @@
+@extends('layouts.theme')
+
+@section('title', 'Ticket #' . $ticket->ticket_number . ' - Helpdesk')
+
+@section('content')
+    {{-- Helpdesk header --}}
+    <div class="bg-white border-bottom sticky-top z-10">
+        <div class="d-flex align-items-center justify-content-between px-4 py-3">
+            <div class="d-flex align-items-center">
+                <a href="{{ route('manager.helpdesk.tickets.index', request()->only(['viewId', 'group', 'category'])) }}"
+                   class="btn btn-light btn-sm me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h5 class="mb-0 fw-bold">
+                    <span class="badge badge-sm" style="background-color: {{ $ticket->category?->color ?? "#6c757d" }}">
+                        <i class="{{ $ticket->category?->icon ?? "fas fa-tag" }} me-1"></i>{{ $ticket->category?->name ?? "Sin categoria" }}
+                    </span>
+                    <span class="text-muted mx-2">#{{ $ticket->ticket_number }}</span>
+                    {{ Str::limit($ticket->subject, 50) }}
+                </h5>
+            </div>
+            <div class="btn-group">
+                @can('update', $ticket)
+                    <a href="{{ route('manager.helpdesk.tickets.edit', $ticket->id) }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                @endcan
+                @can('close', $ticket)
+                    @if(!$ticket->isClosed())
+                        <button type="button" class="btn btn-light btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#close-ticket-modal">
+                            <i class="fas fa-times-circle"></i> Cerrar
+                        </button>
+                    @endif
+                @endcan
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex">
+        {{-- Left sidebar: navigation --}}
+        @include('helpdesktickets::managers.tickets.partials.sidebar')
+
+        {{-- Tickets list (slim) --}}
+        <div class="w-20 flex-shrink-0 border-end">
+            <div class="p-2 border-bottom bg-light">
+                <small class="text-muted fw-semibold">
+                    <i class="fas fa-ticket-alt fs-5 me-1"></i> {{ $tickets->total() }} tickets
+                </small>
+            </div>
+            <ul class="list-group list-group-flush ticket-slim-scroll" data-simplebar>
+                @foreach($tickets as $t)
+                    <li class="list-group-item list-group-item-action p-2 border-bottom {{ $t->id == $ticket->id ? 'active' : '' }}">
+                        <a href="{{ route('manager.helpdesk.tickets.show', $t->id) }}" class="text-decoration-none d-block">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <small class="fw-semibold {{ $t->id == $ticket->id ? 'text-white' : 'text-dark' }}">
+                                    #{{ $t->ticket_number }}
+                                </small>
+                                <small class="text-muted">{{ $t->created_at->diffForHumans(null, true) }}</small>
+                            </div>
+                            <small class="{{ $t->id == $ticket->id ? 'text-white-50' : 'text-muted' }} ticket-slim-subject">
+                                {{ Str::limit($t->subject, 30) }}
+                            </small>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
+        {{-- Main: conversation --}}
+        <div class="flex-fill border-end ticket-main-col">
+            {{-- Ticket info bar --}}
+            <div class="p-3 border-bottom bg-light">
+                <h5 class="mb-2">{{ $ticket->subject }}</h5>
+                <div class="d-flex align-items-center gap-3 text-muted flex-wrap">
+                    <span><i class="fas fa-user me-1"></i>{{ $ticket->customer?->name ?? "Sin cliente" }}</span>
+                    <span><i class="far fa-envelope me-1"></i>{{ $ticket->customer?->email ?? "" }}</span>
+                    <span><i class="far fa-calendar me-1"></i>{{ $ticket->created_at->format('d/m/Y H:i') }}</span>
+                </div>
+            </div>
+
+            {{-- Messages thread --}}
+            <div class="p-3 ticket-messages-scroll" data-simplebar id="messagesContainer">
+                @forelse($ticket->items as $item)
+                    @if($item->type == 'message' || $item->type == 'internal_note')
+                        <div class="mb-3 {{ $item->isFromAgent() ? 'text-end' : '' }}">
+                            <div class="d-inline-block text-start ticket-message-bubble">
+                                {{-- Message header --}}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    @if($item->isFromCustomer())
+                                        <div class="avatar-md rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-semibold">
+                                            {{ strtoupper(substr($item->sender_name, 0, 1)) }}
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <strong class="d-block">{{ $item->sender_name }}</strong>
+                                        <small class="text-muted">{{ $item->created_at->format('d/m/Y H:i') }}</small>
+                                    </div>
+                                    @if($item->isFromAgent())
+                                        <div class="avatar-md rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-semibold">
+                                            {{ strtoupper(substr($item->sender_name, 0, 1)) }}
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Message body --}}
+                                <div class="card {{ $item->isFromAgent() ? 'bg-primary-subtle' : 'bg-light' }} {{ $item->type == 'internal_note' ? 'border-warning border-2' : '' }}">
+                                    <div class="card-body p-3">
+                                        @if($item->type == 'internal_note')
+                                            <div class="badge bg-warning text-dark mb-2">
+                                                <i class="fas fa-lock me-1"></i> Nota interna
+                                            </div>
+                                        @endif
+                                        <div>{!! nl2br(e($item->body)) !!}</div>
+
+                                        @if($item->attachment_urls)
+                                            <div class="mt-2">
+                                                @foreach($item->attachment_urls as $attachment)
+                                                    <a href="{{ $attachment }}" target="_blank" class="btn btn-sm btn-light me-2 mb-1">
+                                                        <i class="fas fa-paperclip"></i> {{ basename($attachment) }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        {{-- System event --}}
+                        <div class="text-center my-3">
+                            <span class="badge bg-light text-dark border">
+                                <i class="fas fa-info-circle me-1"></i>
+                                {{ $item->event_label }}: {{ $item->body }}
+                            </span>
+                        </div>
+                    @endif
+                @empty
+                    <div class="text-center py-5">
+                        <i class="far fa-comment-slash fs-1 text-muted mb-3 d-block"></i>
+                        <p class="text-muted">No hay mensajes en este ticket</p>
+                    </div>
+                @endforelse
+            </div>
+
+            {{-- Reply form --}}
+            @can('update', $ticket)
+                <div class="p-3 border-top bg-light">
+                    <form action="{{ route('manager.helpdesk.tickets.messages.store', $ticket->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-2">
+                            <textarea name="body" class="form-control" rows="3" placeholder="Escribe tu respuesta..." required></textarea>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <input type="file" name="attachments[]" id="attachments" multiple class="d-none">
+                                <label for="attachments" class="btn btn-light btn-sm">
+                                    <i class="fas fa-paperclip"></i> Adjuntar
+                                </label>
+                                <div class="form-check form-check-inline ms-3">
+                                    <input class="form-check-input" type="checkbox" name="is_internal" id="isInternal" value="1">
+                                    <label class="form-check-label" for="isInternal">
+                                        <i class="fas fa-lock"></i> Nota interna
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="far fa-paper-plane"></i> Enviar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            @endcan
+        </div>
+
+        {{-- Right sidebar: details, actions, time, rating, activity --}}
+        <div class="flex-shrink-0 ticket-info-col">
+
+            {{-- SLA status widget --}}
+            @if($ticket->slaPolicy)
+                <div class="p-3 border-bottom">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-stopwatch me-1"></i> SLA</h6>
+
+                    @php
+                        $now = now();
+                        $slaItems = [
+                            [
+                                'label'    => 'Primera respuesta',
+                                'due'      => $ticket->sla_first_response_due_at,
+                                'breached' => $ticket->sla_first_response_breached,
+                                'done'     => $ticket->first_response_at,
+                            ],
+                            [
+                                'label'    => 'Proxima respuesta',
+                                'due'      => $ticket->sla_next_response_due_at,
+                                'breached' => $ticket->sla_next_response_breached,
+                                'done'     => null,
+                            ],
+                            [
+                                'label'    => 'Resolucion',
+                                'due'      => $ticket->sla_resolution_due_at,
+                                'breached' => $ticket->sla_resolution_breached,
+                                'done'     => $ticket->resolved_at,
+                            ],
+                        ];
+                    @endphp
+
+                    @foreach($slaItems as $item)
+                        @continue(!$item['due'])
+                        @php
+                            $dueAt    = $item['due'];
+                            $remaining = $now->diffInSeconds($dueAt, false);
+                            $total    = $ticket->created_at->diffInSeconds($dueAt);
+                            $pct      = $item['done'] ? 100 : ($total > 0 ? max(0, min(100, ($remaining / $total) * 100)) : 0);
+                            $barClass = match(true) {
+                                (bool) $item['breached'] => 'bg-danger',
+                                $pct < 10               => 'bg-danger',
+                                $pct < 50               => 'bg-warning',
+                                default                 => 'bg-success',
+                            };
+                        @endphp
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="fw-semibold">{{ $item['label'] }}</small>
+                                @if($item['breached'])
+                                    <span class="badge bg-danger">Incumplido</span>
+                                @elseif($item['done'])
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Cumplido</span>
+                                @elseif($remaining < 0)
+                                    <span class="badge bg-danger">Vencido</span>
+                                @else
+                                    <small class="text-muted" data-sla-countdown="{{ $dueAt->toIso8601String() }}">
+                                        {{ $dueAt->diffForHumans() }}
+                                    </small>
+                                @endif
+                            </div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar {{ $barClass }}" role="progressbar"
+                                     style="width: {{ $pct }}%" aria-valuenow="{{ $pct }}"
+                                     aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    @if($ticket->sla_paused_at)
+                        <div class="alert alert-warning py-2 px-3 mb-0">
+                            <small><i class="fas fa-pause me-1"></i> SLA pausado</small>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Ticket links widget --}}
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold mb-3"><i class="fas fa-link me-1"></i> Tickets relacionados</h6>
+                @php $allLinks = $ticket->links()->with('linkedTicket')->get(); @endphp
+                @forelse($allLinks as $link)
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1 me-2">
+                            <span class="badge bg-secondary-subtle text-secondary me-1">{{ $link->link_type }}</span>
+                            <a href="{{ route('manager.helpdesk.tickets.show', $link->linkedTicket) }}" class="fw-semibold">
+                                #{{ $link->linkedTicket->ticket_number }}
+                            </a>
+                            <small class="text-muted d-block">{{ Str::limit($link->linkedTicket->subject, 40) }}</small>
+                        </div>
+                        <form action="{{ route('manager.helpdesk.tickets.unlink', [$ticket->id, $link->id]) }}" method="POST" class="flex-shrink-0">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Eliminar enlace">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </div>
+                @empty
+                    <p class="text-muted small mb-3">Sin tickets enlazados.</p>
+                @endforelse
+
+                <form action="{{ route('manager.helpdesk.tickets.link', $ticket->id) }}" method="POST" class="mt-2">
+                    @csrf
+                    <div class="row g-1">
+                        <div class="col-5">
+                            <input type="number" class="form-control form-control-sm" name="linked_ticket_id"
+                                   placeholder="ID del ticket..." min="1" required>
+                        </div>
+                        <div class="col-4">
+                            <select name="link_type" class="form-select form-select-sm">
+                                <option value="related">Relacionado</option>
+                                <option value="duplicate_of">Duplicado</option>
+                                <option value="blocks">Bloquea</option>
+                                <option value="blocked_by">Bloqueado por</option>
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <button type="submit" class="btn btn-sm btn-primary w-100" title="Enlazar">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @error('linked_ticket_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
+                </form>
+            </div>
+
+            {{-- Merge widget --}}
+            @can('manager.helpdesk.tickets.update')
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold mb-2"><i class="fas fa-object-group me-1"></i> Fusionar ticket</h6>
+                <p class="text-muted small mb-2">Fusionar este ticket en otro existente. Los mensajes se moverán y este ticket se cerrará.</p>
+                <form action="{{ route('manager.helpdesk.tickets.merge', $ticket) }}" method="POST"
+                      id="merge-ticket-form">
+                    @csrf
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">#</span>
+                        <input type="number" name="merge_into_id" class="form-control"
+                               placeholder="ID del ticket destino" min="1" required>
+                        <button type="submit" class="btn btn-warning" title="Fusionar">
+                            <i class="fas fa-object-group"></i>
+                        </button>
+                    </div>
+                    @error('merge_into_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
+                </form>
+            </div>
+            @endcan
+
+            {{-- Ticket details --}}
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-1"></i> Detalles</h6>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Estado</small>
+                    <span class="badge" style="background-color: {{ $ticket->status?->color ?? "#6c757d" }}">
+                        {{ $ticket->status?->name ?? "Sin estado" }}
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Prioridad</small>
+                    @php
+                        $priorityColors = ['urgent' => 'danger', 'high' => 'warning', 'normal' => 'info', 'low' => 'secondary'];
+                        $priorityColor = $priorityColors[$ticket->priority] ?? 'secondary';
+                    @endphp
+                    <span class="badge bg-{{ $priorityColor }}">{{ ucfirst($ticket->priority) }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Categoria</small>
+                    <span class="badge" style="background-color: {{ $ticket->category?->color ?? "#6c757d" }}">
+                        <i class="{{ $ticket->category?->icon ?? "fas fa-tag" }} me-1"></i>{{ $ticket->category?->name ?? "Sin categoria" }}
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Asignado a</small>
+                    @if($ticket->assignee)
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-xs rounded-circle bg-success text-white d-flex align-items-center justify-content-center">
+                                {{ strtoupper(substr($ticket->assignee?->name ?? "Sin asignar", 0, 1)) }}
+                            </div>
+                            <span>{{ $ticket->assignee?->name ?? "Sin asignar" }}</span>
+                        </div>
+                    @else
+                        <span class="text-muted"><i class="fas fa-user-times me-1"></i> Sin asignar</span>
+                    @endif
+                </div>
+
+                @if($ticket->group)
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Grupo</small>
+                        <span><i class="fas fa-user-group me-1"></i>{{ $ticket->group?->name ?? "Sin grupo" }}</span>
+                    </div>
+                @endif
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Origen</small>
+                    @php
+                        $sourceIcons = [
+                            'manager' => 'fas fa-desktop',
+                            'widget'  => 'fas fa-comment',
+                            'portal'  => 'fas fa-globe',
+                            'api'     => 'fas fa-code',
+                            'email'   => 'fas fa-envelope',
+                        ];
+                        $sourceIcon = $sourceIcons[$ticket->source] ?? 'fas fa-question-circle';
+                    @endphp
+                    <span><i class="{{ $sourceIcon }} me-1"></i>{{ ucfirst($ticket->source) }}</span>
+                </div>
+
+                @if($ticket->custom_fields)
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-2 fw-bold">Campos personalizados</small>
+                        @foreach($ticket->custom_fields as $key => $value)
+                            <div class="mb-2">
+                                <small class="text-muted d-block">{{ ucfirst(str_replace('_', ' ', $key)) }}</small>
+                                <span class="small">{{ $value }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            {{-- Macros --}}
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold mb-2"><i class="fas fa-bolt me-1 text-warning"></i> Macros</h6>
+                <select class="form-select form-select-sm mb-2" id="macro-select">
+                    <option value="">Selecciona macro...</option>
+                </select>
+                <button class="btn btn-sm btn-primary w-100" id="macro-apply-btn" disabled>
+                    <i class="fas fa-play me-1"></i> Aplicar
+                </button>
+            </div>
+
+            {{-- Actions --}}
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold mb-3"><i class="fas fa-bolt me-1"></i> Acciones</h6>
+
+                @can('resolve', $ticket)
+                    @if(!$ticket->isResolved() && !$ticket->isClosed())
+                        <form action="{{ route('manager.helpdesk.tickets.resolve', $ticket->id) }}" method="POST" class="mb-2">
+                            @csrf
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                <i class="far fa-check-circle me-1"></i> Marcar como resuelto
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+
+                @can('close', $ticket)
+                    @if(!$ticket->isClosed())
+                        <button type="button" class="btn btn-secondary btn-sm w-100 mb-2"
+                                data-bs-toggle="modal" data-bs-target="#close-ticket-modal">
+                            <i class="fas fa-times-circle me-1"></i> Cerrar ticket
+                        </button>
+                    @endif
+                @endcan
+
+                @can('reopen', $ticket)
+                    @if($ticket->isClosed())
+                        <form action="{{ route('manager.helpdesk.tickets.reopen', $ticket->id) }}" method="POST" class="mb-2">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-sync-alt me-1"></i> Reabrir ticket
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+
+                @can('archive', $ticket)
+                    @if($ticket->isClosed() && !$ticket->is_archived)
+                        <button type="button" class="btn btn-light btn-sm w-100 mb-2"
+                                data-bs-toggle="modal" data-bs-target="#archive-ticket-modal">
+                            <i class="fas fa-archive me-1"></i> Archivar
+                        </button>
+                    @endif
+                @endcan
+
+                @can('delete', $ticket)
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 mb-2"
+                            data-bs-toggle="modal" data-bs-target="#delete-ticket-modal">
+                        <i class="fas fa-trash me-1"></i> Eliminar ticket
+                    </button>
+                @endcan
+            </div>
+
+            {{-- Time tracking --}}
+            <div class="card mb-0 border-0 border-top rounded-0">
+                <div class="card-header d-flex justify-content-between align-items-center px-3 py-2 bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-clock me-2"></i>Time tracking</h6>
+                    <span id="total-time-badge" class="badge bg-primary">...</span>
+                </div>
+                <div class="card-body p-0">
+                    <div id="time-entries-list" class="list-group list-group-flush time-entries-scroll"></div>
+                    <form id="log-time-form" class="p-2 border-top">
+                        @csrf
+                        <div class="row g-1 mb-1">
+                            <div class="col-5">
+                                <input type="number" id="time-minutes" class="form-control form-control-sm"
+                                       placeholder="Minutos (1-480)" min="1" max="480">
+                            </div>
+                            <div class="col-7">
+                                <input type="text" id="time-description" class="form-control form-control-sm"
+                                       placeholder="Descripcion (opcional)">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="fas fa-plus me-1"></i> Registrar tiempo
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Customer rating --}}
+            @if($ticket->rated_at)
+                <div class="card mb-0 border-0 border-top rounded-0">
+                    <div class="card-header px-3 py-2 bg-white border-bottom">
+                        <h6 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Valoracion del cliente</h6>
+                    </div>
+                    <div class="card-body px-3 py-2">
+                        <div class="d-flex align-items-center mb-2">
+                            @for($i = 1; $i <= 5; $i++)
+                                <i class="fas fa-star {{ $i <= $ticket->rating ? 'text-warning' : 'text-muted' }} me-1"></i>
+                            @endfor
+                            <span class="ms-2 fw-bold">{{ $ticket->rating }}/5</span>
+                        </div>
+                        @if($ticket->rating_comment)
+                            <p class="text-muted mb-1">"{{ $ticket->rating_comment }}"</p>
+                        @endif
+                        <small class="text-muted">Valorado {{ $ticket->rated_at->diffForHumans() }}</small>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Activity timeline --}}
+            <div class="p-3 border-top">
+                <h6 class="fw-bold mb-3"><i class="fas fa-stream me-1"></i> Actividad</h6>
+                <div class="timeline-sm">
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Creado</small>
+                        <small>{{ $ticket->created_at->format('d/m/Y H:i') }}</small>
+                    </div>
+                    @if($ticket->assigned_at)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Asignado</small>
+                            <small>{{ $ticket->assigned_at->format('d/m/Y H:i') }}</small>
+                        </div>
+                    @endif
+                    @if($ticket->first_response_at)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Primera respuesta</small>
+                            <small>{{ $ticket->first_response_at->format('d/m/Y H:i') }}</small>
+                        </div>
+                    @endif
+                    @if($ticket->resolved_at)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Resuelto</small>
+                            <small>{{ $ticket->resolved_at->format('d/m/Y H:i') }}</small>
+                        </div>
+                    @endif
+                    @if($ticket->closed_at)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Cerrado</small>
+                            <small>{{ $ticket->closed_at->format('d/m/Y H:i') }}</small>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Close ticket modal --}}
+    @can('close', $ticket)
+        @if(!$ticket->isClosed())
+            <div class="modal fade" id="close-ticket-modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Cerrar ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0">¿Deseas cerrar este ticket? El cliente sera notificado.</p>
+                        </div>
+                        <div class="modal-footer d-flex flex-column gap-2">
+                            <form action="{{ route('manager.helpdesk.tickets.close', $ticket->id) }}" method="POST" class="w-100">
+                                @csrf
+                                <button type="submit" class="btn btn-secondary w-100">Cerrar ticket</button>
+                            </form>
+                            <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endcan
+
+    {{-- Archive ticket modal --}}
+    @can('archive', $ticket)
+        @if($ticket->isClosed() && !$ticket->is_archived)
+            <div class="modal fade" id="archive-ticket-modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Archivar ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0">¿Deseas archivar este ticket?</p>
+                        </div>
+                        <div class="modal-footer d-flex flex-column gap-2">
+                            <form action="{{ route('manager.helpdesk.tickets.archive', $ticket->id) }}" method="POST" class="w-100">
+                                @csrf
+                                <button type="submit" class="btn btn-primary w-100">Archivar</button>
+                            </form>
+                            <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endcan
+
+    {{-- Delete ticket modal --}}
+    @can('delete', $ticket)
+        <div class="modal fade" id="delete-ticket-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Eliminar ticket</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">¿Deseas eliminar el ticket <strong>#{{ $ticket->ticket_number }}</strong>? Esta accion no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer d-flex flex-column gap-2">
+                        <form action="{{ route('manager.helpdesk.tickets.destroy', $ticket->id) }}" method="POST" class="w-100">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger w-100">Eliminar</button>
+                        </form>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
+
+@endsection
+
+@push('styles')
+<style>
+    .ticket-slim-scroll { height: calc(100vh - 140px); overflow-y: auto; }
+    .ticket-slim-subject { font-size: 11px; }
+    .ticket-main-col { width: 40%; }
+    .ticket-messages-scroll { height: calc(100vh - 340px); overflow-y: auto; }
+    .ticket-message-bubble { max-width: 70%; }
+    .ticket-info-col { width: 20%; overflow-y: auto; height: calc(100vh - 70px); }
+    .time-entries-scroll { max-height: 200px; overflow-y: auto; }
+    .avatar-md { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
+    .avatar-xs { width: 24px; height: 24px; font-size: 11px; flex-shrink: 0; }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+    // Auto-scroll to bottom of messages
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Real-time via Laravel Echo
+    @if(config('broadcasting.default') !== 'null')
+        Echo.channel('ticket.{{ $ticket->id }}')
+            .listen('TicketMessageReceived', () => location.reload());
+    @endif
+
+    // ── Time Tracking ──────────────────────────────────────────────
+    const timeEntriesUrl = "{{ route('manager.helpdesk.tickets.time-entries.index', $ticket) }}";
+    const currentUserId = {{ auth()->id() }};
+
+    function formatLoggedAt(dateStr) {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function renderEntries(data) {
+        const $list = $('#time-entries-list');
+        $list.empty();
+        $('#total-time-badge').text(data.formatted_total || '0m');
+
+        if (!data.entries || data.entries.length === 0) {
+            $list.html('<div class="list-group-item text-muted text-center py-3">Sin registros de tiempo</div>');
+            return;
+        }
+
+        data.entries.forEach(function (entry) {
+            const userName = entry.user ? entry.user.name : 'Desconocido';
+            const deleteBtn = entry.user_id === currentUserId
+                ? `<button class="btn btn-link btn-sm text-danger p-0 ms-1 delete-time-entry" data-id="${entry.id}" title="Eliminar"><i class="fas fa-trash-alt"></i></button>`
+                : '';
+
+            $list.append(`
+                <div class="list-group-item px-2 py-1 d-flex justify-content-between align-items-start">
+                    <div class="small">
+                        <span class="fw-semibold">${entry.formatted_duration}</span>
+                        <span class="text-muted ms-1">· ${userName}</span>
+                        ${entry.description ? `<div class="text-muted" style="font-size:11px;">${$('<div>').text(entry.description).html()}</div>` : ''}
+                        <div class="text-muted" style="font-size:10px;">${formatLoggedAt(entry.logged_at)}</div>
+                    </div>
+                    <div class="flex-shrink-0">${deleteBtn}</div>
+                </div>
+            `);
+        });
+    }
+
+    function loadTimeEntries() {
+        $.get(timeEntriesUrl)
+            .done(renderEntries)
+            .fail(function () {
+                $('#time-entries-list').html('<div class="list-group-item text-danger small">Error al cargar registros</div>');
+            });
+    }
+
+    $(document).on('click', '.delete-time-entry', function () {
+        const id = $(this).data('id');
+        $.ajax({
+            method: 'DELETE',
+            url: timeEntriesUrl + '/' + id,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        })
+        .done(loadTimeEntries)
+        .fail(function (xhr) {
+            toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Error al eliminar');
+        });
+    });
+
+    $('#log-time-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const minutes = parseInt($('#time-minutes').val(), 10);
+        const description = $('#time-description').val().trim();
+
+        if (!minutes || minutes < 1 || minutes > 480) {
+            toastr.warning('Los minutos deben estar entre 1 y 480.');
+            $('#time-minutes').focus();
+            return;
+        }
+
+        $.ajax({
+            method: 'POST',
+            url: timeEntriesUrl,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { minutes, description },
+        })
+        .done(function () {
+            $('#time-minutes').val('');
+            $('#time-description').val('');
+            toastr.success('Tiempo registrado correctamente.');
+            loadTimeEntries();
+        })
+        .fail(function (xhr) {
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                toastr.error(Object.values(xhr.responseJSON.errors).flat().join(' '));
+            } else {
+                toastr.error('Error al registrar tiempo.');
+            }
+        });
+    });
+
+    loadTimeEntries();
+
+    // ── SLA Countdown ──────────────────────────────────────────────
+    function updateSlaCountdowns() {
+        $('[data-sla-countdown]').each(function () {
+            const due  = new Date($(this).data('sla-countdown'));
+            const mins = Math.round((due - new Date()) / 60000);
+
+            if (mins < 0) {
+                $(this).text('Vencido hace ' + Math.abs(mins) + ' min');
+            } else if (mins < 60) {
+                $(this).text('En ' + mins + ' min');
+            } else {
+                $(this).text('En ' + Math.round(mins / 60) + ' h');
+            }
+        });
+    }
+
+    updateSlaCountdowns();
+    setInterval(updateSlaCountdowns, 30000);
+
+    // ── @Mentions ──────────────────────────────────────────────────
+    (function () {
+        const users = @json($mentionableUsers);
+        const $textarea = $('textarea[name="body"]').first();
+        if (!$textarea.length) return;
+
+        const $dropdown = $('<div class="dropdown-menu shadow" style="max-height:200px;overflow-y:auto;display:none;position:fixed;z-index:9999"></div>')
+            .appendTo('body');
+
+        function getAtContext(text, cursor) {
+            const lastAt = text.lastIndexOf('@', cursor - 1);
+            if (lastAt < 0) return null;
+            if (lastAt > 0 && !/\s/.test(text[lastAt - 1])) return null;
+            const query = text.substring(lastAt + 1, cursor);
+            if (/\s/.test(query)) return null;
+            return { lastAt, query };
+        }
+
+        $textarea.on('input keyup', function () {
+            const ctx = getAtContext(this.value, this.selectionStart);
+            if (!ctx) { $dropdown.hide(); return; }
+
+            const matches = users.filter(u => u.name.toLowerCase().includes(ctx.query.toLowerCase())).slice(0, 8);
+            if (!matches.length) { $dropdown.hide(); return; }
+
+            $dropdown.empty();
+            matches.forEach(function (u) {
+                const rect = $textarea[0].getBoundingClientRect();
+                $dropdown.css({ top: rect.bottom + 5, left: rect.left, minWidth: 260 });
+
+                $('<a class="dropdown-item d-flex align-items-center gap-2 py-2"></a>')
+                    .html('<span class="fw-semibold">' + $('<span>').text(u.name).html() + '</span><small class="text-muted">' + $('<span>').text(u.email).html() + '</small>')
+                    .on('mousedown', function (ev) {
+                        ev.preventDefault();
+                        const val = $textarea.val();
+                        const cursor = $textarea[0].selectionStart;
+                        $textarea.val(val.substring(0, ctx.lastAt) + '@' + u.name + ' ' + val.substring(cursor));
+                        $dropdown.hide();
+                        $textarea.focus();
+                    })
+                    .appendTo($dropdown);
+            });
+
+            const rect = $textarea[0].getBoundingClientRect();
+            $dropdown.css({ top: rect.bottom + 5, left: rect.left, minWidth: 260 }).show();
+        });
+
+        $textarea.on('blur', function () {
+            setTimeout(function () { $dropdown.hide(); }, 200);
+        });
+    }());
+</script>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    const $sel = $('#macro-select');
+    const $btn = $('#macro-apply-btn');
+
+    $.get('{{ route("manager.helpdesk.macros.list") }}').done(function (data) {
+        $.each(data.macros, function (i, m) {
+            $sel.append($('<option>', { value: m.id, text: m.name }));
+        });
+    });
+
+    $sel.on('change', function () {
+        $btn.prop('disabled', !this.value);
+    });
+
+    $btn.on('click', function () {
+        const macroId = $sel.val();
+        if (!macroId) return;
+
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Aplicando...');
+
+        $.ajax({
+            url: '{{ url("panel/helpdesk/tickets/'.$ticket->id.'/macros") }}/' + macroId + '/apply',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (res) {
+            toastr.success(res.message);
+            setTimeout(function () { location.reload(); }, 800);
+        }).fail(function () {
+            toastr.error('Error al aplicar la macro.');
+            $btn.prop('disabled', false).html('<i class="fas fa-play me-1"></i> Aplicar');
+        });
+    });
+
+    // Merge confirmation
+    $('#merge-ticket-form').on('submit', function (e) {
+        const targetId = $(this).find('[name="merge_into_id"]').val();
+        if (!targetId) return;
+        if (!confirm('¿Fusionar este ticket en el ticket #' + targetId + '? Esta acción no se puede deshacer.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+@endpush
+
+@auth
+@push('scripts')
+<script>
+$(function () {
+    if (typeof window.Echo === 'undefined') {
+        console.warn('Echo not available — skipping real-time features');
+        return;
+    }
+
+    const ticketId = {{ $ticket->id }};
+    const meId     = {{ auth()->id() }};
+
+    const $banner = $('<div class="alert alert-warning py-2 mb-3 d-none" id="collision-banner">' +
+        '<i class="fas fa-users me-1"></i><span id="collision-msg"></span>' +
+        '</div>');
+
+    // Insert banner before the messages container
+    $('#messagesContainer').before($banner);
+
+    const $typing = $('<div class="small text-muted fst-italic mt-1 d-none" id="typing-indicator"></div>');
+    $('textarea[name="body"]').closest('form').before($typing);
+
+    let otherUsers = [];
+
+    function updateCollisionBanner() {
+        if (!otherUsers.length) {
+            $('#collision-banner').addClass('d-none');
+            return;
+        }
+
+        const names = otherUsers.map(function (u) { return u.name; }).join(', ');
+        const verb  = otherUsers.length > 1 ? 'estan' : 'esta';
+        $('#collision-msg').text(names + ' ' + verb + ' viendo este ticket');
+        $('#collision-banner').removeClass('d-none');
+    }
+
+    window.Echo.join('ticket.' + ticketId)
+        .here(function (users) {
+            otherUsers = users.filter(function (u) { return u.id !== meId; });
+            updateCollisionBanner();
+        })
+        .joining(function (user) {
+            if (user.id !== meId) {
+                otherUsers.push(user);
+                updateCollisionBanner();
+            }
+        })
+        .leaving(function (user) {
+            otherUsers = otherUsers.filter(function (u) { return u.id !== user.id; });
+            updateCollisionBanner();
+        })
+        .listen('.typing', function (e) {
+            if (e.userId === meId) { return; }
+
+            if (e.isTyping) {
+                $('#typing-indicator').text(e.userName + ' esta escribiendo...').removeClass('d-none');
+            } else {
+                $('#typing-indicator').addClass('d-none');
+            }
+        });
+
+    // Emit typing indicator while agent types in the reply textarea
+    let typingTimer;
+    $('textarea[name="body"]').on('input', function () {
+        clearTimeout(typingTimer);
+
+        $.post('{{ route("manager.helpdesk.tickets.typing", $ticket->id) }}', {
+            _token:    $('meta[name="csrf-token"]').attr('content'),
+            is_typing: 1,
+        });
+
+        typingTimer = setTimeout(function () {
+            $.post('{{ route("manager.helpdesk.tickets.typing", $ticket->id) }}', {
+                _token:    $('meta[name="csrf-token"]').attr('content'),
+                is_typing: 0,
+            });
+        }, 2500);
+    });
+});
+</script>
+@endpush
+@endauth

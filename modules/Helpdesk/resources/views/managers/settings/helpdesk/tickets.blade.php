@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.update') }}" id="ticketsForm">
+    <form method="POST" action="{{ route('manager.helpdesk.settings.tickets.update') }}" id="ticketsForm">
         @csrf
         @method('PUT')
 

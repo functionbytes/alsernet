@@ -1,0 +1,174 @@
+/* Page module admin styles */
+
+/* Icon circles for export/import steps */
+.page-icon-circle {
+    width: 80px;
+    height: 80px;
+    background: rgba(144, 187, 19, 0.1);
+}
+
+/* Step badges */
+.page-step-badge {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+/* Audit list scroll */
+.page-audit-list {
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+/* Diff container scroll */
+.page-diff-container {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Bulk toolbar z-index */
+.page-bulk-toolbar {
+    z-index: 1050;
+}
+
+/* Filter selects min-width */
+.page-filter-select {
+    min-width: 150px;
+}
+
+.page-filter-select-lg {
+    min-width: 180px;
+}
+
+/* Image preview in forms */
+.page-img-preview {
+    max-height: 300px;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Featured image upload zone */
+.page-upload-zone {
+    min-height: 140px;
+    border: 2px dashed #dee2e6;
+    cursor: pointer;
+}
+
+.page-upload-zone i {
+    color: #adb5bd;
+}
+
+.page-upload-zone p {
+    color: #6c757d;
+}
+
+/* SEO preview */
+.page-seo-url {
+    color: #006621;
+    font-size: 13px;
+}
+
+.page-seo-desc {
+    color: #545454;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+/* SEO snippet preview */
+.page-seo-preview-title {
+    font-size: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Analytics icon boxes */
+.page-analytics-icon {
+    width: 44px;
+    height: 44px;
+}
+
+.page-analytics-icon-sm {
+    width: 36px;
+    height: 36px;
+}
+
+.page-analytics-icon-neutral {
+    width: 36px;
+    height: 36px;
+    background: #f5f6f8;
+}
+
+/* Analytics chart containers */
+.page-chart-daily {
+    height: 300px;
+}
+
+.page-chart-sm {
+    height: 200px;
+}
+
+/* Analytics stat max-width */
+.page-stat-value {
+    max-width: 500px;
+}
+
+/* Shortcode table column widths */
+.page-shortcode-col-tag {
+    width: 40%;
+}
+
+.page-shortcode-col-action {
+    width: 80px;
+}
+
+/* Small code labels */
+.page-code-sm {
+    font-size: 0.75rem;
+}
+
+/* Small badge inside badge */
+.page-badge-xs {
+    font-size: 0.6rem;
+}
+
+/* Locale code badge */
+.page-locale-badge {
+    font-size: 0.7rem;
+}
+
+/* Stat card hover */
+.stat-card {
+    transition: transform 0.15s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Zoom-in card animation (cache dashboard) */
+.zoom-in {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: default;
+}
+
+.zoom-in:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+}
+
+/* Preview iframe wrapper */
+.page-preview-wrap {
+    width: 100%;
+    height: 100vh;
+}
+
+/* Versions: lock alert hidden by default */
+#lockAlert {
+    display: none;
+}
+
+/* Published-at wrap hidden by default */
+#main-published-at-wrap {
+    display: none;
+}

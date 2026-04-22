@@ -3,7 +3,7 @@
 @section('title', 'Variables de templates')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="card">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -123,12 +123,10 @@
                                         <small class="text-muted font-monospace">{{ Str::limit($variable->example_value, 30) }}</small>
                                     </td>
                                     <td>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input toggle-status"
-                                                type="checkbox"
-                                                data-id="{{ $variable->id }}"
-                                                {{ $variable->status === 'active' ? 'checked' : '' }}>
-                                        </div>
+                                        <select class="form-select form-select-sm toggle-status" data-id="{{ $variable->id }}">
+                                            <option value="active" {{ $variable->status === 'active' ? 'selected' : '' }}>Activado</option>
+                                            <option value="inactive" {{ $variable->status !== 'active' ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </td>
                                     <td>
                                         @if($variable->is_system)
@@ -178,7 +176,8 @@ $(document).ready(function() {
     // Toggle status
     $('.toggle-status').on('change', function() {
         const id = $(this).data('id');
-        const $switch = $(this);
+        const $select = $(this);
+        const status = $select.val();
 
         $.ajax({
             url: `/mailrelay/setting/variables/${id}/toggle-status`,
@@ -186,13 +185,14 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+            data: { status: status },
             success: function(response) {
                 if (response.success) {
                     toastr.success(response.message);
                 }
             },
             error: function() {
-                $switch.prop('checked', !$switch.prop('checked'));
+                $select.val(status === 'active' ? 'inactive' : 'active');
                 toastr.error('Error al cambiar el estado');
             }
         });

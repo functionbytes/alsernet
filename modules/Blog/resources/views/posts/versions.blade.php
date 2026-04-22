@@ -255,7 +255,7 @@ $(document).ready(function () {
         e.preventDefault();
         var version = $(this).data('version');
         var $form = $(this).closest('form');
-        if (!confirm('¿Restaurar v' + version + '? El estado actual se guardará como nueva versión antes de restaurar.')) {
+        if (true) {
             return;
         }
         $form.submit();

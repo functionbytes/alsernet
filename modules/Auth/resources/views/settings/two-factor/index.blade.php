@@ -3,7 +3,7 @@
 @section('title', 'Autenticación de Dos Factores')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Autenticación de dos factores (2FA)</h5>

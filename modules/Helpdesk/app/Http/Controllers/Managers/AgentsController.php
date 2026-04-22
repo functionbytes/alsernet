@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\AgentSettings;
-use Modules\Helpdesk\Models\Ticket;
+use Modules\HelpdeskTickets\Models\Ticket;
 
 class AgentsController extends Controller
 {

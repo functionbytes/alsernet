@@ -24,13 +24,16 @@ class ConversationView extends Model
         'order',
     ];
 
-    protected $casts = [
-        'filters' => 'array',
-        'is_public' => 'boolean',
-        'is_default' => 'boolean',
-        'is_system' => 'boolean',
-        'order' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'filters' => 'array',
+            'is_public' => 'boolean',
+            'is_default' => 'boolean',
+            'is_system' => 'boolean',
+            'order' => 'integer',
+        ];
+    }
 
     /**
      * Boot the model.

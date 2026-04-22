@@ -140,12 +140,12 @@
                                    value="{{ $form->admin_notification_email }}">
                         </div>
 
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="configSendConfirmation"
-                                   {{ $form->send_confirmation ? 'checked' : '' }}>
-                            <label class="form-check-label" for="configSendConfirmation">
-                                Enviar confirmación al usuario
-                            </label>
+                        <div class="mb-3">
+                            <label class="form-label" for="configSendConfirmation">Enviar confirmación al usuario</label>
+                            <select class="form-select" id="configSendConfirmation">
+                                <option value="1" {{ $form->send_confirmation ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ !$form->send_confirmation ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
 
                         <div id="confirmationFields" class="{{ $form->send_confirmation ? '' : 'd-none' }}">
@@ -203,12 +203,12 @@
                         {{-- Estilo --}}
                         <p class="text-uppercase fw-semibold small text-muted mb-2">Estilo</p>
 
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="configFloatingLabel"
-                                   {{ $form->floating_label ? 'checked' : '' }}>
-                            <label class="form-check-label" for="configFloatingLabel">
-                                Labels flotantes
-                            </label>
+                        <div class="mb-3">
+                            <label class="form-label" for="configFloatingLabel">Labels flotantes</label>
+                            <select class="form-select" id="configFloatingLabel">
+                                <option value="1" {{ $form->floating_label ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ !$form->floating_label ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
 
                         <hr class="my-3">
@@ -604,27 +604,21 @@
                     <small class="text-muted">Protección contra spam y bots</small>
                 </div>
                 <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <div class="fw-semibold small">Honeypot</div>
-                            <div class="text-muted protection-hint">Campo oculto anti-bots</div>
-                        </div>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input btn-protection-toggle" type="checkbox"
-                                   id="honeypotToggle" data-field="honeypot_enabled"
-                                   {{ $form->honeypot_enabled ? 'checked' : '' }}>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small mb-1" for="honeypotToggle">Honeypot</label>
+                        <div class="text-muted protection-hint mb-1">Campo oculto anti-bots</div>
+                        <select class="form-select form-select-sm btn-protection-toggle" id="honeypotToggle" data-field="honeypot_enabled">
+                            <option value="1" {{ $form->honeypot_enabled ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ !$form->honeypot_enabled ? 'selected' : '' }}>Desactivado</option>
+                        </select>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-semibold small">reCAPTCHA</div>
-                            <div class="text-muted protection-hint">Verificación humana</div>
-                        </div>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input btn-protection-toggle" type="checkbox"
-                                   id="captchaToggle" data-field="captcha_enabled"
-                                   {{ $form->captcha_enabled ? 'checked' : '' }}>
-                        </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1" for="captchaToggle">reCAPTCHA</label>
+                        <div class="text-muted protection-hint mb-1">Verificación humana</div>
+                        <select class="form-select form-select-sm btn-protection-toggle" id="captchaToggle" data-field="captcha_enabled">
+                            <option value="1" {{ $form->captcha_enabled ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ !$form->captcha_enabled ? 'selected' : '' }}>Desactivado</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -840,19 +834,21 @@
                             {{-- Switches --}}
                             <div class="col-12">
                                 <div class="field-switches-bar d-flex flex-wrap gap-4 p-3">
-                                    <div class="form-check form-switch mb-0">
-                                        <input type="checkbox" name="is_required" class="form-check-input" id="fieldRequired">
-                                        <label class="form-check-label" for="fieldRequired">
-                                            <span class="fw-semibold">Obligatorio</span>
-                                            <span class="text-muted field-check-hint">El campo debe completarse</span>
-                                        </label>
+                                    <div>
+                                        <label class="form-label fw-semibold mb-1" for="fieldRequired">Obligatorio</label>
+                                        <div class="text-muted field-check-hint mb-1">El campo debe completarse</div>
+                                        <select class="form-select form-select-sm" name="is_required" id="fieldRequired">
+                                            <option value="1">Sí</option>
+                                            <option value="0">No</option>
+                                        </select>
                                     </div>
-                                    <div class="form-check form-switch mb-0">
-                                        <input type="checkbox" name="show_char_counter" class="form-check-input" id="fieldCharCounter">
-                                        <label class="form-check-label" for="fieldCharCounter">
-                                            <span class="fw-semibold">Contador de caracteres</span>
-                                            <span class="text-muted field-check-hint">Muestra caracteres escritos</span>
-                                        </label>
+                                    <div>
+                                        <label class="form-label fw-semibold mb-1" for="fieldCharCounter">Contador de caracteres</label>
+                                        <div class="text-muted field-check-hint mb-1">Muestra caracteres escritos</div>
+                                        <select class="form-select form-select-sm" name="show_char_counter" id="fieldCharCounter">
+                                            <option value="1">Sí</option>
+                                            <option value="0">No</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

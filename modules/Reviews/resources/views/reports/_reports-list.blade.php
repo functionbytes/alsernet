@@ -65,7 +65,7 @@
                             </button>
                         @endif
 
-                        <form action="{{ route('reviews.reports.destroy', $report) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este reporte?')">
+                        <form action="{{ route('reviews.reports.destroy', $report) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">

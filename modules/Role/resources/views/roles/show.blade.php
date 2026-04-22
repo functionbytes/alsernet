@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #b10100 0%, #6d8f0f 100%);">
+                             style="width: 70px; height: 70px; background: #90bb13;">
                             <i class="fas fa-user-shield fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
@@ -355,7 +355,7 @@
 
                         @if(!in_array($role->name, ['super-settings', 'customer']))
                             <form method="POST" action="{{ route('settings.roles.clone', $role) }}"
-                                  onsubmit="return confirm('¿Clonar el rol {{ $role->name }}?')">
+                                  class="needs-confirm" data-confirm-msg="¿Clonar el rol {{ $role->name }}?">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-warning w-100">
                                     Duplicar rol
@@ -365,7 +365,7 @@
                             <hr class="my-2">
 
                             <form method="POST" action="{{ route('settings.roles.destroy', $role) }}"
-                                  onsubmit="return confirm('¿Eliminar el rol {{ $role->name }}? Esta acción no se puede deshacer.')">
+                                  class="needs-confirm" data-confirm-msg="¿Eliminar el rol {{ $role->name }}? Esta acción no se puede deshacer.">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger w-100">

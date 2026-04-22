@@ -4,7 +4,7 @@
 
 @section('content')
     <section class="account pt-150 padding-bottom">
-        <div class="container-fluid">
+        <div class="px-3">
             <div class="account__wrapper aos-init aos-animate" data-aos="fade-up" data-aos-duration="800">
                 <div class="row g-4">
                     <div class="col-lg-12">

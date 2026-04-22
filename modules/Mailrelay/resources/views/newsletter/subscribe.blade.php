@@ -27,7 +27,7 @@
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
     .btn-subscribe {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #90bb13;
         border: none;
         padding: 12px 30px;
         font-weight: 600;
@@ -35,7 +35,7 @@
     }
     .btn-subscribe:hover {
         transform: translateY(-2px);
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        background: #90bb13;
     }
     .btn-subscribe:disabled {
         background: #6c757d;

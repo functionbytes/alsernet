@@ -3,6 +3,7 @@
 return [
 
     'banner' => [
+        'title' => 'Wir verwenden Cookies',
         'message' => 'Wir verwenden Cookies, um Ihre Erfahrung auf unserer Website zu verbessern.',
         'accept' => 'Cookies akzeptieren',
         'reject' => 'Ablehnen',

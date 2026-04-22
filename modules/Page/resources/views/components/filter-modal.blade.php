@@ -57,7 +57,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         Cancelar
                     </button>
-                    <button type="submit" class="btn btn-primary" style="background-color: #90bb13; border-color: #90bb13;">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-filter"></i> Aplicar filtros
                     </button>
                 </div>

@@ -1,3 +1,10 @@
+@php
+    $companyName = theme_option('site_title') ?: config('app.name');
+    $companyEmail = theme_option('email') ?: config('mail.from.address');
+    $companyPhone = theme_option('phone') ?: '';
+    $companyAddress = theme_option('address') ?: '';
+    $siteUrl = config('app.url');
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,9 +20,9 @@
 
                     {{-- Header --}}
                     <tr>
-                        <td style="background-color:#90bb13;padding:24px 32px;">
+                        <td style="background-color:#b10100;padding:24px 32px;">
                             <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;">
-                                {{ config('app.name') }}
+                                {{ $companyName }}
                             </p>
                         </td>
                     </tr>
@@ -82,7 +89,7 @@
                     <tr>
                         <td style="padding:0 32px 32px;" align="center">
                             <a href="{{ route('settings.forms.submissions.show', ['form' => $form->id, 'submission' => $submission->id]) }}"
-                               style="display:inline-block;background-color:#90bb13;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:bold;">
+                               style="display:inline-block;background-color:#b10100;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:bold;">
                                 Ver en el panel
                             </a>
                         </td>
@@ -91,9 +98,14 @@
                     {{-- Footer --}}
                     <tr>
                         <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;">
+                            <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-align:center;">
+                                {{ $companyName }}
+                                @if($companyAddress) &bull; {{ $companyAddress }} @endif
+                            </p>
                             <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-                                {{ config('app.name') }} &bull;
-                                <a href="{{ config('app.url') }}" style="color:#9ca3af;">{{ config('app.url') }}</a>
+                                @if($companyPhone) {{ $companyPhone }} &bull; @endif
+                                <a href="mailto:{{ $companyEmail }}" style="color:#9ca3af;">{{ $companyEmail }}</a>
+                                &bull; <a href="{{ $siteUrl }}" style="color:#9ca3af;">{{ $siteUrl }}</a>
                             </p>
                         </td>
                     </tr>

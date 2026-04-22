@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="container-fluid">
+<div class="px-3">
     <div class="row">
         <div class="col-lg-12">
 
@@ -209,10 +209,6 @@ $(document).ready(function() {
         const attentionUid = $(this).data('attention-uid');
         const mailUid = $(this).data('mail-uid');
         const $btn = $(this);
-
-        if (!confirm('¿Está seguro de reenviar este email?')) {
-            return;
-        }
 
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 

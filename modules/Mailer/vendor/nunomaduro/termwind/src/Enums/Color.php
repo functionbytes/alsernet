@@ -76,7 +76,7 @@ final class Color
 
     public const NEUTRAL_50 = '#fafafa';
 
-    public const NEUTRAL_100 = '#f5f5f5';
+    public const NEUTRAL_100 = '#f9f9f9';
 
     public const NEUTRAL_200 = '#e5e5e5';
 

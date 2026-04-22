@@ -60,11 +60,21 @@ class MathCaptcha
 
     public function verify(string $value): bool
     {
-        if (empty($value)) {
+        if (empty($value) || ! ctype_digit(ltrim($value, '-'))) {
             return false;
         }
 
-        return $value == $this->getMathResult();
+        $expected = (string) $this->getMathResult();
+
+        // Use hash_equals to prevent timing attacks on the comparison.
+        $valid = hash_equals($expected, $value);
+
+        if ($valid) {
+            // Reset the captcha so the same session answer cannot be replayed.
+            $this->reset();
+        }
+
+        return $valid;
     }
 
     /**

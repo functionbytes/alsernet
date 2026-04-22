@@ -1,7 +1,10 @@
 @extends('template::layouts.default')
 
-@section('title', $transTitle ?? 'Opiniones de Clientes')
-@section('description', $transDescription ?? 'Lo que nuestros clientes dicen sobre nosotros. Reseñas verificadas de Google.')
+@php Theme::set('page', $page); @endphp
+
+@section('seo_head')
+    @include(Theme::getThemeNamespace() . '::partials.seo-head')
+@endsection
 
 @section('content')
 

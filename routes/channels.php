@@ -73,3 +73,13 @@ Broadcast::channel('user.{id}', function ($user, $id) {
 Broadcast::channel('attentions', function ($user) {
     return $user->hasAnyRole(['admin', 'super-admin', 'administrative', 'manager', 'callcenter', 'support']);
 });
+
+// Presence channel para colaboracion en tiempo real en tickets de helpdesk
+// Permite collision detection y typing indicator entre agentes
+Broadcast::channel('ticket.{ticketId}', function ($user, int $ticketId) {
+    if ($user->can('manager.helpdesk.tickets.show') || $user->hasRole('super-admin')) {
+        return ['id' => $user->id, 'name' => trim($user->firstname.' '.$user->lastname)];
+    }
+
+    return false;
+});

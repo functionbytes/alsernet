@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="<?php
+use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Core\Models\Setting;
 
 echo e(str_replace('_', '-', app()->getLocale())); ?>" dir="ltr" data-bs-theme="light" data-color-theme="green" data-layout="vertical" data-boxed-layout="boxed" data-card="shadow">
@@ -7,7 +8,9 @@ echo e(str_replace('_', '-', app()->getLocale())); ?>" dir="ltr" data-bs-theme="
 <head>
 
     <meta charset="utf-8"/>
-    <title><?php echo e(getSiteTitle()); ?></title>
+    <title><?php if (! empty(trim($__env->yieldContent('title')))) { ?><?php echo $__env->yieldContent('title'); ?> · <?php echo e(getSiteName()); ?><?php } else { ?><?php echo e(getSiteTitle()); ?><?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?></title>
+    <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+    <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no"/>
     <link rel="apple-touch-icon" href="pages/ico/60.png">
@@ -24,6 +27,9 @@ echo e(str_replace('_', '-', app()->getLocale())); ?>" dir="ltr" data-bs-theme="
 
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <meta name="user-id" content="<?php echo e(auth()->id() ?? ''); ?>">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#90bb13">
 
     <?php echo $__env->yieldPushContent('meta'); ?>
 
@@ -322,6 +328,47 @@ $(document).ready(function () {
 
 <?php echo $__env->yieldPushContent('scripts'); ?>
 
+
+<div class="modal fade" id="__globalConfirmModal" tabindex="-1" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="__globalConfirmMsg"></div>
+            <div class="modal-footer flex-column">
+                <button type="button" class="btn btn-primary w-100 mb-2" id="__globalConfirmOk">Confirmar</button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+window.__confirm = function (msg, onConfirm) {
+    $('#__globalConfirmMsg').text(msg || 'Confirmar accion');
+    const modal = new bootstrap.Modal('#__globalConfirmModal');
+    modal.show();
+    $('#__globalConfirmOk').off('click').on('click', function () {
+        modal.hide();
+        onConfirm();
+    });
+};
+
+$(document).on('submit', 'form.needs-confirm', function (e) {
+    if (this.dataset.confirmed === '1') { return true; }
+    e.preventDefault();
+    const form = this;
+    window.__confirm(form.dataset.confirmMsg, function () {
+        form.dataset.confirmed = '1';
+        form.submit();
+    });
+    $('#__globalConfirmModal').off('hidden.bs.modal.confirm').on('hidden.bs.modal.confirm', function () {
+        form.dataset.confirmed = '0';
+    });
+});
+</script>
+
 <script>
 $(document).on('change', '.js-auto-submit', function () {
     $(this).closest('form').submit();
@@ -329,6 +376,70 @@ $(document).on('change', '.js-auto-submit', function () {
 </script>
 
 <?php echo $__env->make('media::partials.picker-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (auth()->guard()->check()) { ?>
+<script>
+(function () {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        if (!('Notification' in window) || !('PushManager' in reg)) return;
+        if (Notification.permission !== 'default') return;
+        if (localStorage.getItem('__push_asked')) return;
+
+        setTimeout(function () {
+            localStorage.setItem('__push_asked', '1');
+            if (typeof toastr !== 'undefined') {
+                toastr.info(
+                    '<button class="btn btn-sm btn-primary mt-2" onclick="window.__requestPush()">Activar notificaciones</button>',
+                    '¿Quieres recibir notificaciones?',
+                    { timeOut: 10000, extendedTimeOut: 0, closeButton: true, allowHtml: true }
+                );
+            }
+        }, 30000);
+    }).catch(function (err) {
+        console.warn('[PWA] SW registration failed', err);
+    });
+
+    window.__requestPush = async function () {
+        const reg = await navigator.serviceWorker.ready;
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return;
+
+        try {
+            const vapidPublicKey = '<?php echo e(env('VAPID_PUBLIC_KEY', '')); ?>';
+            if (!vapidPublicKey) {
+                alert('VAPID key no configurada. El administrador debe agregar VAPID_PUBLIC_KEY en .env');
+                return;
+            }
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            });
+            await fetch('/panel/push/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                },
+                body: JSON.stringify(subscription),
+            });
+            toastr.success('Notificaciones activadas');
+        } catch (e) {
+            console.error('[PWA] Push subscribe failed', e);
+            toastr.error('No se pudo activar las notificaciones');
+        }
+    };
+
+    function urlBase64ToUint8Array(base64) {
+        const padding = '='.repeat((4 - base64.length % 4) % 4);
+        const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw = window.atob(b64);
+        return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    }
+}());
+</script>
+<?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
 
 
 

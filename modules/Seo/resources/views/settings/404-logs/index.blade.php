@@ -112,7 +112,7 @@
 
             {{-- Table --}}
             <div class="card-body">
-                <div id="pattern-view-container" style="display:none;"></div>
+                <div id="pattern-view-container"></div>
                 @if($logs->count() > 0)
                     <div id="logs-table-wrapper" class="table-responsive">
                         <table class="table table-hover align-middle mb-0">

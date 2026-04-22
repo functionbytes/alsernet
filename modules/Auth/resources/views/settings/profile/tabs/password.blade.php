@@ -19,7 +19,7 @@
                         <label class="form-label">Nueva contraseña <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" name="new_password" id="new_password"
                                placeholder="Mínimo 8 caracteres" required>
-                        <div class="mt-2" id="password-strength-wrapper" style="display:none">
+                        <div class="mt-2" id="password-strength-wrapper" class="d-none">
                             <div class="progress" style="height:6px">
                                 <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
                             </div>

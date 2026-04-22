@@ -2,53 +2,25 @@
 
 namespace Modules\Helpdesk\Providers;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Helpdesk\Console\Commands\AutoCloseTicketsCommand;
-use Modules\Helpdesk\Console\Commands\AutoResponseTicketCommand;
-use Modules\Helpdesk\Console\Commands\CleanupTrashedTicketsCommand;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
-use Modules\Helpdesk\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
-use Modules\Helpdesk\Jobs\CheckSlaBreaches;
-use Modules\Helpdesk\Jobs\CleanupOldTickets;
-use Modules\Helpdesk\Jobs\EscalateTicketsJob;
-use Modules\Helpdesk\Jobs\ProcessRecurringTicketsJob;
-use Modules\Helpdesk\Jobs\SendSlaWarnings;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\HelpCenterArticle;
-use Modules\Helpdesk\Models\RecurringTicket;
-use Modules\Helpdesk\Models\Ticket;
-use Modules\Helpdesk\Models\TicketComment;
-use Modules\Helpdesk\Models\TicketNote;
-use Modules\Helpdesk\Models\TicketTemplate;
-use Modules\Helpdesk\Models\TicketTimeEntry;
 use Modules\Helpdesk\Policies\ConversationPolicy;
 use Modules\Helpdesk\Policies\CustomerPolicy;
 use Modules\Helpdesk\Policies\HelpCenterArticlePolicy;
-use Modules\Helpdesk\Policies\RecurringTicketPolicy;
-use Modules\Helpdesk\Policies\TicketCommentPolicy;
-use Modules\Helpdesk\Policies\TicketNotePolicy;
-use Modules\Helpdesk\Policies\TicketPolicy;
-use Modules\Helpdesk\Policies\TicketTemplatePolicy;
-use Modules\Helpdesk\Policies\TimeEntryPolicy;
-use Modules\Helpdesk\Services\AiAgentFlowEngine;
-use Modules\Helpdesk\Services\AssignmentService;
 use Modules\Helpdesk\Services\CannedReplyService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CustomerStatsService;
-use Modules\Helpdesk\Services\EscalationService;
+use Modules\Helpdesk\Services\EmailInboundService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\Helpdesk\Services\InstagramService;
 use Modules\Helpdesk\Services\NotificationService;
 use Modules\Helpdesk\Services\OutboundMessageService;
-use Modules\Helpdesk\Services\PromptSanitizer;
-use Modules\Helpdesk\Services\SlaService;
-use Modules\Helpdesk\Services\TicketService;
-use Modules\Helpdesk\Services\TicketUpdateService;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -69,8 +41,6 @@ class HelpdeskServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->registerCommands();
-        $this->registerCommandSchedules();
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
@@ -84,12 +54,8 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
 
         // Register services as singletons
-        $this->app->singleton(TicketService::class);
-        $this->app->singleton(TicketUpdateService::class);
         $this->app->singleton(ConversationTagService::class);
         $this->app->singleton(CustomerStatsService::class);
-        $this->app->singleton(AssignmentService::class);
-        $this->app->singleton(SlaService::class);
         $this->app->singleton(CannedReplyService::class);
         $this->app->singleton(NotificationService::class);
 
@@ -99,9 +65,10 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->app->singleton(InstagramService::class);
         $this->app->singleton(OutboundMessageService::class);
 
-        $this->app->singleton(EscalationService::class);
-        $this->app->singleton(PromptSanitizer::class);
-        $this->app->singleton(AiAgentFlowEngine::class);
+        // Email inbound service
+        $this->app->singleton(EmailInboundService::class);
+
+        $this->commands([FetchEmailTicketsCommand::class]);
 
         $this->registerPolicies();
     }
@@ -109,15 +76,9 @@ class HelpdeskServiceProvider extends ServiceProvider
     protected function registerPolicies(): void
     {
         $policies = [
-            Ticket::class => TicketPolicy::class,
             Conversation::class => ConversationPolicy::class,
             Customer::class => CustomerPolicy::class,
             HelpCenterArticle::class => HelpCenterArticlePolicy::class,
-            TicketNote::class => TicketNotePolicy::class,
-            TicketComment::class => TicketCommentPolicy::class,
-            TicketTimeEntry::class => TimeEntryPolicy::class,
-            RecurringTicket::class => RecurringTicketPolicy::class,
-            TicketTemplate::class => TicketTemplatePolicy::class,
         ];
 
         foreach ($policies as $model => $policy) {
@@ -125,65 +86,6 @@ class HelpdeskServiceProvider extends ServiceProvider
                 Gate::policy($model, $policy);
             }
         }
-    }
-
-    protected function registerCommands(): void
-    {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                AutoCloseTicketsCommand::class,
-                MarkOverdueTicketsCommand::class,
-                AutoResponseTicketCommand::class,
-                CleanupTrashedTicketsCommand::class,
-                FetchEmailTicketsCommand::class,
-            ]);
-        }
-    }
-
-    protected function registerCommandSchedules(): void
-    {
-        $this->app->booted(function () {
-            $schedule = $this->app->make(Schedule::class);
-
-            // Email to ticket processing
-            $schedule->command('imap:emailticket')->everyMinute();
-
-            // Auto-close tickets
-            $schedule->command('ticket:autoclose')->everyMinute();
-
-            // Auto-overdue ticket detection
-            $schedule->command('ticket:autooverdue')->everyMinute();
-
-            // Auto-response for tickets
-            $schedule->command('ticket:autoresponseticket')->everyMinute();
-
-            // Clean up trashed tickets
-            $schedule->command('trashedticket:autodelete')->everyMinute();
-
-            // Recurring ticket schedules
-            $schedule->job(new ProcessRecurringTicketsJob)
-                ->everyFifteenMinutes()
-                ->withoutOverlapping();
-
-            // SLA breach checking
-            $schedule->job(new CheckSlaBreaches)
-                ->everyFifteenMinutes()
-                ->withoutOverlapping();
-
-            // SLA warning notifications
-            $schedule->job(new SendSlaWarnings)
-                ->everyThirtyMinutes();
-
-            // Clean up old closed tickets
-            $schedule->job(new CleanupOldTickets)
-                ->daily()
-                ->at('02:00');
-
-            // Priority escalation for overdue tickets
-            $schedule->job(new EscalateTicketsJob)
-                ->hourly()
-                ->withoutOverlapping();
-        });
     }
 
     public function registerTranslations(): void

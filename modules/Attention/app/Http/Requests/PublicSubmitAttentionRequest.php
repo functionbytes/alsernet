@@ -48,7 +48,7 @@ class PublicSubmitAttentionRequest extends FormRequest
             'response_type' => ['nullable', 'string', 'in:email,presencial,correo_fisico,telefono,no_requiere'],
         ];
 
-        if (config('attention.captcha.enabled', true)) {
+        if (config('attention.captcha.enabled', false)) {
             $rules = array_merge($rules, Captcha::rules());
         }
 

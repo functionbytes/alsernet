@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\DashboardCustomizerController;
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Modules\Forms\Http\Controllers\ContactController;
 use Modules\Health\Http\Controllers\AlertThresholdController;
@@ -36,4 +38,16 @@ Route::middleware('auth')->prefix('panel/import')->name('import.')->group(functi
     Route::get('/{type}', [ImportController::class, 'show'])->name('show');
     Route::post('/{type}', [ImportController::class, 'store'])->name('store');
     Route::get('/{type}/template', [ImportController::class, 'template'])->name('template');
+});
+
+Route::middleware(['web', 'auth'])->prefix('panel/push')->group(function () {
+    Route::post('subscribe', [PushSubscriptionController::class, 'subscribe']);
+    Route::post('unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
+});
+
+Route::middleware(['web', 'auth'])->prefix('panel/dashboard')->name('dashboard.')->group(function () {
+    Route::get('customize', [DashboardCustomizerController::class, 'index'])->name('customize');
+    Route::post('customize', [DashboardCustomizerController::class, 'save'])->name('customize.save');
+    Route::post('customize/reset', [DashboardCustomizerController::class, 'reset'])->name('customize.reset');
+    Route::get('widget-data/{source}', [DashboardCustomizerController::class, 'widgetData'])->name('widget-data');
 });

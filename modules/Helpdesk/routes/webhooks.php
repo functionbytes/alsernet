@@ -1,12 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\EmailInboundController;
 use Modules\Helpdesk\Http\Controllers\WebhookController;
 
 // These routes are public (no auth) — Meta webhook verification and delivery require open access.
 // CSRF is already excluded via VerifyCsrfToken::$except = ['webhooks/*'].
 
-Route::prefix('webhooks/helpdesk')->name('helpdesk.webhooks.')->group(function () {
+// Email inbound webhook — supports mailgun, sendgrid, postmark, generic
+Route::post('webhooks/helpdesk/email/{provider}', [EmailInboundController::class, 'handle'])
+    ->name('helpdesk.webhooks.email-inbound')
+    ->middleware('throttle:helpdesk-webhook-inbound');
+
+Route::middleware('throttle:helpdesk-webhook-inbound')->prefix('webhooks/helpdesk')->name('helpdesk.webhooks.')->group(function () {
     // WhatsApp Business API
     Route::get('whatsapp', [WebhookController::class, 'whatsappVerify'])->name('whatsapp.verify');
     Route::post('whatsapp', [WebhookController::class, 'whatsappIncoming'])->name('whatsapp.incoming');

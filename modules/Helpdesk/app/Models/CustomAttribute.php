@@ -36,13 +36,16 @@ class CustomAttribute extends Model
         'active',
     ];
 
-    protected $casts = [
-        'required' => 'boolean',
-        'config' => 'array',
-        'internal' => 'boolean',
-        'materialized' => 'boolean',
-        'active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'required' => 'boolean',
+            'config' => 'array',
+            'internal' => 'boolean',
+            'materialized' => 'boolean',
+            'active' => 'boolean',
+        ];
+    }
 
     protected $hidden = ['pivot'];
 

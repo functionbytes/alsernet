@@ -41,18 +41,22 @@ Route::middleware(['web', 'auth'])
 
 // ─── Rutas públicas ──────────────────────────────────────────────────────────
 
-Route::middleware(['web', 'throttle:20,1'])
+Route::middleware(['web'])
     ->prefix('forms')
     ->name('forms.public.')
     ->group(function () {
-        Route::post('/{slug}/submit', [FormPublicController::class, 'submit'])->name('submit')->middleware('throttle:forms.submit');
+        Route::post('/{slug}/submit', [FormPublicController::class, 'submit'])->name('submit');
         Route::get('/embed/{slug}', [FormPublicController::class, 'embed'])->name('embed');
         Route::get('/access/{token}', [FormPublicController::class, 'accessByToken'])->name('access');
-        Route::post('/abandon/{slug}', [FormPublicController::class, 'trackAbandon'])->name('abandon')->middleware('throttle:30,1');
-        Route::get('/abandon/{slug}/restore', [FormPublicController::class, 'restoreAbandoned'])->name('restore')->middleware('throttle:30,1');
-        Route::get('/preview/{form}/{token}', [FormController::class, 'previewPublic'])->name('preview.public');
+        Route::post('/abandon/{slug}', [FormPublicController::class, 'trackAbandon'])->name('abandon');
+        Route::get('/abandon/{slug}/restore', [FormPublicController::class, 'restoreAbandoned'])->name('restore');
         Route::get('/{slug}', [FormPublicController::class, 'show'])->name('show');
     });
+
+// Preview público con token HMAC — sin throttle restrictivo (token es la protección)
+Route::middleware(['web'])
+    ->get('forms/preview/{form}/{token}', [FormController::class, 'previewPublic'])
+    ->name('forms.public.preview.public');
 
 // ─── Visual editor (sin middleware settings) ──────────────────────────────────
 
@@ -60,7 +64,7 @@ Route::middleware(['web', 'auth'])
     ->patch('panel/forms/fields/{field}/editor', [FormFieldEditorController::class, 'update'])
     ->name('forms.fields.editor.update');
 
-Route::middleware(['web', 'auth', 'throttle:60,1'])
+Route::middleware(['web', 'auth'])
     ->prefix('panel/forms/internal')
     ->name('forms.internal.')
     ->group(function () {

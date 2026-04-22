@@ -59,17 +59,7 @@
                         <div class="col-12 col-md-4">
                             <div class="mb-3">
                                 <label class="form-label d-block">&nbsp;</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="activa"
-                                           name="activa"
-                                           value="1"
-                                           {{ old('activa', true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="activa">
-                                        Automatización activa
-                                    </label>
-                                </div>
+                                <div class="mb-2"><label class="form-label" for="activa">Automatización activa</label><select class="form-select" name="activa" id="activa"><option value="1">Activado</option><option value="0">Desactivado</option></select></div>
                             </div>
                         </div>
 
@@ -286,17 +276,7 @@
                                 <!-- Toggle: Log detallado -->
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input"
-                                                   type="checkbox"
-                                                   id="log_detallado"
-                                                   name="log_detallado"
-                                                   value="1"
-                                                   {{ old('log_detallado') ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="log_detallado">
-                                                Log detallado
-                                            </label>
-                                        </div>
+                                        <div class="mb-2"><label class="form-label" for="log_detallado">Log detallado</label><select class="form-select" name="log_detallado" id="log_detallado"><option value="1">Activado</option><option value="0">Desactivado</option></select></div>
                                         <small class="form-text text-muted">Registrar información detallada de cada ejecución</small>
                                     </div>
                                 </div>
@@ -304,17 +284,7 @@
                                 <!-- Toggle: Notificar settings en errores -->
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input"
-                                                   type="checkbox"
-                                                   id="notificar_admin"
-                                                   name="notificar_admin"
-                                                   value="1"
-                                                   {{ old('notificar_admin') ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="notificar_admin">
-                                                Notificar admin en errores
-                                            </label>
-                                        </div>
+                                        <div class="mb-2"><label class="form-label" for="notificar_admin">Notificar admin en errores</label><select class="form-select" name="notificar_admin" id="notificar_admin"><option value="1">Activado</option><option value="0">Desactivado</option></select></div>
                                         <small class="form-text text-muted">Enviar notificación al administrador cuando ocurra un error</small>
                                     </div>
                                 </div>

@@ -141,22 +141,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="auto_sync"
-                                name="auto_sync"
-                                value="1"
-                                {{ old('auto_sync', true) ? 'checked' : '' }}
-                            >
-                            <label class="form-check-label" for="auto_sync">
-                                <strong>Sincronización automática</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted ms-4">
-                            Sincronizar automáticamente los cambios con Mailrelay
-                        </small>
+                        <label class="form-label" for="auto_sync">Sincronización automática</label>
+                        <select class="form-select" name="auto_sync" id="auto_sync">
+                            <option value="1" {{ old('auto_sync', 1) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('auto_sync', 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="form-text text-muted">Sincronizar automáticamente los cambios con Mailrelay</small>
                     </div>
 
                     <!-- Status -->
@@ -165,22 +155,12 @@
                     </h6>
 
                     <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="active"
-                                name="active"
-                                value="1"
-                                {{ old('active', true) ? 'checked' : '' }}
-                            >
-                            <label class="form-check-label" for="active">
-                                <strong>Grupo activo</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted ms-4">
-                            Los grupos inactivos no recibirán campañas de email
-                        </small>
+                        <label class="form-label" for="active">Estado del grupo</label>
+                        <select class="form-select" name="active" id="active">
+                            <option value="1" {{ old('active', 1) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('active', 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="form-text text-muted">Los grupos inactivos no recibirán campañas de email</small>
                     </div>
 
                     <!-- Action Buttons -->

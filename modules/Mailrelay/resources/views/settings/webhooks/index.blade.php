@@ -3,7 +3,7 @@
 @section('title', 'Webhooks de Mailrelay')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Webhooks de Mailrelay</h5>
@@ -100,7 +100,7 @@
                                             <form action="{{ route('settings.mailrelay.webhooks.destroy', $webhook->id) }}"
                                                   method="POST"
                                                   class="d-inline"
-                                                  onsubmit="return confirm('¿Eliminar este webhook?')">
+                                                  class="needs-confirm" data-confirm-msg="¿Eliminar este webhook?">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger" title="Eliminar">

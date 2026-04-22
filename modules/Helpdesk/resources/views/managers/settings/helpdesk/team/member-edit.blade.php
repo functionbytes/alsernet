@@ -10,7 +10,7 @@
 
         <div class="card w-100">
 
-            <form id="formMember" method="POST" action="{{ route('manager.helpdesk.backups.tickets.team.member.update', $member->id) }}">
+            <form id="formMember" method="POST" action="{{ route('manager.helpdesk.settings.tickets.team.member.update', $member->id) }}">
 
                 {{ csrf_field() }}
                 @method('PUT')
@@ -308,7 +308,7 @@
                             </div>
                             <h6 class="mb-1">No hay grupos disponibles</h6>
                             <p class="text-muted mb-0">
-                                Primero debes <a href="{{ route('manager.helpdesk.backups.tickets.team.group.create') }}" class="text-decoration-underline">crear un grupo</a>
+                                Primero debes <a href="{{ route('manager.helpdesk.settings.tickets.team.group.create') }}" class="text-decoration-underline">crear un grupo</a>
                             </p>
                         </div>
                     @endif
@@ -318,7 +318,7 @@
                     <button type="submit" class="btn btn-primary w-100 mb-1">
                         <i class="fa fa-check me-1"></i> Guardar Cambios
                     </button>
-                    <a href="{{ route('manager.helpdesk.backups.tickets.team.members') }}" class="btn btn-light w-100">
+                    <a href="{{ route('manager.helpdesk.settings.tickets.team.members') }}" class="btn btn-light w-100">
                         <i class="fa fa-arrow-left me-1"></i> Cancelar
                     </a>
                 </div>

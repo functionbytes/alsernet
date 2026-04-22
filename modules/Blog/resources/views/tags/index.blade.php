@@ -272,7 +272,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una accion.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un tag.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' tag(s) seleccionados?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

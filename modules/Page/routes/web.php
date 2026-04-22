@@ -155,4 +155,4 @@ Route::get('/', [PublicController::class, 'showHomepage'])->name('page.home');
 
 // Catchall route for pages - must be last
 Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')
-    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|reviews|templates|reply-templates|blog|helpdesk|forms|mailrelay)([\p{L}0-9\-\/]+)$');
+    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|templates|reply-templates|blog|helpdesk|forms|mailrelay)([\p{L}0-9\-\/]+)$');

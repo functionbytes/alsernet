@@ -67,13 +67,13 @@
 
                     <!-- Enable Email Notifications -->
                     <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="enable_email_notifications" name="enable_email_notifications"
-                                {{ ($settings['email']['enable_email_notifications']['value'] ?? 'no') === 'yes' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="enable_email_notifications">
-                                <strong>Habilitar notificaciones por email</strong>
-                                <small class="d-block text-muted">Activa o desactiva todas las notificaciones por correo</small>
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="enable_email_notifications">Notificaciones por email</label>
+                            <select class="form-select" name="enable_email_notifications" id="enable_email_notifications">
+                                <option value="yes" {{ ($settings['email']['enable_email_notifications']['value'] ?? 'no') === 'yes' ? 'selected' : '' }}>Activado</option>
+                                <option value="no" {{ ($settings['email']['enable_email_notifications']['value'] ?? 'no') === 'no' ? 'selected' : '' }}>Desactivado</option>
+                            </select>
+                            <small class="text-muted">Activa o desactiva todas las notificaciones por correo</small>
                         </div>
                     </div>
 

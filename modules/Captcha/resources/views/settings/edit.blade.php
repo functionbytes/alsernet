@@ -108,13 +108,18 @@
                                         <input type="password"
                                                class="form-control @error('captcha_secret') is-invalid @enderror"
                                                id="captcha_secret" name="captcha_secret"
-                                               value="{{ $captcha_secret }}"
-                                               placeholder="6LcXXXXXXXXXXXXXXXXXXXXXXXXX"
+                                               value=""
+                                               placeholder="{{ $captcha_secret_is_set ? '••••••••••••••••••••••••• (ya configurada)' : '6LcXXXXXXXXXXXXXXXXXXXXXXXXX' }}"
                                                autocomplete="off">
                                         @error('captcha_secret')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
-                                        <small class="text-muted d-block mt-1">Clave privada para validar las respuestas en el servidor. Se almacena encriptada.</small>
+                                        <small class="text-muted d-block mt-1">
+                                            Clave privada para validar las respuestas en el servidor.
+                                            @if($captcha_secret_is_set)
+                                                Deja en blanco para mantener la clave actual.
+                                            @endif
+                                        </small>
                                     </div>
                                 </div>
                             </div>

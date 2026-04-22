@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Cookie\Console\Commands\CheckConsentRateCommand;
 use Modules\Cookie\Console\Commands\CleanupCookieLogsCommand;
+use Modules\Cookie\Models\CookieInventory;
 use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -37,6 +38,7 @@ class CookieServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerCommands();
         $this->registerCommandSchedules();
+        $this->registerShortcodes();
 
         $this->publishes([
             module_path($this->moduleName, 'public') => public_path('modules/'.$this->moduleName),
@@ -203,6 +205,44 @@ class CookieServiceProvider extends ServiceProvider
                 ['label' => 'Inventario de cookies', 'route' => 'settings.cookie.inventory'],
             ],
         ]);
+    }
+
+    /**
+     * Register [cookie-inventory] shortcode — renders grouped cookie inventory as plain text.
+     */
+    protected function registerShortcodes(): void
+    {
+        $this->app->booted(function (): void {
+            if (! $this->app->bound('shortcode')) {
+                return;
+            }
+
+            app('shortcode')->register('cookie-inventory', function (): string {
+                $categories = config('Cookie.general.cookie_categories', []);
+                $inventory = CookieInventory::query()->active()->ordered()->get()->groupBy('category');
+
+                $html = '';
+                foreach ($categories as $key => $category) {
+                    $items = $inventory->get($key);
+                    if (! $items || $items->isEmpty()) {
+                        continue;
+                    }
+
+                    $html .= '<p><strong>'.e(__($category['name'])).':</strong> '.e(__($category['description'])).'</p>';
+                    $html .= '<ul>';
+                    foreach ($items as $cookie) {
+                        $html .= '<li><strong>'.e($cookie->name).'</strong> — '.e($cookie->provider).' ('.e($cookie->duration).'): '.e($cookie->purpose).'</li>';
+                    }
+                    $html .= '</ul>';
+                }
+
+                return $html;
+            }, [
+                'name' => 'Inventario de cookies',
+                'description' => 'Lista agrupada del inventario de cookies activas del sitio.',
+                'category' => 'cookie',
+            ]);
+        });
     }
 
     /**

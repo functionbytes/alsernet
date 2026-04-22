@@ -56,7 +56,7 @@
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <!-- Header -->
     <div class="mb-4">
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -183,14 +183,13 @@
                         @enderror
                     </div>
 
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               id="is_active" name="is_active" value="1"
-                               {{ old('is_active', $automation->is_active) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="is_active">
-                            Automatización activa
-                        </label>
-                        <small class="d-block text-muted">La automatización se ejecutará automáticamente cuando se cumplan las condiciones</small>
+                    <div class="mb-2">
+                        <label class="form-label" for="is_active">Estado de la automatización</label>
+                        <select class="form-select" name="is_active" id="is_active">
+                            <option value="1" {{ old('is_active', $automation->is_active) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('is_active', $automation->is_active) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="text-muted">La automatización se ejecutará automáticamente cuando se cumplan las condiciones</small>
                     </div>
                 </div>
 
@@ -357,14 +356,13 @@
                         </div>
                     </div>
 
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch"
-                               id="detailed_logging" name="detailed_logging" value="1"
-                               {{ old('detailed_logging', $automation->detailed_logging) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="detailed_logging">
-                            Registrar log detallado
-                        </label>
-                        <small class="d-block text-muted">Guarda información completa de cada ejecución (puede ocupar más espacio)</small>
+                    <div class="mb-2">
+                        <label class="form-label" for="detailed_logging">Log detallado</label>
+                        <select class="form-select" name="detailed_logging" id="detailed_logging">
+                            <option value="1" {{ old('detailed_logging', $automation->detailed_logging) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('detailed_logging', $automation->detailed_logging) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="text-muted">Guarda información completa de cada ejecución (puede ocupar más espacio)</small>
                     </div>
                 </div>
             </div>

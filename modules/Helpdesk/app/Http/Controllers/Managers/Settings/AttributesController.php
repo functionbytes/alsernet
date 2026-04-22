@@ -51,7 +51,7 @@ class AttributesController extends Controller
             ->paginate(50)
             ->appends($request->query());
 
-        return view('theme.views.backups.helpdesk.attributes.index', [
+        return view('helpdesk::managers.settings.helpdesk.attributes.index', [
             'attributes' => $attributes,
         ]);
     }
@@ -63,7 +63,7 @@ class AttributesController extends Controller
     {
         $this->authorize('create', CustomAttribute::class);
 
-        return view('theme.views.backups.helpdesk.attributes.create');
+        return view('helpdesk::managers.settings.helpdesk.attributes.create');
     }
 
     /**
@@ -135,7 +135,7 @@ class AttributesController extends Controller
         $attribute = CustomAttribute::create($validated);
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.attributes.index')
+            ->route('manager.helpdesk.settings.attributes.index')
             ->with('success', "Atributo '{$attribute->name}' creado correctamente");
     }
 
@@ -148,7 +148,7 @@ class AttributesController extends Controller
 
         $this->authorize('update', $attribute);
 
-        return view('theme.views.backups.helpdesk.attributes.edit', [
+        return view('helpdesk::managers.settings.helpdesk.attributes.edit', [
             'attribute' => $attribute,
         ]);
     }
@@ -218,7 +218,7 @@ class AttributesController extends Controller
         $attribute->update($validated);
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.attributes.index')
+            ->route('manager.helpdesk.settings.attributes.index')
             ->with('success', "Atributo '{$attribute->name}' actualizado correctamente");
     }
 
@@ -238,7 +238,7 @@ class AttributesController extends Controller
         $attribute->delete();
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.attributes.index')
+            ->route('manager.helpdesk.settings.attributes.index')
             ->with('success', 'Atributo eliminado correctamente');
     }
 

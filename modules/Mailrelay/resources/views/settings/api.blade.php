@@ -200,18 +200,11 @@
                         <!-- Cachear respuestas -->
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           role="switch"
-                                           id="cacheEnabled"
-                                           name="cache_enabled"
-                                           value="1"
-                                           {{ old('cache_enabled', $apiSettings['cache_enabled'] ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="cacheEnabled">
-                                        Cachear respuestas API
-                                    </label>
-                                </div>
+                                <label class="form-label" for="cacheEnabled">Cachear respuestas API</label>
+                                <select class="form-select" name="cache_enabled" id="cacheEnabled">
+                                    <option value="1" {{ old('cache_enabled', $apiSettings['cache_enabled'] ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('cache_enabled', $apiSettings['cache_enabled'] ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="text-muted">Mejora el rendimiento almacenando temporalmente las respuestas</small>
                             </div>
                         </div>
@@ -240,18 +233,11 @@
                         <!-- Retry automático -->
                         <div class="col-12">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           role="switch"
-                                           id="retryEnabled"
-                                           name="retry_enabled"
-                                           value="1"
-                                           {{ old('retry_enabled', $apiSettings['retry_enabled'] ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="retryEnabled">
-                                        Retry automático en errores
-                                    </label>
-                                </div>
+                                <label class="form-label" for="retryEnabled">Retry automático en errores</label>
+                                <select class="form-select" name="retry_enabled" id="retryEnabled">
+                                    <option value="1" {{ old('retry_enabled', $apiSettings['retry_enabled'] ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('retry_enabled', $apiSettings['retry_enabled'] ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="text-muted">Reintenta automáticamente las peticiones fallidas a la API</small>
                             </div>
                         </div>
@@ -295,11 +281,11 @@
 
         // Enable/disable cache duration based on cache_enabled
         $('#cacheEnabled').on('change', function() {
-            $('#cacheDuration').prop('disabled', !this.checked);
+            $('#cacheDuration').prop('disabled', $(this).val() !== '1');
         });
 
         // Initialize cache duration state
-        $('#cacheDuration').prop('disabled', !$('#cacheEnabled').is(':checked'));
+        $('#cacheDuration').prop('disabled', $('#cacheEnabled').val() !== '1');
 
         // Test API Connection
         $('#testConnectionBtn').on('click', function() {

@@ -5,7 +5,7 @@ parameters:
     paths:
         - app
         - modules
-    level: 3
+    level: 5
     parallel:
         maximumNumberOfProcesses: 1
     excludePaths:

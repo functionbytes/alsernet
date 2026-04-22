@@ -83,13 +83,13 @@
                                                 @endif
                                             </td>
                                             <td class="text-center">
-                                                <div class="form-check form-switch d-flex justify-content-center mb-0">
-                                                    <input class="form-check-input toggle-active"
-                                                           type="checkbox"
-                                                           data-id="{{ $followUp->id }}"
-                                                           data-url="{{ route('settings.forms.follow-ups.update', [$form, $followUp]) }}"
-                                                           {{ $followUp->is_active ? 'checked' : '' }}>
-                                                </div>
+                                                <select class="form-select form-select-sm toggle-active"
+                                                        data-id="{{ $followUp->id }}"
+                                                        data-url="{{ route('settings.forms.follow-ups.update', [$form, $followUp]) }}"
+                                                        style="width:auto;margin:auto;">
+                                                    <option value="1" {{ $followUp->is_active ? 'selected' : '' }}>Activado</option>
+                                                    <option value="0" {{ !$followUp->is_active ? 'selected' : '' }}>Desactivado</option>
+                                                </select>
                                             </td>
                                             <td class="text-end pe-3">
                                                 <div class="d-flex gap-1 justify-content-end">
@@ -189,9 +189,12 @@
                         <input type="text" id="fuConditionValue" class="form-control" placeholder="Ej: new">
                     </div>
                     <div class="col-12">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="fuActive" checked>
-                            <label class="form-check-label" for="fuActive">Activo</label>
+                        <div class="mb-2">
+                            <label class="form-label" for="fuActive">Activo</label>
+                            <select class="form-select" id="fuActive">
+                                <option value="1" selected>Activado</option>
+                                <option value="0">Desactivado</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -213,14 +216,14 @@
     const storeUrl  = '{{ route('settings.forms.follow-ups.store', $form) }}';
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-    // Toggle activo via switch
+    // Toggle activo via select
     $(document).on('change', '.toggle-active', function () {
-        const url = $(this).data('url');
-        const active = $(this).is(':checked');
+        const url    = $(this).data('url');
+        const active = $(this).val();
         $.ajax({
             url: url,
             method: 'PATCH',
-            data: { is_active: active ? 1 : 0 },
+            data: { is_active: active },
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function () { toastr.success('Estado actualizado'); },
             error: function () { toastr.error('Error al actualizar'); }
@@ -236,7 +239,7 @@
         $('#fuRecipient').val(data.recipient_type);
         $('#fuConditionField').val(data.condition_field || '');
         $('#fuConditionValue').val(data.condition_value || '');
-        $('#fuActive').prop('checked', !!data.is_active);
+        $('#fuActive').val(data.is_active ? '1' : '0');
         $('#followUpModalLabel').text('Editar follow-up');
         $('#followUpModal').modal('show');
     });
@@ -247,7 +250,7 @@
         $('#fuName, #fuConditionField, #fuConditionValue').val('');
         $('#fuDays').val(3);
         $('#fuRecipient').val('admin');
-        $('#fuActive').prop('checked', true);
+        $('#fuActive').val('1');
         $('#followUpModalLabel').text('Añadir follow-up');
     });
 
@@ -265,7 +268,7 @@
             recipient_type:  $('#fuRecipient').val(),
             condition_field: $('#fuConditionField').val() || null,
             condition_value: $('#fuConditionValue').val() || null,
-            is_active:       $('#fuActive').is(':checked') ? 1 : 0,
+            is_active:       $('#fuActive').val(),
         };
 
         $.ajax({

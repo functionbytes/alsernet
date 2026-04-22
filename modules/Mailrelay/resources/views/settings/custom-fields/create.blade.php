@@ -230,35 +230,21 @@
 
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input"
-                                                       type="checkbox"
-                                                       id="is_required"
-                                                       name="is_required"
-                                                       value="1"
-                                                       {{ old('is_required') ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="is_required">
-                                                    <strong>Campo requerido</strong>
-                                                    <br>
-                                                    <small class="text-muted">Los usuarios deben completar este campo</small>
-                                                </label>
-                                            </div>
+                                            <label class="form-label" for="is_required">Campo requerido</label>
+                                            <select class="form-select" name="is_required" id="is_required">
+                                                <option value="1" {{ old('is_required') == 1 ? 'selected' : '' }}>Activado</option>
+                                                <option value="0" {{ old('is_required', 0) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                            </select>
+                                            <small class="text-muted">Los usuarios deben completar este campo</small>
                                         </div>
 
                                         <div class="col-md-6 mb-3">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input"
-                                                       type="checkbox"
-                                                       id="is_unique"
-                                                       name="is_unique"
-                                                       value="1"
-                                                       {{ old('is_unique') ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="is_unique">
-                                                    <strong>Valor único</strong>
-                                                    <br>
-                                                    <small class="text-muted">No permitir valores duplicados</small>
-                                                </label>
-                                            </div>
+                                            <label class="form-label" for="is_unique">Valor único</label>
+                                            <select class="form-select" name="is_unique" id="is_unique">
+                                                <option value="1" {{ old('is_unique') == 1 ? 'selected' : '' }}>Activado</option>
+                                                <option value="0" {{ old('is_unique', 0) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                            </select>
+                                            <small class="text-muted">No permitir valores duplicados</small>
                                         </div>
                                     </div>
 
@@ -348,19 +334,12 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input"
-                                                   type="checkbox"
-                                                   id="sync_with_mailrelay"
-                                                   name="sync_with_mailrelay"
-                                                   value="1"
-                                                   {{ old('sync_with_mailrelay') ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="sync_with_mailrelay">
-                                                <strong>Sincronizar automáticamente</strong>
-                                                <br>
-                                                <small class="text-muted">Enviar este campo a Mailrelay automáticamente</small>
-                                            </label>
-                                        </div>
+                                        <label class="form-label" for="sync_with_mailrelay">Sincronizar automáticamente</label>
+                                        <select class="form-select" name="sync_with_mailrelay" id="sync_with_mailrelay">
+                                            <option value="1" {{ old('sync_with_mailrelay') == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('sync_with_mailrelay', 0) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
+                                        <small class="text-muted">Enviar este campo a Mailrelay automáticamente</small>
                                     </div>
 
                                     <div id="mailrelay-options" style="display: none;">

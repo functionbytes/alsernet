@@ -41,7 +41,7 @@ class ConversationMessagesController extends Controller
             'body' => 'required|string|max:5000',
             'html_body' => 'nullable|string',
             'is_internal' => 'boolean',
-            'attachments.*' => 'file|max:10240', // 10MB max
+            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip,mp4,mp3,ogg',
         ]);
 
         // Handle attachments

@@ -3,7 +3,7 @@
 @section('title', 'Subscriber Lists')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -89,10 +89,11 @@
                                     <a href="{{ route('mailrelay.lists.edit', $list) }}" class="btn btn-outline-warning" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('mailrelay.lists.destroy', $list) }}" method="POST" style="display: inline;">
+                                    <form action="{{ route('mailrelay.lists.destroy', $list) }}" method="POST"
+                                          class="d-inline needs-confirm" data-confirm-msg="¿Eliminar esta lista?">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger" title="Delete" onclick="return confirm('Are you sure?')">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

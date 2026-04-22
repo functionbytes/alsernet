@@ -297,9 +297,14 @@ class SeoServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             // Añadir sitemaps especializados al índice
+            $canonicalBase = rtrim((string) (seo_setting('canonical_base_url') ?: config('app.url')), '/');
             config(['sitemap.index_extra' => array_merge(
                 config('sitemap.index_extra', []),
-                [url('/sitemap-images.xml'), url('/sitemap-video.xml'), url('/sitemap-news.xml')]
+                [
+                    $canonicalBase.'/sitemap-images.xml',
+                    $canonicalBase.'/sitemap-video.xml',
+                    $canonicalBase.'/sitemap-news.xml',
+                ]
             )]);
 
             $callbacks = config('sitemap.post_callbacks', []);

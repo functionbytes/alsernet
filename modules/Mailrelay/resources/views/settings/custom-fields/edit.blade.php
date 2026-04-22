@@ -2,94 +2,19 @@
 
 @section('title', 'Editar campo personalizado')
 
-@section('head')
+@push('css')
 <style>
-    .nav-tabs .nav-link {
-        color: #6c757d;
-        border: none;
-        border-bottom: 2px solid transparent;
-        padding: 0.75rem 1.25rem;
-        transition: all 0.2s;
-    }
-
-    .nav-tabs .nav-link:hover {
-        border-color: #dee2e6;
-        color: #495057;
-    }
-
-    .nav-tabs .nav-link.active {
-        color: #495057;
-        background-color: transparent;
-        border-color: transparent transparent #0d6efd;
-        font-weight: 600;
-    }
-
-    .tab-content {
-        padding: 1.5rem 0;
-    }
-
-    .info-card {
-        background-color: #e7f3ff;
-        border-left: 4px solid #0d6efd;
-        padding: 1rem;
-        border-radius: 0.25rem;
-    }
-
-    .option-item {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-        align-items: start;
-    }
-
-    .option-item input {
-        flex: 1;
-    }
-
-    .btn-add-option {
-        width: 100%;
-        border-style: dashed;
-    }
-
-    .form-label .required {
-        color: #dc3545;
-    }
-
-    .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    .metadata-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .metadata-card .stat-label {
-        opacity: 0.9;
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .metadata-card .stat-value {
-        font-size: 1.25rem;
-        font-weight: bold;
-    }
-
-    .sync-status-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        display: inline-block;
-        font-weight: 600;
-    }
+    .option-item { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: start; }
+    .option-item input { flex: 1; }
+    .btn-add-option { width: 100%; border-style: dashed; }
+    .metadata-card { color: white; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .metadata-card .stat-label { opacity: 0.9; font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .metadata-card .stat-value { font-size: 1.25rem; font-weight: bold; }
 </style>
-@endsection
+@endpush
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col">
@@ -107,7 +32,7 @@
     </div>
 
     <!-- Metadata Card -->
-    <div class="metadata-card">
+    <div class="metadata-card bg-primary">
         <div class="row">
             <div class="col-md-4">
                 <div class="stat-label">
@@ -362,39 +287,21 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <div class="form-check form-switch">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        id="is_required"
-                                        name="is_required"
-                                        value="1"
-                                        {{ old('is_required', $customField->is_required) ? 'checked' : '' }}
-                                    >
-                                    <label class="form-check-label" for="is_required">
-                                        <strong>Campo requerido</strong>
-                                        <br>
-                                        <small class="text-muted">Los usuarios deben completar este campo</small>
-                                    </label>
-                                </div>
+                                <label class="form-label" for="is_required">Campo requerido</label>
+                                <select class="form-select" name="is_required" id="is_required">
+                                    <option value="1" {{ old('is_required', $customField->is_required) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('is_required', $customField->is_required) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
+                                <small class="text-muted">Los usuarios deben completar este campo</small>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <div class="form-check form-switch">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        id="is_unique"
-                                        name="is_unique"
-                                        value="1"
-                                        {{ old('is_unique', $customField->is_unique) ? 'checked' : '' }}
-                                    >
-                                    <label class="form-check-label" for="is_unique">
-                                        <strong>Valor único</strong>
-                                        <br>
-                                        <small class="text-muted">No permitir valores duplicados</small>
-                                    </label>
-                                </div>
+                                <label class="form-label" for="is_unique">Valor único</label>
+                                <select class="form-select" name="is_unique" id="is_unique">
+                                    <option value="1" {{ old('is_unique', $customField->is_unique) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('is_unique', $customField->is_unique) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
+                                <small class="text-muted">No permitir valores duplicados</small>
                             </div>
                         </div>
 
@@ -514,21 +421,12 @@
                         @endif
 
                         <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    id="sync_with_mailrelay"
-                                    name="sync_with_mailrelay"
-                                    value="1"
-                                    {{ old('sync_with_mailrelay', $customField->sync_with_mailrelay) ? 'checked' : '' }}
-                                >
-                                <label class="form-check-label" for="sync_with_mailrelay">
-                                    <strong>Sincronizar con Mailrelay</strong>
-                                    <br>
-                                    <small class="text-muted">Enviar este campo a Mailrelay automáticamente</small>
-                                </label>
-                            </div>
+                            <label class="form-label" for="sync_with_mailrelay">Sincronizar con Mailrelay</label>
+                            <select class="form-select" name="sync_with_mailrelay" id="sync_with_mailrelay">
+                                <option value="1" {{ old('sync_with_mailrelay', $customField->sync_with_mailrelay) == 1 ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ old('sync_with_mailrelay', $customField->sync_with_mailrelay) == 0 ? 'selected' : '' }}>Desactivado</option>
+                            </select>
+                            <small class="text-muted">Enviar este campo a Mailrelay automáticamente</small>
                         </div>
 
                         <div id="mailrelay-options">

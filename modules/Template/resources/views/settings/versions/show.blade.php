@@ -71,10 +71,10 @@
                             <div class="btn-list">
                                 @if($templateVersion->version !== $template->getCurrentVersionNumber())
                                     <form action="{{ route('settings.templates.versions.restore', [$template, $templateVersion->version]) }}"
-                                          method="POST">
+                                          method="POST" class="needs-confirm"
+                                          data-confirm-msg="¿Restaurar esta versión? Se creará un snapshot de la versión actual.">
                                         @csrf
-                                        <button type="submit" class="btn btn-warning w-100"
-                                                onclick="return confirm('¿Restaurar esta versión? Se creará un snapshot de la versión actual.')">
+                                        <button type="submit" class="btn btn-warning w-100">
                                             <i class="fas fa-undo me-2"></i>{{ __('template::template.restore') }}
                                         </button>
                                     </form>

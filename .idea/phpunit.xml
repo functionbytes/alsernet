@@ -21,6 +21,7 @@
         <option value="$PROJECT_DIR$/tests" />
         <option value="$PROJECT_DIR$/modules/Seo/tests" />
         <option value="$PROJECT_DIR$/modules/Blog/tests" />
+        <option value="$PROJECT_DIR$/modules/Core/tests" />
         <option value="$PROJECT_DIR$/modules/User/Tests" />
         <option value="$PROJECT_DIR$/modules/Forms/tests" />
         <option value="$PROJECT_DIR$/modules/Cookie/tests" />
@@ -29,6 +30,9 @@
         <option value="$PROJECT_DIR$/modules/Helpdesk/tests" />
         <option value="$PROJECT_DIR$/modules/Optimize/Tests" />
         <option value="$PROJECT_DIR$/modules/Template/Tests" />
+        <option value="$PROJECT_DIR$/modules/HelpdeskAgents/tests" />
+        <option value="$PROJECT_DIR$/modules/HelpdeskTickets/tests" />
+        <option value="$PROJECT_DIR$/modules/HelpdeskCampaigns/tests" />
       </list>
     </option>
   </component>

@@ -6,13 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        if (Schema::hasTable('helpdesk_group_user')) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_group_user')) {
             return;
         }
 
-        Schema::create('helpdesk_group_user', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_group_user', function (Blueprint $table) {
             $table->id();
             $table->foreignId('helpdesk_group_id')->constrained('helpdesk_groups')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
@@ -26,6 +28,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_group_user');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_group_user');
     }
 };

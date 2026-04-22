@@ -3,7 +3,7 @@
 @section('title', 'Edit List')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <div class="row">
         <div class="col-lg-8 mx-auto">
             <!-- Header -->
@@ -122,10 +122,11 @@
                     <p class="text-muted mb-3">
                         Deleting a list will remove it permanently. Subscribers will not be affected.
                     </p>
-                    <form action="{{ route('mailrelay.lists.destroy', $list) }}" method="POST" style="display: inline;">
+                    <form action="{{ route('mailrelay.lists.destroy', $list) }}" method="POST"
+                          class="d-inline needs-confirm" data-confirm-msg="¿Estás seguro de eliminar esta lista? Esta acción no se puede deshacer.">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you absolutely sure? This action cannot be undone.')">
+                        <button type="submit" class="btn btn-outline-danger">
                             <i class="fas fa-trash"></i> Delete List
                         </button>
                     </form>

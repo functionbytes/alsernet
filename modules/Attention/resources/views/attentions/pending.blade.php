@@ -489,7 +489,6 @@ $(document).ready(function () {
         if (!action) { toastr.warning('Selecciona una acción antes de continuar.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una peticiones.'); return; }
         if (action === 'change_status' && !value) { toastr.warning('Selecciona un estado.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar ' + ids.length + ' peticiones seleccionados? Esta acción no se puede deshacer.')) { return; }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

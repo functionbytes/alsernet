@@ -4,7 +4,7 @@
 
     <div class="card w-100">
 
-        <form id="formAttribute" method="POST" action="{{ route('manager.helpdesk.backups.tickets.attributes.update', $attribute->id) }}">
+        <form id="formAttribute" method="POST" action="{{ route('manager.helpdesk.settings.tickets.attributes.update', $attribute->id) }}">
 
             {{ csrf_field() }}
             @method('PUT')
@@ -225,7 +225,7 @@
                 <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                     Guardar
                 </button>
-                <a href="{{ route('manager.helpdesk.backups.tickets.attributes.index') }}" class="btn btn-secondary px-4 waves-effect waves-light mt-2 w-100">
+                <a href="{{ route('manager.helpdesk.settings.tickets.attributes.index') }}" class="btn btn-secondary px-4 waves-effect waves-light mt-2 w-100">
                     Volver
                 </a>
             </div>

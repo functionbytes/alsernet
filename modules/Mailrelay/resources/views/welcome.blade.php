@@ -18,7 +18,7 @@
         }
 
         .hero-section {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background-color: #1e3a8a;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -39,7 +39,7 @@
         .feature-icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            background-color: #3b82f6;
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -50,14 +50,14 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            background-color: #3b82f6;
             border: none;
             padding: 12px 32px;
             font-weight: 500;
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            background-color: #1e40af;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
@@ -119,7 +119,7 @@
                 </div>
 
                 <div class="col-lg-6 d-none d-lg-block text-center">
-                    <i class="bi bi-envelope-paper-fill" style="font-size: 20rem; opacity: 0.15;"></i>
+                    <i class="bi bi-envelope-paper-fill hero-bg-icon"></i>
                 </div>
             </div>
         </div>

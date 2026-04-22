@@ -5,8 +5,8 @@ namespace Modules\Helpdesk\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Modules\Helpdesk\Models\Ticket;
-use Modules\Helpdesk\Models\TicketMessage;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketMessage;
 
 class NotificationService
 {

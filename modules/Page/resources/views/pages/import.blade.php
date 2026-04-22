@@ -15,8 +15,8 @@
 
                     {{-- Encabezado --}}
                     <div class="mb-4 text-center">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 80px; height: 80px; background: rgba(66, 133, 244, 0.1);">
-                            <i class="fas fa-file-import fa-3x" ></i>
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 page-icon-circle">
+                            <i class="fas fa-file-import fa-3x"></i>
                         </div>
                         <h5 class="fw-bold">Importar paginas</h5>
                         <p class="text-muted mb-0">
@@ -68,8 +68,7 @@
                             <div class="timeline-steps">
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">1</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center page-step-badge">1</span>
                                     </div>
                                     <div>
                                         <strong class="d-block">Descarga la plantilla</strong>
@@ -78,8 +77,7 @@
                                 </div>
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">2</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center page-step-badge">2</span>
                                     </div>
                                     <div>
                                         <strong class="d-block">Completa los datos</strong>
@@ -88,8 +86,7 @@
                                 </div>
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">3</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center page-step-badge">3</span>
                                     </div>
                                     <div>
                                         <strong class="d-block">Guarda como CSV o JSON</strong>
@@ -98,8 +95,7 @@
                                 </div>
                                 <div class="d-flex">
                                     <div class="me-3">
-                                        <span class="badge bg-success rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">
+                                        <span class="badge bg-success rounded-circle d-flex align-items-center justify-content-center page-step-badge">
                                             <i class="fas fa-check"></i>
                                         </span>
                                     </div>
@@ -161,13 +157,8 @@
 
 @endsection
 
-@push('styles')
-<style>
-    .form-control:focus {
-        border-color: #90bb13;
-        box-shadow: 0 0 0 0.2rem rgba(144, 187, 19, 0.15);
-    }
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ asset('modules/page/css/page-admin.css') }}">
 @endpush
 
 @push('scripts')

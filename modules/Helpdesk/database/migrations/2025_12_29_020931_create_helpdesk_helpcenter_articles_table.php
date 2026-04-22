@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_helpcenter_articles', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_helpcenter_articles', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('category_id');
             $table->string('title');
@@ -29,6 +31,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_helpcenter_articles');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_helpcenter_articles');
     }
 };

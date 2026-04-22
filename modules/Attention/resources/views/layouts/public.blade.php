@@ -36,7 +36,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #f0f4f8 0%, #e8eef3 100%);
+            background: #90bb13;
             font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
         }
@@ -57,7 +57,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #90bb13 0%, #13C672 50%, #90bb13 100%);
+            background: #90bb13;
         }
 
         .public-header .container {
@@ -99,7 +99,7 @@
         }
 
         .public-footer {
-            background: linear-gradient(135deg, #2a3042 0%, #1a2030 100%);
+            background: #90bb13;
             color: rgba(255, 255, 255, 0.7);
             padding: 2rem 0;
             margin-top: 4rem;

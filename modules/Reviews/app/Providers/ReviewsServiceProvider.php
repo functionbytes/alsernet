@@ -390,7 +390,7 @@ class ReviewsServiceProvider extends ServiceProvider
                 return;
             }
 
-            app('shortcode')->register('reviews-testimonios', function (array $attrs) {
+            app('shortcode')->register('reviews-page', function (array $attrs) {
                 $locationId = isset($attrs['location_id']) ? (int) $attrs['location_id'] : null;
                 static $instanceCounter = 0;
                 $instanceId = ++$instanceCounter;
@@ -450,27 +450,12 @@ class ReviewsServiceProvider extends ServiceProvider
                     'localeCode' => $localeCode,
                     'availableTags' => $availableTags,
                 ])->render();
-            });
+            }, ['cacheable' => false]);
 
             app('shortcode')->register('reviews-home', function (array $attrs) {
-                $limit = (int) ($attrs['limit'] ?? 6);
-                $minRating = (int) ($attrs['min_rating'] ?? 5);
-                $localeCode = strtoupper(app()->getLocale());
-
-                $ratingValues = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
-                $allowedRatings = array_slice($ratingValues, $minRating - 1);
-
                 $visible = fn ($q) => $q
                     ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
                     ->orWhereDoesntHave('moderation');
-
-                $reviews = Review::query()
-                    ->where($visible)
-                    ->whereIn('star_rating', $allowedRatings)
-                    ->with(['moderation', 'translations'])
-                    ->inRandomOrder()
-                    ->limit($limit)
-                    ->get();
 
                 $row = Review::query()
                     ->where($visible)
@@ -480,12 +465,51 @@ class ReviewsServiceProvider extends ServiceProvider
                     ->first();
 
                 return view('reviews::shortcodes.home-testimonials', [
-                    'reviews' => $reviews,
                     'avgRating' => (float) ($row->avg_rating ?? 0),
                     'totalCount' => (int) ($row->total ?? 0),
-                    'localeCode' => $localeCode,
                 ])->render();
-            });
+            }, ['cacheable' => false]);
+
+            app('shortcode')->register('reviews-about', function (array $attrs) {
+                return view('reviews::shortcodes.about-reviews')->render();
+            }, ['cacheable' => false]);
+
+            app('shortcode')->register('reviews-service', function (array $attrs) {
+                $tag = $attrs['tag'] ?? null;
+                $limit = (int) ($attrs['limit'] ?? 6);
+                $minRating = (int) ($attrs['min_rating'] ?? 4);
+
+                $visible = fn ($q) => $q
+                    ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+                    ->orWhereDoesntHave('moderation');
+
+                $statsQuery = Review::query()->where($visible);
+                if ($tag) {
+                    $statsQuery->whereHas('moderation', fn ($m) => $m->whereJsonContains('tags', $tag));
+                }
+
+                $row = $statsQuery->selectRaw("COUNT(*) as total, AVG(CASE star_rating
+                    WHEN 'ONE'   THEN 1 WHEN 'TWO'   THEN 2 WHEN 'THREE' THEN 3
+                    WHEN 'FOUR'  THEN 4 WHEN 'FIVE'  THEN 5 ELSE NULL END) as avg_rating")
+                    ->first();
+
+                return view('reviews::shortcodes.service-reviews', [
+                    'tag' => $tag,
+                    'limit' => $limit,
+                    'minRating' => $minRating,
+                    'avgRating' => (float) ($row->avg_rating ?? 0),
+                    'totalCount' => (int) ($row->total ?? 0),
+                ])->render();
+            }, [
+                'description' => 'Muestra reseñas aleatorias filtradas por tag de servicio/producto.',
+                'example' => '[reviews-service tag="mosquiteras" limit="3" /]',
+                'cacheable' => false,
+                'attributes' => [
+                    'tag' => 'Slug del tag de producto (ej: mosquiteras, ventanas-pvc)',
+                    'limit' => 'Número de reseñas a mostrar (default: 6)',
+                    'min_rating' => 'Rating mínimo 1-5 (default: 4)',
+                ],
+            ]);
 
             app('shortcode')->register('reviews', function (array $attrs) {
                 $limit = (int) ($attrs['limit'] ?? 6);

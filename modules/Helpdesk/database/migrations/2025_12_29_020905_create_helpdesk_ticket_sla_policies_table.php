@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_ticket_sla_policies', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_ticket_sla_policies', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
@@ -33,6 +35,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_ticket_sla_policies');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_ticket_sla_policies');
     }
 };

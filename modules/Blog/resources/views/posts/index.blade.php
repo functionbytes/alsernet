@@ -447,7 +447,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un post.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' post(s) seleccionados?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

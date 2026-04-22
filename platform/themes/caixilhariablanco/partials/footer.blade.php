@@ -147,9 +147,9 @@
                     </div>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-2 mt-lg-0">
-                    <a href="{{ url('cookie/policy') }}" class="text-white-50 small me-3">Política de cookies</a>
+                    <a href="{{ url('cookie/policy') }}" class="text-white small me-3">Política de cookies</a>
                     @if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
-                        <button type="button" class="btn btn-link text-white-50 small p-0 border-0 text-decoration-none"
+                        <button type="button" class="btn btn-link text-white small p-0 border-0 text-decoration-none"
                                 data-bs-toggle="modal" data-bs-target="#cookie-preferences-modal">
                             Gestionar cookies
                         </button>
@@ -276,11 +276,16 @@
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit&hl={{ app()->getLocale() }}" async defer></script>
 @endif
 <script src="{{ url('modules/Newsletter/js/newsletter.js') }}"></script>
+<script src="{{ url('modules/Reviews/js/reviews-cards.js') }}"></script>
 
 @if(\Modules\Core\Models\Setting::get('cookie.enabled') === '1')
     @include('cookie::index')
     <link rel="stylesheet" href="{{ url('modules/Cookie/css/cookie-consent.css') }}">
     <script src="{{ url('modules/Cookie/js/cookie-consent.js') }}"></script>
+@endif
+
+@if(theme_option('cta_floating_enabled', '1') === '1')
+    {!! Theme::partial('shortcodes.cta-floating') !!}
 @endif
 </body>
 </html>

@@ -12,7 +12,7 @@
 
         <div class="card w-100">
 
-            <form id="uploadingForm" method="POST" action="{{ route('manager.helpdesk.backups.uploading.update') }}">
+            <form id="uploadingForm" method="POST" action="{{ route('manager.helpdesk.settings.uploading.update') }}">
                 @csrf
                 @method('PUT')
 
@@ -24,7 +24,7 @@
                             <p class="small mb-0 text-muted">Configura restricciones, compresión y seguridad para archivos</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="{{ route('manager.helpdesk.backups') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('manager.helpdesk') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left"></i> Volver
                             </a>
                             <button type="submit" class="btn btn-primary" id="saveBtn" disabled>

@@ -210,7 +210,7 @@
                                     name="assignee_id"
                                     class="form-select select2 @error('assignee_id') is-invalid @enderror">
                                 <option value="">— Sin asignar —</option>
-                                @foreach(\App\Models\User::where('active', true)->orderBy('name')->get() as $user)
+                                @foreach(\App\Models\User::where('active', true)->orderBy('firstname')->get() as $user)
                                     <option value="{{ $user->id }}"
                                             {{ old('assignee_id', $conversation->assignee_id) == $user->id ? 'selected' : '' }}>
                                         {{ $user->name }} ({{ $user->email }})

@@ -20,10 +20,10 @@
                         <p class="small mb-0 text-muted">Organiza a tus agentes en grupos para asignación eficiente de tickets</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('manager.helpdesk.backups.tickets.team.members') }}" class="btn btn-secondary">
+                        <a href="{{ route('manager.helpdesk.settings.tickets.team.members') }}" class="btn btn-secondary">
                             Ver miembros
                         </a>
-                        <a href="{{ route('manager.helpdesk.backups.tickets.team.group.create') }}" class="btn btn-primary">
+                        <a href="{{ route('manager.helpdesk.settings.tickets.team.group.create') }}" class="btn btn-primary">
                             Nuevo grupo
                         </a>
                     </div>
@@ -243,13 +243,13 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.backups.tickets.team.group.edit', $group->id) }}">
+                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.tickets.team.group.edit', $group->id) }}">
                                                             Editar
                                                         </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.team.group.destroy', $group->id) }}"
+                                                        <form method="POST" action="{{ route('manager.helpdesk.settings.tickets.team.group.destroy', $group->id) }}"
                                                               onsubmit="return confirm('¿Estás seguro de eliminar este grupo? Esta acción no se puede deshacer.')">
                                                             @csrf
                                                             @method('DELETE')
@@ -281,11 +281,11 @@
                             @endif
                         </p>
                         @if(!request('search'))
-                            <a href="{{ route('manager.helpdesk.backups.tickets.team.group.create') }}" class="btn btn-primary">
+                            <a href="{{ route('manager.helpdesk.settings.tickets.team.group.create') }}" class="btn btn-primary">
                                 Crear primer grupo
                             </a>
                         @else
-                            <a href="{{ route('manager.helpdesk.backups.tickets.team.groups') }}" class="btn btn-secondary">
+                            <a href="{{ route('manager.helpdesk.settings.ticket-groups.index') }}" class="btn btn-secondary">
                                 Limpiar búsqueda
                             </a>
                         @endif

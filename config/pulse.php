@@ -13,12 +13,13 @@ use Laravel\Pulse\Recorders\SlowRequests;
 use Modules\Media\Pulse\Recorders\MediaUploadRecorder;
 use Nwidart\Modules\Facades\Module;
 
-$pulseEnabled = true;
-try {
-    $module = Module::find('Pulse');
-    $pulseEnabled = ! $module?->isDisabled();
-} catch (Exception $e) {
-    // Fallback to true if module check fails
+$pulseEnabled = env('PULSE_ENABLED', true);
+if ($pulseEnabled) {
+    try {
+        $module = Module::find('Pulse');
+        $pulseEnabled = ! $module?->isDisabled();
+    } catch (Exception $e) {
+    }
 }
 
 return [

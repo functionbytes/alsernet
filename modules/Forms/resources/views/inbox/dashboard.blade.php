@@ -35,8 +35,7 @@
             <div class="col-md-auto d-flex align-items-center gap-2">
                 <div class="dropdown">
                     <a href="javascript:void(0)"
-                       class="d-flex align-items-center justify-content-center rounded-circle text-muted"
-                       style="width:30px;height:30px;background:#f5f6f8;"
+                       class="d-flex align-items-center justify-content-center rounded-circle text-muted btn-icon-sm"
                        data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-ellipsis-vertical"></i>
                     </a>
@@ -73,11 +72,11 @@
                             @endphp
                             @if ($pct30 !== null)
                                 <div class="d-flex align-items-center">
-                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center
+                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center spark-arrow
                                         {{ $pct30 >= 0 ? 'bg-success-subtle' : 'bg-danger-subtle' }}"
-                                          style="width:20px;height:20px;">
+                                          >
                                         <i class="fas {{ $pct30 >= 0 ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger' }}"
-                                           style="font-size:0.6rem;"></i>
+                                           ></i>
                                     </span>
                                     <p class="text-dark me-1 fs-3 mb-0">{{ $pct30 >= 0 ? '+' : '' }}{{ $pct30 }}%</p>
                                     <p class="fs-3 mb-0 text-muted">vs anterior</p>
@@ -109,11 +108,11 @@
                             @endphp
                             @if ($pctToday !== null)
                                 <div class="d-flex align-items-center">
-                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center
+                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center spark-arrow
                                         {{ $pctToday >= 0 ? 'bg-success-subtle' : 'bg-danger-subtle' }}"
-                                          style="width:20px;height:20px;">
+                                          >
                                         <i class="fas {{ $pctToday >= 0 ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger' }}"
-                                           style="font-size:0.6rem;"></i>
+                                           ></i>
                                     </span>
                                     <p class="text-dark me-1 fs-3 mb-0">{{ $pctToday >= 0 ? '+' : '' }}{{ $pctToday }}%</p>
                                     <p class="fs-3 mb-0 text-muted">vs ayer</p>
@@ -145,11 +144,11 @@
                             @endphp
                             @if ($pctMonth !== null)
                                 <div class="d-flex align-items-center">
-                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center
+                                    <span class="me-1 rounded-circle d-flex align-items-center justify-content-center spark-arrow
                                         {{ $pctMonth >= 0 ? 'bg-success-subtle' : 'bg-danger-subtle' }}"
-                                          style="width:20px;height:20px;">
+                                          >
                                         <i class="fas {{ $pctMonth >= 0 ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger' }}"
-                                           style="font-size:0.6rem;"></i>
+                                           ></i>
                                     </span>
                                     <p class="text-dark me-1 fs-3 mb-0">{{ $pctMonth >= 0 ? '+' : '' }}{{ $pctMonth }}%</p>
                                     <p class="fs-3 mb-0 text-muted">vs mes anterior</p>
@@ -180,9 +179,8 @@
                         </div>
                         <div class="col-4">
                             <div class="d-flex justify-content-end">
-                                <span class="rounded-circle d-flex align-items-center justify-content-center"
-                                      style="width:44px;height:44px;background:#fce8e8;">
-                                    <i class="fas fa-envelope" style="color:#b10100;"></i>
+                                <span class="rounded-circle d-flex align-items-center justify-content-center unread-icon">
+                                    <i class="fas fa-envelope"></i>
                                 </span>
                             </div>
                         </div>
@@ -225,7 +223,7 @@
                                                 <div>
                                                     <a href="{{ route('forms.inbox.index', ['form_id' => $item->id]) }}"
                                                        class="fw-semibold text-decoration-none text-dark text-truncate d-block"
-                                                       style="max-width:260px;">
+                                                       class="form-name-link">
                                                         {{ $item->name }}
                                                     </a>
                                                     <span class="fs-2 text-muted">#{{ $item->id }}</span>
@@ -315,7 +313,7 @@
                     <p class="card-subtitle mt-1">Por estado</p>
                 </div>
                 <div class="card-body">
-                    <div id="status-chart" class="mb-4" style="height:200px;"></div>
+                    <div id="status-chart" class="mb-4 chart-200"></div>
                     <hr>
                     @foreach ($statusItems as $i => $item)
                         @php
@@ -347,6 +345,25 @@
     </div>
 
 @endsection
+
+@push('css')
+<style>
+    .btn-icon-sm { width: 30px; height: 30px; background: #f5f6f8; }
+    .spark-arrow { width: 20px; height: 20px; }
+    .spark-icon  { font-size: 0.6rem; }
+    .unread-icon { width: 44px; height: 44px; background: #fce8e8; }
+    .unread-icon i { color: #b10100; }
+    .status-icon { width: 36px; height: 36px; }
+    .chart-200 { height: 200px; }
+    .form-name-link { max-width: 260px; }
+    .badge-total    { background: #fce8e8; color: #b10100; }
+    .badge-unread   { background: #f5d0d0; color: #7b0000; }
+    .badge-new      { background: #e8e8e8; color: #333333; }
+    .badge-review   { background: #f0e0e0; color: #555555; }
+    .badge-resolved { background: #e8e8e8; color: #333333; }
+    .badge-rejected { background: #efefef; color: #555555; }
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js"></script>

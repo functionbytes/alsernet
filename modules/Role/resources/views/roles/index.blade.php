@@ -184,7 +184,7 @@
                                                         </li>
                                                         <li>
                                                             <form method="POST" action="{{ route('settings.roles.clone', $role->id) }}"
-                                                                  onsubmit="return confirm('¿Clonar el rol {{ $role->name }}?')">
+                                                                  class="needs-confirm" data-confirm-msg="¿Clonar el rol {{ $role->name }}?">
                                                                 @csrf
                                                                 <button type="submit" class="dropdown-item">Clonar</button>
                                                             </form>

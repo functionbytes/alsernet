@@ -13,7 +13,7 @@
 
           <input type="hidden" id="id" name="id" value="{{ $canned->id }}">
           <input type="hidden" id="slack" name="slack" value="{{ $canned->uid }}">
-          <textarea style="display: none"  id="description" name="description">{!! $canned->messages !!}</textarea>
+          <textarea style="display: none"  id="description" name="description">{!! clean($canned->messages) !!}</textarea>
 
           <div class="card-body">
             <div class="d-flex no-block align-items-center">
@@ -44,7 +44,7 @@
         <div class="col-12">
           <label class="control-label col-form-label">Contenido</label>
           <div class="">
-            <div id="descriptions">{!! $canned->messages !!}</div>
+            <div id="descriptions">{!! clean($canned->messages) !!}</div>
           </div>
           <label id="description-error" class="error d-none" for="description"></label>
         </div>

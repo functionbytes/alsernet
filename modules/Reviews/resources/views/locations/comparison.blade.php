@@ -153,7 +153,7 @@
         text-transform: uppercase; letter-spacing: 0.5px;
         color: #5A6A85; border-bottom: 2px solid #e9ecef;
     }
-    .table td { font-size: 0.875rem; vertical-align: middle; border-bottom: 1px solid #f5f5f5; }
+    .table td { font-size: 0.875rem; vertical-align: middle; border-bottom: 1px solid #f9f9f9; }
 
     .delta-up   { color: #13C672; }
     .delta-down { color: #FA896B; }

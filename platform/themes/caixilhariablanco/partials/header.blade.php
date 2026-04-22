@@ -5,23 +5,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    @if (theme_option('favicon'))
-        <link rel="icon" href="{{ RvMedia::getImageUrl(theme_option('favicon')) }}" type="image/x-icon">
-    @else
-        <link rel="icon" href="{{ asset('themes/caixilhariablanco/images/favicon.png') }}" type="image/png">
-    @endif
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('android-chrome-512x512.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#b10100">
+    <meta name="msapplication-TileColor" content="#b10100">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Caixilharia Blanco">
+    <meta name="format-detection" content="telephone=yes">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="robots" content="index,follow">
-    <meta name="theme-color" content="#b10100">
-    <link rel="apple-touch-icon" href="{{ theme_option('logo') ? RvMedia::getImageUrl(theme_option('logo')) : asset('themes/caixilhariablanco/images/favicon.png') }}">
 
-    <title>@yield('title', theme_option('site_title', config('app.name')))</title>
-    @hasSection('description')
-        <meta name="description" content="@yield('description')">
-    @endif
-    @hasSection('keywords')
-        <meta name="keywords" content="@yield('keywords')">
+    @hasSection('seo_head')
+        @yield('seo_head')
+    @else
+        <title>@yield('title', theme_option('site_title', config('app.name')))</title>
+        @hasSection('description')
+            <meta name="description" content="@yield('description')">
+        @endif
+        @hasSection('keywords')
+            <meta name="keywords" content="@yield('keywords')">
+        @endif
     @endif
 
     @stack('canonical')
@@ -32,7 +40,6 @@
 
     {!! Theme::asset()->container('default')->styles() !!}
 
-    @yield('seo_head')
     @stack('head')
     {!! Theme::place('head') !!}
     @schemaOrg
@@ -55,6 +62,8 @@
         $headerStyle = theme_option('header_style') ?: '';
         $page = Theme::get('page');
     @endphp
+
+    @seoWebVitalsBeacon
 </head>
 <body {!! Theme::bodyAttributes() !!} class="@if (BaseHelper::isRtlEnabled()) rtl @endif  @if (Theme::get('bodyClass')) {{ Theme::get('bodyClass') }} @endif">
 {!! apply_filters(THEME_FRONT_BODY, null) !!}

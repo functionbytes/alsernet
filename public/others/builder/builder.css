@@ -17098,8 +17098,8 @@ ul.menu-steps li a.current i,ul.menu-steps li a:hover i {
 
 .alert-secondary {
     color: #464a4e;
-    background-color: #f5f5f5;
-    border-color: #f5f5f5
+    background-color: #f9f9f9;
+    border-color: #f9f9f9
 }
 
 .sub-section-header h3 {
@@ -17832,7 +17832,7 @@ ul.inline-infos li {
 }
 
 .form-control:disabled,.form-control[readonly] {
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 .file-upload-input {
@@ -20542,7 +20542,7 @@ body {
 .action-video .video-content-container .item_2-4 .widget__box .box__action ul.dropdown-menu-type a:hover,.action-video .video-content-container .item_2-4 .widget__box .box__action ul.dropdown-menu-color a:hover,.action-video .video-content-container .item_2-4 .widget__box .box__action ul.dropdown-menu-size a:hover {
     text-decoration: none;
     color: #262626;
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 .action-video .video-content-container .item_2-4 .video-square {
@@ -20810,7 +20810,7 @@ body {
 .divider-mode-container .line .widget.widget--divider .widget__box ul.dropdown-menu-line li a:hover {
     text-decoration: none;
     color: #262626;
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 .divider-mode-container .height {
@@ -23294,13 +23294,13 @@ a {
 }
 
 .content-right nav #nav-tab a.active {
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
     color: #516167;
     border: 0
 }
 
 .content-right nav #nav-tab a.active:hover {
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 .content-right nav #nav-tab a:hover {
@@ -23319,7 +23319,7 @@ a {
     padding-top: 25px;
     width: 375px;
     height: 100%;
-    background: #f5f5f5;
+    background: #f9f9f9;
     position: fixed;
     padding-bottom: 129px
 }
@@ -23335,7 +23335,7 @@ a {
 }
 
 .content-right .tab-pane .container {
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
     padding-bottom: 30px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -23349,7 +23349,7 @@ a {
 .content-right .tab-pane .setting-module {
     padding: 0;
     width: 100%;
-    background: #f5f5f5
+    background: #f9f9f9
 }
 
 .content-right .tab-pane .setting-module .jumb-title {
@@ -23566,7 +23566,7 @@ a {
 
 .detail-content {
     padding: 0;
-    background: #f5f5f5;
+    background: #f9f9f9;
     margin: 0;
     margin-right: 0;
     float: left;
@@ -23681,7 +23681,7 @@ nothing {
     right: 0;
     overflow-y: scroll;
     z-index: 200;
-    background: #f5f5f5;
+    background: #f9f9f9;
     padding-bottom: 205px;
     overflow-x: hidden
 }
@@ -23704,7 +23704,7 @@ nothing {
     padding: 0;
     width: 100%;
     height: 220px;
-    background: #f5f5f5
+    background: #f9f9f9
 }
 
 .widget-section ._1khoi .tren ul li {
@@ -24049,7 +24049,7 @@ nothing {
     text-align: center;
     padding: 0;
     border-radius: 0;
-    background: #f5f5f5;
+    background: #f9f9f9;
     color: #383838;
     font-size: 13px;
     border-left: 0;
@@ -24130,7 +24130,7 @@ nothing {
     text-align: center;
     padding: 0;
     border-radius: 0;
-    background: #f5f5f5;
+    background: #f9f9f9;
     color: #383838;
     font-size: 13px;
     border-left: 0;
@@ -24169,7 +24169,7 @@ nothing {
 .widget-section .widget-section-2 .section-tren .widget .container .right div.square {
     width: 80px;
     height: 80px;
-    border: 1px dashed #f5f5f5;
+    border: 1px dashed #f9f9f9;
     background: #0190d2;
     padding: 10px
 }
@@ -24670,7 +24670,7 @@ nothing {
     content: "";
     width: 100%;
     height: 20px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     position: absolute;
     top: -20px;
     left: 0;
@@ -25253,7 +25253,7 @@ nothing {
     right: 0;
     overflow-y: scroll;
     z-index: 200;
-    background: #f5f5f5;
+    background: #f9f9f9;
     padding-bottom: 205px;
     overflow-x: hidden
 }
@@ -25539,7 +25539,7 @@ nothing {
     text-align: center;
     padding: 0;
     border-radius: 0;
-    background: #f5f5f5;
+    background: #f9f9f9;
     color: #383838;
     font-size: 13px;
     border-left: 0;
@@ -25620,7 +25620,7 @@ nothing {
     text-align: center;
     padding: 0;
     border-radius: 0;
-    background: #f5f5f5;
+    background: #f9f9f9;
     color: #383838;
     font-size: 13px;
     border-left: 0;
@@ -25659,7 +25659,7 @@ nothing {
 .section-tren .widget .container .right div.square {
     width: 80px;
     height: 80px;
-    border: 1px dashed #f5f5f5;
+    border: 1px dashed #f9f9f9;
     background: #0190d2;
     padding: 10px
 }
@@ -27450,12 +27450,12 @@ p {
 *::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
     border-radius: 10px;
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 *::-webkit-scrollbar {
     width: 8px;
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 *::-webkit-scrollbar-thumb {
@@ -28191,7 +28191,7 @@ ul.templates-container li a.newTemplate:hover {
 }
 
 .form-control:disabled,.form-control[readonly] {
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
     color: #aaa;
     font-weight: normal
 }
@@ -28713,7 +28713,7 @@ ul.group-background::-webkit-scrollbar-track {
 
 ul.group-background::-webkit-scrollbar {
     width: 5px;
-    background-color: #f5f5f5
+    background-color: #f9f9f9
 }
 
 ul.group-background::-webkit-scrollbar-thumb {

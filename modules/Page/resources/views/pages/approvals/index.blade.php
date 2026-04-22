@@ -299,6 +299,25 @@
         </div>
     </div>
 
+    {{-- Modal confirmar bulk delete --}}
+    <div class="modal fade" id="modal-bulk-delete-confirm" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Eliminar las <strong id="modal-bulk-delete-confirm-count">0</strong> aprobacion(es) seleccionadas? Esta acción no se puede deshacer.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-bulk-delete" class="btn btn-primary w-100 mb-2">Eliminar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -320,7 +339,19 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una accion.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una aprobacion.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' aprobacion(es) seleccionadas?')) { return; }
+        if (action === 'delete') {
+            if (!window._bulkDeleteConfirmed) {
+                $('#modal-bulk-delete-confirm-count').text(ids.length);
+                $('#btn-confirm-bulk-delete').off('click').on('click', function () {
+                    $('#modal-bulk-delete-confirm').modal('hide');
+                    window._bulkDeleteConfirmed = true;
+                    $('#bulk-apply-btn').trigger('click');
+                });
+                $('#modal-bulk-delete-confirm').modal('show');
+                return;
+            }
+            window._bulkDeleteConfirmed = false;
+        }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

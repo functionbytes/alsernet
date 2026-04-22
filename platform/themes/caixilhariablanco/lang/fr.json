@@ -4,7 +4,7 @@
     "footer_quick_links": "Liens rapides",
     "footer_services": "Services",
     "footer_cta": "Transformez votre maison avec Caixilharia Blanco !",
-    "footer_description": "Distributeur officiel Salamander. Spécialistes en fenêtres PVC, portails automatiques et stores à Alcobaça depuis 2009.",
+    "footer_description": "Distributeur officiel Salamander. Spécialistes en fenêtres PVC, portails automatiques et stores à Alcobaça.",
     "newsletter_popup_subtitle": "Recevez nos actualités et promotions",
     "newsletter_popup_title": "Restez informé et profitez-en plus.",
     "newsletter_popup_description": "Abonnez-vous et recevez nos dernières mises à jour, promotions exclusives et contenus de valeur.",
@@ -21,5 +21,9 @@
     "newsletter_unsubscribe_title": "Se désabonner de la newsletter",
     "newsletter_unsubscribe_description": "Si vous ne souhaitez plus recevoir nos actualités, entrez votre adresse e-mail pour annuler votre abonnement.",
     "newsletter_unsubscribe_placeholder": "Entrez votre adresse e-mail",
-    "newsletter_btn_unsubscribe": "Se désabonner"
+    "newsletter_btn_unsubscribe": "Se désabonner",
+    "cta_whatsapp": "WhatsApp",
+    "cta_call": "Appeler",
+    "cta_whatsapp_aria": "Contacter via WhatsApp",
+    "cta_call_aria": "Appeler par téléphone"
 }

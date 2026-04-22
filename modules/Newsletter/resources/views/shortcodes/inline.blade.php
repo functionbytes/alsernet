@@ -21,8 +21,8 @@
                         @endif
                         <button class="btn btn-primary w-100" type="submit">{{ __('newsletter_btn_subscribe') }}</button>
                     </div>
-                    <div class="newsletter-message newsletter-success-message mt-3" style="display:none"></div>
-                    <div class="newsletter-message newsletter-error-message mt-3" style="display:none"></div>
+                    <div class="newsletter-message newsletter-success-message mt-3" class="d-none"></div>
+                    <div class="newsletter-message newsletter-error-message mt-3" class="d-none"></div>
                 </form>
             </div>
         </div>

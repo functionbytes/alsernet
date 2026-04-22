@@ -80,7 +80,7 @@ class TeamController extends Controller
             'with_limit' => $allMembers->filter(fn ($m) => ($m->agentSettings->assignment_limit ?? 0) > 0)->count(),
         ];
 
-        return view('theme.views.backups.helpdesk.team.members', [
+        return view('helpdesk::managers.settings.helpdesk.team.members', [
             'members' => $members,
             'groups' => $groups,
             'roles' => $roles,
@@ -105,7 +105,7 @@ class TeamController extends Controller
             $member->setRelation('agentSettings', AgentSettings::newFromDefault());
         }
 
-        return view('theme.views.backups.helpdesk.team.member-edit', [
+        return view('helpdesk::managers.settings.helpdesk.team.member-edit', [
             'member' => $member,
             'groups' => $groups,
             'roles' => $roles,
@@ -170,7 +170,7 @@ class TeamController extends Controller
         }
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.team.members')
+            ->route('manager.helpdesk.settings.team.members')
             ->with('success', "Configuración de {$member->name} actualizada correctamente");
     }
 
@@ -211,7 +211,7 @@ class TeamController extends Controller
             'priority' => $allGroups->where('assignment_mode', 'priority')->count(),
         ];
 
-        return view('theme.views.backups.helpdesk.team.groups', [
+        return view('helpdesk::managers.settings.helpdesk.team.groups', [
             'groups' => $groups,
             'stats' => $stats,
         ]);
@@ -228,7 +228,7 @@ class TeamController extends Controller
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
         })->orderBy('firstname')->get();
 
-        return view('theme.views.backups.helpdesk.team.group-create', [
+        return view('helpdesk::managers.settings.helpdesk.team.group-create', [
             'agents' => $agents,
         ]);
     }
@@ -272,7 +272,7 @@ class TeamController extends Controller
         });
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.team.groups')
+            ->route('manager.helpdesk.settings.ticket-groups.index')
             ->with('success', 'Grupo creado correctamente');
     }
 
@@ -289,7 +289,7 @@ class TeamController extends Controller
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
         })->orderBy('firstname')->get();
 
-        return view('theme.views.backups.helpdesk.team.group-edit', [
+        return view('helpdesk::managers.settings.helpdesk.team.group-edit', [
             'group' => $group,
             'agents' => $agents,
         ]);
@@ -336,7 +336,7 @@ class TeamController extends Controller
         });
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.team.groups')
+            ->route('manager.helpdesk.settings.ticket-groups.index')
             ->with('success', 'Grupo actualizado correctamente');
     }
 
@@ -353,7 +353,7 @@ class TeamController extends Controller
         $group->delete();
 
         return redirect()
-            ->route('manager.helpdesk.backups.tickets.team.groups')
+            ->route('manager.helpdesk.settings.ticket-groups.index')
             ->with('success', 'Grupo eliminado correctamente');
     }
 }

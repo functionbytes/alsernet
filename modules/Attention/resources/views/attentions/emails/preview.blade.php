@@ -410,10 +410,6 @@ $(document).ready(function() {
 
     // Resend email
     $('#resendEmailBtn').on('click', function() {
-        if (!confirm('Esta seguro de reenviar este email?')) {
-            return;
-        }
-
         const $btn = $(this);
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Reenviando...');
 

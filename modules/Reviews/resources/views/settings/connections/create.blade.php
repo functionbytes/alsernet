@@ -12,9 +12,8 @@
                 <div class="card-body">
                     <!-- Encabezado -->
                     <div class="mb-4 text-center">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                             style="width: 80px; height: 80px; background: rgba(66, 133, 244, 0.1);">
-                            <i class="fab fa-google fa-3x" ></i>
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 google-icon-circle">
+                            <i class="fab fa-google fa-3x"></i>
                         </div>
                         <h5 class="fw-bold. ">Conectar cuenta de Google</h5>
                         <p class="text-muted mb-0">
@@ -62,38 +61,34 @@
                             <div class="timeline-steps">
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">1</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center step-badge">1</span>
                                     </div>
                                     <div>
-                                        <strong class="d-block ">Autorización</strong>
+                                        <strong class="d-block">Autorización</strong>
                                         <small class="text-muted">Serás redirigido a Google para autorizar el acceso.</small>
                                     </div>
                                 </div>
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">2</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center step-badge">2</span>
                                     </div>
                                     <div>
-                                        <strong class="d-block ">Selección de ubicaciones</strong>
+                                        <strong class="d-block">Selección de ubicaciones</strong>
                                         <small class="text-muted">Podrás elegir qué ubicaciones sincronizar.</small>
                                     </div>
                                 </div>
                                 <div class="d-flex mb-3">
                                     <div class="me-3">
-                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">3</span>
+                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center step-badge">3</span>
                                     </div>
                                     <div>
-                                        <strong class="d-block ">Configuración</strong>
+                                        <strong class="d-block">Configuración</strong>
                                         <small class="text-muted">Configura el intervalo de sincronización y opciones de moderación.</small>
                                     </div>
                                 </div>
                                 <div class="d-flex">
                                     <div class="me-3">
-                                        <span class="badge bg-success rounded-circle d-flex align-items-center justify-content-center"
-                                              style="width: 32px; height: 32px;">
+                                        <span class="badge bg-success rounded-circle d-flex align-items-center justify-content-center step-badge">
                                             <i class="fas fa-check"></i>
                                         </span>
                                     </div>
@@ -124,47 +119,10 @@
 
 @endsection
 
-@push('styles')
+@push('css')
 <style>
-    /* Timeline Steps */
-    .timeline-steps {
-        position: relative;
-    }
-
-    /* Shadow y hover effects */
-    .card {
-        transition: all 0.3s ease;
-    }
-
-    /* Button hover effects */
-    .btn {
-        transition: all 0.3s ease;
-    }
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    /* Google icon animation on hover */
-    #connect-google:hover .fa-google {
-        animation: pulse 0.6s ease-in-out;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-
-    /* Input focus */
-    .form-control:focus {
-        border-color: #90bb13;
-        box-shadow: 0 0 0 0.2rem rgba(144, 187, 19, 0.15);
-    }
-
-    /* Badge hover */
-    .badge {
-        transition: all 0.3s ease;
-    }
+.google-icon-circle { width: 80px; height: 80px; background: rgba(66, 133, 244, 0.1); }
+.step-badge { width: 32px; height: 32px; }
 </style>
 @endpush
 

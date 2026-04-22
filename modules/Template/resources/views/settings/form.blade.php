@@ -236,7 +236,7 @@
 
                                     <form id="delete-form"
                                           action="{{ route('settings.templates.destroy', $template) }}"
-                                          method="POST" style="display: none;">
+                                          method="POST" class="d-none">
                                         @csrf
                                         @method('DELETE')
                                     </form>

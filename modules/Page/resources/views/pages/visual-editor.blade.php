@@ -18,10 +18,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script data-pagespeed-no-defer src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-pagespeed-no-defer src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+    <script data-pagespeed-no-defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script data-pagespeed-no-defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     @if (app()->isLocal() && filemtime(public_path('modules/Page/css/visual-editor.css')) > filemtime(public_path('modules/Page/css/visual-editor.min.css')))
         {{-- Local dev: CSS was edited after the minified build. Use the source to avoid stale styles. --}}
@@ -271,7 +271,7 @@
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#e9ecef">Gris</button></li>
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#1a1a1a">Oscuro</button></li>
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#ffffff">Blanco</button></li>
-                        <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="repeating-linear-gradient(45deg,#f0f0f0 0,#f0f0f0 10px,#fff 10px,#fff 20px)">Cuadrícula</button></li>
+                        <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="repeating-#90bb13">Cuadrícula</button></li>
                     </ul>
                 </div>
                 <button type="button" class="ve-ibtn" id="btn-fullscreen-preview" title="Pantalla completa">
@@ -1417,7 +1417,7 @@
 
 {{-- ── Media Picker modal ────────────────────────────────────────────────── --}}
 @include('media::partials.picker-modal')
-<script src="{{ asset('modules/Media/js/media-picker.js') }}"></script>
+<script data-pagespeed-no-defer src="{{ asset('modules/Media/js/media-picker.js') }}"></script>
 
 {{-- ── Context menu ──────────────────────────────────────────────────────── --}}
 <div id="ve-context-menu" class="ec-ctx" role="menu">
@@ -2141,7 +2141,7 @@
 {{-- Block HTML data (used by shortcodes panel to render HTML blocks) --}}
 @include('page::pages.partials.ve-blocks-data')
 
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script data-pagespeed-no-defer src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 
 <script>
 (function ($) {
@@ -7045,14 +7045,14 @@ window.veLoadCodeMirror = (function () {
         var dir = $('#ve-gradient-direction').val();
         var c1 = $('#ve-gradient-color1').val();
         var c2 = $('#ve-gradient-color2').val();
-        $('#ve-gradient-preview').css('background', 'linear-gradient(' + dir + ', ' + c1 + ', ' + c2 + ')');
+        $('#ve-gradient-preview').css('background', '#90bb13');
     }
     $(document).on('input change', '#ve-gradient-direction, #ve-gradient-color1, #ve-gradient-color2', updateGradientPreview);
     $(document).on('click', '#btn-apply-gradient', function() {
         var dir = $('#ve-gradient-direction').val();
         var c1 = $('#ve-gradient-color1').val();
         var c2 = $('#ve-gradient-color2').val();
-        var val = 'linear-gradient(' + dir + ', ' + c1 + ', ' + c2 + ')';
+        var val = '#90bb13';
         var frame = document.getElementById('ve-preview-frame');
         if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'background': val } }, '*');
         if (window.veToast) window.veToast('Gradiente aplicado', 'success');
@@ -10058,7 +10058,7 @@ window.veLoadCodeMirror = (function () {
         $('#ve-acp-preview-fill').css('background', rgba);
         // Alpha bar background
         $('#ve-acp-alpha').css('background',
-            'linear-gradient(to right, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0), rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + '))');
+            '#90bb13, rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + '))');
     }
 
     function syncInputs() {

@@ -3,7 +3,7 @@
 @section('title', 'Nueva variable')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-1">Nueva variable</h4>

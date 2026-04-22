@@ -333,31 +333,32 @@ $(document).ready(function () {
         if (!ids.length) { toastr.warning('Selecciona al menos una entrada.'); return; }
 
         var $btn = $(this);
-        $btn.prop('disabled', true).text('Procesando...');
+
+        const doAction = function () {
+            $btn.prop('disabled', true).text('Procesando...');
+            $.ajax({
+                url: '{{ route("setting.seo.audit.history.bulk-action") }}',
+                method: 'POST',
+                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $('#bulk-modal').modal('hide');
+                    toastr.success(res.count + ' entrada(s) eliminadas.');
+                    setTimeout(function () { location.reload(); }, 800);
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                    $btn.prop('disabled', false).text('Aplicar');
+                }
+            });
+        };
 
         if (action === 'delete') {
-            if (!confirm('¿Eliminar ' + ids.length + ' entrada(s)?')) {
-                $btn.prop('disabled', false).text('Aplicar');
-                return;
-            }
+            window.__confirm('¿Eliminar ' + ids.length + ' entrada(s)?', doAction);
+        } else {
+            doAction();
         }
-
-        $.ajax({
-            url: '{{ route("setting.seo.audit.history.bulk-action") }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.count + ' entrada(s) eliminadas.');
-                setTimeout(function () { location.reload(); }, 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $btn.prop('disabled', false).text('Aplicar');
-            }
-        });
     });
 });
 </script>

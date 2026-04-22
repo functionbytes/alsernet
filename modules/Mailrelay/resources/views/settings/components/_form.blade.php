@@ -109,17 +109,11 @@
                 </div>
 
                 <div class="mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input"
-                            type="checkbox"
-                            id="is_default"
-                            name="is_default"
-                            value="1"
-                            {{ old('is_default', $component->is_default ?? false) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="is_default">
-                            Layout por defecto
-                        </label>
-                    </div>
+                    <label class="form-label" for="is_default">Layout por defecto</label>
+                    <select class="form-select" name="is_default" id="is_default">
+                        <option value="1" {{ old('is_default', $component->is_default ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                        <option value="0" {{ old('is_default', $component->is_default ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                    </select>
                     <small class="form-text text-muted">Solo aplica a layouts</small>
                 </div>
 

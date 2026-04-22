@@ -4,6 +4,8 @@ return [
     'skip' => [
         // Settings routes
         'setting/*', 'setting*',
+        // Visual editor (inline JS with dynamic content breaks when middleware rewrites HTML inside strings)
+        'panel/pages/*/visual-editor',
         // Documents & data
         '*.xml', '*.pdf', '*.txt', '*.csv', '*.json', '*.ico', '*.rss',
         // Archives & executables

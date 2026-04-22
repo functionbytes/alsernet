@@ -60,4 +60,10 @@ return [
         'webhook_token' => env('MAILRELAY_WEBHOOK_TOKEN', ''),
     ],
 
+    'sentry' => [
+        'dsn' => env('SENTRY_DSN'),
+        'environment' => env('SENTRY_ENVIRONMENT'),
+        'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.1),
+    ],
+
 ];

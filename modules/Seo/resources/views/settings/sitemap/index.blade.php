@@ -102,12 +102,12 @@
                             </button>
                         </div>
 
-                        <div id="priorities-loading" class="text-center py-4" style="display:none;">
+                        <div id="priorities-loading" class="text-center py-4" class="d-none">
                             <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
                             <p class="text-muted mb-0">Calculando prioridades...</p>
                         </div>
 
-                        <div id="priorities-result" style="display:none;">
+                        <div id="priorities-result" class="d-none">
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
@@ -136,12 +136,12 @@
                             </button>
                         </div>
 
-                        <div id="verify-urls-loading" class="text-center py-4" style="display:none;">
+                        <div id="verify-urls-loading" class="text-center py-4" class="d-none">
                             <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
                             <p class="text-muted mb-0">Verificando URLs...</p>
                         </div>
 
-                        <div id="verify-urls-result" style="display:none;">
+                        <div id="verify-urls-result" class="d-none">
                             <div class="row g-3 mb-3" id="verify-summary-cards"></div>
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
@@ -240,7 +240,7 @@
                         <button type="button" id="validate-sitemap-btn" class="btn btn-outline-info w-100">
                             Validar
                         </button>
-                        <div id="validate-sitemap-result" class="mt-3" style="display:none;">
+                        <div id="validate-sitemap-result" class="mt-3" class="d-none">
                             <pre id="validate-sitemap-output" class="small bg-light p-2 rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></pre>
                         </div>
                     </div>
@@ -277,9 +277,13 @@
 @push('scripts')
 <script>
 $(document).on('submit', 'form[data-confirm]', function (e) {
-    if (!window.confirm($(this).data('confirm'))) {
-        e.preventDefault();
-    }
+    if (this.dataset.confirmed === '1') { return true; }
+    e.preventDefault();
+    const form = this;
+    window.__confirm($(this).data('confirm'), function () {
+        form.dataset.confirmed = '1';
+        form.submit();
+    });
 });
 (function () {
     // Calculate priorities

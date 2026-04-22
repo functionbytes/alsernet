@@ -9,8 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Modules\Helpdesk\Models\Ticket;
-use Modules\Helpdesk\Models\TicketDailyReport;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketDailyReport;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportsController extends Controller

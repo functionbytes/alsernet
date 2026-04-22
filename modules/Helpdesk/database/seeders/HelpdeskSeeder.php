@@ -9,10 +9,12 @@ class HelpdeskSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            PrioritiesSeeder::class,
-            StatusesSeeder::class,
-            CategoriesSeeder::class,
             PermissionsSeeder::class,
+            HelpdeskConversationStatusSeeder::class,
+            HelpdeskGroupSeeder::class,
+            HelpdeskCannedReplySeeder::class,
+            ConversationViewSeeder::class,
+            HelpCenterSeeder::class,
         ]);
     }
 }

@@ -183,34 +183,24 @@
 
                         <div class="row">
                             <div class="col-12 col-md-6">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           name="is_active"
-                                           id="is_active"
-                                           value="1"
-                                           {{ old('is_active', '1') == '1' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_active">
-                                        <strong>Plantilla activa</strong>
-                                        <br>
-                                        <small class="text-muted">La plantilla estará disponible para su uso</small>
-                                    </label>
+                                <div class="mb-3">
+                                    <label class="form-label" for="is_active">Estado de la plantilla</label>
+                                    <select class="form-select" name="is_active" id="is_active">
+                                        <option value="1" {{ old('is_active', '1') == '1' ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('is_active', '1') == '0' ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
+                                    <small class="text-muted">La plantilla estará disponible para su uso</small>
                                 </div>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           name="use_layout"
-                                           id="use_layout"
-                                           value="1"
-                                           {{ old('use_layout', '1') == '1' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="use_layout">
-                                        <strong>Usar layout base</strong>
-                                        <br>
-                                        <small class="text-muted">Incluir encabezado y pie de página predeterminados</small>
-                                    </label>
+                                <div class="mb-3">
+                                    <label class="form-label" for="use_layout">Usar layout base</label>
+                                    <select class="form-select" name="use_layout" id="use_layout">
+                                        <option value="1" {{ old('use_layout', '1') == '1' ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('use_layout', '1') == '0' ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
+                                    <small class="text-muted">Incluir encabezado y pie de página predeterminados</small>
                                 </div>
                             </div>
                         </div>

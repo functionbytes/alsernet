@@ -1,0 +1,4 @@
+Contact: mailto:info@caixilhariablanco.pt
+Expires: 2027-04-22T00:00:00.000Z
+Preferred-Languages: es, pt, en
+Canonical: https://caixilhariablanco.pt/.well-known/security.txt

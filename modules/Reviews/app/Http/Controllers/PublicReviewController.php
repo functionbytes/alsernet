@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Modules\Reviews\Enums\ReviewRating;
 use Modules\Reviews\Models\Review;
+use Modules\Reviews\Models\ReviewGoogleLocation;
 
 class PublicReviewController extends Controller
 {
@@ -24,7 +25,7 @@ class PublicReviewController extends Controller
             ->orderByDesc('review_time')
             ->get();
 
-        [$totalCount, $avgRating] = $this->aggregateStats();
+        [$totalCount, $avgRating] = $this->getAggregateStats();
 
         $tagCounts = $reviews
             ->flatMap(fn ($r) => $r->moderation?->tags ?? [])
@@ -61,6 +62,61 @@ class PublicReviewController extends Controller
             ->header('Content-Security-Policy', 'frame-ancestors *');
     }
 
+    /**
+     * AJAX endpoint: devuelve cards de reviews renderizadas (HTML) para insertar en containers
+     * cargados desde shortcodes tipo `reviews-home`, `reviews-about`, `reviews-service`.
+     *
+     * Query params:
+     *   scope: 'home'|'about'|'service' (default 'home')
+     *   limit: int (default 6, max 20)
+     *   min_rating: 1-5 (default 5 for home, 4 for service)
+     *   tag: opcional, filtrar por tag (scope=service)
+     */
+    public function cardsJson(Request $request): JsonResponse
+    {
+        $scope = $request->input('scope', 'home');
+        $limit = min(20, max(1, (int) $request->input('limit', 6)));
+        $minRating = max(1, min(5, (int) $request->input('min_rating', $scope === 'service' ? 4 : 5)));
+        $tag = $request->input('tag');
+
+        $ratingValues = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
+        $allowedRatings = array_slice($ratingValues, $minRating - 1);
+
+        $visible = fn ($q) => $q
+            ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+            ->orWhereDoesntHave('moderation');
+
+        $query = Review::query()
+            ->where($visible)
+            ->whereIn('star_rating', $allowedRatings)
+            ->with(['moderation', 'translations']);
+
+        if ($tag) {
+            $query->whereHas('moderation', fn ($q) => $q->whereJsonContains('tags', $tag));
+        }
+
+        $reviews = $query->inRandomOrder()->limit($limit)->get();
+
+        [$totalCount, $avgRating] = $this->getAggregateStats();
+
+        $partial = $scope === 'about'
+            ? 'reviews::shortcodes.partials.swiper-slides'
+            : 'reviews::shortcodes.partials.cards';
+
+        $html = view($partial, [
+            'reviews' => $reviews,
+            'scope' => $scope,
+        ])->render();
+
+        return response()->json([
+            'html' => $html,
+            'stats' => [
+                'total' => $totalCount,
+                'avg_rating' => round($avgRating, 1),
+            ],
+        ])->header('Cache-Control', 'public, max-age=300');
+    }
+
     public function embedCode(Request $request): JsonResponse
     {
         $locationId = $request->input('location_id');
@@ -82,11 +138,61 @@ class PublicReviewController extends Controller
     }
 
     /**
+     * AJAX endpoint: devuelve todos los reviews visibles como JSON estructurado
+     * para el shortcode `reviews-page` (testimonios). Soporta filtrado client-side.
+     *
+     * Query params:
+     *   locale: código de idioma (default: app locale)
+     */
+    public function dataJson(Request $request): JsonResponse
+    {
+        $locale = $request->input('locale', app()->getLocale());
+        $localeCode = strtoupper($locale);
+
+        $activeIds = ReviewGoogleLocation::where('is_active', true)->pluck('id')->all();
+
+        $visible = fn ($q) => $q
+            ->whereHas('moderation', fn ($m) => $m->where('is_visible', true))
+            ->orWhereDoesntHave('moderation');
+
+        $reviews = Review::query()
+            ->where($visible)
+            ->when($activeIds, fn ($q) => $q->whereIn('location_id', $activeIds))
+            ->with(['moderation', 'translations'])
+            ->orderByDesc('star_rating')
+            ->orderByDesc('review_time')
+            ->get();
+
+        [$totalCount, $avgRating] = $this->getAggregateStats();
+
+        $tagCounts = $reviews
+            ->flatMap(fn ($r) => $r->moderation?->tags ?? [])
+            ->countBy()
+            ->sortByDesc(fn ($c) => $c)
+            ->all();
+
+        $reviewsData = $reviews->map(fn ($r) => [
+            'name' => $r->reviewer_name ?? '',
+            'rating' => $r->star_rating->value(),
+            'text' => $r->translations->firstWhere('locale_code', $localeCode)?->translated_text ?? $r->comment ?? '',
+            'tags' => $r->moderation?->tags ?? [],
+            'date' => $r->review_time?->diffForHumans() ?? '',
+        ])->values();
+
+        return response()->json([
+            'reviews' => $reviewsData,
+            'avg' => round($avgRating, 1),
+            'total' => $totalCount,
+            'tag_counts' => $tagCounts,
+        ])->header('Cache-Control', 'public, max-age=120');
+    }
+
+    /**
      * Return [totalCount, avgRating] for all visible reviews using a single query.
      *
      * @return array{int, float}
      */
-    private function aggregateStats(): array
+    public function getAggregateStats(): array
     {
         $row = Review::query()
             ->where(fn ($q) => $q

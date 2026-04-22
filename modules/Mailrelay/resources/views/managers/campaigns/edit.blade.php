@@ -250,22 +250,20 @@
                         </h6>
                     </div>
                     <div class="card-body p-4">
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" name="track_opens"
-                                   id="track_opens" value="1"
-                                   {{ old('track_opens', $campaign->track_opens) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="track_opens">
-                                <strong>Rastrear aperturas</strong>
-                            </label>
+                        <div class="mb-3">
+                            <label class="form-label" for="track_opens">Rastrear aperturas</label>
+                            <select class="form-select" name="track_opens" id="track_opens">
+                                <option value="1" {{ old('track_opens', $campaign->track_opens) ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ !old('track_opens', $campaign->track_opens) ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
 
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="track_clicks"
-                                   id="track_clicks" value="1"
-                                   {{ old('track_clicks', $campaign->track_clicks) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="track_clicks">
-                                <strong>Rastrear clicks</strong>
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="track_clicks">Rastrear clicks</label>
+                            <select class="form-select" name="track_clicks" id="track_clicks">
+                                <option value="1" {{ old('track_clicks', $campaign->track_clicks) ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ !old('track_clicks', $campaign->track_clicks) ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
                     </div>
                 </div>

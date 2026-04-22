@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CannedReply extends Model
@@ -27,13 +28,16 @@ class CannedReply extends Model
         'usage_count',
     ];
 
-    protected $casts = [
-        'tags' => 'array',
-        'is_global' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'tags' => 'array',
+            'is_global' => 'boolean',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
+    }
 
     protected $appends = [
         'preview',
@@ -43,7 +47,7 @@ class CannedReply extends Model
      * Get the user who owns this canned reply
      * Note: User model is in the default connection, not helpdesk
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id')
             ->setConnection(config('database.default'));

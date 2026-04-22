@@ -5,6 +5,8 @@ namespace Modules\Helpdesk\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ConversationItem extends Model
@@ -28,19 +30,22 @@ class ConversationItem extends Model
         'external_id',
     ];
 
-    protected $casts = [
-        'attachment_urls' => 'array',
-        'metadata' => 'array',
-        'is_internal' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'attachment_urls' => 'array',
+            'metadata' => 'array',
+            'is_internal' => 'boolean',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the conversation this item belongs to
      */
-    public function conversation()
+    public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class, 'conversation_id');
     }
@@ -48,7 +53,7 @@ class ConversationItem extends Model
     /**
      * Get the customer who authored this message (if from customer)
      */
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'author_id');
     }
@@ -75,7 +80,7 @@ class ConversationItem extends Model
     /**
      * Get users who have read this message
      */
-    public function reads()
+    public function reads(): HasMany
     {
         return $this->hasMany(ConversationRead::class, 'conversation_item_id');
     }

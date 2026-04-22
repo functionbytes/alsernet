@@ -40,6 +40,9 @@
     "Blog": true,
     "Forms": true,
     "Helpdesk": true,
+    "HelpdeskTickets": true,
+    "HelpdeskAgents": true,
+    "HelpdeskCampaigns": true,
     "Locales": true,
     "Newsletter": true
 }

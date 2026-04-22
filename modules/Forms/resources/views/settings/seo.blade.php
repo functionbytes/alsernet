@@ -3,7 +3,7 @@
 @section('title', 'SEO · '.$form->name)
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="mb-0">SEO del formulario</h4>

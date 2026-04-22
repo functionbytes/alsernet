@@ -533,7 +533,8 @@
             data: new FormData($form[0]),
             processData: false,
             contentType: false,
-            headers: { 'X-CSRF-TOKEN': config.csrfToken },
+            headers: { 'X-CSRF-TOKEN': config.csrfToken, 'Accept': 'application/json' },
+            dataType: 'json',
             success: function(res) {
                 if (res.redirect) {
                     window.location.href = res.redirect;

@@ -95,7 +95,7 @@
                     <p class="small text-muted mb-0">Últimas operaciones de caché</p>
                 </div>
                 <div class="card-body p-0">
-                    <div id="audits-list" style="max-height: 280px; overflow-y: auto;">
+                    <div id="audits-list" class="page-audit-list">
                         <div class="text-center py-4">
                             <div class="spinner-border spinner-border-sm text-muted" role="status"></div>
                             <small class="text-muted d-block mt-2">Cargando actividad...</small>
@@ -105,23 +105,29 @@
             </div>
         </div>
     </div>
+    {{-- Confirm clear cache modal --}}
+    <div class="modal fade" id="clear-cache-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Limpiar caché</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-0">¿Limpiar todo el caché de páginas? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="clear-confirm-btn" type="button" class="btn btn-primary w-100 mb-1">Limpiar caché</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('css')
-<style>
-.zoom-in {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    cursor: default;
-}
-.zoom-in:hover {
-    transform: scale(1.03);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
-}
-.round-60 {
-    width: 60px;
-    height: 60px;
-}
-</style>
+<link rel="stylesheet" href="{{ asset('modules/page/css/page-admin.css') }}">
 @endpush
 
 @push('scripts')
@@ -203,8 +209,12 @@ $(document).ready(function() {
     });
 
     $('#clear-btn').on('click', function() {
-        if (!confirm('¿Limpiar todo el caché de páginas?')) return;
-        const $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Limpiando...');
+        $('#clear-cache-modal').modal('show');
+    });
+
+    $('#clear-confirm-btn').on('click', function() {
+        $('#clear-cache-modal').modal('hide');
+        const $btn = $('#clear-btn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Limpiando...');
         $.post('{{ route('pages.cache.clear') }}', function() {
             toastr.success('Caché limpiado correctamente');
             loadStats();

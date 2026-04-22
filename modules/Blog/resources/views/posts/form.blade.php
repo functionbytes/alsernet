@@ -503,8 +503,7 @@
                         @can('create', \Modules\Blog\Models\BlogPost::class)
                         <form method="POST" action="{{ route('blog.posts.duplicate', $post) }}" class="d-grid">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary"
-                                    onclick="return confirm('¿Duplicar este post?')">
+                            <button type="submit" class="btn btn-outline-secondary">
                                 <i class="fas fa-copy me-1"></i> Duplicar
                             </button>
                         </form>
@@ -1199,7 +1198,7 @@ $(document).ready(function () {
 
     // Translate all locales with progress
     $('#btn-deepl-auto-translate').on('click', function () {
-        if (!confirm('¿Traducir automáticamente a todos los idiomas soportados?')) return;
+        
 
         var $btn = $(this);
         $btn.prop('disabled', true);
@@ -1362,7 +1361,7 @@ $(document).ready(function () {
     // Delete translation
     $(document).on('click', '.btn-delete-translation', function () {
         var locale = $(this).data('locale');
-        if (!confirm('¿Eliminar la traducción al ' + locale.toUpperCase() + '? Esta acción no se puede deshacer.')) return;
+        
 
         var $btn = $(this);
         $btn.prop('disabled', true);
@@ -1389,7 +1388,7 @@ $(document).ready(function () {
     // Copy source content to translation tab
     $(document).on('click', '.btn-copy-source', function () {
         var locale = $(this).data('locale');
-        if (!confirm('¿Copiar el contenido fuente al tab de ' + locale.toUpperCase() + '? Esto sobrescribirá los campos actuales.')) return;
+        
 
         populateTranslationFields(locale, {
             title: $('#title-' + defaultLocale).val(),
@@ -1549,9 +1548,6 @@ $(document).ready(function () {
 
     // Check unsaved changes before translating
     function checkUnsavedBeforeTranslate() {
-        if (formDirty) {
-            return confirm('Hay cambios sin guardar. La traducción usará el contenido guardado en la base de datos, no los cambios actuales del formulario. ¿Continuar?');
-        }
         return true;
     }
 
@@ -1638,7 +1634,7 @@ $(document).ready(function () {
     // Override translate all to use per-locale progress with animation
     $('#btn-deepl-auto-translate').off('click').on('click', function () {
         if (!checkUnsavedBeforeTranslate()) return;
-        if (!confirm('¿Traducir automáticamente a todos los idiomas soportados?')) return;
+        
 
         var $btn = $(this);
         $btn.prop('disabled', true);

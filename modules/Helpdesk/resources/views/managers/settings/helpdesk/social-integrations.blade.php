@@ -19,7 +19,7 @@
                         <p class="small mb-0 text-muted">Configura los canales de WhatsApp, Facebook Messenger e Instagram para recibir mensajes en Helpdesk</p>
                     </div>
                     <div>
-                        <a href="{{ route('manager.helpdesk.backups') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('manager.helpdesk') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Volver
                         </a>
                     </div>
@@ -228,9 +228,9 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token</code></pre>
 @push('scripts')
 <script>
     const socialTestRoutes = {
-        whatsapp: '{{ route('manager.helpdesk.backups.social-integrations.test.whatsapp') }}',
-        facebook: '{{ route('manager.helpdesk.backups.social-integrations.test.facebook') }}',
-        instagram: '{{ route('manager.helpdesk.backups.social-integrations.test.instagram') }}',
+        whatsapp: '{{ route('manager.helpdesk.settings.social-integrations.test.whatsapp') }}',
+        facebook: '{{ route('manager.helpdesk.settings.social-integrations.test.facebook') }}',
+        instagram: '{{ route('manager.helpdesk.settings.social-integrations.test.instagram') }}',
     };
 
     function testConnection(platform) {

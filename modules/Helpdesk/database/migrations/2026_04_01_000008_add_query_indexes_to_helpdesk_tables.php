@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        if (Schema::hasTable('helpdesk_tickets')) {
-            Schema::table('helpdesk_tickets', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_tickets')) {
+            Schema::connection($this->connection)->table('helpdesk_tickets', function (Blueprint $table) {
                 // category_id — used in byCategory scope
                 if (! $this->hasIndex('helpdesk_tickets', 'helpdesk_tickets_category_id_index')) {
                     $table->index('category_id', 'helpdesk_tickets_category_id_index');
@@ -33,8 +35,8 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('helpdesk_conversations') && Schema::hasColumn('helpdesk_conversations', 'channel')) {
-            Schema::table('helpdesk_conversations', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_conversations') && Schema::connection($this->connection)->hasColumn('helpdesk_conversations', 'channel')) {
+            Schema::connection($this->connection)->table('helpdesk_conversations', function (Blueprint $table) {
                 if (! $this->hasIndex('helpdesk_conversations', 'helpdesk_conversations_channel_index')) {
                     $table->index('channel', 'helpdesk_conversations_channel_index');
                 }
@@ -44,12 +46,12 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('helpdesk_conversation_items')) {
-            Schema::table('helpdesk_conversation_items', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_conversation_items')) {
+            Schema::connection($this->connection)->table('helpdesk_conversation_items', function (Blueprint $table) {
                 if (! $this->hasIndex('helpdesk_conversation_items', 'helpdesk_conv_items_conversation_created_index')) {
                     $table->index(['conversation_id', 'created_at'], 'helpdesk_conv_items_conversation_created_index');
                 }
-                if (Schema::hasColumn('helpdesk_conversation_items', 'external_id') &&
+                if (Schema::connection($this->connection)->hasColumn('helpdesk_conversation_items', 'external_id') &&
                     ! $this->hasIndex('helpdesk_conversation_items', 'helpdesk_conv_items_external_id_index')) {
                     $table->index('external_id', 'helpdesk_conv_items_external_id_index');
                 }
@@ -59,8 +61,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasTable('helpdesk_tickets')) {
-            Schema::table('helpdesk_tickets', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_tickets')) {
+            Schema::connection($this->connection)->table('helpdesk_tickets', function (Blueprint $table) {
                 $table->dropIndexIfExists('helpdesk_tickets_category_id_index');
                 $table->dropIndexIfExists('helpdesk_tickets_first_response_at_index');
                 $table->dropIndexIfExists('helpdesk_tickets_resolved_at_index');
@@ -69,15 +71,15 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('helpdesk_conversations')) {
-            Schema::table('helpdesk_conversations', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_conversations')) {
+            Schema::connection($this->connection)->table('helpdesk_conversations', function (Blueprint $table) {
                 $table->dropIndexIfExists('helpdesk_conversations_channel_index');
                 $table->dropIndexIfExists('helpdesk_conversations_sender_channel_index');
             });
         }
 
-        if (Schema::hasTable('helpdesk_conversation_items')) {
-            Schema::table('helpdesk_conversation_items', function (Blueprint $table) {
+        if (Schema::connection($this->connection)->hasTable('helpdesk_conversation_items')) {
+            Schema::connection($this->connection)->table('helpdesk_conversation_items', function (Blueprint $table) {
                 $table->dropIndexIfExists('helpdesk_conv_items_conversation_created_index');
                 $table->dropIndexIfExists('helpdesk_conv_items_external_id_index');
             });

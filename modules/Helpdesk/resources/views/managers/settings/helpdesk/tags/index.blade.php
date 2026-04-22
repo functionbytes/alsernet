@@ -1,247 +1,223 @@
 @extends('layouts.theme')
 
-@section('title', 'Tags de Conversaciones')
+@section('title', 'Etiquetas')
 
 @section('content')
 
-    @include('core::components.card', ['title' => 'Tags de Conversaciones'])
+    @include('core::components.card', ['title' => 'Etiquetas'])
 
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')
 
-        <!-- System Settings Card -->
         <div class="card">
-            <!-- Header Section -->
+
+            {{-- Header --}}
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Tags disponibles</h5>
-                        <p class="small mb-0 text-muted">Organiza y categoriza tus conversaciones con etiquetas</p>
+                        <h5 class="mb-1 fw-bold">Etiquetas de tickets</h5>
+                        <p class="small mb-0 text-muted">Organiza y categoriza los tickets con etiquetas personalizadas</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        @if(request('search'))
-                            <a href="{{ route('manager.helpdesk.backups.tickets.tags.index') }}" class="btn btn-secondary">
-                                Limpiar búsqueda
-                            </a>
-                        @endif
-                        <a href="{{ route('manager.helpdesk.backups.tickets.tags.create') }}" class="btn btn-primary">
-                            Nuevo tag
+                    <div class="ms-auto">
+                        <a href="{{ route('manager.helpdesk.settings.tickets.tags.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Nueva etiqueta
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
+            {{-- Stats --}}
             <div class="card-body border-bottom">
                 <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card bg-light-secondary stat-card h-100">
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-primary mb-2">
-                                            Total
-                                        </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $stats['total'] }}</h4>
-                                        <small class="text-muted">Tags configurados</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
+                                <small class="text-muted">Etiquetas registradas</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light-secondary stat-card h-100">
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-success mb-2">
-                                            Activos
-                                        </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $stats['active'] }}</h4>
-                                        <small class="text-muted">Tags habilitados</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Activas</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['active']) }}</h4>
+                                <small class="text-muted">Habilitadas</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light-secondary stat-card h-100">
+                    <div class="col-6 col-md-4">
+                        <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div>
-                                        <h6 class="card-title text-warning mb-2">
-                                            Inactivos
-                                        </h6>
-                                        <h4 class="mb-1 fw-bold">{{ $stats['inactive'] }}</h4>
-                                        <small class="text-muted">Tags deshabilitados</small>
-                                    </div>
-                                </div>
+                                <h6 class="card-title mb-2">Inactivas</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['inactive']) }}</h4>
+                                <small class="text-muted">Deshabilitadas</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Search Section -->
+            {{-- Search --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('manager.helpdesk.backups.tickets.tags.index') }}">
-                    <div class="row align-items-center g-2">
-                        <div class="col-md-7">
+                <form method="GET" action="{{ route('manager.helpdesk.settings.tickets.tags.index') }}" id="filterForm">
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="flex-fill">
                             <div class="input-group">
-                                <span class="input-group-text bg-white">
-                                    <i class="fas fa-search"></i>
+                                <span class="input-group-text bg-white border-end-1">
+                                    <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="search" name="search" class="form-control" placeholder="Buscar por nombre o descripción..." value="{{ request('search') }}">
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar por nombre, slug o descripcion..."
+                                       value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <select name="status" class="form-select">
-                                <option value="">Todos los estados</option>
-                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activos</option>
-                                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivos</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100">
-                                Buscar
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        @if(request('search'))
+                            <a href="{{ route('manager.helpdesk.settings.tickets.tags.index') }}"
+                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        @endif
                     </div>
                 </form>
             </div>
 
-            <!-- Tags List -->
+            {{-- Table --}}
             <div class="card-body">
                 @if($tags->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover align-middle text-nowrap">
                             <thead class="table-light">
-                            <tr>
-                                <th width="25%">Nombre</th>
-                                <th width="20%">Slug</th>
-                                <th width="10%" class="text-center">Color</th>
-                                <th width="25%">Descripción</th>
-                                <th width="10%" class="text-center">Uso</th>
-                                <th width="10%" class="text-center">Acciones</th>
-                            </tr>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Slug</th>
+                                    <th>Descripcion</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            @foreach($tags as $tag)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <strong>{{ $tag->name }}</strong>
-                                            @if(!$tag->is_active)
-                                                <span class="badge bg-warning-subtle text-warning">Inactivo</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <code class="bg-light px-2 py-1 rounded">{{ $tag->slug }}</code>
-                                    </td>
-                                    <td class="text-center">
-                                        @if($tag->color)
-                                            <div class="d-flex align-items-center justify-content-center gap-2">
-                                                <div style="width: 24px; height: 24px; background-color: {{ $tag->color }}; border-radius: 4px; border: 1px solid #dee2e6;"></div>
-                                                <small class="text-muted">{{ $tag->color }}</small>
+                                @foreach($tags as $tag)
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="rounded-circle d-inline-block flex-shrink-0"
+                                                      style="width:12px;height:12px;background-color:{{ $tag->color ?? '#90bb13' }};"></span>
+                                                <span class="fw-semibold">{{ $tag->name }}</span>
                                             </div>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ $tag->description ? Str::limit($tag->description, 60) : '-' }}</small>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-info-subtle text-info">
-                                            {{ $tag->usage_count }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="dropdown">
-                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
-                                            </a>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('manager.helpdesk.backups.tickets.tags.edit', $tag->id) }}">
-                                                        Editar
-                                                    </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.tags.destroy', $tag->id) }}"
-                                                          onsubmit="return confirm('¿Estás seguro de eliminar este tag? Esta acción no se puede deshacer.')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="dropdown-item text-danger">
+                                        </td>
+                                        <td>
+                                            <code class="bg-light px-2 py-1 rounded small">{{ $tag->slug }}</code>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ $tag->description ? Str::limit($tag->description, 60) : '—' }}
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            @if($tag->is_active)
+                                                <span class="badge bg-success-subtle text-success">Activa</span>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.tickets.tags.edit', $tag->id) }}">
+                                                            Editar
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item delete-btn" href="#"
+                                                           data-bs-toggle="modal"
+                                                           data-bs-target="#delete-modal"
+                                                           data-url="{{ route('manager.helpdesk.settings.tickets.tags.destroy', $tag->id) }}"
+                                                           data-title="Eliminar etiqueta: {{ $tag->name }}">
                                                             Eliminar
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
-
                 @else
                     <div class="text-center py-5">
-                        <div class="d-flex flex-column align-items-center">
-                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-tags fs-7"></i>
-                            </div>
-                            <h6 class="mb-1">No hay tags para mostrar</h6>
-                            <p class="text-muted mb-3">
-                                @if(request('search'))
-                                    No se encontraron resultados para "{{ request('search') }}"
-                                @else
-                                    Crea tu primer tag para organizar las conversaciones
-                                @endif
-                            </p>
-                            @if(!request('search'))
-                                <a href="{{ route('manager.helpdesk.backups.tickets.tags.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus"></i> Crear Primer Tag
-                                </a>
+                        <i class="fas fa-tags fa-3x mb-3 text-muted opacity-50"></i>
+                        <h5 class="fw-bold mb-2">
+                            @if(request('search'))
+                                No se encontraron resultados
+                            @else
+                                No hay etiquetas configuradas
                             @endif
-                        </div>
+                        </h5>
+                        <p class="text-muted mb-4">
+                            @if(request('search'))
+                                No hay resultados para "{{ request('search') }}"
+                            @else
+                                Aun no hay etiquetas creadas
+                            @endif
+                        </p>
+                        @if(request('search'))
+                            <a href="{{ route('manager.helpdesk.settings.tickets.tags.index') }}" class="btn btn-secondary">Limpiar filtros</a>
+                        @else
+                            <a href="{{ route('manager.helpdesk.settings.tickets.tags.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Nueva etiqueta
+                            </a>
+                        @endif
                     </div>
                 @endif
             </div>
 
-            <!-- Pagination -->
+            {{-- Pagination --}}
             @if($tags->hasPages())
                 <div class="card-footer bg-white border-top">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted">
-                            Mostrando <strong>{{ $tags->firstItem() }}</strong> a <strong>{{ $tags->lastItem() }}</strong>
-                            de <strong>{{ $tags->total() }}</strong> tags
+                        <div class="text-muted small">
+                            Mostrando {{ $tags->firstItem() }} - {{ $tags->lastItem() }} de {{ $tags->total() }}
                         </div>
-                        <nav aria-label="Page navigation">
-                            {{ $tags->links() }}
-                        </nav>
+                        <div>
+                            {{ $tags->appends(request()->input())->links() }}
+                        </div>
                     </div>
                 </div>
             @endif
+
         </div>
     </div>
+
+    @include('core::components.delete')
 
 @endsection
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
+$(document).ready(function () {
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Exito');
     @endif
-
-    @if (session('error'))
+    @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    $(document).on('click', '.delete-btn', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').attr('action', $(this).data('url'));
+    });
 });
 </script>
 @endpush

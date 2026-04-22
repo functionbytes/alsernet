@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="account pt-150 padding-bottom">
-        <div class="container-fluid">
+        <div class="px-3">
             <div class="account__wrapper aos-init aos-animate" data-aos="fade-up" data-aos-duration="800">
                 <div class="row g-4">
                     <div class="col-lg-12">
@@ -32,7 +32,7 @@
                                     <div class="input-group">
                                         <input class="form-control" type="password" autocomplete="new-password" name="password" id="password" placeholder="Contraseña (mínimo 8 caracteres)">
                                     </div>
-                                    <div class="mt-2" id="password-strength-wrapper" style="display:none">
+                                    <div class="mt-2" id="password-strength-wrapper" class="d-none">
                                         <div class="progress" style="height:5px">
                                             <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
                                         </div>

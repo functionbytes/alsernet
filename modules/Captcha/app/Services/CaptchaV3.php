@@ -20,6 +20,10 @@ class CaptchaV3 extends CaptchaContract
             return true;
         }
 
+        if (! $this->isValidTokenFormat($response)) {
+            return false;
+        }
+
         $circuit = new CircuitBreaker('captcha', 5, 60);
 
         if (! $circuit->isAvailable()) {
@@ -29,13 +33,16 @@ class CaptchaV3 extends CaptchaContract
         }
 
         try {
-            $httpResponse = Http::asForm()
-                ->withoutVerifying()
-                ->post(self::RECAPTCHA_VERIFY_API_URL, [
-                    'secret' => $this->secretKey,
-                    'response' => $response,
-                    'remoteip' => $clientIp,
-                ]);
+            $http = Http::asForm();
+            if (app()->isLocal()) {
+                $http = $http->withoutVerifying();
+            }
+
+            $httpResponse = $http->post(self::RECAPTCHA_VERIFY_API_URL, [
+                'secret' => $this->secretKey,
+                'response' => $response,
+                'remoteip' => $clientIp,
+            ]);
 
             $circuit->recordSuccess();
 
@@ -54,7 +61,7 @@ class CaptchaV3 extends CaptchaContract
         $action = $options[0];
         $minScore = isset($options[1]) ? (float) $options[1] : 0.6;
 
-        if ($action && (! isset($data['action']) || $action != $data['action'])) {
+        if ($action && (! isset($data['action']) || $action !== $data['action'])) {
             return false;
         }
 

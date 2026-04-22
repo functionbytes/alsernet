@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[ALERT] Error crítico</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
         .wrapper { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
         .header { background: #d32f2f; color: #fff; padding: 24px 32px; }
         .header h1 { margin: 0; font-size: 20px; }

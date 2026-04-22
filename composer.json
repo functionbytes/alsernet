@@ -81,6 +81,9 @@
             "Modules\\Forms\\Database\\Factories\\": "modules/Forms/database/factories/",
             "Modules\\Forms\\Database\\Seeders\\": "modules/Forms/database/seeders/",
             "Modules\\Helpdesk\\": "modules/Helpdesk/app/",
+            "Modules\\HelpdeskTickets\\": "modules/HelpdeskTickets/app/",
+            "Modules\\HelpdeskAgents\\": "modules/HelpdeskAgents/app/",
+            "Modules\\HelpdeskCampaigns\\": "modules/HelpdeskCampaigns/app/",
             "Modules\\Mailrelay\\": "modules/Mailrelay/app/",
             "Modules\\Reviews\\": "modules/Reviews/app/",
             "Modules\\Seo\\": "modules/Seo/app/",
@@ -135,6 +138,7 @@
         ]
     },
     "scripts": {
+        "stan": "./vendor/bin/phpstan analyse --memory-limit=2G",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

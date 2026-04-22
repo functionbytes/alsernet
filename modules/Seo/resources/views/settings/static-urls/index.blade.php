@@ -287,26 +287,32 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una URL.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' URL(s) seleccionadas?')) { return; }
+        const doAction = function () {
+            $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
-        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+            $.ajax({
+                url: '{{ route('setting.seo.static-urls.bulk-action') }}',
+                method: 'POST',
+                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $('#bulk-modal').modal('hide');
+                    toastr.success(res.message || res.count + ' URL(s) actualizadas.');
+                    setTimeout(() => location.reload(), 800);
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                    $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+                },
+            });
+        };
 
-        $.ajax({
-            url: '{{ route('setting.seo.static-urls.bulk-action') }}',
-            method: 'POST',
-            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                $('#bulk-modal').modal('hide');
-                toastr.success(res.message || res.count + ' URL(s) actualizadas.');
-                setTimeout(() => location.reload(), 800);
-            },
-            error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-            },
-        });
+        if (action === 'delete') {
+            window.__confirm('¿Eliminar las ' + ids.length + ' URL(s) seleccionadas?', doAction);
+        } else {
+            doAction();
+        }
     });
 });
 </script>

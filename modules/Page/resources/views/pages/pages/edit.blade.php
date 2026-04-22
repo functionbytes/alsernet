@@ -359,11 +359,11 @@
                                         </div>
                                     @else
                                         <div id="featuredImageEmpty"
-                                             class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light"
-                                             style="min-height:140px; border:2px dashed #dee2e6; cursor:pointer;"
+                                             class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light border border-dashed cursor-pointer"
+                                             style="min-height:140px;"
                                              onclick="document.getElementById('btn-featured-image-picker').click()">
-                                            <i class="fas fa-image fa-3x mb-2" style="color:#adb5bd;"></i>
-                                            <p class="mb-0 small" style="color:#6c757d;">Haz clic para seleccionar una imagen</p>
+                                            <i class="fas fa-image fa-3x mb-2 text-muted"></i>
+                                            <p class="mb-0 small text-muted">Haz clic para seleccionar una imagen</p>
                                         </div>
                                     @endif
                                 </div>

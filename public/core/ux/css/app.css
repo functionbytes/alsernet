@@ -1085,8 +1085,8 @@ ul.menu-steps li a.current i, ul.menu-steps li a:hover i {
 
 .alert-secondary {
   color: #464a4e;
-  background-color: #f5f5f5;
-  border-color: #f5f5f5;
+  background-color: #f9f9f9;
+  border-color: #f9f9f9;
 }
 
 .sub-section-header h3 {
@@ -1837,7 +1837,7 @@ ul.inline-infos li {
 }
 
 .form-control:disabled, .form-control[readonly] {
-  background-color: #f5f5f5;
+  background-color: #f9f9f9;
 }
 
 .file-upload-input {

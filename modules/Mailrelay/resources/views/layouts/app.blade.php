@@ -22,7 +22,7 @@
         /* Sidebar Styles */
         #sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            background: #90bb13;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             position: fixed;
             top: 0;
@@ -174,7 +174,7 @@
 <div id="content">
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg top-navbar">
-        <div class="container-fluid">
+        <div>
             <button class="btn btn-link text-dark" id="sidebarToggle">
                 <i class="bi bi-list fs-4"></i>
             </button>
@@ -238,7 +238,7 @@
 
     <!-- Footer -->
     <footer class="bg-white border-top py-3 mt-auto">
-        <div class="container-fluid px-4">
+        <div class="px-4 px-3">
             <div class="d-flex justify-content-between align-items-center">
                 <small class="text-muted">&copy; {{ date('Y') }} MailRelay. All rights reserved.</small>
                 <small class="text-muted">Version 1.0.0</small>

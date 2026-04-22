@@ -4,8 +4,8 @@ namespace Tests\Feature\Helpdesk;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Helpdesk\Models\Ticket;
-use Modules\Helpdesk\Models\TicketComment;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketComment;
 use Tests\TestCase;
 
 class TicketCommentsControllerTest extends TestCase

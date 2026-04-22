@@ -12,6 +12,8 @@ class HelpCenterCategory extends Model
 {
     use SoftDeletes;
 
+    protected $connection = 'helpdesk';
+
     protected $table = 'helpdesk_helpcenter_categories';
 
     protected $fillable = [
@@ -26,11 +28,14 @@ class HelpCenterCategory extends Model
         'managed_by_role',
     ];
 
-    protected $casts = [
-        'is_section' => 'boolean',
-        'position' => 'integer',
-        'parent_id' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_section' => 'boolean',
+            'position' => 'integer',
+            'parent_id' => 'integer',
+        ];
+    }
 
     /**
      * A category can have many child sections

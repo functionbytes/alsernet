@@ -2,47 +2,17 @@
 
 @section('title', 'Grupos de suscriptores')
 
-@section('head')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+@push('css')
 <style>
-    .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    .stats-card h3 {
-        font-size: 2rem;
-        margin: 0;
-    }
-    .stats-card p {
-        margin: 0;
-        opacity: 0.9;
-    }
-    .search-section {
-        background-color: #fff;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-        margin-bottom: 1.5rem;
-    }
-    .table-hover tbody tr:hover {
-        background-color: rgba(0, 123, 255, 0.05);
-    }
-    .badge-status {
-        font-size: 0.875rem;
-        padding: 0.35em 0.65em;
-    }
-    .form-switch .form-check-input {
-        cursor: pointer;
-    }
+    .stats-card { color: white; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+    .stats-card h3 { font-size: 2rem; margin: 0; }
+    .stats-card p { margin: 0; opacity: 0.9; }
+    .badge-status { font-size: 0.875rem; padding: 0.35em 0.65em; }
 </style>
-@endsection
+@endpush
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4">
     <div class="row mb-4">
         <div class="col-md-8">
             <h1 class="h2 mb-3">
@@ -59,33 +29,33 @@
     <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="stats-card">
+            <div class="stats-card bg-primary">
                 <h3>{{ $stats['total'] ?? 0 }}</h3>
-                <p><i class="fas fa-layer-group"></i> Total grupos</p>
+                <p>Total grupos</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="stats-card bg-success">
                 <h3>{{ $stats['active'] ?? 0 }}</h3>
-                <p><i class="fas fa-check-circle"></i> Activos</p>
+                <p>Activos</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="stats-card bg-info">
                 <h3>{{ $stats['total_subscribers'] ?? 0 }}</h3>
-                <p><i class="fas fa-user-friends"></i> Total suscriptores</p>
+                <p>Total suscriptores</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stats-card bg-secondary">
                 <h3>{{ $stats['avg_per_group'] ?? 0 }}</h3>
-                <p><i class="fas fa-chart-line"></i> Promedio por grupo</p>
+                <p>Promedio por grupo</p>
             </div>
         </div>
     </div>
 
     <!-- Search Section -->
-    <div class="search-section">
+    <div class="card mb-3 p-3">
         <form method="GET" action="{{ route('mailrelay.settings.groups.index') }}" class="row g-3">
             <div class="col-md-10">
                 <label for="search" class="form-label">
@@ -173,19 +143,10 @@
                                       onchange="this.submit()">
                                     @csrf
                                     @method('PATCH')
-                                    <div class="form-check form-switch">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="active_{{ $group->id }}"
-                                            name="active"
-                                            value="1"
-                                            {{ $group->active ? 'checked' : '' }}
-                                        >
-                                        <label class="form-check-label" for="active_{{ $group->id }}">
-                                            {{ $group->active ? 'Activo' : 'Inactivo' }}
-                                        </label>
-                                    </div>
+                                    <select class="form-select form-select-sm" name="active">
+                                        <option value="1" {{ $group->active ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ !$group->active ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </form>
                             </td>
                             <td>
@@ -246,7 +207,7 @@
                                 <form id="delete-form-{{ $group->id }}"
                                       action="{{ route('mailrelay.settings.groups.destroy', $group) }}"
                                       method="POST"
-                                      style="display: none;">
+                                      class="d-none">
                                     @csrf
                                     @method('DELETE')
                                 </form>
@@ -255,7 +216,7 @@
                         @empty
                         <tr>
                             <td colspan="6" class="text-center py-5">
-                                <i class="fas fa-users" style="font-size: 3rem; color: #ccc;"></i>
+                                <i class="fas fa-users fs-1 text-muted"></i>
                                 <p class="text-muted mt-3">No se encontraron grupos de suscriptores.</p>
                                 <a href="{{ route('mailrelay.settings.groups.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus-circle"></i> Crear tu primer grupo
@@ -277,13 +238,12 @@
 </div>
 @endsection
 
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+@push('scripts')
 <script>
     function confirmDelete(groupId) {
-        if (confirm('¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer.')) {
+        if (window.confirm('¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer.')) {
             document.getElementById('delete-form-' + groupId).submit();
         }
     }
 </script>
-@endsection
+@endpush

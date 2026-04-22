@@ -121,7 +121,7 @@
                                                         <i class="fas fa-link"></i>
                                                     </button>
                                                     <form method="POST" action="{{ route('settings.forms.access-tokens.destroy', [$form, $token]) }}"
-                                                          onsubmit="return confirm('¿Eliminar este token? Los usuarios con este enlace perderán el acceso.')">
+                                                          class="needs-confirm" data-confirm-msg="¿Eliminar este token? Los usuarios con este enlace perderán el acceso.">
                                                         @csrf @method('DELETE')
                                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
                                                             <i class="fas fa-trash"></i>

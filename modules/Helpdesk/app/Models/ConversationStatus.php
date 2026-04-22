@@ -23,13 +23,16 @@ class ConversationStatus extends Model
         'active',
     ];
 
-    protected $casts = [
-        'is_default' => 'boolean',
-        'is_system' => 'boolean',
-        'is_open' => 'boolean',
-        'active' => 'boolean',
-        'order' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_default' => 'boolean',
+            'is_system' => 'boolean',
+            'is_open' => 'boolean',
+            'active' => 'boolean',
+            'order' => 'integer',
+        ];
+    }
 
     /**
      * Boot the model.

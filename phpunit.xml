@@ -7,17 +7,30 @@
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
-            <directory>Modules/*/tests/Unit</directory>
+            <directory>modules/*/tests/Unit</directory>
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
-            <directory>Modules/*/tests/Feature</directory>
+            <directory>modules/*/tests/Feature</directory>
         </testsuite>
     </testsuites>
+    <coverage>
+        <report>
+            <clover outputFile="coverage.xml"/>
+            <html outputDirectory="coverage/"/>
+            <text outputFile="coverage.txt" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+
     <source>
         <include>
             <directory>app</directory>
+            <directory>modules/Helpdesk/app</directory>
         </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>storage</directory>
+        </exclude>
     </source>
     <php>
         <ini name="memory_limit" value="512M"/>

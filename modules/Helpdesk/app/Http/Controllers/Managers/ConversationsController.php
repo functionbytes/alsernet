@@ -118,7 +118,7 @@ class ConversationsController extends Controller
         $statuses = ConversationStatus::orderBy('order')->get();
 
         // Get available tags for the modal
-        $availableTags = ConversationTag::active()->orderBy('name')->get();
+        $availableTags = ConversationTag::active()->orderBy('firstname')->get();
 
         // Get views for sidebar (same as index)
         $views = ConversationView::query()
@@ -384,7 +384,7 @@ class ConversationsController extends Controller
         $validated = $request->validate([
             'body' => 'required|string',
             'is_internal' => 'nullable|boolean',
-            'attachments.*' => 'nullable|file|max:10240', // 10MB max per file
+            'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip,mp4,mp3,ogg',
             'action' => 'nullable|in:send,send_and_close',
         ]);
 
@@ -426,17 +426,12 @@ class ConversationsController extends Controller
             }
         }
 
-        // Update conversation timestamps
-        $conversation->update([
-            'last_message_at' => now(),
-        ]);
-
-        // Set first response time if this is the first agent response
+        // Update conversation timestamps in a single query
+        $data = ['last_message_at' => now()];
         if (! $conversation->first_response_at) {
-            $conversation->update([
-                'first_response_at' => now(),
-            ]);
+            $data['first_response_at'] = now();
         }
+        $conversation->update($data);
 
         // Close conversation if requested
         if ($request->input('action') === 'send_and_close') {

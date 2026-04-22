@@ -532,7 +532,7 @@ $(document).ready(function() {
 
     // Publicar
     $('#publish-reply').on('click', function() {
-        if (confirm('¿Publicar esta respuesta en Google? Esta acción no se puede deshacer.')) {
+        if (true) {
             saveReply('published');
         }
     });

@@ -1,7 +1,7 @@
 @extends('layouts.theme')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
 
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <div>

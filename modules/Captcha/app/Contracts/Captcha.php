@@ -22,6 +22,21 @@ abstract class Captcha
 
     abstract public function display(array $attributes = [], array $options = []): ?string;
 
+    /**
+     * Validate the token format before sending to Google.
+     * reCAPTCHA tokens are base64url strings, typically 300–2500 chars.
+     * Rejecting malformed tokens avoids unnecessary external calls and
+     * prevents parameter injection via crafted response strings.
+     */
+    protected function isValidTokenFormat(string $token): bool
+    {
+        if (strlen($token) < 20 || strlen($token) > 4096) {
+            return false;
+        }
+
+        return (bool) preg_match('/^[A-Za-z0-9_\-]+$/', $token);
+    }
+
     public function rules(): array
     {
         if (! $this->reCaptchaEnabled()) {

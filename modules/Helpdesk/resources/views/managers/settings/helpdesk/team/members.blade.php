@@ -21,11 +21,11 @@
                     </div>
                     <div class="d-flex gap-2">
                         @if(request('search') || request('role') != 'all' || request('group_id') != 'all')
-                            <a href="{{ route('manager.helpdesk.backups.tickets.team.members') }}" class="btn btn-secondary">
+                            <a href="{{ route('manager.helpdesk.settings.tickets.team.members') }}" class="btn btn-secondary">
                                 Limpiar filtros
                             </a>
                         @endif
-                        <a href="{{ route('manager.helpdesk.backups.tickets.team.groups') }}" class="btn btn-primary">
+                        <a href="{{ route('manager.helpdesk.settings.ticket-groups.index') }}" class="btn btn-primary">
                             Ver grupos
                         </a>
                     </div>
@@ -164,7 +164,7 @@
 
             <!-- Filters -->
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('manager.helpdesk.backups.tickets.team.members') }}" id="filterForm">
+                <form method="GET" action="{{ route('manager.helpdesk.settings.tickets.team.members') }}" id="filterForm">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Buscar</label>
@@ -290,7 +290,7 @@
                                         </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.backups.tickets.team.member.edit', $member->id) }}">
+                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.settings.tickets.team.member.edit', $member->id) }}">
                                                             Editar
                                                         </a>
                                                     </li>

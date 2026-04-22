@@ -3,7 +3,7 @@
 @section('page_title', 'Crear Componente de email')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
 
     {{-- Breadcrumb Card --}}
     @include('core::components.card', [
@@ -195,7 +195,7 @@
                     <div class="tab-content" id="editorTabsContent">
                         {{-- Tab 1: Code Editor --}}
                         <div class="tab-pane fade show active p-0" id="code-panel" role="tabpanel" aria-labelledby="code-tab">
-                            <textarea class="form-control" id="content" name="content" style="display: none;">{{ old('content', '') }}</textarea>
+                            <textarea class="form-control d-none" id="content" name="content">{{ old('content', '') }}</textarea>
                         </div>
 
                         {{-- Tab 2: Preview Panel --}}

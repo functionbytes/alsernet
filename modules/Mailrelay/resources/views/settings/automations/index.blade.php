@@ -35,7 +35,7 @@
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -227,18 +227,13 @@
                 <!-- Card Footer -->
                 <div class="card-footer border-top bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <!-- Toggle Switch -->
-                        <div class="form-check form-switch">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   role="switch"
-                                   id="status{{ $automation->id }}"
-                                   {{ $automation->status === 'active' ? 'checked' : '' }}
-                                   onchange="toggleStatus({{ $automation->id }})">
-                            <label class="form-check-label" for="status{{ $automation->id }}">
-                                {{ $automation->status === 'active' ? 'Activa' : 'Pausada' }}
-                            </label>
-                        </div>
+                        <select class="form-select form-select-sm w-auto"
+                                id="status{{ $automation->id }}"
+                                onchange="toggleStatus({{ $automation->id }})">
+                            <option value="active" {{ $automation->status === 'active' ? 'selected' : '' }}>Activa</option>
+                            <option value="paused" {{ $automation->status === 'paused' ? 'selected' : '' }}>Pausada</option>
+                            <option value="inactive" {{ $automation->status === 'inactive' ? 'selected' : '' }}>Inactiva</option>
+                        </select>
 
                         <!-- Dropdown Menu -->
                         <div class="dropdown">
@@ -321,8 +316,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function toggleStatus(automationId) {
-    const checkbox = document.getElementById('status' + automationId);
-    const status = checkbox.checked ? 'active' : 'paused';
+    const select = document.getElementById('status' + automationId);
+    const status = select.value;
+    const prevValue = select.dataset.prev || select.value;
+    select.dataset.prev = status;
 
     fetch(`{{ url('settings/mailrelay/automations') }}/${automationId}/toggle`, {
         method: 'PATCH',
@@ -340,44 +337,27 @@ function toggleStatus(automationId) {
     })
     .then(data => {
         if (data.success) {
-            // Update badge
-            const card = checkbox.closest('.card');
+            const card = select.closest('.card');
             const badge = card.querySelector('.badge');
 
             if (status === 'active') {
                 badge.className = 'badge bg-success';
                 badge.textContent = 'Activa';
-            } else {
+            } else if (status === 'paused') {
                 badge.className = 'badge bg-warning text-dark';
                 badge.textContent = 'Pausada';
+            } else {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Inactiva';
             }
 
-            // Show success message
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-success alert-dismissible fade show';
-            alertDiv.innerHTML = `
-                <i class="fas fa-check-circle me-2"></i>Estado actualizado correctamente
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
-
-            setTimeout(() => alertDiv.remove(), 3000);
+            toastr.success('Estado actualizado correctamente');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        checkbox.checked = !checkbox.checked;
-
-        // Show error message
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.innerHTML = `
-            <i class="fas fa-exclamation-circle me-2"></i>Error al actualizar el estado
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
-
-        setTimeout(() => alertDiv.remove(), 3000);
+        select.value = prevValue;
+        toastr.error('Error al actualizar el estado');
     });
 }
 </script>

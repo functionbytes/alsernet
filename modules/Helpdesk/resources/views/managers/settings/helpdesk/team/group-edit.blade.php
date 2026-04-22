@@ -4,7 +4,7 @@
 
     <div class="card w-100">
 
-        <form id="groupForm" method="POST" action="{{ route('manager.helpdesk.backups.tickets.team.group.update', $group->id) }}">
+        <form id="groupForm" method="POST" action="{{ route('manager.helpdesk.settings.tickets.team.group.update', $group->id) }}">
 
             {{ csrf_field() }}
             @method('PUT')
@@ -214,7 +214,7 @@
                 <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                     Guardar
                 </button>
-                <a href="{{ route('manager.helpdesk.backups.tickets.team.groups') }}" class="btn btn-light px-4 waves-effect waves-light mt-2 w-100">
+                <a href="{{ route('manager.helpdesk.settings.ticket-groups.index') }}" class="btn btn-light px-4 waves-effect waves-light mt-2 w-100">
                     Cancelar
                 </a>
             </div>

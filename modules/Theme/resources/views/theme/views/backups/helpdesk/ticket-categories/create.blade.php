@@ -1,147 +1,208 @@
 @extends('layouts.theme')
 
-@section('title', 'Nueva categoría de ticket')
+@section('title', 'Nueva categoria de ticket')
 
 @section('content')
-<div class="container-fluid">
 
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="{{ route('manager.helpdesk.backups.tickets.categories.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i> Volver
-        </a>
-        <div>
-            <h4 class="mb-0 fw-bold">Nueva categoría de ticket</h4>
-            <p class="text-muted mb-0">Crea una categoría para clasificar los tickets</p>
+    @include('core::components.card', ['title' => 'Nueva categoria de ticket'])
+
+    <div class="row g-3">
+
+        {{-- Form --}}
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <form id="categoryForm" action="{{ route('manager.helpdesk.settings.ticket-categories.store') }}" method="POST">
+                    @csrf
+
+                    <div class="card-header border-bottom p-3">
+                        <h5 class="mb-0 fw-bold">Nueva categoria</h5>
+                        <small class="text-muted">Crea una categoria para clasificar los tickets</small>
+                    </div>
+
+                    <div class="card-body">
+                        @include('core::components.alerts')
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible de la categoria</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" name="name"
+                                           class="form-control @error('name') is-invalid @enderror"
+                                           value="{{ old('name') }}"
+                                           placeholder="Ej: Soporte tecnico"
+                                           required>
+                                    @error('name')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Slug</label>
+                                    <input type="text" name="slug"
+                                           class="form-control @error('slug') is-invalid @enderror"
+                                           value="{{ old('slug') }}"
+                                           placeholder="soporte-tecnico">
+                                    <small class="form-text text-muted">Se genera automaticamente si se deja vacio</small>
+                                    @error('slug')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Descripcion</label>
+                                    <textarea name="description"
+                                              class="form-control @error('description') is-invalid @enderror"
+                                              rows="3"
+                                              placeholder="Describe el alcance de esta categoria">{{ old('description') }}</textarea>
+                                    @error('description')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Apariencia</h6>
+                        <p class="text-muted small mb-3">Icono y color que identifican visualmente la categoria en listados</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Icono</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i id="iconPreview" class="{{ old('icon', 'fas fa-tag') }}"></i>
+                                        </span>
+                                        <input type="text" name="icon" id="iconInput"
+                                               class="form-control @error('icon') is-invalid @enderror"
+                                               value="{{ old('icon', 'fas fa-tag') }}"
+                                               placeholder="fas fa-tag">
+                                    </div>
+                                    <small class="form-text text-muted">Clase Font Awesome 6. Ej: fas fa-headset, fas fa-bug</small>
+                                    @error('icon')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Color</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="color" name="color" id="colorPicker"
+                                               class="form-control form-control-color @error('color') is-invalid @enderror"
+                                               value="{{ old('color', '#90bb13') }}">
+                                        <input type="text" id="colorHex" class="form-control"
+                                               value="{{ old('color', '#90bb13') }}" readonly>
+                                    </div>
+                                    @error('color')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Colores sugeridos</label>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
+                                            <button type="button" class="btn btn-sm color-preset rounded-circle border-0"
+                                                    data-color="{{ $c }}"
+                                                    title="{{ $c }}"
+                                                    style="background-color:{{ $c }};width:32px;height:32px;"></button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <p class="text-muted small mb-3">Politica SLA por defecto y disponibilidad de la categoria</p>
+                        <div class="row g-3">
+
+                            @if(isset($slaPolicies) && $slaPolicies->count())
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Politica SLA por defecto</label>
+                                        <select name="default_sla_policy_id"
+                                                class="form-select select2 @error('default_sla_policy_id') is-invalid @enderror">
+                                            <option value="">Sin politica SLA</option>
+                                            @foreach($slaPolicies as $sla)
+                                                <option value="{{ $sla->id }}" {{ old('default_sla_policy_id') == $sla->id ? 'selected' : '' }}>
+                                                    {{ $sla->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('default_sla_policy_id')
+                                            <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label for="active" class="form-label">Estado</label>
+                                    <select class="form-select @error('active') is-invalid @enderror" id="active" name="active" required>
+                                        <option value="1" {{ old('active', 1) == 1 ? 'selected' : '' }}>Activa</option>
+                                        <option value="0" {{ old('active', 1) == 0 ? 'selected' : '' }}>Inactiva</option>
+                                    </select>
+                                    <small class="form-text text-muted">Las inactivas no estan disponibles para nuevos tickets</small>
+                                    @error('active')
+                                        <div class="field-validation-error">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar categoria</button>
+                        <a href="{{ route('manager.helpdesk.settings.ticket-categories.index') }}" class="btn btn-light w-100">Cancelar</a>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="card">
-        <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.categories.store') }}">
-            @csrf
-
-            <div class="card-body">
-                <div class="row g-3">
-
-                    <div class="col-12">
-                        <h6 class="fw-semibold text-uppercase text-muted">Informacion basica</h6>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name') }}" placeholder="Ej: Soporte Tecnico" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Slug <small class="text-muted fw-normal">(opcional)</small></label>
-                        <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror"
-                               value="{{ old('slug') }}" placeholder="soporte-tecnico">
-                        <div class="form-text">Se genera automáticamente si se deja vacío.</div>
-                        @error('slug')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Descripcion <small class="text-muted fw-normal">(opcional)</small></label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
-                                  rows="2" placeholder="Describe el alcance de esta categoría">{{ old('description') }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12"><hr class="my-2"></div>
-                    <div class="col-12">
-                        <h6 class="fw-semibold text-uppercase text-muted">Apariencia</h6>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Icono <small class="text-muted fw-normal">(clase FontAwesome)</small></label>
-                        <div class="input-group">
-                            <span class="input-group-text" id="iconPreview">
-                                <i class="{{ old('icon', 'fas fa-tag') }}"></i>
-                            </span>
-                            <input type="text" name="icon" id="iconInput"
-                                   class="form-control @error('icon') is-invalid @enderror"
-                                   value="{{ old('icon', 'fas fa-tag') }}" placeholder="fas fa-tag">
-                        </div>
-                        <div class="form-text">Ej: fas fa-headset, fas fa-bug, fas fa-laptop</div>
-                        @error('icon')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Color</label>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="color" name="color" id="colorPicker"
-                                   class="form-control form-control-color @error('color') is-invalid @enderror"
-                                   value="{{ old('color', '#90bb13') }}">
-                            <input type="text" id="colorHex" class="form-control" style="max-width:110px;"
-                                   value="{{ old('color', '#90bb13') }}" readonly>
-                            <div id="colorPreview" class="border rounded"
-                                 style="width:40px;height:40px;background-color:{{ old('color', '#90bb13') }};"></div>
-                        </div>
-                        @error('color')
-                            <div class="text-danger small mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Colores sugeridos</label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
-                                <button type="button" class="btn btn-sm color-preset rounded"
-                                        data-color="{{ $c }}"
-                                        style="background-color:{{ $c }};width:36px;height:36px;"></button>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="col-12"><hr class="my-2"></div>
-
-                    <div class="col-md-4">
-                        <div class="form-check form-switch">
-                            <input type="hidden" name="active" value="0">
-                            <input type="checkbox" name="active" class="form-check-input" id="active"
-                                   value="1" {{ old('active', true) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="active">
-                                <strong>Activa</strong>
-                                <small class="d-block text-muted">Disponible para nuevos tickets</small>
-                            </label>
-                        </div>
-                    </div>
-
+        {{-- Help panel --}}
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Sobre las categorias</h6>
+                    <p class="card-text text-muted">
+                        Las categorias permiten clasificar los tickets para facilitar su gestion y enrutamiento hacia el equipo correcto.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Buenas practicas</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 text-muted small"><i class="fas fa-check text-success me-2"></i> Usa nombres cortos y descriptivos</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check text-success me-2"></i> Asigna un color distinto por categoria</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check text-success me-2"></i> Configura una politica SLA para controlar tiempos</li>
+                        <li class="text-muted small"><i class="fas fa-check text-success me-2"></i> El slug se genera automaticamente desde el nombre</li>
+                    </ul>
                 </div>
             </div>
+        </div>
 
-            <div class="card-footer d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Guardar
-                </button>
-                <a href="{{ route('manager.helpdesk.backups.tickets.categories.index') }}" class="btn btn-secondary px-4">
-                    Cancelar
-                </a>
-            </div>
-        </form>
     </div>
-</div>
+
 @endsection
 
 @push('scripts')
 <script>
-$(function () {
+$(document).ready(function () {
+    // Auto-generate slug from name
     $('input[name="name"]').on('input', function () {
         if (!$('input[name="slug"]').val()) {
             $('input[name="slug"]').val(
@@ -150,22 +211,25 @@ $(function () {
         }
     });
 
+    // Icon preview
     $('#iconInput').on('input', function () {
-        $('#iconPreview i').attr('class', $(this).val() || 'fas fa-tag');
+        $('#iconPreview').attr('class', $(this).val() || 'fas fa-tag');
     });
 
+    // Color picker sync
     $('#colorPicker').on('input', function () {
-        const color = $(this).val();
-        $('#colorHex').val(color);
-        $('#colorPreview').css('background-color', color);
+        $('#colorHex').val($(this).val());
     });
 
-    $('.color-preset').on('click', function () {
+    // Color preset buttons
+    $(document).on('click', '.color-preset', function () {
         const color = $(this).data('color');
         $('#colorPicker').val(color);
         $('#colorHex').val(color);
-        $('#colorPreview').css('background-color', color);
     });
+
+    // Select2
+    $('.select2').select2({ width: '100%' });
 });
 </script>
 @endpush

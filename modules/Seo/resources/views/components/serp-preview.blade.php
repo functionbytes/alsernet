@@ -11,11 +11,19 @@
     <div class="card-header p-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center">
             <h6 class="fw-bold mb-0">Vista previa SERP</h6>
-            <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-secondary active" data-preview="google">Google</button>
-                <button type="button" class="btn btn-outline-secondary" data-preview="mobile">Móvil</button>
-                <button type="button" class="btn btn-outline-secondary" data-preview="facebook">Facebook</button>
-                <button type="button" class="btn btn-outline-secondary" data-preview="twitter">Twitter</button>
+            <div class="btn-group btn-group-sm seo-preview-tabs" role="group" aria-label="Plataforma">
+                <button type="button" class="btn btn-outline-secondary active" data-preview="google" title="Google">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-preview="mobile" title="Móvil">
+                    <i class="fas fa-mobile-screen"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-preview="facebook" title="Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-preview="twitter" title="Twitter">
+                    <i class="fab fa-x-twitter"></i>
+                </button>
             </div>
         </div>
     </div>

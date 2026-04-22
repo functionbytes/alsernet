@@ -22,6 +22,7 @@ class ThemeOptionController extends Controller
     /** @var list<string> */
     private static array $allowedKeys = [
         'preloader_enabled',
+        'cta_floating_enabled',
         'phone',
         'email',
         'address',
@@ -34,7 +35,6 @@ class ThemeOptionController extends Controller
         'logo',
         'logo_light',
         'favicon',
-        'terms_url',
         'copyright',
         'social_links',
         'header_messages',

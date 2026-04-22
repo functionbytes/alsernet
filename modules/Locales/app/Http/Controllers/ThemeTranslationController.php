@@ -17,12 +17,17 @@ class ThemeTranslationController extends Controller
         private readonly ThemeTranslationService $service
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $locales = $this->service->getAvailableLocales();
-        $groups = $this->service->getGroups();
+        $groupsByModule = $this->service->getGroupsByModule();
+        $moduleFilter = $request->input('module', '');
 
-        return view('locales::translations.index', compact('locales', 'groups'));
+        if ($moduleFilter !== '') {
+            $groupsByModule = $groupsByModule->only([$moduleFilter]);
+        }
+
+        return view('locales::translations.index', compact('locales', 'groupsByModule', 'moduleFilter'));
     }
 
     public function edit(Request $request, string $locale, string $group): View
@@ -30,6 +35,7 @@ class ThemeTranslationController extends Controller
         $allTranslations = $this->service->getTranslations($locale, $group);
         $locales = $this->service->getAvailableLocales();
         $groups = $this->service->getGroups();
+        $currentGroup = collect($groups)->firstWhere('name', $group);
 
         $sourceLocale = $locale === 'es' ? 'en' : 'es';
         $sourceTranslations = $this->service->getTranslations($sourceLocale, $group);
@@ -81,7 +87,7 @@ class ThemeTranslationController extends Controller
         );
 
         return view('locales::translations.edit', compact(
-            'locale', 'group', 'translations', 'allTranslations', 'locales', 'groups',
+            'locale', 'group', 'currentGroup', 'translations', 'allTranslations', 'locales', 'groups',
             'sourceLocale', 'sourceTranslations', 'sourceLocaleName', 'targetLocaleName',
             'totalKeys', 'translatedCount', 'untranslatedCount', 'percent',
             'search', 'tab'

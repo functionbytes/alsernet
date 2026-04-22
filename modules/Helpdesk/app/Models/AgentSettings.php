@@ -19,10 +19,13 @@ class AgentSettings extends Model
         'working_hours',
     ];
 
-    protected $casts = [
-        'assignment_limit' => 'integer',
-        'working_hours' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'assignment_limit' => 'integer',
+            'working_hours' => 'array',
+        ];
+    }
 
     /**
      * Get the user that owns the agent backups.

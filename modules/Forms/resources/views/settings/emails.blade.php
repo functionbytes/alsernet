@@ -91,14 +91,12 @@
 
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="send_confirmation" value="0">
-                                        <input class="form-check-input" type="checkbox" id="send_confirmation"
-                                               name="send_confirmation" value="1"
-                                               {{ old('send_confirmation', $form->send_confirmation) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="send_confirmation">
-                                            Enviar email de confirmación al cliente
-                                        </label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="send_confirmation">Email de confirmación al cliente</label>
+                                        <select class="form-select" name="send_confirmation" id="send_confirmation">
+                                            <option value="1" {{ old('send_confirmation', $form->send_confirmation) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('send_confirmation', $form->send_confirmation) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -158,22 +156,22 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="honeypot_enabled" value="0">
-                                        <input class="form-check-input" type="checkbox" id="honeypot_enabled"
-                                               name="honeypot_enabled" value="1"
-                                               {{ old('honeypot_enabled', $form->honeypot_enabled) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="honeypot_enabled">Honeypot anti-spam</label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="honeypot_enabled">Honeypot anti-spam</label>
+                                        <select class="form-select" name="honeypot_enabled" id="honeypot_enabled">
+                                            <option value="1" {{ old('honeypot_enabled', $form->honeypot_enabled) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('honeypot_enabled', $form->honeypot_enabled) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                     <div class="form-text small">Campo oculto para detectar bots.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="captcha_enabled" value="0">
-                                        <input class="form-check-input" type="checkbox" id="captcha_enabled"
-                                               name="captcha_enabled" value="1"
-                                               {{ old('captcha_enabled', $form->captcha_enabled) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="captcha_enabled">CAPTCHA</label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="captcha_enabled">CAPTCHA</label>
+                                        <select class="form-select" name="captcha_enabled" id="captcha_enabled">
+                                            <option value="1" {{ old('captcha_enabled', $form->captcha_enabled) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('captcha_enabled', $form->captcha_enabled) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                     <div class="form-text small">Requiere resolución de CAPTCHA antes de enviar.</div>
                                 </div>
@@ -240,7 +238,7 @@
 @push('scripts')
 <script>
     $('#send_confirmation').on('change', function () {
-        $('#confirmationFields').toggleClass('d-none', !this.checked);
+        $('#confirmationFields').toggleClass('d-none', this.value !== '1');
     });
 </script>
 @endpush

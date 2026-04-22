@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Mail;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
 use Modules\Forms\Models\FormSubmissionEmail;
+use Modules\Locales\Models\Locale;
+use Modules\Mailer\Models\MailerTemplate;
+use Modules\Mailer\Services\MailerTemplateRendererService;
 
 class FormEmailService
 {
@@ -27,7 +30,7 @@ class FormEmailService
 
         try {
             if ($form->admin_template_id && class_exists('\Modules\Mailer\Services\MailerTemplateRendererService')) {
-                $result = $this->sendViaMailerTemplate($form->admin_template_id, $recipients, $form, $submission);
+                $result = $this->sendViaMailerTemplate($form->admin_template_id, $recipients, $form, $submission, $this->resolveDefaultLangId());
                 if ($result) {
                     foreach ($recipients as $recipient) {
                         FormSubmissionEmail::log($submission, 'admin', $recipient, "Notificación vía plantilla #{$form->admin_template_id}")->markAsSent();
@@ -71,7 +74,7 @@ class FormEmailService
     {
         try {
             if ($form->confirmation_template_id && class_exists('\Modules\Mailer\Services\MailerTemplateRendererService')) {
-                $result = $this->sendViaMailerTemplate($form->confirmation_template_id, [$email], $form, $submission);
+                $result = $this->sendViaMailerTemplate($form->confirmation_template_id, [$email], $form, $submission, $this->resolveSubmissionLangId($submission));
                 if ($result) {
                     FormSubmissionEmail::log($submission, 'confirmation', $email, "Confirmación vía plantilla #{$form->confirmation_template_id}")->markAsSent();
                 }
@@ -151,7 +154,7 @@ class FormEmailService
             $displayValue = htmlspecialchars($value->getDisplayValue(), ENT_QUOTES, 'UTF-8');
 
             $rows .= "<tr>
-                <td style='padding:8px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;width:35%'>{$label}</td>
+                <td style='padding:8px;border:1px solid #ddd;font-weight:bold;background:#f9f9f9;width:35%'>{$label}</td>
                 <td style='padding:8px;border:1px solid #ddd'>{$displayValue}</td>
             </tr>";
         }
@@ -162,23 +165,23 @@ class FormEmailService
     /**
      * Envía email a través del módulo Mailer con template.
      */
-    protected function sendViaMailerTemplate(int $templateId, array $recipients, Form $form, FormSubmission $submission): bool
+    protected function sendViaMailerTemplate(int $templateId, array $recipients, Form $form, FormSubmission $submission, ?int $langId = null): bool
     {
         try {
-            $rendererService = app('\Modules\Mailer\Services\MailerTemplateRendererService');
-            $template = app('\Modules\Mailer\Models\MailerTemplate')::find($templateId);
+            $template = MailerTemplate::find($templateId);
 
             if (! $template) {
                 return false;
             }
 
             $variables = $this->buildTemplateVariables($form, $submission);
-            $rendered = $rendererService->render($template, $variables);
+            $body = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
+            $translation = $template->translate($langId);
+            $rawSubject = ($translation?->subject) ?? $template->subject ?? "[{$form->name}] Nueva respuesta #{$submission->id}";
+            $subject = MailerTemplateRendererService::replaceVariables($rawSubject, $variables);
 
-            Mail::send([], [], function ($message) use ($recipients, $rendered, $template) {
-                $message->to($recipients)
-                    ->subject($rendered['subject'] ?? $template->subject)
-                    ->html($rendered['body'] ?? $template->body);
+            Mail::send([], [], function ($message) use ($recipients, $body, $subject) {
+                $message->to($recipients)->subject($subject)->html($body);
             });
 
             return true;
@@ -202,6 +205,14 @@ class FormEmailService
     {
         $submission->loadMissing('values');
 
+        $submitterName = $submission->values
+            ->firstWhere(fn ($v) => in_array($v->field_key, ['nombre', 'name', 'full_name', 'nombre_completo']))
+            ?->value ?? '';
+        $nameParts = explode(' ', trim($submitterName), 2);
+
+        $siteUrl = config('app.url');
+        $companyName = setting('mail_from_name') ?: config('app.name');
+
         return [
             '{FORM_NAME}' => $form->name,
             '{FORM_ID}' => (string) $form->id,
@@ -211,8 +222,21 @@ class FormEmailService
             '{FIELDS_TABLE}' => $this->buildFieldsTable($submission),
             '{SUBMITTER_IP}' => $submission->ip_address ?? 'N/A',
             '{SUBMITTER_COUNTRY}' => $submission->country ?? 'N/A',
-            '{SITE_NAME}' => config('app.name'),
-            '{SITE_URL}' => config('app.url'),
+            '{SITE_NAME}' => $companyName,
+            '{SITE_URL}' => $siteUrl,
+            '{SITE_LOGO_URL}' => $siteUrl.'/media/0/fnL5XDsB9dREbPHjAk5PzhDQd4o8btomFgYosNbA.png',
+            '{COMPANY_NAME}' => $companyName,
+            '{COMPANY_PHONE}' => '+351 913 893 333',
+            '{COMPANY_EMAIL}' => 'info@caixilhariablanco.pt',
+            '{COMPANY_ADDRESS}' => 'Estrada Nacional 8 N12',
+            '{COMPANY_CITY}' => 'Alcobaça',
+            '{COMPANY_POSTAL_CODE}' => '2460-349',
+            '{COMPANY_COUNTRY}' => 'Portugal',
+            '{CURRENT_YEAR}' => date('Y'),
+            '{CURRENT_DATE}' => date('d/m/Y'),
+            '{USER_NAME}' => $submitterName,
+            '{USER_FIRST_NAME}' => $nameParts[0] ?? $submitterName,
+            '{USER_LAST_NAME}' => $nameParts[1] ?? '',
             '{ADMIN_URL}' => route('settings.forms.submissions.show', [
                 'form' => $form->id,
                 'submission' => $submission->id,
@@ -230,5 +254,24 @@ class FormEmailService
         }
 
         return array_values(array_filter(array_map('trim', explode(',', $emails))));
+    }
+
+    protected function resolveDefaultLangId(): int
+    {
+        return Locale::query()->where('is_default', true)->value('id')
+            ?? Locale::query()->first()?->id
+            ?? 1;
+    }
+
+    protected function resolveSubmissionLangId(FormSubmission $submission): int
+    {
+        if ($submission->locale) {
+            $id = Locale::query()->where('code', $submission->locale)->value('id');
+            if ($id) {
+                return $id;
+            }
+        }
+
+        return $this->resolveDefaultLangId();
     }
 }

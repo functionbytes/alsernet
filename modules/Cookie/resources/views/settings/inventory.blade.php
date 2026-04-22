@@ -188,10 +188,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="inv-active" name="is_active" value="1">
-                                <label class="form-check-label" for="inv-active">Activa</label>
-                            </div>
+                            <label class="form-label" for="inv-active">Estado</label>
+                            <select class="form-select" id="inv-active" name="is_active">
+                                <option value="1">Activa</option>
+                                <option value="0">Inactiva</option>
+                            </select>
                         </div>
                     </form>
                 </div>

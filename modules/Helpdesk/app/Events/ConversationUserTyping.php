@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events\Helpdesk;
+namespace Modules\Helpdesk\Events;
 
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;

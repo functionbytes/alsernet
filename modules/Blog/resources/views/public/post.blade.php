@@ -7,14 +7,14 @@
     <meta property="og:description" content="{{ $post->seo_description ?? $post->excerpt }}">
     <meta property="og:type" content="article">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ $post->image ?? asset('images/og-default.jpg') }}">
+    <meta property="og:image" content="{{ $post->image ?? config('Seo.default_og_image') }}">
     <meta property="og:site_name" content="{{ config('app.name') }}">
     <meta property="article:published_time" content="{{ $post->published_at?->toIso8601String() }}">
     <meta property="article:author" content="{{ $post->user?->name }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $post->seo_title ?? $post->title }}">
     <meta name="twitter:description" content="{{ $post->seo_description ?? $post->excerpt }}">
-    <meta name="twitter:image" content="{{ $post->image ?? asset('images/og-default.jpg') }}">
+    <meta name="twitter:image" content="{{ $post->image ?? config('Seo.default_og_image') }}">
 @endpush
 
 @section('content')

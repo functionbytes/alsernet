@@ -98,13 +98,12 @@
                                     </div>
                                 </div>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="includeYear"
-                                           name="radicado_include_year" value="1"
-                                           {{ old('radicado_include_year', $configurations['radicado_include_year'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="includeYear">
-                                        Incluir año en el radicado
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="radicado_include_year">Incluir año en el radicado</label>
+                                    <select class="form-select" name="radicado_include_year" id="radicado_include_year">
+                                        <option value="1" {{ old('radicado_include_year', $configurations['radicado_include_year'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('radicado_include_year', $configurations['radicado_include_year'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -155,31 +154,28 @@
                                     Configuraciones adicionales del sistema.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="allowAnonymous"
-                                           name="allow_anonymous" value="1"
-                                           {{ old('allow_anonymous', $configurations['allow_anonymous'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="allowAnonymous">
-                                        Permitir solicitudes anónimas
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="allow_anonymous">Permitir solicitudes anónimas</label>
+                                    <select class="form-select" name="allow_anonymous" id="allow_anonymous">
+                                        <option value="1" {{ old('allow_anonymous', $configurations['allow_anonymous'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('allow_anonymous', $configurations['allow_anonymous'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="requireAttachment"
-                                           name="require_attachment" value="1"
-                                           {{ old('require_attachment', $configurations['require_attachment'] ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="requireAttachment">
-                                        Requerir al menos un archivo adjunto
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="require_attachment">Requerir al menos un archivo adjunto</label>
+                                    <select class="form-select" name="require_attachment" id="require_attachment">
+                                        <option value="1" {{ old('require_attachment', $configurations['require_attachment'] ?? 0) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('require_attachment', $configurations['require_attachment'] ?? 0) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="autoAssign"
-                                           name="auto_assign" value="1"
-                                           {{ old('auto_assign', $configurations['auto_assign'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="autoAssign">
-                                        Asignación automática por departamento
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="auto_assign">Asignación automática por departamento</label>
+                                    <select class="form-select" name="auto_assign" id="auto_assign">
+                                        <option value="1" {{ old('auto_assign', $configurations['auto_assign'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('auto_assign', $configurations['auto_assign'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -194,13 +190,12 @@
                                     Se envía automáticamente cuando el ciudadano crea una nueva solicitud.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="emailReceived"
-                                           name="email_received_enabled" value="1"
-                                           {{ old('email_received_enabled', $configurations['email_received_enabled'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="emailReceived">
-                                        <strong>Habilitar</strong> notificación de recepción
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="email_received_enabled">Notificación de recepción</label>
+                                    <select class="form-select" name="email_received_enabled" id="email_received_enabled">
+                                        <option value="1" {{ old('email_received_enabled', $configurations['email_received_enabled'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('email_received_enabled', $configurations['email_received_enabled'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-3">
@@ -234,13 +229,12 @@
                                     Se envía cuando la solicitud es asignada a un funcionario o departamento.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="emailAssigned"
-                                           name="email_assigned_enabled" value="1"
-                                           {{ old('email_assigned_enabled', $configurations['email_assigned_enabled'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="emailAssigned">
-                                        <strong>Habilitar</strong> notificación de asignación
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="email_assigned_enabled">Notificación de asignación</label>
+                                    <select class="form-select" name="email_assigned_enabled" id="email_assigned_enabled">
+                                        <option value="1" {{ old('email_assigned_enabled', $configurations['email_assigned_enabled'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('email_assigned_enabled', $configurations['email_assigned_enabled'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-0">
@@ -271,13 +265,12 @@
                                     Se envía cuando la solicitud cambia a estado "En proceso".
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="emailInProcess"
-                                           name="email_in_process_enabled" value="1"
-                                           {{ old('email_in_process_enabled', $configurations['email_in_process_enabled'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="emailInProcess">
-                                        <strong>Habilitar</strong> notificación en proceso
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="email_in_process_enabled">Notificación en proceso</label>
+                                    <select class="form-select" name="email_in_process_enabled" id="email_in_process_enabled">
+                                        <option value="1" {{ old('email_in_process_enabled', $configurations['email_in_process_enabled'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('email_in_process_enabled', $configurations['email_in_process_enabled'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-0">
@@ -308,13 +301,12 @@
                                     Se envía cuando la solicitud es resuelta con una respuesta oficial.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="emailResolved"
-                                           name="email_resolved_enabled" value="1"
-                                           {{ old('email_resolved_enabled', $configurations['email_resolved_enabled'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="emailResolved">
-                                        <strong>Habilitar</strong> notificación de resolución
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="email_resolved_enabled">Notificación de resolución</label>
+                                    <select class="form-select" name="email_resolved_enabled" id="email_resolved_enabled">
+                                        <option value="1" {{ old('email_resolved_enabled', $configurations['email_resolved_enabled'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('email_resolved_enabled', $configurations['email_resolved_enabled'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-0">
@@ -345,13 +337,12 @@
                                     Se envía cuando la solicitud es cerrada definitivamente.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="emailClosed"
-                                           name="email_closed_enabled" value="1"
-                                           {{ old('email_closed_enabled', $configurations['email_closed_enabled'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="emailClosed">
-                                        <strong>Habilitar</strong> notificación de cierre
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="email_closed_enabled">Notificación de cierre</label>
+                                    <select class="form-select" name="email_closed_enabled" id="email_closed_enabled">
+                                        <option value="1" {{ old('email_closed_enabled', $configurations['email_closed_enabled'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('email_closed_enabled', $configurations['email_closed_enabled'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-0">
@@ -428,13 +419,12 @@
                                     Configura cuándo se envían alertas de vencimiento.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="enableSlaAlerts"
-                                           name="enable_sla_alerts" value="1"
-                                           {{ old('enable_sla_alerts', $configurations['enable_sla_alerts'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="enableSlaAlerts">
-                                        Habilitar alertas automáticas de SLA
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="enable_sla_alerts">Alertas automáticas de SLA</label>
+                                    <select class="form-select" name="enable_sla_alerts" id="enable_sla_alerts">
+                                        <option value="1" {{ old('enable_sla_alerts', $configurations['enable_sla_alerts'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('enable_sla_alerts', $configurations['enable_sla_alerts'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
                                 <div class="mb-0">
@@ -457,40 +447,36 @@
                                     Configura las notificaciones que reciben los funcionarios.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="notifyNewAttention"
-                                           name="notify_new_attention" value="1"
-                                           {{ old('notify_new_attention', $configurations['notify_new_attention'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifyNewAttention">
-                                        Notificar nueva solicitud recibida
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_new_attention">Notificar nueva solicitud recibida</label>
+                                    <select class="form-select" name="notify_new_attention" id="notify_new_attention">
+                                        <option value="1" {{ old('notify_new_attention', $configurations['notify_new_attention'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_new_attention', $configurations['notify_new_attention'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="notifyAssignment"
-                                           name="notify_assignment" value="1"
-                                           {{ old('notify_assignment', $configurations['notify_assignment'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifyAssignment">
-                                        Notificar asignaciones al responsable
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_assignment">Notificar asignaciones al responsable</label>
+                                    <select class="form-select" name="notify_assignment" id="notify_assignment">
+                                        <option value="1" {{ old('notify_assignment', $configurations['notify_assignment'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_assignment', $configurations['notify_assignment'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="notifyReassignment"
-                                           name="notify_reassignment" value="1"
-                                           {{ old('notify_reassignment', $configurations['notify_reassignment'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifyReassignment">
-                                        Notificar reasignaciones
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_reassignment">Notificar reasignaciones</label>
+                                    <select class="form-select" name="notify_reassignment" id="notify_reassignment">
+                                        <option value="1" {{ old('notify_reassignment', $configurations['notify_reassignment'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_reassignment', $configurations['notify_reassignment'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="notifySlaWarning"
-                                           name="notify_sla_warning" value="1"
-                                           {{ old('notify_sla_warning', $configurations['notify_sla_warning'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifySlaWarning">
-                                        Notificar alertas de SLA próximas a vencer
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_sla_warning">Notificar alertas de SLA próximas a vencer</label>
+                                    <select class="form-select" name="notify_sla_warning" id="notify_sla_warning">
+                                        <option value="1" {{ old('notify_sla_warning', $configurations['notify_sla_warning'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_sla_warning', $configurations['notify_sla_warning'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -504,31 +490,28 @@
                                     Configura las notificaciones que reciben los ciudadanos.
                                 </p>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="notifyCitizenUpdates"
-                                           name="notify_citizen_updates" value="1"
-                                           {{ old('notify_citizen_updates', $configurations['notify_citizen_updates'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifyCitizenUpdates">
-                                        Notificar cambios de estado
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_citizen_updates">Notificar cambios de estado</label>
+                                    <select class="form-select" name="notify_citizen_updates" id="notify_citizen_updates">
+                                        <option value="1" {{ old('notify_citizen_updates', $configurations['notify_citizen_updates'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_citizen_updates', $configurations['notify_citizen_updates'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="notifyCitizenComments"
-                                           name="notify_citizen_comments" value="1"
-                                           {{ old('notify_citizen_comments', $configurations['notify_citizen_comments'] ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="notifyCitizenComments">
-                                        Notificar nuevos comentarios internos
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="notify_citizen_comments">Notificar nuevos comentarios internos</label>
+                                    <select class="form-select" name="notify_citizen_comments" id="notify_citizen_comments">
+                                        <option value="1" {{ old('notify_citizen_comments', $configurations['notify_citizen_comments'] ?? 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('notify_citizen_comments', $configurations['notify_citizen_comments'] ?? 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
 
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="enableSmsNotifications"
-                                           name="enable_sms_notifications" value="1"
-                                           {{ old('enable_sms_notifications', $configurations['enable_sms_notifications'] ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="enableSmsNotifications">
-                                        Habilitar notificaciones SMS (requiere configuración adicional)
-                                    </label>
+                                <div class="mb-2">
+                                    <label class="form-label" for="enable_sms_notifications">Notificaciones SMS (requiere configuración adicional)</label>
+                                    <select class="form-select" name="enable_sms_notifications" id="enable_sms_notifications">
+                                        <option value="1" {{ old('enable_sms_notifications', $configurations['enable_sms_notifications'] ?? 0) == 1 ? 'selected' : '' }}>Activado</option>
+                                        <option value="0" {{ old('enable_sms_notifications', $configurations['enable_sms_notifications'] ?? 0) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>

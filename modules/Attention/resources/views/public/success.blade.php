@@ -13,7 +13,7 @@
                     <div class="mb-4 position-relative">
                         <div class="success-gradient-bg"></div>
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle position-relative"
-                             style="width: 120px; height: 120px; background: linear-gradient(135deg, #13C672 0%, #90bb13 100%); box-shadow: 0 8px 24px rgba(19, 198, 114, 0.4);">
+                             style="width: 120px; height: 120px; background: #90bb13; box-shadow: 0 8px 24px rgba(19, 198, 114, 0.4);">
                             <i class="fas fa-check-circle text-white" style="font-size: 4rem;"></i>
                         </div>
                         <div class="success-particles"></div>
@@ -92,7 +92,7 @@
                     </div>
 
                     {{-- Alerta importante --}}
-                    <div class="alert alert-warning border-0 text-start mb-4" style="background: linear-gradient(135deg, #FEC90F15 0%, #FEC90F10 100%);">
+                    <div class="alert alert-warning border-0 text-start mb-4" style="background: #90bb13;">
                         <div class="d-flex align-items-start">
                             <i class="fas fa-exclamation-triangle me-3 mt-1" style="color: #FEC90F; font-size: 1.25rem;"></i>
                             <div>
@@ -167,7 +167,7 @@
 
         /* Radicado Box */
         .radicado-box {
-            background: linear-gradient(135deg, rgba(144, 187, 19, 0.05) 0%, rgba(19, 198, 114, 0.05) 100%);
+            background: #90bb13 0%, rgba(19, 198, 114, 0.05) 100%);
             border: 2px solid #90bb13;
             border-radius: 1rem;
             padding: 1.5rem;
@@ -212,7 +212,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #90bb13 0%, #13C672 100%);
+            background: #90bb13;
             display: flex;
             align-items: center;
             justify-content: center;

@@ -50,6 +50,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
         return [(new WithoutOverlapping("webhook-{$this->channel}-{$messageId}"))->dontRelease()];
     }
 
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessSocialWebhookJob permanently failed', [
+            'channel' => $this->channel,
+            'event_type' => $this->eventType,
+            'error' => $exception->getMessage(),
+        ]);
+    }
+
     public function handle(WhatsAppBusinessService $whatsappService, FacebookMessengerService $facebookService): void
     {
         match ($this->channel) {

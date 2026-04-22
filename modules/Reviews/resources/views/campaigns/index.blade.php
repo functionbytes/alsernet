@@ -342,7 +342,7 @@ $(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una campaña.'); return; }
-        if (!confirm('¿Eliminar las ' + ids.length + ' campaña(s) seleccionadas?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

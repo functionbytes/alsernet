@@ -5,20 +5,6 @@
 
 @section('content')
 
-<div class="breadcrumb-area py-3 bg-light border-bottom">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item">
-                    <a href="{{ url('/') }}" class="text-decoration-none">
-                        <i class="fas fa-home me-1"></i>Inicio
-                    </a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">Radicar PQRSF</li>
-            </ol>
-        </nav>
-    </div>
-</div>
 
 <section class="py-5">
     <div class="container">

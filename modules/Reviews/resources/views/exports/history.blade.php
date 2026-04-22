@@ -232,7 +232,7 @@ $(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una exportación.'); return; }
-        if (!confirm('¿Eliminar las ' + ids.length + ' exportación(es) seleccionadas?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

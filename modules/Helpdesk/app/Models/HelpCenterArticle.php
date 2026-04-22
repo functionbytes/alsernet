@@ -20,26 +20,30 @@ class HelpCenterArticle extends Model implements HasMedia
     protected $table = 'helpdesk_helpcenter_articles';
 
     protected $fillable = [
+        'category_id',
         'title',
         'slug',
-        'position',
-        'body',
-        'description',
-        'meta_description',
-        'draft',
-        'hide_from_structure',
-        'views',
-        'was_helpful',
+        'content',
+        'excerpt',
+        'order',
+        'views_count',
+        'active',
+        'is_published',
         'author_id',
+        'published_at',
+        'meta_description',
     ];
 
-    protected $casts = [
-        'draft' => 'boolean',
-        'hide_from_structure' => 'boolean',
-        'views' => 'integer',
-        'was_helpful' => 'integer',
-        'position' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+            'is_published' => 'boolean',
+            'views_count' => 'integer',
+            'order' => 'integer',
+            'published_at' => 'datetime',
+        ];
+    }
 
     /**
      * Categories relationship (many-to-many with position)

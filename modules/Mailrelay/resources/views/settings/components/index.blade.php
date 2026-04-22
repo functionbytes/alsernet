@@ -3,7 +3,7 @@
 @section('title', 'Layouts y componentes')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="card">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -93,12 +93,10 @@
                                         <small class="text-muted">{{ Str::limit($component->description, 50) }}</small>
                                     </td>
                                     <td>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input toggle-status"
-                                                type="checkbox"
-                                                data-id="{{ $component->id }}"
-                                                {{ $component->status === 'active' ? 'checked' : '' }}>
-                                        </div>
+                                        <select class="form-select form-select-sm toggle-status" data-id="{{ $component->id }}">
+                                            <option value="active" {{ $component->status === 'active' ? 'selected' : '' }}>Activado</option>
+                                            <option value="inactive" {{ $component->status !== 'active' ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </td>
                                     <td>
                                         @if($component->is_default)
@@ -173,7 +171,8 @@ $(document).ready(function() {
     // Toggle status
     $('.toggle-status').on('change', function() {
         const id = $(this).data('id');
-        const $switch = $(this);
+        const $select = $(this);
+        const status = $select.val();
 
         $.ajax({
             url: `/mailrelay/setting/components/${id}/toggle-status`,
@@ -181,13 +180,14 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+            data: { status: status },
             success: function(response) {
                 if (response.success) {
                     toastr.success(response.message);
                 }
             },
             error: function() {
-                $switch.prop('checked', !$switch.prop('checked'));
+                $select.val(status === 'active' ? 'inactive' : 'active');
                 toastr.error('Error al cambiar el estado');
             }
         });

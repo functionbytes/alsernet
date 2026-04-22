@@ -5,13 +5,13 @@
         </h5>
     </div>
     <div class="card-body">
-        <div class="widget-loading text-center py-5" style="display: none;">
+        <div class="widget-loading text-center py-5 d-none">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Cargando...</span>
             </div>
         </div>
 
-        <div class="widget-error alert alert-danger" style="display: none;"></div>
+        <div class="widget-error alert alert-danger d-none"></div>
 
         <div class="widget-content">
             <div class="row">

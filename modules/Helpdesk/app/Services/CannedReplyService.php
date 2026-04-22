@@ -5,7 +5,7 @@ namespace Modules\Helpdesk\Services;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\CannedReply;
-use Modules\Helpdesk\Models\Ticket;
+use Modules\HelpdeskTickets\Models\Ticket;
 
 class CannedReplyService
 {

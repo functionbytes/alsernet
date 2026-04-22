@@ -16,6 +16,47 @@
     $fieldLabel = $field->localizedLabel($locale);
     $fieldPlaceholder = $field->localizedPlaceholder($locale);
     $fieldConsentText = $field->localizedConsentText($locale);
+    $fieldI18n = [
+        'es' => [
+            'select_placeholder' => '-- Seleccionar --',
+            'nps_low'  => 'Nada probable', 'nps_high' => 'Muy probable',
+            'clear' => 'Borrar', 'calculating' => 'Calculado automáticamente',
+            'chars' => 'caracteres', 'file_max' => 'Máx.', 'file_allowed' => 'Permitidos:',
+            'street' => 'Calle / Dirección', 'number' => 'Número',
+            'city' => 'Ciudad', 'postal' => 'CP', 'country' => 'País',
+        ],
+        'pt' => [
+            'select_placeholder' => '-- Selecionar --',
+            'nps_low'  => 'Nada provável', 'nps_high' => 'Muito provável',
+            'clear' => 'Limpar', 'calculating' => 'Calculado automaticamente',
+            'chars' => 'caracteres', 'file_max' => 'Máx.', 'file_allowed' => 'Permitidos:',
+            'street' => 'Rua / Morada', 'number' => 'Número',
+            'city' => 'Cidade', 'postal' => 'CP', 'country' => 'País',
+        ],
+        'en' => [
+            'select_placeholder' => '-- Select --',
+            'nps_low'  => 'Not at all likely', 'nps_high' => 'Extremely likely',
+            'clear' => 'Clear', 'calculating' => 'Calculated automatically',
+            'chars' => 'characters', 'file_max' => 'Max.', 'file_allowed' => 'Allowed:',
+            'street' => 'Street / Address', 'number' => 'Number',
+            'city' => 'City', 'postal' => 'Postcode', 'country' => 'Country',
+        ],
+        'fr' => [
+            'select_placeholder' => '-- Sélectionner --',
+            'nps_low'  => 'Pas du tout probable', 'nps_high' => 'Très probable',
+            'clear' => 'Effacer', 'calculating' => 'Calculé automatiquement',
+            'chars' => 'caractères', 'file_max' => 'Max.', 'file_allowed' => 'Autorisés :',
+            'street' => 'Rue / Adresse', 'number' => 'Numéro',
+            'city' => 'Ville', 'postal' => 'Code postal', 'country' => 'Pays',
+        ],
+    ][$locale] ?? [
+        'select_placeholder' => '-- Seleccionar --',
+        'nps_low'  => 'Nada probable', 'nps_high' => 'Muy probable',
+        'clear' => 'Borrar', 'calculating' => 'Calculado automáticamente',
+        'chars' => 'caracteres', 'file_max' => 'Máx.', 'file_allowed' => 'Permitidos:',
+        'street' => 'Calle / Dirección', 'number' => 'Número',
+        'city' => 'Ciudad', 'postal' => 'CP', 'country' => 'País',
+    ];
 @endphp
 
 @switch($field->type)
@@ -66,7 +107,7 @@
         >{{ $field->default_value }}</textarea>
         @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
         @if($field->show_char_counter)
-        <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} caracteres</small>
+        <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} {{ $fieldI18n['chars'] }}</small>
         @endif
         <div class="invalid-feedback"></div>
     </div>
@@ -83,8 +124,8 @@
             data-form-field-help="{{ $field->help_text }}"
             data-form-field-required="{{ $field->is_required ? '1' : '0' }}"
             data-form-field-placeholder="{{ $fieldPlaceholder }}">
-            <option value="">{{ $fieldPlaceholder ?: '-- Seleccionar --' }}</option>
-            @foreach($field->options ?? [] as $option)
+            <option value="">{{ $fieldPlaceholder ?: $fieldI18n['select_placeholder'] }}</option>
+            @foreach($field->localizedOptions($locale) as $option)
             <option value="{{ $option['value'] }}" {{ $field->default_value == $option['value'] ? 'selected' : '' }}>{{ $option['label'] }}</option>
             @endforeach
         </select>
@@ -99,7 +140,7 @@
         <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
-        @foreach($field->options ?? [] as $option)
+        @foreach($field->localizedOptions($locale) as $option)
         <div class="form-check">
             <input type="radio" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}" value="{{ $option['value'] }}" class="form-check-input"
                 @if($loop->first)
@@ -123,7 +164,7 @@
         @if($labelPos !== 'hidden')
         <label class="form-label d-block">{{ $fieldLabel }}@if($field->is_required)<span class="text-danger ms-1">*</span>@endif</label>
         @endif
-        @foreach($field->options ?? [] as $option)
+        @foreach($field->localizedOptions($locale) as $option)
         <div class="form-check">
             <input type="checkbox" id="{{ $inputId }}-{{ $loop->index }}" name="{{ $field->key }}[]" value="{{ $option['value'] }}" class="form-check-input"
                 @if($loop->first)
@@ -147,7 +188,7 @@
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <input type="file" id="{{ $inputId }}" name="{{ $field->key }}" class="form-control" {{ $field->is_required ? 'required' : '' }}>
-        <small class="text-muted">Máx. {{ config('forms.max_file_size_mb', 10) }}MB. Permitidos: {{ implode(', ', config('forms.allowed_file_extensions', [])) }}</small>
+        <small class="text-muted">{{ $fieldI18n['file_max'] }} {{ config('forms.max_file_size_mb', 10) }}MB. {{ $fieldI18n['file_allowed'] }} {{ implode(', ', config('forms.allowed_file_extensions', [])) }}</small>
         <div class="invalid-feedback"></div>
     </div>
     @break
@@ -180,8 +221,8 @@
             @endfor
         </div>
         <div class="d-flex justify-content-between mt-1">
-            <small class="text-muted">Nada probable</small>
-            <small class="text-muted">Muy probable</small>
+            <small class="text-muted">{{ $fieldI18n['nps_low'] }}</small>
+            <small class="text-muted">{{ $fieldI18n['nps_high'] }}</small>
         </div>
         <input type="hidden" name="{{ $field->key }}" id="{{ $inputId }}" value="" {{ $field->is_required ? 'required' : '' }}>
         <div class="invalid-feedback d-block" id="{{ $inputId }}-error"></div>
@@ -218,7 +259,7 @@
             <canvas id="{{ $inputId }}-canvas" class="forms-signature-canvas d-block" width="400" height="150" data-field="{{ $field->key }}"></canvas>
             <div class="d-flex justify-content-end p-1 border-top">
                 <button type="button" class="btn btn-xs btn-outline-secondary forms-signature-clear" data-target="{{ $inputId }}-canvas">
-                    <i class="fas fa-eraser me-1"></i> Borrar
+                    <i class="fas fa-eraser me-1"></i> {{ $fieldI18n['clear'] }}
                 </button>
             </div>
         </div>
@@ -296,11 +337,11 @@
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="row g-2">
-            <div class="col-8"><input type="text" name="{{ $field->key }}[street]" class="form-control form-control-sm" placeholder="Calle / Dirección" {{ $field->is_required ? 'required' : '' }}></div>
-            <div class="col-4"><input type="text" name="{{ $field->key }}[number]" class="form-control form-control-sm" placeholder="Número"></div>
-            <div class="col-6"><input type="text" name="{{ $field->key }}[city]" class="form-control form-control-sm" placeholder="Ciudad" {{ $field->is_required ? 'required' : '' }}></div>
-            <div class="col-3"><input type="text" name="{{ $field->key }}[postal_code]" class="form-control form-control-sm" placeholder="CP"></div>
-            <div class="col-3"><input type="text" name="{{ $field->key }}[country]" class="form-control form-control-sm" placeholder="País"></div>
+            <div class="col-8"><input type="text" name="{{ $field->key }}[street]" class="form-control form-control-sm" placeholder="{{ $fieldI18n['street'] }}" {{ $field->is_required ? 'required' : '' }}></div>
+            <div class="col-4"><input type="text" name="{{ $field->key }}[number]" class="form-control form-control-sm" placeholder="{{ $fieldI18n['number'] }}"></div>
+            <div class="col-6"><input type="text" name="{{ $field->key }}[city]" class="form-control form-control-sm" placeholder="{{ $fieldI18n['city'] }}" {{ $field->is_required ? 'required' : '' }}></div>
+            <div class="col-3"><input type="text" name="{{ $field->key }}[postal_code]" class="form-control form-control-sm" placeholder="{{ $fieldI18n['postal'] }}"></div>
+            <div class="col-3"><input type="text" name="{{ $field->key }}[country]" class="form-control form-control-sm" placeholder="{{ $fieldI18n['country'] }}"></div>
         </div>
     </div>
     @break
@@ -312,7 +353,7 @@
         @endif
         @if($field->help_text)<small class="text-muted d-block mb-1">{{ $field->help_text }}</small>@endif
         <div class="d-flex flex-wrap gap-2 forms-image-choice" data-field="{{ $field->key }}">
-            @foreach($field->options ?? [] as $option)
+            @foreach($field->localizedOptions($locale) as $option)
             <div class="forms-image-choice-item text-center" data-value="{{ $option['value'] }}" style="cursor:pointer;border:2px solid #dee2e6;border-radius:8px;padding:8px;width:120px">
                 @if(!empty($option['image']))<img src="{{ $option['image'] }}" class="img-fluid mb-1" style="height:60px;object-fit:cover">@endif
                 <small>{{ $option['label'] }}</small>
@@ -329,7 +370,7 @@
         @if($labelPos !== 'hidden')
         <label for="{{ $inputId }}" class="form-label">{{ $fieldLabel }}</label>
         @endif
-        <input type="text" id="{{ $inputId }}" name="{{ $field->key }}" class="form-control forms-calculation" readonly placeholder="Calculado automáticamente" data-formula="{{ $field->formula }}" value="{{ $field->default_value }}">
+        <input type="text" id="{{ $inputId }}" name="{{ $field->key }}" class="form-control forms-calculation" readonly placeholder="{{ $fieldI18n['calculating'] }}" data-formula="{{ $field->formula }}" value="{{ $field->default_value }}">
     </div>
     @break
 
@@ -421,7 +462,7 @@
                 {!! $autoPopulate !!}>
             @if($field->help_text)<small class="text-muted d-block mt-1">{{ $field->help_text }}</small>@endif
             @if($field->show_char_counter)
-            <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} caracteres</small>
+            <small class="forms-char-counter text-muted" data-target="{{ $inputId }}">0{{ $field->max_value ? '/' . (int)$field->max_value : '' }} {{ $fieldI18n['chars'] }}</small>
             @endif
             <div class="invalid-feedback"></div>
         @endif

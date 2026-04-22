@@ -22,6 +22,10 @@
     }
     .kpi-icon-box-red  { background: #fce8e8; color: #b10100; }
     .kpi-icon-box-mid  { background: #f0e0e0; color: #c41c1c; }
+    .chart-260 { height: 260px; }
+    .chart-220 { height: 220px; }
+    .chart-200 { height: 200px; }
+    .status-pct { min-width: 38px; }
 </style>
 @endpush
 
@@ -129,7 +133,7 @@
                         <p class="card-subtitle mt-1">Últimos 30 días</p>
                     </div>
                     <div class="card-body">
-                        <div id="chartByDay" style="height: 260px;"></div>
+                        <div id="chartByDay" class="chart-260"></div>
                     </div>
                 </div>
 
@@ -140,7 +144,7 @@
                         <p class="card-subtitle mt-1">Distribución horaria</p>
                     </div>
                     <div class="card-body">
-                        <div id="chartByHour" style="height: 220px;"></div>
+                        <div id="chartByHour" class="chart-220"></div>
                     </div>
                 </div>
 
@@ -153,7 +157,7 @@
                                 <p class="card-subtitle mt-1">Por submissions</p>
                             </div>
                             <div class="card-body">
-                                <div id="chartByStatus" class="mb-3" style="height: 200px;"></div>
+                                <div id="chartByStatus" class="mb-3 chart-200"></div>
                                 <hr class="my-3">
                                 <div id="statusList"></div>
                             </div>
@@ -330,7 +334,7 @@
             + '</div>'
             + '<div class="d-flex align-items-center gap-3">'
             + '<span class="fw-semibold small">' + item.value + '</span>'
-            + '<span class="text-muted small text-end" style="min-width:38px;">' + pct + '%</span>'
+            + '<span class="text-muted small text-end status-pct">' + pct + '%</span>'
             + '</div>'
             + '</div>';
     });

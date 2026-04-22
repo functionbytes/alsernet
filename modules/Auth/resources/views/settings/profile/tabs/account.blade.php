@@ -59,7 +59,7 @@
             @if($user->user_img)
                 <form method="POST"
                       action="{{ route('settings.auth.profile.delete-avatar') }}"
-                      onsubmit="return confirm('¿Eliminar la foto de perfil?')">
+                      class="needs-confirm" data-confirm-msg="¿Eliminar la foto de perfil?">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-link text-danger p-0">

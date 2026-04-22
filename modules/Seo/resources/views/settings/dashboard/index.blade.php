@@ -16,8 +16,7 @@
                 </div>
                 <div class="col-auto">
                     <div class="dropdown">
-                        <a href="javascript:void(0)" class="d-flex align-items-center justify-content-center rounded-circle text-muted"
-                           style="width:30px;height:30px;background:#f5f6f8;"
+                        <a href="javascript:void(0)" class="seo-dropdown-trigger d-flex align-items-center justify-content-center rounded-circle text-muted"
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-ellipsis-vertical"></i>
                         </a>
@@ -90,9 +89,9 @@
                                 <h5 class="card-title fw-semibold mb-3">Total metas SEO</h5>
                                 <h4 class="fw-semibold mb-2">{{ number_format($metaStats['total']) }}</h4>
                                 <p class="fs-3 mb-0 text-muted">
-                                    <span style="color:#b10100;">{{ number_format($metaStats['indexable']) }} indexables</span>
+                                    <span class="text-danger">{{ number_format($metaStats['indexable']) }} indexables</span>
                                     &middot;
-                                    <span style="color:#555555;">{{ number_format($metaStats['noindex']) }} noindex</span>
+                                    <span class="text-secondary">{{ number_format($metaStats['noindex']) }} noindex</span>
                                 </p>
                             </div>
                             <div class="col-4">
@@ -157,9 +156,8 @@
                             </div>
                             <div class="col-4">
                                 <div class="d-flex justify-content-end">
-                                    <span class="rounded-circle d-flex align-items-center justify-content-center"
-                                          style="width:44px;height:44px;background:#fce8e8;">
-                                        <i class="fas fa-bullseye" style="color:#b10100;"></i>
+                                    <span class="seo-icon-box rounded-circle d-flex align-items-center justify-content-center brand-box-red">
+                                        <i class="fas fa-bullseye"></i>
                                     </span>
                                 </div>
                             </div>
@@ -180,9 +178,8 @@
                             </div>
                             <div class="col-4">
                                 <div class="d-flex justify-content-end">
-                                    <span class="rounded-circle d-flex align-items-center justify-content-center"
-                                          style="width:44px;height:44px;background:#e8e8e8;">
-                                        <i class="fas fa-file-alt" style="color:#333333;"></i>
+                                    <span class="seo-icon-box rounded-circle d-flex align-items-center justify-content-center brand-box-dark">
+                                        <i class="fas fa-file-alt"></i>
                                     </span>
                                 </div>
                             </div>
@@ -202,11 +199,11 @@
                     </div>
                     <div class="card-body">
                         @if($scoreTrend->count() > 0)
-                            <div id="scoreTrendChart" style="height:300px;"></div>
+                            <div id="scoreTrendChart" class="seo-chart-md"></div>
                         @else
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-chart-line" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-chart-line text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin datos de tendencia</p>
                                 <small class="text-muted">No hay auditorías en los últimos 7 días</small>
@@ -237,13 +234,13 @@
                     </div>
                     <div class="card-body">
                         @if($totalGraded > 0)
-                            <div id="gradeDonutChart" class="mb-4" style="height:200px;"></div>
+                            <div id="gradeDonutChart" class="mb-4 seo-chart-sm"></div>
                             <hr>
                             @foreach($gradeConfig as $grade => $config)
                                 @php $count = $gradeDistribution[$grade] ?? 0; @endphp
                                 <div class="d-flex align-items-center justify-content-between {{ !$loop->last ? 'mb-4' : '' }}">
                                     <div class="d-flex align-items-center">
-                                        <div class="p-2 rounded-2 d-flex align-items-center justify-content-center me-3" style="width:36px;height:36px;background:{{ $config['color'] }}1a;">
+                                        <div class="seo-icon-box-sm p-2 rounded-2 d-flex align-items-center justify-content-center me-3" style="background:{{ $config['color'] }}1a;">
                                             <span class="fw-bold" style="color:{{ $config['color'] }};">{{ $grade }}</span>
                                         </div>
                                         <div>
@@ -256,8 +253,8 @@
                             @endforeach
                         @else
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-chart-pie" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-chart-pie text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin distribución</p>
                                 <small class="text-muted">No hay páginas auditadas aún</small>
@@ -301,8 +298,8 @@
                             @endforeach
                         @else
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-check" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-check text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Todo en orden</p>
                                 <small class="text-muted">No hay páginas con score bajo</small>
@@ -348,8 +345,8 @@
                             @endforeach
                         @else
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-clipboard-check" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-clipboard-check text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin auditorías</p>
                                 <small class="text-muted">Aún no se han realizado auditorías</small>
@@ -388,7 +385,7 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td><span class="badge fw-semibold py-1" style="background:#fce8e8;color:#b10100;">{{ $issue['count'] }}</span></td>
+                                                <td><span class="badge fw-semibold py-1" class="brand-badge-red">{{ $issue['count'] }}</span></td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
                                                         <div class="progress progress-thin flex-fill" style="min-width:50px;height:4px;">
@@ -404,8 +401,8 @@
                             </div>
                         @else
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-check" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-check text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin problemas</p>
                                 <small class="text-muted">No se detectaron issues frecuentes</small>
@@ -426,14 +423,14 @@
                             <p class="card-subtitle mt-1">Keywords compartidas entre múltiples páginas</p>
                         </div>
                         <div class="ms-auto mt-3 mt-md-0">
-                            <span class="badge" style="background:#fce8e8;color:#b10100;">{{ $cannibalization->count() }} conflictos</span>
+                            <span class="badge" class="brand-badge-red">{{ $cannibalization->count() }} conflictos</span>
                         </div>
                     </div>
                     <div class="card-body">
                         @if($cannibalization->isEmpty())
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-check" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-check text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin conflictos</p>
                                 <small class="text-muted">No se detectaron keywords compartidas entre páginas</small>
@@ -454,7 +451,7 @@
                                                 <td class="ps-0">
                                                     <h6 class="mb-0 fw-semibold">{{ $item->target_keyword }}</h6>
                                                 </td>
-                                                <td><span class="badge fw-semibold py-1" style="background:#fce8e8;color:#b10100;">{{ $item->page_count }}</span></td>
+                                                <td><span class="badge fw-semibold py-1" class="brand-badge-red">{{ $item->page_count }}</span></td>
                                                 <td>
                                                     <a href="{{ route('setting.seo.metas.index', ['target_keyword' => $item->target_keyword]) }}"
                                                        class="btn btn-xs btn-outline-secondary">
@@ -499,8 +496,8 @@
                     <div class="card-body">
                         @if($duplicateTitles->isEmpty() && $duplicateDescriptions->isEmpty())
                             <div class="text-center py-5">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;background:#f5f6f8;">
-                                    <i class="fas fa-check" style="color:#adb5bd;font-size:1.25rem;"></i>
+                                <div class="seo-icon-box-md rounded-circle d-inline-flex align-items-center justify-content-center mb-3 brand-box-empty">
+                                    <i class="fas fa-check text-secondary fs-5"></i>
                                 </div>
                                 <p class="mb-1 fw-semibold text-muted">Sin duplicados</p>
                                 <small class="text-muted">No se detectaron títulos ni descripciones repetidas</small>

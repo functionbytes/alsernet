@@ -34,17 +34,14 @@ class SitemapController extends Controller
     }
 
     /**
-     * Display pages sitemap
+     * Display pages sitemap with multilingual hreflang alternates
      */
     public function pages()
     {
         $sitemap = app('sitemap');
         $sitemap->clear();
 
-        // Add only pages
-        if (class_exists(Page::class)) {
-            $sitemap->addModel(Page::class);
-        }
+        $this->addMultilingualPages($sitemap);
 
         return response($sitemap->render(), 200, [
             'Content-Type' => 'application/xml',
@@ -165,13 +162,7 @@ class SitemapController extends Controller
      */
     protected function generateSitemap($sitemap)
     {
-        $sitemap->add(url('/'), now()->toAtomString(), '1.0', 'daily');
-
-        foreach (config('sitemap.models', []) as $modelClass) {
-            if (class_exists($modelClass)) {
-                $sitemap->addModel($modelClass);
-            }
-        }
+        $this->addMultilingualPages($sitemap);
 
         if (class_exists(BlogPost::class)) {
             $sitemap->addModel(BlogPost::class);
@@ -192,5 +183,49 @@ class SitemapController extends Controller
         return response($sitemap->render(), 200, [
             'Content-Type' => 'application/xml',
         ]);
+    }
+
+    /**
+     * Add all multilingual page URLs using SeoMeta canonical URLs with hreflang alternates.
+     * Groups SeoMetas by seoable_id so each page gets all its locale variants.
+     */
+    protected function addMultilingualPages($sitemap): void
+    {
+        $metas = SeoMeta::where('seoable_type', Page::class)
+            ->whereNotNull('canonical_url')
+            ->where('robots', 'not like', '%noindex%')
+            ->select(['seoable_id', 'locale', 'canonical_url', 'updated_at'])
+            ->orderBy('seoable_id')
+            ->orderBy('locale')
+            ->get();
+
+        $grouped = $metas->groupBy('seoable_id');
+        $defaultLocale = config('app.locale', 'es');
+
+        foreach ($grouped as $pageId => $pageMetas) {
+            // Build alternates map for this page: locale → canonical_url
+            $alternatesMap = $pageMetas->pluck('canonical_url', 'locale')->all();
+
+            // Skip pages with no URLs
+            if (empty($alternatesMap)) {
+                continue;
+            }
+
+            // Add each locale URL to the sitemap
+            foreach ($pageMetas as $meta) {
+                $lastmod = $meta->updated_at?->toAtomString();
+                $priority = $meta->locale === $defaultLocale ? '0.9' : '0.8';
+                $sitemap->add($meta->canonical_url, $lastmod, $priority, 'monthly');
+
+                // Add hreflang alternates for this URL
+                foreach ($alternatesMap as $lang => $href) {
+                    $sitemap->addAlternate($meta->canonical_url, $lang, $href);
+                }
+                // x-default points to the default locale URL
+                if (isset($alternatesMap[$defaultLocale])) {
+                    $sitemap->addAlternate($meta->canonical_url, 'x-default', $alternatesMap[$defaultLocale]);
+                }
+            }
+        }
     }
 }

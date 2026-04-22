@@ -546,7 +546,7 @@ body {
 .list-group-container .list-group .list-group-item:hover {
     color: #555;
     text-decoration: none;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 
 /*jumbotron widget*/
@@ -691,7 +691,7 @@ body {
 
 .panel-container .panel .panel-footer {
     padding: 10px 15px;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
     border-top: 1px solid #ddd;
     border-bottom-right-radius: 3px;
     border-bottom-left-radius: 3px;

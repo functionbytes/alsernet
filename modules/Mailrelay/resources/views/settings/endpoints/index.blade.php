@@ -3,7 +3,7 @@
 @section('title', 'Endpoints de email')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="card">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -96,12 +96,10 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input toggle-status"
-                                                type="checkbox"
-                                                data-id="{{ $endpoint->id }}"
-                                                {{ $endpoint->status === 'active' ? 'checked' : '' }}>
-                                        </div>
+                                        <select class="form-select form-select-sm toggle-status" data-id="{{ $endpoint->id }}">
+                                            <option value="active" {{ $endpoint->status === 'active' ? 'selected' : '' }}>Activado</option>
+                                            <option value="inactive" {{ $endpoint->status !== 'active' ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2 justify-content-end">
@@ -175,7 +173,8 @@ $(document).ready(function() {
     // Toggle status
     $('.toggle-status').on('change', function() {
         const id = $(this).data('id');
-        const $switch = $(this);
+        const $select = $(this);
+        const status = $select.val();
 
         $.ajax({
             url: `/mailrelay/setting/endpoints/${id}/toggle-status`,
@@ -183,13 +182,14 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+            data: { status: status },
             success: function(response) {
                 if (response.success) {
                     toastr.success(response.message);
                 }
             },
             error: function() {
-                $switch.prop('checked', !$switch.prop('checked'));
+                $select.val(status === 'active' ? 'inactive' : 'active');
                 toastr.error('Error al cambiar el estado');
             }
         });

@@ -16,7 +16,7 @@
             <h2 style="color: #333333; font-size: 18px;">Hola {{ $user->name }},</h2>
             <p style="color: #555555;">Este es tu resumen de actividad en el gestor de medios.</p>
 
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="padding: 8px 0; color: #555555;">Periodo</td>
@@ -44,7 +44,7 @@
             </p>
         </div>
 
-        <div style="background-color: #f5f5f5; padding: 15px 30px; text-align: center;">
+        <div style="background-color: #f9f9f9; padding: 15px 30px; text-align: center;">
             <p style="color: #aaaaaa; font-size: 12px; margin: 0;">{{ config('app.name') }}</p>
         </div>
     </div>

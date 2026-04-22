@@ -4,10 +4,13 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerSession extends Model
 {
     use HasFactory;
+
+    protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_customer_sessions';
 
@@ -23,16 +26,19 @@ class CustomerSession extends Model
         'last_activity_at',
     ];
 
-    protected $casts = [
-        'last_activity_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'last_activity_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the customer that owns this session
      */
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }

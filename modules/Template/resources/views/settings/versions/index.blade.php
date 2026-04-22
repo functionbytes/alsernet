@@ -58,10 +58,10 @@
 
                                                         @if($version->version !== $template->getCurrentVersionNumber())
                                                             <form action="{{ route('settings.templates.versions.restore', [$template, $version->version]) }}"
-                                                                  method="POST" style="display: inline;">
+                                                                  method="POST" class="d-inline needs-confirm"
+                                                                  data-confirm-msg="¿Restaurar esta versión?">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-sm btn-outline-warning"
-                                                                        onclick="return confirm('¿Restaurar esta versión?')">
+                                                                <button type="submit" class="btn btn-sm btn-outline-warning">
                                                                     <i class="fas fa-undo me-1"></i>Restaurar
                                                                 </button>
                                                             </form>

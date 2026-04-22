@@ -1,17 +1,17 @@
 @php
-    $title      = cookie_option('banner_title', 'Usamos cookies');
-    $message    = cookie_option('banner_message', 'Utilizamos cookies propias y de terceros para mejorar tu experiencia. Puedes aceptar todas o configurar tus preferencias.');
-    $acceptText = cookie_option('accept_btn_text', 'Aceptar todo');
-    $rejectText = cookie_option('reject_btn_text', 'Solo necesarias');
-    $configText = cookie_option('config_btn_text', 'Configurar');
-    $btnColor   = cookie_option('btn_color', '#90bb13');
-    $position   = cookie_option('banner_position', 'bottom'); // bottom | top
+    $title      = __('cookie::messages.banner.title');
+    $message    = __('cookie::messages.banner.message');
+    $acceptText = __('cookie::messages.banner.accept');
+    $rejectText = __('cookie::messages.banner.reject');
+    $configText = __('cookie::messages.banner.customize');
+    $btnColor   = '#b10100';
+    $position   = cookie_option('position', 'bottom'); // bottom | top
 @endphp
 
 <div id="cookie-banner"
      class="cookie-banner position-fixed {{ $position === 'top' ? 'top-0' : 'bottom-0' }} start-0 end-0 z-3 shadow-lg"
      style="display:none; background:#fff; border-top: 3px solid {{ $btnColor }};">
-    <div class="container-fluid px-4 py-3">
+    <div class="px-4 py-3 px-3">
         <div class="row align-items-center g-3">
             <div class="col-12 col-md-7">
                 <div class="d-flex align-items-start gap-3">

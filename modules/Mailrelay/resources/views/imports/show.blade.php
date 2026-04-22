@@ -3,7 +3,7 @@
 @section('title', 'Import Details')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <div class="row mb-4">
         <div class="col-md-12">
             <nav aria-label="breadcrumb">
@@ -272,8 +272,7 @@
                             </button>
                         @endif
 
-                        <button class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('Are you sure you want to delete this import?')">
+                        <button class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-trash me-2"></i>Delete Import
                         </button>
                     </div>

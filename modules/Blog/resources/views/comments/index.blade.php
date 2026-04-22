@@ -286,7 +286,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una accion.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un comentario.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' comentario(s) seleccionados?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

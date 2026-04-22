@@ -3,6 +3,7 @@
 return [
 
     'banner' => [
+        'title' => 'We use cookies',
         'message' => 'We use cookies to improve your experience on our website.',
         'accept' => 'Accept cookies',
         'reject' => 'Reject',

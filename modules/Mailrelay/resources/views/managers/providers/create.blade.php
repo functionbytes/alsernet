@@ -156,21 +156,9 @@
                             <small class="text-muted">Mayor prioridad = mayor probabilidad de uso (0-100)</small>
                         </div>
 
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_active"
-                                   id="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_active">
-                                Provider activo
-                            </label>
-                        </div>
+                        <div class="mb-2"><label class="form-label" for="is_active">Provider activo</label><select class="form-select" name="is_active" id="is_active"><option value="1">Activado</option><option value="0">Desactivado</option></select></div>
 
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_default"
-                                   id="is_default" value="1" {{ old('is_default', false) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_default">
-                                Provider predeterminado
-                            </label>
-                        </div>
+                        <div class="mb-2"><label class="form-label" for="is_default">Provider predeterminado</label><select class="form-select" name="is_default" id="is_default"><option value="1">Activado</option><option value="0">Desactivado</option></select></div>
                     </div>
                 </div>
 

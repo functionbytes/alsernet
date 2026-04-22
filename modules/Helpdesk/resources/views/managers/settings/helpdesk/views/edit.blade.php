@@ -12,14 +12,14 @@
                     <p class="text-muted mb-0">{{ $view->name }}</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('manager.helpdesk.backups.tickets.views.index') }}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Cancelar</a>
+                    <a href="{{ route('manager.helpdesk.settings.ticket-views.index') }}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Cancelar</a>
                     <button type="submit" form="viewForm" class="btn btn-primary" id="saveBtn" disabled><i class="fa fa-check"></i> Guardar Cambios</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.views.update', $view->id) }}" id="viewForm">
+    <form method="POST" action="{{ route('manager.helpdesk.settings.ticket-views.update', $view->id) }}" id="viewForm">
         @csrf
         @method('PUT')
         <div class="row">

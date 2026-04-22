@@ -1803,7 +1803,7 @@
 .ve-sc-tabs { display:flex; gap:4px; }
 .ve-sc-tab {
     flex:1; padding:4px 0; font-size:11px; font-weight:600;
-    background:#f5f5f5; border:1px solid #ddd; border-radius:4px;
+    background:#f9f9f9; border:1px solid #ddd; border-radius:4px;
     cursor:pointer; transition:all .15s;
 }
 .ve-sc-tab:hover { background:#ebebeb; }
@@ -1842,7 +1842,7 @@
 .ve-sc-items-toolbar { display:flex; gap:4px; margin-bottom:6px; }
 .ve-sc-toolbar-btn {
     flex:1; padding:3px 0; font-size:10px; font-weight:600;
-    background:#f5f5f5; border:1px solid #ddd; border-radius:4px;
+    background:#f9f9f9; border:1px solid #ddd; border-radius:4px;
     cursor:pointer; color:#666; transition:all .15s;
 }
 .ve-sc-toolbar-btn:hover { background:#ebebeb; color:#333; }

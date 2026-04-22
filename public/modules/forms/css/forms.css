@@ -58,9 +58,7 @@
 .forms-form .form-select:focus-visible,
 .forms-form .form-check-input:focus-visible,
 .forms-form .btn:focus-visible {
-    outline: 2px solid #90bb13;
     outline-offset: 2px;
-    box-shadow: 0 0 0 3px rgba(144, 187, 19, 0.25);
 }
 
 /* Tap targets mobile mínimos 44x44 (WCAG 2.2 AA) */

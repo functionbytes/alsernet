@@ -2,50 +2,14 @@
 
 @section('title', 'Editar grupo de suscriptores')
 
-@section('head')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+@push('css')
 <style>
-    .form-card {
-        background-color: #fff;
-        border-radius: 0.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-        padding: 2rem;
-    }
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-    }
-    .required-field::after {
-        content: " *";
-        color: #dc3545;
-    }
-    .info-box {
-        background-color: #e7f3ff;
-        border-left: 4px solid #0d6efd;
-        padding: 1rem;
-        border-radius: 0.25rem;
-        margin-bottom: 1.5rem;
-    }
-    .sync-stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .sync-stats-card h6 {
-        margin: 0;
-        opacity: 0.9;
-        font-size: 0.875rem;
-    }
-    .sync-stats-card .stat-value {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin: 0.5rem 0;
-    }
+    .required-field::after { content: " *"; color: #dc3545; }
+    .sync-stats-card { color: white; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .sync-stats-card h6 { margin: 0; opacity: 0.9; font-size: 0.875rem; }
+    .sync-stats-card .stat-value { font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0; }
 </style>
-@endsection
+@endpush
 
 @section('content')
 <div class="container py-4">
@@ -212,22 +176,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="auto_sync"
-                                name="auto_sync"
-                                value="1"
-                                {{ old('auto_sync', $group->auto_sync) ? 'checked' : '' }}
-                            >
-                            <label class="form-check-label" for="auto_sync">
-                                <strong>Sincronización automática</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted ms-4">
-                            Sincronizar automáticamente los cambios con Mailrelay
-                        </small>
+                        <label class="form-label" for="auto_sync">Sincronización automática</label>
+                        <select class="form-select" name="auto_sync" id="auto_sync">
+                            <option value="1" {{ old('auto_sync', $group->auto_sync) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('auto_sync', $group->auto_sync) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="form-text text-muted">Sincronizar automáticamente los cambios con Mailrelay</small>
                     </div>
 
                     <!-- Status -->
@@ -236,22 +190,12 @@
                     </h6>
 
                     <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="active"
-                                name="active"
-                                value="1"
-                                {{ old('active', $group->active) ? 'checked' : '' }}
-                            >
-                            <label class="form-check-label" for="active">
-                                <strong>Grupo activo</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted ms-4">
-                            Los grupos inactivos no recibirán campañas de email
-                        </small>
+                        <label class="form-label" for="active">Estado del grupo</label>
+                        <select class="form-select" name="active" id="active">
+                            <option value="1" {{ old('active', $group->active) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('active', $group->active) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="form-text text-muted">Los grupos inactivos no recibirán campañas de email</small>
                     </div>
 
                     <!-- Metadata Section -->

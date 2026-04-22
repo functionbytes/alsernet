@@ -120,7 +120,7 @@ class HtmlColornameDecoder extends HexColorDecoder implements DecoderInterface
         'azure' => '#f0ffff',
         'aliceblue' => '#f0f8ff',
         'ghostwhite' => '#f8f8ff',
-        'whitesmoke' => '#f5f5f5',
+        'whitesmoke' => '#f9f9f9',
         'seashell' => '#fff5ee',
         'beige' => '#f5f5dc',
         'oldlace' => '#fdf5e6',
@@ -163,11 +163,11 @@ class HtmlColornameDecoder extends HexColorDecoder implements DecoderInterface
      */
     public function decode(mixed $input): ImageInterface|ColorInterface
     {
-        if (!is_string($input)) {
+        if (! is_string($input)) {
             throw new DecoderException('Unable to decode input');
         }
 
-        if (!array_key_exists(strtolower($input), static::$names)) {
+        if (! array_key_exists(strtolower($input), static::$names)) {
             throw new DecoderException('Unable to decode input');
         }
 

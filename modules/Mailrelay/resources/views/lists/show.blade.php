@@ -3,7 +3,7 @@
 @section('title', $list->name)
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <div class="row">
         <div class="col-lg-10 mx-auto">
             <!-- Header -->

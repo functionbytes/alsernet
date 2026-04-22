@@ -413,10 +413,10 @@
     .CodeMirror { height: 420px; font-size: 13px; }
     .CodeMirror-scroll { min-height: 420px; }
     .CodeMirror-fullscreen { z-index: 9999 !important; }
-    .CodeMirror-dialog { background: #f5f5f5; color: #333; border-top: 1px solid #ddd; padding: 6px 10px; }
+    .CodeMirror-dialog { background: #f9f9f9; color: #333; border-top: 1px solid #ddd; padding: 6px 10px; }
     .CodeMirror-dialog input { background: #fff; color: #333; border: 1px solid #ccc; border-radius: 3px; padding: 2px 6px; }
     .CodeMirror-foldmarker { color: #0066cc; cursor: pointer; font-size: 11px; padding: 0 4px; background: rgba(0,0,0,.06); border-radius: 3px; }
-    .editor-toolbar-row { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f5f5f5; border-bottom: 1px solid #ddd; flex-wrap: wrap; transition: background .2s; }
+    .editor-toolbar-row { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f9f9f9; border-bottom: 1px solid #ddd; flex-wrap: wrap; transition: background .2s; }
     .editor-toolbar-row .btn { font-size: 11px; padding: 2px 8px; color: #444; border-color: #ccc; background: transparent; }
     .editor-toolbar-row .btn:hover { background: #e0e0e0; color: #000; }
     .editor-toolbar-row .btn.active { background: #d0d0d0; color: #000; }

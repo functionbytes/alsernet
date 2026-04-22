@@ -256,7 +256,7 @@
                         </ul>
                         <div class="tab-content" id="editorTabsContent">
                             <div class="tab-pane fade show active" id="code-panel" role="tabpanel" aria-labelledby="code-tab">
-                                <textarea class="form-control" id="content" name="content" style="display: none;">{{ old('content', $baseContent ?? '') }}</textarea>
+                                <textarea class="form-control d-none" id="content" name="content">{{ old('content', $baseContent ?? '') }}</textarea>
                             </div>
                             <div class="tab-pane fade p-3" id="preview-panel" role="tabpanel" aria-labelledby="preview-tab">
                                 <div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">

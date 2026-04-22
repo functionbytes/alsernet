@@ -107,34 +107,32 @@
             <div class="card-body">
                 @if($categories->isEmpty())
                     <div class="text-center py-5">
-                        <div class="d-flex flex-column align-items-center">
-                            <div class="round-48 rounded-circle bg-light-subtle text-muted mb-3 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-folder-open fs-7"></i>
-                            </div>
-                            <h6 class="mb-1">
-                                @if(request('search') || request('status'))
-                                    No se encontraron categorias
-                                @else
-                                    No hay categorias configuradas
-                                @endif
-                            </h6>
-                            <p class="text-muted mb-3">
-                                @if(request('search') || request('status'))
-                                    No hay resultados para los criterios de busqueda
-                                @else
-                                    Crea la primera categoria para organizar tus paginas
-                                @endif
-                            </p>
-                            @if(!request('search') && !request('status'))
-                                <a href="{{ route('pages.categories.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus me-1"></i> Nueva categoria
-                                </a>
+                        <i class="fas fa-folder-open fa-3x mb-3 text-muted opacity-50"></i>
+                        <h5 class="fw-bold mb-2">
+                            @if(request('search') || request('status'))
+                                No se encontraron resultados
+                            @else
+                                No hay categorias configuradas
                             @endif
-                        </div>
+                        </h5>
+                        <p class="text-muted mb-4">
+                            @if(request('search') || request('status'))
+                                No hay resultados para los criterios de busqueda
+                            @else
+                                Crea la primera categoria para organizar tus paginas
+                            @endif
+                        </p>
+                        @if(request('search') || request('status'))
+                            <a href="{{ route('pages.categories.index') }}" class="btn btn-secondary">Limpiar filtros</a>
+                        @else
+                            <a href="{{ route('pages.categories.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Nueva categoria
+                            </a>
+                        @endif
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="categories-table">
+                        <table class="table table-hover align-middle text-nowrap" id="categories-table">
                             <thead class="table-light">
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
@@ -154,7 +152,7 @@
                                             @if($category->is_active)
                                                 <span class="badge bg-success-subtle text-success">Activa</span>
                                             @else
-                                                <span class="badge bg-light text-black">Inactiva</span>
+                                                <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
                                             @endif
                                         </td>
                                         <td class="text-center">

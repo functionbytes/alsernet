@@ -6,13 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::table('helpdesk_ticket_categories', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_ticket_categories', function (Blueprint $table) {
             $table->string('key')->nullable()->unique()->after('name');
         });
 
-        Schema::table('helpdesk_conversation_statuses', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_conversation_statuses', function (Blueprint $table) {
             $table->string('key')->nullable()->unique()->after('name');
             $table->boolean('is_closed')->default(false)->after('is_open');
         });
@@ -20,11 +22,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('helpdesk_ticket_categories', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_ticket_categories', function (Blueprint $table) {
             $table->dropColumn('key');
         });
 
-        Schema::table('helpdesk_conversation_statuses', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_conversation_statuses', function (Blueprint $table) {
             $table->dropColumn(['key', 'is_closed']);
         });
     }

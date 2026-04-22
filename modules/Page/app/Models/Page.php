@@ -741,4 +741,13 @@ class Page extends Model implements HasMedia
             'expires_at' => now(),
         ]);
     }
+
+    public function excludeFromSitemap(): bool
+    {
+        if ((bool) ($this->seo_noindex ?? false)) {
+            return true;
+        }
+
+        return str_starts_with((string) $this->slug, 'error-');
+    }
 }

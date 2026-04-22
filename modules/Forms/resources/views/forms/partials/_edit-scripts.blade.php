@@ -182,8 +182,8 @@
             placeholder:      $('#fieldPlaceholder').val(),
             help_text:        $('#fieldHelpText').val(),
             label_position:   $('#fieldLabelPosition').val(),
-            is_required:      $('#fieldRequired').is(':checked') ? 1 : 0,
-            show_char_counter:$('#fieldCharCounter').is(':checked') ? 1 : 0,
+            is_required:      parseInt($('#fieldRequired').val()) || 0,
+            show_char_counter:parseInt($('#fieldCharCounter').val()) || 0,
             html_content:     $('#fieldHtmlContent').val(),
             consent_text:     $('#fieldConsentText').val(),
             min_value:        $('#fieldMinValue').val(),
@@ -291,8 +291,8 @@
         $('#fieldPlaceholder').val(field.placeholder);
         $('#fieldHelpText').val(field.help_text);
         $('#fieldLabelPosition').val(field.label_position || 'top');
-        $('#fieldRequired').prop('checked', field.is_required);
-        $('#fieldCharCounter').prop('checked', field.show_char_counter);
+        $('#fieldRequired').val(field.is_required ? '1' : '0');
+        $('#fieldCharCounter').val(field.show_char_counter ? '1' : '0');
         $('#fieldHtmlContent').val(field.html_content);
         $('#fieldConsentText').val(field.consent_text);
         $('#fieldMinValue').val(field.min_value ?? 0);
@@ -388,7 +388,7 @@
     // ─── Toggles de protección (honeypot / captcha) ───────────────────────────
     $(document).on('change', '.btn-protection-toggle', function () {
         var field = $(this).data('field');
-        var value = $(this).is(':checked') ? 1 : 0;
+        var value = parseInt($(this).val()) || 0;
         var payload = {};
         payload[field] = value;
 
@@ -402,8 +402,6 @@
             },
             error: function () {
                 toastr.error('Error al guardar');
-                var $chk = $('[data-field="' + field + '"]');
-                $chk.prop('checked', !$chk.is(':checked'));
             }
         });
     });
@@ -469,7 +467,7 @@
         $('#fieldHtmlContent, #fieldConsentText, #fieldFormula').val('');
         $('#fieldWidth').val('full');
         $('#fieldLabelPosition').val('top');
-        $('#fieldRequired, #fieldCharCounter').prop('checked', false);
+        $('#fieldRequired, #fieldCharCounter').val('0');
         $('#fieldMinValue').val(0);
         $('#fieldMaxValue').val(5);
         $('#fieldStepValue').val(1);
@@ -892,7 +890,7 @@
     $('.config-select2').select2({ width: '100%', minimumResultsForSearch: Infinity });
 
     $('#configSendConfirmation').on('change', function () {
-        $('#confirmationFields').toggleClass('d-none', !this.checked);
+        $('#confirmationFields').toggleClass('d-none', $(this).val() !== '1');
     });
 
     $('#btnSaveConfig').on('click', function () {
@@ -917,16 +915,16 @@
                 redirect_url:             $('#configRedirectUrl').val(),
                 success_animation:        $('#configSuccessAnimation').val(),
                 admin_notification_email: $('#configAdminEmail').val(),
-                send_confirmation:        $('#configSendConfirmation').is(':checked') ? 1 : 0,
+                send_confirmation:        parseInt($('#configSendConfirmation').val()) || 0,
                 email_field_key:          $('#configEmailFieldKey').val(),
                 confirmation_subject:     $('#configConfirmationSubject').val(),
                 confirmation_message:     $('#configConfirmationMessage').val(),
                 max_submissions:          $('#configMaxSubmissions').val() || '',
                 retention_days:           $('#configRetentionDays').val() || '',
                 webhook_url:              $('#configWebhookUrl').val(),
-                floating_label:           $('#configFloatingLabel').is(':checked') ? 1 : 0,
-                honeypot_enabled:         $('#honeypotToggle').is(':checked') ? 1 : 0,
-                captcha_enabled:          $('#captchaToggle').is(':checked') ? 1 : 0,
+                floating_label:           parseInt($('#configFloatingLabel').val()) || 0,
+                honeypot_enabled:         parseInt($('#honeypotToggle').val()) || 0,
+                captcha_enabled:          parseInt($('#captchaToggle').val()) || 0,
                 custom_css:               typeof editorCss !== 'undefined' ? editorCss.getValue() : '',
                 custom_js:                typeof editorJs !== 'undefined' ? editorJs.getValue() : '',
             },

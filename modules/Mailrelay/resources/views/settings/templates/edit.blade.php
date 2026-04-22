@@ -57,7 +57,7 @@
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="py-4 px-3">
     <!-- Header -->
     <div class="mb-4">
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -204,13 +204,13 @@
                         <i class="fas fa-cog me-2"></i>Configuración
                     </h3>
 
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1"
-                               {{ old('is_active', $template->is_active) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="is_active">
-                            <strong>Plantilla activa</strong>
-                            <br><small class="text-muted">Las plantillas activas están disponibles para usar en campañas</small>
-                        </label>
+                    <div class="mb-2">
+                        <label class="form-label" for="is_active">Estado de la plantilla</label>
+                        <select class="form-select" name="is_active" id="is_active">
+                            <option value="1" {{ old('is_active', $template->is_active) == 1 ? 'selected' : '' }}>Activado</option>
+                            <option value="0" {{ old('is_active', $template->is_active) == 0 ? 'selected' : '' }}>Desactivado</option>
+                        </select>
+                        <small class="text-muted">Las plantillas activas están disponibles para usar en campañas</small>
                     </div>
                 </div>
             </div>

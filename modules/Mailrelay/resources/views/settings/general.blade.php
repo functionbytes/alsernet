@@ -102,17 +102,11 @@
                         <!-- Sincronización automática -->
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="auto_sync_enabled"
-                                           name="auto_sync_enabled"
-                                           value="1"
-                                           {{ old('auto_sync_enabled', $settings->auto_sync_enabled ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="auto_sync_enabled">
-                                        Sincronización automática habilitada
-                                    </label>
-                                </div>
+                                <label class="form-label" for="auto_sync_enabled">Sincronización automática</label>
+                                <select class="form-select" name="auto_sync_enabled" id="auto_sync_enabled">
+                                    <option value="1" {{ old('auto_sync_enabled', $settings->auto_sync_enabled ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('auto_sync_enabled', $settings->auto_sync_enabled ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="form-text text-muted">Sincroniza automáticamente los suscriptores con Mailrelay</small>
                             </div>
                         </div>
@@ -141,17 +135,11 @@
                         <!-- Sincronizar suscriptores eliminados -->
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="sync_deleted"
-                                           name="sync_deleted"
-                                           value="1"
-                                           {{ old('sync_deleted', $settings->sync_deleted ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="sync_deleted">
-                                        Sincronizar suscriptores eliminados
-                                    </label>
-                                </div>
+                                <label class="form-label" for="sync_deleted">Sincronizar suscriptores eliminados</label>
+                                <select class="form-select" name="sync_deleted" id="sync_deleted">
+                                    <option value="1" {{ old('sync_deleted', $settings->sync_deleted ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('sync_deleted', $settings->sync_deleted ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="form-text text-muted">Eliminar de Mailrelay los suscriptores borrados en el sistema</small>
                             </div>
                         </div>
@@ -233,17 +221,11 @@
                         <!-- Doble opt-in -->
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="double_optin"
-                                           name="double_optin"
-                                           value="1"
-                                           {{ old('double_optin', $settings->double_optin ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="double_optin">
-                                        Doble opt-in requerido
-                                    </label>
-                                </div>
+                                <label class="form-label" for="double_optin">Doble opt-in requerido</label>
+                                <select class="form-select" name="double_optin" id="double_optin">
+                                    <option value="1" {{ old('double_optin', $settings->double_optin ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('double_optin', $settings->double_optin ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="form-text text-muted">Enviar email de confirmación a nuevos suscriptores</small>
                             </div>
                         </div>
@@ -251,17 +233,11 @@
                         <!-- Permitir cancelación -->
                         <div class="col-12 col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="allow_unsubscribe"
-                                           name="allow_unsubscribe"
-                                           value="1"
-                                           {{ old('allow_unsubscribe', $settings->allow_unsubscribe ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="allow_unsubscribe">
-                                        Permitir cancelación de suscripción
-                                    </label>
-                                </div>
+                                <label class="form-label" for="allow_unsubscribe">Permitir cancelación de suscripción</label>
+                                <select class="form-select" name="allow_unsubscribe" id="allow_unsubscribe">
+                                    <option value="1" {{ old('allow_unsubscribe', $settings->allow_unsubscribe ?? true) == 1 ? 'selected' : '' }}>Activado</option>
+                                    <option value="0" {{ old('allow_unsubscribe', $settings->allow_unsubscribe ?? true) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                </select>
                                 <small class="form-text text-muted">Incluir enlace de baja en los emails</small>
                             </div>
                         </div>
@@ -308,17 +284,11 @@
                                 <!-- Logging detallado -->
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input"
-                                                   type="checkbox"
-                                                   id="detailed_logging"
-                                                   name="detailed_logging"
-                                                   value="1"
-                                                   {{ old('detailed_logging', $settings->detailed_logging ?? false) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="detailed_logging">
-                                                Logging detallado
-                                            </label>
-                                        </div>
+                                        <label class="form-label" for="detailed_logging">Logging detallado</label>
+                                        <select class="form-select" name="detailed_logging" id="detailed_logging">
+                                            <option value="1" {{ old('detailed_logging', $settings->detailed_logging ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('detailed_logging', $settings->detailed_logging ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                         <small class="form-text text-muted">Registrar todas las operaciones con Mailrelay en logs</small>
                                     </div>
                                 </div>
@@ -345,17 +315,11 @@
                                 <!-- Modo de prueba -->
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input"
-                                                   type="checkbox"
-                                                   id="sandbox_mode"
-                                                   name="sandbox_mode"
-                                                   value="1"
-                                                   {{ old('sandbox_mode', $settings->sandbox_mode ?? false) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="sandbox_mode">
-                                                Modo de prueba (sandbox)
-                                            </label>
-                                        </div>
+                                        <label class="form-label" for="sandbox_mode">Modo de prueba (sandbox)</label>
+                                        <select class="form-select" name="sandbox_mode" id="sandbox_mode">
+                                            <option value="1" {{ old('sandbox_mode', $settings->sandbox_mode ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('sandbox_mode', $settings->sandbox_mode ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                         <small class="form-text text-muted">Simular operaciones sin ejecutar llamadas reales a la API</small>
                                     </div>
                                 </div>

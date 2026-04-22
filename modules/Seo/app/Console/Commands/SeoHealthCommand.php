@@ -96,12 +96,12 @@ class SeoHealthCommand extends Command
 
     private function checkIndexNow(): void
     {
-        if (! config('seohelper.indexnow.enabled', false)) {
+        if (! config('Seo.indexnow.enabled', false)) {
             $this->skip('indexnow', 'IndexNow deshabilitado');
 
             return;
         }
-        if (! config('seohelper.indexnow.key')) {
+        if (! config('Seo.indexnow.key')) {
             $this->critical('indexnow', 'IndexNow habilitado pero falta SEO_INDEXNOW_KEY');
 
             return;

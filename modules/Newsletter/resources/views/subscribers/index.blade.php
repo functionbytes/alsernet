@@ -228,7 +228,7 @@
     </div>
 
     {{-- Form oculto para eliminar individual --}}
-    <form id="delete-form" method="POST" style="display:none">
+    <form id="delete-form" method="POST" class="d-none">
         @csrf
         @method('DELETE')
     </form>

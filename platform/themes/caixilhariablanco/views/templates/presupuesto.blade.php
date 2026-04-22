@@ -1,7 +1,10 @@
 @extends('template::layouts.default')
 
-@section('title', $transTitle ?? 'Solicite su presupuesto gratis')
-@section('description', $transDescription ?? 'Presupuesto gratuito y sin compromiso. Respuesta en menos de 24h.')
+@php Theme::set('page', $page); @endphp
+
+@section('seo_head')
+    @include(Theme::getThemeNamespace() . '::partials.seo-head')
+@endsection
 
 @section('content')
 

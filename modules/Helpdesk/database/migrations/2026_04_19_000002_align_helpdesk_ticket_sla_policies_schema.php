@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::table('helpdesk_ticket_sla_policies', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_ticket_sla_policies', function (Blueprint $table) {
             $table->string('uid')->nullable()->unique()->after('id');
             $table->string('key')->nullable()->unique()->after('uid');
             $table->string('priority')->nullable()->after('description');
@@ -28,7 +30,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('helpdesk_ticket_sla_policies', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_ticket_sla_policies', function (Blueprint $table) {
             $table->dropColumn([
                 'uid', 'key', 'priority',
                 'first_response_time_hours', 'next_response_time_hours', 'resolution_time_hours',

@@ -3,7 +3,7 @@
 @section('title', 'Sesiones Activas')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-desktop me-2"></i>Sesiones activas</h5>

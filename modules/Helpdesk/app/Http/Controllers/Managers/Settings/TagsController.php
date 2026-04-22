@@ -39,7 +39,7 @@ class TagsController extends Controller
             'inactive' => ConversationTag::where('is_active', false)->count(),
         ];
 
-        return view('theme.views.backups.helpdesk.tags.index', [
+        return view('helpdesk::managers.settings.helpdesk.tags.index', [
             'tags' => $tags,
             'stats' => $stats,
         ]);
@@ -50,7 +50,7 @@ class TagsController extends Controller
      */
     public function create()
     {
-        return view('theme.views.backups.helpdesk.tags.create');
+        return view('helpdesk::managers.settings.helpdesk.tags.create');
     }
 
     /**
@@ -81,7 +81,7 @@ class TagsController extends Controller
 
         ConversationTag::create($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.tags.index')
+        return redirect()->route('manager.helpdesk.settings.tickets.tags.index')
             ->with('success', 'Tag creado exitosamente.');
     }
 
@@ -90,7 +90,7 @@ class TagsController extends Controller
      */
     public function edit(ConversationTag $tag)
     {
-        return view('theme.views.backups.helpdesk.tags.edit', compact('tag'));
+        return view('helpdesk::managers.settings.helpdesk.tags.edit', compact('tag'));
     }
 
     /**
@@ -127,7 +127,7 @@ class TagsController extends Controller
 
         $tag->update($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.tags.index')
+        return redirect()->route('manager.helpdesk.settings.tickets.tags.index')
             ->with('success', 'Tag actualizado exitosamente.');
     }
 
@@ -140,13 +140,13 @@ class TagsController extends Controller
         $usageCount = $tag->conversations()->count();
 
         if ($usageCount > 0) {
-            return redirect()->route('manager.helpdesk.backups.tickets.tags.index')
+            return redirect()->route('manager.helpdesk.settings.tickets.tags.index')
                 ->with('error', "No se puede eliminar el tag porque está siendo usado en {$usageCount} conversación(es).");
         }
 
         $tag->delete();
 
-        return redirect()->route('manager.helpdesk.backups.tickets.tags.index')
+        return redirect()->route('manager.helpdesk.settings.tickets.tags.index')
             ->with('success', 'Tag eliminado exitosamente.');
     }
 }

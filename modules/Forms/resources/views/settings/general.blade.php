@@ -120,35 +120,32 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="allow_multiple" value="0">
-                                        <input class="form-check-input" type="checkbox" id="allow_multiple" name="allow_multiple"
-                                               value="1" {{ old('allow_multiple', $form->allow_multiple) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="allow_multiple">
-                                            Permitir múltiples envíos por usuario
-                                        </label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="allow_multiple">Múltiples envíos por usuario</label>
+                                        <select class="form-select" name="allow_multiple" id="allow_multiple">
+                                            <option value="1" {{ old('allow_multiple', $form->allow_multiple) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('allow_multiple', $form->allow_multiple) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="is_multi_step" value="0">
-                                        <input class="form-check-input" type="checkbox" id="is_multi_step" name="is_multi_step"
-                                               value="1" {{ old('is_multi_step', $form->is_multi_step) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_multi_step">
-                                            Formulario multi-paso
-                                        </label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="is_multi_step">Formulario multi-paso</label>
+                                        <select class="form-select" name="is_multi_step" id="is_multi_step">
+                                            <option value="1" {{ old('is_multi_step', $form->is_multi_step) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('is_multi_step', $form->is_multi_step) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch">
-                                        <input type="hidden" name="floating_label" value="0">
-                                        <input class="form-check-input" type="checkbox" id="floating_label" name="floating_label"
-                                               value="1" {{ old('floating_label', $form->floating_label) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="floating_label">
-                                            Labels flotantes (Material)
-                                        </label>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="floating_label">Labels flotantes (Material)</label>
+                                        <select class="form-select" name="floating_label" id="floating_label">
+                                            <option value="1" {{ old('floating_label', $form->floating_label) == 1 ? 'selected' : '' }}>Activado</option>
+                                            <option value="0" {{ old('floating_label', $form->floating_label) == 0 ? 'selected' : '' }}>Desactivado</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

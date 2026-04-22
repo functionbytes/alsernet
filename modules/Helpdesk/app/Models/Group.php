@@ -5,9 +5,12 @@ namespace Modules\Helpdesk\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Group extends Model
 {
+    use SoftDeletes;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_groups';
@@ -18,9 +21,12 @@ class Group extends Model
         'default',
     ];
 
-    protected $casts = [
-        'default' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'default' => 'boolean',
+        ];
+    }
 
     protected $hidden = [
         'created_at',
@@ -56,7 +62,7 @@ class Group extends Model
     /**
      * Get agents with primary priority.
      */
-    public function primaryAgents()
+    public function primaryAgents(): BelongsToMany
     {
         return $this->users()->wherePivot('conversation_priority', 'primary');
     }
@@ -64,7 +70,7 @@ class Group extends Model
     /**
      * Get agents with backup priority.
      */
-    public function backupAgents()
+    public function backupAgents(): BelongsToMany
     {
         return $this->users()->wherePivot('conversation_priority', 'backup');
     }

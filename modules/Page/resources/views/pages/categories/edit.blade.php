@@ -29,7 +29,7 @@
                                        value="{{ old('name', $category->name) }}" required autofocus
                                        placeholder="ej: Noticias">
                                 @error('name')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -40,7 +40,7 @@
                                        value="{{ old('slug', $category->slug) }}">
                                 <small class="form-text text-muted">Modificar el slug puede afectar URLs existentes</small>
                                 @error('slug')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -58,7 +58,7 @@
                                        value="{{ old('color', $category->color ?? '#90bb13') }}">
                                 <small class="form-text text-muted">Color de identificacion visual</small>
                                 @error('color')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -74,7 +74,7 @@
                                 </div>
                                 <small class="form-text text-muted">Clase Font Awesome 6 (ej: <code>fas fa-folder</code>)</small>
                                 @error('icon')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 

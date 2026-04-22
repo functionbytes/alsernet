@@ -17,9 +17,12 @@
                         <p class="small mb-0 text-muted">Notifica a Bing/Yandex/Seznam cuando publicas o actualizas contenido.</p>
                     </div>
                     <div class="card-body p-4">
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="indexnow_enabled" name="indexnow_enabled" value="1" @checked($settings['indexnow_enabled'])>
-                            <label class="form-check-label" for="indexnow_enabled">Activar IndexNow</label>
+                        <div class="mb-3">
+                            <label for="indexnow_enabled" class="form-label fw-semibold">Activar IndexNow</label>
+                            <select class="form-select" id="indexnow_enabled" name="indexnow_enabled">
+                                <option value="1" @selected($settings['indexnow_enabled'])>Activo</option>
+                                <option value="0" @selected(!$settings['indexnow_enabled'])>Inactivo</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="indexnow_key" class="form-label fw-semibold">Key</label>
@@ -29,9 +32,12 @@
                             <small class="text-muted">Archivo de verificación se sirve en <code>/&lt;key&gt;.txt</code>.</small>
                             @error('indexnow_key')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="indexnow_auto_submit" name="indexnow_auto_submit" value="1" @checked($settings['indexnow_auto_submit'])>
-                            <label class="form-check-label" for="indexnow_auto_submit">Auto-submit al publicar/actualizar</label>
+                        <div class="mb-3">
+                            <label for="indexnow_auto_submit" class="form-label fw-semibold">Auto-submit al publicar/actualizar</label>
+                            <select class="form-select" id="indexnow_auto_submit" name="indexnow_auto_submit">
+                                <option value="1" @selected($settings['indexnow_auto_submit'])>Activo</option>
+                                <option value="0" @selected(!$settings['indexnow_auto_submit'])>Inactivo</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -80,17 +86,26 @@
                             <small class="text-muted">Puntos. Notifica si el SEO score cae más de este valor.</small>
                             @error('score_drop_threshold')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-check form-switch mb-1">
-                            <input class="form-check-input" type="checkbox" id="notify_score_drop" name="notify_score_drop" value="1" @checked($settings['notify_score_drop'])>
-                            <label class="form-check-label" for="notify_score_drop">Notificar caídas de score</label>
+                        <div class="mb-3">
+                            <label for="notify_score_drop" class="form-label fw-semibold">Notificar caídas de score</label>
+                            <select class="form-select" id="notify_score_drop" name="notify_score_drop">
+                                <option value="1" @selected($settings['notify_score_drop'])>Activo</option>
+                                <option value="0" @selected(!$settings['notify_score_drop'])>Inactivo</option>
+                            </select>
                         </div>
-                        <div class="form-check form-switch mb-1">
-                            <input class="form-check-input" type="checkbox" id="notify_redirect_chain" name="notify_redirect_chain" value="1" @checked($settings['notify_redirect_chain'])>
-                            <label class="form-check-label" for="notify_redirect_chain">Notificar cadenas de redirects</label>
+                        <div class="mb-3">
+                            <label for="notify_redirect_chain" class="form-label fw-semibold">Notificar cadenas de redirects</label>
+                            <select class="form-select" id="notify_redirect_chain" name="notify_redirect_chain">
+                                <option value="1" @selected($settings['notify_redirect_chain'])>Activo</option>
+                                <option value="0" @selected(!$settings['notify_redirect_chain'])>Inactivo</option>
+                            </select>
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="notify_orphans" name="notify_orphans" value="1" @checked($settings['notify_orphans'])>
-                            <label class="form-check-label" for="notify_orphans">Notificar contenido huérfano</label>
+                        <div class="mb-3">
+                            <label for="notify_orphans" class="form-label fw-semibold">Notificar contenido huérfano</label>
+                            <select class="form-select" id="notify_orphans" name="notify_orphans">
+                                <option value="1" @selected($settings['notify_orphans'])>Activo</option>
+                                <option value="0" @selected(!$settings['notify_orphans'])>Inactivo</option>
+                            </select>
                         </div>
                     </div>
                 </div>

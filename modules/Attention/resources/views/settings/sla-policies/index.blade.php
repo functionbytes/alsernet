@@ -289,7 +289,6 @@
 
                 if (!action) { toastr.warning('Selecciona una acción.'); return; }
                 if (!ids.length) { toastr.warning('Selecciona al menos un elemento.'); return; }
-                if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' elemento(s) seleccionados?')) { return; }
 
                 $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

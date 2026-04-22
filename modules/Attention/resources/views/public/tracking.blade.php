@@ -12,7 +12,7 @@
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                             style="width: 70px; height: 70px; background: linear-gradient(135deg, #90bb13 0%, #13C672 100%); box-shadow: 0 4px 20px rgba(144, 187, 19, 0.3);">
+                             style="width: 70px; height: 70px; background: #90bb13; box-shadow: 0 4px 20px rgba(144, 187, 19, 0.3);">
                             <i class="fas fa-magnifying-glass fa-2x text-white"></i>
                         </div>
                         <h4 class="fw-bold mb-2" style="color: #1a2030;">Consulte el estado de su peticiones</h4>
@@ -37,7 +37,7 @@
                 @if(isset($attention) && $attention)
                     {{-- Informacion del radicado --}}
                     <div class="card mb-4">
-                        <div class="card-header p-3" style="background: linear-gradient(135deg, #2a3042, #1a2030);">
+                        <div class="card-header p-3" style="background: #90bb13;">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="mb-1 text-white fw-bold">Radicado: {{ $attention->radicado }}</h5>
@@ -199,7 +199,7 @@
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
                                 <div class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                                     style="width: 100px; height: 100px; background: linear-gradient(135deg, #FEC90F15 0%, #FEC90F30 100%);">
+                                     style="width: 100px; height: 100px; background: #90bb13;">
                                     <i class="fas fa-circle-exclamation text-warning" style="font-size: 3rem;"></i>
                                 </div>
                             </div>

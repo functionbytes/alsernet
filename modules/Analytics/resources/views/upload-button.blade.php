@@ -11,7 +11,7 @@
         </button>
     </div>
 
-    <input type="file" id="credentialsFileInput" accept=".json" style="display: none;">
+    <input type="file" id="credentialsFileInput" accept=".json" class="d-none">
 
     <div class="alert alert-info border-0 bg-info-subtle d-none" id="credentialsInfo">
         <div class="d-flex align-items-start">

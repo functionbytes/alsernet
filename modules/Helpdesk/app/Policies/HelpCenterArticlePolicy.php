@@ -14,22 +14,22 @@ class HelpCenterArticlePolicy
 
     public function view(User $user, HelpCenterArticle $article): bool
     {
-        return ! $article->draft || $user->hasPermissionTo('manage_helpdesk');
+        return ! $article->draft || $user->hasPermissionTo('helpdesk.manage');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('manage_helpdesk');
+        return $user->hasPermissionTo('helpdesk.manage');
     }
 
     public function update(User $user, HelpCenterArticle $article): bool
     {
-        return $user->hasPermissionTo('manage_helpdesk')
+        return $user->hasPermissionTo('helpdesk.manage')
             || $article->author_id === $user->id;
     }
 
     public function delete(User $user, HelpCenterArticle $article): bool
     {
-        return $user->hasPermissionTo('manage_helpdesk');
+        return $user->hasPermissionTo('helpdesk.manage');
     }
 }

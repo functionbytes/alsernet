@@ -34,6 +34,12 @@ Route::middleware(['web', 'throttle:60,1'])->group(function () {
 
     Route::get('/reviews/embed-code', [PublicReviewController::class, 'embedCode'])
         ->name('reviews.embed-code');
+
+    Route::get('/reviews/cards', [PublicReviewController::class, 'cardsJson'])
+        ->name('reviews.cards');
+
+    Route::get('/reviews/data', [PublicReviewController::class, 'dataJson'])
+        ->name('reviews.public-data');
 });
 
 Route::middleware(['web', 'auth'])->group(function () {

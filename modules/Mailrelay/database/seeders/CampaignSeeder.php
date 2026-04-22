@@ -124,7 +124,7 @@ class CampaignSeeder extends Seeder
                 .header { background: linear-gradient(135deg, #90bb13 0%, #7a9f11 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0; }
                 .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
                 .cta-button { display: inline-block; background: #90bb13; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-                .footer { background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 10px 10px; }
+                .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 10px 10px; }
             </style>
         </head>
         <body>

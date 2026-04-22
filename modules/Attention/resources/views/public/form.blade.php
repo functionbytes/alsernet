@@ -283,10 +283,11 @@
                         <div class="section-divider my-4"></div>
 
                         {{-- Captcha --}}
+                        @if(\Modules\Captcha\Facades\Captcha::isEnabled() && config('attention.captcha.enabled', false))
                         <div class="mb-4">
                             <label class="form-label fw-bold">Verificacion de seguridad <span class="text-danger">*</span></label>
                             <div class="mt-2">
-                                {!! Captcha::display() !!}
+                                {!! \Modules\Captcha\Facades\Captcha::display() !!}
                             </div>
                             @error('g-recaptcha-response')
                                 <div class="text-danger mt-2">
@@ -294,6 +295,7 @@
                                 </div>
                             @enderror
                         </div>
+                        @endif
 
                         {{-- Submit --}}
                         <div class="submit-section">
@@ -408,7 +410,7 @@
         .section-header {
             padding-left: 1rem;
             border-left: 4px solid #90bb13;
-            background: linear-gradient(90deg, rgba(144, 187, 19, 0.05) 0%, transparent 100%);
+            background: #90bb13 0%, transparent 100%);
             padding: 1rem;
             border-radius: 0.5rem;
         }
@@ -420,7 +422,7 @@
         /* Section Divider */
         .section-divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent 0%, #e0e0e0 50%, transparent 100%);
+            background: #90bb13;
             margin: 2rem 0;
         }
 
@@ -512,7 +514,7 @@
 
         /* Submit Section */
         .submit-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: #90bb13;
             padding: 1.5rem;
             border-radius: 0.75rem;
             margin-top: 2rem;

@@ -155,20 +155,20 @@
                             <small class="text-muted">Mayor prioridad = mayor probabilidad de uso (0-100)</small>
                         </div>
 
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_active"
-                                   id="is_active" value="1" {{ old('is_active', $provider->is_active) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_active">
-                                Provider activo
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="is_active">Provider activo</label>
+                            <select class="form-select" name="is_active" id="is_active">
+                                <option value="1" {{ old('is_active', $provider->is_active) == 1 ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ old('is_active', $provider->is_active) == 0 ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
 
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_default"
-                                   id="is_default" value="1" {{ old('is_default', $provider->is_default) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_default">
-                                Provider predeterminado
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="is_default">Provider predeterminado</label>
+                            <select class="form-select" name="is_default" id="is_default">
+                                <option value="1" {{ old('is_default', $provider->is_default) == 1 ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ old('is_default', $provider->is_default) == 0 ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
                     </div>
                 </div>

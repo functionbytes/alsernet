@@ -166,6 +166,25 @@
 
     </div>
 
+    {{-- Modal confirmar restaurar --}}
+    <div class="modal fade" id="modal-restore-version" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Restaurar versión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Restaurar v{{ $version->version_number }}? La versión actual se guardará automáticamente.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-restore" class="btn btn-primary w-100 mb-2">Restaurar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -173,7 +192,11 @@
 $(document).ready(function () {
     $('#restoreBtn').on('click', function (e) {
         e.preventDefault();
-        if (!confirm('¿Restaurar v{{ $version->version_number }}? La versión actual se guardará automáticamente.')) return;
+        $('#modal-restore-version').modal('show');
+    });
+
+    $('#btn-confirm-restore').on('click', function () {
+        $('#modal-restore-version').modal('hide');
         $('#restoreForm').submit();
     });
 

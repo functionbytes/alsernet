@@ -4,9 +4,15 @@
     $display = $shortcodeConfig['display'] ?? 'inline';
     $columns = $shortcodeConfig['columns'] ?? null;
     $showTitle = $shortcodeConfig['show_title'] ?? false;
-    $buttonText = $shortcodeConfig['button_text'] ?? $form->submit_button_text ?? 'Enviar';
-    $buttonColor = $shortcodeConfig['button_color'] ?? null;
     $locale = app()->getLocale();
+    $_i18nForms = [
+        'es' => ['send' => 'Enviar', 'sending' => 'Enviando…', 'submitted' => 'Formulario enviado.', 'loading' => 'Cargando formulario…'],
+        'pt' => ['send' => 'Enviar', 'sending' => 'A enviar…', 'submitted' => 'Formulário enviado.', 'loading' => 'A carregar formulário…'],
+        'en' => ['send' => 'Send', 'sending' => 'Sending…', 'submitted' => 'Form submitted.', 'loading' => 'Loading form…'],
+        'fr' => ['send' => 'Envoyer', 'sending' => 'Envoi en cours…', 'submitted' => 'Formulaire envoyé.', 'loading' => 'Chargement du formulaire…'],
+    ][$locale] ?? ['send' => 'Enviar', 'sending' => 'Enviando…', 'submitted' => 'Formulario enviado.', 'loading' => 'Cargando formulario…'];
+    $buttonText = $shortcodeConfig['button_text'] ?? $form->submit_button_text ?? $_i18nForms['send'];
+    $buttonColor = $shortcodeConfig['button_color'] ?? null;
     $isMultiStep = $form->is_multi_step && count($form->fields->pluck('step_number')->unique()) > 1;
     $steps = $isMultiStep ? $form->fields->pluck('step_number')->unique()->sort()->values() : collect([1]);
     $totalSteps = $steps->count();
@@ -39,7 +45,7 @@
 <div class="forms-lazy-wrapper" data-lazy-form="{{ $formId }}" data-form-slug="{{ $form->slug }}" aria-busy="true">
     <div class="forms-lazy-placeholder text-center py-5">
         <div class="spinner-border text-secondary" role="status" aria-hidden="true"></div>
-        <p class="text-muted small mt-2 mb-0">Cargando formulario…</p>
+        <p class="text-muted small mt-2 mb-0">{{ $_i18nForms['loading'] }}</p>
     </div>
     <template class="forms-lazy-template">
 @endif
@@ -85,7 +91,6 @@
 </div>
 @endif
 
-@once
 @php
 $validateLocaleMap = [
     'ar'    => 'ar',    'az' => 'az',    'bg' => 'bg',
@@ -107,16 +112,42 @@ $validateLocaleMap = [
 ];
 $validateLocale = $validateLocaleMap[$locale] ?? null;
 @endphp
+@once
 <script>
-// Guardas anti-duplicación de assets (idempotente entre múltiples [form] en una página)
 window.FormsAssets = window.FormsAssets || { loaded: {} };
+(function () {
+    function loadScript(src, onload) {
+        if (window.FormsAssets.loaded[src]) { if (onload) onload(); return; }
+        window.FormsAssets.loaded[src] = true;
+        var s = document.createElement('script');
+        s.src = src;
+        if (onload) s.onload = onload;
+        document.head.appendChild(s);
+    }
+
+    function waitForJQuery(cb) {
+        if (typeof jQuery !== 'undefined') { cb(); return; }
+        var t = setInterval(function () {
+            if (typeof jQuery !== 'undefined') { clearInterval(t); cb(); }
+        }, 20);
+    }
+
+    var jqvSrc   = 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js';
+    var localeSrc = @json($validateLocale ? 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_'.$validateLocale.'.js' : null);
+    var select2Src = '{{ asset('core/select2/js/select2.min.js') }}';
+    var formsSrc   = '{{ asset('modules/forms/js/forms.js') }}';
+
+    waitForJQuery(function () {
+        loadScript(jqvSrc, function () {
+            var after = function () { loadScript(formsSrc); };
+            if (localeSrc) { loadScript(localeSrc, function () { loadScript(select2Src, after); }); }
+            else { loadScript(select2Src, after); }
+        });
+    });
+})();
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-@if($validateLocale)
-<script defer src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_{{ $validateLocale }}.js"></script>
-@endif
-<script defer src="{{ asset('core/select2/js/select2.min.js') }}"></script>
-<script defer src="{{ asset('modules/forms/js/forms.js') }}"></script>
+@endonce
+@once
 
 {{-- Auto-populate de UTM y parámetros auto_populate_param --}}
 <script>
@@ -283,65 +314,6 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
         return region;
     }
 
-    function ensureErrorSummary(form) {
-        var summary = form.querySelector('.forms-error-summary');
-        if (summary) return summary;
-        summary = document.createElement('div');
-        summary.className = 'forms-error-summary';
-        summary.setAttribute('role', 'alert');
-        summary.setAttribute('tabindex', '-1');
-        summary.style.display = 'none';
-        summary.innerHTML = '<h3>Por favor corrige los siguientes errores:</h3><ul></ul>';
-        form.prepend(summary);
-        return summary;
-    }
-
-    function refreshErrorSummary(form) {
-        var summary = ensureErrorSummary(form);
-        var ul = summary.querySelector('ul');
-        ul.innerHTML = '';
-
-        var invalids = form.querySelectorAll('.is-invalid, [aria-invalid="true"]');
-        if (!invalids.length) {
-            summary.style.display = 'none';
-            return;
-        }
-
-        invalids.forEach(function (el) {
-            if (!el.id) { el.id = 'forms-field-' + Math.random().toString(36).slice(2, 8); }
-            var label = form.querySelector('label[for="' + el.id + '"]');
-            var labelText = (label ? label.textContent : el.name || 'Campo').replace('*', '').trim();
-            var feedback = el.parentElement && el.parentElement.querySelector('.invalid-feedback');
-            var msg = feedback && feedback.textContent.trim() ? feedback.textContent.trim() : 'revisa este campo';
-
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.href = '#' + el.id;
-            a.textContent = labelText + ': ' + msg;
-            a.addEventListener('click', function (e) {
-                e.preventDefault();
-                el.focus();
-            });
-            li.appendChild(a);
-            ul.appendChild(li);
-        });
-
-        summary.style.display = '';
-        setTimeout(function () { summary.focus(); }, 80);
-    }
-
-    function setupErrorSummaryObserver(form) {
-        if (form.dataset.errorSummaryBound === '1') return;
-        form.dataset.errorSummaryBound = '1';
-
-        var scheduled = false;
-        var observer = new MutationObserver(function () {
-            if (scheduled) return;
-            scheduled = true;
-            setTimeout(function () { scheduled = false; refreshErrorSummary(form); }, 50);
-        });
-        observer.observe(form, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-invalid'] });
-    }
 
     function setupSuccessAnnouncer(form) {
         var success = form.querySelector('.forms-success-message');
@@ -354,7 +326,7 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
         var observer = new MutationObserver(function () {
             if (!success.classList.contains('d-none')) {
                 var region = ensureAriaLiveRegion(form);
-                region.textContent = (success.textContent || 'Formulario enviado.').trim();
+                region.textContent = (success.textContent || @json($_i18nForms['submitted'])).trim();
                 form.dispatchEvent(new CustomEvent('forms:submitted-ok', { bubbles: true }));
                 // Limpiar error summary si lo había
                 var summary = form.querySelector('.forms-error-summary');
@@ -375,7 +347,7 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
             btn.setAttribute('aria-busy', 'true');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' +
-                (btn.dataset.loadingText || 'Enviando…');
+                (btn.dataset.loadingText || @json($_i18nForms['sending']));
             // Rehabilitar si falla (listener opcional via evento)
             setTimeout(function () {
                 if (btn.disabled && document.body.contains(btn)) {
@@ -405,7 +377,12 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
 
                 var fb = el.parentElement && el.parentElement.querySelector('.invalid-feedback');
                 if (!ok && fb && !fb.textContent.trim()) {
-                    fb.textContent = el.validationMessage;
+                    var msg = (typeof $.validator !== 'undefined' && $.validator.messages && $.validator.messages.required)
+                        ? (typeof $.validator.messages.required === 'function' ? $.validator.messages.required.call({param: null}, el) : $.validator.messages.required)
+                        : el.validationMessage;
+                    var _d = document.createElement('textarea');
+                    _d.innerHTML = msg;
+                    fb.textContent = _d.value;
                 }
             });
             el.addEventListener('input', function () {
@@ -510,7 +487,7 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
             setupInlineValidation(form);
             setupLocalStorageDraft(form);
             setupMultiStepFocus(form);
-            setupErrorSummaryObserver(form);
+
             setupSuccessAnnouncer(form);
         });
     }

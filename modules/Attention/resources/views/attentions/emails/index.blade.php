@@ -345,10 +345,6 @@ $(document).ready(function() {
         var mailUid = $(this).data('mail-uid');
         var $btn = $(this);
 
-        if (!confirm('¿Esta seguro de reenviar este email?')) {
-            return;
-        }
-
         $btn.prop('disabled', true).html('Reenviando...');
 
         $.ajax({

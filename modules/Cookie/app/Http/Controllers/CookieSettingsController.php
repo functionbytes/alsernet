@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Cookie\Http\Requests\UpdateCookieSettingsRequest;
 use Modules\Cookie\Models\CookieConsentLog;
 use Modules\Core\Models\Setting;
+use Modules\Page\Models\Page;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CookieSettingsController extends Controller
@@ -24,8 +25,14 @@ class CookieSettingsController extends Controller
     {
         $get = fn (string $key, mixed $default = '') => Setting::get(self::PREFIX.$key, $default);
 
+        $pages = Page::query()
+            ->where('status', 'published')
+            ->orderBy('title')
+            ->get(['id', 'title', 'slug']);
+
         return view('cookie::settings.index', [
             'get' => $get,
+            'pages' => $pages,
         ]);
     }
 

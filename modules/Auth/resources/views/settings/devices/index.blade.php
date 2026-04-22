@@ -3,7 +3,7 @@
 @section('title', 'Dispositivos Autorizados')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-mobile-alt me-2"></i>Dispositivos autorizados</h5>

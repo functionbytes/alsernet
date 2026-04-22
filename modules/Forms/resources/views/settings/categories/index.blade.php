@@ -82,7 +82,7 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="flex-shrink-0" style="min-width: 180px;">
+                        <div class="flex-shrink-0" >
                             <select name="status" class="form-select select2 h-100">
                                 <option value="">Todos los estados</option>
                                 <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Activas</option>
@@ -230,7 +230,7 @@
     </div>
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" >
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionada(s) &mdash; Aplicar acción
         </button>

@@ -138,18 +138,11 @@
                 </div>
 
                 <div class="mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input"
-                            type="checkbox"
-                            id="is_system"
-                            name="is_system"
-                            value="1"
-                            {{ old('is_system', $variable->is_system ?? false) ? 'checked' : '' }}
-                            {{ isset($variable) && $variable->is_system ? 'disabled' : '' }}>
-                        <label class="form-check-label" for="is_system">
-                            Variable del sistema
-                        </label>
-                    </div>
+                    <label class="form-label" for="is_system">Variable del sistema</label>
+                    <select class="form-select" name="is_system" id="is_system" {{ isset($variable) && $variable->is_system ? 'disabled' : '' }}>
+                        <option value="1" {{ old('is_system', $variable->is_system ?? false) == 1 ? 'selected' : '' }}>Activado</option>
+                        <option value="0" {{ old('is_system', $variable->is_system ?? false) == 0 ? 'selected' : '' }}>Desactivado</option>
+                    </select>
                     <small class="form-text text-muted">Las variables del sistema no se pueden eliminar</small>
                 </div>
 

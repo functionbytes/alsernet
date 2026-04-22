@@ -222,22 +222,22 @@
                         </h6>
                     </div>
                     <div class="card-body p-4">
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" name="track_opens"
-                                   id="track_opens" value="1" {{ old('track_opens', true) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="track_opens">
-                                <strong>Rastrear aperturas</strong>
-                                <br><small class="text-muted">Insertar pixel de tracking para saber quién abrió el email</small>
-                            </label>
+                        <div class="mb-3">
+                            <label class="form-label" for="track_opens">Rastrear aperturas</label>
+                            <div class="form-text mb-1">Insertar pixel de tracking para saber quién abrió el email</div>
+                            <select class="form-select" name="track_opens" id="track_opens">
+                                <option value="1" {{ old('track_opens', 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ old('track_opens', 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
 
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="track_clicks"
-                                   id="track_clicks" value="1" {{ old('track_clicks', true) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="track_clicks">
-                                <strong>Rastrear clicks</strong>
-                                <br><small class="text-muted">Reescribir URLs para saber qué enlaces se clickean</small>
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="track_clicks">Rastrear clicks</label>
+                            <div class="form-text mb-1">Reescribir URLs para saber qué enlaces se clickean</div>
+                            <select class="form-select" name="track_clicks" id="track_clicks">
+                                <option value="1" {{ old('track_clicks', 1) == 1 ? 'selected' : '' }}>Activado</option>
+                                <option value="0" {{ old('track_clicks', 1) == 0 ? 'selected' : '' }}>Desactivado</option>
+                            </select>
                         </div>
                     </div>
                 </div>

@@ -10,6 +10,18 @@
 
         @include('core::components.alerts')
 
+        {{-- SLA breach alert --}}
+        @if($ticketStats['sla_breached'] > 0)
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="fas fa-exclamation-circle fs-5 flex-shrink-0"></i>
+                <div>
+                    <strong>{{ $ticketStats['sla_breached'] }} ticket(s) con SLA incumplido</strong>
+                    — requieren atención inmediata.
+                    <a href="{{ route('manager.helpdesk.tickets.index') }}" class="alert-link ms-1">Ver tickets</a>
+                </div>
+            </div>
+        @endif
+
         {{-- Stat Cards Row --}}
         <div class="row g-3 mb-4">
             <div class="col-sm-6 col-xl-2">
@@ -20,7 +32,7 @@
                                 <i class="fas fa-ticket-alt text-primary fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold">{{ $ticketStats['open'] }}</h4>
+                                <h4 class="mb-0 fw-bold">{{ number_format($ticketStats['open']) }}</h4>
                                 <small class="text-muted">Tickets abiertos</small>
                             </div>
                         </div>
@@ -36,8 +48,8 @@
                                 <i class="fas fa-check-circle text-success fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold">{{ $ticketStats['closed_today'] }}</h4>
-                                <small class="text-muted">Cerrados hoy</small>
+                                <h4 class="mb-0 fw-bold">{{ number_format($ticketStats['closed_today']) }}</h4>
+                                <small class="text-muted">Resueltos hoy</small>
                             </div>
                         </div>
                     </div>
@@ -52,7 +64,7 @@
                                 <i class="fas fa-plus-circle text-info fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold">{{ $ticketStats['created_today'] }}</h4>
+                                <h4 class="mb-0 fw-bold">{{ number_format($ticketStats['created_today']) }}</h4>
                                 <small class="text-muted">Creados hoy</small>
                             </div>
                         </div>
@@ -61,14 +73,16 @@
             </div>
 
             <div class="col-sm-6 col-xl-2">
-                <div class="card h-100 border-danger border-opacity-50">
+                <div class="card h-100 {{ $ticketStats['sla_breached'] > 0 ? 'border-danger border-opacity-50' : '' }}">
                     <div class="card-body">
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle bg-danger bg-opacity-10 p-3">
                                 <i class="fas fa-exclamation-triangle text-danger fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold text-danger">{{ $ticketStats['sla_breached'] }}</h4>
+                                <h4 class="mb-0 fw-bold {{ $ticketStats['sla_breached'] > 0 ? 'text-danger' : '' }}">
+                                    {{ number_format($ticketStats['sla_breached']) }}
+                                </h4>
                                 <small class="text-muted">SLA incumplido</small>
                             </div>
                         </div>
@@ -77,14 +91,16 @@
             </div>
 
             <div class="col-sm-6 col-xl-2">
-                <div class="card h-100 border-warning border-opacity-50">
+                <div class="card h-100 {{ $ticketStats['unassigned'] > 0 ? 'border-warning border-opacity-50' : '' }}">
                     <div class="card-body">
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle bg-warning bg-opacity-10 p-3">
                                 <i class="fas fa-user-slash text-warning fs-5"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold text-warning">{{ $ticketStats['unassigned'] }}</h4>
+                                <h4 class="mb-0 fw-bold {{ $ticketStats['unassigned'] > 0 ? 'text-warning' : '' }}">
+                                    {{ number_format($ticketStats['unassigned']) }}
+                                </h4>
                                 <small class="text-muted">Sin asignar</small>
                             </div>
                         </div>

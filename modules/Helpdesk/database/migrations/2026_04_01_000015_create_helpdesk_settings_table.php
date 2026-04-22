@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_settings', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_settings', function (Blueprint $table) {
             $table->id();
             $table->string('key', 255)->unique();
             $table->text('value')->nullable();
@@ -21,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_settings');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_settings');
     }
 };

@@ -2,10 +2,12 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
-use Modules\Helpdesk\Models\AiAgent;
+use Modules\HelpdeskAgents\Models\AiAgent;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     /**
      * Migrate plaintext api_key from the backups JSON column into the
      * dedicated api_key_encrypted column (encrypted via the model cast).

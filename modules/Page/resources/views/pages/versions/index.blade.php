@@ -203,16 +203,16 @@
     </div>
 
     {{-- Forms ocultos para acciones POST --}}
-    <form id="restore-form" method="POST" style="display:none">
+    <form id="restore-form" method="POST" class="d-none">
         @csrf
     </form>
-    <form id="delete-version-form" method="POST" style="display:none">
+    <form id="delete-version-form" method="POST" class="d-none">
         @csrf
         @method('DELETE')
     </form>
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none bulk-toolbar-float">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
             <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
@@ -288,6 +288,63 @@
     </div>
     @endif
 
+    {{-- Modal confirmar restaurar --}}
+    <div class="modal fade" id="modal-restore-version" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Restaurar versión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Restaurar <strong id="confirm-restore-version"></strong>? La versión actual se guardará automáticamente.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-restore" class="btn btn-primary w-100 mb-2">Restaurar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal confirmar eliminar versión --}}
+    <div class="modal fade" id="modal-delete-version" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar versión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Eliminar <strong id="confirm-delete-version"></strong>? Esta acción no se puede deshacer.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-delete-version" class="btn btn-primary w-100 mb-2">Eliminar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal confirmar bulk delete --}}
+    <div class="modal fade" id="modal-bulk-delete-confirm" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Eliminar las <strong id="modal-bulk-delete-confirm-count">0</strong> versión(es) seleccionadas? Esta acción no se puede deshacer.
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="button" id="btn-confirm-bulk-delete" class="btn btn-primary w-100 mb-2">Eliminar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -308,16 +365,24 @@ $(document).ready(function () {
     $(document).on('click', '.restore-btn', function () {
         const url = $(this).data('url');
         const version = $(this).data('version');
-        if (!confirm('¿Restaurar ' + version + '? La versión actual se guardará automáticamente.')) return;
-        $('#restore-form').attr('action', url).submit();
+        $('#confirm-restore-version').text(version);
+        $('#btn-confirm-restore').off('click').on('click', function () {
+            $('#modal-restore-version').modal('hide');
+            $('#restore-form').attr('action', url).submit();
+        });
+        $('#modal-restore-version').modal('show');
     });
 
     // Eliminar versión
     $(document).on('click', '.delete-version-btn', function () {
         const url = $(this).data('url');
         const version = $(this).data('version');
-        if (!confirm('¿Eliminar ' + version + '? Esta acción no se puede deshacer.')) return;
-        $('#delete-version-form').attr('action', url).submit();
+        $('#confirm-delete-version').text(version);
+        $('#btn-confirm-delete-version').off('click').on('click', function () {
+            $('#modal-delete-version').modal('hide');
+            $('#delete-version-form').attr('action', url).submit();
+        });
+        $('#modal-delete-version').modal('show');
     });
 
     // Bulk actions
@@ -337,7 +402,19 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una versión.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' versión(es) seleccionadas?')) { return; }
+        if (action === 'delete') {
+            if (!window._bulkDeleteConfirmed) {
+                $('#modal-bulk-delete-confirm-count').text(ids.length);
+                $('#btn-confirm-bulk-delete').off('click').on('click', function () {
+                    $('#modal-bulk-delete-confirm').modal('hide');
+                    window._bulkDeleteConfirmed = true;
+                    $('#bulk-apply-btn').trigger('click');
+                });
+                $('#modal-bulk-delete-confirm').modal('show');
+                return;
+            }
+            window._bulkDeleteConfirmed = false;
+        }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

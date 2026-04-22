@@ -80,7 +80,7 @@ class ViewsController extends Controller
 
         ConversationView::create($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.views.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
             ->with('success', 'Vista creada exitosamente.');
     }
 
@@ -91,7 +91,7 @@ class ViewsController extends Controller
     {
         // Check if user can edit this view
         if (! $view->canEdit(Auth::id())) {
-            return redirect()->route('manager.helpdesk.backups.tickets.views.index')
+            return redirect()->route('manager.helpdesk.settings.ticket-views.index')
                 ->with('error', 'No tienes permiso para editar esta vista.');
         }
 
@@ -125,7 +125,7 @@ class ViewsController extends Controller
 
         $view->update($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.views.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
             ->with('success', 'Vista actualizada exitosamente.');
     }
 
@@ -145,7 +145,7 @@ class ViewsController extends Controller
 
         $view->delete();
 
-        return redirect()->route('manager.helpdesk.backups.tickets.views.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
             ->with('success', 'Vista eliminada exitosamente.');
     }
 

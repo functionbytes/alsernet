@@ -4,10 +4,13 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PageVisit extends Model
 {
     use HasFactory;
+
+    protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_page_visits';
 
@@ -22,16 +25,19 @@ class PageVisit extends Model
         'visited_at',
     ];
 
-    protected $casts = [
-        'visited_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'visited_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the customer that made this visit
      */
-    public function customer()
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
@@ -39,7 +45,7 @@ class PageVisit extends Model
     /**
      * Get the session associated with this visit
      */
-    public function session()
+    public function session(): BelongsTo
     {
         return $this->belongsTo(CustomerSession::class, 'session_id');
     }

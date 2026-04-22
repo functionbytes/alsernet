@@ -101,6 +101,16 @@ class MenuItem extends Model
                 : $rawTitle;
         }
 
+        // Support JSON-encoded multilingual titles: {"es":"Servicios","pt":"Serviços","en":"Services","fr":"Services"}
+        if ($this->title && str_starts_with(trim($this->title), '{')) {
+            $map = json_decode($this->title, true);
+            if (is_array($map)) {
+                $locale = app()->getLocale();
+
+                return $map[$locale] ?? $map['es'] ?? reset($map);
+            }
+        }
+
         return $this->title;
     }
 

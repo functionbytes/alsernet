@@ -830,7 +830,7 @@ input.error {
     right: 10px;
 }
 .list_columns ul {
-    background: #f5f5f5;
+    background: #f9f9f9;
 }
 .list_columns ul li {
     padding: 5px 15px;
@@ -1088,7 +1088,7 @@ table.table-log tr td:first-child {
     margin-bottom: 0;
 }
 input.disabled {
-    background-color: #f5f5f5 !important;
+    background-color: #f9f9f9 !important;
 }
 input.disabled:hover {
     border-color: #ccc !important;
@@ -1389,7 +1389,7 @@ ul.plans-intro li a {
 }
 .system_logs {
     height: 400px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     overflow: auto;
     width: 100%;
     border: solid 2px #bbb;
@@ -1894,7 +1894,7 @@ ul.plans-intro li span {
 }
 .dashboard-box {
     box-shadow: 1px 1px 5px rgba(0,0,0,0.4);
-    background: #f5f5f5;
+    background: #f9f9f9;
     height: 103px;
     margin-right: 15px;
     margin-bottom: 15px;
@@ -2553,7 +2553,7 @@ canvas[data-zr-dom-id='_zrender_hover_'] {
 .dim-box {
     border: dashed 1px #ddd;
     padding: 15px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     border-radius: 5px;
 }
 .square-tag {
@@ -2788,7 +2788,7 @@ p.link-inline a {
     cursor: pointer;
 }
 .line-item:hover {
-    background: #f5f5f5;
+    background: #f9f9f9;
 }
 .line-item .line-icon {
     padding-right: 20px;
@@ -4149,7 +4149,7 @@ label:hover .checkmark, .checkmark-container:hover .checkmark {
 }
 .upcoming-bill-box .header {
     padding: 20px;
-    background: #f5f5f5;
+    background: #f9f9f9;
 }
 .upcoming-bill-box .body {
     padding: 20px;
@@ -4501,7 +4501,7 @@ pagination {
 .picker__nav--prev:hover,
 .picker__nav--next:hover {
     cursor: pointer;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .picker__nav--prev {
     left: 0;
@@ -4521,8 +4521,8 @@ pagination {
 .picker__nav--disabled:before:hover {
     cursor: default;
     background: none;
-    border-right-color: #f5f5f5;
-    border-left-color: #f5f5f5;
+    border-right-color: #f9f9f9;
+    border-left-color: #f9f9f9;
 }
 .picker__table {
     text-align: center;
@@ -4550,7 +4550,7 @@ pagination {
 }
 .picker__day--today {
     position: relative;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .picker__day--today:before {
     content: "";
@@ -4569,7 +4569,7 @@ pagination {
 .picker__day--outfocus:hover {
     cursor: pointer;
     color: #333333;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .picker__day--highlighted:before {
     border-top-color: #fff;
@@ -4619,7 +4619,7 @@ pagination {
 .picker__footer button:hover,
 .picker__footer button:focus {
     outline: 0;
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .picker__footer button:before {
     height: 0;
@@ -4781,7 +4781,7 @@ pagination {
     clear: left;
 }
 .AnyTime-dom-btn:hover {
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .AnyTime-dom-btn-empty {
     display: none;
@@ -4805,7 +4805,7 @@ pagination {
     border-radius: 2px;
 }
 .AnyTime-btn:hover {
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
 }
 .AnyTime-hr-btn,
 .AnyTime-min-ten-btn,
@@ -5819,7 +5819,7 @@ table.table-log tr th {
 }
 .tox .tox-edit-area {
     border-top: none!important;
-    background: #f5f5f5;
+    background: #f9f9f9;
 }
 .tox .tox-toolbar, .tox .tox-toolbar__overflow, .tox .tox-toolbar__primary {
     border-top: none!important;
@@ -5998,7 +5998,7 @@ table.table-log tr th {
 }
 .table-box tr td.plugin-title-paystack::after {
     background-image: url(../../images/paystack.svg);
-    background-color: #f5f5f5;
+    background-color: #f9f9f9;
     width: 80px;
     height: 80px;
     display: inline-block;
@@ -7390,8 +7390,8 @@ hr {
     padding: 0;
     border-radius: 50px;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.04);
-    border-color: #f5f5f5;
-    background: #f5f5f5;
+    border-color: #f9f9f9;
+    background: #f9f9f9;
     transition: all 0.1s ease-in-out;
     cursor: pointer;
     height: 40px;
@@ -7414,7 +7414,7 @@ hr {
     width: 35px;
     border-radius: 100%;
     margin-right: 5px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     transition: all 0.1s ease-in-out;
 }
 .app_search_input + [class^="material-"]:hover {
@@ -7692,7 +7692,7 @@ body.mode-dark .dropdown-item:focus {
 }
 .open-site-top-menu {
     border-radius: 100%;
-    background: #f5f5f5;
+    background: #f9f9f9;
     margin-top: 15px;
     height: 40px;
     width: 40px;
@@ -7754,7 +7754,7 @@ textarea.form-control {
     width: 35px;
     border-radius: 100%;
     margin-right: 5px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     transition: all 0.2s ease-in-out;
     display: flex;
     align-items: center;
@@ -8003,7 +8003,7 @@ textarea.form-control {
 }
 .topfix-search-input {
     max-width: 400px;
-    background: #f5f5f5;
+    background: #f9f9f9;
     border-width: 0px;
     box-shadow: inset 0px 1px 1px rgba(0,0,0,0.055);
     padding-left: 40px;
@@ -8196,7 +8196,7 @@ label.checker input:disabled ~ .checker-symbol {
     margin-right: 7px;
 }
 [chat-control="insert"]:hover {
-    background: #f5f5f5;
+    background: #f9f9f9;
 }
 .select-plan-item {
     width: calc(25% - 20px);

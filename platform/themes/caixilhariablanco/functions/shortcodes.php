@@ -1,16 +1,72 @@
 <?php
 
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 use Modules\Template\Facades\Theme;
 
 /**
  * Shortcodes del tema Wowy
  *
- * Los shortcodes del tema que requieren módulos de ecommerce/blog/faq
- * se registran en la base de datos desde:
- * Admin → Configuración → Shortcodes
- *
- * Los shortcodes genéricos compatibles con inoqualabs se definen aquí.
+ * Los shortcodes genéricos se definen aquí.
+ * Los shortcodes con render_template en BD se registran con add_db_shortcode().
  */
+
+/**
+ * Registra un shortcode cuyo template HTML está almacenado en la tabla `shortcodes`.
+ * El campo `render_template` se compila con Blade::render($template, $attrs).
+ */
+function add_db_shortcode(string $key): void
+{
+    if (! function_exists('add_shortcode')) {
+        return;
+    }
+
+    add_shortcode($key, $key, $key, function ($shortcode) use ($key) {
+        $row = DB::table('shortcodes')->where('key', $key)->first();
+        if (! $row || empty($row->render_template)) {
+            return '';
+        }
+        $attrs = is_object($shortcode) ? (array) $shortcode : (array) ($shortcode ?? []);
+        try {
+            $html = Blade::render($row->render_template, $attrs);
+        } catch (Throwable) {
+            $html = $row->render_template;
+        }
+
+        // Procesar shortcodes anidados en el template (ej: [form] dentro del hero)
+        return function_exists('shortcode') ? shortcode($html) : $html;
+    });
+}
+
+/**
+ * Registra un shortcode parametrizado que carga su template desde la tabla `shortcodes`
+ * usando la clave compuesta: "{base}-{service}" (ej: service-content-ventanas).
+ */
+function add_db_shortcode_keyed(string $shortcodeName, string $keyPrefix): void
+{
+    if (! function_exists('add_shortcode')) {
+        return;
+    }
+
+    add_shortcode($shortcodeName, $shortcodeName, $shortcodeName, function ($shortcode) use ($keyPrefix) {
+        $service = is_object($shortcode) ? ($shortcode->service ?? '') : ($shortcode['service'] ?? '');
+        if (! $service) {
+            return '';
+        }
+        $row = DB::table('shortcodes')->where('key', "{$keyPrefix}-{$service}")->first();
+        if (! $row || empty($row->render_template)) {
+            return '';
+        }
+        try {
+            $html = Blade::render($row->render_template, []);
+        } catch (Throwable) {
+            $html = $row->render_template;
+        }
+
+        return function_exists('shortcode') ? shortcode($html) : $html;
+    });
+}
+
 app()->booted(function (): void {
 
     /**
@@ -20,6 +76,18 @@ app()->booted(function (): void {
     if (function_exists('add_shortcode')) {
         add_shortcode('our-offices', __('Our offices'), __('Our offices'), function () {
             return Theme::partial('shortcodes.our-offices');
+        });
+    }
+
+    /**
+     * Shortcode: cta-floating
+     * Barra flotante con botones de WhatsApp y llamada, fijada en la esquina inferior.
+     * Usa theme_option('phone') como fuente y labels traducibles por idioma.
+     * Uso: [cta-floating /]
+     */
+    if (function_exists('add_shortcode')) {
+        add_shortcode('cta-floating', __('Floating CTA'), __('Botones flotantes de WhatsApp y llamada'), function () {
+            return Theme::partial('shortcodes.cta-floating');
         });
     }
 
@@ -189,5 +257,106 @@ app()->booted(function (): void {
             ]);
         });
     }
+
+    /**
+     * Shortcode: installation-gallery
+     * Galería de imágenes solo-imagen con lightbox Magnific Popup.
+     *
+     * Uso:
+     *   [installation-gallery]
+     *   [img src="/pages/images/foto1.jpg" /]
+     *   [img src="/pages/images/foto2.jpg" /]
+     *   [/installation-gallery]
+     */
+    if (function_exists('add_shortcode')) {
+        add_shortcode('installation-gallery', __('Installation Gallery'), __('Cuadrícula de fotos con lightbox, encabezado de sección opcional'), function ($shortcode, string $content = '') {
+            $images = [];
+
+            if (str_contains((string) $content, '[img')) {
+                preg_match_all('/\[img([^\]]*?)\/?\]/', (string) $content, $matches);
+                foreach ($matches[1] as $attrStr) {
+                    preg_match('/src=["\']([^"\']+)["\']/', $attrStr, $m);
+                    if (! empty($m[1])) {
+                        $images[] = $m[1];
+                    }
+                }
+            }
+
+            $title = is_object($shortcode) ? ($shortcode->title ?? null) : ($shortcode['title'] ?? null);
+            $subtitle = is_object($shortcode) ? ($shortcode->subtitle ?? null) : ($shortcode['subtitle'] ?? null);
+
+            return Theme::partial('shortcodes.installation-gallery', compact('images', 'title', 'subtitle'));
+        });
+    }
+
+    /**
+     * Shortcode: hero-slider
+     * Carrusel hero con slides configurables.
+     *
+     * Uso:
+     *   [hero-slider]
+     *   [slide image="/img.png" badge="..." title="..." text="..."
+     *          btn1_text="..." btn1_url="/ruta"
+     *          btn2_text="..." btn2_url="/ruta"
+     *          stat="1.000+" stat_label="clientes" /]
+     *   [/hero-slider]
+     */
+    if (function_exists('add_shortcode')) {
+        add_shortcode('hero-slider', __('Hero slider'), __('Carrusel de slides hero con imagen, título, descripción y botones'), function ($shortcode, string $content = '') {
+            $slides = [];
+
+            if (str_contains((string) $content, '[slide')) {
+                preg_match_all('/\[slide([^\]]*?)\/?\]/', (string) $content, $matches);
+                foreach ($matches[1] as $attrStr) {
+                    preg_match_all('/(\w+)=["\']([^"\']*)["\']/', $attrStr, $pairs, PREG_SET_ORDER);
+                    $attr = [];
+                    foreach ($pairs as $p) {
+                        $attr[$p[1]] = $p[2];
+                    }
+                    if (! empty($attr['image'])) {
+                        $slides[] = $attr;
+                    }
+                }
+            }
+
+            if (empty($slides)) {
+                return '';
+            }
+
+            return Theme::partial('shortcodes.hero-slider', compact('slides'));
+        });
+    }
+
+    // Shortcodes con template almacenado en la tabla `shortcodes` (render_template)
+    add_db_shortcode('about-block');
+    add_db_shortcode('proceso-steps');
+    add_db_shortcode('provider-logos');
+    add_db_shortcode('footer-ticker');
+    add_db_shortcode('why-choose');
+    add_db_shortcode('faq-page');
+
+    // Shortcodes de contacto y secciones reutilizables
+    add_db_shortcode('contact-info');
+    add_db_shortcode('ctf-section');
+    add_db_shortcode('coverage-section');
+    add_db_shortcode('contact-faq');
+    add_db_shortcode('cta-section');
+    add_db_shortcode('services-grid');
+    add_db_shortcode('services-types');
+    add_db_shortcode('commitments');
+
+    // Shortcodes de página Nosotros
+    add_db_shortcode('company-history');
+    add_db_shortcode('company-pillars');
+    add_db_shortcode('company-team');
+    add_db_shortcode('certifications');
+
+    // Shortcodes de página Presupuesto
+    add_db_shortcode('estimate-hero');
+
+    // Shortcodes parametrizados por servicio
+    add_db_shortcode_keyed('service-content', 'service-content');
+    add_db_shortcode_keyed('service-faq', 'service-faq');
+    add_db_shortcode_keyed('service-coverage', 'service-coverage');
 
 });

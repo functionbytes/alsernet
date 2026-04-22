@@ -147,11 +147,11 @@
                                         {{-- Preview SEO --}}
                                         <div class="seo-preview" id="seoPreview-{{ $locale }}">
                                             <div class="p-3 border rounded bg-white">
-                                                <div class="text-danger">
+                                                <div class="text-primary fw-semibold">
                                                     {{ old('translations.'.$locale.'.seo_title') ?: old('translations.'.$locale.'.title') ?: 'Título de la página' }}
                                                 </div>
-                                                <div style="color:#006621; font-size:13px;">{{ url('/') }}/...</div>
-                                                <div style="color:#545454; font-size:13px; margin-top:2px;">
+                                                <div class="text-success small">{{ url('/') }}/...</div>
+                                                <div class="text-muted small mt-1">
                                                     {{ old('translations.'.$locale.'.seo_description') ?: 'La descripción de la página aparecerá aquí.' }}
                                                 </div>
                                             </div>
@@ -190,8 +190,8 @@
                                             {{-- SEO Live Preview --}}
                                             <div class="mt-3 p-3 border rounded bg-light" id="seo-preview-{{ $locale }}">
                                                 <small class="text-muted d-block mb-1">Vista previa en buscadores:</small>
-                                                <div style="font-family: Arial, sans-serif; max-width: 600px;">
-                                                    <div class="text-primary" style="font-size:18px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;"
+                                                <div class="seo-serp-preview">
+                                                    <div class="text-primary fw-semibold text-truncate"
                                                          id="seo-preview-title-{{ $locale }}">
                                                         {{ old('translations.'.$locale.'.seo_title') ?: 'Título de la página' }}
                                                     </div>
@@ -235,7 +235,7 @@
                                                         <img src="{{ old('translations.'.$locale.'.seo_image_url') }}"
                                                              class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">
                                                     @else
-                                                        <div class="text-center py-3 border border-dashed rounded bg-light">
+                                                        <div class="text-center py-3 border rounded bg-light">
                                                             <i class="fas fa-image fa-2x text-muted mb-1"></i>
                                                             <p class="text-muted mb-0">Sin imagen SEO</p>
                                                         </div>
@@ -246,9 +246,8 @@
                                                             data-locale="{{ $locale }}">
                                                         <i class="fas fa-images me-1"></i> Elegir imagen
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-danger seo-image-clear-btn"
-                                                            data-locale="{{ $locale }}"
-                                                            {{ old('translations.'.$locale.'.seo_image_url') ? '' : 'style="display:none"' }}>
+                                                    <button type="button" class="btn btn-outline-danger seo-image-clear-btn {{ old('translations.'.$locale.'.seo_image_url') ? '' : 'd-none' }}"
+                                                            data-locale="{{ $locale }}">
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 </div>
@@ -448,11 +447,11 @@
                     </div>
                     <div class="card-body">
                         <div id="imagePreviewContainer" class="mb-3">
-                            <div class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light"
-                                 style="min-height:140px; border:2px dashed #dee2e6; cursor:pointer;"
+                            <div class="d-flex flex-column align-items-center justify-content-center rounded-3 bg-light border border-dashed cursor-pointer"
+                                 style="min-height:140px;"
                                  onclick="document.getElementById('featured_image').click()">
-                                <i class="fas fa-image fa-3x mb-2" style="color:#adb5bd;"></i>
-                                <p class="mb-0 small" style="color:#6c757d;">Haz clic para seleccionar una imagen</p>
+                                <i class="fas fa-image fa-3x mb-2 text-muted"></i>
+                                <p class="mb-0 small text-muted">Haz clic para seleccionar una imagen</p>
                             </div>
                         </div>
                         <input type="file"
@@ -754,7 +753,7 @@ $(document).ready(function () {
             $('#seoImagePreview-' + seoPickerLocale).html(
                 '<img src="' + fullUrl + '" class="img-fluid rounded" style="max-height:120px; object-fit:cover; width:100%">'
             );
-            $('[data-locale="' + seoPickerLocale + '"].seo-image-clear-btn').show();
+            $('[data-locale="' + seoPickerLocale + '"].seo-image-clear-btn').removeClass('d-none');
             $('#seoImagePickerModal').modal('hide');
         };
         $('#seoImagePickerModal').modal('show');
@@ -768,7 +767,7 @@ $(document).ready(function () {
             '<i class="fas fa-image fa-2x text-muted mb-1"></i>' +
             '<p class="text-muted mb-0">Sin imagen SEO</p></div>'
         );
-        $(this).hide();
+        $(this).addClass('d-none');
     });
 
     // =========================================================

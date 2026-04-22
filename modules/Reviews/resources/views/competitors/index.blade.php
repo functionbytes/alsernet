@@ -234,7 +234,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un competidor.'); return; }
-        if (!confirm('¿Eliminar los ' + ids.length + ' competidor(es) seleccionados?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

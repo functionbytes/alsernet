@@ -4,6 +4,8 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
@@ -48,16 +50,19 @@ class Customer extends Model
         'portal_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'banned_at' => 'datetime',
-        'last_seen_at' => 'datetime',
-        'custom_attributes' => 'array',
-        'portal_token_expires_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'banned_at' => 'datetime',
+            'last_seen_at' => 'datetime',
+            'custom_attributes' => 'array',
+            'portal_token_expires_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
+    }
 
     protected $appends = [
         'is_banned',
@@ -67,7 +72,7 @@ class Customer extends Model
     /**
      * Get all tickets for this customer
      */
-    public function tickets()
+    public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'customer_id');
     }
@@ -75,7 +80,7 @@ class Customer extends Model
     /**
      * Get all conversations for this customer
      */
-    public function conversations()
+    public function conversations(): HasMany
     {
         return $this->hasMany(Conversation::class, 'customer_id');
     }
@@ -83,7 +88,7 @@ class Customer extends Model
     /**
      * Get all sessions for this customer
      */
-    public function sessions()
+    public function sessions(): HasMany
     {
         return $this->hasMany(CustomerSession::class, 'customer_id');
     }
@@ -91,7 +96,7 @@ class Customer extends Model
     /**
      * Get the latest session
      */
-    public function latestSession()
+    public function latestSession(): HasOne
     {
         return $this->hasOne(CustomerSession::class, 'customer_id')
             ->latest('created_at');
@@ -100,7 +105,7 @@ class Customer extends Model
     /**
      * Get all page visits
      */
-    public function pageVisits()
+    public function pageVisits(): HasMany
     {
         return $this->hasMany(PageVisit::class, 'customer_id');
     }

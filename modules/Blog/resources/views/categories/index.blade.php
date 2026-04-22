@@ -280,7 +280,7 @@ $(document).ready(function () {
 
         if (!action) { toastr.warning('Selecciona una accion.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos una categoria.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' categoria(s) seleccionadas?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 

@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::create('helpdesk_groups', function (Blueprint $table) {
+        Schema::connection($this->connection)->create('helpdesk_groups', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('assignment_mode')->default('round_robin');
@@ -21,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('helpdesk_groups');
+        Schema::connection($this->connection)->dropIfExists('helpdesk_groups');
     }
 };

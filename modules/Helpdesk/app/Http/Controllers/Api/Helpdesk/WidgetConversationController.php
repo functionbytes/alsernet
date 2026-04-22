@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Validator;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MessageReceived;
-use Modules\Helpdesk\Jobs\StartAiAgentSessionJob;
-use Modules\Helpdesk\Models\AiAgent;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskAgents\Jobs\StartAiAgentSessionJob;
+use Modules\HelpdeskAgents\Models\AiAgent;
 
 class WidgetConversationController extends Controller
 {

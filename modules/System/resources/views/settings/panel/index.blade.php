@@ -3,7 +3,7 @@
 @section('title', 'Configuración del sistema')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
 
     {{-- Header --}}
     <div class="d-flex align-items-center gap-3 mb-4">

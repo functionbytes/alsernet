@@ -35,8 +35,11 @@ class WebhookController extends Controller
     {
         $signature = $request->header('X-Hub-Signature-256', '');
 
-        if (filled($signature) && ! $service->verifySignature($request->getContent(), $signature)) {
-            Log::warning('WhatsApp webhook signature mismatch');
+        if (! $service->verifySignature($request->getContent(), $signature)) {
+            Log::warning('WhatsApp webhook signature mismatch or missing', [
+                'ip' => $request->ip(),
+                'has_signature' => filled($signature),
+            ]);
 
             return response()->json(['status' => 'forbidden'], 403);
         }
@@ -74,8 +77,11 @@ class WebhookController extends Controller
     {
         $signature = $request->header('X-Hub-Signature-256', '');
 
-        if (filled($signature) && ! $service->verifySignature($request->getContent(), $signature)) {
-            Log::warning('Facebook webhook signature mismatch');
+        if (! $service->verifySignature($request->getContent(), $signature)) {
+            Log::warning('Facebook webhook signature mismatch or missing', [
+                'ip' => $request->ip(),
+                'has_signature' => filled($signature),
+            ]);
 
             return response()->json(['status' => 'forbidden'], 403);
         }
@@ -113,8 +119,11 @@ class WebhookController extends Controller
     {
         $signature = $request->header('X-Hub-Signature-256', '');
 
-        if (filled($signature) && ! $service->verifySignature($request->getContent(), $signature)) {
-            Log::warning('Instagram webhook signature mismatch');
+        if (! $service->verifySignature($request->getContent(), $signature)) {
+            Log::warning('Instagram webhook signature mismatch or missing', [
+                'ip' => $request->ip(),
+                'has_signature' => filled($signature),
+            ]);
 
             return response()->json(['status' => 'forbidden'], 403);
         }

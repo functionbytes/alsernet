@@ -4,63 +4,42 @@ namespace Modules\Helpdesk\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Modules\Helpdesk\Http\Requests\Api\IndexCustomerApiRequest;
+use Modules\Helpdesk\Http\Requests\Api\StoreCustomerApiRequest;
+use Modules\Helpdesk\Http\Resources\CustomerResource;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\Helpdesk\Models\Customer;
 
 class CustomersController extends Controller
 {
-    /**
-     * Search and list customers with pagination.
-     *
-     * GET /api/helpdesk/customers?q=&page=
-     */
-    public function index(Request $request): JsonResponse
+    public function index(IndexCustomerApiRequest $request): JsonResponse
     {
-        $request->validate([
-            'q' => 'nullable|string|min:2',
-        ]);
-
-        $query = Customer::query()->select(['id', 'name', 'email', 'phone', 'created_at']);
-
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($sub) use ($q) {
-                $sub->where('name', 'like', "%{$q}%")
+        $customers = Customer::query()
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $q = $request->q;
+                $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
-                    ->orWhere('phone', 'like', "%{$q}%");
-            });
-        }
+                    ->orWhere('phone', 'like', "%{$q}%"));
+            })
+            ->latest()
+            ->paginate($request->input('per_page', 15));
 
-        return response()->json($query->latest()->paginate(15));
+        return ApiResponse::success(CustomerResource::collection($customers));
     }
 
-    /**
-     * Get a single customer with ticket count.
-     *
-     * GET /api/helpdesk/customers/{id}
-     */
     public function show(int $id): JsonResponse
     {
+        $this->authorize('helpdesk.customers.view');
+
         $customer = Customer::withCount('tickets')->findOrFail($id);
 
-        return response()->json($customer);
+        return ApiResponse::success(new CustomerResource($customer));
     }
 
-    /**
-     * Create a new customer.
-     *
-     * POST /api/helpdesk/customers
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCustomerApiRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:helpdesk_customers,email',
-            'phone' => 'nullable|string|max:50',
-        ]);
+        $customer = Customer::create($request->validated());
 
-        $customer = Customer::create($validated);
-
-        return response()->json($customer, 201);
+        return ApiResponse::created(new CustomerResource($customer), 'Cliente creado correctamente.');
     }
 }

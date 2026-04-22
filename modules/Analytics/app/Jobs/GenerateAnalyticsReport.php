@@ -222,7 +222,7 @@ class GenerateAnalyticsReport implements ShouldBeUnique, ShouldQueue
 </div>
 <h3>{$topPagesLabel}</h3>
 <table style="width:100%;border-collapse:collapse;">
-<thead><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;">{$columnPage}</th><th style="padding:8px 12px;text-align:right;">{$columnViews}</th></tr></thead>
+<thead><tr style="background:#f9f9f9;"><th style="padding:8px 12px;text-align:left;">{$columnPage}</th><th style="padding:8px 12px;text-align:right;">{$columnViews}</th></tr></thead>
 <tbody>{$topPagesRows}</tbody>
 </table>
 <p style="color:#999;font-size:12px;margin-top:30px;">{$footerText}</p>

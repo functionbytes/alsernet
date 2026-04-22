@@ -13,20 +13,24 @@
     }
 
     $enabled        = cookie_option('enabled') === '1';
-    $bgColor        = cookie_option('bg_color', '#ffffff');
-    $textColor      = cookie_option('text_color', '#212529');
-    $btnColor       = cookie_option('btn_color', '#90bb13');
+    $bgColor        = '#ffffff';
+    $textColor      = '#212529';
+    $btnColor       = '#b10100';
     $position       = cookie_option('position', 'bottom');
     $style          = cookie_option('style', config('Cookie.general.style', 'full-width'));
     $styleClass     = 'cookie-consent-' . $style;
-    $maxWidth       = cookie_option('max_width', config('Cookie.general.max_width', 1170));
-    $message        = cookie_option('message',          __('cookie::messages.banner.message'));
-    $acceptText     = cookie_option('accept_btn_text',  __('cookie::messages.banner.accept'));
-    $rejectText     = cookie_option('reject_btn_text',  __('cookie::messages.banner.reject'));
-    $customText     = cookie_option('customize_btn_text', __('cookie::messages.banner.customize'));
-    $saveText       = cookie_option('save_btn_text',    __('cookie::messages.modal.save'));
-    $learnMoreUrl   = cookie_option('more_info_url',    config('Cookie.general.learn_more_url', ''));
-    $learnMoreText  = cookie_option('more_info_text',   __('cookie::messages.banner.learn_more'));
+    $maxWidth       = config('Cookie.general.max_width', 1170);
+    $message        = __('cookie::messages.banner.message');
+    $acceptText     = __('cookie::messages.banner.accept');
+    $rejectText     = __('cookie::messages.banner.reject');
+    $customText     = __('cookie::messages.banner.customize');
+    $saveText       = __('cookie::messages.modal.save');
+    $policyPageId = cookie_option('policy_page_id');
+    $policyPage   = $policyPageId ? \Modules\Page\Models\Page::find($policyPageId) : null;
+    $learnMoreUrl = $policyPage && $policyPage->status === 'published'
+        ? url($policyPage->slug)
+        : config('Cookie.general.learn_more_url', '');
+    $learnMoreText  = __('cookie::messages.banner.learn_more');
     $categories     = config('Cookie.general.cookie_categories', []);
     $direction      = app()->getLocale() === 'ar' ? 'rtl' : 'ltr';
     $gaEnabled      = cookie_option('google_analytics_enabled') === '1';

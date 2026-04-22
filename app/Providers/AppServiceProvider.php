@@ -81,5 +81,30 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('registration', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
+
+        // Helpdesk-specific rate limiters
+        RateLimiter::for('helpdesk-api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('helpdesk-webhook-inbound', function (Request $request) {
+            return Limit::perMinute(100)->by($request->ip());
+        });
+
+        RateLimiter::for('helpdesk-customer-portal', function (Request $request) {
+            return Limit::perMinute(30)->by(session('portal_customer_id') ?: $request->ip());
+        });
+
+        RateLimiter::for('helpdesk-feedback', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        RateLimiter::for('helpdesk-search', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('helpdesk-export', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

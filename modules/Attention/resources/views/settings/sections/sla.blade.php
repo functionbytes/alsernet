@@ -63,13 +63,13 @@
 
                     <!-- Enable SLA -->
                     <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="sla_enabled" name="sla_enabled"
-                                {{ ($settings['sla']['sla_enabled']['value'] ?? 'no') === 'yes' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="sla_enabled">
-                                <strong>Habilitar SLA</strong>
-                                <small class="d-block text-muted">Activa el seguimiento de acuerdos de nivel de servicio</small>
-                            </label>
+                        <div class="mb-2">
+                            <label class="form-label" for="sla_enabled">SLA</label>
+                            <select class="form-select" name="sla_enabled" id="sla_enabled">
+                                <option value="yes" {{ ($settings['sla']['sla_enabled']['value'] ?? 'no') === 'yes' ? 'selected' : '' }}>Activado</option>
+                                <option value="no" {{ ($settings['sla']['sla_enabled']['value'] ?? 'no') === 'no' ? 'selected' : '' }}>Desactivado</option>
+                            </select>
+                            <small class="text-muted">Activa el seguimiento de acuerdos de nivel de servicio</small>
                         </div>
                     </div>
 

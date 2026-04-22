@@ -1,4 +1,4 @@
-@extends('layouts.helpdesk')
+@extends('layouts.theme')
 
 @section('title', 'Conversaciones - Helpdesk')
 
@@ -33,7 +33,7 @@
                 <li class="border-bottom my-3"></li>
                 <li class="fw-semibold text-dark text-uppercase mx-9 my-2 px-3 fs-2">
                     VISTAS
-                    <a href="{{ route('manager.helpdesk.backups.tickets.views.create') }}" class="float-end text-primary" title="Nueva vista">
+                    <a href="{{ route('manager.helpdesk.settings.ticket-views.create') }}" class="float-end text-primary" title="Nueva vista">
                         <i class="fas fa-plus fs-4"></i>
                     </a>
                 </li>
@@ -54,7 +54,7 @@
                 <li class="border-bottom my-3"></li>
                 <li class="fw-semibold text-dark text-uppercase mx-9 my-2 px-3 fs-2">
                     GRUPOS
-                    <a href="{{ route('manager.helpdesk.backups.tickets.team.groups') }}" class="float-end text-primary" title="Gestionar">
+                    <a href="{{ route('manager.helpdesk.settings.ticket-groups.index') }}" class="float-end text-primary" title="Gestionar">
                         <i class="fas fa-cog fs-4"></i>
                     </a>
                 </li>
@@ -188,7 +188,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('manager.helpdesk.backups.tickets.views.index') }}">
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('manager.helpdesk.settings.ticket-views.index') }}">
                                     <span><i class="fas fa-cog fs-4"></i></span>Configurar Vistas
                                 </a>
                             </li>

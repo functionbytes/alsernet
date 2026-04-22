@@ -73,6 +73,10 @@ class Captcha extends CaptchaContract
             return false;
         }
 
+        if (! $this->isValidTokenFormat($response)) {
+            return false;
+        }
+
         $circuit = new CircuitBreaker('captcha', 5, 60);
 
         if (! $circuit->isAvailable()) {

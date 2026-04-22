@@ -72,7 +72,7 @@ class StatusesController extends Controller
 
         ConversationStatus::create($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.statuses.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
             ->with('success', 'Estado creado exitosamente.');
     }
 
@@ -112,7 +112,7 @@ class StatusesController extends Controller
 
         $status->update($validated);
 
-        return redirect()->route('manager.helpdesk.backups.tickets.statuses.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
             ->with('success', 'Estado actualizado exitosamente.');
     }
 
@@ -131,7 +131,7 @@ class StatusesController extends Controller
 
         $status->delete();
 
-        return redirect()->route('manager.helpdesk.backups.tickets.statuses.index')
+        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
             ->with('success', 'Estado eliminado exitosamente.');
     }
 

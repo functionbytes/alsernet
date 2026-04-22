@@ -234,9 +234,7 @@
     <script>
         $(document).ready(function() {
             // Initialize Select2
-            $('.select2').select2({
-                theme: 'bootstrap-5'
-            });
+            $('.select2').select2();
 
             // Handle anonymous checkbox
             $('#is_anonymous').on('change', function() {

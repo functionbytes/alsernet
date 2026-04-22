@@ -94,7 +94,7 @@
                     @endif
                     <div class="card-body">
 
-                        <h6 class="fw-bold text-primary mb-1">SEO basico</h6>
+                        <h6 class="fw-bold text-dark mb-1">SEO basico</h6>
                         <p class="text-muted mb-3">Configura los metadatos básicos para mejorar el posicionamiento en buscadores.</p>
 
                         @if($meta->seoable !== null)
@@ -297,7 +297,7 @@
                                        placeholder="ej: comprar zapatos online"
                                        maxlength="100"
                                        autocomplete="off">
-                                <div id="keyword-suggestions" class="mt-2" style="display:none;"></div>
+                                <div id="keyword-suggestions" class="mt-2"></div>
                                 <small class="text-muted">La palabra clave principal que quieres posicionar para esta página</small>
                                 @error('target_keyword')
                                     <span class="field-validation-error">{{ $message }}</span>
@@ -362,7 +362,7 @@
                     <hr class="my-0">
 
                     <div class="card-body">
-                        <h6 class="fw-bold text-primary mb-1">Open Graph</h6>
+                        <h6 class="fw-bold text-dark mb-1">Open Graph</h6>
                         <p class="text-muted mb-3">Controla cómo se comparte el contenido en Facebook, LinkedIn y otras redes sociales.</p>
                         <div class="row">
                             <div class="col-12 mb-3">
@@ -411,33 +411,58 @@
                             </div>
 
                             <div class="col-12 mb-3">
-                                <label class="form-label fw-semibold">OG Imagen URL</label>
-                                <input type="url"
-                                       class="form-control @error('og_image') is-invalid @enderror"
-                                       id="og_image"
-                                       name="og_image"
-                                       value="{{ old('og_image', $meta->og_image) }}"
-                                       maxlength="500"
-                                       data-preview="#og-image-preview"
-                                       placeholder="https://ejemplo.com/imagen.jpg">
-                                <small class="text-muted">Recomendado: 1200x630px</small>
-                                <div id="og-image-preview"></div>
-                                <div class="mt-2">
+                                <label class="form-label fw-semibold">Imagen Open Graph</label>
+                                @php
+                                    $ogVal = old('og_image', $meta->og_image);
+                                    $ogPreview = $ogVal ? preg_replace('#^https?://[^/]+#', request()->getSchemeAndHttpHost(), $ogVal) : '';
+                                @endphp
+                                <div class="seo-img-card {{ $ogVal ? 'has-image' : 'is-empty' }}"
+                                     id="seo-img-card-og" data-key="og_image" data-label="Imagen Open Graph">
+                                    <div class="seo-img-card__preview">
+                                        <img src="{{ $ogPreview }}" alt="Imagen Open Graph" id="seo-img-og" class="{{ $ogVal ? '' : 'd-none' }}">
+                                        <div class="seo-img-card__empty {{ $ogVal ? 'd-none' : '' }}">
+                                            <i class="fas fa-cloud-arrow-up"></i>
+                                            <span>Click para subir · Recomendado 1200×630 px</span>
+                                        </div>
+                                        <div class="seo-img-card__overlay">
+                                            <span><i class="fas fa-image me-1"></i> Cambiar</span>
+                                        </div>
+                                    </div>
+                                    <div class="seo-img-card__body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">Imagen para compartir en redes</div>
+                                                <small class="text-muted">Aparece en Facebook, LinkedIn, WhatsApp, etc.</small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-link seo-img-clear-btn {{ $ogVal ? '' : 'd-none' }}"
+                                                    data-target="og" title="Quitar imagen">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden"
+                                           class="@error('og_image') is-invalid @enderror"
+                                           id="og_image"
+                                           name="og_image"
+                                           value="{{ $ogVal }}"
+                                           data-preview="#og-image-preview">
+                                </div>
+                                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-generate-og"
-                                            data-meta-id="{{ $meta->id }}"
-                                            data-template="default">
-                                        <i class="fas fa-image"></i> Generar imagen OG automática
+                                            data-meta-id="{{ $meta->id }}" data-template="default">
+                                        <i class="fas fa-image me-1"></i> Generar OG automática
                                     </button>
-                                    <div class="btn-group btn-group-sm ms-2" role="group">
-                                        <small class="text-muted me-1 align-self-center">Plantilla:</small>
-                                        @foreach(['default' => 'Verde', 'dark' => 'Oscura', 'minimal' => 'Minimal'] as $tpl => $label)
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <small class="text-muted me-2 align-self-center">Plantilla:</small>
+                                        @foreach(['default' => 'Rojo', 'dark' => 'Oscura', 'minimal' => 'Minimal'] as $tpl => $label)
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-secondary og-template-btn {{ $tpl === 'default' ? 'active' : '' }}"
                                                 data-template="{{ $tpl }}">{{ $label }}</button>
                                         @endforeach
                                     </div>
-                                    <small class="text-muted ms-2 d-block mt-1">Genera una imagen 1200×630 con el título de la página</small>
                                 </div>
+                                <small class="text-muted d-block mt-1">Genera una imagen 1200×630 con el título de la página.</small>
+                                <div id="og-image-preview" class="d-none"></div>
                                 @error('og_image')
                                     <span class="field-validation-error">{{ $message }}</span>
                                 @enderror
@@ -449,7 +474,7 @@
 
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <h6 class="fw-bold text-primary mb-0">Twitter Card</h6>
+                            <h6 class="fw-bold text-dark mb-0">Twitter Card</h6>
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-copy-og-to-twitter">
                                 <i class="fas fa-copy me-1"></i>Igual que OG
                             </button>
@@ -471,16 +496,42 @@
                             </div>
 
                             <div class="col-12 mb-3">
-                                <label class="form-label fw-semibold">Twitter Imagen URL</label>
-                                <input type="url"
-                                       class="form-control @error('twitter_image') is-invalid @enderror"
-                                       name="twitter_image"
-                                       value="{{ old('twitter_image', $meta->twitter_image) }}"
-                                       maxlength="500"
-                                       data-preview="#twitter-image-preview"
-                                       placeholder="https://ejemplo.com/imagen.jpg">
-                                <small class="text-muted">Imagen para Twitter Card</small>
-                                <div id="twitter-image-preview"></div>
+                                <label class="form-label fw-semibold">Imagen Twitter Card</label>
+                                @php
+                                    $twVal = old('twitter_image', $meta->twitter_image);
+                                    $twPreview = $twVal ? preg_replace('#^https?://[^/]+#', request()->getSchemeAndHttpHost(), $twVal) : '';
+                                @endphp
+                                <div class="seo-img-card {{ $twVal ? 'has-image' : 'is-empty' }}"
+                                     id="seo-img-card-twitter" data-key="twitter_image" data-label="Imagen Twitter Card">
+                                    <div class="seo-img-card__preview">
+                                        <img src="{{ $twPreview }}" alt="Imagen Twitter" id="seo-img-twitter" class="{{ $twVal ? '' : 'd-none' }}">
+                                        <div class="seo-img-card__empty {{ $twVal ? 'd-none' : '' }}">
+                                            <i class="fas fa-cloud-arrow-up"></i>
+                                            <span>Click para subir · Recomendado 1200×630 px</span>
+                                        </div>
+                                        <div class="seo-img-card__overlay">
+                                            <span><i class="fas fa-image me-1"></i> Cambiar</span>
+                                        </div>
+                                    </div>
+                                    <div class="seo-img-card__body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">Imagen para Twitter/X</div>
+                                                <small class="text-muted">Si la dejas vacía, usará la de Open Graph.</small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-link seo-img-clear-btn {{ $twVal ? '' : 'd-none' }}"
+                                                    data-target="twitter" title="Quitar imagen">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden"
+                                           class="@error('twitter_image') is-invalid @enderror"
+                                           id="twitter_image"
+                                           name="twitter_image"
+                                           value="{{ $twVal }}">
+                                </div>
+                                <div id="twitter-image-preview" class="d-none"></div>
                                 @error('twitter_image')
                                     <span class="field-validation-error">{{ $message }}</span>
                                 @enderror
@@ -518,16 +569,13 @@
                     </div>
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-save me-1"></i> Guardar cambios
+                            Guardar cambios
                         </button>
                         <a href="{{ route('setting.seo.schema-org.edit', $meta) }}" class="btn btn-outline-primary w-100 mb-2">
                             Editar Schema.org
-                            @if($meta->schema_type)
-                                <span class="badge bg-primary-subtle text-primary ms-1">{{ $meta->schema_type }}</span>
-                            @endif
                         </a>
-                        <a href="{{ route('setting.seo.metas.show', $meta) }}" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-times me-1"></i> Cancelar
+                        <a href="{{ route('setting.seo.metas.show', $meta) }}" class="btn btn-secondary w-100">
+                            Cancelar
                         </a>
                     </div>
                 </form>
@@ -553,13 +601,19 @@
                 </div>
             </div>
 
+            @php
+                $seoable = $meta->seoable;
+                $isPage  = $seoable instanceof \Modules\Page\Models\Page;
+                $previewTrans = $isPage
+                    ? ($seoable->translations->load('localeModel')->first(fn ($t) => $t->localeModel?->is_default) ?? $seoable->translations->first())
+                    : null;
+            @endphp
+
             <div class="card">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0">Modelo asociado</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3 border-bottom pb-2">Modelo asociado</h6>
-                    @php
-                        $seoable = $meta->seoable;
-                        $isPage  = $seoable instanceof \Modules\Page\Models\Page;
-                    @endphp
                     <dl class="mb-0">
                         <dt class="text-muted small fw-normal">Tipo</dt>
                         <dd class="fw-semibold mb-2">{{ class_basename($meta->seoable_type) }}</dd>
@@ -568,41 +622,44 @@
                         <dd class="fw-semibold mb-2">#{{ $meta->seoable_id }}</dd>
 
                         <dt class="text-muted small fw-normal">Nombre</dt>
-                        <dd class="fw-semibold mb-2">{{ $seoable?->title ?? $seoable?->name ?? 'N/A' }}</dd>
+                        <dd class="fw-semibold mb-0">{{ $seoable?->title ?? $seoable?->name ?? 'N/A' }}</dd>
                     </dl>
 
-                    @if($seoable && $isPage)
-                    <div class="d-flex flex-column gap-1 mt-2">
-                        <a href="{{ route('pages.edit', $seoable->id) }}"
-                           class="btn btn-sm btn-outline-primary w-100">
-                            <i class="fas fa-edit me-1"></i> Editar página
-                        </a>
-                        @php
-                            $previewTrans = $seoable->translations->load('localeModel')
-                                ->first(fn ($t) => $t->localeModel?->is_default)
-                                ?? $seoable->translations->first();
-                        @endphp
-                        @if($previewTrans?->slug)
-                        <a href="{{ url($previewTrans->slug) }}" target="_blank"
-                           class="btn btn-sm btn-outline-secondary w-100">
-                            <i class="fas fa-external-link-alt me-1"></i> Ver página pública
-                        </a>
-                        @endif
-                    </div>
-                    <div class="alert alert-success border-0 bg-success-subtle mt-2 mb-0 p-2">
-                        <small><i class="fas fa-check-circle me-1"></i><strong>Todo el SEO</strong> de esta página se gestiona desde aquí.</small>
+                    @if($isPage)
+                    <div class="seo-info-note mt-3 mb-0">
+                        <strong>Todo el SEO</strong> de esta página se gestiona desde aquí.
                     </div>
                     @endif
+                </div>
+                @if($isPage)
+                <div class="card-footer d-flex flex-column gap-2">
+                    <a href="{{ route('pages.edit', $seoable->id) }}"
+                       class="btn btn-sm btn-outline-primary w-100">
+                        Editar página
+                    </a>
+                    @if($previewTrans?->slug)
+                    <a href="{{ url($previewTrans->slug) }}" target="_blank"
+                       class="btn btn-sm btn-outline-secondary w-100">
+                        Ver página pública
+                    </a>
+                    @endif
+                </div>
+                @endif
+            </div>
 
-                    <hr class="my-3">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0">Fechas</h6>
+                </div>
+                <div class="card-body">
                     <dl class="mb-0">
                         <dt class="text-muted small fw-normal">Creado</dt>
-                        <dd class="fw-semibold mb-0">
+                        <dd class="fw-semibold mb-2">
                             {{ $meta->created_at->format('d/m/Y H:i') }}
                             <small class="text-muted fw-normal">({{ $meta->created_at->diffForHumans() }})</small>
                         </dd>
 
-                        <dt class="text-muted small fw-normal mt-2">Actualizado</dt>
+                        <dt class="text-muted small fw-normal">Actualizado</dt>
                         <dd class="fw-semibold mb-0">
                             {{ $meta->updated_at->format('d/m/Y H:i') }}
                             <small class="text-muted fw-normal">({{ $meta->updated_at->diffForHumans() }})</small>
@@ -624,25 +681,25 @@
                     </div>
                 </div>
                 <div class="card-body p-3">
-                    <ul class="nav nav-pills nav-fill gap-1 mb-3" id="previewTabs" role="tablist">
+                    <ul class="nav nav-pills nav-fill gap-1 mb-3 seo-platform-tabs" id="previewTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active py-1 px-2 small rounded" id="tab-google" data-bs-toggle="tab" data-bs-target="#pane-google" type="button" role="tab">
-                                <i class="fab fa-google me-1"></i>Google
+                            <button class="nav-link active" id="tab-google" data-bs-toggle="tab" data-bs-target="#pane-google" type="button" role="tab" title="Google" aria-label="Google">
+                                <i class="fab fa-google"></i>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link py-1 px-2 small rounded" id="tab-facebook" data-bs-toggle="tab" data-bs-target="#pane-facebook" type="button" role="tab">
-                                <i class="fab fa-facebook me-1"></i>Facebook
+                            <button class="nav-link" id="tab-facebook" data-bs-toggle="tab" data-bs-target="#pane-facebook" type="button" role="tab" title="Facebook" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link py-1 px-2 small rounded" id="tab-twitter" data-bs-toggle="tab" data-bs-target="#pane-twitter" type="button" role="tab">
-                                <i class="fab fa-x-twitter me-1"></i>Twitter/X
+                            <button class="nav-link" id="tab-twitter" data-bs-toggle="tab" data-bs-target="#pane-twitter" type="button" role="tab" title="Twitter/X" aria-label="Twitter/X">
+                                <i class="fab fa-x-twitter"></i>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link py-1 px-2 small rounded" id="tab-whatsapp" data-bs-toggle="tab" data-bs-target="#pane-whatsapp" type="button" role="tab">
-                                <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                            <button class="nav-link" id="tab-whatsapp" data-bs-toggle="tab" data-bs-target="#pane-whatsapp" type="button" role="tab" title="WhatsApp" aria-label="WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
                             </button>
                         </li>
                     </ul>
@@ -819,91 +876,93 @@
                     <p class="small text-muted mb-2 fw-semibold">Validar en herramientas externas:</p>
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="https://developers.facebook.com/tools/debug/?q={{ urlencode($meta->canonical_url) }}"
-                           target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="fab fa-facebook me-1"></i>OG Debugger
-                        </a>
+                           target="_blank" class="btn btn-sm btn-outline-secondary">OG Debugger</a>
                         <a href="https://www.linkedin.com/post-inspector/inspect/{{ urlencode($meta->canonical_url) }}"
-                           target="_blank" class="btn btn-sm btn-outline-secondary">
-                            <i class="fab fa-linkedin me-1"></i>LinkedIn
-                        </a>
+                           target="_blank" class="btn btn-sm btn-outline-secondary">LinkedIn</a>
                         <a href="https://search.google.com/test/rich-results?url={{ urlencode($meta->canonical_url) }}"
-                           target="_blank" class="btn btn-sm btn-outline-success">
-                            <i class="fab fa-google me-1"></i>Rich Results
-                        </a>
+                           target="_blank" class="btn btn-sm btn-outline-secondary">Rich Results</a>
                     </div>
                     @endif
                 </div>
             </div>
 
             <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0">Recomendaciones</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="fw-bold mb-2">Recomendaciones</h6>
-                    <ul class="list-unstyled mb-0 small">
-                        <li class="d-flex gap-2 mb-1"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">Titulo: entre 50-60 caracteres para mejor visibilidad</span></li>
-                        <li class="d-flex gap-2 mb-1"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">Descripcion: entre 120-160 caracteres ideal</span></li>
-                        <li class="d-flex gap-2 mb-1"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">Usa palabras clave naturalmente en el texto</span></li>
-                        <li class="d-flex gap-2 mb-1"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">Incluye imagen OG de al menos 1200×630px</span></li>
-                        <li class="d-flex gap-2 mb-1"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">El canonical URL evita contenido duplicado</span></li>
-                        <li class="d-flex gap-2"><i class="fas fa-check text-success mt-1 flex-shrink-0"></i><span class="text-muted">Usa noindex solo en páginas que no quieras en Google</span></li>
+                    <ul class="seo-tips-list mb-0 small">
+                        <li>Título entre 50-60 caracteres para mejor visibilidad</li>
+                        <li>Descripción entre 120-160 caracteres ideal</li>
+                        <li>Usa palabras clave naturalmente en el texto</li>
+                        <li>Incluye imagen OG de al menos 1200×630 px</li>
+                        <li>El canonical URL evita contenido duplicado</li>
+                        <li>Usa noindex solo en páginas que no quieras en Google</li>
                     </ul>
                 </div>
             </div>
 
             {{-- SEO Checklist Card --}}
-            <div class="card mb-3 mt-3">
-                <div class="card-header d-flex justify-content-between align-items-center p-3">
-                    <h6 class="card-title mb-0 fw-bold">Checklist SEO</h6>
-                    <button class="btn btn-sm btn-outline-primary" id="btn-load-checklist">
-                        <i class="fas fa-sync-alt"></i> Verificar
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Checklist SEO</h6>
+                </div>
+                <div class="card-body">
+                    <div id="checklist-container">
+                        <p class="text-muted small mb-0">Haz clic en "Verificar" para comprobar el estado SEO de esta página.</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-sm btn-outline-primary w-100" id="btn-load-checklist">
+                        Verificar
                     </button>
                 </div>
-                <div class="card-body p-2" id="checklist-container">
-                    <p class="text-muted mb-0">Haz clic en "Verificar" para comprobar el estado SEO de esta página.</p>
-                </div>
             </div>
 
             <div class="card mt-3">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold mb-1">Evolución del score SEO</h6>
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0">Evolución del score SEO</h6>
+                </div>
+                <div class="card-body">
                     <canvas id="scoreSparkline" height="60" style="max-width:100%;"></canvas>
-                    <div id="sparkline-empty" class="text-muted d-none">Sin historial de auditorías aún.</div>
+                    <div id="sparkline-empty" class="text-muted small d-none mb-0">Sin historial de auditorías aún.</div>
                 </div>
             </div>
 
             <div class="card mt-3">
-                <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">
-                        <button class="btn btn-link p-0 text-decoration-none text-dark fw-bold d-flex align-items-center justify-content-between w-100"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#audit-history-collapse"
-                                aria-expanded="false">
-                            <span><i class="fas fa-history me-2 text-muted"></i>Historial de auditorias</span>
-                            <i class="fas fa-chevron-down text-muted small collapse-icon" style="transition:transform .2s;"></i>
-                        </button>
-                    </h6>
+                <div class="card-header p-0">
+                    <button class="btn btn-link w-100 p-3 text-decoration-none text-dark fw-bold d-flex align-items-center justify-content-between"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#audit-history-collapse"
+                            aria-expanded="false">
+                        <span>Historial de auditorías</span>
+                        <i class="fas fa-chevron-down text-muted small collapse-icon" style="transition:transform .2s;"></i>
+                    </button>
                 </div>
                 <div id="audit-history-collapse" class="collapse">
                     <div class="card-body" id="audit-history-container">
-                        <div class="text-center py-3">
+                        <div class="text-center py-2">
                             <button class="btn btn-outline-secondary btn-sm" id="load-audit-history">
-                                <i class="fas fa-history"></i> Cargar historial
+                                Cargar historial
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card mt-3 border-danger">
-                <div class="card-header p-3" style="background-color:#FA896B20;border-bottom:1px solid #FA896B40;">
-                    <h6 class="mb-0 fw-bold" style="color:#c0392b;"><i class="fas fa-exclamation-triangle me-1"></i> Zona de peligro</h6>
+            <div class="card mt-3 seo-danger-card">
+                <div class="card-header">
+                    <h6 class="mb-0 fw-bold seo-danger-title">Zona de peligro</h6>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small mb-3">Eliminar estos metadatos SEO no se puede deshacer. El modelo asociado no se vera afectado.</p>
+                    <p class="text-muted small mb-0">Eliminar estos metadatos SEO no se puede deshacer. El modelo asociado no se verá afectado.</p>
+                </div>
+                <div class="card-footer">
                     <button type="button" class="btn btn-danger w-100 delete-btn"
                             data-bs-toggle="modal"
                             data-bs-target="#delete-modal">
-                        <i class="fas fa-trash me-1"></i> Eliminar meta SEO
+                        Eliminar meta SEO
                     </button>
                 </div>
             </div>
@@ -914,6 +973,146 @@
 
     @include('core::components.delete')
 @endsection
+
+@push('css')
+<style>
+.seo-img-card {
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.seo-img-card:hover { border-color: #b10100; box-shadow: 0 2px 8px rgba(177,1,0,.12); }
+.seo-img-card__preview {
+    position: relative;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+    background-image:
+        linear-gradient(45deg, #eef2f6 25%, transparent 25%, transparent 75%, #eef2f6 75%),
+        linear-gradient(45deg, #eef2f6 25%, transparent 25%, transparent 75%, #eef2f6 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+}
+.seo-img-card__preview img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+.seo-img-card__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+    text-align: center;
+}
+.seo-img-card__empty i { font-size: 1.75rem; margin-bottom: .35rem; }
+.seo-img-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .65);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .15s ease;
+    font-weight: 600;
+    pointer-events: none;
+}
+.seo-img-card.has-image .seo-img-card__preview:hover .seo-img-card__overlay { opacity: 1; }
+.seo-img-card__body {
+    padding: .625rem .75rem;
+    background: #fff;
+}
+.seo-img-clear-btn {
+    color: #b10100 !important;
+    padding: .25rem .5rem;
+}
+.seo-img-clear-btn:hover { color: #7f0100 !important; }
+
+/* Tips list — red dot marker, no duplicate checks */
+.seo-tips-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+.seo-tips-list li {
+    position: relative;
+    padding: .35rem 0 .35rem 1.25rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+/* Info note (ex "Todo el SEO de esta página...") */
+.seo-info-note {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #7f1d1d;
+    padding: .6rem .75rem;
+    border-radius: .5rem;
+    font-size: .8rem;
+    line-height: 1.4;
+}
+
+/* Platform tabs (Vista previa en tiempo real) — icon-only circular */
+.seo-platform-tabs .nav-link {
+    padding: .5rem 0;
+    border-radius: .5rem;
+    color: #6b7280;
+    font-size: 1.05rem;
+    transition: all .15s ease;
+}
+.seo-platform-tabs .nav-link:hover {
+    background: #f9fafb;
+    color: #374151;
+}
+.seo-platform-tabs .nav-link.active {
+    background: #b10100;
+    color: #fff;
+}
+.seo-platform-tabs .nav-link i { line-height: 1; }
+
+/* SERP preview tabs */
+.seo-preview-tabs .btn { padding: .3rem .55rem; min-width: 34px; }
+.seo-preview-tabs .btn.active {
+    background: #b10100;
+    color: #fff;
+    border-color: #b10100;
+}
+
+/* Card header/footer consistency */
+.card > .card-header {
+    background: #fff;
+    border-bottom: 1px solid #f3f4f6;
+    padding: .75rem 1rem;
+}
+.card > .card-footer {
+    background: #fff;
+    border-top: 1px solid #f3f4f6;
+    padding: .75rem 1rem;
+}
+
+/* Zona de peligro */
+.seo-danger-card {
+    border: 1px solid #fecaca;
+}
+.seo-danger-card > .card-header {
+    background: #fef2f2;
+    border-bottom-color: #fecaca;
+}
+.seo-danger-title { color: #b10100; }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -1506,6 +1705,64 @@ $(document).ready(function() {
         waitForChart();
     });
 });
+
+// ============================================================
+// SEO image cards (OG + Twitter) — MediaPicker integration
+// ============================================================
+(function () {
+    function setImage(target, url) {
+        var $card = $('#seo-img-card-' + target);
+        var $img = $('#seo-img-' + target);
+        var inputName = target === 'og' ? 'og_image' : 'twitter_image';
+        var $input = $('#' + inputName);
+        var $empty = $card.find('.seo-img-card__empty');
+        var $clear = $card.find('.seo-img-clear-btn');
+
+        $input.val(url).trigger('change');
+
+        if (url) {
+            $img.attr('src', url).removeClass('d-none');
+            $empty.addClass('d-none');
+            $card.addClass('has-image').removeClass('is-empty');
+            $clear.removeClass('d-none');
+        } else {
+            $img.attr('src', '').addClass('d-none');
+            $empty.removeClass('d-none');
+            $card.removeClass('has-image').addClass('is-empty');
+            $clear.addClass('d-none');
+        }
+    }
+
+    $(document).on('click', '.seo-img-card__preview', function () {
+        var $card = $(this).closest('.seo-img-card');
+        var key = $card.data('key');
+        var label = $card.data('label');
+        var target = $card.attr('id').replace('seo-img-card-', '');
+
+        if (typeof window.MediaPicker !== 'undefined' && window.MediaPicker.open) {
+            window.MediaPicker.open({
+                urls: {
+                    list:   '{{ route("media.list") }}',
+                    upload: '{{ route("media.files.upload") }}',
+                    base:   '{{ url("media") }}',
+                },
+                filter: 'image',
+                title: 'Elegir imagen — ' + label,
+                onSelect: function (fullUrl) {
+                    setImage(target, fullUrl);
+                }
+            });
+        } else {
+            var manual = prompt('Pega la URL de la imagen:', $('#' + key).val() || '');
+            if (manual !== null) setImage(target, manual);
+        }
+    });
+
+    $(document).on('click', '.seo-img-clear-btn', function (e) {
+        e.stopPropagation();
+        setImage($(this).data('target'), '');
+    });
+})();
 </script>
 
 @endpush

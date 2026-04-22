@@ -1,5 +1,8 @@
 <?php
 
+use Acelle\Framework\LaravelRequest;
+use Illuminate\Contracts\Http\Kernel;
+
 $version = '9.14.0';
 
 if (session_id() == '') {
@@ -18,9 +21,9 @@ setlocale(LC_CTYPE, 'en_US'); // correct transliteration
 // ACELLE INJECTED
 require '../../bootstrap/autoload.php';
 $app = require_once '../../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $response = $kernel->handle(
-    $request = Acelle\Framework\LaravelRequest::capture('/blank')
+    $request = LaravelRequest::capture('/blank')
 );
 
 $mainAppConfig = Auth::user()->getFilemanagerConfig();
@@ -478,7 +481,7 @@ $config = [
     'range.value.fontWeight' => 'normal',
     'range.value.fontSize' => '11px',
     'range.value.border' => '0',
-    'range.value.backgroundColor' => '#f5f5f5',
+    'range.value.backgroundColor' => '#f9f9f9',
     'range.title.color' => '#000',
     'range.title.fontWeight' => 'lighter',
 

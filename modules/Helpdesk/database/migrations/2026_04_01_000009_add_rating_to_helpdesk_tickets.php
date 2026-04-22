@@ -6,18 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
-        Schema::table('helpdesk_tickets', function (Blueprint $table) {
-            if (! Schema::hasColumn('helpdesk_tickets', 'rating')) {
+        Schema::connection($this->connection)->table('helpdesk_tickets', function (Blueprint $table) {
+            if (! Schema::connection($this->connection)->hasColumn('helpdesk_tickets', 'rating')) {
                 $table->tinyInteger('rating')->nullable()->after('is_archived');
             }
 
-            if (! Schema::hasColumn('helpdesk_tickets', 'rating_comment')) {
+            if (! Schema::connection($this->connection)->hasColumn('helpdesk_tickets', 'rating_comment')) {
                 $table->string('rating_comment', 500)->nullable()->after('rating');
             }
 
-            if (! Schema::hasColumn('helpdesk_tickets', 'rated_at')) {
+            if (! Schema::connection($this->connection)->hasColumn('helpdesk_tickets', 'rated_at')) {
                 $table->timestamp('rated_at')->nullable()->after('rating_comment');
             }
         });
@@ -25,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('helpdesk_tickets', function (Blueprint $table) {
+        Schema::connection($this->connection)->table('helpdesk_tickets', function (Blueprint $table) {
             $table->dropColumn(['rating', 'rating_comment', 'rated_at']);
         });
     }

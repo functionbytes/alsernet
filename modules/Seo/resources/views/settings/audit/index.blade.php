@@ -110,7 +110,7 @@
                 </div>
 
                 {{-- Resultados de auditoría masiva --}}
-                <div id="bulk-audit-section" class="mt-4" style="display:none;">
+                <div id="bulk-audit-section" class="mt-4">
                     <div class="row mb-3 g-3" id="bulk-summary"></div>
                     <div class="card">
                         <div class="card-body p-0">

@@ -3,168 +3,212 @@
 @section('title', 'Editar estado: ' . $status->name)
 
 @section('content')
-<div class="container-fluid">
 
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="{{ route('manager.helpdesk.backups.tickets.statuses.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i> Volver
-        </a>
-        <div>
-            <h4 class="mb-0 fw-bold">
-                <span class="rounded-circle d-inline-block me-2"
-                      style="width:14px;height:14px;background-color:{{ $status->color }};"></span>
-                Editar: {{ $status->name }}
-            </h4>
-            <p class="text-muted mb-0">Modifica las propiedades del estado</p>
+    @include('core::components.card', ['title' => 'Editar estado'])
+
+    <div class="row g-3">
+
+        {{-- Form --}}
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <form id="statusForm" action="{{ route('manager.helpdesk.settings.ticket-statuses.update', $status) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="card-header border-bottom p-3">
+                        <h5 class="mb-0 fw-bold">Editar: {{ $status->name }}</h5>
+                        <small class="text-muted">Modifica las propiedades del estado</small>
+                    </div>
+
+                    <div class="card-body">
+                        @include('core::components.alerts')
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible del estado</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" name="name"
+                                           class="form-control @error('name') is-invalid @enderror"
+                                           value="{{ old('name', $status->name) }}"
+                                           required>
+                                    @error('name')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Slug</label>
+                                    <input type="text" name="slug"
+                                           class="form-control @error('slug') is-invalid @enderror"
+                                           value="{{ old('slug', $status->slug) }}">
+                                    <small class="form-text text-muted">Se genera automaticamente desde el nombre</small>
+                                    @error('slug')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Descripcion</label>
+                                    <textarea name="description"
+                                              class="form-control @error('description') is-invalid @enderror"
+                                              rows="3">{{ old('description', $status->description) }}</textarea>
+                                    @error('description')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Color</h6>
+                        <p class="text-muted small mb-3">Color identificador del estado en listados y badges</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Color <span class="text-danger">*</span></label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="color" name="color" id="colorPicker"
+                                               class="form-control form-control-color @error('color') is-invalid @enderror"
+                                               value="{{ old('color', $status->color) }}">
+                                        <input type="text" id="colorHex" class="form-control"
+                                               value="{{ old('color', $status->color) }}" readonly>
+                                        <div id="colorPreview" class="border rounded flex-shrink-0"
+                                             style="width:38px;height:38px;background-color:{{ old('color', $status->color) }};"></div>
+                                    </div>
+                                    @error('color')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Colores sugeridos</label>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
+                                            <button type="button" class="btn btn-sm color-preset rounded-circle border-0"
+                                                    data-color="{{ $c }}"
+                                                    title="{{ $c }}"
+                                                    style="background-color:{{ $c }};width:32px;height:32px;"></button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Comportamiento</h6>
+                        <p class="text-muted small mb-3">Define como se comporta este estado dentro del flujo y SLA</p>
+                        <div class="row g-3">
+
+                            <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="is_open" class="form-label">Tipo de estado</label>
+                                    <select class="form-select @error('is_open') is-invalid @enderror" id="is_open" name="is_open" required>
+                                        <option value="1" {{ old('is_open', $status->is_open ? 1 : 0) == 1 ? 'selected' : '' }}>Abierto — el ticket sigue activo</option>
+                                        <option value="0" {{ old('is_open', $status->is_open ? 1 : 0) == 0 ? 'selected' : '' }}>Cerrado — el ticket se considera finalizado</option>
+                                    </select>
+                                    @error('is_open')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="is_default" class="form-label">Estado por defecto</label>
+                                    <select class="form-select @error('is_default') is-invalid @enderror" id="is_default" name="is_default">
+                                        <option value="0" {{ old('is_default', $status->is_default ? 1 : 0) == 0 ? 'selected' : '' }}>No — asignacion manual</option>
+                                        <option value="1" {{ old('is_default', $status->is_default ? 1 : 0) == 1 ? 'selected' : '' }}>Si — asignado a tickets nuevos</option>
+                                    </select>
+                                    @error('is_default')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="stops_sla_timer" class="form-label">Temporizador SLA</label>
+                                    <select class="form-select @error('stops_sla_timer') is-invalid @enderror" id="stops_sla_timer" name="stops_sla_timer">
+                                        <option value="0" {{ old('stops_sla_timer', $status->stops_sla_timer ? 1 : 0) == 0 ? 'selected' : '' }}>No pausa — SLA sigue corriendo</option>
+                                        <option value="1" {{ old('stops_sla_timer', $status->stops_sla_timer ? 1 : 0) == 1 ? 'selected' : '' }}>Si pausa — SLA se detiene</option>
+                                    </select>
+                                    @error('stops_sla_timer')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
+                        <a href="{{ route('manager.helpdesk.settings.ticket-statuses.index') }}" class="btn btn-light w-100">Cancelar</a>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="card">
-        <form method="POST" action="{{ route('manager.helpdesk.backups.tickets.statuses.update', $status->id) }}">
-            @csrf
-            @method('PUT')
-
-            <div class="card-body">
-                <div class="row g-3">
-
-                    <div class="col-12">
-                        <h6 class="fw-semibold text-uppercase text-muted">Informacion del estado</h6>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name', $status->name) }}" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Slug</label>
-                        <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror"
-                               value="{{ old('slug', $status->slug) }}">
-                        <div class="form-text">Solo letras minúsculas, números y guiones.</div>
-                        @error('slug')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Descripcion <small class="text-muted fw-normal">(opcional)</small></label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
-                                  rows="2">{{ old('description', $status->description) }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12"><hr class="my-2"></div>
-                    <div class="col-12">
-                        <h6 class="fw-semibold text-uppercase text-muted">Color</h6>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Color <span class="text-danger">*</span></label>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="color" name="color" id="colorPicker"
-                                   class="form-control form-control-color @error('color') is-invalid @enderror"
-                                   value="{{ old('color', $status->color) }}">
-                            <input type="text" id="colorHex" class="form-control" style="max-width:110px;"
-                                   value="{{ old('color', $status->color) }}" readonly>
-                            <div id="colorPreview" class="border rounded"
-                                 style="width:40px;height:40px;background-color:{{ old('color', $status->color) }};"></div>
-                        </div>
-                        @error('color')
-                            <div class="text-danger small mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Colores sugeridos</label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
-                                <button type="button" class="btn btn-sm color-preset rounded"
-                                        data-color="{{ $c }}"
-                                        style="background-color:{{ $c }};width:36px;height:36px;"></button>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="col-12"><hr class="my-2"></div>
-                    <div class="col-12">
-                        <h6 class="fw-semibold text-uppercase text-muted">Comportamiento</h6>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="form-check form-switch">
-                            <input type="hidden" name="is_open" value="0">
-                            <input type="checkbox" name="is_open" class="form-check-input" id="isOpen"
-                                   value="1" {{ old('is_open', $status->is_open) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="isOpen">
-                                <strong>Estado abierto</strong>
-                                <small class="d-block text-muted">El ticket sigue activo en este estado</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="form-check form-switch">
-                            <input type="hidden" name="is_default" value="0">
-                            <input type="checkbox" name="is_default" class="form-check-input" id="isDefault"
-                                   value="1" {{ old('is_default', $status->is_default) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="isDefault">
-                                <strong>Estado por defecto</strong>
-                                <small class="d-block text-muted">Asignado automáticamente a tickets nuevos</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="form-check form-switch">
-                            <input type="hidden" name="stops_sla_timer" value="0">
-                            <input type="checkbox" name="stops_sla_timer" class="form-check-input" id="stopsSla"
-                                   value="1" {{ old('stops_sla_timer', $status->stops_sla_timer) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="stopsSla">
-                                <strong>Pausar SLA</strong>
-                                <small class="d-block text-muted">El temporizador SLA se pausa en este estado</small>
-                            </label>
-                        </div>
-                    </div>
-
+        {{-- Help panel --}}
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Sobre los estados</h6>
+                    <p class="card-text text-muted">
+                        Los estados definen el ciclo de vida de un ticket y permiten controlar el flujo de trabajo y el cumplimiento del SLA.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Buenas practicas</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres cortos que reflejen la etapa del ticket</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna colores distintos para facilitar la identificacion visual</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Solo un estado debe ser el predeterminado para tickets nuevos</li>
+                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa "Pausar SLA" en estados de espera por el cliente</li>
+                    </ul>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Informacion del registro</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 text-muted small">
+                            <span class="fw-semibold">Creado:</span> {{ $status->created_at->format('d/m/Y H:i') }}
+                        </li>
+                        <li class="text-muted small">
+                            <span class="fw-semibold">Actualizado:</span> {{ $status->updated_at->format('d/m/Y H:i') }}
+                        </li>
+                    </ul>
                 </div>
             </div>
+        </div>
 
-            <div class="card-footer d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Actualizar
-                </button>
-                <a href="{{ route('manager.helpdesk.backups.tickets.statuses.index') }}" class="btn btn-secondary px-4">
-                    Cancelar
-                </a>
-            </div>
-        </form>
     </div>
-</div>
+
 @endsection
 
 @push('scripts')
 <script>
-$(function () {
+$(document).ready(function () {
+    // Color picker sync
     $('#colorPicker').on('input', function () {
         const color = $(this).val();
         $('#colorHex').val(color);
         $('#colorPreview').css('background-color', color);
     });
 
-    $('.color-preset').on('click', function () {
+    // Color preset buttons
+    $(document).on('click', '.color-preset', function () {
         const color = $(this).data('color');
         $('#colorPicker').val(color);
         $('#colorHex').val(color);

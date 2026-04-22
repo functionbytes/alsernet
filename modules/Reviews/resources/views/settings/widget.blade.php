@@ -48,7 +48,7 @@
                     </div>
 
                     {{-- Embed code (hidden until generated) --}}
-                    <div id="embed-section" class="mt-3" style="display:none">
+                    <div id="embed-section" class="mt-3" class="d-none">
                         <hr>
                         <h6 class="fw-bold mb-3">Codigo de integracion</h6>
 

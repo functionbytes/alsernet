@@ -15,6 +15,55 @@ class GenerateSitemapCommand extends Command
 
     protected $description = 'Generate sitemap.xml and optionally ping search engines';
 
+    /**
+     * Add all multilingual page URLs using SeoMeta canonical URLs with hreflang alternates.
+     * Uses the production canonical_url field rather than url() helper (APP_URL) to ensure
+     * the correct domain is always used regardless of the environment.
+     */
+    protected function addMultilingualPages(SitemapBuilder $builder): void
+    {
+        $seoMetaClass = 'Modules\\Seo\\Models\\SeoMeta';
+        $pageClass = 'Modules\\Page\\Models\\Page';
+
+        if (! class_exists($seoMetaClass) || ! class_exists($pageClass)) {
+            return;
+        }
+
+        $this->info('  Adding multilingual pages via SeoMeta...');
+
+        $metas = $seoMetaClass::where('seoable_type', $pageClass)
+            ->whereNotNull('canonical_url')
+            ->where('robots', 'not like', '%noindex%')
+            ->select(['seoable_id', 'locale', 'canonical_url', 'updated_at'])
+            ->orderBy('seoable_id')
+            ->orderBy('locale')
+            ->get();
+
+        $grouped = $metas->groupBy('seoable_id');
+        $defaultLocale = config('app.locale', 'es');
+
+        foreach ($grouped as $pageMetas) {
+            $alternatesMap = $pageMetas->pluck('canonical_url', 'locale')->all();
+
+            if (empty($alternatesMap)) {
+                continue;
+            }
+
+            foreach ($pageMetas as $meta) {
+                $lastmod = $meta->updated_at?->toAtomString();
+                $priority = $meta->locale === $defaultLocale ? '0.9' : '0.8';
+                $builder->add($meta->canonical_url, $lastmod, $priority, 'monthly');
+
+                foreach ($alternatesMap as $lang => $href) {
+                    $builder->addAlternate($meta->canonical_url, $lang, $href);
+                }
+                if (isset($alternatesMap[$defaultLocale])) {
+                    $builder->addAlternate($meta->canonical_url, 'x-default', $alternatesMap[$defaultLocale]);
+                }
+            }
+        }
+    }
+
     public function handle(): int
     {
         $start = hrtime(true);
@@ -25,8 +74,6 @@ class GenerateSitemapCommand extends Command
 
             $this->info('Generating sitemap...');
 
-            $builder->add(url('/'), null, '1.0', 'daily');
-
             foreach (config('sitemap.static_urls', []) as $entry) {
                 $builder->add(
                     url($entry['loc']),
@@ -36,10 +83,19 @@ class GenerateSitemapCommand extends Command
                 );
             }
 
+            // Add multilingual pages using SeoMeta canonical URLs (correct production domain)
+            $this->addMultilingualPages($builder);
+
+            // Add non-Page models (Blog, etc.) using the model trait
             foreach (config('sitemap.models', []) as $modelClass) {
                 if (! class_exists($modelClass)) {
                     $this->warn("  Skipping {$modelClass} (class not found)");
 
+                    continue;
+                }
+
+                // Pages are handled by addMultilingualPages() above
+                if ($modelClass === 'Modules\\Page\\Models\\Page') {
                     continue;
                 }
 

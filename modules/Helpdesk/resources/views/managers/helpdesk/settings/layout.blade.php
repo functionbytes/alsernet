@@ -313,7 +313,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="{{ route('manager.dashboard') }}">Dashboard</a>
+                <a href="{{ route('core.dashboard') }}">Dashboard</a>
             </li>
             <li class="breadcrumb-item">
                 <a href="{{ route('manager.helpdesk.tickets.index') }}">Helpdesk</a>

@@ -426,7 +426,7 @@
         width: 88px;
         height: 88px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--bs-primary) 0%, color-mix(in srgb, var(--bs-primary) 85%, white) 100%);
+        background: var(--bs-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -488,7 +488,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--bs-primary) 0%, color-mix(in srgb, var(--bs-primary) 85%, white) 100%);
+        background: var(--bs-primary);
         border: none;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -496,7 +496,7 @@
     .tracking-submit-btn:hover {
         transform: scale(1.08);
         box-shadow: 0 6px 16px color-mix(in srgb, var(--bs-primary) 35%, transparent);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--bs-primary) 85%, white) 0%, var(--bs-primary) 100%);
+        background: color-mix(in srgb, var(--bs-primary) 90%, white);
     }
 
     .tracking-submit-btn:active {
@@ -506,7 +506,7 @@
     .info-badge {
         display: inline-flex;
         align-items: center;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        background: #f8f9fa;
         border: 1px solid #e9ecef;
         border-radius: 16px;
         padding: 14px 24px;
@@ -518,7 +518,7 @@
 
     .info-badge:hover {
         border-color: var(--bs-primary);
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        background: #90bb13;
         box-shadow: 0 4px 8px color-mix(in srgb, var(--bs-primary) 10%, transparent);
     }
 

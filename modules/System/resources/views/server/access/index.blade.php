@@ -282,7 +282,7 @@
                         </div>
                     </div>
 
-                    <div id="databaseInfo" style="display: none;">
+                    <div id="databaseInfo" class="d-none">
                         <hr class="my-3">
                         <div class="row g-3">
                             <div class="col-md-6">

@@ -7,8 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Modules\Helpdesk\Events\TicketAssigned;
-use Modules\Helpdesk\Mail\TicketAssignedMail;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Mail\TicketAssignedMail;
 
 /**
  * Notify agent when a ticket is assigned to them

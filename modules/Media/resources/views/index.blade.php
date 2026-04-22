@@ -22,7 +22,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--stat-color), var(--stat-color));
+        background: #90bb13, var(--stat-color));
     }
 
     .stat-card:hover {
@@ -30,7 +30,7 @@
         transform: translateY(-4px);
     }
 
-    .stat-card.folders { --stat-color: #5D87FF; }
+    .stat-card.folders { --stat-color: #90bb13; }
     .stat-card.files { --stat-color: #13C672; }
     .stat-card.storage { --stat-color: #FEC90F; }
 
@@ -44,7 +44,7 @@
     .media-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-4px);
-        border-color: #5D87FF;
+        border-color: #90bb13;
     }
 
     .folder-card {
@@ -55,7 +55,7 @@
     .folder-card:hover {
         box-shadow: 0 8px 24px rgba(93, 135, 255, 0.15) !important;
         transform: translateY(-4px);
-        border-color: #5D87FF !important;
+        border-color: #90bb13 !important;
     }
 
     .folder-preview {
@@ -127,31 +127,31 @@
 
     /* Gradient Backgrounds */
     .bg-gradient-danger {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-success {
-        background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-info {
-        background: linear-gradient(135deg, #4dabf7 0%, #228be6 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-warning {
-        background: linear-gradient(135deg, #ffd43b 0%, #fab005 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-purple {
-        background: linear-gradient(135deg, #cc5de8 0%, #9c36b5 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-dark {
-        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+        background: #90bb13;
     }
 
     .bg-gradient-secondary {
-        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        background: #90bb13;
     }
 
     .text-purple {
@@ -187,46 +187,46 @@
 
     .action-btn:hover {
         background: #f0f4ff;
-        border-color: #5D87FF;
-        color: #5D87FF;
+        border-color: #90bb13;
+        color: #90bb13;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.15);
     }
 
     .upload-zone {
-        border: 2px dashed #5D87FF;
+        border: 2px dashed #90bb13;
         border-radius: 12px;
-        background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
+        background: #90bb13;
         transition: all 0.3s ease;
     }
 
     .upload-zone:hover {
         border-color: #3E5BDB;
-        background: linear-gradient(135deg, #e8f0ff 0%, #f0f4ff 100%);
+        background: #90bb13;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.12);
     }
 
     .upload-zone.drag-over {
         border-color: #3E5BDB;
-        background: linear-gradient(135deg, #e0e8ff 0%, #e8f0ff 100%);
+        background: #90bb13;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
     }
 
     /* Upload Zone Modern */
     .upload-zone-modern {
-        background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        background: #90bb13;
         border: 2px dashed #e0e7ff;
         transition: all 0.3s ease;
     }
 
     .upload-zone-modern:hover {
-        border-color: #5D87FF;
-        background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
+        border-color: #90bb13;
+        background: #90bb13;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.1);
     }
 
     .upload-zone-modern.drag-active {
-        border-color: #5D87FF;
-        background: linear-gradient(135deg, #e8f0ff 0%, #f0f4ff 100%);
+        border-color: #90bb13;
+        background: #90bb13;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
         transform: scale(1.01);
     }
@@ -237,7 +237,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #5D87FF 0%, #4570ea 100%);
+        background: #90bb13;
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3);
     }
@@ -254,7 +254,7 @@
     }
 
     .card-header {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        background: #90bb13;
         border-color: #f0f0f0 !important;
     }
 
@@ -318,8 +318,8 @@
     }
 
     .folder-file-item:hover {
-        background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
-        border-color: #5D87FF !important;
+        background: #90bb13;
+        border-color: #90bb13 !important;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);
         transform: translateY(-2px);
     }
@@ -329,7 +329,7 @@
     }
 
     .folder-file-item:hover i {
-        color: #5D87FF !important;
+        color: #90bb13 !important;
     }
 
     /* Dropdown for folder options */
@@ -345,7 +345,7 @@
 
     .dropdown-item:hover {
         background: #f0f4ff;
-        color: #5D87FF;
+        color: #90bb13;
     }
 
     .dropdown-item.text-danger:hover {
@@ -372,14 +372,14 @@
     }
 
     .user-profile-tab .nav-link:hover {
-        color: #5D87FF;
+        color: #90bb13;
         border-bottom-color: rgba(93, 135, 255, 0.3);
         background: rgba(93, 135, 255, 0.05) !important;
     }
 
     .user-profile-tab .nav-link.active {
-        color: #5D87FF;
-        border-bottom-color: #5D87FF;
+        color: #90bb13;
+        border-bottom-color: #90bb13;
         background: transparent !important;
         font-weight: 600;
     }
@@ -431,7 +431,7 @@
 
     .context-menu-item:hover {
         background: #f0f4ff;
-        color: #5D87FF;
+        color: #90bb13;
     }
 
     .context-menu-item.danger:hover {
@@ -464,8 +464,8 @@
     }
 
     .card.selected {
-        border: 3px solid #5D87FF !important;
-        background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 100%);
+        border: 3px solid #90bb13 !important;
+        background: #90bb13;
         box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.15),
                     0 8px 24px rgba(93, 135, 255, 0.25) !important;
         transform: translateY(-2px);
@@ -483,7 +483,7 @@
         left: 12px;
         width: 28px;
         height: 28px;
-        background: #5D87FF;
+        background: #90bb13;
         border-radius: 50%;
         z-index: 20;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.5);
@@ -562,13 +562,13 @@
     }
 
     .card-header:has(.text-primary) {
-        background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 100%) !important;
-        border-bottom: 2px solid #5D87FF !important;
+        background: #90bb13 !important;
+        border-bottom: 2px solid #90bb13 !important;
     }
 
     /* Enhanced sidebar-like navigation */
     .user-profile-tab {
-        background: linear-gradient(135deg, #fafbff 0%, #ffffff 100%);
+        background: #90bb13;
     }
 
     .user-profile-tab .nav-link {
@@ -584,7 +584,7 @@
         transform: translateY(-50%);
         width: 0;
         height: 0;
-        background: #5D87FF;
+        background: #90bb13;
         border-radius: 0 4px 4px 0;
         transition: all 0.3s ease;
     }
@@ -803,11 +803,11 @@
                     v-on:drop.prevent="handleDrop">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h6 class="fw-bold mb-1">Arrastra y suelta archivos aqui</h6>
+                            <h6 class="fw-bold mb-1">Arrastra y suelta archivos aquí</h6>
                             <p class="mb-3 text-muted">
-                                Suelta tus archivos en esta zona o seleccionalos desde tu dispositivo.
+                                Suelta tus archivos en esta zona o selecciónalos desde tu dispositivo.
                                 <span class="d-block mt-1">
-                                    Formatos: imagenes, documentos y archivos comprimidos. Maximo <strong>100 MB</strong> por archivo.
+                                    Formatos: imágenes, documentos y archivos comprimidos. Máximo <strong>100 MB</strong> por archivo.
                                 </span>
                             </p>
                             <div class="d-flex flex-wrap gap-2">
@@ -887,7 +887,7 @@
                             </button>
                             <ul class="dropdown-menu p-2" style="min-width: 250px; max-height: 300px; overflow-y: auto">
                                 <li v-for="tag in availableTags" :key="tag.id" class="mb-1">
-                                    <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer">
+                                    <label class="d-flex align-items-center gap-2 mb-0" >
                                         <input type="checkbox" :value="tag.id" v-model="selectedTagIds" @change="filterByTags">
                                         <span class="media-tag-pill" :style="{ backgroundColor: tag.color }">@{{ tag.name }}</span>
                                     </label>
@@ -1927,9 +1927,9 @@
 
 @push('scripts')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+<script data-pagespeed-no-defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script data-pagespeed-no-defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script data-pagespeed-no-defer src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
 <script>
     const { createApp } = Vue;
 
@@ -2228,7 +2228,7 @@
                 }
             },
             async deleteFolder(folder) {
-                if (!confirm(`¿Estás seguro de eliminar la carpeta "${folder.name}"?`)) return;
+                
 
                 try {
                     const response = await fetch(`{{ url('panel/media/folders') }}/${folder.id}`, {
@@ -2249,7 +2249,7 @@
                 }
             },
             async deleteFile(file) {
-                if (!confirm(`¿Estás seguro de eliminar el archivo "${file.name}"?`)) return;
+                
 
                 try {
                     const response = await fetch(`{{ url('panel/media/files') }}/${file.id}`, {
@@ -2654,7 +2654,7 @@
                 }
             },
             async emptyTrash() {
-                if (!confirm('¿Estás seguro de que deseas vaciar la papelera? Esta acción eliminará permanentemente todos los archivos y carpetas en la papelera.')) {
+                if (false) {
                     return;
                 }
 
@@ -3101,7 +3101,7 @@
             },
 
             async bulkDelete() {
-                if (!confirm(`¿Estás seguro de eliminar ${this.selectedItems.length} elemento(s)?`)) {
+                if (false) {
                     return;
                 }
                 await this.bulkRequest('delete');
@@ -3351,7 +3351,7 @@
                 }
             },
             async deleteTag(tag) {
-                if (!confirm(`¿Eliminar tag "${tag.name}"?`)) return;
+                
                 try {
                     await $.ajax({
                         url: `/panel/media/tags/${tag.id}`,
@@ -3384,7 +3384,7 @@
                 }
             },
             async restoreVersion(version) {
-                if (!confirm(`¿Restaurar versión ${version.version_number}?`)) return;
+                
                 try {
                     await $.ajax({
                         url: `/panel/media/files/${this.currentVersionedItem.id}/versions/${version.id}/restore`,

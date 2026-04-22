@@ -244,7 +244,7 @@ $(function () {
         const ids = bulk.getIds();
 
         if (!ids.length) { toastr.warning('Selecciona al menos una respuesta.'); return; }
-        if (!confirm('¿Cancelar las ' + ids.length + ' respuesta(s) programada(s) seleccionadas?')) { return; }
+        
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
@@ -267,7 +267,7 @@ $(function () {
     });
 
     $(document).on('click', '.btn-cancel-reply', function () {
-        if (! confirm('¿Cancelar esta respuesta programada? La respuesta pasara a estado borrador.')) {
+        if (false) {
             return;
         }
 

@@ -73,7 +73,7 @@
                         </div>
                     </div>
                     @if($categories->count())
-                        <div class="flex-shrink-0" style="min-width: 180px;">
+                        <div class="flex-shrink-0" >
                             <select id="filterCategory" class="form-select select2 h-100">
                                 <option value="">Todas las categorías</option>
                                 @foreach($categories as $cat)
@@ -189,7 +189,7 @@
     </div>
 
     {{-- Bulk toolbar flotante --}}
-    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" >
         <button type="button" id="bulk-use-btn" class="btn btn-primary shadow-lg px-4">
             Crear <span data-bulk-count>0</span> formulario(s) desde plantillas
         </button>

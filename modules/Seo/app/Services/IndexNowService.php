@@ -33,7 +33,7 @@ class IndexNowService
             return null;
         }
 
-        return rtrim((string) config('app.url', ''), '/').'/'.$key.'.txt';
+        return rtrim($this->baseUrl(), '/').'/'.$key.'.txt';
     }
 
     /**
@@ -115,6 +115,17 @@ class IndexNowService
 
     private function host(): string
     {
-        return (string) (parse_url((string) config('app.url', ''), PHP_URL_HOST) ?: '');
+        return (string) (parse_url($this->baseUrl(), PHP_URL_HOST) ?: '');
+    }
+
+    /**
+     * Returns the canonical base URL, preferring the seo.canonical_base_url setting
+     * over APP_URL so that production submissions always use the real domain.
+     */
+    private function baseUrl(): string
+    {
+        $canonical = seo_setting('canonical_base_url');
+
+        return $canonical ?: (string) config('app.url', '');
     }
 }

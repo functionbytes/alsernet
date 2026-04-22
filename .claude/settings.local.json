@@ -141,7 +141,9 @@
       "Bash(mysql:*)",
       "Bash(.env.temp << 'EOF'\n\n# Configuración para desarrollo local \\(comenta SESSION_DOMAIN y SESSION_SECURE_COOKIE\\)\n# SESSION_DOMAIN=.functionbytes.com\n# SESSION_SECURE_COOKIE=true\nSESSION_DOMAIN=null\nSESSION_SECURE_COOKIE=false\nEOF)",
       "Bash(rm -f .git/index.lock)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(rm /Users/developerts/Herd/system/.git/index.lock)",
+      "Bash(git checkout *)"
     ],
     "deny": []
   },

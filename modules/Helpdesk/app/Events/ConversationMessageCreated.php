@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events\Helpdesk;
+namespace Modules\Helpdesk\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;

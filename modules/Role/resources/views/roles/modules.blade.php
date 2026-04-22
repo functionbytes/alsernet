@@ -1,7 +1,7 @@
 @extends('layouts.theme')
 
 @section('content')
-<div class="container-fluid">
+<div class="px-3">
 
     {{-- Breadcrumb Card --}}
     @include('core::components.card', [

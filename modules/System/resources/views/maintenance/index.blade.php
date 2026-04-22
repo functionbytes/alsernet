@@ -311,7 +311,7 @@
     </div>
 
     <!-- Results Area for Execute All -->
-    <div id="execute-all-results" class="mt-3" style="display: none;"></div>
+    <div id="execute-all-results" class="mt-3 d-none"></div>
 
     @push('scripts')
         <script>

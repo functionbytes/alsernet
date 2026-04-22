@@ -33,7 +33,6 @@
       <sourceFolder url="file://$MODULE_DIR$/modules/Database/tests" isTestSource="true" packagePrefix="Modules\Database\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Document/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/app" isTestSource="false" packagePrefix="Modules\HealthCheck\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Health/app" isTestSource="false" packagePrefix="Modules\Health\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/database/factories" isTestSource="false" packagePrefix="Modules\HealthCheck\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/database/seeders" isTestSource="false" packagePrefix="Modules\HealthCheck\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Health/tests" isTestSource="true" packagePrefix="Modules\HealthCheck\Tests\" />
@@ -115,7 +114,6 @@
       <sourceFolder url="file://$MODULE_DIR$/modules/Menu/app" isTestSource="false" packagePrefix="Modules\Menu\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Menu/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/app" isTestSource="false" packagePrefix="modules\Page\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Page/app" isTestSource="false" packagePrefix="Modules\Page\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/database/factories" isTestSource="false" packagePrefix="modules\Page\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/database/seeders" isTestSource="false" packagePrefix="modules\Page\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Page/tests" isTestSource="true" />
@@ -153,12 +151,18 @@
       <sourceFolder url="file://$MODULE_DIR$/modules/Optimize/Tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Inventory/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Template/app" isTestSource="false" packagePrefix="Modules\Template\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/Core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskAgents/app" isTestSource="false" packagePrefix="Modules\HelpdeskAgents\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskAgents/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskCampaigns/app" isTestSource="false" packagePrefix="Modules\HelpdeskCampaigns\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskCampaigns/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskTickets/app" isTestSource="false" packagePrefix="Modules\HelpdeskTickets\" />
+      <sourceFolder url="file://$MODULE_DIR$/modules/HelpdeskTickets/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/User/Tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/database/factories" isTestSource="false" packagePrefix="Modules\Shortcode\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/database/seeders" isTestSource="false" packagePrefix="Modules\Shortcode\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Shortcode/tests" isTestSource="true" packagePrefix="Modules\Shortcode\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/app" isTestSource="false" packagePrefix="modules\Sitemap\" />
-      <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/app" isTestSource="false" packagePrefix="Modules\Sitemap\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/database/factories" isTestSource="false" packagePrefix="modules\Sitemap\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/database/seeders" isTestSource="false" packagePrefix="modules\Sitemap\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Sitemap/tests" isTestSource="true" />
