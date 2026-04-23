@@ -57,14 +57,7 @@ if (ucounter.length > 0) {
 }
 
 //========== HERO SLIDER ============= //
-// Defer carousel initialization to avoid layout shift
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initHeroSlider);
-} else {
-  initHeroSlider();
-}
-
-function initHeroSlider() {
+$(document).ready(function() {
   var carouselEl = $('.slider-header-carousel');
   if (carouselEl.length === 0) return;
 
@@ -105,7 +98,7 @@ function initHeroSlider() {
   carouselEl.find('.owl-dots button').each(function(index) {
     $(this).attr('aria-label', 'Ir a diapositiva ' + (index + 1));
   });
-}
+});
 
 //========== PRELOADER ============= //
 $(window).on("load", function (event) {

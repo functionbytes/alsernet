@@ -31,8 +31,8 @@
 
   /* Hero slider aspect ratio (prevents CLS) */
   .slider-header-carousel {
-    display: block !important;
     width: 100%;
+    display: block;
   }
 
   .slider-header-carousel .hero1-section-area {
@@ -43,19 +43,9 @@
   }
 
   .slider-header-carousel img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-  }
-
-  /* Owl carousel visibility control */
-  .owl-carousel {
-    display: block !important;
-  }
-
-  .no-js .owl-carousel,
-  .owl-carousel.owl-loaded {
-    display: block !important;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 </style>
