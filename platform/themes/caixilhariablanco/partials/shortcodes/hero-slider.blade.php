@@ -1,13 +1,15 @@
 @if(!empty($slides))
-<div class="slider-header-carousel owl-carousel">
+<div class="slider-header-carousel owl-carousel" role="region" aria-label="Carrusel de hero">
     @foreach($slides as $slide)
-    <div class="hero1-section-area">
+    <div class="hero1-section-area" style="aspect-ratio: 16/9; overflow: hidden;">
         <img src="{{ $slide['image'] }}?v=2" alt="{{ $slide['title'] ?? 'Imagen del slider' }}" class="header-img1"
+             width="1920" height="1080"
              @if($loop->first)
                  fetchpriority="high" loading="eager" decoding="sync"
              @else
                  loading="lazy" decoding="async"
-             @endif>
+             @endif
+             style="width: 100%; height: 100%; object-fit: cover; display: block;">
         <div class="container">
             <div class="row">
                 <div class="col-lg-6">

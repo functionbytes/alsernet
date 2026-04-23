@@ -28,4 +28,34 @@
   @font-face {
     font-display: swap !important;
   }
+
+  /* Hero slider aspect ratio (prevents CLS) */
+  .slider-header-carousel {
+    display: block !important;
+    width: 100%;
+  }
+
+  .slider-header-carousel .hero1-section-area {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    position: relative;
+    background: #f0f0f0;
+  }
+
+  .slider-header-carousel img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  /* Owl carousel visibility control */
+  .owl-carousel {
+    display: block !important;
+  }
+
+  .no-js .owl-carousel,
+  .owl-carousel.owl-loaded {
+    display: block !important;
+  }
 </style>
