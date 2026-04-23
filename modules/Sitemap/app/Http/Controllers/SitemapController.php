@@ -4,6 +4,7 @@ namespace Modules\Sitemap\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
+use Modules\Seo\Services\SitemapCallbackRegistry;
 use Modules\Sitemap\Builder\SitemapBuilder;
 
 class SitemapController extends Controller
@@ -22,60 +23,73 @@ class SitemapController extends Controller
 
     public function pages(): Response
     {
-        $builder = new SitemapBuilder;
+        $xml = cache()->remember('sitemap-pages-xml', config('sitemap.cache_duration', 86400), function () {
+            $builder = new SitemapBuilder;
 
-        foreach (config('sitemap.page_models', []) as $modelClass) {
-            if (class_exists($modelClass)) {
-                $builder->addModel($modelClass);
+            foreach (config('sitemap.page_models', []) as $modelClass) {
+                if (class_exists($modelClass)) {
+                    $builder->addModel($modelClass);
+                }
             }
-        }
 
-        return $this->xmlResponse($builder->render());
+            return $builder->render();
+        });
+
+        return $this->xmlResponse($xml);
     }
 
     public function posts(): Response
     {
-        $builder = new SitemapBuilder;
+        $xml = cache()->remember('sitemap-posts-xml', config('sitemap.cache_duration', 86400), function () {
+            $builder = new SitemapBuilder;
 
-        foreach (config('sitemap.post_models', []) as $modelClass) {
-            if (class_exists($modelClass)) {
-                $builder->addModel($modelClass);
+            foreach (config('sitemap.post_models', []) as $modelClass) {
+                if (class_exists($modelClass)) {
+                    $builder->addModel($modelClass);
+                }
             }
-        }
 
-        foreach (config('sitemap.post_callbacks', []) as $callback) {
-            if (is_callable($callback)) {
-                $callback($builder);
+            $callbacks = array_merge(config('sitemap.post_callbacks', []), SitemapCallbackRegistry::all());
+            foreach ($callbacks as $callback) {
+                if (is_callable($callback)) {
+                    $callback($builder);
+                }
             }
-        }
 
-        return $this->xmlResponse($builder->render());
+            return $builder->render();
+        });
+
+        return $this->xmlResponse($xml);
     }
 
     public function sitemapIndex(): Response
     {
-        $builder = new SitemapBuilder;
+        $xml = cache()->remember('sitemap-index-xml', config('sitemap.cache_duration', 86400), function () {
+            $builder = new SitemapBuilder;
 
-        $hasPages = ! empty(config('sitemap.page_models'));
-        $hasPosts = ! empty(config('sitemap.post_models')) || ! empty(config('sitemap.post_callbacks'));
+            $hasPages = ! empty(config('sitemap.page_models'));
+            $hasPosts = ! empty(config('sitemap.post_models')) || ! empty(config('sitemap.post_callbacks')) || ! empty(SitemapCallbackRegistry::all());
 
-        if ($hasPages) {
-            $builder->addSitemap(url('/sitemap-pages.xml'));
-        }
+            if ($hasPages) {
+                $builder->addSitemap(url('/sitemap-pages.xml'));
+            }
 
-        if ($hasPosts) {
-            $builder->addSitemap(url('/sitemap-posts.xml'));
-        }
+            if ($hasPosts) {
+                $builder->addSitemap(url('/sitemap-posts.xml'));
+            }
 
-        if (! $hasPages && ! $hasPosts) {
-            $builder->addSitemap(url('/sitemap.xml'));
-        }
+            if (! $hasPages && ! $hasPosts) {
+                $builder->addSitemap(url('/sitemap.xml'));
+            }
 
-        foreach (config('sitemap.index_extra', []) as $extraUrl) {
-            $builder->addSitemap($extraUrl);
-        }
+            foreach (config('sitemap.index_extra', []) as $extraUrl) {
+                $builder->addSitemap($extraUrl);
+            }
 
-        return $this->xmlResponse($builder->render('index'));
+            return $builder->render('index');
+        });
+
+        return $this->xmlResponse($xml);
     }
 
     private function buildMainXml(): string

@@ -16,6 +16,11 @@ class ReportsController extends Controller
         $thirtyDaysAgo = now()->subDays(30);
 
         $data = Cache::remember('helpdesk:reports', 300, function () use ($thirtyDaysAgo) {
+            $slaRow = Ticket::query()
+                ->selectRaw('SUM(sla_policy_id IS NOT NULL) as sla_total')
+                ->selectRaw('SUM(sla_first_response_breached = 1 OR sla_resolution_breached = 1) as sla_breached')
+                ->first();
+
             return [
                 'volume' => Ticket::where('created_at', '>=', $thirtyDaysAgo)
                     ->selectRaw('DATE(created_at) as day, COUNT(*) as created, SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved')
@@ -36,11 +41,8 @@ class ReportsController extends Controller
                     ->get()
                     ->pluck('total', 'priority'),
 
-                'sla_total' => Ticket::whereNotNull('sla_policy_id')->count(),
-                'sla_breached' => Ticket::where(fn ($q) => $q
-                    ->where('sla_first_response_breached', 1)
-                    ->orWhere('sla_resolution_breached', 1)
-                )->count(),
+                'sla_total' => (int) $slaRow->sla_total,
+                'sla_breached' => (int) $slaRow->sla_breached,
 
                 'top_agents' => (function () {
                     $counts = Ticket::whereNotNull('resolved_at')

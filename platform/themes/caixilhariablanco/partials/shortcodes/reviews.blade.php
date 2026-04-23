@@ -41,7 +41,7 @@
             <div class="d-flex justify-content-center align-items-center gap-2">
                 @for($i = 1; $i <= 5; $i++)
                     <i class="fas fa-star {{ $i <= round($avgRating) ? 'text-warning' : 'text-muted' }}"
-                       style="font-size:1.4rem;"></i>
+                      ></i>
                 @endfor
                 <span class="fw-bold fs-5 ms-2">{{ number_format($avgRating, 1) }}</span>
                 <span class="text-muted">/ 5 ({{ $reviews->count() }} reseñas)</span>
@@ -68,16 +68,13 @@
                                  alt="{{ $review->reviewer_name }}"
                                  class="rounded-circle flex-shrink-0"
                                  width="48" height="48"
-                                 style="object-fit:cover;"
                                  loading="lazy"
                                  onerror="this.replaceWith(this.nextElementSibling)">
-                            <div class="rounded-circle flex-shrink-0 d-none d-flex align-items-center justify-content-center fw-bold"
-                                 style="width:48px;height:48px;background:var(--accent-color,#90bb13);color:#fff;font-size:1.1rem;">
+                            <div class="rounded-circle flex-shrink-0 d-none d-flex align-items-center justify-content-center fw-bold review-avatar">
                                 {{ $initial }}
                             </div>
                         @else
-                            <div class="rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center fw-bold"
-                                 style="width:48px;height:48px;background:var(--accent-color,#90bb13);color:#fff;font-size:1.1rem;">
+                            <div class="rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center fw-bold review-avatar">
                                 {{ $initial }}
                             </div>
                         @endif
@@ -96,15 +93,13 @@
                     {{-- Estrellas --}}
                     <div class="mb-2">
                         @for($i = 1; $i <= 5; $i++)
-                            <i class="fas fa-star {{ $i <= $stars ? 'text-warning' : 'text-muted' }}"
-                               style="font-size:.8rem;"></i>
+                            <i class="fas fa-star {{ $i <= $stars ? 'text-warning' : 'text-muted' }} fs-8"></i>
                         @endfor
                     </div>
 
                     {{-- Comentario --}}
                     @if($comment)
-                        <p class="text-muted small mb-0"
-                           style="line-height:1.6;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">
+                        <p class="text-muted small mb-0 line-clamp-4">
                             {{ $comment }}
                         </p>
                     @endif

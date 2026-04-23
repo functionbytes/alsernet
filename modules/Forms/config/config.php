@@ -88,6 +88,11 @@ return [
         'counters_ttl_seconds' => 60,
     ],
 
+    'pii' => [
+        'field_types' => ['email', 'tel'],
+        'keywords' => ['email', 'phone', 'name', 'telefon', 'nombre'],
+    ],
+
     'import' => [
         'max_fields' => 100,
         'max_file_bytes' => 512 * 1024,

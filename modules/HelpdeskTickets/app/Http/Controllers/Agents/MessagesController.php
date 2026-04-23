@@ -23,6 +23,8 @@ class MessagesController extends Controller
 
     public function store(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
+        $this->authorize('update', $ticket);
+
         $validated = $request->validate([
             'body' => 'required|string|max:65535',
             'is_internal' => 'boolean',

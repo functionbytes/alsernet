@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Forms\Http\Requests\BulkActionInboxRequest;
+use Modules\Forms\Http\Requests\UpdateManageInboxRequest;
 use Modules\Forms\Http\Requests\UploadSubmissionFileRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
@@ -24,14 +26,14 @@ class FormsInboxController extends Controller
     {
         $this->authorize('Forms.submissions.index');
 
-        $query = FormSubmission::query()->with(['form', 'assignedTo', 'values']);
+        $query = FormSubmission::query()->with(['form', 'assignedTo']);
 
         $this->applyFilters($query, $request);
 
         $submissions = $query->latest()->paginate(config('pagination.forms_submissions'))->withQueryString();
         $stats = $this->buildStats();
-        $forms = Form::orderBy('name')->get(['id', 'name']);
-        $users = User::orderBy('firstname')->get(['id', 'firstname', 'lastname']);
+        $forms = Form::orderBy('name')->limit(200)->get(['id', 'name']);
+        $users = User::orderBy('firstname')->limit(200)->get(['id', 'firstname', 'lastname']);
 
         $sourcePages = $this->topSourcePages();
 
@@ -64,14 +66,17 @@ class FormsInboxController extends Controller
             return collect();
         }
 
-        return \DB::table('form_submissions')
-            ->join('pages', 'pages.id', '=', 'form_submissions.source_page_id')
-            ->select('pages.id', 'pages.title', \DB::raw('COUNT(*) as submissions_count'))
-            ->whereNotNull('form_submissions.source_page_id')
-            ->groupBy('pages.id', 'pages.title')
-            ->orderByDesc('submissions_count')
-            ->limit(20)
-            ->get();
+        return Cache::remember('forms:inbox:top_source_pages', 300, function () {
+            return Page::query()
+                ->select('pages.id', 'pages.title')
+                ->selectRaw('COUNT(form_submissions.id) as submissions_count')
+                ->join('form_submissions', 'pages.id', '=', 'form_submissions.source_page_id')
+                ->whereNotNull('form_submissions.source_page_id')
+                ->groupBy('pages.id', 'pages.title')
+                ->orderByDesc('submissions_count')
+                ->limit(20)
+                ->get();
+        });
     }
 
     public function show(FormSubmission $submission): View
@@ -82,9 +87,10 @@ class FormsInboxController extends Controller
 
         if (! $submission->is_read) {
             $submission->update(['is_read' => true]);
+            Cache::forget('forms:inbox:stats:'.auth()->id());
         }
 
-        $users = User::orderBy('firstname')->get(['id', 'firstname', 'lastname']);
+        $users = User::orderBy('firstname')->limit(200)->get(['id', 'firstname', 'lastname']);
 
         return view('forms::inbox.show', compact('submission', 'users'));
     }
@@ -102,13 +108,13 @@ class FormsInboxController extends Controller
             $submission->update(['is_read' => true]);
         }
 
-        $users = User::orderBy('firstname')->get(['id', 'firstname', 'lastname']);
+        $users = User::orderBy('firstname')->limit(200)->get(['id', 'firstname', 'lastname']);
         $citizenInfo = $this->extractCitizenInfo($submission);
 
         return view('forms::inbox.manage', compact('submission', 'users', 'citizenInfo'));
     }
 
-    public function updateManage(Request $request, FormSubmission $submission): JsonResponse
+    public function updateManage(UpdateManageInboxRequest $request, FormSubmission $submission): JsonResponse
     {
         $this->authorize('Forms.submissions.edit');
 
@@ -159,6 +165,8 @@ class FormsInboxController extends Controller
         }
 
         $submission->save();
+
+        Cache::forget('forms:inbox:stats:'.auth()->id());
 
         return response()->json(['success' => true, 'message' => 'Cambios guardados correctamente']);
     }
@@ -212,6 +220,8 @@ class FormsInboxController extends Controller
             'unmark_spam' => $query->update(['is_spam' => false]),
             'delete' => $query->delete(),
         };
+
+        Cache::forget('forms:inbox:stats:'.auth()->id());
 
         return response()->json(['success' => true, 'message' => "{$count} registro(s) procesados.", 'count' => $count]);
     }
@@ -288,13 +298,28 @@ class FormsInboxController extends Controller
      */
     private function buildStats(): array
     {
-        return [
-            'total' => FormSubmission::query()->where('is_spam', false)->count(),
-            'unread' => FormSubmission::query()->where('is_read', false)->where('is_spam', false)->count(),
-            'spam' => FormSubmission::query()->where('is_spam', true)->count(),
-            'starred' => FormSubmission::query()->where('is_starred', true)->count(),
-            'assigned_to_me' => FormSubmission::query()->where('assigned_to', auth()->id())->count(),
-        ];
+        $userId = auth()->id();
+        $cacheKey = "forms:inbox:stats:{$userId}";
+
+        return Cache::remember($cacheKey, 30, function () use ($userId) {
+            $row = FormSubmission::query()
+                ->selectRaw('
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_read = 0 AND is_spam = 0 THEN 1 ELSE 0 END) as unread,
+                    SUM(CASE WHEN is_spam = 1 THEN 1 ELSE 0 END) as spam,
+                    SUM(CASE WHEN is_starred = 1 THEN 1 ELSE 0 END) as starred,
+                    SUM(CASE WHEN assigned_to = ? THEN 1 ELSE 0 END) as assigned_to_me
+                ', [$userId])
+                ->first();
+
+            return [
+                'total' => (int) $row->total,
+                'unread' => (int) $row->unread,
+                'spam' => (int) $row->spam,
+                'starred' => (int) $row->starred,
+                'assigned_to_me' => (int) $row->assigned_to_me,
+            ];
+        });
     }
 
     /**
@@ -304,38 +329,25 @@ class FormsInboxController extends Controller
      */
     private function extractCitizenInfo(FormSubmission $submission): array
     {
-        $info = ['name' => null, 'lastname' => null, 'phone' => null];
+        $findValue = function (array $keywords) use ($submission): ?string {
+            $found = $submission->values->first(function ($value) use ($keywords) {
+                $key = strtolower($value->field_key ?? '');
+                foreach ($keywords as $keyword) {
+                    if (str_contains($key, $keyword)) {
+                        return true;
+                    }
+                }
 
-        foreach ($submission->values as $value) {
-            $key = strtolower($value->field_key ?? '');
+                return false;
+            });
 
-            if (! $info['name'] && (
-                str_contains($key, 'nombre') || str_contains($key, 'name') ||
-                str_contains($key, 'first') || str_contains($key, 'primer')
-            )) {
-                $info['name'] = $value->value;
+            return $found?->value;
+        };
 
-                continue;
-            }
-
-            if (! $info['lastname'] && (
-                str_contains($key, 'apellido') || str_contains($key, 'lastname') ||
-                str_contains($key, 'last') || str_contains($key, 'segundo')
-            )) {
-                $info['lastname'] = $value->value;
-
-                continue;
-            }
-
-            if (! $info['phone'] && (
-                str_contains($key, 'telefon') || str_contains($key, 'phone') ||
-                str_contains($key, 'celular') || str_contains($key, 'movil') ||
-                str_contains($key, 'tel')
-            )) {
-                $info['phone'] = $value->value;
-            }
-        }
-
-        return $info;
+        return [
+            'name' => $findValue(['nombre', 'name', 'first', 'primer']),
+            'lastname' => $findValue(['apellido', 'lastname', 'last', 'segundo']),
+            'phone' => $findValue(['telefon', 'phone', 'celular', 'movil', 'tel']),
+        ];
     }
 }

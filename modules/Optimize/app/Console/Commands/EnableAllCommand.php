@@ -3,6 +3,7 @@
 namespace Modules\Optimize\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Modules\Core\Models\Setting;
 
 /**
@@ -32,7 +33,9 @@ class EnableAllCommand extends Command
         'optimize.insert_dns_prefetch',
         'optimize.inject_font_display',
         'optimize.inject_critical_preload',
+        'optimize.inject_critical_css',
         'optimize.add_image_dimensions',
+        'optimize.add_image_decoding',
         'optimize.cache_control_headers',
         'optimize.rewrite_min_assets',
         'optimize.link_preload_header',
@@ -40,10 +43,12 @@ class EnableAllCommand extends Command
 
     public function handle(): int
     {
-        foreach (self::ALL_KEYS as $key) {
-            Setting::set($key, '1');
-        }
-        Setting::set('optimize.cache_control_ttl', (string) max(60, (int) $this->option('ttl')));
+        DB::transaction(function () {
+            foreach (self::ALL_KEYS as $key) {
+                Setting::set($key, '1');
+            }
+            Setting::set('optimize.cache_control_ttl', (string) max(60, (int) $this->option('ttl')));
+        });
         // Setting::set() already persists each row and invalidates its
         // per-key cache. No explicit ::save() is needed — calling it
         // statically throws "Non-static method save() cannot be called

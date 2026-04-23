@@ -5,6 +5,7 @@ namespace Modules\System\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -30,58 +31,64 @@ class TranslationController extends Controller
      */
     public function index(Request $request): View
     {
-        // Detectar dinámicamente todos los archivos de traducción
-        $baseLocale = 'es';
-        $basePath = resource_path("lang/{$baseLocale}");
-        $availableFiles = [];
+        $cacheKey = 'system:translations_index';
+        $data = Cache::remember($cacheKey, 3600, function () {
+            $baseLocale = 'es';
+            $basePath = resource_path("lang/{$baseLocale}");
+            $availableFiles = [];
 
-        if (File::isDirectory($basePath)) {
-            $files = File::files($basePath);
-            foreach ($files as $file) {
-                if ($file->getExtension() === 'php') {
-                    $filename = $file->getFilenameWithoutExtension();
-                    $availableFiles[$filename] = $this->translationFileLabels[$filename] ?? ucfirst(str_replace('_', ' ', $filename));
+            if (File::isDirectory($basePath)) {
+                $files = File::files($basePath);
+                foreach ($files as $file) {
+                    if ($file->getExtension() === 'php') {
+                        $filename = $file->getFilenameWithoutExtension();
+                        $availableFiles[$filename] = $this->translationFileLabels[$filename] ?? ucfirst(str_replace('_', ' ', $filename));
+                    }
                 }
             }
-        }
 
-        // Agrupar por archivo
-        $translationsByFile = [];
+            $translationsByFile = [];
 
-        foreach ($availableFiles as $file => $label) {
-            $fileData = [
-                'file' => $file,
-                'label' => $label,
-                'locales' => [],
+            foreach ($availableFiles as $file => $label) {
+                $fileData = [
+                    'file' => $file,
+                    'label' => $label,
+                    'locales' => [],
+                ];
+
+                foreach ($this->availableLocales as $locale) {
+                    $path = resource_path("lang/{$locale}/{$file}.php");
+
+                    if (File::exists($path)) {
+                        $fileContent = File::getRequire($path);
+
+                        $fileData['locales'][] = [
+                            'locale' => $locale,
+                            'locale_label' => $this->getLocaleLabel($locale),
+                            'path' => $path,
+                            'content' => $fileContent,
+                            'count' => $this->countTranslationKeys($fileContent),
+                        ];
+                    }
+                }
+
+                if (! empty($fileData['locales'])) {
+                    $translationsByFile[$file] = $fileData;
+                }
+            }
+
+            return [
+                'translationsByFile' => $translationsByFile,
+                'availableFiles' => $availableFiles,
             ];
-
-            foreach ($this->availableLocales as $locale) {
-                $path = resource_path("lang/{$locale}/{$file}.php");
-
-                if (File::exists($path)) {
-                    $fileContent = File::getRequire($path);
-
-                    $fileData['locales'][] = [
-                        'locale' => $locale,
-                        'locale_label' => $this->getLocaleLabel($locale),
-                        'path' => $path,
-                        'content' => $fileContent,
-                        'count' => $this->countTranslationKeys($fileContent),
-                    ];
-                }
-            }
-
-            if (! empty($fileData['locales'])) {
-                $translationsByFile[$file] = $fileData;
-            }
-        }
+        });
 
         $searchQuery = $request->input('search', '');
 
         return view('theme.views.backups.translations.index', [
-            'translationsByFile' => $translationsByFile,
+            'translationsByFile' => $data['translationsByFile'],
             'locales' => $this->availableLocales,
-            'availableFiles' => $availableFiles,
+            'availableFiles' => $data['availableFiles'],
             'searchQuery' => $searchQuery,
         ]);
     }

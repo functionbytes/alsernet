@@ -78,19 +78,15 @@ class SeoTemplateController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $templates = SeoTemplate::whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($templates as $template) {
-            match ($validated['action']) {
-                'activate' => $template->update(['is_active' => true]),
-                'deactivate' => $template->update(['is_active' => false]),
-                'delete' => $template->delete(),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'activate' => SeoTemplate::whereIn('id', $ids)->update(['is_active' => true]),
+            'deactivate' => SeoTemplate::whereIn('id', $ids)->update(['is_active' => false]),
+            'delete' => SeoTemplate::whereIn('id', $ids)->each->delete(),
+        };
 
-        return response()->json(['success' => true, 'count' => $count]);
+        return response()->json(['success' => true, 'count' => count($ids)]);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Captcha\Facades\Captcha;
 use Modules\Forms\Http\Requests\TrackAbandonRequest;
@@ -101,14 +102,18 @@ class FormPublicController extends Controller
 
         $request->validate($rules, [], $attributeNames);
 
-        $submission = $this->submissionService->process($form, $request);
+        $submission = DB::transaction(function () use ($form, $request) {
+            $submission = $this->submissionService->process($form, $request);
 
-        if ($request->filled('_session_token')) {
-            FormAbandonTracking::query()
-                ->where('form_id', $form->id)
-                ->where('session_token', $request->_session_token)
-                ->update(['is_completed' => true]);
-        }
+            if ($request->filled('_session_token')) {
+                FormAbandonTracking::query()
+                    ->where('form_id', $form->id)
+                    ->where('session_token', $request->_session_token)
+                    ->update(['is_completed' => true]);
+            }
+
+            return $submission;
+        });
 
         if ($request->expectsJson()) {
             return response()->json([

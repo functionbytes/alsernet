@@ -19,17 +19,19 @@ class RobotsController extends Controller
         // Traducciones con noindex
         PageTranslation::where('seo_noindex', true)
             ->where('status', 'published')
-            ->get(['slug', 'locale'])
-            ->each(function ($trans) use (&$noindexUrls, $prefix) {
-                $noindexUrls[] = '/'.($prefix ? $prefix.'/'.$trans->slug : $trans->slug);
+            ->chunk(500, function ($translations) use (&$noindexUrls, $prefix) {
+                foreach ($translations as $trans) {
+                    $noindexUrls[] = '/'.($prefix ? $prefix.'/'.$trans->slug : $trans->slug);
+                }
             });
 
         // Páginas base con noindex (sin traducción)
         Page::where('seo_noindex', true)
             ->published()
-            ->get(['slug'])
-            ->each(function ($page) use (&$noindexUrls, $prefix) {
-                $noindexUrls[] = '/'.($prefix ? $prefix.'/'.$page->slug : $page->slug);
+            ->chunk(500, function ($pages) use (&$noindexUrls, $prefix) {
+                foreach ($pages as $page) {
+                    $noindexUrls[] = '/'.($prefix ? $prefix.'/'.$page->slug : $page->slug);
+                }
             });
 
         $sitemapUrl = url('/sitemap.xml');

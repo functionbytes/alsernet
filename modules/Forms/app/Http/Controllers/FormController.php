@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -46,18 +47,31 @@ class FormController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $stats = DB::table('forms')->selectRaw('
-            COUNT(*) as total_forms,
-            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_forms
-        ')->first();
+        $stats = Cache::remember('forms:admin:stats', 60, function () {
+            $formStats = Form::query()
+                ->selectRaw('
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
+                ')
+                ->first();
 
-        $submissionStats = DB::table('form_submissions')->selectRaw('
-            COUNT(*) as total,
-            SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today
-        ')->first();
+            $submissionStats = FormSubmission::query()
+                ->selectRaw('
+                    COUNT(*) as total,
+                    SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today
+                ')
+                ->first();
 
-        $totalSubmissions = (int) $submissionStats->total;
-        $submissionsToday = (int) $submissionStats->today;
+            return (object) [
+                'total_forms' => (int) $formStats->total,
+                'active_forms' => (int) $formStats->active,
+                'total_submissions' => (int) $submissionStats->total,
+                'submissions_today' => (int) $submissionStats->today,
+            ];
+        });
+
+        $totalSubmissions = $stats->total_submissions;
+        $submissionsToday = $stats->submissions_today;
 
         $categories = FormCategory::query()->active()->ordered()->get();
 
@@ -83,6 +97,8 @@ class FormController extends Controller
 
         $this->service->createInitialVersion($form);
 
+        Cache::forget('forms:admin:stats');
+
         session()->flash('success', __('forms::messages.crud.form_created'));
 
         return redirect()->route('settings.forms.edit', $form);
@@ -92,9 +108,23 @@ class FormController extends Controller
     {
         $this->authorize('Forms.forms.index');
 
-        $form->load(['category', 'fields' => fn ($q) => $q->ordered(), 'submissions']);
+        $form->load(['category', 'fields' => fn ($q) => $q->ordered()]);
 
-        return view('forms::forms.show', compact('form'));
+        $stats = FormSubmission::query()
+            ->where('form_id', $form->id)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
+                SUM(CASE WHEN is_spam = 1 THEN 1 ELSE 0 END) as spam
+            ')
+            ->first();
+
+        return view('forms::forms.show', [
+            'form' => $form,
+            'totalSubmissions' => (int) $stats->total,
+            'unreadCount' => (int) $stats->unread,
+            'spamCount' => (int) $stats->spam,
+        ]);
     }
 
     public function edit(Form $form): View
@@ -139,21 +169,18 @@ class FormController extends Controller
     public function bulkAction(BulkActionFormRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $ids = $validated['ids'];
 
-        $count = DB::transaction(function () use ($validated): int {
-            $forms = Form::query()->whereIn('id', $validated['ids'])->get();
-            $processed = 0;
+        $count = DB::transaction(function () use ($validated, $ids): int {
+            match ($validated['action']) {
+                'activate' => Form::query()->whereIn('id', $ids)->update(['is_active' => true]),
+                'deactivate' => Form::query()->whereIn('id', $ids)->update(['is_active' => false]),
+                'delete' => Form::query()->whereIn('id', $ids)->get()->each->delete(),
+            };
 
-            foreach ($forms as $form) {
-                match ($validated['action']) {
-                    'activate' => $form->update(['is_active' => true]),
-                    'deactivate' => $form->update(['is_active' => false]),
-                    'delete' => $form->delete(),
-                };
-                $processed++;
-            }
+            Cache::forget('forms:admin:stats');
 
-            return $processed;
+            return count($ids);
         });
 
         return response()->json(['success' => true, 'count' => $count]);
@@ -168,7 +195,13 @@ class FormController extends Controller
                 ->with('error', __('forms::messages.crud.form_delete_has_submissions'));
         }
 
-        $form->delete();
+        DB::transaction(function () use ($form): void {
+            $form->flushCountersCache();
+            $form->flushShortcodeCache();
+            $form->delete();
+        });
+
+        Cache::forget('forms:admin:stats');
 
         session()->flash('success', __('forms::messages.crud.form_deleted'));
 

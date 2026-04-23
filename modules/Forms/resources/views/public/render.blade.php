@@ -135,7 +135,7 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
     var jqvSrc   = 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js';
     var localeSrc = @json($validateLocale ? 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_'.$validateLocale.'.js' : null);
     var select2Src = '{{ asset('core/select2/js/select2.min.js') }}';
-    var formsSrc   = '{{ asset('modules/forms/js/forms.js') }}';
+    var formsSrc   = '{{ asset('modules/forms/js/forms.min.js') }}';
 
     waitForJQuery(function () {
         loadScript(jqvSrc, function () {

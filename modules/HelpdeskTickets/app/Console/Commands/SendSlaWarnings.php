@@ -52,7 +52,7 @@ class SendSlaWarnings extends Command
             ->where('sla_first_response_due_at', '>', $now)
             ->where('sla_paused', false)
             ->with(['status', 'category', 'assignee', 'group', 'slaPolicy'])
-            ->get();
+            ->cursor();
 
         foreach ($tickets as $ticket) {
             // Calculate percentage of time elapsed
@@ -118,7 +118,7 @@ class SendSlaWarnings extends Command
             ->where('sla_resolution_due_at', '>', $now)
             ->where('sla_paused', false)
             ->with(['status', 'category', 'assignee', 'group', 'slaPolicy'])
-            ->get();
+            ->cursor();
 
         foreach ($tickets as $ticket) {
             // Calculate percentage of time elapsed

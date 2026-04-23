@@ -21,12 +21,14 @@ class PageCacheService
 
     private const CACHED_COUNT_KEY = 'pages:stats:cached_count';
 
+    private const CACHE_VERSION_KEY = 'pages:cache:version';
+
     /**
      * Check if page caching is enabled
      */
     public static function isEnabled(): bool
     {
-        return Setting::get(self::PAGES_ENABLED_KEY) === '1';
+        return Cache::remember('page_cache:enabled', 60, fn () => Setting::get(self::PAGES_ENABLED_KEY) === '1');
     }
 
     /**
@@ -34,7 +36,7 @@ class PageCacheService
      */
     public static function getTtlInMinutes(): int
     {
-        return (int) Setting::get(self::PAGE_TTL_KEY, 1440);
+        return (int) Cache::remember('page_cache:ttl', 60, fn () => Setting::get(self::PAGE_TTL_KEY, 1440));
     }
 
     /**
@@ -51,8 +53,26 @@ class PageCacheService
     public static function getCacheKey(string $slug, ?string $locale = null): string
     {
         $locale = $locale ?? app()->getLocale();
+        $version = self::getCacheVersion();
 
-        return self::CACHE_PREFIX.$locale.':'.$slug;
+        return self::CACHE_PREFIX.$version.':'.$locale.':'.$slug;
+    }
+
+    /**
+     * Get the current cache version (used for tag-less invalidation).
+     */
+    private static function getCacheVersion(): int
+    {
+        return (int) Cache::get(self::CACHE_VERSION_KEY, 1);
+    }
+
+    /**
+     * Increment the cache version to invalidate all page cache entries
+     * without touching other application cache keys.
+     */
+    private static function incrementCacheVersion(): void
+    {
+        Cache::increment(self::CACHE_VERSION_KEY);
     }
 
     /**
@@ -188,13 +208,14 @@ class PageCacheService
         if (self::supportsTagging()) {
             Cache::tags(['pages'])->flush();
         } else {
-            // For non-taggable drivers (file, array), full flush is the only safe option
-            // since Laravel hashes cache keys and partial flush is not supported
-            Cache::flush();
+            // For non-taggable drivers, increment the cache version so all
+            // existing keys become unreachable (they expire naturally by TTL).
+            self::incrementCacheVersion();
         }
 
         Cache::forget('pages:cache:blacklist');
         Cache::put(self::CACHED_COUNT_KEY, 0);
+        self::clearStats();
 
         self::auditLog('flushed_all', null, null);
         Log::info('All page cache flushed');
@@ -335,12 +356,16 @@ class PageCacheService
     private static function auditLog(string $action, ?int $pageId, ?string $slug): void
     {
         try {
-            PageCacheAudit::create([
+            $payload = [
                 'action' => $action,
                 'page_id' => $pageId,
                 'slug' => $slug,
                 'user_id' => auth()->id(),
-            ]);
+            ];
+
+            dispatch(function () use ($payload) {
+                PageCacheAudit::create($payload);
+            })->afterResponse();
         } catch (\Exception $e) {
             Log::error('Failed to record cache audit', ['error' => $e->getMessage()]);
         }

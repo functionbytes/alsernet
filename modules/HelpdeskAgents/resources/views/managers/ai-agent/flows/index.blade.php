@@ -94,7 +94,7 @@
                         <select name="trigger_type" class="form-select w-auto flex-shrink-0">
                             <option value="">Todos los triggers</option>
                             @foreach ($triggers as $key => $label)
-                                <option value="{{ $key }}" {{ request('trigger') === $key ? 'selected' : '' }}>
+                                <option value="{{ $key }}" {{ request('trigger_type') === $key ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
@@ -102,7 +102,7 @@
                         <button type="submit" class="btn btn-primary flex-shrink-0">
                             <i class="fas fa-search"></i>
                         </button>
-                        @if(request('search') || request('status') || request('trigger'))
+                        @if(request('search') || request('status') || request('trigger_type'))
                             <a href="{{ route('manager.helpdesk.ai.flows.index') }}"
                                class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
                                 <i class="fas fa-times"></i>
@@ -213,7 +213,7 @@
                     <div class="text-center py-5">
                         <i class="fas fa-diagram-project fa-3x mb-3 text-muted opacity-50"></i>
                         <h5 class="fw-bold mb-2">
-                            @if(request('search') || request('status') || request('trigger'))
+                            @if(request('search') || request('status') || request('trigger_type'))
                                 No se encontraron resultados
                             @else
                                 No hay flujos configurados
@@ -262,10 +262,10 @@
 <script>
 $(document).ready(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
+        toastr.success(@json(session('success')), 'Exito');
     @endif
     @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
+        toastr.error(@json(session('error')), 'Error');
     @endif
 
     $(document).on('click', '.delete-btn', function () {

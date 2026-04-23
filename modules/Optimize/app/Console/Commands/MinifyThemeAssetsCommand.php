@@ -3,113 +3,75 @@
 namespace Modules\Optimize\Console\Commands;
 
 use Illuminate\Console\Command;
-use Symfony\Component\Finder\Finder;
+use Modules\Optimize\Services\ThemeOptimizerService;
 
 /**
- * Genera archivos `.min.css` y `.min.js` junto a los CSS/JS originales
- * de un theme. El middleware `RewriteAssetsToMinified` (si está activo)
- * reescribe las URLs de assets hacia la versión minificada en runtime.
+ * Genera archivos `.min.css` y `.min.js` de los assets declarados en
+ * config.php del tema activo. Solo toca los archivos listados en
+ * `assets.css` y `assets.js`, no todo el directorio public/.
  *
- * Ataca "Minifica los archivos CSS" (136 KB) y "Minifica los recursos
- * JavaScript" (26 KB) en PageSpeed.
- *
- * Minificación simple (string-based), suficiente para CSS/JS de terceros
- * ya mayormente bien-formados. No es un parser — no intenta tree-shake.
+ * El middleware `RewriteMinAssets` (si está activo) reescribe las URLs
+ * hacia la versión .min en runtime.
  */
 class MinifyThemeAssetsCommand extends Command
 {
     protected $signature = 'optimize:minify-theme-assets
-                            {slug : carpeta del theme en platform/themes}
+                            {--theme= : Tema objetivo (por defecto el activo)}
                             {--force : Regenerar aunque el .min sea más reciente que el origen}';
 
-    protected $description = 'Generar .min.css y .min.js de los assets de un theme';
+    protected $description = 'Generar .min.css y .min.js de los assets declarados del tema';
 
-    public function handle(): int
+    public function handle(ThemeOptimizerService $optimizer): int
     {
-        $slug = $this->argument('slug');
-        $root = base_path("platform/themes/{$slug}/public");
-        if (! is_dir($root)) {
-            $this->error("Theme no encontrado: {$root}");
-
-            return self::FAILURE;
-        }
-
+        $theme = $this->option('theme') ?: $optimizer->getActiveTheme();
         $force = (bool) $this->option('force');
 
-        $cssBefore = $cssAfter = 0;
-        $jsBefore = $jsAfter = 0;
-        $cssCount = $jsCount = 0;
+        $this->info("Tema: {$theme}");
+        $this->newLine();
 
-        $finder = (new Finder)->files()->in($root)->name(['*.css', '*.js'])
-            ->notName('*.min.css')->notName('*.min.js');
+        $assets = $optimizer->getDeclaredAssets($theme);
 
-        foreach ($finder as $file) {
-            $path = $file->getRealPath();
-            $ext = strtolower($file->getExtension());
-            $minPath = preg_replace('/\.'.$ext.'$/', '.min.'.$ext, $path);
+        if (empty($assets)) {
+            $this->warn('No hay assets declarados en config.php para minificar.');
 
-            if (! $force && is_file($minPath) && filemtime($minPath) >= filemtime($path)) {
-                continue;
-            }
-
-            $original = file_get_contents($path);
-            $minified = $ext === 'css'
-                ? self::minifyCss($original)
-                : self::minifyJs($original);
-
-            file_put_contents($minPath, $minified);
-
-            if ($ext === 'css') {
-                $cssCount++;
-                $cssBefore += strlen($original);
-                $cssAfter += strlen($minified);
-            } else {
-                $jsCount++;
-                $jsBefore += strlen($original);
-                $jsAfter += strlen($minified);
-            }
+            return self::SUCCESS;
         }
 
-        $this->info("✔ CSS minificados: {$cssCount}  (".self::fmt($cssBefore).' → '.self::fmt($cssAfter).', '.self::pct($cssBefore, $cssAfter).' menos)');
-        $this->info("✔ JS minificados:  {$jsCount}  (".self::fmt($jsBefore).' → '.self::fmt($jsAfter).', '.self::pct($jsBefore, $jsAfter).' menos)');
+        $this->info('Assets declarados: '.count($assets));
+        foreach (array_keys($assets) as $name) {
+            $this->line("  - {$name}");
+        }
+        $this->newLine();
+
+        $result = $optimizer->minifyDeclaredAssets($theme, $force);
+
+        $css = $result['css'];
+        $js = $result['js'];
+
+        if ($css['count'] > 0) {
+            $this->info("✔ CSS minificados: {$css['count']}  (".$this->fmt($css['before']).' → '.$this->fmt($css['after']).', '.$this->pct($css['before'], $css['after']).' menos)');
+        } else {
+            $this->warn('CSS: todos los .min están actualizados.');
+        }
+
+        if ($js['count'] > 0) {
+            $this->info("✔ JS  minificados: {$js['count']}  (".$this->fmt($js['before']).' → '.$this->fmt($js['after']).', '.$this->pct($js['before'], $js['after']).' menos)');
+        } else {
+            $this->warn('JS: todos los .min están actualizados.');
+        }
+
         $this->newLine();
         $this->line('Activa `optimize.rewrite_min_assets` en settings para que el middleware sirva las versiones .min.');
 
         return self::SUCCESS;
     }
 
-    private static function minifyCss(string $css): string
-    {
-        // Remove comments /* ... */
-        $css = preg_replace('!/\*[\s\S]*?\*/!', '', $css) ?? $css;
-        // Collapse whitespace around symbols
-        $css = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $css) ?? $css;
-        // Collapse consecutive whitespace
-        $css = preg_replace('/\s+/', ' ', $css) ?? $css;
-        // Remove last ; before }
-        $css = preg_replace('/;}/', '}', $css) ?? $css;
-
-        return trim($css);
-    }
-
-    private static function minifyJs(string $js): string
-    {
-        // VERY conservative — just strip // comments at the start of lines and
-        // /* ... */ blocks, plus collapse blank lines. A real JS minifier
-        // (terser) would be safer, but most theme JS is already minified.
-        $js = preg_replace('!^\s*//[^\n]*$!m', '', $js) ?? $js;
-        $js = preg_replace('!/\*[\s\S]*?\*/!', '', $js) ?? $js;
-        $js = preg_replace('/\n\s*\n/', "\n", $js) ?? $js;
-
-        return trim($js);
-    }
-
-    private static function fmt(int $bytes): string
+    private function fmt(int $bytes): string
     {
         return $bytes >= 1024 ? number_format($bytes / 1024, 1).' KB' : $bytes.' B';
     }
 
-    private static function pct(int $before, int $after): string
+    private function pct(int $before, int $after): string
     {
         if ($before <= 0) {
             return '0 %';

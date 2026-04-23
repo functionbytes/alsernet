@@ -1,12 +1,24 @@
 @can('cookie.settings.view')
 @php
-$stats = \Illuminate\Support\Facades\Cache::remember('cookie.widget.stats', 300, fn () => [
-    'total'      => \Modules\Cookie\Models\CookieConsentLog::count(),
-    'accept_all' => \Modules\Cookie\Models\CookieConsentLog::where('action', 'accept_all')->count(),
-    'reject_all' => \Modules\Cookie\Models\CookieConsentLog::where('action', 'reject_all')->count(),
-    'custom'     => \Modules\Cookie\Models\CookieConsentLog::where('action', 'custom')->count(),
-    'today'      => \Modules\Cookie\Models\CookieConsentLog::whereDate('created_at', today())->count(),
-]);
+$stats = \Illuminate\Support\Facades\Cache::remember('cookie.widget.stats', 300, function () {
+    $row = \Modules\Cookie\Models\CookieConsentLog::query()
+        ->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN action = ? THEN 1 ELSE 0 END) as accept_all,
+            SUM(CASE WHEN action = ? THEN 1 ELSE 0 END) as reject_all,
+            SUM(CASE WHEN action = ? THEN 1 ELSE 0 END) as custom,
+            SUM(CASE WHEN DATE(created_at) = ? THEN 1 ELSE 0 END) as today
+        ', ['accept_all', 'reject_all', 'custom', today()->toDateString()])
+        ->first();
+
+    return [
+        'total'      => (int) $row->total,
+        'accept_all' => (int) $row->accept_all,
+        'reject_all' => (int) $row->reject_all,
+        'custom'     => (int) $row->custom,
+        'today'      => (int) $row->today,
+    ];
+});
 $acceptRate = $stats['total'] > 0 ? round($stats['accept_all'] / $stats['total'] * 100) : 0;
 $progressClass = $acceptRate >= 60 ? 'bg-success' : ($acceptRate >= 40 ? 'bg-warning' : 'bg-danger');
 @endphp

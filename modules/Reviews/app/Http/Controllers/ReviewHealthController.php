@@ -57,9 +57,10 @@ class ReviewHealthController extends Controller
     {
         $count = $this->countPendingSyncJobs();
 
+        $thresholds = config('reviews.general.health_thresholds.pending_syncs', ['critical' => 50, 'warning' => 20]);
         $status = match (true) {
-            $count > 50 => 'critical',
-            $count > 20 => 'warning',
+            $count > $thresholds['critical'] => 'critical',
+            $count > $thresholds['warning'] => 'warning',
             default => 'ok',
         };
 
@@ -71,9 +72,10 @@ class ReviewHealthController extends Controller
     {
         $count = ReviewReply::query()->where('status', ReplyStatus::FAILED)->count();
 
+        $thresholds = config('reviews.general.health_thresholds.failed_replies', ['critical' => 20, 'warning' => 5]);
         $status = match (true) {
-            $count > 20 => 'critical',
-            $count > 5 => 'warning',
+            $count > $thresholds['critical'] => 'critical',
+            $count > $thresholds['warning'] => 'warning',
             default => 'ok',
         };
 
@@ -93,9 +95,10 @@ class ReviewHealthController extends Controller
 
         $minutesAgo = (int) now()->diffInMinutes($latest);
 
+        $thresholds = config('reviews.general.health_thresholds.last_sync_minutes', ['critical' => 60, 'warning' => 30]);
         $status = match (true) {
-            $minutesAgo > 60 => 'critical',
-            $minutesAgo > 30 => 'warning',
+            $minutesAgo > $thresholds['critical'] => 'critical',
+            $minutesAgo > $thresholds['warning'] => 'warning',
             default => 'ok',
         };
 

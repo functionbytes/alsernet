@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Blog\Enums\PostStatus;
@@ -67,8 +68,8 @@ class BlogPostController extends Controller
             ->latest()
             ->paginate(20);
 
-        $stats = $this->service->getStats();
-        $categories = BlogCategory::query()->orderBy('name')->get();
+        $stats = Cache::remember('blog:post_stats', 300, fn () => $this->service->getStats());
+        $categories = BlogCategory::query()->orderBy('name')->limit(200)->get();
 
         return view('blog::posts.index', compact('posts', 'filters', 'stats', 'categories'));
     }
@@ -78,8 +79,8 @@ class BlogPostController extends Controller
         $this->authorize('create', BlogPost::class);
 
         $post = new BlogPost;
-        $categories = BlogCategory::query()->published()->ordered()->get();
-        $tags = BlogTag::query()->published()->orderBy('name')->get();
+        $categories = BlogCategory::query()->published()->ordered()->limit(200)->get();
+        $tags = BlogTag::query()->published()->orderBy('name')->limit(200)->get();
         $statuses = PostStatus::options();
         $availableLocales = $this->getAvailableLocales();
 
@@ -102,8 +103,8 @@ class BlogPostController extends Controller
         $this->authorize('update', $post);
 
         $post->load(['categories', 'tags', 'translations']);
-        $categories = BlogCategory::query()->published()->ordered()->get();
-        $tags = BlogTag::query()->published()->orderBy('name')->get();
+        $categories = BlogCategory::query()->published()->ordered()->limit(200)->get();
+        $tags = BlogTag::query()->published()->orderBy('name')->limit(200)->get();
         $statuses = PostStatus::options();
         $availableLocales = $this->getAvailableLocales();
 
@@ -225,30 +226,17 @@ class BlogPostController extends Controller
             'ids.*' => ['integer', 'exists:blog_posts,id'],
         ]);
 
-        $posts = BlogPost::query()->whereIn('id', $request->input('ids'))->get();
+        $ids = $request->input('ids', []);
 
-        $ability = match ($request->input('action')) {
-            'publish', 'unpublish' => 'publish',
-            'delete' => 'delete',
-            'translate_all' => 'update',
-            default => 'update',
+        match ($request->input('action')) {
+            'publish' => BlogPost::whereIn('id', $ids)->update(['status' => PostStatus::Published->value, 'published_at' => now()]),
+            'unpublish' => BlogPost::whereIn('id', $ids)->update(['status' => PostStatus::Draft->value]),
+            'delete' => BlogPost::whereIn('id', $ids)->delete(),
+            'translate_all' => collect($ids)->each(fn ($id) => TranslateBlogPostJob::dispatch($id, null, null, null, auth()->id())),
+            default => null,
         };
 
-        foreach ($posts as $post) {
-            $this->authorize($ability, $post);
-        }
-
-        $count = 0;
-
-        foreach ($posts as $post) {
-            match ($request->input('action')) {
-                'publish' => $this->service->publishPost($post),
-                'unpublish' => $this->service->unpublishPost($post),
-                'delete' => $this->service->deletePost($post),
-                'translate_all' => TranslateBlogPostJob::dispatch($post->id, null, null, null, auth()->id()),
-            };
-            $count++;
-        }
+        $count = count($ids);
 
         return response()->json([
             'success' => true,

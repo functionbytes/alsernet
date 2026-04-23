@@ -41,16 +41,28 @@ Route::middleware(['web', 'auth'])
 
 // ─── Rutas públicas ──────────────────────────────────────────────────────────
 
-Route::middleware(['web'])
+Route::middleware(['web', 'throttle:forms.submit'])
     ->prefix('forms')
     ->name('forms.public.')
     ->group(function () {
         Route::post('/{slug}/submit', [FormPublicController::class, 'submit'])->name('submit');
-        Route::get('/embed/{slug}', [FormPublicController::class, 'embed'])->name('embed');
-        Route::get('/access/{token}', [FormPublicController::class, 'accessByToken'])->name('access');
         Route::post('/abandon/{slug}', [FormPublicController::class, 'trackAbandon'])->name('abandon');
-        Route::get('/abandon/{slug}/restore', [FormPublicController::class, 'restoreAbandoned'])->name('restore');
+    });
+
+Route::middleware(['web', 'throttle:forms.public'])
+    ->prefix('forms')
+    ->name('forms.public.')
+    ->group(function () {
+        Route::get('/embed/{slug}', [FormPublicController::class, 'embed'])->name('embed');
         Route::get('/{slug}', [FormPublicController::class, 'show'])->name('show');
+    });
+
+Route::middleware(['web'])
+    ->prefix('forms')
+    ->name('forms.public.')
+    ->group(function () {
+        Route::get('/access/{token}', [FormPublicController::class, 'accessByToken'])->name('access');
+        Route::get('/abandon/{slug}/restore', [FormPublicController::class, 'restoreAbandoned'])->name('restore');
     });
 
 // Preview público con token HMAC — sin throttle restrictivo (token es la protección)

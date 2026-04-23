@@ -24,14 +24,24 @@ class SeoDashboardController extends Controller
     public function index(): View
     {
         $metaStats = Cache::remember('seo.dashboard.meta_stats', 300, function () {
+            $row = SeoMeta::query()->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN robots NOT LIKE ? THEN 1 ELSE 0 END) as indexable,
+                SUM(CASE WHEN robots LIKE ? THEN 1 ELSE 0 END) as noindex,
+                SUM(CASE WHEN description IS NULL OR description = ? THEN 1 ELSE 0 END) as missing_description,
+                SUM(CASE WHEN og_image IS NULL OR og_image = ? THEN 1 ELSE 0 END) as missing_og_image,
+                SUM(CASE WHEN seo_score IS NOT NULL THEN 1 ELSE 0 END) as with_score,
+                AVG(CASE WHEN seo_score IS NOT NULL THEN seo_score END) as avg_score
+            ', ['%noindex%', '%noindex%', '', ''])->first();
+
             return [
-                'total' => SeoMeta::count(),
-                'indexable' => SeoMeta::whereNotLike('robots', '%noindex%')->count(),
-                'noindex' => SeoMeta::where('robots', 'LIKE', '%noindex%')->count(),
-                'missing_description' => SeoMeta::whereNull('description')->orWhere('description', '')->count(),
-                'missing_og_image' => SeoMeta::whereNull('og_image')->orWhere('og_image', '')->count(),
-                'with_score' => SeoMeta::whereNotNull('seo_score')->count(),
-                'avg_score' => round(SeoMeta::whereNotNull('seo_score')->avg('seo_score') ?? 0, 1),
+                'total' => (int) $row->total,
+                'indexable' => (int) $row->indexable,
+                'noindex' => (int) $row->noindex,
+                'missing_description' => (int) $row->missing_description,
+                'missing_og_image' => (int) $row->missing_og_image,
+                'with_score' => (int) $row->with_score,
+                'avg_score' => round($row->avg_score ?? 0, 1),
             ];
         });
 
@@ -125,8 +135,13 @@ class SeoDashboardController extends Controller
 
         // Score goal tracking
         $scoreGoal = config('Seo.score_goal', 80);
-        $totalAudited = SeoMeta::whereNotNull('seo_score')->count();
-        $meetingGoal = SeoMeta::whereNotNull('seo_score')->where('seo_score', '>=', $scoreGoal)->count();
+        $goalRow = SeoMeta::query()->selectRaw('
+            SUM(CASE WHEN seo_score IS NOT NULL THEN 1 ELSE 0 END) as total_audited,
+            SUM(CASE WHEN seo_score IS NOT NULL AND seo_score >= ? THEN 1 ELSE 0 END) as meeting_goal
+        ', [$scoreGoal])->first();
+
+        $totalAudited = (int) $goalRow->total_audited;
+        $meetingGoal = (int) $goalRow->meeting_goal;
         $goalPercent = $totalAudited > 0 ? round(($meetingGoal / $totalAudited) * 100) : 0;
 
         ['improving' => $improving, 'declining' => $declining] = Cache::remember('seo.dashboard.trending', 300, function () {

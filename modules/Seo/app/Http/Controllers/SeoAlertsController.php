@@ -20,11 +20,18 @@ class SeoAlertsController extends Controller
             ->orderByDesc('created_at')
             ->paginate(30);
 
+        $row = SeoAlert::unacknowledged()->selectRaw('
+            COUNT(*) as unacknowledged,
+            SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) as critical,
+            SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) as warning,
+            SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) as info
+        ', [SeoAlert::SEVERITY_CRITICAL, SeoAlert::SEVERITY_WARNING, SeoAlert::SEVERITY_INFO])->first();
+
         $stats = [
-            'unacknowledged' => SeoAlert::unacknowledged()->count(),
-            'critical' => SeoAlert::unacknowledged()->ofSeverity(SeoAlert::SEVERITY_CRITICAL)->count(),
-            'warning' => SeoAlert::unacknowledged()->ofSeverity(SeoAlert::SEVERITY_WARNING)->count(),
-            'info' => SeoAlert::unacknowledged()->ofSeverity(SeoAlert::SEVERITY_INFO)->count(),
+            'unacknowledged' => (int) $row->unacknowledged,
+            'critical' => (int) $row->critical,
+            'warning' => (int) $row->warning,
+            'info' => (int) $row->info,
         ];
 
         return view('Seo::settings.alerts.index', compact('alerts', 'stats'));

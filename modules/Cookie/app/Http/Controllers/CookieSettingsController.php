@@ -28,6 +28,7 @@ class CookieSettingsController extends Controller
         $pages = Page::query()
             ->where('status', 'published')
             ->orderBy('title')
+            ->limit(500)
             ->get(['id', 'title', 'slug']);
 
         return view('cookie::settings.index', [
@@ -53,7 +54,7 @@ class CookieSettingsController extends Controller
         ];
 
         foreach ($checkboxes as $checkbox) {
-            $data[$checkbox] = $request->has($checkbox) ? '1' : '0';
+            $data[$checkbox] = $request->input($checkbox) === '1' ? '1' : '0';
         }
 
         foreach ($data as $key => $value) {
@@ -103,6 +104,7 @@ class CookieSettingsController extends Controller
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date', 'action')
             ->orderBy('date')
+            ->limit(31)
             ->get()
             ->groupBy('date')
             ->map(fn ($group) => [

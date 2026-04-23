@@ -19,9 +19,14 @@ class SeoReportController extends Controller
 
     public function index(): View
     {
+        $metaRow = SeoMeta::query()->selectRaw('
+            COUNT(*) as total,
+            AVG(CASE WHEN seo_score IS NOT NULL THEN seo_score END) as avg_score
+        ')->first();
+
         $stats = [
-            'total_metas' => SeoMeta::count(),
-            'avg_score' => round(SeoMeta::whereNotNull('seo_score')->avg('seo_score') ?? 0, 1),
+            'total_metas' => (int) $metaRow->total,
+            'avg_score' => round($metaRow->avg_score ?? 0, 1),
             'total_redirects' => SeoRedirect::count(),
         ];
 
@@ -95,9 +100,14 @@ class SeoReportController extends Controller
             ->limit(500)
             ->get();
 
+        $metaRow = SeoMeta::query()->selectRaw('
+            COUNT(*) as total,
+            AVG(CASE WHEN seo_score IS NOT NULL THEN seo_score END) as avg_score
+        ')->first();
+
         $stats = [
-            'total_metas' => SeoMeta::count(),
-            'avg_score' => round(SeoMeta::whereNotNull('seo_score')->avg('seo_score') ?? 0, 1),
+            'total_metas' => (int) $metaRow->total,
+            'avg_score' => round($metaRow->avg_score ?? 0, 1),
             'total_redirects' => SeoRedirect::count(),
             'grade_distribution' => SeoMeta::whereNotNull('seo_grade')
                 ->selectRaw('seo_grade, COUNT(*) as count')

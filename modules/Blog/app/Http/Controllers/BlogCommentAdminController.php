@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Blog\Enums\CommentStatus;
 use Modules\Blog\Models\BlogPostComment;
@@ -37,7 +38,7 @@ class BlogCommentAdminController extends Controller
         }
 
         $comments = $query->paginate(20)->withQueryString();
-        $stats = $this->commentService->getStats();
+        $stats = Cache::remember('blog:comment_stats', 300, fn () => $this->commentService->getStats());
 
         return view('blog::comments.index', compact('comments', 'stats'));
     }
@@ -68,17 +69,15 @@ class BlogCommentAdminController extends Controller
             'ids.*' => 'integer',
         ]);
 
-        $comments = BlogPostComment::whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($comments as $comment) {
-            match ($validated['action']) {
-                'approve' => $this->commentService->approveComment($comment),
-                'spam' => $this->commentService->markAsSpam($comment),
-                'delete' => $this->commentService->deleteComment($comment),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'approve' => BlogPostComment::whereIn('id', $ids)->update(['status' => CommentStatus::Approved->value]),
+            'spam' => BlogPostComment::whereIn('id', $ids)->update(['status' => CommentStatus::Spam->value]),
+            'delete' => BlogPostComment::whereIn('id', $ids)->delete(),
+        };
+
+        $count = count($ids);
 
         return response()->json(['count' => $count]);
     }

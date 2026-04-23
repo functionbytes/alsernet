@@ -21,7 +21,7 @@
     :nameKey="$nameKey"
 >
     <x-slot:label>
-        @if ($showLabel && $options['label'] !== false && $options['label_show'])
+        @if ($showLabel && $options['label'] !== false && ($options['label_show'] ?? true))
             {!! Form::customLabel($name, $options['label'], $options['label_attr']) !!}
         @endif
     </x-slot:label>

@@ -3,6 +3,7 @@
 namespace Modules\Auth\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Modules\Auth\Models\ImpersonationLog;
 use Modules\Auth\Models\LoginAttempt;
 
@@ -37,20 +38,24 @@ class PruneAuthLogsCommand extends Command
 
         $this->info("Cutoff: {$cutoff->toDateTimeString()} ({$days} días de retención)");
 
-        $attempts = LoginAttempt::where('attempted_at', '<', $cutoff)->count();
-        $impersonations = ImpersonationLog::where('started_at', '<', $cutoff)->count();
-
-        $this->line("  Login attempts a purgar:   {$attempts}");
-        $this->line("  Impersonations a purgar:   {$impersonations}");
+        $attemptsQuery = LoginAttempt::where('attempted_at', '<', $cutoff);
+        $impersonationsQuery = ImpersonationLog::where('started_at', '<', $cutoff);
 
         if ($dryRun) {
+            $attempts = $attemptsQuery->count();
+            $impersonations = $impersonationsQuery->count();
+
+            $this->line("  Login attempts a purgar:   {$attempts}");
+            $this->line("  Impersonations a purgar:   {$impersonations}");
             $this->warn('Modo dry-run: no se eliminó nada.');
 
             return self::SUCCESS;
         }
 
-        LoginAttempt::where('attempted_at', '<', $cutoff)->delete();
-        ImpersonationLog::where('started_at', '<', $cutoff)->delete();
+        DB::transaction(function () use ($attemptsQuery, $impersonationsQuery): void {
+            $attemptsQuery->delete();
+            $impersonationsQuery->delete();
+        });
 
         $this->info('Registros eliminados correctamente.');
 

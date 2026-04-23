@@ -2,12 +2,6 @@
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
 if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (! $isRendered || request()->ajax()) { ?>
-    <script
-        src="<?php echo e($url); ?>"
-        async
-        defer
-    ></script>
-
     <script>
         'use strict';
 
@@ -30,6 +24,23 @@ if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]-->
                 }
             });
         };
+
+        (function() {
+            var loaded = false;
+            function loadRecaptcha() {
+                if (loaded) return;
+                loaded = true;
+                var script = document.createElement('script');
+                script.src = '<?php echo e($url); ?>';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+            document.addEventListener('focusin', loadRecaptcha, {once: true});
+            document.addEventListener('scroll', loadRecaptcha, {once: true});
+            document.addEventListener('mousemove', loadRecaptcha, {once: true});
+            document.addEventListener('touchstart', loadRecaptcha, {once: true});
+        })();
     </script>
 <?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
 

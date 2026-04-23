@@ -1,25 +1,19 @@
 @if(!empty($slides))
-<style>
-    .slider-header-carousel .heading1 h1.main-heading,
-    .slider-header-carousel .heading1 h5 {
-        text-transform: none;
-    }
-    .slider-header-carousel .heading1 h1.main-heading::first-letter,
-    .slider-header-carousel .heading1 h5::first-letter {
-        text-transform: uppercase;
-    }
-</style>
 <div class="slider-header-carousel owl-carousel">
     @foreach($slides as $slide)
     <div class="hero1-section-area">
-        <img src="{{ $slide['image'] }}" alt="" class="header-img1"
-             {{ $loop->first ? 'fetchpriority="high"' : 'loading="lazy"' }}>
+        <img src="{{ $slide['image'] }}?v=2" alt="{{ $slide['title'] ?? 'Imagen del slider' }}" class="header-img1"
+             @if($loop->first)
+                 fetchpriority="high" loading="eager" decoding="sync"
+             @else
+                 loading="lazy" decoding="async"
+             @endif>
         <div class="container">
             <div class="row">
                 <div class="col-lg-6">
                     <div class="hero-heading-area heading1">
                         @if(!empty($slide['badge']))
-                            <h5>{{ $slide['badge'] }}</h5>
+                            <span >{{ $slide['badge'] }}</span>
                         @endif
                         <h1 class="main-heading">{{ $slide['title'] ?? '' }}</h1>
                         @if(!empty($slide['text']))
@@ -40,7 +34,7 @@
                         @if(!empty($slide['stat']))
                         <div class="header-bottom-images">
                             <div class="img1">
-                                <img src="/pages/images/all-images/header-bottom.png" alt="" loading="lazy">
+                                <img src="/pages/images/all-images/header-bottom.webp?v=2" alt="" width="138" height="52" loading="lazy">
                             </div>
                             <div class="content">
                                 <ul>

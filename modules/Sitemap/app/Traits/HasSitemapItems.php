@@ -23,6 +23,7 @@ trait HasSitemapItems
         return static::query()
             ->where(static::$sitemapStatusColumn, static::$sitemapStatusValue)
             ->orderByDesc('updated_at')
+            ->limit(5000)
             ->get()
             ->filter(fn ($item) => ! $item->excludeFromSitemap())
             ->values();

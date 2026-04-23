@@ -30,11 +30,11 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card w-100 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-light-success p-3">
-                        <i class="fas fa-right-to-bracket text-success fs-4"></i>
+                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                        <i class="fas fa-right-to-bracket text-success"></i>
                     </div>
                     <div>
                         <h3 class="mb-0 fw-bold">{{ number_format($stats['success_24h']) }}</h3>
@@ -46,11 +46,11 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card w-100 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-light-danger p-3">
-                        <i class="fas fa-xmark text-danger fs-4"></i>
+                    <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                        <i class="fas fa-xmark text-danger"></i>
                     </div>
                     <div>
                         <h3 class="mb-0 fw-bold {{ $stats['failed_24h'] > 20 ? 'text-danger' : '' }}">
@@ -64,11 +64,11 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card w-100 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-light-warning p-3">
-                        <i class="fas fa-lock text-warning fs-4"></i>
+                    <div class="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                        <i class="fas fa-lock text-warning"></i>
                     </div>
                     <div>
                         <h3 class="mb-0 fw-bold {{ $stats['locked_now'] > 0 ? 'text-warning' : '' }}">
@@ -82,11 +82,11 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card w-100 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-light-info p-3">
-                        <i class="fas fa-user-secret text-info fs-4"></i>
+                    <div class="rounded-circle bg-info-subtle d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                        <i class="fas fa-user-secret text-info"></i>
                     </div>
                     <div>
                         <h3 class="mb-0 fw-bold {{ $stats['active_impersonations'] > 0 ? 'text-info' : '' }}">

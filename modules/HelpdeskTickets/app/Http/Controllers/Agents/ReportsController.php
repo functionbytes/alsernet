@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Agents;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Models\Ticket;
 
@@ -21,13 +22,25 @@ class ReportsController extends Controller
             ->where('assignee_id', $userId)
             ->whereBetween('created_at', [$from, $to]);
 
-        $stats = [
-            'total' => (clone $baseQuery)->count(),
-            'open' => (clone $baseQuery)->open()->count(),
-            'closed' => (clone $baseQuery)->closed()->count(),
-            'resolved' => (clone $baseQuery)->resolved()->count(),
-            'breached' => (clone $baseQuery)->slaBreach()->count(),
-        ];
+        $cacheKey = "helpdesk:agent:reports:{$userId}:{$from->format('Y-m-d')}:{$to->format('Y-m-d')}";
+
+        $stats = Cache::remember($cacheKey, 60, function () use ($baseQuery) {
+            $row = (clone $baseQuery)
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('SUM(status_id IN (SELECT id FROM helpdesk_ticket_statuses WHERE is_open = 1)) as open')
+                ->selectRaw('SUM(status_id IN (SELECT id FROM helpdesk_ticket_statuses WHERE is_open = 0)) as closed')
+                ->selectRaw('SUM(resolved_at IS NOT NULL) as resolved')
+                ->selectRaw('SUM(sla_first_response_breached = 1 OR sla_next_response_breached = 1 OR sla_resolution_breached = 1) as breached')
+                ->first();
+
+            return [
+                'total' => (int) $row->total,
+                'open' => (int) $row->open,
+                'closed' => (int) $row->closed,
+                'resolved' => (int) $row->resolved,
+                'breached' => (int) $row->breached,
+            ];
+        });
 
         $byStatus = (clone $baseQuery)
             ->with('status:id,name,color')
@@ -55,7 +68,7 @@ class ReportsController extends Controller
             ->where('assignee_id', $userId)
             ->whereBetween('created_at', [$from, $to])
             ->latest()
-            ->get();
+            ->cursor();
 
         $csv = implode(',', ['Ticket #', 'Subject', 'Status', 'Category', 'Priority', 'Customer', 'Created', 'Resolved'])."\n";
 

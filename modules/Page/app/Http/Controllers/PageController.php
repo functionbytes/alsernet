@@ -474,7 +474,8 @@ class PageController extends Controller
                     return $sc;
                 }, $shortcodes);
             }
-        } catch (\Throwable) {
+        } catch (Exception $e) {
+            Log::warning('Page controller: failed to resolve shortcodes', ['error' => $e->getMessage()]);
         }
 
         $shortcodeCategories = ShortcodeCategory::active()->get();

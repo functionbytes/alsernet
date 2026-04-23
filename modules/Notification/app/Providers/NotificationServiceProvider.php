@@ -157,8 +157,11 @@ class NotificationServiceProvider extends ServiceProvider
         ];
 
         try {
-            foreach ($keys as $key) {
-                $value = Setting::get($key);
+            $settings = Setting::query()
+                ->whereIn('key', $keys)
+                ->pluck('value', 'key');
+
+            foreach ($settings as $key => $value) {
                 if ($value !== null) {
                     config([$key => $value]);
                 }

@@ -38,7 +38,7 @@
                     </div>
                     <hr>
                     <div class="article-body mt-4">
-                        {!! $article->content !!}
+                        {!! clean($article->content) !!
                     </div>
                 </div>
             </div>

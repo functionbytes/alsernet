@@ -39,8 +39,13 @@ class SeoStaticUrlController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $totalActive = SeoStaticUrl::where('is_active', true)->count();
-        $total = SeoStaticUrl::count();
+        $row = SeoStaticUrl::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
+        ')->first();
+
+        $total = (int) $row->total;
+        $totalActive = (int) $row->active;
 
         return view('Seo::settings.static-urls.index', compact('staticUrls', 'totalActive', 'total'));
     }

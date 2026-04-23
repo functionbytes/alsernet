@@ -2,6 +2,7 @@
 
 namespace Modules\Locales\Observers;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Locales\Models\Locale;
@@ -41,6 +42,7 @@ class LocaleObserver
     private function invalidateCaches(): void
     {
         LocaleService::clearCache();
+        Cache::forget('locales.translation_groups');
 
         // Reset cache in-memory del helper canónico
         Locale::clearResolvedLegacyLangId();

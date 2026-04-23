@@ -18,9 +18,12 @@ class CheckConsentRateCommand extends Command
     {
         $threshold = (int) Setting::get('cookie.alert_threshold', 30);
 
-        $total = CookieConsentLog::query()
+        $stats = CookieConsentLog::query()
             ->where('created_at', '>=', now()->subDay())
-            ->count();
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN action = ? THEN 1 ELSE 0 END) as accept_count', ['accept_all'])
+            ->first();
+
+        $total = (int) $stats->total;
 
         if ($total < 10) {
             $this->info('Datos insuficientes para calcular la tasa (menos de 10 registros en 24h).');
@@ -28,10 +31,7 @@ class CheckConsentRateCommand extends Command
             return self::SUCCESS;
         }
 
-        $acceptCount = CookieConsentLog::query()
-            ->where('created_at', '>=', now()->subDay())
-            ->where('action', 'accept_all')
-            ->count();
+        $acceptCount = (int) $stats->accept_count;
 
         $rate = round(($acceptCount / $total) * 100, 1);
 

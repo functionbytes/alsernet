@@ -45,7 +45,7 @@ class MediaFileRepository implements MediaFileInterface
             }
         }
 
-        $files = $query->orderBy('name')->get()->map(fn (MediaFile $file) => (object) array_merge(
+        $files = $query->orderBy('name')->limit(1000)->get()->map(fn (MediaFile $file) => (object) array_merge(
             $file->toArray(),
             ['is_folder' => false, 'human_size' => $file->human_size]
         ));
@@ -70,7 +70,7 @@ class MediaFileRepository implements MediaFileInterface
             $folderQuery->where('name', 'LIKE', '%'.$folderParams['search'].'%');
         }
 
-        $folders = $folderQuery->orderBy('name')->get()->map(fn (MediaFolder $folder) => (object) array_merge(
+        $folders = $folderQuery->orderBy('name')->limit(200)->get()->map(fn (MediaFolder $folder) => (object) array_merge(
             $folder->toArray(),
             ['is_folder' => true]
         ));
@@ -83,11 +83,11 @@ class MediaFileRepository implements MediaFileInterface
         $fileQuery = $this->model->onlyTrashed();
         $folderQuery = MediaFolder::onlyTrashed();
 
-        $files = $fileQuery->orderBy('name')->get()->map(
+        $files = $fileQuery->orderBy('name')->limit(1000)->get()->map(
             fn (MediaFile $file) => (object) array_merge($file->toArray(), ['is_folder' => false, 'human_size' => $file->human_size])
         );
 
-        $folders = $folderQuery->orderBy('name')->get()->map(
+        $folders = $folderQuery->orderBy('name')->limit(200)->get()->map(
             fn (MediaFolder $folder) => (object) array_merge($folder->toArray(), ['is_folder' => true])
         );
 

@@ -68,6 +68,7 @@ class AttentionDepartmentsController extends Controller
         $users = User::where('available', 1)
             ->orderBy('firstname')
             ->orderBy('lastname')
+            ->limit(200)
             ->get();
 
         return view('attention::settings.departments.create', [
@@ -115,6 +116,7 @@ class AttentionDepartmentsController extends Controller
         $users = User::where('available', 1)
             ->orderBy('firstname')
             ->orderBy('lastname')
+            ->limit(200)
             ->get();
 
         return view('attention::settings.departments.edit', [

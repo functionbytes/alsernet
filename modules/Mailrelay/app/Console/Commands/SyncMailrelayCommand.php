@@ -312,63 +312,67 @@ class SyncMailrelayCommand extends Command
             $query = Subscriber::query();
 
             if ($isForce) {
-                // Force mode: sync all active subscribers
-                $subscribers = $query->active()->get();
+                $subscribersQuery = $query->active();
             } else {
-                // Normal mode: sync only subscribers that need syncing
-                $subscribers = $query->active()->where(function ($q) {
+                $subscribersQuery = $query->active()->where(function ($q) {
                     $q->whereNull('mailrelay_id')
                         ->orWhereNull('last_synced_at')
                         ->orWhere('last_synced_at', '<', now()->subHours(24));
-                })->get();
+                });
             }
 
-            if ($subscribers->isEmpty()) {
+            $count = $subscribersQuery->count();
+
+            if ($count === 0) {
                 $this->info('ℹ️  No subscribers need syncing');
 
                 return true;
             }
 
-            $this->info('Found '.$subscribers->count().' subscribers to sync');
+            $this->info('Found '.$count.' subscribers to sync');
 
-            $progressBar = $this->output->createProgressBar($subscribers->count());
+            $progressBar = $this->output->createProgressBar($count);
             $progressBar->start();
 
             $batchSize = config('mailrelay.sync.batch_size', 100);
             $useQueue = config('mailrelay.sync.use_queue', true);
             $queueName = config('mailrelay.sync.queue_name', 'mailrelay');
 
-            foreach ($subscribers as $subscriber) {
-                if ($isDryRun) {
-                    $this->line("  [DRY RUN] Would queue sync job for: {$subscriber->email}");
-                    $this->stats['subscribers_queued']++;
-                } else {
-                    try {
-                        // Dispatch sync job
-                        if ($useQueue) {
-                            SyncSubscriberJob::dispatch($subscriber)
-                                ->onQueue($queueName)
-                                ->delay(now()->addSeconds($this->stats['subscribers_queued'] % $batchSize));
-                        } else {
-                            // Sync immediately if queue is disabled
-                            $this->syncSubscriber($subscriber);
-                        }
-
+            $subscribersQuery->chunk(500, function ($subscribers) use (
+                $isDryRun, $batchSize, $useQueue, $queueName, $progressBar
+            ) {
+                foreach ($subscribers as $subscriber) {
+                    if ($isDryRun) {
+                        $this->line("  [DRY RUN] Would queue sync job for: {$subscriber->email}");
                         $this->stats['subscribers_queued']++;
-                    } catch (\Exception $e) {
-                        $this->stats['errors']++;
-                        $this->stats['subscribers_skipped']++;
+                    } else {
+                        try {
+                            // Dispatch sync job
+                            if ($useQueue) {
+                                SyncSubscriberJob::dispatch($subscriber)
+                                    ->onQueue($queueName)
+                                    ->delay(now()->addSeconds($this->stats['subscribers_queued'] % $batchSize));
+                            } else {
+                                // Sync immediately if queue is disabled
+                                $this->syncSubscriber($subscriber);
+                            }
 
-                        Log::error('Failed to queue subscriber sync job', [
-                            'subscriber_id' => $subscriber->id,
-                            'email' => $subscriber->email,
-                            'error' => $e->getMessage(),
-                        ]);
+                            $this->stats['subscribers_queued']++;
+                        } catch (\Exception $e) {
+                            $this->stats['errors']++;
+                            $this->stats['subscribers_skipped']++;
+
+                            Log::error('Failed to queue subscriber sync job', [
+                                'subscriber_id' => $subscriber->id,
+                                'email' => $subscriber->email,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
                     }
-                }
 
-                $progressBar->advance();
-            }
+                    $progressBar->advance();
+                }
+            });
 
             $progressBar->finish();
             $this->newLine(2);

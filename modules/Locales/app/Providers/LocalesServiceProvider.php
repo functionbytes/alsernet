@@ -62,7 +62,7 @@ class LocalesServiceProvider extends ServiceProvider
         // lines (from other modules) are reloaded including the theme's lang files.
         $this->app->booted(function () {
             try {
-                $theme = \DB::table('settings')->where('key', 'template')->value('value') ?? 'caixilhariablanco';
+                $theme = setting('template', 'caixilhariablanco');
             } catch (\Throwable) {
                 $theme = 'caixilhariablanco';
             }

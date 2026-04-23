@@ -569,7 +569,8 @@ class StorageController extends Controller
 
         // DB disks are registered into config() by the ServiceProvider at boot time.
         // Exclude them here to avoid showing each DB disk twice (once as "config" and once as "DB").
-        $dbDiskNames = array_column($this->loadCustomDisks(), 'name');
+        $customDisks = $this->loadCustomDisks();
+        $dbDiskNames = array_column($customDisks, 'name');
 
         foreach ($disksConfig as $diskName => $diskConfig) {
             if (in_array($diskName, $coreDisks) || in_array($diskName, $dbDiskNames)) {
@@ -578,8 +579,6 @@ class StorageController extends Controller
 
             $configDisks[] = $this->buildDiskFromConfig($diskName, $diskConfig, true);
         }
-
-        $customDisks = $this->loadCustomDisks();
 
         foreach ($customDisks as &$disk) {
             $disk['from_config'] = false;

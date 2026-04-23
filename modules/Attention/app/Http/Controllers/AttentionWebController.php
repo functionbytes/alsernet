@@ -102,10 +102,10 @@ class AttentionWebController extends Controller
         $attentions = $query->latest()->paginate(config('pagination.attentions'))->withQueryString();
 
         // Get filter options
-        $types = AttentionType::orderBy('name')->get();
-        $categories = AttentionCategory::orderBy('name')->get();
-        $departments = AttentionDepartment::orderBy('name')->get();
-        $sedes = AttentionSede::orderBy('name')->get();
+        $types = AttentionType::orderBy('name')->limit(200)->get();
+        $categories = AttentionCategory::orderBy('name')->limit(200)->get();
+        $departments = AttentionDepartment::orderBy('name')->limit(200)->get();
+        $sedes = AttentionSede::orderBy('name')->limit(200)->get();
 
         return view('attention::attentions.pending', [
             'attentions' => $attentions,
@@ -164,7 +164,7 @@ class AttentionWebController extends Controller
         $attentions = $query->latest()->paginate(config('pagination.attentions'))->withQueryString();
 
         // Get filter options
-        $types = AttentionType::orderBy('name')->get();
+        $types = AttentionType::orderBy('name')->limit(200)->get();
 
         return view('attention::attentions.index', [
             'attentions' => $attentions,
@@ -183,9 +183,9 @@ class AttentionWebController extends Controller
     public function create(): View
     {
         $this->authorize('create', Attention::class);
-        $types = AttentionType::orderBy('name')->get();
-        $categories = AttentionCategory::orderBy('name')->get();
-        $sedes = AttentionSede::orderBy('name')->get();
+        $types = AttentionType::orderBy('name')->limit(200)->get();
+        $categories = AttentionCategory::orderBy('name')->limit(200)->get();
+        $sedes = AttentionSede::orderBy('name')->limit(200)->get();
 
         return view('attention::attentions.create', [
             'types' => $types,
@@ -251,11 +251,11 @@ class AttentionWebController extends Controller
                 ->with('error', 'Este peticiones ya no puede ser editado');
         }
 
-        $types = AttentionType::orderBy('name')->get();
-        $categories = AttentionCategory::orderBy('name')->get();
-        $sedes = AttentionSede::orderBy('name')->get();
-        $departments = AttentionDepartment::orderBy('name')->get();
-        $users = User::orderBy('firstname')->get();
+        $types = AttentionType::orderBy('name')->limit(200)->get();
+        $categories = AttentionCategory::orderBy('name')->limit(200)->get();
+        $sedes = AttentionSede::orderBy('name')->limit(200)->get();
+        $departments = AttentionDepartment::orderBy('name')->limit(200)->get();
+        $users = User::orderBy('firstname')->limit(200)->get();
         $statuses = AttentionStatus::cases();
         $responseTypes = ResponseType::cases();
 
@@ -319,10 +319,10 @@ class AttentionWebController extends Controller
         $statuses = AttentionStatus::cases();
 
         // Get departments
-        $departments = AttentionDepartment::orderBy('name')->get();
+        $departments = AttentionDepartment::orderBy('name')->limit(200)->get();
 
         // Get users for assignment
-        $users = User::orderBy('firstname')->get();
+        $users = User::orderBy('firstname')->limit(200)->get();
 
         // Get response types
         $responseTypes = ResponseType::cases();

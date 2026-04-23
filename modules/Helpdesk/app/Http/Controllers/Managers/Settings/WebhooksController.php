@@ -34,10 +34,16 @@ class WebhooksController extends Controller
 
         $webhooks = $query->latest()->paginate(20);
 
+        $webhookRow = Webhook::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
+        ')->first();
+
         $stats = [
-            'total' => Webhook::count(),
-            'active' => Webhook::where('is_active', true)->count(),
-            'inactive' => Webhook::where('is_active', false)->count(),
+            'total' => (int) $webhookRow->total,
+            'active' => (int) $webhookRow->active,
+            'inactive' => (int) $webhookRow->inactive,
             'deliveries_today' => WebhookDelivery::whereDate('created_at', today())->count(),
         ];
 

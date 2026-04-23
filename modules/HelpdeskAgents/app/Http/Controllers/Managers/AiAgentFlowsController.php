@@ -32,7 +32,7 @@ class AiAgentFlowsController extends Controller
 
         $flows = $agent->flows()
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->when($request->trigger_type, fn ($q) => $q->where('trigger_type', $request->trigger))
+            ->when($request->trigger_type, fn ($q) => $q->where('trigger_type', $request->trigger_type))
             ->when($request->search, fn ($q) => $q->where('name', 'like', '%'.$request->search.'%'))
             ->latest()
             ->paginate(20);

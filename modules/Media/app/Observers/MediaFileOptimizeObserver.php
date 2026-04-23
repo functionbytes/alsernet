@@ -26,7 +26,7 @@ class MediaFileOptimizeObserver
         if ($file->type !== 'image') {
             return;
         }
-        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png'], true)) {
+        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'], true)) {
             return;
         }
 
@@ -43,7 +43,7 @@ class MediaFileOptimizeObserver
         if ($file->type !== 'image') {
             return;
         }
-        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png'], true)) {
+        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'], true)) {
             return;
         }
 
@@ -55,15 +55,35 @@ class MediaFileOptimizeObserver
         }
 
         $siblings = [];
-        // .webp hermano simple
-        $webp = preg_replace('/\.(jpe?g|png)$/i', '.webp', $relative);
-        if (is_string($webp) && $webp !== $relative) {
-            $siblings[] = $webp;
+
+        // WebP fallback (when original is AVIF)
+        if (str_ends_with(strtolower($relative), '.avif')) {
+            $fallbackWebp = preg_replace('/\.avif$/i', '.webp', $relative);
+            if (is_string($fallbackWebp)) {
+                $siblings[] = $fallbackWebp;
+            }
         }
-        // variantes responsive
+
+        // .webp hermano simple (only when original was not already WebP or AVIF)
+        if (! str_ends_with(strtolower($relative), '.webp') && ! str_ends_with(strtolower($relative), '.avif')) {
+            $webp = preg_replace('/\.(jpe?g|png)$/i', '.webp', $relative);
+            if (is_string($webp) && $webp !== $relative) {
+                $siblings[] = $webp;
+            }
+        }
+
+        // responsive WebP variants
         foreach ([480, 768, 1024, 1920] as $w) {
-            $variant = preg_replace('/\.(jpe?g|png)$/i', '-'.$w.'w.webp', $relative);
+            $variant = preg_replace('/\.(jpe?g|png|webp|avif)$/i', '-'.$w.'w.webp', $relative);
             if (is_string($variant)) {
+                $siblings[] = $variant;
+            }
+        }
+
+        // responsive AVIF variants (if any)
+        foreach ([480, 768, 1024, 1920] as $w) {
+            $variant = preg_replace('/\.(jpe?g|png|webp|avif)$/i', '-'.$w.'w.avif', $relative);
+            if (is_string($variant) && $variant !== $relative) {
                 $siblings[] = $variant;
             }
         }

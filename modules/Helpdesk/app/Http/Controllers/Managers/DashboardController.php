@@ -13,25 +13,41 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
+        $this->authorize('access_helpdesk');
+
         $ticketStats = Cache::remember('helpdesk:dashboard:ticket_stats', 300, function () {
+            $row = Ticket::query()
+                ->selectRaw('
+                    SUM(CASE WHEN closed_at IS NULL THEN 1 ELSE 0 END) as open,
+                    SUM(CASE WHEN DATE(closed_at) = CURDATE() THEN 1 ELSE 0 END) as closed_today,
+                    SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as created_today,
+                    SUM(CASE WHEN sla_resolution_breached = 1 AND closed_at IS NULL THEN 1 ELSE 0 END) as sla_breached,
+                    SUM(CASE WHEN assignee_id IS NULL AND closed_at IS NULL THEN 1 ELSE 0 END) as unassigned,
+                    SUM(CASE WHEN sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < NOW() AND closed_at IS NULL THEN 1 ELSE 0 END) as overdue
+                ')
+                ->first();
+
             return [
-                'open' => Ticket::query()->whereNull('closed_at')->count(),
-                'closed_today' => Ticket::query()->whereDate('closed_at', today())->count(),
-                'created_today' => Ticket::query()->whereDate('created_at', today())->count(),
-                'sla_breached' => Ticket::query()->where('sla_resolution_breached', true)->whereNull('closed_at')->count(),
-                'unassigned' => Ticket::query()->whereNull('assignee_id')->whereNull('closed_at')->count(),
-                'overdue' => Ticket::query()
-                    ->whereNotNull('sla_resolution_due_at')
-                    ->where('sla_resolution_due_at', '<', now())
-                    ->whereNull('closed_at')
-                    ->count(),
+                'open' => (int) $row->open,
+                'closed_today' => (int) $row->closed_today,
+                'created_today' => (int) $row->created_today,
+                'sla_breached' => (int) $row->sla_breached,
+                'unassigned' => (int) $row->unassigned,
+                'overdue' => (int) $row->overdue,
             ];
         });
 
         $convStats = Cache::remember('helpdesk:dashboard:conv_stats', 300, function () {
+            $row = Conversation::query()
+                ->selectRaw('
+                    SUM(CASE WHEN closed_at IS NULL THEN 1 ELSE 0 END) as open,
+                    SUM(CASE WHEN assignee_id IS NULL AND closed_at IS NULL THEN 1 ELSE 0 END) as unassigned
+                ')
+                ->first();
+
             return [
-                'open' => Conversation::whereNull('closed_at')->count(),
-                'unassigned' => Conversation::whereNull('assignee_id')->whereNull('closed_at')->count(),
+                'open' => (int) $row->open,
+                'unassigned' => (int) $row->unassigned,
             ];
         });
 
@@ -47,19 +63,23 @@ class DashboardController extends Controller
                 ->get();
         });
 
-        $recentBreaches = Ticket::query()
-            ->where('sla_resolution_breached', true)
-            ->whereNull('closed_at')
-            ->with(['customer:id,name', 'assignee:id,name', 'status:id,name,color'])
-            ->orderBy('sla_resolution_due_at')
-            ->limit(5)
-            ->get();
+        $recentBreaches = Cache::remember('helpdesk:dashboard:recent_breaches', 60, function () {
+            return Ticket::query()
+                ->where('sla_resolution_breached', true)
+                ->whereNull('closed_at')
+                ->with(['customer:id,name', 'assignee:id,name', 'status:id,name,color'])
+                ->orderBy('sla_resolution_due_at')
+                ->limit(5)
+                ->get();
+        });
 
-        $recentTickets = Ticket::query()
-            ->with(['customer:id,name', 'status:id,name,color', 'assignee:id,name'])
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+        $recentTickets = Cache::remember('helpdesk:dashboard:recent_tickets', 60, function () {
+            return Ticket::query()
+                ->with(['customer:id,name', 'status:id,name,color', 'assignee:id,name'])
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
+        });
 
         $avgRating = round(
             Ticket::query()

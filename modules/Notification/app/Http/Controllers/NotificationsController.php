@@ -118,8 +118,7 @@ class NotificationsController extends Controller
         $query = $user->notifications()->whereIn('id', $request->validated('ids'));
 
         if ($request->validated('action') === 'mark_read') {
-            $count = $query->clone()->whereNull('read_at')->count();
-            $query->whereNull('read_at')->get()->each->markAsRead();
+            $count = $query->clone()->whereNull('read_at')->update(['read_at' => now()]);
         } else {
             $count = $query->count();
             $query->delete();

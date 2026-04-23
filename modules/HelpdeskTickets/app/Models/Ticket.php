@@ -150,6 +150,15 @@ class Ticket extends Model
             TicketHistory::logTicketCreated($ticket, auth()->user());
         });
 
+        // Invalidate report cache on any ticket change
+        static::saved(function () {
+            Cache::forget('helpdesk:reports');
+        });
+
+        static::deleted(function () {
+            Cache::forget('helpdesk:reports');
+        });
+
         // Track field changes and create TicketHistory records
         static::updated(function ($ticket) {
             $changes = $ticket->getDirty();
@@ -180,10 +189,11 @@ class Ticket extends Model
                 } elseif ($field === 'assignee_id') {
                     // Handle assignment changes
                     if ($newValue && ! $oldValue) {
+                        $ticket->loadMissing('assignee');
                         TicketHistory::logAssigned(
                             $ticket,
                             auth()->user(),
-                            User::find($newValue)
+                            $ticket->assignee
                         );
                     } elseif (! $newValue && $oldValue) {
                         TicketHistory::logUnassigned($ticket, auth()->user());

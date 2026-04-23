@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Models\SeoStaticUrl;
+use Modules\Seo\Services\SitemapCallbackRegistry;
 use Modules\Seo\Services\SitemapPriorityCalculator;
 use Modules\Sitemap\Builder\SitemapBuilder;
 use Modules\Sitemap\Models\SitemapGeneration;
@@ -116,7 +117,8 @@ class SitemapAdminController extends Controller
                 $sitemap->add($staticUrl->url, null, (string) $staticUrl->priority, $staticUrl->changefreq);
             }
 
-            foreach (config('sitemap.post_callbacks', []) as $callback) {
+            $callbacks = array_merge(config('sitemap.post_callbacks', []), SitemapCallbackRegistry::all());
+            foreach ($callbacks as $callback) {
                 if (is_callable($callback)) {
                     $callback($sitemap);
                 }

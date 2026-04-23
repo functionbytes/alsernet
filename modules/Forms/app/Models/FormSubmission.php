@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Forms\Database\Factories\FormSubmissionFactory;
 
 class FormSubmission extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'form_submissions';
 
@@ -128,9 +130,11 @@ class FormSubmission extends Model
 
     public function getEmailValue(): ?string
     {
-        $value = $this->values()->where('field_type', 'email')->first();
+        if ($this->relationLoaded('values')) {
+            return $this->values->firstWhere('field_type', 'email')?->value;
+        }
 
-        return $value?->value;
+        return $this->values()->where('field_type', 'email')->value('value');
     }
 
     public function getRadicado(): string
@@ -140,16 +144,27 @@ class FormSubmission extends Model
 
     public function getCitizenName(): ?string
     {
-        foreach ($this->values as $value) {
-            $key = strtolower($value->field_key ?? '');
+        if ($this->relationLoaded('values')) {
+            $found = $this->values->first(function ($value) {
+                $key = strtolower($value->field_key ?? '');
 
-            if (str_contains($key, 'nombre') || str_contains($key, 'name') ||
-                str_contains($key, 'first') || str_contains($key, 'primer')) {
-                return $value->value;
-            }
+                return str_contains($key, 'nombre')
+                    || str_contains($key, 'name')
+                    || str_contains($key, 'first')
+                    || str_contains($key, 'primer');
+            });
+
+            return $found?->value;
         }
 
-        return null;
+        return $this->values()
+            ->where(function ($query) {
+                $query->where('field_key', 'like', '%nombre%')
+                    ->orWhere('field_key', 'like', '%name%')
+                    ->orWhere('field_key', 'like', '%first%')
+                    ->orWhere('field_key', 'like', '%primer%');
+            })
+            ->value('value');
     }
 
     public function emails(): HasMany

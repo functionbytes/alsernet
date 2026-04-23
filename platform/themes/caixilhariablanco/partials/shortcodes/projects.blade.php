@@ -11,50 +11,7 @@
 @endphp
 
 @if(! empty($items))
-<style>
-.projects-sc-item .project-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-    cursor: pointer;
-    display: block;
-}
-.projects-sc-item .project-card-img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
-    transition: transform .4s ease;
-}
-.projects-sc-item .project-card:hover .project-card-img {
-    transform: scale(1.05);
-}
-.projects-sc-item .project-card-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.08) 60%, transparent 100%);
-    opacity: 0;
-    transition: opacity .3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 1rem;
-}
-.projects-sc-item .project-card:hover .project-card-overlay {
-    opacity: 1;
-}
-.projects-sc-item .project-card-title {
-    color: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-    line-height: 1.3;
-    margin-bottom: .2rem;
-}
-.projects-sc-item .project-card-location {
-    color: rgba(255,255,255,.8);
-    font-size: .8rem;
-}
-</style>
+
 
 <section class="projects-widget py-5">
     <div class="container">
@@ -110,7 +67,7 @@
                 <button aria-label="Cerrar" type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center p-2">
-                <img id="plb-img" src="" alt="" class="img-fluid rounded" style="max-height:70vh;object-fit:contain;">
+                <img id="plb-img" src="" alt="" class="img-fluid rounded lightbox-img">
             </div>
         </div>
     </div>

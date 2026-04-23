@@ -33,7 +33,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card h-100 border-0 shadow-sm text-center p-4">
                         <div class="mb-3">
-                            <i class="{{ $service['icon'] }} fa-3x" style="color:var(--main-color, #90bb13);"></i>
+                            <i class="{{ $service['icon'] }} fa-3x" class="text-main-color"></i>
                         </div>
                         <h5 class="fw-bold">{{ $service['title'] }}</h5>
                         <p class="text-muted small mb-0">{{ $service['desc'] }}</p>

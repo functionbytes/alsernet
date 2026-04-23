@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardCustomizerController;
 use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
+use Modules\Core\Http\Controllers\HealthCheckController;
 use Modules\Forms\Http\Controllers\ContactController;
 use Modules\Health\Http\Controllers\AlertThresholdController;
 use Modules\System\Http\Controllers\ApiDocController;
@@ -30,7 +31,7 @@ Route::post('/contact/send', [ContactController::class, 'send'])
     ->name('contact.send')
     ->middleware('throttle:5,1');
 
-Route::middleware(['auth', 'throttle:global-search'])
+Route::middleware('auth')
     ->get('/panel/search', GlobalSearchController::class)
     ->name('search.global');
 
@@ -51,3 +52,6 @@ Route::middleware(['web', 'auth'])->prefix('panel/dashboard')->name('dashboard.'
     Route::post('customize/reset', [DashboardCustomizerController::class, 'reset'])->name('customize.reset');
     Route::get('widget-data/{source}', [DashboardCustomizerController::class, 'widgetData'])->name('widget-data');
 });
+
+// Health check endpoint for load balancers and monitoring
+Route::get('/health', HealthCheckController::class)->name('health');

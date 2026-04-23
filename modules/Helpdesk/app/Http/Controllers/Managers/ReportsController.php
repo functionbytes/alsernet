@@ -20,22 +20,20 @@ class ReportsController extends Controller
      */
     public function index(Request $request): View
     {
+        $this->authorize('helpdesk.metrics.view');
+
         [$from, $to] = $this->resolveDateRange($request);
 
-        $totalCreated = Ticket::whereBetween('created_at', [$from, $to])->count();
-        $totalClosed = Ticket::whereBetween('closed_at', [$from, $to])->count();
-        $totalResolved = Ticket::whereBetween('resolved_at', [$from, $to])->count();
-        $slaBreached = Ticket::whereBetween('created_at', [$from, $to])
-            ->where('sla_resolution_breached', true)
-            ->count();
-
-        $avgResponseTime = Ticket::whereBetween('created_at', [$from, $to])
-            ->whereNotNull('first_response_at')
-            ->avg(DB::connection('helpdesk')->raw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at)'));
-
-        $avgResolutionTime = Ticket::whereBetween('created_at', [$from, $to])
-            ->whereNotNull('closed_at')
-            ->avg(DB::connection('helpdesk')->raw('TIMESTAMPDIFF(MINUTE, created_at, closed_at)'));
+        $statsRow = Ticket::whereBetween('created_at', [$from, $to])
+            ->selectRaw('
+                COUNT(*) as total_created,
+                SUM(CASE WHEN closed_at IS NOT NULL THEN 1 ELSE 0 END) as total_closed,
+                SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) as total_resolved,
+                SUM(CASE WHEN sla_resolution_breached = 1 THEN 1 ELSE 0 END) as sla_breached,
+                AVG(CASE WHEN first_response_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, created_at, first_response_at) END) as avg_response_time,
+                AVG(CASE WHEN closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, created_at, closed_at) END) as avg_resolution_time
+            ')
+            ->first();
 
         $byStatus = Ticket::with('status:id,name,color')
             ->whereBetween('created_at', [$from, $to])
@@ -54,7 +52,7 @@ class ReportsController extends Controller
             ->groupBy('priority')
             ->get();
 
-        $topAgents = Ticket::query()
+        $topAgentRows = Ticket::query()
             ->select(
                 'assignee_id',
                 DB::connection('helpdesk')->raw('COUNT(*) as closed_count')
@@ -64,19 +62,31 @@ class ReportsController extends Controller
             ->groupBy('assignee_id')
             ->orderByDesc('closed_count')
             ->limit(5)
-            ->get()
-            ->map(function ($row) {
-                $row->agent = User::find($row->assignee_id);
+            ->get();
 
-                return $row;
-            })
-            ->filter(fn ($r) => $r->agent !== null)
+        $topAgentUsers = User::whereIn('id', $topAgentRows->pluck('assignee_id'))
+            ->select(['id', 'name'])
+            ->get()
+            ->keyBy('id');
+
+        $topAgents = $topAgentRows
+            ->map(fn ($row) => [
+                'agent' => $topAgentUsers->get($row->assignee_id),
+                'closed_count' => $row->closed_count,
+            ])
+            ->filter(fn ($r) => $r['agent'] !== null)
             ->values();
 
-        $ratedBase = Ticket::whereBetween('created_at', [$from, $to])->whereNotNull('rated_at');
-        $avgRating = round((float) (clone $ratedBase)->avg('rating'), 1);
-        $ratedCount = (clone $ratedBase)->count();
-        $ratingDistribution = (clone $ratedBase)
+        $ratedRow = Ticket::whereBetween('created_at', [$from, $to])
+            ->whereNotNull('rated_at')
+            ->selectRaw('
+                COUNT(*) as rated_count,
+                AVG(rating) as avg_rating
+            ')
+            ->first();
+
+        $ratingDistribution = Ticket::whereBetween('created_at', [$from, $to])
+            ->whereNotNull('rated_at')
             ->selectRaw('rating, COUNT(*) as count')
             ->groupBy('rating')
             ->orderBy('rating')
@@ -85,18 +95,18 @@ class ReportsController extends Controller
         return view('helpdesk::managers.helpdesk.reports.index', [
             'from' => $from,
             'to' => $to,
-            'totalCreated' => $totalCreated,
-            'totalClosed' => $totalClosed,
-            'totalResolved' => $totalResolved,
-            'slaBreached' => $slaBreached,
-            'avgResponseTime' => round($avgResponseTime ?? 0),
-            'avgResolutionTime' => round($avgResolutionTime ?? 0),
+            'totalCreated' => (int) $statsRow->total_created,
+            'totalClosed' => (int) $statsRow->total_closed,
+            'totalResolved' => (int) $statsRow->total_resolved,
+            'slaBreached' => (int) $statsRow->sla_breached,
+            'avgResponseTime' => round($statsRow->avg_response_time ?? 0),
+            'avgResolutionTime' => round($statsRow->avg_resolution_time ?? 0),
             'byStatus' => $byStatus,
             'byCategory' => $byCategory,
             'byPriority' => $byPriority,
             'topAgents' => $topAgents,
-            'avgRating' => $avgRating,
-            'ratedCount' => $ratedCount,
+            'avgRating' => round($ratedRow->avg_rating ?? 0, 1),
+            'ratedCount' => (int) $ratedRow->rated_count,
             'ratingDistribution' => $ratingDistribution,
         ]);
     }
@@ -106,6 +116,8 @@ class ReportsController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
+        $this->authorize('helpdesk.metrics.export');
+
         [$from, $to] = $this->resolveDateRange($request);
 
         $filename = 'tickets-'.$from->format('Y-m-d').'-to-'.$to->format('Y-m-d').'.csv';
@@ -159,9 +171,11 @@ class ReportsController extends Controller
      */
     public function agentPerformance(Request $request): JsonResponse
     {
+        $this->authorize('helpdesk.metrics.view');
+
         [$from, $to] = $this->resolveDateRange($request);
 
-        $rows = Ticket::query()
+        $agentRows = Ticket::query()
             ->select(
                 'assignee_id',
                 DB::connection('helpdesk')->raw('COUNT(*) as assigned_count'),
@@ -173,19 +187,25 @@ class ReportsController extends Controller
             ->whereBetween('created_at', [$from, $to])
             ->whereNotNull('assignee_id')
             ->groupBy('assignee_id')
-            ->get()
-            ->map(function ($row) {
-                $agent = User::find($row->assignee_id);
+            ->get();
 
-                return [
-                    'agent' => $agent?->name ?? 'Unknown',
-                    'assigned' => $row->assigned_count,
-                    'closed' => $row->closed_count,
-                    'avg_response_time' => round($row->avg_response_time ?? 0),
-                    'avg_resolution_time' => round($row->avg_resolution_time ?? 0),
-                    'sla_breaches' => $row->sla_breaches,
-                ];
-            });
+        $agentUsers = User::whereIn('id', $agentRows->pluck('assignee_id'))
+            ->select(['id', 'name'])
+            ->get()
+            ->keyBy('id');
+
+        $rows = $agentRows->map(function ($row) use ($agentUsers) {
+            $agent = $agentUsers->get($row->assignee_id);
+
+            return [
+                'agent' => $agent?->name ?? 'Unknown',
+                'assigned' => $row->assigned_count,
+                'closed' => $row->closed_count,
+                'avg_response_time' => round($row->avg_response_time ?? 0),
+                'avg_resolution_time' => round($row->avg_resolution_time ?? 0),
+                'sla_breaches' => $row->sla_breaches,
+            ];
+        });
 
         return response()->json($rows);
     }
@@ -195,6 +215,8 @@ class ReportsController extends Controller
      */
     public function trend(Request $request): JsonResponse
     {
+        $this->authorize('helpdesk.metrics.view');
+
         [$from, $to] = $this->resolveDateRange($request);
 
         $reports = TicketDailyReport::whereBetween('report_date', [$from->toDateString(), $to->toDateString()])

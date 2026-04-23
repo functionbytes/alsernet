@@ -30,7 +30,8 @@ class ListProvidersCommand extends Command
             $query->where('is_active', true);
         }
 
-        $providers = $query->orderBy('is_default', 'desc')
+        $providers = $query->withCount('campaigns')
+            ->orderBy('is_default', 'desc')
             ->orderBy('priority', 'desc')
             ->orderBy('name')
             ->get();
@@ -65,7 +66,7 @@ class ListProvidersCommand extends Command
             $status = $this->getStatusBadge($provider);
             $default = $provider->is_default ? '⭐ YES' : 'No';
             $connection = $provider->connection_ok ? '✓ OK' : ($provider->last_tested_at ? '✗ Failed' : '? Not tested');
-            $campaigns = $provider->campaigns()->count();
+            $campaigns = $provider->campaigns_count;
 
             return [
                 $provider->id,

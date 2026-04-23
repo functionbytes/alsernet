@@ -39,7 +39,7 @@ class PageImportExportController extends Controller
         $pages = Page::query()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->orderByDesc('created_at')
-            ->get();
+            ->cursor();
 
         return match ($request->get('format', 'csv')) {
             'json' => $this->exportService->exportJson($pages),

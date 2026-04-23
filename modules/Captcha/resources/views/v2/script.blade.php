@@ -1,10 +1,4 @@
 @if (! $isRendered || request()->ajax())
-    <script
-        src="{{ $url }}"
-        async
-        defer
-    ></script>
-
     <script>
         'use strict';
 
@@ -27,6 +21,23 @@
                 }
             });
         };
+
+        (function() {
+            var loaded = false;
+            function loadRecaptcha() {
+                if (loaded) return;
+                loaded = true;
+                var script = document.createElement('script');
+                script.src = '{{ $url }}';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+            document.addEventListener('focusin', loadRecaptcha, {once: true});
+            document.addEventListener('scroll', loadRecaptcha, {once: true});
+            document.addEventListener('mousemove', loadRecaptcha, {once: true});
+            document.addEventListener('touchstart', loadRecaptcha, {once: true});
+        })();
     </script>
 @endif
 

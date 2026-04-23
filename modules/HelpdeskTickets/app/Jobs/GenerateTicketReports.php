@@ -65,10 +65,8 @@ class GenerateTicketReports implements ShouldQueue
             $averageResponseTime = Ticket::query()
                 ->whereBetween('created_at', [$startOfDay, $endOfDay])
                 ->whereNotNull('first_response_at')
-                ->get()
-                ->avg(function ($ticket) {
-                    return $ticket->created_at->diffInMinutes($ticket->first_response_at);
-                });
+                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg')
+                ->value('avg');
 
             $ticketsByCategory = Ticket::query()
                 ->whereBetween('created_at', [$startOfDay, $endOfDay])
@@ -92,12 +90,12 @@ class GenerateTicketReports implements ShouldQueue
 
             $agentPerformance = Ticket::query()
                 ->whereBetween('closed_at', [$startOfDay, $endOfDay])
-                ->whereNotNull('assigned_to')
-                ->select('assigned_to', DB::raw('count(*) as tickets_closed'))
-                ->groupBy('assigned_to')
+                ->whereNotNull('assignee_id')
+                ->select('assignee_id', DB::raw('count(*) as tickets_closed'))
+                ->groupBy('assignee_id')
                 ->get()
                 ->mapWithKeys(function ($item) {
-                    return [$item->assigned_to => $item->tickets_closed];
+                    return [$item->assignee_id => $item->tickets_closed];
                 })
                 ->toArray();
 
@@ -115,8 +113,8 @@ class GenerateTicketReports implements ShouldQueue
                         Ticket::query()
                             ->whereBetween('resolved_at', [$startOfDay, $endOfDay])
                             ->whereNotNull('created_at')
-                            ->get()
-                            ->avg(fn ($t) => $t->created_at->diffInMinutes($t->resolved_at)) ?? 0,
+                            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as avg')
+                            ->value('avg') ?? 0,
                         2
                     ),
                     'sla_breached_count' => Ticket::query()

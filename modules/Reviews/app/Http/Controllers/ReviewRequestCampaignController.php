@@ -25,11 +25,20 @@ class ReviewRequestCampaignController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $statsRow = ReviewRequestCampaign::query()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = \'active\' THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN status = \'scheduled\' THEN 1 ELSE 0 END) as scheduled,
+                SUM(CASE WHEN status = \'draft\' THEN 1 ELSE 0 END) as draft
+            ')
+            ->first();
+
         $stats = [
-            'total' => ReviewRequestCampaign::count(),
-            'active' => ReviewRequestCampaign::active()->count(),
-            'scheduled' => ReviewRequestCampaign::scheduled()->count(),
-            'draft' => ReviewRequestCampaign::draft()->count(),
+            'total' => (int) $statsRow->total,
+            'active' => (int) $statsRow->active,
+            'scheduled' => (int) $statsRow->scheduled,
+            'draft' => (int) $statsRow->draft,
         ];
 
         return view('reviews::campaigns.index', compact('campaigns', 'stats'));
@@ -114,18 +123,14 @@ class ReviewRequestCampaignController extends Controller
             'ids.*' => ['required', 'integer', 'exists:review_request_campaigns,id'],
         ]);
 
-        $campaigns = ReviewRequestCampaign::query()->whereIn('id', $validated['ids'])->get();
-        $deleted = 0;
+        $ids = $validated['ids'];
 
-        foreach ($campaigns as $campaign) {
-            $campaign->delete();
-            $deleted++;
-        }
+        ReviewRequestCampaign::query()->whereIn('id', $ids)->delete();
 
         return response()->json([
             'success' => true,
-            'message' => "Se eliminaron {$deleted} campañas correctamente.",
-            'deleted' => $deleted,
+            'message' => 'Se eliminaron '.count($ids).' campañas correctamente.',
+            'deleted' => count($ids),
         ]);
     }
 
@@ -137,14 +142,25 @@ class ReviewRequestCampaignController extends Controller
             'recipients.*.email' => ['required', 'email', 'max:200'],
         ]);
 
-        $sends = collect($validated['recipients'])->map(function (array $recipient) use ($campaign) {
-            return ReviewRequestSend::create([
+        $now = now();
+        $rows = collect($validated['recipients'])->map(function (array $recipient) use ($campaign, $now) {
+            return [
                 'campaign_id' => $campaign->id,
                 'customer_name' => $recipient['name'],
                 'customer_email' => $recipient['email'],
                 'status' => 'pending',
-            ]);
-        });
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        })->all();
+
+        ReviewRequestSend::query()->insert($rows);
+
+        $sends = ReviewRequestSend::query()
+            ->where('campaign_id', $campaign->id)
+            ->whereIn('customer_email', collect($validated['recipients'])->pluck('email'))
+            ->where('created_at', $now)
+            ->get();
 
         $sends->each(fn (ReviewRequestSend $send) => SendReviewRequestJob::dispatch($send));
 
@@ -157,10 +173,19 @@ class ReviewRequestCampaignController extends Controller
 
     public function stats(ReviewRequestCampaign $campaign): JsonResponse
     {
-        $total = $campaign->sends()->count();
-        $sent = $campaign->sends()->sent()->count();
-        $failed = $campaign->sends()->where('status', 'failed')->count();
-        $opened = $campaign->sends()->whereNotNull('opened_at')->count();
+        $statsRow = $campaign->sends()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = \'sent\' THEN 1 ELSE 0 END) as sent,
+                SUM(CASE WHEN status = \'failed\' THEN 1 ELSE 0 END) as failed,
+                SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opened
+            ')
+            ->first();
+
+        $total = (int) $statsRow->total;
+        $sent = (int) $statsRow->sent;
+        $failed = (int) $statsRow->failed;
+        $opened = (int) $statsRow->opened;
 
         return response()->json([
             'success' => true,

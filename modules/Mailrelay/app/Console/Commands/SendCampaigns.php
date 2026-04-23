@@ -102,16 +102,9 @@ class SendCampaigns extends Command
             throw new \RuntimeException("List (group) ID {$campaign->list_id} not found for campaign #{$campaign->id}");
         }
 
-        $recipients = $group->subscribers()
-            ->active()
-            ->get()
-            ->map(fn ($subscriber) => [
-                'email' => $subscriber->email,
-                'name' => $subscriber->name,
-            ])
-            ->all();
+        $recipientCount = $group->subscribers()->active()->count();
 
-        if (empty($recipients)) {
+        if ($recipientCount === 0) {
             $this->warn("  No active subscribers in list '{$group->name}'. Skipping campaign.");
 
             Log::warning('SendCampaigns: no active subscribers for campaign', [
@@ -122,7 +115,17 @@ class SendCampaigns extends Command
             return;
         }
 
-        $this->info('  Found '.count($recipients)." active subscriber(s) in list '{$group->name}'.");
+        $this->info('  Found '.$recipientCount." active subscriber(s) in list '{$group->name}'.");
+
+        $recipients = $group->subscribers()
+            ->active()
+            ->limit(5000)
+            ->get()
+            ->map(fn ($subscriber) => [
+                'email' => $subscriber->email,
+                'name' => $subscriber->name,
+            ])
+            ->all();
 
         if ($isDryRun) {
             $this->line('  [DRY RUN] Would dispatch SendCampaignJob and mark campaign as SENDING.');

@@ -862,37 +862,54 @@ class AttentionController extends Controller
             $dateFrom = $request->input('date_from', now()->startOfMonth());
             $dateTo = $request->input('date_to', now()->endOfMonth());
 
-            // Base query with date filter
-            $query = Attention::query()
-                ->whereBetween('created_at', [$dateFrom, $dateTo]);
+            // Consolidated status counts in a single query
+            $statusRow = Attention::query()
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->selectRaw('
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as received,
+                    SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_process,
+                    SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as resolved,
+                    SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as closed,
+                    SUM(CASE WHEN is_anonymous = 1 THEN 1 ELSE 0 END) as anonymous,
+                    AVG(CASE WHEN satisfaction_rating IS NOT NULL THEN satisfaction_rating END) as avg_satisfaction
+                ', [
+                    AttentionStatus::RECEIVED->value,
+                    AttentionStatus::IN_PROCESS->value,
+                    AttentionStatus::RESOLVED->value,
+                    AttentionStatus::CLOSED->value,
+                ])->first();
 
-            // Total counts
+            // By type — SQL groupBy (no PHP collection bloat)
+            $byType = Attention::query()
+                ->leftJoin('attention_types', 'attentions.type_id', '=', 'attention_types.id')
+                ->select('attention_types.name as name', DB::raw('COUNT(*) as count'))
+                ->whereBetween('attentions.created_at', [$dateFrom, $dateTo])
+                ->groupBy('attentions.type_id', 'attention_types.name')
+                ->orderByDesc('count')
+                ->get();
+
+            // By category — SQL groupBy
+            $byCategory = Attention::query()
+                ->leftJoin('attention_categories', 'attentions.category_id', '=', 'attention_categories.id')
+                ->select('attention_categories.name as name', DB::raw('COUNT(*) as count'))
+                ->whereBetween('attentions.created_at', [$dateFrom, $dateTo])
+                ->groupBy('attentions.category_id', 'attention_categories.name')
+                ->orderByDesc('count')
+                ->get();
+
             $stats = [
-                'total' => $query->count(),
+                'total' => (int) $statusRow->total,
                 'by_status' => [
-                    'received' => (clone $query)->where('status', AttentionStatus::RECEIVED)->count(),
-                    'in_process' => (clone $query)->where('status', AttentionStatus::IN_PROCESS)->count(),
-                    'resolved' => (clone $query)->where('status', AttentionStatus::RESOLVED)->count(),
-                    'closed' => (clone $query)->where('status', AttentionStatus::CLOSED)->count(),
+                    'received' => (int) $statusRow->received,
+                    'in_process' => (int) $statusRow->in_process,
+                    'resolved' => (int) $statusRow->resolved,
+                    'closed' => (int) $statusRow->closed,
                 ],
-                'by_type' => $query->with('type')
-                    ->get()
-                    ->groupBy('type_id')
-                    ->map(fn ($group) => [
-                        'name' => $group->first()->type->name ?? 'Sin tipo',
-                        'count' => $group->count(),
-                    ])
-                    ->values(),
-                'by_category' => $query->with('category')
-                    ->get()
-                    ->groupBy('category_id')
-                    ->map(fn ($group) => [
-                        'name' => $group->first()->category->name ?? 'Sin categoría',
-                        'count' => $group->count(),
-                    ])
-                    ->values(),
-                'anonymous' => (clone $query)->where('is_anonymous', true)->count(),
-                'average_satisfaction' => (clone $query)->whereNotNull('satisfaction_rating')->avg('satisfaction_rating'),
+                'by_type' => $byType,
+                'by_category' => $byCategory,
+                'anonymous' => (int) $statusRow->anonymous,
+                'average_satisfaction' => $statusRow->avg_satisfaction ? round($statusRow->avg_satisfaction, 2) : null,
                 'date_range' => [
                     'from' => $dateFrom,
                     'to' => $dateTo,
@@ -996,39 +1013,56 @@ class AttentionController extends Controller
         try {
             $now = now();
 
-            // Base query
-            $baseQuery = Attention::query();
+            // Consolidated totals (all, today, week, month)
+            $totalsRow = Attention::query()->selectRaw('
+                COUNT(*) as all_count,
+                SUM(CASE WHEN DATE(created_at) = ? THEN 1 ELSE 0 END) as today,
+                SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as week,
+                SUM(CASE WHEN MONTH(created_at) = ? AND YEAR(created_at) = ? THEN 1 ELSE 0 END) as month
+            ', [
+                $now->toDateString(),
+                $now->copy()->startOfWeek(),
+                $now->copy()->endOfWeek(),
+                $now->month,
+                $now->year,
+            ])->first();
 
-            // Total peticiones statistics
-            $totalAll = (clone $baseQuery)->count();
-            $totalToday = (clone $baseQuery)->whereDate('created_at', $now->toDateString())->count();
-            $totalWeek = (clone $baseQuery)->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count();
-            $totalMonth = (clone $baseQuery)->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count();
+            // Status counts consolidated
+            $statusRow = Attention::query()->selectRaw('
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as received,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_process,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as resolved,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as closed
+            ', [
+                AttentionStatus::RECEIVED->value,
+                AttentionStatus::IN_PROCESS->value,
+                AttentionStatus::RESOLVED->value,
+                AttentionStatus::CLOSED->value,
+            ])->first();
 
-            // Statistics by status
-            $byStatus = [
-                'received' => (clone $baseQuery)->where('status', AttentionStatus::RECEIVED)->count(),
-                'in_process' => (clone $baseQuery)->where('status', AttentionStatus::IN_PROCESS)->count(),
-                'resolved' => (clone $baseQuery)->where('status', AttentionStatus::RESOLVED)->count(),
-                'closed' => (clone $baseQuery)->where('status', AttentionStatus::CLOSED)->count(),
-            ];
-
-            // Statistics by type
-            $byType = Attention::select('type_id', DB::raw('count(*) as count'))
-                ->with('type:id,name,code')
-                ->groupBy('type_id')
+            // By type — SQL groupBy
+            $byType = Attention::query()
+                ->leftJoin('attention_types', 'attentions.type_id', '=', 'attention_types.id')
+                ->select('attention_types.name as type', 'attention_types.code', DB::raw('COUNT(*) as count'))
+                ->groupBy('attentions.type_id', 'attention_types.name', 'attention_types.code')
+                ->orderByDesc('count')
                 ->get()
                 ->map(fn ($item) => [
-                    'type' => $item->type?->name ?? 'Sin tipo',
-                    'code' => $item->type?->code ?? null,
+                    'type' => $item->type ?? 'Sin tipo',
+                    'code' => $item->code,
                     'count' => $item->count,
                 ]);
 
-            // Average satisfaction rating
-            $avgSatisfaction = Attention::whereNotNull('satisfaction_rating')->avg('satisfaction_rating');
+            // Average satisfaction & resolution time
+            $satisfactionRow = Attention::query()
+                ->selectRaw('
+                    AVG(satisfaction_rating) as avg_rating,
+                    COUNT(CASE WHEN satisfaction_rating IS NOT NULL THEN 1 END) as total_rated
+                ')
+                ->first();
 
-            // Average resolution time (in hours)
-            $avgResolutionTime = Attention::whereNotNull('resolved_at')
+            $avgResolutionTime = Attention::query()
+                ->whereNotNull('resolved_at')
                 ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, resolved_at)) as avg_hours')
                 ->value('avg_hours');
 
@@ -1037,29 +1071,32 @@ class AttentionController extends Controller
             $breachedCount = Attention::whereHas('breaches')->distinct('id')->count();
             $slaComplianceRate = $totalWithSla > 0 ? (($totalWithSla - $breachedCount) / $totalWithSla) * 100 : null;
 
-            // Top 5 categories
-            $topCategories = Attention::select('category_id', DB::raw('count(*) as count'))
-                ->with('category:id,name')
-                ->groupBy('category_id')
+            // Top 5 categories — SQL groupBy
+            $topCategories = Attention::query()
+                ->leftJoin('attention_categories', 'attentions.category_id', '=', 'attention_categories.id')
+                ->select('attention_categories.name as category', DB::raw('COUNT(*) as count'))
+                ->whereNotNull('attentions.category_id')
+                ->groupBy('attentions.category_id', 'attention_categories.name')
                 ->orderByDesc('count')
                 ->limit(5)
                 ->get()
                 ->map(fn ($item) => [
-                    'category' => $item->category?->name ?? 'Sin categoría',
+                    'category' => $item->category ?? 'Sin categoría',
                     'count' => $item->count,
                 ]);
 
             // Top 5 departments with most workload
-            $topDepartments = Attention::select('department_id', DB::raw('count(*) as count'))
-                ->with('department:id,name')
-                ->whereNotNull('department_id')
-                ->whereIn('status', [AttentionStatus::RECEIVED, AttentionStatus::IN_PROCESS])
-                ->groupBy('department_id')
+            $topDepartments = Attention::query()
+                ->leftJoin('attention_departments', 'attentions.department_id', '=', 'attention_departments.id')
+                ->select('attention_departments.name as department', DB::raw('COUNT(*) as count'))
+                ->whereNotNull('attentions.department_id')
+                ->whereIn('attentions.status', [AttentionStatus::RECEIVED->value, AttentionStatus::IN_PROCESS->value])
+                ->groupBy('attentions.department_id', 'attention_departments.name')
                 ->orderByDesc('count')
                 ->limit(5)
                 ->get()
                 ->map(fn ($item) => [
-                    'department' => $item->department?->name ?? 'Sin departamento',
+                    'department' => $item->department ?? 'Sin departamento',
                     'count' => $item->count,
                 ]);
 
@@ -1067,16 +1104,21 @@ class AttentionController extends Controller
                 'success' => true,
                 'data' => [
                     'totals' => [
-                        'all' => $totalAll,
-                        'today' => $totalToday,
-                        'week' => $totalWeek,
-                        'month' => $totalMonth,
+                        'all' => (int) $totalsRow->all_count,
+                        'today' => (int) $totalsRow->today,
+                        'week' => (int) $totalsRow->week,
+                        'month' => (int) $totalsRow->month,
                     ],
-                    'by_status' => $byStatus,
+                    'by_status' => [
+                        'received' => (int) $statusRow->received,
+                        'in_process' => (int) $statusRow->in_process,
+                        'resolved' => (int) $statusRow->resolved,
+                        'closed' => (int) $statusRow->closed,
+                    ],
                     'by_type' => $byType,
                     'satisfaction' => [
-                        'average' => $avgSatisfaction ? round($avgSatisfaction, 2) : null,
-                        'total_rated' => Attention::whereNotNull('satisfaction_rating')->count(),
+                        'average' => $satisfactionRow->avg_rating ? round($satisfactionRow->avg_rating, 2) : null,
+                        'total_rated' => (int) $satisfactionRow->total_rated,
                     ],
                     'performance' => [
                         'avg_resolution_time_hours' => $avgResolutionTime ? round($avgResolutionTime, 2) : null,
@@ -1116,46 +1158,43 @@ class AttentionController extends Controller
         ]);
 
         try {
-            $query = Attention::query();
+            $query = Attention::query()
+                ->leftJoin('attention_types', 'attentions.type_id', '=', 'attention_types.id');
 
             // Apply date filters
             if ($request->filled('date_from')) {
-                $query->whereDate('created_at', '>=', $request->date_from);
+                $query->whereDate('attentions.created_at', '>=', $request->date_from);
             }
 
             if ($request->filled('date_to')) {
-                $query->whereDate('created_at', '<=', $request->date_to);
+                $query->whereDate('attentions.created_at', '<=', $request->date_to);
             }
 
-            // Group by type and calculate metrics
-            $stats = $query->with('type:id,name,code')
+            // SQL aggregation — no PHP collection bloat
+            $stats = $query
+                ->select(
+                    'attention_types.id as type_id',
+                    'attention_types.name as type_name',
+                    'attention_types.code as type_code',
+                    DB::raw('COUNT(*) as count'),
+                    DB::raw('SUM(CASE WHEN attentions.resolved_at IS NOT NULL THEN 1 ELSE 0 END) as total_resolved'),
+                    DB::raw('AVG(CASE WHEN attentions.resolved_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, attentions.created_at, attentions.resolved_at) END) as avg_resolution_minutes'),
+                    DB::raw('SUM(CASE WHEN attentions.satisfaction_rating IS NOT NULL THEN 1 ELSE 0 END) as total_rated'),
+                    DB::raw('AVG(attentions.satisfaction_rating) as avg_satisfaction')
+                )
+                ->groupBy('attentions.type_id', 'attention_types.id', 'attention_types.name', 'attention_types.code')
+                ->orderByDesc('count')
                 ->get()
-                ->groupBy('type_id')
-                ->map(function ($group) {
-                    $type = $group->first()->type;
-
-                    // Calculate average resolution time for resolved items
-                    $resolvedItems = $group->filter(fn ($item) => $item->resolved_at !== null);
-                    $avgResolutionMinutes = $resolvedItems->isNotEmpty()
-                        ? $resolvedItems->avg(fn ($item) => $item->created_at->diffInMinutes($item->resolved_at))
-                        : null;
-
-                    // Calculate average satisfaction
-                    $ratedItems = $group->filter(fn ($item) => $item->satisfaction_rating !== null);
-                    $avgSatisfaction = $ratedItems->isNotEmpty() ? $ratedItems->avg('satisfaction_rating') : null;
-
-                    return [
-                        'type_id' => $type?->id,
-                        'type_name' => $type?->name ?? 'Sin tipo',
-                        'type_code' => $type?->code ?? null,
-                        'count' => $group->count(),
-                        'avg_resolution_time_hours' => $avgResolutionMinutes ? round($avgResolutionMinutes / 60, 2) : null,
-                        'avg_satisfaction' => $avgSatisfaction ? round($avgSatisfaction, 2) : null,
-                        'total_resolved' => $resolvedItems->count(),
-                        'total_rated' => $ratedItems->count(),
-                    ];
-                })
-                ->values();
+                ->map(fn ($item) => [
+                    'type_id' => $item->type_id,
+                    'type_name' => $item->type_name ?? 'Sin tipo',
+                    'type_code' => $item->type_code,
+                    'count' => (int) $item->count,
+                    'avg_resolution_time_hours' => $item->avg_resolution_minutes ? round($item->avg_resolution_minutes / 60, 2) : null,
+                    'avg_satisfaction' => $item->avg_satisfaction ? round($item->avg_satisfaction, 2) : null,
+                    'total_resolved' => (int) $item->total_resolved,
+                    'total_rated' => (int) $item->total_rated,
+                ]);
 
             return response()->json([
                 'success' => true,
@@ -1202,26 +1241,53 @@ class AttentionController extends Controller
                 $query->whereDate('created_at', '<=', $request->date_to);
             }
 
-            // Get all attentions
-            $attentions = $query->get();
+            // Single aggregation query
+            $row = $query->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as received,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_process,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as resolved,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as closed,
+                AVG(CASE WHEN status = ? THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) END) as avg_time_received,
+                AVG(CASE WHEN status = ? THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) END) as avg_time_in_process,
+                AVG(CASE WHEN status = ? THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) END) as avg_time_resolved,
+                AVG(CASE WHEN status = ? THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) END) as avg_time_closed
+            ', [
+                AttentionStatus::RECEIVED->value,
+                AttentionStatus::IN_PROCESS->value,
+                AttentionStatus::RESOLVED->value,
+                AttentionStatus::CLOSED->value,
+                AttentionStatus::RECEIVED->value,
+                AttentionStatus::IN_PROCESS->value,
+                AttentionStatus::RESOLVED->value,
+                AttentionStatus::CLOSED->value,
+            ])->first();
 
-            // Group by status and calculate metrics
+            $total = (int) $row->total;
+
             $stats = collect(AttentionStatus::cases())
-                ->map(function ($status) use ($attentions) {
-                    $group = $attentions->filter(fn ($item) => $item->status === $status);
+                ->map(function ($status) use ($row, $total) {
+                    $count = match ($status) {
+                        AttentionStatus::RECEIVED => (int) $row->received,
+                        AttentionStatus::IN_PROCESS => (int) $row->in_process,
+                        AttentionStatus::RESOLVED => (int) $row->resolved,
+                        AttentionStatus::CLOSED => (int) $row->closed,
+                    };
 
-                    // Calculate average time in current status
-                    $avgTimeInStatus = $group->isNotEmpty()
-                        ? $group->avg(fn ($item) => $item->updated_at->diffInHours($item->created_at))
-                        : null;
+                    $avgTime = match ($status) {
+                        AttentionStatus::RECEIVED => $row->avg_time_received,
+                        AttentionStatus::IN_PROCESS => $row->avg_time_in_process,
+                        AttentionStatus::RESOLVED => $row->avg_time_resolved,
+                        AttentionStatus::CLOSED => $row->avg_time_closed,
+                    };
 
                     return [
                         'status' => $status->value,
                         'status_label' => $status->label(),
                         'status_color' => $status->color(),
-                        'count' => $group->count(),
-                        'avg_time_in_status_hours' => $avgTimeInStatus ? round($avgTimeInStatus, 2) : null,
-                        'percentage' => $attentions->count() > 0 ? round(($group->count() / $attentions->count()) * 100, 2) : 0,
+                        'count' => $count,
+                        'avg_time_in_status_hours' => $avgTime ? round($avgTime, 2) : null,
+                        'percentage' => $total > 0 ? round(($count / $total) * 100, 2) : 0,
                     ];
                 })
                 ->values();
@@ -1229,7 +1295,7 @@ class AttentionController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $stats,
-                'total' => $attentions->count(),
+                'total' => $total,
                 'filters' => [
                     'date_from' => $request->date_from,
                     'date_to' => $request->date_to,
@@ -1389,36 +1455,34 @@ class AttentionController extends Controller
                 });
             }
 
-            // Calculate severity and order by it
-            $attentions = $query->get()->map(function ($attention) {
-                $elapsedMinutes = $attention->created_at->diffInMinutes(now());
-                $limitMinutes = $attention->slaPolicy?->resolution_time ?? 0;
-                $overageMinutes = $limitMinutes > 0 ? max(0, $elapsedMinutes - $limitMinutes) : 0;
-                $overagePercent = $limitMinutes > 0 ? ($overageMinutes / $limitMinutes) * 100 : 0;
+            // Add computed severity score via SQL for efficient ordering
+            $query->selectRaw('
+                attentions.*,
+                CASE
+                    WHEN attention_sla_policies.resolution_time > 0
+                    THEN (
+                        (TIMESTAMPDIFF(MINUTE, attentions.created_at, NOW()) - attention_sla_policies.resolution_time)
+                        / attention_sla_policies.resolution_time
+                    ) * 100
+                    ELSE 0
+                END as severity_score
+            ')
+                ->leftJoin('attention_sla_policies', 'attentions.sla_policy_id', '=', 'attention_sla_policies.id')
+                ->orderByDesc('severity_score');
 
-                $attention->severity_score = $overagePercent;
-
-                return $attention;
-            })->sortByDesc('severity_score');
-
-            // Paginate results
             $perPage = min($request->integer('per_page', 15), 100);
-            $page = $request->integer('page', 1);
-            $offset = ($page - 1) * $perPage;
-
-            $paginatedAttentions = $attentions->slice($offset, $perPage)->values();
-            $total = $attentions->count();
+            $attentions = $query->paginate($perPage);
 
             return response()->json([
                 'success' => true,
-                'data' => $paginatedAttentions,
+                'data' => $attentions->items(),
                 'meta' => [
-                    'current_page' => $page,
-                    'last_page' => (int) ceil($total / $perPage),
-                    'per_page' => $perPage,
-                    'total' => $total,
-                    'from' => $offset + 1,
-                    'to' => min($offset + $perPage, $total),
+                    'current_page' => $attentions->currentPage(),
+                    'last_page' => $attentions->lastPage(),
+                    'per_page' => $attentions->perPage(),
+                    'total' => $attentions->total(),
+                    'from' => $attentions->firstItem(),
+                    'to' => $attentions->lastItem(),
                 ],
                 'filters' => [
                     'breach_type' => $request->breach_type,

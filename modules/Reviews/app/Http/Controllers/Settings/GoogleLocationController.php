@@ -72,12 +72,19 @@ class GoogleLocationController extends Controller
 
         $locations = $query->latest('synced_at')->paginate(20)->withQueryString();
 
-        // Calculate stats
+        $locationStats = ReviewGoogleLocation::query()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                COALESCE(AVG(CASE WHEN is_active = 1 THEN average_rating END), 0) as avg_rating
+            ')
+            ->first();
+
         $stats = [
-            'total' => ReviewGoogleLocation::count(),
-            'active' => ReviewGoogleLocation::where('is_active', true)->count(),
-            'avg_rating' => ReviewGoogleLocation::where('is_active', true)->avg('average_rating') ?? 0,
-            'total_reviews' => Review::count(),
+            'total' => (int) $locationStats->total,
+            'active' => (int) $locationStats->active,
+            'avg_rating' => round((float) $locationStats->avg_rating, 2),
+            'total_reviews' => Review::query()->count(),
         ];
 
         return view('reviews::settings.locations.index', compact('locations', 'stats'));
@@ -187,19 +194,17 @@ class GoogleLocationController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $locations = ReviewGoogleLocation::query()->whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($locations as $location) {
-            match ($validated['action']) {
-                'activate' => $location->update(['is_active' => true]),
-                'deactivate' => $location->update(['is_active' => false]),
-                'sync' => SyncGoogleReviewsJob::dispatch($location),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'activate' => ReviewGoogleLocation::query()->whereIn('id', $ids)->update(['is_active' => true]),
+            'deactivate' => ReviewGoogleLocation::query()->whereIn('id', $ids)->update(['is_active' => false]),
+            'sync' => ReviewGoogleLocation::query()->whereIn('id', $ids)->get()->each(
+                fn ($location) => SyncGoogleReviewsJob::dispatch($location)
+            ),
+        };
 
-        return response()->json(['success' => true, 'count' => $count]);
+        return response()->json(['success' => true, 'count' => count($ids)]);
     }
 
     public function tags(ReviewGoogleLocation $location): JsonResponse

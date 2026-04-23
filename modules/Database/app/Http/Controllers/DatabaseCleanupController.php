@@ -56,22 +56,17 @@ class DatabaseCleanupController extends Controller
         $database = config('database.connections.'.config('database.default').'.database');
         $tables = [];
 
-        // Get all tables from current database
         $result = DB::select('SELECT TABLE_NAME, TABLE_ROWS
                             FROM INFORMATION_SCHEMA.TABLES
                             WHERE TABLE_SCHEMA = ?
-                            ORDER BY TABLE_NAME ASC', [$database]);
+                            ORDER BY TABLE_NAME ASC
+                            LIMIT 200', [$database]);
 
         foreach ($result as $row) {
-            $tableName = $row->TABLE_NAME;
-
-            // Get actual count (TABLE_ROWS can be inaccurate)
-            $actualCount = DB::table($tableName)->count();
-
             $tables[] = [
-                'name' => $tableName,
-                'records' => $actualCount,
-                'estimated' => $row->TABLE_ROWS,
+                'name' => $row->TABLE_NAME,
+                'records' => (int) $row->TABLE_ROWS,
+                'estimated' => (int) $row->TABLE_ROWS,
             ];
         }
 
@@ -93,21 +88,19 @@ class DatabaseCleanupController extends Controller
 
         try {
             $request->validate([
-                'tables' => 'required|array|min:1',
+                'tables' => 'required|array|min:1|max:50',
                 'tables.*' => 'required|string',
             ]);
 
             $tablesToTruncate = $request->input('tables');
             $database = config('database.connections.'.config('database.default').'.database');
 
-            // Get all valid tables from database
             $allTables = DB::select('SELECT TABLE_NAME
                                     FROM INFORMATION_SCHEMA.TABLES
                                     WHERE TABLE_SCHEMA = ?', [$database]);
 
             $validTableNames = array_map(fn ($t) => $t->TABLE_NAME, $allTables);
 
-            // Validate all requested tables exist
             foreach ($tablesToTruncate as $table) {
                 if (! in_array($table, $validTableNames)) {
                     return response()->json([
@@ -117,27 +110,26 @@ class DatabaseCleanupController extends Controller
                 }
             }
 
-            // Disable foreign key checks temporarily
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-            $truncatedCount = 0;
-            $errors = [];
+            try {
+                $truncatedCount = 0;
+                $errors = [];
 
-            // Truncate each table
-            foreach ($tablesToTruncate as $table) {
-                try {
-                    DB::table($table)->truncate();
-                    $truncatedCount++;
-                } catch (\Exception $e) {
-                    $errors[] = [
-                        'table' => $table,
-                        'error' => $e->getMessage(),
-                    ];
+                foreach ($tablesToTruncate as $table) {
+                    try {
+                        DB::table($table)->truncate();
+                        $truncatedCount++;
+                    } catch (\Exception $e) {
+                        $errors[] = [
+                            'table' => $table,
+                            'error' => $e->getMessage(),
+                        ];
+                    }
                 }
+            } finally {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
             }
-
-            // Re-enable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
             if (! empty($errors)) {
                 return response()->json([

@@ -141,9 +141,7 @@ class FormSettingsController extends Controller
 
             $form->submissions()
                 ->where('created_at', '<', $cutoff)
-                ->chunk(100, function ($submissions) {
-                    $submissions->each(fn ($s) => $s->update(['is_anonymized' => true]));
-                });
+                ->update(['is_anonymized' => true]);
         }
 
         session()->flash('success', 'Configuración GDPR guardada.');

@@ -8,7 +8,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Filters\TicketFilter;
@@ -22,13 +21,14 @@ use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketLink;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketView;
 use Modules\HelpdeskTickets\Models\TicketWatcher;
-use Modules\HelpdeskTickets\Notifications\TicketMentionNotification;
+use Modules\HelpdeskTickets\Services\MentionService;
 use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketAiService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
@@ -36,7 +36,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketsController extends Controller
 {
-    public function __construct(private TicketUpdateService $ticketUpdateService) {}
+    public function __construct(
+        private TicketUpdateService $ticketUpdateService,
+        private MentionService $mentionService,
+    ) {}
 
     /**
      * Display a listing of tickets
@@ -47,7 +50,7 @@ class TicketsController extends Controller
 
         $userId = auth()->id();
 
-        $views = TicketView::forUser($userId)->ordered()->get();
+        $views = TicketView::forUser($userId)->ordered()->limit(100)->get();
 
         $currentView = null;
         if ($request->has('viewId')) {
@@ -104,7 +107,7 @@ class TicketsController extends Controller
             $customer = Customer::findOrFail($request->customer);
         }
 
-        $customers = Customer::orderBy('name')->get();
+        $customers = Customer::orderBy('name')->limit(500)->get();
         $categories = TicketCategory::active()->ordered()->get();
         $statuses = TicketStatus::active()->ordered()->get();
         $defaultStatus = TicketStatus::where('is_default', true)->first() ?? $statuses->first();
@@ -552,27 +555,30 @@ class TicketsController extends Controller
 
         $isInternal = (bool) ($validated['is_internal'] ?? false);
         $count = count($validated['ticket_ids']);
+        $ids = $validated['ticket_ids'];
+        $now = now();
 
-        DB::transaction(function () use ($validated, $isInternal): void {
-            foreach ($validated['ticket_ids'] as $id) {
-                $ticket = Ticket::find($id);
-                if (! $ticket) {
-                    continue;
-                }
+        DB::transaction(function () use ($ids, $validated, $isInternal, $now): void {
+            // Batch-insert message items
+            $items = array_map(fn ($id) => [
+                'ticket_id' => $id,
+                'type' => 'message',
+                'user_id' => auth()->id(),
+                'body' => $validated['body'],
+                'is_internal' => $isInternal,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $ids);
 
-                $ticket->items()->create([
-                    'type' => 'message',
-                    'user_id' => auth()->id(),
-                    'body' => $validated['body'],
-                    'is_internal' => $isInternal,
-                ]);
+            TicketItem::insert($items);
 
-                $updateData = ['last_message_at' => now()];
-                if (! $ticket->first_response_at) {
-                    $updateData['first_response_at'] = now();
-                }
-                $ticket->update($updateData);
-            }
+            // Batch-update last_message_at for all tickets
+            Ticket::whereIn('id', $ids)->update(['last_message_at' => $now]);
+
+            // Batch-update first_response_at only for tickets that don't have it yet
+            Ticket::whereIn('id', $ids)
+                ->whereNull('first_response_at')
+                ->update(['first_response_at' => $now]);
         });
 
         return response()->json([
@@ -663,7 +669,7 @@ class TicketsController extends Controller
         $ticket->update($data);
 
         // Dispatch mention notifications
-        $this->notifyMentions($request->body, $ticket);
+        $this->mentionService->notifyMentions($request->body, $ticket);
 
         // Broadcast events
         broadcast(new TicketMessageReceived($ticket, $item));
@@ -707,7 +713,7 @@ class TicketsController extends Controller
             );
         }
 
-        $tickets = $query->take(1000)->get();
+        $tickets = $query->take(1000)->cursor();
 
         if ($format === 'csv') {
             return $this->exportCsv($tickets);
@@ -720,7 +726,7 @@ class TicketsController extends Controller
         abort(400, 'Formato no soportado.');
     }
 
-    private function exportCsv(Collection $tickets): StreamedResponse
+    private function exportCsv(iterable $tickets): StreamedResponse
     {
         $filename = 'tickets-'.now()->format('Y-m-d').'.csv';
 
@@ -745,42 +751,12 @@ class TicketsController extends Controller
         }, $filename, ['Content-Type' => 'text/csv']);
     }
 
-    private function exportPdf(Collection $tickets): Response
+    private function exportPdf(iterable $tickets): Response
     {
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('helpdesktickets::managers.tickets.export-pdf', compact('tickets'));
 
         return $pdf->download('tickets-'.now()->format('Y-m-d').'.pdf');
-    }
-
-    /**
-     * Parse @mentions in a message body and send notifications.
-     */
-    private function notifyMentions(string $body, Ticket $ticket): void
-    {
-        if (! preg_match_all('/@([\w][\w\s]*?)(?=[,.\n]|$)/u', $body, $matches)) {
-            return;
-        }
-
-        $currentUserId = auth()->id();
-        $notified = [];
-
-        foreach ($matches[1] as $name) {
-            $name = trim($name);
-            if (! $name) {
-                continue;
-            }
-
-            $user = User::where('available', true)
-                ->where('verified', true)
-                ->whereRaw("TRIM(CONCAT(firstname, ' ', lastname)) LIKE ?", [$name.'%'])
-                ->first();
-
-            if ($user && $user->id !== $currentUserId && ! in_array($user->id, $notified)) {
-                $notified[] = $user->id;
-                $user->notify(new TicketMentionNotification($ticket, auth()->user()));
-            }
-        }
     }
 
     /**

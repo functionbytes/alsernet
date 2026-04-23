@@ -61,9 +61,10 @@ class FormSubmissionsExport implements FromQuery, WithChunkReading, WithHeadings
 
         if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
-            $query->whereIn('id', function ($sub) use ($search) {
-                $sub->select('submission_id')
+            $query->whereExists(function ($sub) use ($search) {
+                $sub->selectRaw('1')
                     ->from('form_submission_values')
+                    ->whereColumn('form_submission_values.submission_id', 'form_submissions.id')
                     ->where('value', 'like', "%{$search}%");
             });
         }

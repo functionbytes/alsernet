@@ -107,6 +107,7 @@ class HealthController extends Controller
         $history = HealthCheckResultHistoryItem::query()
             ->where('created_at', '>=', now()->subDays($days))
             ->orderBy('created_at', 'desc')
+            ->limit(1000)
             ->get()
             ->groupBy('check_name')
             ->map(function ($items) {

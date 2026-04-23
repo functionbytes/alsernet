@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Modules\Core\Models\Setting;
 use Modules\Template\Models\Template;
 use Modules\Template\Models\TemplateVersion;
 
@@ -57,7 +58,7 @@ class TemplateService
         DB::transaction(function () use ($template): void {
             $template->update(['status' => 'active']);
             Template::where('id', '!=', $template->id)->update(['status' => 'inactive']);
-            DB::table('settings')->updateOrInsert(
+            Setting::updateOrCreate(
                 ['key' => 'template'],
                 ['value' => $template->slug]
             );

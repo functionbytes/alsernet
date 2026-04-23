@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskTickets\Models\Ticket;
 
@@ -15,12 +16,23 @@ class MetricsController extends Controller
     {
         $this->authorize('helpdesk.metrics.view');
 
-        return ApiResponse::success([
-            'open' => Ticket::whereNull('closed_at')->count(),
-            'closedToday' => Ticket::whereDate('closed_at', today())->count(),
-            'slaBreached' => Ticket::where('sla_resolution_breached', true)->whereNull('closed_at')->count(),
-            'unassigned' => Ticket::whereNull('assignee_id')->whereNull('closed_at')->count(),
-        ]);
+        $data = Cache::remember('helpdesk:api:metrics', 60, function () {
+            $row = Ticket::query()
+                ->selectRaw('SUM(closed_at IS NULL) as open')
+                ->selectRaw('SUM(DATE(closed_at) = CURDATE()) as closedToday')
+                ->selectRaw('SUM(sla_resolution_breached = 1 AND closed_at IS NULL) as slaBreached')
+                ->selectRaw('SUM(assignee_id IS NULL AND closed_at IS NULL) as unassigned')
+                ->first();
+
+            return [
+                'open' => (int) $row->open,
+                'closedToday' => (int) $row->closedToday,
+                'slaBreached' => (int) $row->slaBreached,
+                'unassigned' => (int) $row->unassigned,
+            ];
+        });
+
+        return ApiResponse::success($data);
     }
 
     public function byAgent(Request $request): JsonResponse

@@ -16,12 +16,7 @@
     </div>
 @endsection
 
-@push('head')
-<link rel="stylesheet" href="{{ asset('core/select2/css/select2.min.css') }}">
-@endpush
-
 @push('scripts')
-<script src="{{ asset('core/select2/js/select2.min.js') }}"></script>
 <script src="{{ asset('core/validate/jquery.validate.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -30,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var $form = $('#multiStepForm');
     if (!$form.length) { return; }
 
-    // Replace nice-select with select2
-    $('#multiStepForm select').niceSelect('destroy');
+    // Init select2 for estimate form
     $('#multiStepForm select').select2({ width: '100%', minimumResultsForSearch: 6 });
 
     var totalSteps  = 5;

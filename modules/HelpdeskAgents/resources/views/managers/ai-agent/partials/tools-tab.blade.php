@@ -1,7 +1,7 @@
 {{-- Tools tab partial - loaded via AJAX into #tools-container --}}
 
 @php
-    $total = $tools->count();
+    $total = $tools->total();
     $active = $tools->where('is_active', true)->count();
     $inactive = $total - $active;
 @endphp
@@ -136,6 +136,12 @@
             </tbody>
         </table>
     </div>
+
+    @if($tools->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $tools->links() }}
+        </div>
+    @endif
 @endif
 
 <script>

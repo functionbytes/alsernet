@@ -15,20 +15,15 @@ class ActivityLogService
     public function countByEvent(): array
     {
         return Cache::remember('activity:count-by-event', 300, function () {
-            $counts = Activity::query()
-                ->selectRaw('event, COUNT(*) as count')
-                ->whereNotNull('event')
-                ->groupBy('event')
-                ->pluck('count', 'event')
-                ->all();
-
-            $total = Activity::query()->count();
+            $row = Activity::query()
+                ->selectRaw("COUNT(*) as total, SUM(event='created') as created, SUM(event='updated') as updated, SUM(event='deleted') as deleted")
+                ->first();
 
             return [
-                'created' => (int) ($counts['created'] ?? 0),
-                'updated' => (int) ($counts['updated'] ?? 0),
-                'deleted' => (int) ($counts['deleted'] ?? 0),
-                'total' => $total,
+                'created' => (int) $row->created,
+                'updated' => (int) $row->updated,
+                'deleted' => (int) $row->deleted,
+                'total' => (int) $row->total,
             ];
         });
     }

@@ -25,9 +25,11 @@ class ActivityLogSignatureObserver
             'created_at' => (string) now(),
         ];
 
+        ksort($payload);
+
         $activity->hmac_signature = hash_hmac(
             'sha256',
-            json_encode($payload, JSON_SORT_KEYS),
+            json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             config('app.key')
         );
     }

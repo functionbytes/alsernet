@@ -15,6 +15,7 @@ use Modules\HelpdeskAgents\Models\AiAgentFlow;
 use Modules\HelpdeskAgents\Models\AiAgentFlowNode;
 use Modules\HelpdeskAgents\Models\AiAgentSession;
 use Modules\HelpdeskAgents\Models\AiAgentSessionMessage;
+use Modules\HelpdeskTickets\Models\Ticket;
 
 class AiAgentFlowEngine
 {
@@ -175,7 +176,7 @@ class AiAgentFlowEngine
     {
         $systemPrompt = $nodeData['system_prompt'] ?? '';
 
-        $history = $session->messages()->get()->map(fn (AiAgentSessionMessage $msg) => [
+        $history = $session->messages()->orderBy('id')->limit(100)->get()->map(fn (AiAgentSessionMessage $msg) => [
             'role' => $msg->role,
             'content' => $msg->content,
         ])->toArray();
@@ -309,7 +310,7 @@ class AiAgentFlowEngine
         $config = $agent->backups ?? [];
         $provider = $config['provider'] ?? $agent->provider;
         $model = $config['model'] ?? $agent->model;
-        $apiKey = $config['api_key'] ?? null;
+        $apiKey = $agent->getApiKey();
         $temperature = (float) ($config['temperature'] ?? 0.7);
         $maxTokens = (int) ($config['max_tokens'] ?? 500);
 

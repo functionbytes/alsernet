@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Auth\Models\ImpersonationLog;
 use Modules\Auth\Models\LoginAttempt;
@@ -107,11 +108,13 @@ class AuditController extends Controller
 
         $restoredEmail = preg_replace('/^deleted_\d+_/', '', $user->email);
 
-        $user->restore();
-        $user->forceFill([
-            'email' => $restoredEmail,
-            'available' => true,
-        ])->save();
+        DB::transaction(function () use ($user, $restoredEmail): void {
+            $user->restore();
+            $user->forceFill([
+                'email' => $restoredEmail,
+                'available' => true,
+            ])->save();
+        });
 
         return response()->json([
             'success' => true,

@@ -3,12 +3,12 @@
 namespace Modules\Media\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Media\Models\MediaAccessLog;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFolder;
+use Modules\Media\Models\MediaShareRevocation;
 
 class PublicMediaController extends Controller
 {
@@ -33,7 +33,7 @@ class PublicMediaController extends Controller
 
         abort_unless(hash_equals($expectedSig, $payload['sig']), 404);
 
-        if (DB::table('media_share_revocations')->where('token_hash', hash('sha256', $token))->exists()) {
+        if (MediaShareRevocation::where('token_hash', hash('sha256', $token))->exists()) {
             abort(410, 'Enlace revocado');
         }
 
@@ -43,9 +43,11 @@ class PublicMediaController extends Controller
 
         $disk = $file->disk ?? config('media.default_disk', 'media');
 
-        return response()->file(Storage::disk($disk)->path($file->url), [
-            'Cache-Control' => 'private, max-age=3600',
-        ]);
+        return $this->serveFile(
+            Storage::disk($disk)->path($file->url),
+            $file,
+            'private, max-age=3600'
+        );
     }
 
     /**
@@ -59,16 +61,15 @@ class PublicMediaController extends Controller
 
         $this->logAccess($mediaFile, 'view');
 
+        $disk = $mediaFile->disk ?? config('media.default_disk', 'media');
+        $filePath = Storage::disk($disk)->path($mediaFile->url);
+
         if ($mediaFile->visibility === 'private') {
             abort_unless(auth()->check(), 403);
             $this->authorize('view', $mediaFile);
 
-            $disk = $mediaFile->disk ?? config('media.default_disk', 'media');
-
-            return response()->download(Storage::disk($disk)->path($mediaFile->url));
+            return $this->serveFile($filePath, $mediaFile, 'private, max-age=3600');
         }
-
-        $disk = $mediaFile->disk ?? config('media.default_disk', 'media');
 
         // Content negotiation for images: serve modern formats if available
         if (str_starts_with($mediaFile->mime_type, 'image/')) {
@@ -76,21 +77,60 @@ class PublicMediaController extends Controller
             $thumbs = $mediaFile->metadata['thumbnails'] ?? [];
 
             if (str_contains($accept, 'image/avif') && isset($thumbs['avif'])) {
-                return response()->file(Storage::disk($disk)->path($thumbs['avif']), [
-                    'Content-Type' => 'image/avif',
-                    'Vary' => 'Accept',
-                ]);
+                return $this->serveFile(
+                    Storage::disk($disk)->path($thumbs['avif']),
+                    $mediaFile,
+                    'public, max-age=31536000, immutable',
+                    'image/avif'
+                );
             }
 
             if (str_contains($accept, 'image/webp') && isset($thumbs['webp'])) {
-                return response()->file(Storage::disk($disk)->path($thumbs['webp']), [
-                    'Content-Type' => 'image/webp',
-                    'Vary' => 'Accept',
-                ]);
+                return $this->serveFile(
+                    Storage::disk($disk)->path($thumbs['webp']),
+                    $mediaFile,
+                    'public, max-age=31536000, immutable',
+                    'image/webp'
+                );
             }
         }
 
-        return response()->file(Storage::disk($disk)->path($mediaFile->url));
+        return $this->serveFile($filePath, $mediaFile, 'public, max-age=31536000, immutable');
+    }
+
+    private function serveFile(string $path, MediaFile $mediaFile, string $cacheControl, ?string $contentType = null): mixed
+    {
+        $etag = '"'.md5($mediaFile->file_hash.'|'.$mediaFile->updated_at->timestamp).'"';
+
+        if (request()->header('If-None-Match') === $etag) {
+            return response()->noContent(304, [
+                'Cache-Control' => $cacheControl,
+                'ETag' => $etag,
+            ]);
+        }
+
+        $headers = [
+            'Cache-Control' => $cacheControl,
+            'ETag' => $etag,
+        ];
+
+        if ($contentType) {
+            $headers['Content-Type'] = $contentType;
+        }
+
+        // Gzip compression for SVGs when the browser accepts it
+        if ($mediaFile->mime_type === 'image/svg+xml' && str_contains(request()->header('Accept-Encoding', ''), 'gzip')) {
+            $compressed = gzencode(file_get_contents($path), 9);
+            if ($compressed !== false) {
+                $headers['Content-Encoding'] = 'gzip';
+                $headers['Content-Length'] = strlen($compressed);
+                $headers['Vary'] = 'Accept-Encoding';
+
+                return response($compressed, 200, $headers);
+            }
+        }
+
+        return response()->file($path, $headers);
     }
 
     /**

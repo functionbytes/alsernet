@@ -18,6 +18,8 @@ class BulkConversationsController extends Controller
      */
     public function handle(Request $request): RedirectResponse
     {
+        $this->authorize('helpdesk.conversations.manage');
+
         $validated = $request->validate([
             'conversation_ids' => 'required|array|min:1|max:100',
             'conversation_ids.*' => 'integer',

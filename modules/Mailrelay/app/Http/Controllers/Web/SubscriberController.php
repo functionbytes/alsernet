@@ -45,11 +45,18 @@ class SubscriberController extends Controller
         }
 
         // Get statistics (before pagination)
+        $statsRaw = Subscriber::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as active', ['active', 'subscribed'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending', ['pending'])
+            ->selectRaw('SUM(CASE WHEN mailrelay_id IS NOT NULL THEN 1 ELSE 0 END) as synced')
+            ->first();
+
         $stats = [
-            'total' => Subscriber::count(),
-            'active' => Subscriber::whereIn('status', ['active', 'subscribed'])->count(),
-            'pending' => Subscriber::where('status', 'pending')->count(),
-            'synced' => Subscriber::whereNotNull('mailrelay_id')->count(),
+            'total' => (int) $statsRaw->total,
+            'active' => (int) $statsRaw->active,
+            'pending' => (int) $statsRaw->pending,
+            'synced' => (int) $statsRaw->synced,
         ];
 
         $subscribers = $query->latest()

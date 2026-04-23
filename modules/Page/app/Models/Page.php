@@ -57,7 +57,6 @@ class Page extends Model implements HasMedia
         'page_type',
         'description',
         'status',
-        'user_id',
         'seo_title',
         'seo_description',
         'seo_keywords',

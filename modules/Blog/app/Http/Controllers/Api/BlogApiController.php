@@ -45,6 +45,7 @@ class BlogApiController extends Controller
             ->published()
             ->when($request->get('root'), fn ($q) => $q->root())
             ->ordered()
+            ->limit(200)
             ->get();
 
         return BlogCategoryResource::collection($categories);
@@ -55,6 +56,7 @@ class BlogApiController extends Controller
         $tags = BlogTag::query()
             ->published()
             ->orderBy('name')
+            ->limit(200)
             ->get();
 
         return BlogTagResource::collection($tags);

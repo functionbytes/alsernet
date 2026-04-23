@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Blog\Http\Requests\StoreBlogTagRequest;
@@ -34,12 +35,11 @@ class BlogTagController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        $stats = [
-            'total' => BlogTag::query()->count(),
-            'published' => BlogTag::query()->where('status', 'published')->count(),
-            'draft' => BlogTag::query()->where('status', 'draft')->count(),
-            'used' => BlogTag::query()->has('posts')->count(),
-        ];
+        $stats = Cache::remember('blog:tag_stats', 300, function () {
+            $row = BlogTag::query()->selectRaw("COUNT(*) as total, SUM(status='published') as published, SUM(status='draft') as draft")->first();
+
+            return ['total' => (int) $row->total, 'published' => (int) $row->published, 'draft' => (int) $row->draft, 'used' => (int) BlogTag::has('posts')->count()];
+        });
 
         return view('blog::tags.index', compact('tags', 'stats'));
     }
@@ -119,20 +119,18 @@ class BlogTagController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $tags = BlogTag::query()->whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($tags as $tag) {
-            match ($validated['action']) {
-                'publish' => $tag->update(['status' => 'published']),
-                'unpublish' => $tag->update(['status' => 'draft']),
-                'delete' => (function () use ($tag) {
-                    $tag->posts()->detach();
-                    $tag->delete();
-                })(),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'publish' => BlogTag::whereIn('id', $ids)->update(['status' => 'published']),
+            'unpublish' => BlogTag::whereIn('id', $ids)->update(['status' => 'draft']),
+            'delete' => (function () use ($ids) {
+                BlogTag::whereIn('id', $ids)->get()->each(fn ($tag) => $tag->posts()->detach());
+                BlogTag::whereIn('id', $ids)->delete();
+            })(),
+        };
+
+        $count = count($ids);
 
         return response()->json(['success' => true, 'count' => $count]);
     }

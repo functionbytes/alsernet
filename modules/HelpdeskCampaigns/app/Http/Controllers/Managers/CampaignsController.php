@@ -4,6 +4,7 @@ namespace Modules\HelpdeskCampaigns\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskCampaigns\Http\Requests\StoreCampaignRequest;
 use Modules\HelpdeskCampaigns\Http\Requests\UpdateCampaignRequest;
 use Modules\HelpdeskCampaigns\Models\Campaign;
@@ -34,8 +35,10 @@ class CampaignsController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', "%{$request->search}%")
-                ->orWhere('description', 'like', "%{$request->search}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")
+                    ->orWhere('description', 'like', "%{$request->search}%");
+            });
         }
 
         $campaigns = $query->paginate(20);
@@ -55,7 +58,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->get();
+        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
 
         return view('helpdeskcampaigns::managers.campaigns.create', [
             'templates' => $templates,
@@ -112,7 +115,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->get();
+        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
 
         return view('helpdeskcampaigns::managers.campaigns.edit', [
             'campaign' => $campaign,
@@ -129,6 +132,8 @@ class CampaignsController extends Controller
 
         $campaign->update($request->validated());
 
+        Cache::forget("campaign_stats_{$campaign->id}");
+
         return back()->with('success', 'Campaña actualizada exitosamente');
     }
 
@@ -138,6 +143,8 @@ class CampaignsController extends Controller
     public function destroy(Campaign $campaign)
     {
         $this->authorize('delete', $campaign);
+
+        Cache::forget("campaign_stats_{$campaign->id}");
 
         $campaign->delete();
 
@@ -155,6 +162,8 @@ class CampaignsController extends Controller
 
         $campaign->publish();
 
+        Cache::forget("campaign_stats_{$campaign->id}");
+
         return back()->with('success', 'Campaña publicada exitosamente');
     }
 
@@ -166,6 +175,8 @@ class CampaignsController extends Controller
         $this->authorize('update', $campaign);
 
         $campaign->pause();
+
+        Cache::forget("campaign_stats_{$campaign->id}");
 
         return back()->with('success', 'Campaña pausada');
     }
@@ -179,6 +190,8 @@ class CampaignsController extends Controller
 
         $campaign->resume();
 
+        Cache::forget("campaign_stats_{$campaign->id}");
+
         return back()->with('success', 'Campaña reanudada');
     }
 
@@ -191,6 +204,8 @@ class CampaignsController extends Controller
 
         $campaign->end();
 
+        Cache::forget("campaign_stats_{$campaign->id}");
+
         return back()->with('success', 'Campaña finalizada');
     }
 
@@ -201,20 +216,30 @@ class CampaignsController extends Controller
     {
         $this->authorize('view', $campaign);
 
-        $impressions = $campaign->impressions()->count();
-        $clicks = $campaign->impressions()->whereNotNull('clicked_at')->count();
-        $ctr = $impressions > 0 ? round(($clicks / $impressions) * 100, 2) : 0;
+        $stats = Cache::remember("campaign_stats_{$campaign->id}", 300, function () use ($campaign) {
+            $agg = $campaign->impressions()
+                ->selectRaw('COUNT(*) as total, SUM(clicked_at IS NOT NULL) as clicks')
+                ->first();
 
-        return response()->json([
-            'campaign_id' => $campaign->id,
-            'impressions' => $impressions,
-            'clicks' => $clicks,
-            'ctr' => $ctr.'%',
-            'daily_impressions' => $campaign->average_daily_impressions,
-            'status' => $campaign->status_label,
-            'created_at' => $campaign->created_at,
-            'published_at' => $campaign->published_at,
-        ]);
+            $impressions = (int) ($agg->total ?? 0);
+            $clicks = (int) ($agg->clicks ?? 0);
+            $ctr = $impressions > 0 ? round(($clicks / $impressions) * 100, 2) : 0;
+
+            return [
+                'impressions' => $impressions,
+                'clicks' => $clicks,
+                'ctr' => $ctr.'%',
+                'daily_impressions' => $campaign->average_daily_impressions,
+                'status' => $campaign->status_label,
+                'created_at' => $campaign->created_at,
+                'published_at' => $campaign->published_at,
+            ];
+        });
+
+        return response()->json(array_merge(
+            ['campaign_id' => $campaign->id],
+            $stats
+        ));
     }
 
     /**
@@ -243,7 +268,7 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $templates = CampaignTemplate::select(['id', 'name', 'type'])->get();
+        $templates = CampaignTemplate::select(['id', 'name', 'type'])->limit(100)->get();
 
         return view('helpdeskcampaigns::managers.campaigns.templates', [
             'templates' => $templates,

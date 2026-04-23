@@ -18,12 +18,21 @@ class ViewsController extends Controller
     {
         $baseQuery = ConversationView::query()->forUser(Auth::id());
 
-        // Calculate stats
+        // Calculate stats — single aggregated query
+        $statsRow = (clone $baseQuery)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN user_id = ? THEN 1 ELSE 0 END) as personal,
+                SUM(CASE WHEN is_public = 1 THEN 1 ELSE 0 END) as public,
+                SUM(CASE WHEN is_system = 1 THEN 1 ELSE 0 END) as system
+            ', [Auth::id()])
+            ->first();
+
         $stats = [
-            'total' => (clone $baseQuery)->count(),
-            'personal' => (clone $baseQuery)->where('user_id', Auth::id())->count(),
-            'public' => (clone $baseQuery)->where('is_public', true)->count(),
-            'system' => (clone $baseQuery)->where('is_system', true)->count(),
+            'total' => (int) $statsRow->total,
+            'personal' => (int) $statsRow->personal,
+            'public' => (int) $statsRow->public,
+            'system' => (int) $statsRow->system,
         ];
 
         $query = clone $baseQuery;

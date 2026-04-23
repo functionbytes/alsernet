@@ -4,6 +4,8 @@ namespace Modules\HelpdeskAgents\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\HelpdeskAgents\Models\AiAgent;
 use Modules\HelpdeskAgents\Models\AiAgentKnowledgeBase;
@@ -114,6 +116,8 @@ class AiAgentSettingsController extends Controller
 
         $agent->save();
 
+        Cache::forget('helpdesk:ai-agent:first');
+
         return redirect()
             ->route('manager.helpdesk.ai.settings')
             ->with('success', 'Configuración del agente IA actualizada correctamente');
@@ -124,6 +128,8 @@ class AiAgentSettingsController extends Controller
      */
     public function testConnection(Request $request)
     {
+        $this->authorize('manage', AiAgent::class);
+
         $validated = $request->validate([
             'provider' => 'required|in:openai,anthropic,gemini,local',
             'api_key' => 'nullable|string',
@@ -155,6 +161,8 @@ class AiAgentSettingsController extends Controller
      */
     public function getModels(Request $request)
     {
+        $this->authorize('viewAny', AiAgent::class);
+
         $request->validate(['provider' => 'required|in:openai,anthropic,gemini,local']);
 
         $models = match ($request->provider) {
@@ -173,6 +181,8 @@ class AiAgentSettingsController extends Controller
      */
     public function statistics()
     {
+        $this->authorize('viewAny', AiAgent::class);
+
         $agent = AiAgent::first();
 
         if (! $agent) {
@@ -244,6 +254,7 @@ class AiAgentSettingsController extends Controller
         }
 
         $response = Http::withToken($apiKey)
+            ->timeout(10)
             ->get('https://api.openai.com/v1/models/'.$config['model']);
 
         if (! $response->ok()) {
@@ -263,6 +274,7 @@ class AiAgentSettingsController extends Controller
         }
 
         $response = Http::withHeader('x-api-key', $apiKey)
+            ->timeout(10)
             ->post('https://api.anthropic.com/v1/messages', [
                 'model' => $config['model'],
                 'max_tokens' => 100,
@@ -285,7 +297,7 @@ class AiAgentSettingsController extends Controller
             throw new \Exception('API key no configurada para Gemini');
         }
 
-        $response = Http::get(
+        $response = Http::timeout(10)->get(
             'https://generativelanguage.googleapis.com/v1/models/'.$config['model'],
             ['key' => $apiKey]
         );
@@ -302,7 +314,7 @@ class AiAgentSettingsController extends Controller
     {
         $baseUrl = $config['base_url'] ?? 'http://localhost:11434';
 
-        $response = Http::get($baseUrl.'/api/tags');
+        $response = Http::timeout(10)->get($baseUrl.'/api/tags');
 
         if (! $response->ok()) {
             throw new \Exception('No se pudo conectar con Ollama en '.$baseUrl);
@@ -323,7 +335,9 @@ class AiAgentSettingsController extends Controller
      */
     public function tagsIndex()
     {
-        $tags = AiAgentTag::orderBy('priority', 'desc')->get();
+        $this->authorize('viewAny', AiAgent::class);
+
+        $tags = AiAgentTag::orderBy('priority', 'desc')->paginate(50);
 
         return view('helpdeskagents::managers.ai-agent.partials.tags-tab', compact('tags'));
     }
@@ -333,6 +347,8 @@ class AiAgentSettingsController extends Controller
      */
     public function tagsStore(Request $request)
     {
+        $this->authorize('create', AiAgent::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -355,6 +371,8 @@ class AiAgentSettingsController extends Controller
      */
     public function tagsUpdate(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $tag = AiAgentTag::findOrFail($id);
 
         $validated = $request->validate([
@@ -379,6 +397,8 @@ class AiAgentSettingsController extends Controller
      */
     public function tagsDestroy($id)
     {
+        $this->authorize('delete', AiAgent::class);
+
         $tag = AiAgentTag::findOrFail($id);
         $tag->delete();
 
@@ -390,6 +410,8 @@ class AiAgentSettingsController extends Controller
      */
     public function tagsToggle(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $tag = AiAgentTag::findOrFail($id);
         $tag->update(['is_active' => $request->is_active]);
 
@@ -403,8 +425,10 @@ class AiAgentSettingsController extends Controller
      */
     public function toolsIndex()
     {
+        $this->authorize('viewAny', AiAgent::class);
+
         $agent = AiAgent::first();
-        $tools = $agent ? $agent->tools()->orderBy('created_at', 'desc')->get() : collect();
+        $tools = $agent ? $agent->tools()->orderBy('created_at', 'desc')->paginate(50) : new LengthAwarePaginator([], 0, 50);
 
         return view('helpdeskagents::managers.ai-agent.partials.tools-tab', compact('tools'));
     }
@@ -414,6 +438,8 @@ class AiAgentSettingsController extends Controller
      */
     public function toolsStore(Request $request)
     {
+        $this->authorize('create', AiAgent::class);
+
         $agent = AiAgent::first();
         if (! $agent) {
             return response()->json(['success' => false, 'message' => 'No hay agente configurado'], 400);
@@ -444,6 +470,8 @@ class AiAgentSettingsController extends Controller
      */
     public function toolsUpdate(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $tool = AiAgentTool::findOrFail($id);
 
         $validated = $request->validate([
@@ -470,6 +498,8 @@ class AiAgentSettingsController extends Controller
      */
     public function toolsDestroy($id)
     {
+        $this->authorize('delete', AiAgent::class);
+
         $tool = AiAgentTool::findOrFail($id);
         $tool->delete();
 
@@ -481,6 +511,8 @@ class AiAgentSettingsController extends Controller
      */
     public function toolsToggle(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $tool = AiAgentTool::findOrFail($id);
         $tool->update(['is_active' => $request->is_active]);
 
@@ -494,8 +526,10 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeIndex()
     {
+        $this->authorize('viewAny', AiAgent::class);
+
         $agent = AiAgent::first();
-        $knowledge = $agent ? $agent->knowledgeBase()->orderBy('created_at', 'desc')->get() : collect();
+        $knowledge = $agent ? $agent->knowledgeBase()->orderBy('created_at', 'desc')->paginate(50) : new LengthAwarePaginator([], 0, 50);
 
         return view('helpdeskagents::managers.ai-agent.partials.knowledge-tab', compact('knowledge'));
     }
@@ -505,6 +539,8 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeStore(Request $request)
     {
+        $this->authorize('create', AiAgent::class);
+
         $agent = AiAgent::first();
         if (! $agent) {
             return response()->json(['success' => false, 'message' => 'No hay agente configurado'], 400);
@@ -534,6 +570,8 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeUpdate(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $knowledge = AiAgentKnowledgeBase::findOrFail($id);
 
         $validated = $request->validate([
@@ -559,6 +597,8 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeDestroy($id)
     {
+        $this->authorize('delete', AiAgent::class);
+
         $knowledge = AiAgentKnowledgeBase::findOrFail($id);
         $knowledge->delete();
 
@@ -570,6 +610,8 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeToggle(Request $request, $id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $knowledge = AiAgentKnowledgeBase::findOrFail($id);
         $knowledge->update(['is_active' => $request->is_active]);
 
@@ -581,6 +623,8 @@ class AiAgentSettingsController extends Controller
      */
     public function knowledgeGenerateEmbedding($id)
     {
+        $this->authorize('update', AiAgent::class);
+
         $knowledge = AiAgentKnowledgeBase::findOrFail($id);
 
         // This would call the actual embedding API

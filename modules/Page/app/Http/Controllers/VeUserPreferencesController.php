@@ -5,6 +5,7 @@ namespace Modules\Page\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Page\Models\Page;
 use Modules\Page\Models\VeUserPreference;
 
 /**
@@ -30,6 +31,7 @@ class VeUserPreferencesController extends Controller
 
     public function show(Request $request, string $key): JsonResponse
     {
+        $this->authorize('viewAny', Page::class);
         $this->assertKey($key);
 
         $pref = VeUserPreference::query()
@@ -46,6 +48,7 @@ class VeUserPreferencesController extends Controller
 
     public function store(Request $request, string $key): JsonResponse
     {
+        $this->authorize('update', Page::class);
         $this->assertKey($key);
 
         $data = $request->validate([
@@ -67,6 +70,7 @@ class VeUserPreferencesController extends Controller
      */
     public function bulkShow(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Page::class);
         $data = $request->validate([
             'keys' => ['required', 'array', 'max:20'],
             'keys.*' => ['string'],
@@ -92,6 +96,7 @@ class VeUserPreferencesController extends Controller
      */
     public function bulkStore(Request $request): JsonResponse
     {
+        $this->authorize('update', Page::class);
         $data = $request->validate([
             'values' => ['required', 'array', 'max:20'],
             'values.*' => ['required', 'array'],

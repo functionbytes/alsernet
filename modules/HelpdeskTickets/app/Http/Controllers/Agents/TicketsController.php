@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -15,6 +16,8 @@ class TicketsController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Ticket::class);
+
         $userId = auth()->id();
 
         $query = Ticket::query()
@@ -42,21 +45,19 @@ class TicketsController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Ticket::class);
+
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'email']);
 
         return view('helpdesktickets::agents.tickets.create', compact('categories', 'customers'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTicketRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category_id' => 'required|integer|exists:helpdesk_ticket_categories,id',
-            'priority' => 'nullable|string|in:low,normal,high,urgent',
-            'customer_id' => 'nullable|integer|exists:helpdesk_customers,id',
-        ]);
+        $this->authorize('create', Ticket::class);
+
+        $validated = $request->validated();
 
         $ticket = Ticket::create(array_merge($validated, [
             'assignee_id' => auth()->id(),
@@ -69,6 +70,8 @@ class TicketsController extends Controller
 
     public function show(Ticket $ticket): View
     {
+        $this->authorize('view', $ticket);
+
         $ticket->load(['customer', 'status', 'category', 'assignee', 'items.user', 'items.author']);
 
         $ticket->items()
@@ -82,6 +85,8 @@ class TicketsController extends Controller
 
     public function edit(Ticket $ticket): View
     {
+        $this->authorize('update', $ticket);
+
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
         $statuses = TicketStatus::active()->ordered()->get(['id', 'name', 'color']);
 
@@ -90,6 +95,8 @@ class TicketsController extends Controller
 
     public function update(Request $request, Ticket $ticket): RedirectResponse
     {
+        $this->authorize('update', $ticket);
+
         $validated = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
@@ -105,6 +112,8 @@ class TicketsController extends Controller
 
     public function destroy(Ticket $ticket): RedirectResponse
     {
+        $this->authorize('delete', $ticket);
+
         $ticket->delete();
 
         return redirect()->route('agent.helpdesk.tickets.index')
@@ -113,6 +122,8 @@ class TicketsController extends Controller
 
     public function assign(Request $request, Ticket $ticket): RedirectResponse
     {
+        $this->authorize('assign', $ticket);
+
         $request->validate(['agent_id' => 'required|integer|exists:users,id']);
         $ticket->assignTo($request->integer('agent_id'));
 
@@ -121,6 +132,8 @@ class TicketsController extends Controller
 
     public function unassign(Ticket $ticket): RedirectResponse
     {
+        $this->authorize('update', $ticket);
+
         $ticket->update(['assignee_id' => null, 'assigned_at' => null]);
 
         return back()->with('success', __('helpdesk::helpdesk.messages.ticket_unassigned'));
@@ -128,6 +141,8 @@ class TicketsController extends Controller
 
     public function close(Ticket $ticket): RedirectResponse
     {
+        $this->authorize('close', $ticket);
+
         $ticket->close();
 
         return back()->with('success', __('helpdesk::helpdesk.messages.ticket_closed'));
@@ -135,6 +150,8 @@ class TicketsController extends Controller
 
     public function reopen(Ticket $ticket): RedirectResponse
     {
+        $this->authorize('update', $ticket);
+
         $ticket->reopen();
 
         return back()->with('success', __('helpdesk::helpdesk.messages.ticket_reopened'));

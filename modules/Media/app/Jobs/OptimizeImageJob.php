@@ -9,6 +9,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
 use Modules\Media\Models\MediaFile;
 
@@ -52,7 +54,7 @@ class OptimizeImageJob implements ShouldQueue
         if ($file->type !== 'image') {
             return;
         }
-        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png'], true)) {
+        if (! in_array($file->mime_type, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'], true)) {
             return;
         }
 
@@ -68,28 +70,48 @@ class OptimizeImageJob implements ShouldQueue
             return;
         }
 
-        $manager = ImageManager::gd();
+        $isAvif = $file->mime_type === 'image/avif';
+        $driver = ($isAvif && extension_loaded('imagick')) ? new ImagickDriver : new GdDriver;
+        $manager = new ImageManager($driver);
         $contents = $disk->get($relative);
         $image = $manager->read($contents);
         $originalWidth = $image->width();
 
-        // 1) Generate .webp sibling (simple conversion).
-        $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $relative);
-        if ($webpPath && ! $disk->exists($webpPath)) {
-            $disk->put($webpPath, (string) $image->toWebp(self::QUALITY));
+        // 1) Generate .webp sibling only if original is not WebP or AVIF.
+        if (! in_array($file->mime_type, ['image/webp', 'image/avif'], true)) {
+            $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $relative);
+            if ($webpPath && ! $disk->exists($webpPath)) {
+                $disk->put($webpPath, (string) $image->toWebp(self::QUALITY));
+            }
         }
 
-        // 2) Generate responsive variants (-480w.webp, -768w.webp, …).
+        // 2) Generate responsive WebP variants.
         foreach (self::RESPONSIVE_WIDTHS as $w) {
             if ($w >= $originalWidth) {
                 continue;
             }
-            $variantPath = preg_replace('/\.(jpe?g|png)$/i', '-'.$w.'w.webp', $relative);
+            $variantPath = preg_replace('/\.(jpe?g|png|webp|avif)$/i', '-'.$w.'w.webp', $relative);
             if (! $variantPath || $disk->exists($variantPath)) {
                 continue;
             }
             $variant = (clone $image)->scale(width: $w);
             $disk->put($variantPath, (string) $variant->toWebp(self::QUALITY));
+        }
+
+        // 3) Generate responsive AVIF variants when original is AVIF.
+        if ($isAvif && extension_loaded('imagick')) {
+            $avifQuality = (int) config('media.avif_quality', 60);
+            foreach (self::RESPONSIVE_WIDTHS as $w) {
+                if ($w >= $originalWidth) {
+                    continue;
+                }
+                $variantPath = preg_replace('/\.(jpe?g|png|webp|avif)$/i', '-'.$w.'w.avif', $relative);
+                if (! $variantPath || $disk->exists($variantPath)) {
+                    continue;
+                }
+                $variant = (clone $image)->scale(width: $w);
+                $disk->put($variantPath, (string) $variant->toAvif($avifQuality));
+            }
         }
     }
 

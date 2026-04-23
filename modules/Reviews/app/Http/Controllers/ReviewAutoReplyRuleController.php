@@ -25,10 +25,18 @@ class ReviewAutoReplyRuleController extends Controller
         if (! $request->expectsJson()) {
             $baseQuery = ReviewAutoReplyRule::query()->whereIn('location_id', $locationIds);
 
+            $statsRow = (clone $baseQuery)
+                ->selectRaw('
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                    SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
+                ')
+                ->first();
+
             $stats = [
-                'total' => (clone $baseQuery)->count(),
-                'active' => (clone $baseQuery)->where('is_active', true)->count(),
-                'inactive' => (clone $baseQuery)->where('is_active', false)->count(),
+                'total' => (int) $statsRow->total,
+                'active' => (int) $statsRow->active,
+                'inactive' => (int) $statsRow->inactive,
             ];
 
             return view('reviews::auto-reply-rules.index', compact('stats'));
@@ -185,22 +193,22 @@ class ReviewAutoReplyRuleController extends Controller
             ->whereHas('connection', fn ($q) => $q->where('user_id', auth()->id()))
             ->pluck('id');
 
-        $rules = ReviewAutoReplyRule::query()
-            ->whereIn('id', $validated['ids'])
-            ->whereIn('location_id', $locationIds)
-            ->get();
+        $ids = $validated['ids'];
+        $query = ReviewAutoReplyRule::query()
+            ->whereIn('id', $ids)
+            ->whereIn('location_id', $locationIds);
 
-        $count = 0;
-        foreach ($rules as $rule) {
-            match ($validated['action']) {
-                'activate' => $rule->update(['is_active' => true]),
-                'deactivate' => $rule->update(['is_active' => false]),
-                'delete' => $rule->delete(),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'activate' => $query->update(['is_active' => true]),
+            'deactivate' => $query->update(['is_active' => false]),
+            'delete' => ReviewAutoReplyRule::query()
+                ->whereIn('id', $ids)
+                ->whereIn('location_id', $locationIds)
+                ->get()
+                ->each->delete(),
+        };
 
-        return response()->json(['success' => true, 'count' => $count]);
+        return response()->json(['success' => true, 'count' => count($ids)]);
     }
 
     private function buildConditions(array $validated): array

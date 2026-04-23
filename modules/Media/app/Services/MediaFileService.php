@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
 use Modules\Media\Events\MediaFileDeleted;
 use Modules\Media\Events\MediaFileMoved;
@@ -58,17 +59,86 @@ class MediaFileService
         }
 
         $storedPath = $file->store((string) ($folderId ?? 0), $disk);
+        $mimeType = $file->getMimeType();
+        $fileSize = $file->getSize();
+        $fileName = $file->getClientOriginalName();
+        $fileHash = $hash;
+        $converted = null;
+
+        if (config('media.convert_to_avif', true) && in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true) && extension_loaded('imagick')) {
+            $converted = $this->convertStoredFileToAvif($storedPath, $disk);
+
+            if ($converted) {
+                Storage::disk($disk)->delete($storedPath);
+                $storedPath = $converted['path'];
+                $mimeType = 'image/avif';
+                $fileSize = $converted['size'];
+                $fileHash = $converted['hash'];
+                $fileName = $this->replaceExtensionWithAvif($fileName);
+
+                // Re-check deduplication with the new AVIF hash
+                $existingAvif = MediaFile::query()
+                    ->where('file_hash', $fileHash)
+                    ->where('disk', $disk)
+                    ->first();
+
+                if ($existingAvif) {
+                    Storage::disk($disk)->delete($storedPath);
+                    if (isset($converted['fallback_webp'])) {
+                        Storage::disk($disk)->delete($converted['fallback_webp']);
+                    }
+
+                    return ['duplicate' => true, 'file' => $existingAvif];
+                }
+            }
+        } elseif (config('media.convert_to_webp', true) && in_array($mimeType, ['image/jpeg', 'image/png'], true)) {
+            $converted = $this->convertStoredFileToWebp($storedPath, $disk);
+
+            if ($converted) {
+                Storage::disk($disk)->delete($storedPath);
+                $storedPath = $converted['path'];
+                $mimeType = 'image/webp';
+                $fileSize = $converted['size'];
+                $fileHash = $converted['hash'];
+                $fileName = $this->replaceExtensionWithWebp($fileName);
+
+                // Re-check deduplication with the new WebP hash
+                $existingWebP = MediaFile::query()
+                    ->where('file_hash', $fileHash)
+                    ->where('disk', $disk)
+                    ->first();
+
+                if ($existingWebP) {
+                    Storage::disk($disk)->delete($storedPath);
+
+                    return ['duplicate' => true, 'file' => $existingWebP];
+                }
+            }
+        }
+
+        $metadata = $this->extractImageMetadata($file);
+
+        if (str_starts_with($mimeType, 'image/')) {
+            $placeholder = $this->generatePlaceholder($storedPath, $disk);
+            if ($placeholder) {
+                $metadata['placeholder'] = $placeholder;
+            }
+        }
+
+        if (! empty($converted['fallback_webp'])) {
+            $metadata['fallback_webp'] = $converted['fallback_webp'];
+        }
 
         $mediaFile = MediaFile::create([
-            'name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
+            'name' => $fileName,
+            'mime_type' => $mimeType,
+            'size' => $fileSize,
             'url' => $storedPath,
             'folder_id' => $folderId,
             'user_id' => $userId,
             'disk' => $disk,
-            'file_hash' => $hash,
-            'metadata' => $this->extractImageMetadata($file),
+            'file_hash' => $fileHash,
+            'metadata' => $metadata,
         ]);
 
         if (str_starts_with($mediaFile->mime_type, 'image/')) {
@@ -330,14 +400,81 @@ class MediaFileService
                 $filename
             );
 
+            $fileName = $filename;
+            $fileSize = $size;
+            $fileHash = null;
+            $converted = null;
+
+            if (config('media.convert_to_avif', true) && in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true) && extension_loaded('imagick')) {
+                $converted = $this->convertStoredFileToAvif($storedPath, $disk);
+
+                if ($converted) {
+                    Storage::disk($disk)->delete($storedPath);
+                    $storedPath = $converted['path'];
+                    $mimeType = 'image/avif';
+                    $fileSize = $converted['size'];
+                    $fileHash = $converted['hash'];
+                    $fileName = $this->replaceExtensionWithAvif($fileName);
+                }
+            } elseif (config('media.convert_to_webp', true) && in_array($mimeType, ['image/jpeg', 'image/png'], true)) {
+                $converted = $this->convertStoredFileToWebp($storedPath, $disk);
+
+                if ($converted) {
+                    Storage::disk($disk)->delete($storedPath);
+                    $storedPath = $converted['path'];
+                    $mimeType = 'image/webp';
+                    $fileSize = $converted['size'];
+                    $fileHash = $converted['hash'];
+                    $fileName = $this->replaceExtensionWithWebp($fileName);
+                }
+            }
+
+            if (! $fileHash) {
+                $fileHash = hash_file('sha256', Storage::disk($disk)->path($storedPath));
+            }
+
+            $existing = MediaFile::query()
+                ->where('file_hash', $fileHash)
+                ->where('disk', $disk)
+                ->first();
+
+            if ($existing) {
+                Storage::disk($disk)->delete($storedPath);
+                if (! empty($converted['fallback_webp'])) {
+                    Storage::disk($disk)->delete($converted['fallback_webp']);
+                }
+
+                return $existing;
+            }
+
+            $metadata = [];
+
+            if (str_starts_with($mimeType, 'image/')) {
+                $dimensions = @getimagesize(Storage::disk($disk)->path($storedPath));
+                if ($dimensions) {
+                    $metadata = ['width' => $dimensions[0], 'height' => $dimensions[1]];
+                }
+
+                $placeholder = $this->generatePlaceholder($storedPath, $disk);
+                if ($placeholder) {
+                    $metadata['placeholder'] = $placeholder;
+                }
+            }
+
+            if (! empty($converted['fallback_webp'])) {
+                $metadata['fallback_webp'] = $converted['fallback_webp'];
+            }
+
             $mediaFile = MediaFile::create([
-                'name' => $filename,
+                'name' => $fileName,
                 'mime_type' => $mimeType,
-                'size' => $size,
+                'size' => $fileSize,
                 'url' => $storedPath,
                 'folder_id' => $folderId,
                 'user_id' => $userId,
                 'disk' => $disk,
+                'file_hash' => $fileHash,
+                'metadata' => $metadata,
             ]);
 
             if (str_starts_with($mimeType, 'image/')) {
@@ -590,7 +727,7 @@ class MediaFileService
     public function calculatePhash(string $imagePath): ?string
     {
         try {
-            $img = (new ImageManager(new Driver))
+            $img = (new ImageManager(new GdDriver))
                 ->read($imagePath)
                 ->resize(8, 8)
                 ->greyscale();
@@ -617,6 +754,132 @@ class MediaFileService
             return $hex;
         } catch (\Throwable $e) {
             Log::warning('pHash calculation failed', ['path' => $imagePath, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Generate a tiny base64-encoded WebP placeholder (LQIP) for an image.
+     * Uses Imagick if available (supports AVIF/WebP/PNG/JPEG), otherwise GD.
+     */
+    private function generatePlaceholder(string $path, string $disk): ?string
+    {
+        if (! Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        try {
+            $content = Storage::disk($disk)->get($path);
+            $driver = extension_loaded('imagick') ? new ImagickDriver : new GdDriver;
+            $manager = new ImageManager($driver);
+            $image = $manager->read($content);
+
+            $tiny = $image->scale(width: 20);
+            $encoded = (string) $tiny->toWebp(30);
+
+            return 'data:image/webp;base64,'.base64_encode($encoded);
+        } catch (\Throwable $e) {
+            Log::warning('Placeholder generation failed', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Convert a stored image file to WebP. Returns new path, size and hash,
+     * or null on failure. Original file is NOT deleted here.
+     */
+    private function convertStoredFileToWebp(string $path, string $disk): ?array
+    {
+        if (! Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        try {
+            $content = Storage::disk($disk)->get($path);
+            $manager = new ImageManager(new GdDriver);
+            $image = $manager->read($content);
+
+            $webpContent = (string) $image->toWebp((int) config('media.image_optimization.quality', 85));
+
+            $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $path);
+            Storage::disk($disk)->put($webpPath, $webpContent);
+
+            $fullPath = Storage::disk($disk)->path($webpPath);
+
+            return [
+                'path' => $webpPath,
+                'size' => filesize($fullPath),
+                'hash' => hash_file('sha256', $fullPath),
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('WebP conversion failed during upload', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function replaceExtensionWithWebp(string $filename): string
+    {
+        return preg_replace('/\.(jpe?g|png)$/i', '.webp', $filename);
+    }
+
+    private function replaceExtensionWithAvif(string $filename): string
+    {
+        return preg_replace('/\.(jpe?g|png|webp)$/i', '.avif', $filename);
+    }
+
+    /**
+     * Convert a stored image to AVIF using Imagick. Returns path, size, hash
+     * and optionally generates a WebP fallback. Original is NOT deleted.
+     */
+    private function convertStoredFileToAvif(string $path, string $disk): ?array
+    {
+        if (! Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        try {
+            $content = Storage::disk($disk)->get($path);
+            $manager = new ImageManager(new ImagickDriver);
+            $image = $manager->read($content);
+
+            $quality = (int) config('media.avif_quality', 60);
+            $avifContent = (string) $image->toAvif($quality);
+
+            $avifPath = preg_replace('/\.(jpe?g|png|webp)$/i', '.avif', $path);
+            Storage::disk($disk)->put($avifPath, $avifContent);
+
+            $fullPath = Storage::disk($disk)->path($avifPath);
+            $avifSize = filesize($fullPath);
+            $avifHash = hash_file('sha256', $fullPath);
+
+            // Generate WebP fallback
+            $webpContent = (string) $image->toWebp((int) config('media.image_optimization.quality', 85));
+            $webpPath = preg_replace('/\.(jpe?g|png|webp)$/i', '.webp', $path);
+            Storage::disk($disk)->put($webpPath, $webpContent);
+
+            return [
+                'path' => $avifPath,
+                'size' => $avifSize,
+                'hash' => $avifHash,
+                'fallback_webp' => $webpPath,
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('AVIF conversion failed during upload', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ]);
 
             return null;
         }

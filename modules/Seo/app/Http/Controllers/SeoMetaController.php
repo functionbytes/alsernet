@@ -172,16 +172,26 @@ class SeoMetaController extends Controller
      */
     public function statistics(): JsonResponse
     {
+        $row = SeoMeta::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN robots LIKE ? THEN 1 ELSE 0 END) as indexable,
+            SUM(CASE WHEN robots LIKE ? THEN 1 ELSE 0 END) as noindex,
+            SUM(CASE WHEN description IS NULL THEN 1 ELSE 0 END) as missing_description,
+            SUM(CASE WHEN og_image IS NULL THEN 1 ELSE 0 END) as missing_og_image
+        ', ['%index%', '%noindex%'])->first();
+
+        $byType = SeoMeta::query()
+            ->selectRaw('seoable_type, COUNT(*) as count')
+            ->groupBy('seoable_type')
+            ->pluck('count', 'seoable_type');
+
         $stats = [
-            'total' => SeoMeta::count(),
-            'indexable' => SeoMeta::where('robots', 'like', '%index%')->count(),
-            'noindex' => SeoMeta::where('robots', 'like', '%noindex%')->count(),
-            'by_type' => SeoMeta::selectRaw('seoable_type, count(*) as count')
-                ->groupBy('seoable_type')
-                ->get()
-                ->pluck('count', 'seoable_type'),
-            'missing_description' => SeoMeta::whereNull('description')->count(),
-            'missing_og_image' => SeoMeta::whereNull('og_image')->count(),
+            'total' => (int) $row->total,
+            'indexable' => (int) $row->indexable,
+            'noindex' => (int) $row->noindex,
+            'by_type' => $byType,
+            'missing_description' => (int) $row->missing_description,
+            'missing_og_image' => (int) $row->missing_og_image,
         ];
 
         return response()->json($stats);

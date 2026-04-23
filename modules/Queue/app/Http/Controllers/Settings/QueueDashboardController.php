@@ -87,9 +87,11 @@ class QueueDashboardController extends Controller
         $this->authorize('queue.view');
 
         try {
-            $failed24h = DB::table('failed_jobs')->where('failed_at', '>=', now()->subDay())->count();
-            $failed7d = DB::table('failed_jobs')->where('failed_at', '>=', now()->subWeek())->count();
-            $failedTotal = DB::table('failed_jobs')->count();
+            $failedStats = DB::table('failed_jobs')
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('SUM(CASE WHEN failed_at >= ? THEN 1 ELSE 0 END) as failed_24h', [now()->subDay()])
+                ->selectRaw('SUM(CASE WHEN failed_at >= ? THEN 1 ELSE 0 END) as failed_7d', [now()->subWeek()])
+                ->first();
 
             $topFailing = DB::table('failed_jobs')
                 ->latest('failed_at')
@@ -108,8 +110,14 @@ class QueueDashboardController extends Controller
 
             try {
                 $knownQueues = config('queue_module.known_queues', []);
+                $queueCounts = DB::table('jobs')
+                    ->select('queue', DB::raw('COUNT(*) as count'))
+                    ->whereIn('queue', $knownQueues)
+                    ->groupBy('queue')
+                    ->pluck('count', 'queue');
+
                 foreach ($knownQueues as $queue) {
-                    $count = DB::table('jobs')->where('queue', $queue)->count();
+                    $count = (int) ($queueCounts[$queue] ?? 0);
                     $queuePending[$queue] = $count;
                     $pendingTotal += $count;
                 }
@@ -118,9 +126,9 @@ class QueueDashboardController extends Controller
             }
 
             return response()->json([
-                'failed_24h' => $failed24h,
-                'failed_7d' => $failed7d,
-                'failed_total' => $failedTotal,
+                'failed_24h' => (int) $failedStats->failed_24h,
+                'failed_7d' => (int) $failedStats->failed_7d,
+                'failed_total' => (int) $failedStats->total,
                 'pending_total' => $pendingTotal,
                 'queue_pending' => $queuePending,
                 'top_failing' => $topFailing,

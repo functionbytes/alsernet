@@ -45,6 +45,23 @@ class SeoPageUrlsController extends Controller
 
             $rawPages = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
+            // Collect all paths first to batch-load redirects (avoids N+1)
+            $allPaths = collect();
+            foreach ($rawPages as $page) {
+                if ($page->translations->isNotEmpty()) {
+                    foreach ($page->translations as $trans) {
+                        $slug = $trans->slug ?? $page->slug;
+                        $allPaths->push('/'.($prefix ? $prefix.'/'.$slug : $slug));
+                    }
+                } else {
+                    $allPaths->push('/'.($prefix ? $prefix.'/'.$page->slug : $page->slug));
+                }
+            }
+
+            $redirectMap = SeoRedirect::whereIn('source_path', $allPaths->unique()->values())
+                ->get()
+                ->keyBy('source_path');
+
             // Transformar para la vista: una fila por URL (por traducción)
             $rows = collect();
             foreach ($rawPages as $page) {
@@ -54,7 +71,7 @@ class SeoPageUrlsController extends Controller
                     foreach ($page->translations as $trans) {
                         $slug = $trans->slug ?? $page->slug;
                         $fullPath = '/'.($prefix ? $prefix.'/'.$slug : $slug);
-                        $existingRedirect = SeoRedirect::where('source_path', $fullPath)->first();
+                        $existingRedirect = $redirectMap->get($fullPath);
 
                         $rows->push([
                             'page_id' => $page->id,
@@ -74,7 +91,7 @@ class SeoPageUrlsController extends Controller
                 } else {
                     $slug = $page->slug;
                     $fullPath = '/'.($prefix ? $prefix.'/'.$slug : $slug);
-                    $existingRedirect = SeoRedirect::where('source_path', $fullPath)->first();
+                    $existingRedirect = $redirectMap->get($fullPath);
 
                     $rows->push([
                         'page_id' => $page->id,

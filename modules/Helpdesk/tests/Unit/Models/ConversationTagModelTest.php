@@ -2,37 +2,24 @@
 
 namespace Modules\Helpdesk\Tests\Unit\Models;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Helpdesk\Models\ConversationTag;
 use Tests\TestCase;
 
 class ConversationTagModelTest extends TestCase
 {
-    public function test_class_exists(): void
-    {
-        $this->assertTrue(class_exists(ConversationTag::class));
-    }
+    use RefreshDatabase;
 
-    public function test_has_table_property(): void
+    public function test_scope_search_does_not_override_previous_filters(): void
     {
-        $model = new ConversationTag;
-        $this->assertNotEmpty($model->getTable());
-    }
+        ConversationTag::factory()->create(['name' => 'urgente', 'description' => 'Alta prioridad']);
+        ConversationTag::factory()->create(['name' => 'seguimiento', 'description' => 'Revisar']);
 
-    public function test_uses_helpdesk_connection(): void
-    {
-        $model = new ConversationTag;
-        $this->assertEquals('helpdesk', $model->getConnectionName());
-    }
+        $results = ConversationTag::query()
+            ->where('name', 'like', '%NonExistent%')
+            ->search('urgente')
+            ->get();
 
-    public function test_has_fillable(): void
-    {
-        $model = new ConversationTag;
-        $this->assertNotEmpty($model->getFillable());
-    }
-
-    public function test_name_in_fillable(): void
-    {
-        $model = new ConversationTag;
-        $this->assertContains('name', $model->getFillable());
+        $this->assertCount(0, $results);
     }
 }

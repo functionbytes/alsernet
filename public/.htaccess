@@ -19,3 +19,9 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Remove X-Robots-Tag header if present
+<IfModule mod_headers.c>
+    Header always unset X-Robots-Tag
+    Header unset X-Robots-Tag
+</IfModule>

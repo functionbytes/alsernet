@@ -29,6 +29,7 @@ class Campaign extends Model
             'conditions' => 'array', // Targeting rules
             'metadata' => 'array', // Additional data
             'published_at' => 'datetime',
+            'ends_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -98,8 +99,10 @@ class Campaign extends Model
 
     public function scopeSearch($query, $term)
     {
-        return $query->where('name', 'like', "%{$term}%")
-            ->orWhere('description', 'like', "%{$term}%");
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('description', 'like', "%{$term}%");
+        });
     }
 
     // ==================== Accessors & Mutators ====================
@@ -107,19 +110,25 @@ class Campaign extends Model
     /**
      * Get the number of impressions
      */
-    public function getImpressionsCountAttribute()
+    public function getImpressionsCountAttribute(): int
     {
+        if (array_key_exists('impressions_count', $this->attributes)) {
+            return (int) $this->attributes['impressions_count'];
+        }
+
         return $this->impressions()->count();
     }
 
     /**
      * Get the number of clicks/conversions
      */
-    public function getConversionsCountAttribute()
+    public function getConversionsCountAttribute(): int
     {
-        return $this->impressions()
-            ->whereNotNull('clicked_at')
-            ->count();
+        $row = $this->impressions()
+            ->selectRaw('COUNT(*) as total, SUM(clicked_at IS NOT NULL) as clicks')
+            ->first();
+
+        return (int) ($row->clicks ?? 0);
     }
 
     /**
@@ -142,6 +151,10 @@ class Campaign extends Model
      */
     public function getIsActiveAttribute()
     {
+        if (! $this->published_at) {
+            return false;
+        }
+
         return $this->status === 'active' &&
                $this->published_at <= now() &&
                (is_null($this->ends_at) || $this->ends_at > now());
@@ -269,9 +282,9 @@ class Campaign extends Model
             return '';
         }
 
-        $bgColor = $this->appearance['background_color'] ?? '#ffffff';
-        $textColor = $this->appearance['text_color'] ?? '#000000';
-        $primaryColor = $this->appearance['primary_color'] ?? '#90bb13';
+        $bgColor = $this->sanitizeCssColor($this->appearance['background_color'] ?? '', '#ffffff');
+        $textColor = $this->sanitizeCssColor($this->appearance['text_color'] ?? '', '#000000');
+        $primaryColor = $this->sanitizeCssColor($this->appearance['primary_color'] ?? '', '#90bb13');
 
         $css = ':root {';
         $css .= "--campaign-bg-color: {$bgColor};";
@@ -280,6 +293,18 @@ class Campaign extends Model
         $css .= '}';
 
         return $css;
+    }
+
+    /**
+     * Sanitize a CSS color value to prevent injection.
+     */
+    private function sanitizeCssColor(string $value, string $default): string
+    {
+        if (preg_match('/^#[0-9a-fA-F]{3,6}$/', $value)) {
+            return $value;
+        }
+
+        return $default;
     }
 
     /**
@@ -299,10 +324,11 @@ class Campaign extends Model
             return 0;
         }
 
-        $days = now()->diffInDays($this->published_at);
-        if ($days === 0) {
+        if ($this->published_at > now()) {
             return 0;
         }
+
+        $days = max(1, (int) now()->diffInDays($this->published_at));
 
         $impressions = $this->getImpressionsCountAttribute();
 

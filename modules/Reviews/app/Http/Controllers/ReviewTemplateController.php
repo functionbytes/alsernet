@@ -58,16 +58,28 @@ class ReviewTemplateController extends Controller
 
         $locations = ReviewGoogleLocation::query()->orderBy('name')->get(['id', 'name']);
 
-        // Calculate stats
+        $statsRow = ReviewReplyTemplate::query()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN category = \'positive\' THEN 1 ELSE 0 END) as positive,
+                SUM(CASE WHEN category = \'negative\' THEN 1 ELSE 0 END) as negative,
+                SUM(CASE WHEN category = \'neutral\' THEN 1 ELSE 0 END) as neutral,
+                SUM(CASE WHEN category = \'general\' THEN 1 ELSE 0 END) as general,
+                COALESCE(SUM(usage_count), 0) as total_usage
+            ')
+            ->first();
+
         $stats = [
-            'total' => ReviewReplyTemplate::count(),
-            'active' => ReviewReplyTemplate::where('is_active', true)->count(),
-            'inactive' => ReviewReplyTemplate::where('is_active', false)->count(),
-            'positive' => ReviewReplyTemplate::where('category', 'positive')->count(),
-            'negative' => ReviewReplyTemplate::where('category', 'negative')->count(),
-            'neutral' => ReviewReplyTemplate::where('category', 'neutral')->count(),
-            'general' => ReviewReplyTemplate::where('category', 'general')->count(),
-            'total_usage' => ReviewReplyTemplate::sum('usage_count'),
+            'total' => (int) $statsRow->total,
+            'active' => (int) $statsRow->active,
+            'inactive' => (int) $statsRow->inactive,
+            'positive' => (int) $statsRow->positive,
+            'negative' => (int) $statsRow->negative,
+            'neutral' => (int) $statsRow->neutral,
+            'general' => (int) $statsRow->general,
+            'total_usage' => (int) $statsRow->total_usage,
         ];
 
         return view('reviews::replies.templates.index', compact('templates', 'stats', 'locations'));
@@ -244,19 +256,15 @@ class ReviewTemplateController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $templates = ReviewReplyTemplate::query()->whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($templates as $template) {
-            match ($validated['action']) {
-                'activate' => $template->update(['is_active' => true]),
-                'deactivate' => $template->update(['is_active' => false]),
-                'delete' => $template->delete(),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'activate' => ReviewReplyTemplate::query()->whereIn('id', $ids)->update(['is_active' => true]),
+            'deactivate' => ReviewReplyTemplate::query()->whereIn('id', $ids)->update(['is_active' => false]),
+            'delete' => ReviewReplyTemplate::query()->whereIn('id', $ids)->get()->each->delete(),
+        };
 
-        return response()->json(['success' => true, 'count' => $count]);
+        return response()->json(['success' => true, 'count' => count($ids)]);
     }
 
     public function bulkDelete(Request $request): RedirectResponse

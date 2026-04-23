@@ -247,12 +247,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
             ->orderByDesc('is_default')
             ->value('id') ?? 1;
 
-        return Conversation::create([
+        $conversation = Conversation::create([
             'customer_id' => $customerId,
             'channel' => $channel,
             'external_sender_id' => $externalSenderId,
-            'status_id' => $statusId,
         ]);
+        $conversation->status_id = $statusId;
+        $conversation->save();
+
+        return $conversation;
     }
 
     private function isDuplicate(int $conversationId, ?string $externalId): bool

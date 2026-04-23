@@ -33,12 +33,18 @@ class PageWebhookController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $webhooks = $query->latest()->get();
+        $webhooks = $query->latest()->paginate(25);
+
+        $statsRaw = PageWebhook::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
+            ->first();
 
         $stats = [
-            'total' => PageWebhook::query()->count(),
-            'active' => PageWebhook::query()->where('is_active', true)->count(),
-            'inactive' => PageWebhook::query()->where('is_active', false)->count(),
+            'total' => (int) $statsRaw->total,
+            'active' => (int) $statsRaw->active,
+            'inactive' => (int) $statsRaw->inactive,
         ];
 
         return view('page::pages.webhooks.index', compact('webhooks', 'stats'));

@@ -16,9 +16,9 @@
                         {{-- Icono de exito --}}
                         <div class="mb-4 position-relative d-inline-block">
                             <div class="success-bg-glow"></div>
-                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle position-relative"
-                                 style="width:120px;height:120px;background:linear-gradient(135deg,#13C672 0%,#90bb13 100%);box-shadow:0 8px 24px rgba(19,198,114,0.4);">
-                                <i class="fas fa-check-circle text-white" style="font-size:4rem;"></i>
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle position-relative success-icon-box"
+                                >
+                                <i class="fas fa-check-circle text-white success-icon-i"></i>
                             </div>
                         </div>
 
@@ -27,7 +27,7 @@
                         <p class="text-muted mb-4">
                             Su solicitud ha sido recibida y registrada en nuestro sistema.
                             @if(!$attention->is_anonymous && $attention->customer_email)
-                                <br>Se ha enviado una confirmacion a <strong style="color:#90bb13;">{{ $attention->customer_email }}</strong>.
+                                <br>Se ha enviado una confirmacion a <strong class="success-text-brand">{{ $attention->customer_email }}</strong>.
                             @endif
                         </p>
 
@@ -35,7 +35,7 @@
                         <div class="radicado-box mb-4">
                             <p class="text-muted mb-2 small">Numero de radicado</p>
                             <div class="d-flex align-items-center justify-content-center gap-2">
-                                <h3 class="fw-bold mb-0" style="letter-spacing:2px;color:#90bb13;" id="radicadoNumber">
+                                <h3 class="fw-bold mb-0 success-radicado-text" id="radicadoNumber">
                                     {{ $attention->radicado }}
                                 </h3>
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="copyBtn" onclick="copyRadicado()">
@@ -95,12 +95,12 @@
                         </div>
 
                         {{-- Alerta importante --}}
-                        <div class="alert border-0 text-start mb-4" style="background:rgba(254,201,15,0.1);">
+                        <div class="alert border-0 text-start mb-4 bg-warn-light">
                             <div class="d-flex align-items-start">
-                                <i class="fas fa-exclamation-triangle me-3 mt-1" style="color:#FEC90F;font-size:1.25rem;"></i>
+                                <i class="fas fa-exclamation-triangle me-3 mt-1 success-warn-icon"></i>
                                 <div>
                                     <strong>Importante:</strong> Guarde su numero de radicado
-                                    <strong style="color:#90bb13;">{{ $attention->radicado }}</strong>.
+                                    <strong class="success-text-brand">{{ $attention->radicado }}</strong>.
                                     Lo necesitara para consultar el estado de su solicitud.
                                 </div>
                             </div>
@@ -124,59 +124,7 @@
     </div>
 </section>
 
-@push('css')
-<style>
-    .success-bg-glow {
-        position: absolute;
-        width: 200px;
-        height: 200px;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background: radial-gradient(circle, rgba(19,198,114,0.15) 0%, transparent 70%);
-        border-radius: 50%;
-        animation: pulse-glow 2s ease-in-out infinite;
-    }
 
-    @keyframes pulse-glow {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
-    }
-
-    .radicado-box {
-        background: linear-gradient(135deg, rgba(144,187,19,0.05), rgba(19,198,114,0.05));
-        border: 2px solid #90bb13;
-        border-radius: 1rem;
-        padding: 1.5rem;
-    }
-
-    #copyBtn.copied {
-        background-color: #13C672;
-        border-color: #13C672;
-        color: #fff;
-    }
-
-    .what-next-section {
-        text-align: left;
-        padding: 2rem;
-        background: #f8f9fa;
-        border-radius: 1rem;
-    }
-
-    .next-step-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #90bb13 0%, #13C672 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 1.25rem;
-        box-shadow: 0 4px 12px rgba(144,187,19,0.3);
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>

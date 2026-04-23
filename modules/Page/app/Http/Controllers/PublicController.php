@@ -45,6 +45,8 @@ class PublicController extends Controller
 
         $page = $page ?? abort(404);
 
+        $page->loadMissing(['translations.localeModel']);
+
         $locale = app()->getLocale();
         $langLinks = $this->buildLangLinks($page, '', $locale);
 

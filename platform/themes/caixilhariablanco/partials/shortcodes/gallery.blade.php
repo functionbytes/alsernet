@@ -12,8 +12,7 @@
         @endif
             <img src="{{ $imageUrl }}"
                  alt="{{ pathinfo(parse_url($imageUrl, PHP_URL_PATH), PATHINFO_FILENAME) ?: 'Imagen ' . $loop->iteration }}"
-                 class="img-fluid w-100 hover-scale"
-                 style="height:220px;object-fit:cover;"
+                 class="img-fluid w-100 hover-scale gallery-img"
                  loading="lazy">
         @if($lightbox ?? true)
         </a>

@@ -163,12 +163,15 @@ class AssignmentService
                 return null;
             }
 
-            $agentWorkloads = $agents->map(function ($agent) {
-                return [
-                    'agent_id' => $agent->id,
-                    'workload' => $this->getAgentWorkload($agent->id),
-                ];
-            })->sortBy('workload');
+            $workloads = Ticket::whereNull('closed_at')
+                ->selectRaw('assignee_id, COUNT(*) as workload')
+                ->groupBy('assignee_id')
+                ->pluck('workload', 'assignee_id');
+
+            $agentWorkloads = $agents->map(fn ($agent) => [
+                'agent_id' => $agent->id,
+                'workload' => $workloads[$agent->id] ?? 0,
+            ])->sortBy('workload');
 
             $minWorkload = $agentWorkloads->first()['workload'];
             $candidateAgents = $agentWorkloads->where('workload', $minWorkload);
@@ -213,15 +216,15 @@ class AssignmentService
                 return null;
             }
 
-            $agentWorkloads = $agents->map(function ($agent) {
-                $openTickets = Ticket::where('assignee_id', $agent->id)
-                    ->whereNull('closed_at')
-                    ->with('priority')
-                    ->get();
+            $openTickets = Ticket::whereIn('assignee_id', $agents->pluck('id'))
+                ->whereNull('closed_at')
+                ->with('priority')
+                ->get()
+                ->groupBy('assignee_id');
 
-                $totalWorkload = $openTickets->sum(function ($ticket) {
-                    return $ticket->priority->resolution_time_hours ?? 24;
-                });
+            $agentWorkloads = $agents->map(function ($agent) use ($openTickets) {
+                $tickets = $openTickets[$agent->id] ?? collect();
+                $totalWorkload = $tickets->sum(fn ($ticket) => $ticket->priority->resolution_time_hours ?? 24);
 
                 return [
                     'agent_id' => $agent->id,

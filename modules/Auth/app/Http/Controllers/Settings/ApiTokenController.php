@@ -18,6 +18,7 @@ class ApiTokenController extends Controller
     {
         $tokens = $request->user()->tokens()
             ->orderByDesc('created_at')
+            ->limit(100)
             ->get()
             ->map(fn (PersonalAccessToken $t) => [
                 'id' => $t->id,

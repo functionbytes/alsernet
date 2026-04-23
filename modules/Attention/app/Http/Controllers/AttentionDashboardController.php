@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Models\Attention;
@@ -16,11 +15,10 @@ class AttentionDashboardController extends Controller
 {
     private static function trendLast7DaysByStatus(string $status): array
     {
-        $rows = DB::table('attentions')
+        $rows = Attention::query()
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
             ->where('created_at', '>=', now()->subDays(6)->startOfDay())
             ->where('status', $status)
-            ->whereNull('deleted_at')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -55,26 +53,37 @@ class AttentionDashboardController extends Controller
 
         $status = AttentionStatus::class;
 
-        $count = fn ($f, $t, $st = null) => Attention::query()
-            ->whereBetween('created_at', [$f, $t])
-            ->whereNull('deleted_at')
-            ->when($st, fn ($q) => $q->where('status', $st))
-            ->count();
+        // Consolidated count for current period
+        $currentRow = Attention::query()
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_process
+            ', [
+                $status::RECEIVED->value,
+                $status::IN_PROCESS->value,
+            ])->first();
 
-        $total = $count($from, $to);
-        $prevTotal = $count($prevFrom, $prevTo);
-        $pending = $count($from, $to, $status::RECEIVED);
-        $prevPending = $count($prevFrom, $prevTo, $status::RECEIVED);
-        $inProcess = $count($from, $to, $status::IN_PROCESS);
-        $prevInProc = $count($prevFrom, $prevTo, $status::IN_PROCESS);
+        // Consolidated count for previous period
+        $prevRow = Attention::query()
+            ->whereBetween('created_at', [$prevFrom, $prevTo])
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_process
+            ', [
+                $status::RECEIVED->value,
+                $status::IN_PROCESS->value,
+            ])->first();
 
         return response()->json([
-            'total' => $total,
-            'prev_total' => $prevTotal,
-            'pending' => $pending,
-            'prev_pending' => $prevPending,
-            'in_process' => $inProcess,
-            'prev_in_process' => $prevInProc,
+            'total' => (int) $currentRow->total,
+            'prev_total' => (int) $prevRow->total,
+            'pending' => (int) $currentRow->pending,
+            'prev_pending' => (int) $prevRow->pending,
+            'in_process' => (int) $currentRow->in_process,
+            'prev_in_process' => (int) $prevRow->in_process,
             'by_status' => AttentionStatisticsService::countByStatus($from, $to),
             'by_type' => AttentionStatisticsService::countByType($from, $to),
             'by_department' => AttentionStatisticsService::countByDepartment($from, $to),

@@ -62,7 +62,7 @@
     {{-- Breadcrumb --}}
     <div class="blog-page-header mb-30">
         <h4 class="mb-5">{{ \Illuminate\Support\Str::limit($post->title, 60) }}</h4>
-        <p class="text-muted mb-0" style="font-size:13px">
+        <p class="text-muted mb-0" class="fs-13">
             <a href="{{ url('/') }}" class="text-brand">{{ __('Home') }}</a>
             <i class="fa-solid fa-angle-right mx-1"></i>
             <a href="{{ route('blog.public.index') }}" class="text-brand">{{ __('Blog') }}</a>
@@ -80,7 +80,7 @@
                 <div class="blog-left-heading heading2 mb-30">
                     <div class="img1">
                         <img alt="" src="{{ RvMedia::getImageUrl($post->image, null, false, RvMedia::getDefaultImage()) }}"
-                             alt="{{ $post->title }}" class="w-100" style="border-radius:8px">
+                             alt="{{ $post->title }}" class="w-100" class="rounded-8">
                     </div>
                 </div>
                 <div class="space48"></div>
@@ -88,15 +88,15 @@
 
             {{-- Meta: autor, fecha, vistas --}}
             <div class="left-heading2 heading2 mb-20">
-                <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0" style="font-size:13px; color:#666">
+                <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0" class="fs-13 text-secondary">
                     @if ($post->user)
-                        <li><i class="fa-solid fa-user me-1" style="color:var(--color-brand)"></i> {{ $post->user->name }}</li>
+                        <li><i class="fa-solid fa-user me-1" class="text-brand"></i> {{ $post->user->name }}</li>
                     @endif
-                    <li><i class="fa-solid fa-calendar-days me-1" style="color:var(--color-brand)"></i> {{ $post->created_at->translatedFormat('d M, Y') }}</li>
+                    <li><i class="fa-solid fa-calendar-days me-1" class="text-brand"></i> {{ $post->created_at->translatedFormat('d M, Y') }}</li>
                     @if (function_exists('get_time_to_read'))
-                        <li><i class="fa-regular fa-clock me-1" style="color:var(--color-brand)"></i> {{ __(':count mins read', ['count' => get_time_to_read($post)]) }}</li>
+                        <li><i class="fa-solid fa-clock me-1" class="text-brand"></i> {{ __(':count mins read', ['count' => get_time_to_read($post)]) }}</li>
                     @endif
-                    <li><i class="fa-regular fa-eye me-1" style="color:var(--color-brand)"></i> {{ number_format($post->views) }}</li>
+                    <li><i class="fa-solid fa-eye me-1" class="text-brand"></i> {{ number_format($post->views) }}</li>
                 </ul>
             </div>
             <div class="space16"></div>
@@ -123,17 +123,17 @@
                     <h4>{{ __('Share this') }}:</h4>
                     <ul>
                         <li>
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($post->url) }}" target="_blank">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($post->url) }}" target="_blank" rel="noopener noreferrer">
                                 <i class="fa-brands fa-facebook-f"></i>
                             </a>
                         </li>
                         <li>
-                            <a href="https://twitter.com/intent/tweet?url={{ urlencode($post->url) }}&text={{ strip_tags($post->description) }}" target="_blank">
+                            <a href="https://twitter.com/intent/tweet?url={{ urlencode($post->url) }}&text={{ strip_tags($post->description) }}" target="_blank" rel="noopener noreferrer">
                                 <i class="fa-brands fa-x-twitter"></i>
                             </a>
                         </li>
                         <li>
-                            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ urlencode($post->url) }}" target="_blank">
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ urlencode($post->url) }}" target="_blank" rel="noopener noreferrer">
                                 <i class="fa-brands fa-linkedin-in"></i>
                             </a>
                         </li>
@@ -197,15 +197,15 @@
 
                     <div class="contact-submit-boxarea" id="comment-form">
                         <h4>{{ __('Leave a Reply') }}</h4>
-                        <div id="comment-alert" class="mb-3" style="display:none"></div>
-                        <p id="reply-notice" class="text-muted mb-3" style="display:none">
+                        <div id="comment-alert" class="mb-3" class="d-none"></div>
+                        <p id="reply-notice" class="text-muted mb-3" class="d-none">
                             {{ __('Replying to') }}: <strong id="reply-to-name"></strong>
-                            <a href="#" id="cancel-reply" class="ms-2 text-danger" style="font-size:12px">{{ __('Cancel') }}</a>
+                            <a href="#" id="cancel-reply" class="ms-2 text-danger" class="fs-12">{{ __('Cancel') }}</a>
                         </p>
                         <form id="comment-submit-form" novalidate>
                             @csrf
                             <input type="hidden" name="parent_id" id="parent_id" value="">
-                            <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
+                            <input type="text" name="website" class="d-none" tabindex="-1" autocomplete="off">
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="input-area">

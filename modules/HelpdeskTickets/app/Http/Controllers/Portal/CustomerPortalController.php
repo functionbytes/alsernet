@@ -139,12 +139,13 @@ class CustomerPortalController extends Controller
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
-        $messages = $ticket->messages()->with('user:id,name')->orderBy('created_at')->get();
+        $messages = $ticket->messages()
+            ->with(['user:id,name', 'attachments'])
+            ->orderBy('created_at')
+            ->limit(200)
+            ->get();
 
-        $attachments = TicketMessage::where('ticket_id', $ticket->id)
-            ->with('attachments')
-            ->get()
-            ->flatMap(fn (TicketMessage $msg) => $msg->attachments);
+        $attachments = $messages->flatMap(fn (TicketMessage $msg) => $msg->attachments);
 
         return view('helpdesktickets::portal.tickets.show', compact('customer', 'ticket', 'messages', 'attachments'));
     }

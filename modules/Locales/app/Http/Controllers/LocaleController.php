@@ -18,11 +18,18 @@ class LocaleController extends Controller
     {
         $locales = Locale::query()->ordered()->paginate(20);
 
+        $statsRaw = Locale::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
+            ->selectRaw('MAX(CASE WHEN is_default = 1 THEN name END) as default_name')
+            ->first();
+
         $stats = [
-            'total' => Locale::query()->count(),
-            'active' => Locale::query()->where('is_active', true)->count(),
-            'inactive' => Locale::query()->where('is_active', false)->count(),
-            'default' => Locale::query()->where('is_default', true)->value('name') ?? '—',
+            'total' => (int) $statsRaw->total,
+            'active' => (int) $statsRaw->active,
+            'inactive' => (int) $statsRaw->inactive,
+            'default' => $statsRaw->default_name ?? '—',
         ];
 
         return view('locales::locales.index', compact('locales', 'stats'));
@@ -59,12 +66,11 @@ class LocaleController extends Controller
         if ($action === 'activate' || $action === 'deactivate') {
             $active = $action === 'activate';
 
-            Locale::query()
+            $count = Locale::query()
                 ->whereIn('id', $ids)
                 ->where('is_default', false)
                 ->update(['is_active' => $active]);
 
-            $count = count($ids);
             LocaleService::clearCache();
 
             $label = $active ? 'activado(s)' : 'desactivado(s)';

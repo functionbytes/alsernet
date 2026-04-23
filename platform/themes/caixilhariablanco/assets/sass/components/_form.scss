@@ -102,11 +102,6 @@ textarea {
     position: relative;
     width: 100%;
 
-    .nice-select {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-
     .select2-container--default {
         .select2-selection--single {
             background-color: #f7f7f7;
@@ -525,11 +520,7 @@ label {
     }
 }
 
-.nice-select {
-    .list {
-        width: 100%;
-    }
-}
+
 
 .button-contactForm {
     background: $color-brand;

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskTickets\Database\Factories\TicketStatusFactory;
 
 class TicketStatus extends Model
@@ -71,6 +72,22 @@ class TicketStatus extends Model
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
             }
+        });
+
+        static::saved(function () {
+            Cache::forget('helpdesk:default-status');
+            Cache::forget('helpdesk:open-status');
+            Cache::forget('helpdesk:closed-status');
+            Cache::forget('helpdesk:open-status-ids');
+            Cache::forget('helpdesk:closed-status-ids');
+        });
+
+        static::deleted(function () {
+            Cache::forget('helpdesk:default-status');
+            Cache::forget('helpdesk:open-status');
+            Cache::forget('helpdesk:closed-status');
+            Cache::forget('helpdesk:open-status-ids');
+            Cache::forget('helpdesk:closed-status-ids');
         });
     }
 

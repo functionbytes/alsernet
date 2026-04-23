@@ -55,7 +55,7 @@ class CheckSlaBreaches implements ShouldQueue
                 ->where('sla_resolution_breached', false)
                 ->where('sla_resolution_due_at', '<', now())
                 ->whereNull('closed_at')
-                ->get();
+                ->cursor();
 
             $breachCount = 0;
 

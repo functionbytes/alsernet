@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
@@ -265,39 +266,47 @@ class SystemSettingsController extends Controller
      */
     public function queueStats(): JsonResponse
     {
-        $stats = [];
+        $stats = Cache::remember('system:queue_stats', 10, function () {
+            $data = [];
 
-        try {
-            $stats['pending'] = DB::table('jobs')->count();
-            $stats['failed'] = DB::table('failed_jobs')->count();
+            try {
+                $failedStats = DB::table('failed_jobs')
+                    ->selectRaw('COUNT(*) as total')
+                    ->first();
 
-            $stats['by_queue'] = DB::table('jobs')
-                ->select('queue', DB::raw('COUNT(*) as count'))
-                ->groupBy('queue')
-                ->get();
+                $data['pending'] = (int) DB::table('jobs')->count();
+                $data['failed'] = (int) $failedStats->total;
 
-            $stats['recent_failed'] = DB::table('failed_jobs')
-                ->latest('failed_at')
-                ->limit(5)
-                ->get(['id', 'uuid', 'queue', 'exception', 'failed_at'])
-                ->map(function (object $job): object {
-                    $job->exception_summary = strtok((string) $job->exception, "\n");
-                    unset($job->exception);
+                $data['by_queue'] = DB::table('jobs')
+                    ->select('queue', DB::raw('COUNT(*) as count'))
+                    ->groupBy('queue')
+                    ->get();
 
-                    return $job;
-                });
-        } catch (\Throwable $e) {
-            Log::error('Queue stats unavailable', ['error' => $e->getMessage()]);
-            $stats = ['error' => 'Las estadísticas de cola no están disponibles.'];
-        }
+                $data['recent_failed'] = DB::table('failed_jobs')
+                    ->latest('failed_at')
+                    ->limit(5)
+                    ->get(['id', 'uuid', 'queue', 'exception', 'failed_at'])
+                    ->map(function (object $job): object {
+                        $job->exception_summary = strtok((string) $job->exception, "\n");
+                        unset($job->exception);
 
-        try {
-            if (class_exists(MasterSupervisorRepository::class)) {
-                $supervisors = app(MasterSupervisorRepository::class)->all();
-                $stats['horizon'] = ['status' => $supervisors ? 'running' : 'stopped'];
+                        return $job;
+                    });
+            } catch (\Throwable $e) {
+                Log::error('Queue stats unavailable', ['error' => $e->getMessage()]);
+                $data = ['error' => 'Las estadísticas de cola no están disponibles.'];
             }
-        } catch (\Throwable) {
-        }
+
+            try {
+                if (class_exists(MasterSupervisorRepository::class)) {
+                    $supervisors = app(MasterSupervisorRepository::class)->all();
+                    $data['horizon'] = ['status' => $supervisors ? 'running' : 'stopped'];
+                }
+            } catch (\Throwable) {
+            }
+
+            return $data;
+        });
 
         return response()->json($stats);
     }

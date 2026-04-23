@@ -161,6 +161,7 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
             ->metrics('sessions')
             ->dimensions('browser')
             ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
             ->get()
             ->table;
     }
@@ -193,7 +194,7 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
             ->table;
     }
 
-    public function fetchDeviceCategories(Period $period): Collection
+    public function fetchDeviceCategories(Period $period, int $maxResults = 10): Collection
     {
         $that = clone $this;
 
@@ -201,6 +202,7 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
             ->metrics('sessions')
             ->dimensions('deviceCategory')
             ->orderByMetricDesc('sessions')
+            ->limit($maxResults)
             ->get()
             ->table;
     }
@@ -275,24 +277,26 @@ class Analytics extends AnalyticsAbstract implements AnalyticsContract
             ->table;
     }
 
-    public function fetchChannelTrend(Period $period): Collection
+    public function fetchChannelTrend(Period $period, int $maxResults = 500): Collection
     {
         $that = clone $this;
 
         return $that->dateRange($period)
             ->metrics('sessions')
             ->dimensions(['date', 'sessionMedium'])
+            ->limit($maxResults)
             ->get()
             ->table;
     }
 
-    public function fetchHourlyHeatmap(Period $period): Collection
+    public function fetchHourlyHeatmap(Period $period, int $maxResults = 500): Collection
     {
         $that = clone $this;
 
         return $that->dateRange($period)
             ->metrics('sessions')
             ->dimensions(['hour', 'dayOfWeek'])
+            ->limit($maxResults)
             ->get()
             ->table;
     }

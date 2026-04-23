@@ -5,6 +5,7 @@ namespace Modules\Core\Providers;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\Console\Commands\OptimizeProductionCommand;
 use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Theme\Services\NavService;
 
@@ -46,6 +47,13 @@ class CoreServiceProvider extends ServiceProvider
 
         // Register scheduled tasks
         $this->registerSchedules();
+
+        // Register commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                OptimizeProductionCommand::class,
+            ]);
+        }
     }
 
     protected function registerRoutes(): void
@@ -58,6 +66,14 @@ class CoreServiceProvider extends ServiceProvider
                 Route::get('/dashboard/kpis', [DashboardController::class, 'kpis'])->name('dashboard.kpis');
                 Route::get('/dashboard/activity', [DashboardController::class, 'recentActivity'])->name('dashboard.activity');
                 Route::get('/dashboard/queue-stats', [DashboardController::class, 'queueStats'])->name('dashboard.queue-stats');
+                Route::get('/dashboard/trends', [DashboardController::class, 'trends'])->name('dashboard.trends');
+                Route::get('/dashboard/health', [DashboardController::class, 'health'])->name('dashboard.health');
+                Route::get('/dashboard/alerts', [DashboardController::class, 'alerts'])->name('dashboard.alerts');
+                Route::get('/dashboard/distribution', [DashboardController::class, 'distribution'])->name('dashboard.distribution');
+                Route::get('/dashboard/latest-reviews', [DashboardController::class, 'latestReviews'])->name('dashboard.latest-reviews');
+                Route::get('/dashboard/security-metrics', [DashboardController::class, 'securityMetrics'])->name('dashboard.security-metrics');
+                Route::get('/dashboard/login-timeline', [DashboardController::class, 'loginAttemptsTimeline'])->name('dashboard.login-timeline');
+                Route::get('/dashboard/top-failed-ips', [DashboardController::class, 'topFailedIps'])->name('dashboard.top-failed-ips');
             });
     }
 

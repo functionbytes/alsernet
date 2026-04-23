@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Blog\Http\Requests\StoreBlogCategoryRequest;
@@ -35,12 +36,13 @@ class BlogCategoryController extends Controller
             ->ordered()
             ->paginate(20);
 
-        $stats = [
-            'total' => BlogCategory::query()->count(),
-            'published' => BlogCategory::query()->where('status', 'published')->count(),
-            'draft' => BlogCategory::query()->where('status', 'draft')->count(),
-            'featured' => BlogCategory::query()->where('is_featured', true)->count(),
-        ];
+        $stats = Cache::remember('blog:category_stats', 300, function () {
+            $row = BlogCategory::query()
+                ->selectRaw("COUNT(*) as total, SUM(status='published') as published, SUM(status='draft') as draft, SUM(is_featured=1) as featured")
+                ->first();
+
+            return ['total' => (int) $row->total, 'published' => (int) $row->published, 'draft' => (int) $row->draft, 'featured' => (int) $row->featured];
+        });
 
         return view('blog::categories.index', compact('categories', 'stats'));
     }
@@ -129,20 +131,18 @@ class BlogCategoryController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $categories = BlogCategory::query()->whereIn('id', $validated['ids'])->get();
-        $count = 0;
+        $ids = $validated['ids'];
 
-        foreach ($categories as $category) {
-            match ($validated['action']) {
-                'publish' => $category->update(['status' => 'published']),
-                'unpublish' => $category->update(['status' => 'draft']),
-                'delete' => (function () use ($category) {
-                    $category->posts()->detach();
-                    $category->delete();
-                })(),
-            };
-            $count++;
-        }
+        match ($validated['action']) {
+            'publish' => BlogCategory::whereIn('id', $ids)->update(['status' => 'published']),
+            'unpublish' => BlogCategory::whereIn('id', $ids)->update(['status' => 'draft']),
+            'delete' => (function () use ($ids) {
+                BlogCategory::whereIn('id', $ids)->get()->each(fn ($category) => $category->posts()->detach());
+                BlogCategory::whereIn('id', $ids)->delete();
+            })(),
+        };
+
+        $count = count($ids);
 
         return response()->json(['success' => true, 'count' => $count]);
     }

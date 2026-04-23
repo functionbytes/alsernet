@@ -27,13 +27,7 @@ class RunScheduledBackups extends Command
      */
     public function handle()
     {
-        $schedules = BackupSchedule::where('enabled', true)->get();
-
-        if ($schedules->isEmpty()) {
-            $this->info('No backup schedules found.');
-
-            return Command::SUCCESS;
-        }
+        $schedules = BackupSchedule::where('enabled', true)->lazyById(100);
 
         $executed = 0;
 

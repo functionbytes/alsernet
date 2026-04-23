@@ -4,6 +4,7 @@ namespace Modules\Locales\Services;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Modules\Locales\Models\Locale;
 
@@ -24,36 +25,38 @@ class ThemeTranslationService
      */
     public function getGroups(): array
     {
-        $groups = [];
+        return Cache::remember('locales.translation_groups', 3600, function () {
+            $groups = [];
 
-        $themePath = base_path(self::THEME_LANG_PATH);
-        if (File::isDirectory($themePath)) {
-            $groups[] = [
-                'name' => 'theme',
-                'module' => 'theme',
-                'module_label' => 'Tema',
-                'file' => 'theme',
-                'format' => 'json',
-                'path' => $themePath,
-            ];
-        }
+            $themePath = base_path(self::THEME_LANG_PATH);
+            if (File::isDirectory($themePath)) {
+                $groups[] = [
+                    'name' => 'theme',
+                    'module' => 'theme',
+                    'module_label' => 'Tema',
+                    'file' => 'theme',
+                    'format' => 'json',
+                    'path' => $themePath,
+                ];
+            }
 
-        foreach ($this->getActiveModules() as $module) {
-            foreach ($this->getModuleLangDirs($module) as $langDir) {
-                foreach ($this->getModuleFiles($langDir) as $file) {
-                    $groups[] = [
-                        'name' => $this->buildGroupName($module, $file),
-                        'module' => $module,
-                        'module_label' => $module,
-                        'file' => $file,
-                        'format' => 'php',
-                        'path' => $langDir,
-                    ];
+            foreach ($this->getActiveModules() as $module) {
+                foreach ($this->getModuleLangDirs($module) as $langDir) {
+                    foreach ($this->getModuleFiles($langDir) as $file) {
+                        $groups[] = [
+                            'name' => $this->buildGroupName($module, $file),
+                            'module' => $module,
+                            'module_label' => $module,
+                            'file' => $file,
+                            'format' => 'php',
+                            'path' => $langDir,
+                        ];
+                    }
                 }
             }
-        }
 
-        return $groups;
+            return $groups;
+        });
     }
 
     /**

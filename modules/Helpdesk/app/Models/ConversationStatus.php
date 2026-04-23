@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ConversationStatus extends Model
 {
@@ -60,6 +61,9 @@ class ConversationStatus extends Model
                     ->update(['is_default' => false]);
             }
         });
+
+        static::saved(fn () => Cache::forget('helpdesk:conv-closed-status'));
+        static::deleted(fn () => Cache::forget('helpdesk:conv-closed-status'));
     }
 
     /**

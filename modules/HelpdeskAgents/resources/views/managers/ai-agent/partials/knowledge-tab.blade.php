@@ -1,7 +1,7 @@
 {{-- Knowledge tab partial - loaded via AJAX into #knowledge-container --}}
 
 @php
-    $total = $knowledge->count();
+    $total = $knowledge->total();
     $active = $knowledge->where('is_active', true)->count();
     $inactive = $total - $active;
 @endphp
@@ -142,6 +142,12 @@
             </tbody>
         </table>
     </div>
+
+    @if($knowledge->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $knowledge->links() }}
+        </div>
+    @endif
 @endif
 
 <script>

@@ -4,13 +4,13 @@ namespace Modules\Forms\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Forms\Http\Requests\ReorderFormFieldRequest;
 use Modules\Forms\Http\Requests\StoreFormFieldRequest;
 use Modules\Forms\Http\Requests\UpdateFormFieldRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormField;
+use Modules\Locales\Models\Locale;
 use Modules\Locales\Services\DeepLTranslationService;
 
 class FormFieldController extends Controller
@@ -157,7 +157,7 @@ class FormFieldController extends Controller
             return response()->json(['success' => false, 'message' => 'DeepL no está configurado. Añade DEEPL_API_KEY.'], 422);
         }
 
-        $locales = DB::table('locales')
+        $locales = Locale::query()
             ->where('is_active', true)
             ->where('code', '!=', 'es')
             ->pluck('code')

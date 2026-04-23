@@ -23,6 +23,7 @@ class PublicReviewController extends Controller
             ->with('moderation')
             ->orderByDesc('star_rating')
             ->orderByDesc('review_time')
+            ->limit(100)
             ->get();
 
         [$totalCount, $avgRating] = $this->getAggregateStats();
@@ -161,6 +162,7 @@ class PublicReviewController extends Controller
             ->with(['moderation', 'translations'])
             ->orderByDesc('star_rating')
             ->orderByDesc('review_time')
+            ->limit(500)
             ->get();
 
         [$totalCount, $avgRating] = $this->getAggregateStats();

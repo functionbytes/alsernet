@@ -14,24 +14,24 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
-                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                                 style="width:70px;height:70px;background:linear-gradient(135deg,#90bb13 0%,#13C672 100%);box-shadow:0 4px 20px rgba(144,187,19,0.3);">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 tracking-icon-box"
+                                >
                                 <i class="fas fa-magnifying-glass fa-2x text-white"></i>
                             </div>
                             <h4 class="fw-bold mb-2">Consulte el estado de su PQRSF</h4>
                             <p class="text-muted mb-0">Ingrese su numero de radicado para ver el estado actual</p>
                         </div>
 
-                        <form action="{{ route('pqrsf.tracking') }}" method="GET" class="mx-auto" style="max-width:550px;">
+                        <form action="{{ route('pqrsf.tracking') }}" method="GET" class="mx-auto tracking-search-form">
                             <div class="d-flex gap-2">
                                 <div class="flex-grow-1 position-relative">
-                                    <i class="fas fa-search position-absolute" style="left:1.25rem;top:50%;transform:translateY(-50%);color:#90bb13;z-index:5;"></i>
-                                    <input type="text" class="form-control form-control-lg" name="radicado"
-                                           style="padding-left:3rem;border-radius:0.75rem;border:2px solid #e0e0e0;"
+                                    <i class="fas fa-search position-absolute tracking-search-icon"></i>
+                                    <input type="text" class="form-control form-control-lg tracking-search-input" name="radicado"
+                                          
                                            value="{{ $radicado ?? request('radicado') }}"
                                            placeholder="Ej: PQRSF-2026-000001" required>
                                 </div>
-                                <button class="btn btn-primary btn-lg px-4" type="submit" style="border-radius:0.75rem;white-space:nowrap;">
+                                <button class="btn btn-primary btn-lg px-4 tracking-search-btn" type="submit">
                                     Consultar
                                 </button>
                             </div>
@@ -44,7 +44,7 @@
 
                         {{-- Cabecera del radicado --}}
                         <div class="card mb-4">
-                            <div class="card-header p-3" style="background:linear-gradient(135deg,#2a3042,#1a2030);">
+                            <div class="card-header p-3 tracking-card-header">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h5 class="mb-1 text-white fw-bold">Radicado: {{ $attention->radicado }}</h5>
@@ -88,7 +88,7 @@
                         <div class="card mb-4">
                             <div class="card-header bg-white p-3 border-bottom">
                                 <h5 class="mb-0 fw-bold">
-                                    <i class="fas fa-list-check me-2" style="color:#90bb13;"></i>Historial de estados
+                                    <i class="fas fa-list-check me-2" class="pqrsf-info-icon"></i>Historial de estados
                                 </h5>
                             </div>
                             <div class="card-body p-4">
@@ -186,8 +186,8 @@
                         <div class="card border-0 shadow-sm">
                             <div class="card-body text-center p-5">
                                 <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4"
-                                     style="width:100px;height:100px;background:rgba(254,201,15,0.15);">
-                                    <i class="fas fa-circle-exclamation text-warning" style="font-size:3rem;"></i>
+                                     class="tracking-warn-icon">
+                                    <i class="fas fa-circle-exclamation text-warning" class="tracking-warn-icon-i"></i>
                                 </div>
                                 <h4 class="fw-bold mb-3">Radicado no encontrado</h4>
                                 <p class="text-muted mb-4">
@@ -219,77 +219,6 @@
     </div>
 </section>
 
-@push('css')
-<style>
-    .tracking-timeline {
-        position: relative;
-        padding-left: 60px;
-    }
 
-    .tracking-timeline::before {
-        content: '';
-        position: absolute;
-        left: 20px;
-        top: 5px;
-        bottom: 5px;
-        width: 3px;
-        background: #e0e0e0;
-        border-radius: 3px;
-    }
-
-    .timeline-step {
-        position: relative;
-        padding-bottom: 30px;
-        opacity: 0.4;
-    }
-
-    .timeline-step:last-child { padding-bottom: 0; }
-
-    .timeline-step.completed,
-    .timeline-step.active { opacity: 1; }
-
-    .timeline-icon {
-        position: absolute;
-        left: -48px;
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: #e0e0e0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 16px;
-        z-index: 1;
-        border: 3px solid #fff;
-    }
-
-    .timeline-step.completed .timeline-icon { background: #13C672; color: #fff; }
-
-    .timeline-step.active .timeline-icon {
-        background: #FEC90F;
-        color: #fff;
-        animation: pulse-step 2s infinite;
-    }
-
-    .timeline-step.pending .timeline-icon { background: #e9ecef; color: #adb5bd; }
-
-    .timeline-body {
-        background: #f8f9fa;
-        padding: 12px 16px;
-        border-radius: 8px;
-        border-left: 3px solid #e0e0e0;
-    }
-
-    .timeline-step.completed .timeline-body { border-left-color: #13C672; }
-    .timeline-step.active .timeline-body { border-left-color: #FEC90F; background: #fffde6; }
-
-    @keyframes pulse-step {
-        0%   { box-shadow: 0 0 0 0 rgba(254,201,15,0.7); }
-        70%  { box-shadow: 0 0 0 10px rgba(254,201,15,0); }
-        100% { box-shadow: 0 0 0 0 rgba(254,201,15,0); }
-    }
-</style>
-@endpush
 
 @endsection

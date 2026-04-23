@@ -35,5 +35,5 @@
 
 @section('js')
 <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('modules/forms/js/forms.js') }}"></script>
+<script src="{{ asset('modules/forms/js/forms.min.js') }}"></script>
 @endsection

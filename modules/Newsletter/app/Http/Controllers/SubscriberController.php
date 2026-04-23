@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Newsletter\Models\Subscriber;
 use Modules\Newsletter\Services\SubscriberService;
@@ -32,12 +33,18 @@ class SubscriberController extends Controller
 
         $subscribers = $query->paginate(25)->withQueryString();
 
-        $stats = [
-            'total' => Subscriber::query()->count(),
-            'subscribed' => Subscriber::query()->subscribed()->count(),
-            'unsubscribed' => Subscriber::query()->unsubscribed()->count(),
-            'new' => Subscriber::query()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
-        ];
+        $stats = Cache::remember('newsletter:subscriber_stats', 300, function () {
+            $row = Subscriber::query()
+                ->selectRaw("COUNT(*) as total, SUM(status='subscribed') as subscribed, SUM(status='unsubscribed') as unsubscribed, SUM(MONTH(created_at)=? AND YEAR(created_at)=?) as new", [now()->month, now()->year])
+                ->first();
+
+            return [
+                'total' => (int) $row->total,
+                'subscribed' => (int) $row->subscribed,
+                'unsubscribed' => (int) $row->unsubscribed,
+                'new' => (int) $row->new,
+            ];
+        });
 
         return view('newsletter::subscribers.index', compact('subscribers', 'stats', 'search', 'status'));
     }

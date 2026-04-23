@@ -54,25 +54,28 @@ class SlaService
     public function checkBreaches(): Collection
     {
         try {
-            $breachedTickets = Ticket::where('sla_resolution_breached', false)
+            $breachedTickets = collect();
+
+            Ticket::where('sla_resolution_breached', false)
                 ->whereNotNull('sla_resolution_due_at')
                 ->where('sla_resolution_due_at', '<', now())
                 ->whereNull('closed_at')
-                ->get();
+                ->cursor()
+                ->each(function (Ticket $ticket) use ($breachedTickets) {
+                    $ticket->update(['sla_resolution_breached' => true]);
 
-            foreach ($breachedTickets as $ticket) {
-                $ticket->update(['sla_resolution_breached' => true]);
+                    event(new SlaBreached($ticket));
 
-                event(new SlaBreached($ticket));
+                    $this->notificationService->notifySlaBreach($ticket);
 
-                $this->notificationService->notifySlaBreach($ticket);
+                    Log::warning('SLA breach detected', [
+                        'ticket_id' => $ticket->id,
+                        'ticket_number' => $ticket->ticket_number,
+                        'due_at' => $ticket->sla_resolution_due_at,
+                    ]);
 
-                Log::warning('SLA breach detected', [
-                    'ticket_id' => $ticket->id,
-                    'ticket_number' => $ticket->ticket_number,
-                    'due_at' => $ticket->sla_resolution_due_at,
-                ]);
-            }
+                    $breachedTickets->push($ticket);
+                });
 
             return $breachedTickets;
         } catch (\Exception $e) {
@@ -88,41 +91,40 @@ class SlaService
     public function sendWarnings(): int
     {
         try {
-            $warningTickets = Ticket::where('sla_resolution_breached', false)
+            $sentCount = 0;
+
+            Ticket::where('sla_resolution_breached', false)
                 ->whereNotNull('sla_resolution_due_at')
                 ->whereBetween('sla_resolution_due_at', [now(), now()->addMinutes(30)])
                 ->whereNull('closed_at')
-                ->get();
+                ->cursor()
+                ->each(function (Ticket $ticket) use (&$sentCount) {
+                    $policy = $this->getApplicablePolicy($ticket);
 
-            $sentCount = 0;
+                    if (! $policy) {
+                        return;
+                    }
 
-            foreach ($warningTickets as $ticket) {
-                $policy = $this->getApplicablePolicy($ticket);
+                    $totalMinutes = $ticket->created_at->diffInMinutes($ticket->sla_resolution_due_at);
+                    $usedMinutes = $ticket->created_at->diffInMinutes(now());
+                    $percentUsed = ($usedMinutes / $totalMinutes) * 100;
 
-                if (! $policy) {
-                    continue;
-                }
+                    $warningThreshold = $policy->warning_threshold_percent ?? 80;
 
-                $totalMinutes = $ticket->created_at->diffInMinutes($ticket->sla_resolution_due_at);
-                $usedMinutes = $ticket->created_at->diffInMinutes(now());
-                $percentUsed = ($usedMinutes / $totalMinutes) * 100;
+                    if ($percentUsed >= $warningThreshold) {
+                        event(new SlaWarning($ticket, round($percentUsed, 2)));
 
-                $warningThreshold = $policy->warning_threshold_percent ?? 80;
+                        $this->notificationService->notifySlaWarning($ticket);
 
-                if ($percentUsed >= $warningThreshold) {
-                    event(new SlaWarning($ticket, round($percentUsed, 2)));
+                        $sentCount++;
 
-                    $this->notificationService->notifySlaWarning($ticket);
-
-                    $sentCount++;
-
-                    Log::info('SLA warning sent', [
-                        'ticket_id' => $ticket->id,
-                        'ticket_number' => $ticket->ticket_number,
-                        'percent_used' => round($percentUsed, 2),
-                    ]);
-                }
-            }
+                        Log::info('SLA warning sent', [
+                            'ticket_id' => $ticket->id,
+                            'ticket_number' => $ticket->ticket_number,
+                            'percent_used' => round($percentUsed, 2),
+                        ]);
+                    }
+                });
 
             return $sentCount;
         } catch (\Exception $e) {
@@ -141,7 +143,7 @@ class SlaService
             ->whereNull('closed_at');
 
         if ($agentId) {
-            $query->where('assigned_to', $agentId);
+            $query->where('assignee_id', $agentId);
         }
 
         return $query->orderBy('sla_resolution_due_at', 'asc')->get();

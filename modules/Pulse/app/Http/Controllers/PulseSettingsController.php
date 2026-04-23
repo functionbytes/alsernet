@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Core\Models\Setting;
 
 class PulseSettingsController extends Controller
@@ -74,20 +75,22 @@ class PulseSettingsController extends Controller
             'server_directories' => 'required|string|max:500',
         ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::set(self::PREFIX.$key, $value);
-        }
+        DB::transaction(function () use ($request, $validated): void {
+            foreach ($validated as $key => $value) {
+                Setting::set(self::PREFIX.$key, $value);
+            }
 
-        foreach (self::RECORDERS as $key => $label) {
-            Setting::set(
-                self::PREFIX."recorder_{$key}_enabled",
-                $request->has("recorder_{$key}_enabled") ? '1' : '0'
-            );
-            Setting::set(
-                self::PREFIX."recorder_{$key}_sample_rate",
-                (int) $request->input("recorder_{$key}_sample_rate", 1)
-            );
-        }
+            foreach (self::RECORDERS as $key => $label) {
+                Setting::set(
+                    self::PREFIX."recorder_{$key}_enabled",
+                    $request->has("recorder_{$key}_enabled") ? '1' : '0'
+                );
+                Setting::set(
+                    self::PREFIX."recorder_{$key}_sample_rate",
+                    (int) $request->input("recorder_{$key}_sample_rate", 1)
+                );
+            }
+        });
 
         Setting::clearPrefixCache('pulse.');
 

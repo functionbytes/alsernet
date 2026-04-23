@@ -60,6 +60,18 @@ return [
         'medium' => '540x360',
     ],
 
+    'convert_to_webp' => env('MEDIA_CONVERT_TO_WEBP', true),
+    'convert_to_avif' => env('MEDIA_CONVERT_TO_AVIF', true),
+    'avif_quality' => env('MEDIA_AVIF_QUALITY', 60),
+
+    'cdn' => [
+        'enabled' => env('MEDIA_CDN_ENABLED', false),
+        'url' => env('MEDIA_CDN_URL', ''),
+        'signed_urls' => env('MEDIA_CDN_SIGNED_URLS', false),
+        'signature_key' => env('MEDIA_CDN_SIGNATURE_KEY', ''),
+        'signature_expiration' => env('MEDIA_CDN_SIGNATURE_EXPIRATION', 3600),
+    ],
+
     'image_optimization' => [
         'enabled' => env('MEDIA_IMAGE_OPTIMIZATION', true),
         'quality' => env('MEDIA_IMAGE_QUALITY', 85),

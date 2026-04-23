@@ -18,7 +18,7 @@
     {{-- Breadcrumb / Hero --}}
     <div class="blog-page-header mb-30">
         <h4 class="mb-5">{{ __('Our Blog') }}</h4>
-        <p class="text-muted mb-0" style="font-size:13px">
+        <p class="text-muted mb-0" class="fs-13">
             <a href="{{ url('/') }}" class="text-brand">{{ __('Home') }}</a>
             <i class="fa-solid fa-angle-right mx-1"></i>
             <span>{{ __('Blog') }}</span>

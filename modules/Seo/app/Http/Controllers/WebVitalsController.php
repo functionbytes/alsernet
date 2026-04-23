@@ -4,7 +4,6 @@ namespace Modules\Seo\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Modules\Seo\Models\SeoWebVital;
 
 /**
@@ -27,18 +26,18 @@ class WebVitalsController extends Controller
         $globalP75 = $this->computeP75(null, $since);
 
         // Worst pages per metric (rating = poor, sorted by sample count)
-        $worstPages = DB::table('seo_web_vitals')
+        $worstPages = SeoWebVital::query()
             ->selectRaw('url_path, metric, COUNT(*) as samples, AVG(value) as avg_value')
             ->where('captured_at', '>=', $since)
             ->where('rating', 'poor')
             ->groupBy('url_path', 'metric')
-            ->having('samples', '>=', 3)
+            ->havingRaw('COUNT(*) >= 3')
             ->orderByDesc('samples')
             ->limit(20)
             ->get();
 
         // Device breakdown
-        $byDevice = DB::table('seo_web_vitals')
+        $byDevice = SeoWebVital::query()
             ->selectRaw('device, metric, AVG(value) as avg_value, COUNT(*) as samples')
             ->where('captured_at', '>=', $since)
             ->groupBy('device', 'metric')
@@ -59,7 +58,7 @@ class WebVitalsController extends Controller
 
         $p75 = $this->computeP75($normalizedPath, $since);
 
-        $trend = DB::table('seo_web_vitals')
+        $trend = SeoWebVital::query()
             ->selectRaw('DATE(captured_at) as date, metric, COUNT(*) as samples, AVG(value) as avg_value')
             ->where('url_path', $normalizedPath)
             ->where('captured_at', '>=', $since)

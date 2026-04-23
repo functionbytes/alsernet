@@ -38,23 +38,26 @@ class DispatchAnalyticsSchedulesCommand extends Command
 
     private function dispatch(): int
     {
-        $schedules = AnalyticsReportSchedule::query()->due()->get();
+        $count = 0;
 
-        if ($schedules->isEmpty()) {
+        AnalyticsReportSchedule::query()->due()->chunk(50, function ($schedules) use (&$count) {
+            foreach ($schedules as $schedule) {
+                GenerateAnalyticsReport::dispatchForSchedule($schedule);
+
+                $schedule->update(['next_run_at' => $this->service->calculateNextRun($schedule->frequency)]);
+
+                $this->line("  -> [{$schedule->frequency}] {$schedule->name} -> {$schedule->email}");
+                $count++;
+            }
+        });
+
+        if ($count === 0) {
             $this->info(__('analytics::analytics.schedules.no_pending'));
 
             return self::SUCCESS;
         }
 
-        $this->info(__('analytics::analytics.schedules.dispatching', ['count' => $schedules->count()]));
-
-        foreach ($schedules as $schedule) {
-            GenerateAnalyticsReport::dispatchForSchedule($schedule);
-
-            $schedule->update(['next_run_at' => $this->service->calculateNextRun($schedule->frequency)]);
-
-            $this->line("  -> [{$schedule->frequency}] {$schedule->name} -> {$schedule->email}");
-        }
+        $this->info(__('analytics::analytics.schedules.dispatching', ['count' => $count]));
 
         return self::SUCCESS;
     }

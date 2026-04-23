@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Captcha\Contracts;
 
 use Illuminate\Support\Str;
@@ -18,7 +20,7 @@ abstract class Captcha
 
     public function __construct(protected ?string $siteKey, protected ?string $secretKey) {}
 
-    abstract public function verify(string $response, string $clientIp, array $options = []): bool;
+    abstract public function verify(string $response, ?string $clientIp = null, array $options = []): bool;
 
     abstract public function display(array $attributes = [], array $options = []): ?string;
 

@@ -5,6 +5,7 @@ namespace Modules\Blog\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Blog\Models\BlogPost;
 use Modules\Blog\Services\BlogPostService;
@@ -17,10 +18,8 @@ class BlogTranslationDashboardController extends Controller
      */
     public function index(): View
     {
-        $posts = BlogPost::query()
-            ->with('translations')
-            ->latest()
-            ->get();
+        $posts = Cache::remember('blog:translation_posts', 300, fn () => BlogPost::query()->with('translations')->latest()->get()
+        );
 
         $locales = BlogPostService::getSupportedLocales();
         $totalPosts = $posts->count();
@@ -65,9 +64,10 @@ class BlogTranslationDashboardController extends Controller
             ];
         }
 
-        $metrics = BlogTranslationService::getUsageMetrics(
+        $metrics = Cache::remember('blog:translation_metrics', 300, fn () => BlogTranslationService::getUsageMetrics(
             now()->subDays(30)->toDateString(),
             now()->toDateString()
+        )
         );
 
         return view('blog::translations.dashboard', compact(

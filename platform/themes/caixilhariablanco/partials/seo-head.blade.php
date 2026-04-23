@@ -7,6 +7,39 @@
 
     $seoTitle     = $seoMeta?->title ?: ($seoPage?->seo_title ?: ($transTitle ?? ($seoPage?->title ?? config('app.name'))));
     $seoDesc      = $seoMeta?->description ?: ($seoPage?->seo_description ?: ($transDescription ?? ($seoPage?->description ?? '')));
+
+    // Fallback: extract hero image and description from rendered content
+    $serviceShortcodeImage = null;
+    $serviceShortcodeDesc = null;
+    $renderedContent = ! empty($transContent) && function_exists('shortcode')
+        ? shortcode($transContent)
+        : ($transContent ?? '');
+    if (! empty($renderedContent)) {
+        // Extract hero background image from rendered HTML (e.g. background-image: url(...))
+        if (preg_match('/background-image:\s*url\(["\']?([^"\')]+)["\']?\)/i', $renderedContent, $imgMatches)) {
+            $serviceShortcodeImage = asset($imgMatches[1]);
+        }
+        // Extract first meaningful sentence for description
+        $text = strip_tags($renderedContent);
+        $text = preg_replace('/\s+/', ' ', $text);
+        if (preg_match('/[a-záéíóúñ]{3,}[^.]{15,120}\./ui', $text, $descMatches)) {
+            $serviceShortcodeDesc = \Illuminate\Support\Str::limit(trim($descMatches[0]), 160);
+        }
+    }
+
+    if (empty($seoDesc) && ! empty($serviceShortcodeDesc)) {
+        $seoDesc = $serviceShortcodeDesc;
+    } elseif (empty($seoDesc) && ! empty($transContent)) {
+        $seoDesc = \Illuminate\Support\Str::limit(strip_tags($transContent), 160);
+    } elseif (empty($seoDesc) && ! empty($seoPage?->content)) {
+        $seoDesc = \Illuminate\Support\Str::limit(strip_tags($seoPage->content), 160);
+    }
+
+    $defaultOgImage = config('Seo.default_og_image', 'https://caixilhariablanco.pt/media/seo/og-default.png');
+    $isDefaultImage = empty($featuredImage) || $featuredImage === $defaultOgImage || str_contains($featuredImage, 'og-default');
+    if ($isDefaultImage && ! empty($serviceShortcodeImage)) {
+        $featuredImage = $serviceShortcodeImage;
+    }
     $seoKeywords  = $seoMeta?->keywords ?: ($seoPage?->seo_keywords ?: ($transKeywords ?? null));
     $seoRobots    = $seoMeta?->robots ?: (($seoPage?->seo_noindex ?? false) ? 'noindex,nofollow' : 'index,follow');
     $seoCanonical = $seoMeta?->canonical_url ?: ($canonicalUrl ?? url()->current());
@@ -15,6 +48,9 @@
     $seoOgDesc    = $seoMeta?->og_description ?: $seoDesc;
     $seoOgType    = $seoMeta?->og_type ?: 'website';
     $seoOgImage   = $seoMeta?->og_image ?: (($featuredImage ?? null) ?: config('Seo.default_og_image', 'https://caixilhariablanco.pt/media/seo/og-default.png'));
+    if ($isDefaultImage && ! empty($serviceShortcodeImage)) {
+        $seoOgImage = $serviceShortcodeImage;
+    }
 
     $seoTwCard    = $seoMeta?->twitter_card ?: ($seoOgImage ? 'summary_large_image' : 'summary');
     $seoTwTitle   = $seoMeta?->twitter_title ?: $seoOgTitle;
@@ -70,6 +106,9 @@
 @if(theme_option('twitter_handle'))
     <meta name="twitter:site" content="{{ '@'.ltrim(theme_option('twitter_handle'), '@') }}">
 @endif
+{{-- Don't preload featuredImage — OG images are for social sharing, not browser rendering.
+     Preloading them wastes bandwidth and competes with LCP-critical resources.
 @if(!empty($featuredImage))
     <link rel="preload" as="image" href="{{ $featuredImage }}">
 @endif
+--}}

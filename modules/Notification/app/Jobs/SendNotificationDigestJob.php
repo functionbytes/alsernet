@@ -28,6 +28,7 @@ class SendNotificationDigestJob implements ShouldQueue
         $unread = $this->user
             ->unreadNotifications()
             ->where('created_at', '>=', now()->subDay())
+            ->limit(50)
             ->get();
 
         if ($unread->isEmpty()) {

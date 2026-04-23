@@ -37,9 +37,9 @@ class AttentionPublicController extends Controller
     public function form(): View
     {
         return view('template::views.peticiones.form', [
-            'types' => AttentionType::where('is_active', true)->orderBy('name')->get(),
-            'categories' => AttentionCategory::where('is_active', true)->orderBy('name')->get(),
-            'sedes' => AttentionSede::where('is_active', true)->orderBy('name')->get(),
+            'types' => AttentionType::where('is_active', true)->orderBy('name')->limit(200)->get(),
+            'categories' => AttentionCategory::where('is_active', true)->orderBy('name')->limit(200)->get(),
+            'sedes' => AttentionSede::where('is_active', true)->orderBy('name')->limit(200)->get(),
             'responseTypes' => ResponseType::cases(),
         ]);
     }

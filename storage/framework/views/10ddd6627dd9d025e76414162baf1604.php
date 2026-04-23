@@ -3,7 +3,7 @@
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Captcha\Facades\Captcha;
 
-$formId = 'form-'.$form->id.'-'.uniqid();
+    $formId = 'form-'.$form->id.'-'.uniqid();
 $theme = $shortcodeConfig['theme'] ?? $form->theme ?? 'default';
 $display = $shortcodeConfig['display'] ?? 'inline';
 $columns = $shortcodeConfig['columns'] ?? null;
@@ -25,8 +25,8 @@ $captchaEnabled = ($form->captcha_enabled ?? false) && class_exists(Captcha::cla
 ?>
 
 
-<?php if (! $__env->hasRenderedOnce('4ff27a66-1974-48a8-8d4d-c44b109cd56a')) {
-    $__env->markAsRenderedOnce('4ff27a66-1974-48a8-8d4d-c44b109cd56a'); ?>
+<?php if (! $__env->hasRenderedOnce('7603cff2-21ff-467e-b44b-2a4a63874339')) {
+    $__env->markAsRenderedOnce('7603cff2-21ff-467e-b44b-2a4a63874339'); ?>
 <link rel="stylesheet" href="<?php echo e(asset('modules/forms/css/forms.css')); ?>">
 <link rel="stylesheet" href="<?php echo e(asset('core/select2/css/select2.min.css')); ?>">
 <style>
@@ -118,8 +118,8 @@ $validateLocaleMap = [
 ];
 $validateLocale = $validateLocaleMap[$locale] ?? null;
 ?>
-<?php if (! $__env->hasRenderedOnce('9df42c6f-7ff1-41fc-a4c8-4bd139b00307')) {
-    $__env->markAsRenderedOnce('9df42c6f-7ff1-41fc-a4c8-4bd139b00307'); ?>
+<?php if (! $__env->hasRenderedOnce('b9b1fd18-1c6c-4760-a8ad-d1af44091b24')) {
+    $__env->markAsRenderedOnce('b9b1fd18-1c6c-4760-a8ad-d1af44091b24'); ?>
 <script>
 window.FormsAssets = window.FormsAssets || { loaded: {} };
 (function () {
@@ -142,7 +142,7 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
     var jqvSrc   = 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js';
     var localeSrc = <?php echo json_encode($validateLocale ? 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_'.$validateLocale.'.js' : null, 15, 512) ?>;
     var select2Src = '<?php echo e(asset('core/select2/js/select2.min.js')); ?>';
-    var formsSrc   = '<?php echo e(asset('modules/forms/js/forms.js')); ?>';
+    var formsSrc   = '<?php echo e(asset('modules/forms/js/forms.min.js')); ?>';
 
     waitForJQuery(function () {
         loadScript(jqvSrc, function () {
@@ -154,8 +154,8 @@ window.FormsAssets = window.FormsAssets || { loaded: {} };
 })();
 </script>
 <?php } ?>
-<?php if (! $__env->hasRenderedOnce('bd5a95a0-b16a-41ce-9e3f-d45106439df8')) {
-    $__env->markAsRenderedOnce('bd5a95a0-b16a-41ce-9e3f-d45106439df8'); ?>
+<?php if (! $__env->hasRenderedOnce('61c8c6b8-c68e-4e28-bfa5-b3adbb83bb96')) {
+    $__env->markAsRenderedOnce('61c8c6b8-c68e-4e28-bfa5-b3adbb83bb96'); ?>
 
 
 <script>

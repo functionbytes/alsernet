@@ -5,7 +5,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\HelpCenterArticle;
 use Modules\Helpdesk\Models\HelpCenterCategory;
@@ -50,13 +50,18 @@ class HelpCenterController extends Controller
     /**
      * Store new category
      */
+    private function clearWidgetCache(): void
+    {
+        Cache::increment('helpdesk:widget:version');
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|string',
-            'icon' => 'fa-duotone nullable|string|max:100',
+            'icon' => 'nullable|string|max:100',
             'visible_to_role' => 'nullable|string|max:255',
             'managed_by_role' => 'nullable|string|max:255',
         ]);
@@ -66,6 +71,7 @@ class HelpCenterController extends Controller
         $validated['is_section'] = false;
 
         $category = HelpCenterCategory::create($validated);
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -95,13 +101,14 @@ class HelpCenterController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|string',
-            'icon' => 'fa-duotone nullable|string|max:100',
+            'icon' => 'nullable|string|max:100',
             'visible_to_role' => 'nullable|string|max:255',
             'managed_by_role' => 'nullable|string|max:255',
         ]);
 
         $category = HelpCenterCategory::findOrFail($validated['id']);
         $category->update($validated);
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -150,6 +157,7 @@ class HelpCenterController extends Controller
         }
 
         $category->delete();
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -189,6 +197,7 @@ class HelpCenterController extends Controller
         $validated['is_section'] = true;
 
         $section = HelpCenterCategory::create($validated);
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -226,6 +235,7 @@ class HelpCenterController extends Controller
 
         $section = HelpCenterCategory::findOrFail($validated['id']);
         $section->update($validated);
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -264,6 +274,7 @@ class HelpCenterController extends Controller
         }
 
         $section->delete();
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -349,6 +360,7 @@ class HelpCenterController extends Controller
             'hide_from_structure' => $request->has('hide_from_structure') ? true : false,
             'author_id' => auth()->id(),
         ]);
+        $this->clearWidgetCache();
 
         // Handle featured image upload
         if ($request->hasFile('featured_image')) {
@@ -367,9 +379,9 @@ class HelpCenterController extends Controller
         }
 
         // Attach to section with position
-        $categoryPosition = DB::table('helpdesk_helpcenter_category_article')
+        $categoryPosition = (int) $article->categories()
             ->where('category_id', $validated['section_id'])
-            ->max('position') + 1;
+            ->max('helpdesk_helpcenter_category_article.position') + 1;
 
         $article->categories()->attach($validated['section_id'], ['position' => $categoryPosition]);
 
@@ -424,6 +436,7 @@ class HelpCenterController extends Controller
             'draft' => $request->has('draft') ? true : false,
             'hide_from_structure' => $request->has('hide_from_structure') ? true : false,
         ]);
+        $this->clearWidgetCache();
 
         // Handle featured image upload
         if ($request->hasFile('featured_image')) {
@@ -472,6 +485,7 @@ class HelpCenterController extends Controller
 
         $article = HelpCenterArticle::findOrFail($id);
         $article->delete();
+        $this->clearWidgetCache();
 
         return response()->json([
             'success' => true,
@@ -509,61 +523,66 @@ class HelpCenterController extends Controller
         $limit = min((int) $request->input('limit', 50), 200);
         $page = max((int) $request->input('page', 1), 1);
 
-        $categories = HelpCenterCategory::whereNull('parent_id')
-            ->where('is_section', false)
-            ->with(['sections' => function ($q) {
-                $q->with(['articles' => function ($q2) {
-                    $q2->where('draft', false)
-                        ->orderBy('position')
-                        ->limit(30);
-                }])->orderBy('position');
-            }])
-            ->orderBy('position')
-            ->get();
+        $version = Cache::get('helpdesk:widget:version', 1);
+        $cacheKey = "helpdesk:widget:articles:{$version}:{$limit}:{$page}";
 
-        $widgetArticles = [];
-        $widgetCategories = [];
+        return Cache::remember($cacheKey, 3600, function () use ($limit, $page) {
+            $categories = HelpCenterCategory::whereNull('parent_id')
+                ->where('is_section', false)
+                ->with(['sections' => function ($q) {
+                    $q->with(['articles' => function ($q2) {
+                        $q2->where('draft', false)
+                            ->orderBy('position')
+                            ->limit(30);
+                    }])->orderBy('position');
+                }])
+                ->orderBy('position')
+                ->get();
 
-        foreach ($categories as $category) {
-            $articleCount = 0;
+            $widgetArticles = [];
+            $widgetCategories = [];
 
-            foreach ($category->sections as $section) {
-                foreach ($section->articles as $article) {
-                    $widgetArticles[] = [
-                        'id' => (string) $article->id,
-                        'title' => $article->title,
-                        'excerpt' => $article->description ?: \Str::limit(strip_tags($article->body ?? ''), 100),
-                        'category' => $category->name,
-                        'section' => $section->name,
+            foreach ($categories as $category) {
+                $articleCount = 0;
+
+                foreach ($category->sections as $section) {
+                    foreach ($section->articles as $article) {
+                        $widgetArticles[] = [
+                            'id' => (string) $article->id,
+                            'title' => $article->title,
+                            'excerpt' => $article->description ?: \Str::limit(strip_tags($article->body ?? ''), 100),
+                            'category' => $category->name,
+                            'section' => $section->name,
+                        ];
+                        $articleCount++;
+                    }
+                }
+
+                if ($articleCount > 0) {
+                    $widgetCategories[] = [
+                        'id' => (string) $category->id,
+                        'name' => $category->name,
+                        'icon' => $category->icon ?: '📄',
+                        'count' => $articleCount,
                     ];
-                    $articleCount++;
                 }
             }
 
-            if ($articleCount > 0) {
-                $widgetCategories[] = [
-                    'id' => (string) $category->id,
-                    'name' => $category->name,
-                    'icon' => $category->icon ?: '📄',
-                    'count' => $articleCount,
-                ];
-            }
-        }
+            // Manual pagination over flat article list
+            $total = count($widgetArticles);
+            $offset = ($page - 1) * $limit;
+            $paged = array_slice($widgetArticles, $offset, $limit);
 
-        // Manual pagination over flat article list
-        $total = count($widgetArticles);
-        $offset = ($page - 1) * $limit;
-        $paged = array_slice($widgetArticles, $offset, $limit);
-
-        return response()->json([
-            'categories' => $widgetCategories,
-            'articles' => $paged,
-            'meta' => [
-                'total' => $total,
-                'per_page' => $limit,
-                'current_page' => $page,
-                'last_page' => (int) ceil($total / $limit),
-            ],
-        ]);
+            return response()->json([
+                'categories' => $widgetCategories,
+                'articles' => $paged,
+                'meta' => [
+                    'total' => $total,
+                    'per_page' => $limit,
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $limit),
+                ],
+            ]);
+        });
     }
 }

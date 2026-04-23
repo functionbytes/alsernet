@@ -36,7 +36,7 @@
 
                     @if (theme_option('logo_light'))
                         <div class="footer-logo">
-                            <img src="{{ RvMedia::getImageUrl(theme_option('logo_light')) }}" alt="{{ theme_option('site_title') }}">
+                            <img src="{{ RvMedia::getImageUrl(theme_option('logo_light')) }}" alt="{{ theme_option('site_title') }}" width="242" height="76">
                         </div>
                     @endif
 
@@ -94,7 +94,7 @@
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <div class="footer-contact-content">
-                                <p><a href="mailto:{{ Theme::getSiteEmail() }}" style="color:inherit;">{{ Theme::getSiteEmail() }}</a></p>
+                                <p><a href="mailto:{{ Theme::getSiteEmail() }}" class="color-inherit">{{ Theme::getSiteEmail() }}</a></p>
                             </div>
                         </div>
                     @endif
@@ -105,7 +105,7 @@
                                 <i class="fas fa-phone"></i>
                             </div>
                             <div class="footer-contact-content">
-                                <p><a href="tel:{{ Theme::getSiteCellphone() }}" style="color:inherit;">{{ Theme::getSiteCellphone() }}</a></p>
+                                <p><a href="tel:{{ Theme::getSiteCellphone() }}" class="color-inherit">{{ Theme::getSiteCellphone() }}</a></p>
                             </div>
                         </div>
                     @endif

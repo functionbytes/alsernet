@@ -3,6 +3,7 @@
 namespace Modules\Sitemap\Console;
 
 use Illuminate\Console\Command;
+use Modules\Seo\Services\SitemapCallbackRegistry;
 use Modules\Sitemap\Builder\SitemapBuilder;
 use Modules\Sitemap\Models\SitemapGeneration;
 use Throwable;
@@ -37,7 +38,7 @@ class GenerateSitemapCommand extends Command
             ->select(['seoable_id', 'locale', 'canonical_url', 'updated_at'])
             ->orderBy('seoable_id')
             ->orderBy('locale')
-            ->get();
+            ->cursor();
 
         $grouped = $metas->groupBy('seoable_id');
         $defaultLocale = config('app.locale', 'es');
@@ -107,7 +108,8 @@ class GenerateSitemapCommand extends Command
                 }
             }
 
-            foreach (config('sitemap.post_callbacks', []) as $callback) {
+            $callbacks = array_merge(config('sitemap.post_callbacks', []), SitemapCallbackRegistry::all());
+            foreach ($callbacks as $callback) {
                 if (is_callable($callback)) {
                     $callback($builder);
                 }

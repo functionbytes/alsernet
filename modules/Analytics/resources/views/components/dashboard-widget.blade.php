@@ -1,12 +1,15 @@
 @if(class_exists('Modules\Analytics\Analytics') && setting('google_analytics_enable') && setting('google_analytics_property_id'))
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">
-            <i class="fas fa-chart-line me-2 text-primary"></i>Analytics — últimos 7 días
-        </span>
-        <a href="{{ route('analytics.dashboard') }}" class="btn btn-sm btn-outline-primary">
-            Ver detalle
-        </a>
+<div class="card w-100 mb-4">
+    <div class="card-header d-md-flex align-items-center">
+        <div>
+            <h4 class="card-title fw-semibold mb-0">Analytics</h4>
+            <p class="card-subtitle mt-1">Métricas de los últimos 7 días</p>
+        </div>
+        <div class="ms-auto mt-3 mt-md-0">
+            <a href="{{ route('analytics.dashboard') }}" class="btn btn-sm btn-outline-primary">
+                Ver detalle
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <div class="row g-3" id="analytics-kpi-widget">

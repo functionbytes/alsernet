@@ -18,6 +18,7 @@ class TimeEntriesController extends Controller
         $entries = $ticket->timeEntries()
             ->with('user:id,name')
             ->orderBy('logged_at', 'desc')
+            ->limit(200)
             ->get()
             ->map(fn ($entry) => array_merge($entry->toArray(), [
                 'formatted_duration' => $entry->formatted_duration,

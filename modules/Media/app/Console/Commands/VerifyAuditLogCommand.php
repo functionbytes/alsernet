@@ -33,7 +33,8 @@ class VerifyAuditLogCommand extends Command
                 'created_at' => (string) $row->created_at,
             ];
 
-            $expected = hash_hmac('sha256', json_encode($payload, JSON_SORT_KEYS), config('app.key'));
+            ksort($payload);
+            $expected = hash_hmac('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), config('app.key'));
 
             if (hash_equals($expected, $row->hmac_signature)) {
                 $ok++;

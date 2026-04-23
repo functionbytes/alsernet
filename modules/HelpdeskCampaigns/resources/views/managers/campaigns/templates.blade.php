@@ -51,7 +51,7 @@
                         @foreach($templates as $template)
                             <div class="col-md-4">
                                 <div class="card h-100" style="cursor: pointer;"
-                                     onclick="showCreateModal({{ $template->id }})">
+                                     onclick="showCreateModal(@json($template->id))">
                                     <div class="card-body bg-light-secondary d-flex align-items-center justify-content-center"
                                          style="min-height: 140px;">
                                         @if($template->type === 'popup')
@@ -76,7 +76,7 @@
                                     </div>
                                     <div class="card-footer bg-white">
                                         <button type="button" class="btn btn-primary btn-sm w-100"
-                                                onclick="event.stopPropagation(); showCreateModal({{ $template->id }})">
+                                                onclick="event.stopPropagation(); showCreateModal(@json($template->id))">
                                             Usar esta plantilla
                                         </button>
                                     </div>

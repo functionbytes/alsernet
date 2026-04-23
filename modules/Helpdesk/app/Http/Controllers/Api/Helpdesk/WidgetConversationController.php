@@ -92,11 +92,12 @@ class WidgetConversationController extends Controller
         // Create conversation
         $conversation = Conversation::create([
             'customer_id' => $customer->id,
-            'status_id' => $openStatus->id,
             'subject' => $request->input('subject', 'Nueva conversación desde widget'),
             'priority' => 'normal',
             'last_message_at' => now(),
         ]);
+        $conversation->status_id = $openStatus->id;
+        $conversation->save();
 
         // Create first message
         $message = ConversationItem::create([
@@ -168,7 +169,7 @@ class WidgetConversationController extends Controller
 
         // Verify customer ownership (basic security)
         $customerEmail = $request->input('customer_email');
-        if ($customerEmail && $conversation->customer->email !== $customerEmail) {
+        if (! $customerEmail || $conversation->customer->email !== $customerEmail) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autorizado para ver esta conversación.',
@@ -329,7 +330,7 @@ class WidgetConversationController extends Controller
 
         // Verify customer ownership
         $customerEmail = $request->input('customer_email');
-        if ($customerEmail && $conversation->customer->email !== $customerEmail) {
+        if (! $customerEmail || $conversation->customer->email !== $customerEmail) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autorizado para ver estos mensajes.',
@@ -341,25 +342,18 @@ class WidgetConversationController extends Controller
             ->where('is_internal', false)
             ->with(['author', 'user'])
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->paginate(50);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'messages' => $messages->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'type' => $item->type,
-                        'body' => $item->body,
-                        'html_body' => $item->html_body,
-                        'is_from_customer' => $item->isFromCustomer(),
-                        'is_from_agent' => $item->isFromAgent(),
-                        'sender_name' => $item->sender_name,
-                        'sender_avatar' => $item->sender_avatar,
-                        'attachments' => $item->attachment_urls,
-                        'created_at' => $item->created_at->toIso8601String(),
-                    ];
-                }),
+                'messages' => $messages->items(),
+                'pagination' => [
+                    'total' => $messages->total(),
+                    'per_page' => $messages->perPage(),
+                    'current_page' => $messages->currentPage(),
+                    'last_page' => $messages->lastPage(),
+                ],
             ],
         ]);
     }

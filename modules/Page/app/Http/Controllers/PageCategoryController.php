@@ -27,12 +27,18 @@ class PageCategoryController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $categories = $query->ordered()->get();
+        $categories = $query->ordered()->limit(500)->get();
+
+        $statsRaw = PageCategory::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
+            ->first();
 
         $stats = [
-            'total' => PageCategory::query()->count(),
-            'active' => PageCategory::query()->where('is_active', true)->count(),
-            'inactive' => PageCategory::query()->where('is_active', false)->count(),
+            'total' => (int) $statsRaw->total,
+            'active' => (int) $statsRaw->active,
+            'inactive' => (int) $statsRaw->inactive,
             'with_pages' => PageCategory::query()->has('pages')->count(),
         ];
 

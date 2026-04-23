@@ -21,6 +21,7 @@ use Modules\Forms\Jobs\ExportFormSubmissionsJob;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormSubmission;
 use Modules\Forms\Models\FormSubmissionNote;
+use Modules\Forms\Models\FormSubmissionValue;
 use Modules\Forms\Services\FormEmailService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -68,9 +69,10 @@ class FormSubmissionController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereIn('id', function ($sub) use ($search) {
-                $sub->select('submission_id')
+            $query->whereExists(function ($sub) use ($search) {
+                $sub->selectRaw('1')
                     ->from('form_submission_values')
+                    ->whereColumn('form_submission_values.submission_id', 'form_submissions.id')
                     ->where('value', 'like', "%{$search}%");
             });
         }
@@ -94,7 +96,7 @@ class FormSubmissionController extends Controller
             'starred' => (int) $row->starred,
         ];
 
-        $users = User::query()->orderBy('firstname')->get(['id', 'firstname', 'lastname', 'email']);
+        $users = User::query()->orderBy('firstname')->limit(200)->get(['id', 'firstname', 'lastname', 'email']);
 
         return view('forms::settings.submissions.index', compact('form', 'submissions', 'stats', 'users'));
     }
@@ -109,7 +111,7 @@ class FormSubmissionController extends Controller
             $submission->update(['is_read' => true]);
         }
 
-        $users = User::query()->orderBy('firstname')->get(['id', 'firstname', 'lastname', 'email']);
+        $users = User::query()->orderBy('firstname')->limit(200)->get(['id', 'firstname', 'lastname', 'email']);
 
         return view('forms::settings.submissions.show', compact('form', 'submission', 'users'));
     }
@@ -261,16 +263,12 @@ class FormSubmissionController extends Controller
 
     public function bulkAnonymize(BulkAnonymizeRequest $request, Form $form): JsonResponse
     {
-        $submissions = FormSubmission::query()
+        $ids = $request->validated()['ids'];
+
+        FormSubmission::query()
             ->where('form_id', $form->id)
-            ->whereIn('id', $request->validated()['ids'])
-            ->get();
-
-        $piiFieldTypes = ['email', 'tel'];
-        $piiKeywords = ['email', 'phone', 'name', 'telefon', 'nombre'];
-
-        foreach ($submissions as $submission) {
-            $submission->update([
+            ->whereIn('id', $ids)
+            ->update([
                 'ip_address' => null,
                 'user_agent' => null,
                 'country' => null,
@@ -282,16 +280,20 @@ class FormSubmissionController extends Controller
                 'utm_content' => null,
             ]);
 
-            $submission->values()
-                ->where(function ($q) use ($piiFieldTypes, $piiKeywords) {
-                    $q->whereIn('field_type', $piiFieldTypes);
-                    foreach ($piiKeywords as $keyword) {
-                        $q->orWhere('field_key', 'like', "%{$keyword}%");
-                    }
-                })
-                ->update(['value' => '[anonimizado]']);
-        }
+        $piiFieldTypes = config('forms.pii.field_types', ['email', 'tel']);
+        $piiKeywords = config('forms.pii.keywords', ['email', 'phone', 'name', 'telefon', 'nombre']);
 
-        return response()->json(['success' => true, 'anonymized' => $submissions->count()]);
+        $query = FormSubmissionValue::query()
+            ->whereIn('submission_id', $ids)
+            ->where(function ($q) use ($piiFieldTypes, $piiKeywords) {
+                $q->whereIn('field_type', $piiFieldTypes);
+                foreach ($piiKeywords as $keyword) {
+                    $q->orWhere('field_key', 'like', "%{$keyword}%");
+                }
+            });
+
+        $query->update(['value' => '[anonimizado]']);
+
+        return response()->json(['success' => true, 'anonymized' => count($ids)]);
     }
 }

@@ -27,23 +27,24 @@ class QueueRetryAllFailedCommand extends Command
             $query->where('failed_at', '<', $before);
         }
 
-        $jobs = $query->get(['uuid', 'queue', 'failed_at']);
+        $count = $query->count();
 
         if ($this->option('dry-run')) {
-            $this->info("Found {$jobs->count()} failed job(s) matching the criteria.");
+            $jobs = $query->limit(100)->get(['uuid', 'queue', 'failed_at']);
+            $this->info("Found {$count} failed job(s) matching the criteria.");
             $this->table(['UUID', 'Queue', 'Failed At'], $jobs->map(fn ($j) => [$j->uuid, $j->queue, $j->failed_at]));
 
             return self::SUCCESS;
         }
 
-        if ($jobs->isEmpty()) {
+        if ($count === 0) {
             $this->info('No failed jobs found matching the criteria.');
 
             return self::SUCCESS;
         }
 
         $retried = 0;
-        foreach ($jobs as $job) {
+        foreach ($query->lazyById(100, 'id') as $job) {
             Artisan::call('queue:retry', ['id' => $job->uuid]);
             $retried++;
         }

@@ -58,7 +58,7 @@ class AutoAssignUnassignedTickets implements ShouldQueue
                 ->whereNull('assignee_id')
                 ->whereNull('closed_at')
                 ->orderBy('created_at', 'asc')
-                ->get();
+                ->cursor();
 
             $assignedCount = 0;
 

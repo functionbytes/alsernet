@@ -33,11 +33,20 @@ class FormCategoryController extends Controller
 
         $categories = $query->ordered()->paginate(15)->withQueryString();
 
+        $stats = FormCategory::query()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN forms_count > 0 THEN 1 ELSE 0 END) as with_forms
+            ')
+            ->first();
+
         $stats = [
-            'total' => FormCategory::query()->count(),
-            'active' => FormCategory::query()->where('is_active', true)->count(),
-            'inactive' => FormCategory::query()->where('is_active', false)->count(),
-            'with_forms' => FormCategory::query()->has('forms')->count(),
+            'total' => (int) $stats->total,
+            'active' => (int) $stats->active,
+            'inactive' => (int) $stats->inactive,
+            'with_forms' => (int) $stats->with_forms,
         ];
 
         return view('forms::settings.categories.index', compact('categories', 'stats'));
@@ -82,21 +91,16 @@ class FormCategoryController extends Controller
     public function bulkAction(BulkActionFormCategoryRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $ids = $validated['ids'];
 
-        $count = DB::transaction(function () use ($validated): int {
-            $categories = FormCategory::query()->whereIn('id', $validated['ids'])->get();
-            $processed = 0;
+        $count = DB::transaction(function () use ($validated, $ids): int {
+            match ($validated['action']) {
+                'activate' => FormCategory::query()->whereIn('id', $ids)->update(['is_active' => true]),
+                'deactivate' => FormCategory::query()->whereIn('id', $ids)->update(['is_active' => false]),
+                'delete' => FormCategory::query()->whereIn('id', $ids)->get()->each->delete(),
+            };
 
-            foreach ($categories as $category) {
-                match ($validated['action']) {
-                    'activate' => $category->update(['is_active' => true]),
-                    'deactivate' => $category->update(['is_active' => false]),
-                    'delete' => $category->delete(),
-                };
-                $processed++;
-            }
-
-            return $processed;
+            return count($ids);
         });
 
         return response()->json(['success' => true, 'count' => $count]);

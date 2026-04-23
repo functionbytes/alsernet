@@ -110,17 +110,16 @@ class ServerAccessController extends Controller
                 continue;
             }
 
-            $content = @file_get_contents($file);
-            if (! $content) {
+            $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false) {
                 continue;
             }
 
-            $lines = array_reverse(explode("\n", $content));
+            // Only process the last N*2 lines to avoid loading huge files into memory
+            $chunk = array_slice($lines, -($limit * 2));
 
-            foreach ($lines as $line) {
-                if (empty(trim($line))) {
-                    continue;
-                }
+            for ($i = count($chunk) - 1; $i >= 0; $i--) {
+                $line = $chunk[$i];
 
                 // Parse Laravel log format: [YYYY-MM-DD HH:MM:SS] ENVIRONMENT.LEVEL: message
                 if (preg_match('/\[(.*?)\]\s+\w+\.(\w+):\s+(.*)/', $line, $matches)) {

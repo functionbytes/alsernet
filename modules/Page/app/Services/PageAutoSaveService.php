@@ -20,7 +20,7 @@ class PageAutoSaveService
             'title' => $data['title'] ?? null,
             'slug' => $data['slug'] ?? null,
             'content' => isset($data['content'])
-                ? $this->pageService->sanitizeContent($data['content'])
+                ? $this->pageService->sanitizeVisualEditorContent($data['content'])
                 : null,
             'description' => $data['description'] ?? null,
             'status' => $data['status'] ?? null,

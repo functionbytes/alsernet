@@ -11,11 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 
 class Conversation extends Model
 {
-    use HasCustomAttributes, HasFactory, SoftDeletes;
+    use HasCrossDatabaseUserRelation, HasCustomAttributes, HasFactory, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -24,10 +25,7 @@ class Conversation extends Model
     protected $fillable = [
         'customer_id',
         'subject',
-        'status_id',
-        'assignee_id',
         'priority',
-        'is_archived',
         'channel',
         'external_id',
         'external_sender_id',
@@ -73,19 +71,9 @@ class Conversation extends Model
      * Get the assignee (support agent)
      * Note: User model is in the default connection, not helpdesk
      */
-    public function assignee()
+    public function assignee(): BelongsTo
     {
-        // Create a User instance with the correct database connection
-        $instance = (new User)->setConnection(null); // null uses the model's default connection
-
-        // Create the BelongsTo relationship with the properly connected instance
-        return $this->newBelongsTo(
-            $instance->newQuery(),
-            $this,
-            'assignee_id',
-            'id',
-            'assignee'
-        );
+        return $this->belongsToUser('assignee_id', 'assignee');
     }
 
     /**
@@ -205,8 +193,10 @@ class Conversation extends Model
      */
     public function scopeSearch($query, $term)
     {
-        return $query->where('subject', 'like', "%{$term}%")
-            ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$term}%"));
+        return $query->where(function ($q) use ($term) {
+            $q->where('subject', 'like', "%{$term}%")
+                ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$term}%"));
+        });
     }
 
     /**
@@ -309,7 +299,7 @@ class Conversation extends Model
             return null;
         }
 
-        return $this->first_response_at->diffInMinutes($this->created_at);
+        return $this->created_at->diffInMinutes($this->first_response_at);
     }
 
     /**
@@ -319,7 +309,7 @@ class Conversation extends Model
     {
         $end = $this->closed_at ?? now();
 
-        return $end->diffInMinutes($this->created_at);
+        return $this->created_at->diffInMinutes($end);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Page\Enums\PageStatus;
 use Modules\Page\Models\Page;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class PageControllerTest extends TestCase
@@ -429,5 +430,115 @@ class PageControllerTest extends TestCase
             ->assertRedirect(route('login'));
 
         $this->assertDatabaseCount('pages', 1);
+    }
+
+    // -------------------------------------------------------------------------
+    // Authorization 403 — authenticated user without permission
+    // -------------------------------------------------------------------------
+
+    public function test_user_without_page_view_permission_cannot_access_index(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('pages.index'))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_view_permission_cannot_access_edit(): void
+    {
+        $page = Page::factory()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('pages.edit', $page))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_create_permission_cannot_access_create_form(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('pages.create'))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_create_permission_cannot_store_page(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('pages.store'), [
+                'title' => 'Unauthorized',
+                'status' => PageStatus::Draft->value,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_update_permission_cannot_update_page(): void
+    {
+        $page = Page::factory()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->put(route('pages.update', $page), [
+                'title' => 'Hacked',
+                'status' => PageStatus::Draft->value,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_delete_permission_cannot_delete_page(): void
+    {
+        $page = Page::factory()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->delete(route('pages.destroy', $page))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_publish_permission_cannot_publish_page(): void
+    {
+        $page = Page::factory()->draft()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('pages.publish', $page))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_publish_permission_cannot_unpublish_page(): void
+    {
+        $page = Page::factory()->published()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('pages.unpublish', $page))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_create_permission_cannot_duplicate_page(): void
+    {
+        $page = Page::factory()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('pages.duplicate', $page))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_page_update_permission_cannot_access_bulk_action(): void
+    {
+        $pages = Page::factory()->count(2)->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('pages.bulk-action'), [
+                'action' => 'delete',
+                'ids' => $pages->pluck('id')->all(),
+            ])
+            ->assertForbidden();
     }
 }

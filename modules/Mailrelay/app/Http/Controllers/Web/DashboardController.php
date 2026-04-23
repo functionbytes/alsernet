@@ -16,12 +16,27 @@ class DashboardController extends Controller
     public function index()
     {
         // Get statistics
-        $totalSubscribers = Subscriber::count();
-        $activeSubscribers = Subscriber::whereIn('status', ['active', 'subscribed'])->count();
-        $validEmails = EmailValidation::valid()->count();
-        $invalidEmails = EmailValidation::invalid()->count();
-        $activeCampaigns = Campaign::where('status', 'sent')->count();
-        $totalCampaigns = Campaign::count();
+        $subscriberStats = Subscriber::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as active', ['active', 'subscribed'])
+            ->first();
+
+        $validationStats = EmailValidation::query()
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as valid', ['valid'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as invalid', ['invalid'])
+            ->first();
+
+        $campaignStats = Campaign::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active', ['sent'])
+            ->first();
+
+        $totalSubscribers = (int) $subscriberStats->total;
+        $activeSubscribers = (int) $subscriberStats->active;
+        $validEmails = (int) $validationStats->valid;
+        $invalidEmails = (int) $validationStats->invalid;
+        $activeCampaigns = (int) $campaignStats->active;
+        $totalCampaigns = (int) $campaignStats->total;
 
         // Get recent imports
         $recentImports = ImportJob::latest()->take(5)->get();

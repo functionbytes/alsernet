@@ -65,11 +65,13 @@ class MediaController extends Controller
                 $files = MediaFile::byUser()->whereIn('id', $fileIds)
                     ->where('disk', $activeDisk)
                     ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->limit(500)
                     ->get()
                     ->map(fn ($f) => $this->formatFileForList($f));
                 $folders = MediaFolder::byUser()->whereIn('id', $folderIds)
                     ->where('disk', $activeDisk)
                     ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->limit(200)
                     ->get()
                     ->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => true]));
                 break;
@@ -82,6 +84,7 @@ class MediaController extends Controller
                     ->where('created_at', '>=', now()->subHours(24))
                     ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
                     ->orderByDesc('created_at')
+                    ->limit(500)
                     ->get()
                     ->map(fn ($f) => $this->formatFileForList($f));
                 $folders = collect();
@@ -90,16 +93,25 @@ class MediaController extends Controller
             default: // all_media
                 $activeDisk = $this->getActiveDisk();
                 $breadcrumbs = $this->buildBreadcrumbs($folderId);
-                $items = $this->fileRepository->getFilesByFolderId(
-                    $folderId,
-                    ['search' => $search ?: null, 'disk' => $activeDisk],
-                    true,
-                    ['search' => $search ?: null, 'disk' => $activeDisk]
-                );
-                $folders = $items->where('is_folder', true)->values();
-                $allFiles = $items->where('is_folder', false);
-                $totalFiles = $allFiles->count();
-                $files = $allFiles->forPage($page, $perPage)->values();
+
+                $folders = MediaFolder::query()
+                    ->when($folderId, fn ($q) => $q->where('parent_id', $folderId), fn ($q) => $q->whereNull('parent_id'))
+                    ->where('disk', $activeDisk)
+                    ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orderBy('name')
+                    ->limit(200)
+                    ->get()
+                    ->map(fn ($f) => (object) array_merge($f->toArray(), ['is_folder' => true]));
+
+                $filesQuery = MediaFile::query()
+                    ->when($folderId, fn ($q) => $q->where('folder_id', $folderId), fn ($q) => $q->whereNull('folder_id'))
+                    ->where('disk', $activeDisk)
+                    ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orderBy('name');
+
+                $paginator = $filesQuery->paginate($perPage, ['*'], 'page', $page);
+                $totalFiles = $paginator->total();
+                $files = collect($paginator->items())->map(fn ($f) => $this->formatFileForList($f));
                 break;
         }
 
@@ -361,6 +373,7 @@ class MediaController extends Controller
                 ->where('user_id', $userId)
                 ->orderBy('file_hash')
                 ->orderBy('created_at')
+                ->limit(1000)
                 ->get();
 
             $grouped = $files->groupBy('file_hash')->map(fn ($g) => $g->values());
@@ -376,6 +389,7 @@ class MediaController extends Controller
         $files = MediaFile::query()
             ->where('user_id', $userId)
             ->whereNotNull('phash')
+            ->limit(500)
             ->get();
 
         $groups = [];

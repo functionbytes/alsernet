@@ -793,15 +793,70 @@ class SeoMetaWebController extends Controller
         $filename = 'seo-backup-'.now()->format('Y-m-d').'.json';
 
         return response()->streamDownload(function () {
-            $data = [
-                'exported_at' => now()->toIso8601String(),
-                'version' => '1.0',
-                'metas' => SeoMeta::all()->toArray(),
-                'redirects' => SeoRedirect::all(['source_path', 'target_path', 'status_code', 'is_active', 'is_regex', 'is_wildcard', 'active_from', 'active_until'])->toArray(),
-                'templates' => SeoTemplate::all()->toArray(),
-                'static_urls' => SeoStaticUrl::all()->toArray(),
-            ];
-            echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo "{\n";
+            echo '  "exported_at": '.json_encode(now()->toIso8601String()).",\n";
+            echo "  \"version\": \"1.0\",\n";
+
+            // Metas — chunked to avoid memory bloat
+            echo "  \"metas\": [\n";
+            $first = true;
+            SeoMeta::query()->chunk(500, function ($chunk) use (&$first) {
+                foreach ($chunk as $meta) {
+                    if (! $first) {
+                        echo ",\n";
+                    }
+                    echo '    '.json_encode($meta->toArray());
+                    $first = false;
+                }
+            });
+            echo "\n  ],\n";
+
+            // Redirects
+            echo "  \"redirects\": [\n";
+            $first = true;
+            SeoRedirect::query()->select([
+                'source_path', 'target_path', 'status_code', 'is_active',
+                'is_regex', 'is_wildcard', 'active_from', 'active_until',
+            ])->chunk(500, function ($chunk) use (&$first) {
+                foreach ($chunk as $redirect) {
+                    if (! $first) {
+                        echo ",\n";
+                    }
+                    echo '    '.json_encode($redirect->toArray());
+                    $first = false;
+                }
+            });
+            echo "\n  ],\n";
+
+            // Templates
+            echo "  \"templates\": [\n";
+            $first = true;
+            SeoTemplate::query()->chunk(500, function ($chunk) use (&$first) {
+                foreach ($chunk as $template) {
+                    if (! $first) {
+                        echo ",\n";
+                    }
+                    echo '    '.json_encode($template->toArray());
+                    $first = false;
+                }
+            });
+            echo "\n  ],\n";
+
+            // Static URLs
+            echo "  \"static_urls\": [\n";
+            $first = true;
+            SeoStaticUrl::query()->chunk(500, function ($chunk) use (&$first) {
+                foreach ($chunk as $url) {
+                    if (! $first) {
+                        echo ",\n";
+                    }
+                    echo '    '.json_encode($url->toArray());
+                    $first = false;
+                }
+            });
+            echo "\n  ]\n";
+
+            echo "}\n";
         }, $filename, [
             'Content-Type' => 'application/json',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",

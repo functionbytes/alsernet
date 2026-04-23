@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Helpdesk\Jobs\SendHelpdeskEmailJob;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMessage;
 
@@ -121,21 +122,21 @@ class NotificationService
             }
 
             if ($message->is_internal) {
-                $agents = User::whereHas('roles', function ($q) {
+                $recipients = User::whereHas('roles', function ($q) {
                     $q->where('name', 'helpdesk-agent');
-                })->where('is_active', true)->get();
+                })->where('is_active', true)->pluck('email')->all();
 
-                foreach ($agents as $agent) {
-                    $this->sendEmail(
-                        $agent->email,
+                if (! empty($recipients)) {
+                    dispatch(new SendHelpdeskEmailJob(
+                        $recipients,
                         'Nota interna en ticket: '.$ticket->ticket_number,
                         'helpdesk.emails.internal_note',
                         array_merge(['ticket' => $ticket, 'message' => $message], $data)
-                    );
+                    ));
                 }
             }
 
-            Log::info('New message notification sent', [
+            Log::info('New message notification queued', [
                 'ticket_id' => $ticket->id,
                 'message_id' => $message->id,
                 'is_internal' => $message->is_internal,
@@ -216,20 +217,20 @@ class NotificationService
                 }
             }
 
-            $managers = User::whereHas('roles', function ($q) {
+            $recipients = User::whereHas('roles', function ($q) {
                 $q->where('name', 'helpdesk-manager');
-            })->where('is_active', true)->get();
+            })->where('is_active', true)->pluck('email')->all();
 
-            foreach ($managers as $manager) {
-                $this->sendEmail(
-                    $manager->email,
+            if (! empty($recipients)) {
+                dispatch(new SendHelpdeskEmailJob(
+                    $recipients,
                     'SLA Incumplido: '.$ticket->ticket_number,
                     'helpdesk.emails.sla_breach',
                     array_merge(['ticket' => $ticket], $data)
-                );
+                ));
             }
 
-            Log::warning('SLA breach notification sent', [
+            Log::warning('SLA breach notification queued', [
                 'ticket_id' => $ticket->id,
                 'breach_time' => $breachTime,
             ]);

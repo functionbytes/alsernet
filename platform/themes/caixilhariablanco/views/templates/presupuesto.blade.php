@@ -10,16 +10,16 @@
 
     <!-- Hero -->
     <div class="hero2-section-area estimate-hero">
-        <div class="container text-center text-white" style="position:relative;z-index:10;">
+        <div class="container text-center text-white" class="z-10">
             <div class="row justify-content-center">
                 <div class="col-lg-9 col-xl-8">
                     <span class="estimate-hero-badge">500+ instalaciones realizadas</span>
                     <h1 class="estimate-hero-title">Solicite su presupuesto <span>gratis</span></h1>
                     <div class="estimate-hero-benefits">
-                        <div class="estimate-benefit-item"><i class="fa-regular fa-circle-check"></i><span>Respuesta en menos de 24h.</span></div>
-                        <div class="estimate-benefit-item"><i class="fa-regular fa-circle-check"></i><span>Sin compromiso ni obligación.</span></div>
-                        <div class="estimate-benefit-item"><i class="fa-regular fa-circle-check"></i><span>Visita técnica gratuita.</span></div>
-                        <div class="estimate-benefit-item"><i class="fa-regular fa-circle-check"></i><span>Financiación hasta 60 meses.</span></div>
+                        <div class="estimate-benefit-item"><i class="fa-solid fa-circle-check"></i><span>Respuesta en menos de 24h.</span></div>
+                        <div class="estimate-benefit-item"><i class="fa-solid fa-circle-check"></i><span>Sin compromiso ni obligación.</span></div>
+                        <div class="estimate-benefit-item"><i class="fa-solid fa-circle-check"></i><span>Visita técnica gratuita.</span></div>
+                        <div class="estimate-benefit-item"><i class="fa-solid fa-circle-check"></i><span>Financiación hasta 60 meses.</span></div>
                     </div>
                     @php $phone = theme_option('phone', '+351 913 893 833'); @endphp
                     <div class="estimate-hero-ctas">

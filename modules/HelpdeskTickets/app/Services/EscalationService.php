@@ -46,6 +46,7 @@ class EscalationService
         }
 
         $count = 0;
+        $notifications = [];
 
         foreach ($this->thresholds() as $prioritySlug => $hours) {
             $tickets = Ticket::query()
@@ -53,11 +54,14 @@ class EscalationService
                 ->whereNull('closed_at')
                 ->whereNull('escalated_at')
                 ->where('created_at', '<=', now()->subHours($hours))
-                ->get();
+                ->cursor();
 
             foreach ($tickets as $ticket) {
                 try {
-                    $this->escalate($ticket);
+                    $notification = $this->escalate($ticket);
+                    if ($notification) {
+                        $notifications[] = $notification;
+                    }
                     $count++;
                 } catch (\Exception $e) {
                     Log::error("Failed to escalate ticket #{$ticket->id}: {$e->getMessage()}", [
@@ -68,15 +72,23 @@ class EscalationService
             }
         }
 
+        // Batch-send escalation emails to avoid N+1
+        if (! empty($notifications)) {
+            $this->sendEscalationNotifications($notifications);
+        }
+
         return $count;
     }
 
-    private function escalate(Ticket $ticket): void
+    /**
+     * Escalate a single ticket. Returns notification data if an agent should be notified.
+     */
+    private function escalate(Ticket $ticket): ?array
     {
         $nextPriority = $this->escalationChain[$ticket->priority] ?? null;
 
         if (! $nextPriority) {
-            return;
+            return null;
         }
 
         $oldPriority = $ticket->priority;
@@ -93,10 +105,40 @@ class EscalationService
         ]);
 
         if ($ticket->assignee_id) {
-            $agent = User::find($ticket->assignee_id);
+            return [
+                'agent_id' => $ticket->assignee_id,
+                'ticket' => $ticket,
+                'old_priority' => $oldPriority,
+                'new_priority' => $nextPriority,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Send batched escalation notification emails.
+     *
+     * @param  array<int, array<string, mixed>>  $notifications
+     */
+    private function sendEscalationNotifications(array $notifications): void
+    {
+        $agentIds = array_unique(array_column($notifications, 'agent_id'));
+        $agents = User::whereIn('id', $agentIds)
+            ->get(['id', 'email'])
+            ->keyBy('id');
+
+        foreach ($notifications as $notification) {
+            $agent = $agents->get($notification['agent_id']);
 
             if ($agent) {
-                Mail::to($agent->email)->queue(new TicketEscalatedMail($ticket, $oldPriority, $nextPriority));
+                Mail::to($agent->email)->queue(
+                    new TicketEscalatedMail(
+                        $notification['ticket'],
+                        $notification['old_priority'],
+                        $notification['new_priority']
+                    )
+                );
             }
         }
     }

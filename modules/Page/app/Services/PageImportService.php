@@ -17,6 +17,8 @@ class PageImportService
 
     private int $skipped = 0;
 
+    private array $existingSlugs = [];
+
     public function __construct(
         private readonly PageService $pageService,
     ) {}
@@ -25,6 +27,7 @@ class PageImportService
     public function importFromCsv(UploadedFile $file): array
     {
         $this->reset();
+        $this->existingSlugs = Page::pluck('slug')->flip()->all();
 
         Log::info('Page import started', ['user_id' => auth()->id(), 'format' => 'csv']);
 
@@ -73,6 +76,7 @@ class PageImportService
     public function importFromJson(UploadedFile $file): array
     {
         $this->reset();
+        $this->existingSlugs = Page::pluck('slug')->flip()->all();
 
         Log::info('Page import started', ['user_id' => auth()->id(), 'format' => 'json']);
 
@@ -110,17 +114,22 @@ class PageImportService
         }
 
         try {
-            Page::create([
+            $slug = $this->uniqueSlug($record['slug'] ?? $title);
+
+            $page = Page::create([
                 'title' => $title,
-                'slug' => $this->uniqueSlug($record['slug'] ?? $title),
+                'slug' => $slug,
                 'content' => $this->pageService->sanitizeContent($record['content'] ?? ''),
                 'description' => $record['description'] ?? null,
                 'status' => $this->validStatus($record['status'] ?? ''),
                 'template' => $record['template'] ?? 'default',
                 'published_at' => ! empty($record['published_at']) ? Carbon::parse($record['published_at']) : null,
-                'user_id' => auth()->id(),
             ]);
 
+            $page->user_id = auth()->id();
+            $page->saveQuietly();
+
+            $this->existingSlugs[$slug] = true;
             $this->imported++;
         } catch (\Exception $e) {
             $this->errors[] = "Fila {$row}: error al importar '{$title}' - {$e->getMessage()}";
@@ -134,7 +143,7 @@ class PageImportService
         $slug = $base;
         $i = 1;
 
-        while (Page::where('slug', $slug)->exists()) {
+        while (isset($this->existingSlugs[$slug])) {
             $slug = $base.'-'.$i++;
         }
 

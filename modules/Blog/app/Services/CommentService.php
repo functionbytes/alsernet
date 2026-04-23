@@ -84,12 +84,11 @@ class CommentService
      */
     public function getStats(): array
     {
-        return [
-            'total' => BlogPostComment::query()->count(),
-            'pending' => BlogPostComment::query()->where('status', CommentStatus::Pending)->count(),
-            'approved' => BlogPostComment::query()->where('status', CommentStatus::Approved)->count(),
-            'spam' => BlogPostComment::query()->where('status', CommentStatus::Spam)->count(),
-        ];
+        $row = BlogPostComment::query()
+            ->selectRaw('COUNT(*) as total, SUM(status=?) as pending, SUM(status=?) as approved, SUM(status=?) as spam', [CommentStatus::Pending->value, CommentStatus::Approved->value, CommentStatus::Spam->value])
+            ->first();
+
+        return ['total' => (int) $row->total, 'pending' => (int) $row->pending, 'approved' => (int) $row->approved, 'spam' => (int) $row->spam];
     }
 
     private function resolveParentId(?string $parentId, int $postId): ?int

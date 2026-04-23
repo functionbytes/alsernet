@@ -36,8 +36,8 @@ class EmailInboundController extends Controller
     {
         return match ($provider) {
             'mailgun' => $this->verifyMailgun($request),
-            'sendgrid' => true, // SendGrid uses IP allowlisting
-            'postmark' => true, // Postmark uses IP allowlisting
+            'sendgrid' => $this->verifySendgrid($request),
+            'postmark' => $this->verifyPostmark($request),
             'generic' => true,  // Insecure — dev/testing only
             default => false,
         };
@@ -57,6 +57,36 @@ class EmailInboundController extends Controller
 
         return hash_equals(
             hash_hmac('sha256', $timestamp.$token, $signingKey),
+            $signature,
+        );
+    }
+
+    private function verifySendgrid(Request $request): bool
+    {
+        $secret = config('helpdesk.email_inbound.sendgrid_webhook_secret');
+
+        if (! $secret) {
+            return true; // Backwards compatibility: allow if not configured
+        }
+
+        $signature = $request->header('X-Sendgrid-Signature', $request->input('signature', ''));
+
+        return hash_equals($secret, $signature);
+    }
+
+    private function verifyPostmark(Request $request): bool
+    {
+        $secret = config('helpdesk.email_inbound.postmark_webhook_secret');
+
+        if (! $secret) {
+            return true; // Backwards compatibility: allow if not configured
+        }
+
+        $signature = $request->header('X-Postmark-Signature', '');
+        $body = $request->getContent();
+
+        return hash_equals(
+            base64_encode(hash_hmac('sha256', $body, $secret, true)),
             $signature,
         );
     }

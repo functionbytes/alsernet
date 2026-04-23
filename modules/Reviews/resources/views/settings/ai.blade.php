@@ -74,11 +74,11 @@
                                 <input type="password" class="form-control" id="api_key" name="api_key"
                                        value="{{ $aiSettings?->api_key ? '••••••••••••' : '' }}"
                                        placeholder="Ingresa tu API key...">
-                                <button type="button" class="btn btn-outline-secondary" id="toggle-api-key" title="Mostrar / Ocultar">
+                                <button type="button" class="btn btn-secondary" id="toggle-api-key" title="Mostrar / Ocultar">
                                     <i class="fas fa-eye" id="toggle-icon"></i>
                                 </button>
-                                <button type="button" class="btn btn-outline-primary" id="test-connection" title="Probar conexión">
-                                    <i class="fas fa-plug"></i> Probar
+                                <button type="button" class="btn btn-primary" id="test-connection" title="Probar conexión">
+                                    <i class="fas fa-plug"></i>
                                 </button>
                             </div>
                             <small class="text-muted d-block mt-1">Deja el campo en blanco para conservar la key guardada.</small>
@@ -93,7 +93,7 @@
                             <p class="text-muted mb-3">Define el tono, idioma y longitud máxima de las respuestas generadas.</p>
 
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="tone" class="form-label fw-semibold">Tono</label>
                                     <select class="form-select select2" id="tone" name="tone" required>
                                         <option value="professional" {{ ($aiSettings?->tone ?? 'professional') === 'professional' ? 'selected' : '' }}>Profesional</option>
@@ -102,7 +102,7 @@
                                         <option value="casual"       {{ ($aiSettings?->tone ?? '') === 'casual'       ? 'selected' : '' }}>Casual</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="language" class="form-label fw-semibold">Idioma de respuesta</label>
                                     <select class="form-select select2" id="language" name="language" required>
                                         <option value="es" {{ ($aiSettings?->language ?? 'es') === 'es' ? 'selected' : '' }}>Español</option>
@@ -111,7 +111,7 @@
                                         <option value="fr" {{ ($aiSettings?->language ?? '') === 'fr' ? 'selected' : '' }}>Francés</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="max_tokens" class="form-label fw-semibold">Longitud máxima (tokens)</label>
                                     <input type="number" class="form-control" id="max_tokens" name="max_tokens"
                                            value="{{ $aiSettings?->max_tokens ?? 500 }}"

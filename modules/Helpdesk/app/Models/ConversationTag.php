@@ -94,8 +94,10 @@ class ConversationTag extends Model
      */
     public function scopeSearch($query, $term)
     {
-        return $query->where('name', 'like', "%{$term}%")
-            ->orWhere('description', 'like', "%{$term}%");
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('description', 'like', "%{$term}%");
+        });
     }
 
     /**

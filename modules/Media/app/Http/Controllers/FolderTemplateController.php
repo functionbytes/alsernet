@@ -16,6 +16,7 @@ class FolderTemplateController extends Controller
         $templates = FolderTemplate::query()
             ->where('user_id', auth()->id())
             ->orWhere('is_shared', true)
+            ->limit(200)
             ->get();
 
         return response()->json(['templates' => $templates]);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\RemoveRobotsTag;
 use App\Providers\AppServiceProvider;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -93,6 +94,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ValidatePostSize::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
+            RemoveRobotsTag::class,
         ]);
 
         // Middleware de grupos (Web y API)

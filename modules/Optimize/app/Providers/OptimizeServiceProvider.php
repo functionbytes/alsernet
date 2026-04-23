@@ -7,15 +7,24 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
+use Modules\Optimize\Console\Commands\ConvertThemePngToWebpCommand;
 use Modules\Optimize\Console\Commands\EnableAllCommand;
+use Modules\Optimize\Console\Commands\GenerateCriticalCssCommand;
+use Modules\Optimize\Console\Commands\MinifyModuleAssetsCommand;
 use Modules\Optimize\Console\Commands\MinifyThemeAssetsCommand;
+use Modules\Optimize\Console\Commands\OptimizeModuleImagesCommand;
+use Modules\Optimize\Console\Commands\OptimizeThemeImagesCommand;
 use Modules\Optimize\Console\Commands\PurgeCacheCommand;
+use Modules\Optimize\Http\Middleware\AddImageDecoding;
 use Modules\Optimize\Http\Middleware\AddImageDimensions;
 use Modules\Optimize\Http\Middleware\AddLoadingLazy;
+use Modules\Optimize\Http\Middleware\AsyncStylesheets;
 use Modules\Optimize\Http\Middleware\CacheControlHeaders;
 use Modules\Optimize\Http\Middleware\CollapseWhitespace;
 use Modules\Optimize\Http\Middleware\DeferJavascript;
 use Modules\Optimize\Http\Middleware\ElideAttributes;
+use Modules\Optimize\Http\Middleware\GzipResponse;
+use Modules\Optimize\Http\Middleware\InjectCriticalCss;
 use Modules\Optimize\Http\Middleware\InjectCriticalPreload;
 use Modules\Optimize\Http\Middleware\InjectFontDisplay;
 use Modules\Optimize\Http\Middleware\InlineCss;
@@ -46,14 +55,17 @@ class OptimizeServiceProvider extends ServiceProvider
         'optimize.minify_inline_scripts' => MinifyInlineScripts::class,
         'optimize.defer_javascript' => DeferJavascript::class,
         'optimize.add_loading_lazy' => AddLoadingLazy::class,
+        'optimize.async_stylesheets' => AsyncStylesheets::class,
         'optimize.inline_css' => InlineCss::class,
         'optimize.insert_dns_prefetch' => InsertDNSPrefetch::class,
         'optimize.inject_font_display' => InjectFontDisplay::class,
         'optimize.inject_critical_preload' => InjectCriticalPreload::class,
         'optimize.add_image_dimensions' => AddImageDimensions::class,
+        'optimize.add_image_decoding' => AddImageDecoding::class,
         'optimize.cache_control_headers' => CacheControlHeaders::class,
         'optimize.rewrite_min_assets' => RewriteMinAssets::class,
         'optimize.link_preload_header' => LinkPreloadHeader::class,
+        'optimize.inject_critical_css' => InjectCriticalCss::class,
     ];
 
     public function boot(): void
@@ -69,8 +81,13 @@ class OptimizeServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ConvertThemePngToWebpCommand::class,
                 EnableAllCommand::class,
+                GenerateCriticalCssCommand::class,
+                MinifyModuleAssetsCommand::class,
                 MinifyThemeAssetsCommand::class,
+                OptimizeModuleImagesCommand::class,
+                OptimizeThemeImagesCommand::class,
                 PurgeCacheCommand::class,
             ]);
         }
@@ -115,6 +132,11 @@ class OptimizeServiceProvider extends ServiceProvider
                 $router->pushMiddlewareToGroup('web', $middlewareClass);
             }
         }
+
+        // Gzip compression — must run last so it compresses the fully-rendered response
+        if (Setting::get('optimize.gzip_response', '0') === '1') {
+            $router->pushMiddlewareToGroup('web', GzipResponse::class);
+        }
     }
 
     protected function registerConfig(): void
@@ -158,6 +180,7 @@ class OptimizeServiceProvider extends ServiceProvider
 
         NavService::addItemsToSection('settings', 'Configuraciones', [
             ['label' => 'Configuracion de optimización', 'route' => 'settings.optimize.index'],
+            ['label' => 'Herramientas de optimización', 'route' => 'settings.optimize.tools'],
         ]);
 
     }

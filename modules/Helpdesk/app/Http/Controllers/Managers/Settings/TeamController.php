@@ -55,29 +55,55 @@ class TeamController extends Controller
             ->paginate(50)
             ->appends($request->query());
 
-        $groups = Group::orderBy('name')->get();
-        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->get();
+        $groups = Group::orderBy('name')->limit(200)->get();
+        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->limit(200)->get();
 
-        // Get all members for statistics (without pagination)
-        $allMembers = User::query()
-            ->with(['roles', 'agentSettings', 'groups'])
-            ->whereHas('roles', function ($q) {
-                $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+        // Calculate statistics via SQL (avoid loading all members into memory)
+        $baseUserQuery = User::query()->whereHas('roles', function ($q) {
+            $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+        });
+
+        $total = (int) (clone $baseUserQuery)->count();
+
+        $availability = User::query()
+            ->join('helpdesk_agent_settings', 'users.id', '=', 'helpdesk_agent_settings.user_id')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('model_has_roles')
+                    ->whereColumn('model_has_roles.model_id', 'users.id')
+                    ->whereIn('model_has_roles.role_id', function ($sq) {
+                        $sq->select('id')->from('roles')->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+                    });
             })
-            ->get();
+            ->selectRaw('
+                SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as available,
+                SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as working_hours,
+                SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as unavailable,
+                SUM(CASE WHEN helpdesk_agent_settings.assignment_limit = 0 THEN 1 ELSE 0 END) as with_unlimited,
+                SUM(CASE WHEN helpdesk_agent_settings.assignment_limit > 0 THEN 1 ELSE 0 END) as with_limit
+            ', ['yes', 'working_hours', 'no'])
+            ->first();
 
-        // Calculate statistics
+        $roleCounts = Role::query()
+            ->join('model_has_roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->whereIn('roles.name', ['admin', 'manager', 'support', 'callcenter'])
+            ->where('model_has_roles.model_type', User::class)
+            ->selectRaw('roles.name, COUNT(*) as count')
+            ->groupBy('roles.name')
+            ->pluck('count', 'roles.name')
+            ->toArray();
+
         $stats = [
-            'total' => $allMembers->count(),
-            'available' => $allMembers->filter(fn ($m) => ($m->agentSettings->accepts_conversations ?? 'no') === 'yes')->count(),
-            'working_hours' => $allMembers->filter(fn ($m) => ($m->agentSettings->accepts_conversations ?? 'no') === 'working_hours')->count(),
-            'unavailable' => $allMembers->filter(fn ($m) => ($m->agentSettings->accepts_conversations ?? 'no') === 'no')->count(),
-            'admin' => $allMembers->filter(fn ($m) => $m->roles->contains('name', 'admin'))->count(),
-            'manager' => $allMembers->filter(fn ($m) => $m->roles->contains('name', 'manager'))->count(),
-            'support' => $allMembers->filter(fn ($m) => $m->roles->contains('name', 'support'))->count(),
-            'callcenter' => $allMembers->filter(fn ($m) => $m->roles->contains('name', 'callcenter'))->count(),
-            'with_unlimited' => $allMembers->filter(fn ($m) => ($m->agentSettings->assignment_limit ?? 0) === 0)->count(),
-            'with_limit' => $allMembers->filter(fn ($m) => ($m->agentSettings->assignment_limit ?? 0) > 0)->count(),
+            'total' => $total,
+            'available' => (int) ($availability->available ?? 0),
+            'working_hours' => (int) ($availability->working_hours ?? 0),
+            'unavailable' => (int) ($availability->unavailable ?? 0),
+            'admin' => (int) ($roleCounts['admin'] ?? 0),
+            'manager' => (int) ($roleCounts['manager'] ?? 0),
+            'support' => (int) ($roleCounts['support'] ?? 0),
+            'callcenter' => (int) ($roleCounts['callcenter'] ?? 0),
+            'with_unlimited' => (int) ($availability->with_unlimited ?? 0),
+            'with_limit' => (int) ($availability->with_limit ?? 0),
         ];
 
         return view('helpdesk::managers.settings.helpdesk.team.members', [
@@ -97,8 +123,8 @@ class TeamController extends Controller
 
         $this->authorize('update', $member);
 
-        $groups = Group::orderBy('name')->get();
-        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->get();
+        $groups = Group::orderBy('name')->limit(200)->get();
+        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->limit(200)->get();
 
         // Ensure agent backups exist
         if (! $member->agentSettings) {
@@ -194,21 +220,37 @@ class TeamController extends Controller
             ->paginate(50)
             ->appends($request->query());
 
-        // Get all groups for statistics
-        $allGroups = Group::with('users')->get();
+        // Calculate statistics via SQL
+        $groupStats = Group::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN `default` = 1 THEN 1 ELSE 0 END) as `default`,
+            SUM(CASE WHEN assignment_mode = ? THEN 1 ELSE 0 END) as round_robin,
+            SUM(CASE WHEN assignment_mode = ? THEN 1 ELSE 0 END) as load_balance,
+            SUM(CASE WHEN assignment_mode = ? THEN 1 ELSE 0 END) as priority
+        ', ['round_robin', 'load_balance', 'priority'])->first();
 
-        // Calculate statistics
+        $memberStats = Group::query()
+            ->leftJoin('helpdesk_group_user', 'helpdesk_groups.id', '=', 'helpdesk_group_user.group_id')
+            ->selectRaw('
+                SUM(CASE WHEN helpdesk_group_user.user_id IS NOT NULL THEN 1 ELSE 0 END) as total_members,
+                SUM(CASE WHEN helpdesk_group_user.conversation_priority = ? THEN 1 ELSE 0 END) as primary_members,
+                SUM(CASE WHEN helpdesk_group_user.conversation_priority = ? THEN 1 ELSE 0 END) as backup_members,
+                COUNT(DISTINCT CASE WHEN helpdesk_group_user.user_id IS NOT NULL THEN helpdesk_groups.id END) as with_members,
+                COUNT(DISTINCT CASE WHEN helpdesk_group_user.user_id IS NULL THEN helpdesk_groups.id END) as empty
+            ', ['primary', 'backup'])
+            ->first();
+
         $stats = [
-            'total' => $allGroups->count(),
-            'default' => $allGroups->where('default', true)->count(),
-            'with_members' => $allGroups->filter(fn ($g) => $g->users->count() > 0)->count(),
-            'empty' => $allGroups->filter(fn ($g) => $g->users->count() === 0)->count(),
-            'total_members' => $allGroups->sum(fn ($g) => $g->users->count()),
-            'primary_members' => $allGroups->sum(fn ($g) => $g->users->where('pivot.conversation_priority', 'primary')->count()),
-            'backup_members' => $allGroups->sum(fn ($g) => $g->users->where('pivot.conversation_priority', 'backup')->count()),
-            'round_robin' => $allGroups->where('assignment_mode', 'round_robin')->count(),
-            'load_balance' => $allGroups->where('assignment_mode', 'load_balance')->count(),
-            'priority' => $allGroups->where('assignment_mode', 'priority')->count(),
+            'total' => (int) $groupStats->total,
+            'default' => (int) $groupStats->default,
+            'with_members' => (int) $memberStats->with_members,
+            'empty' => (int) $memberStats->empty,
+            'total_members' => (int) $memberStats->total_members,
+            'primary_members' => (int) $memberStats->primary_members,
+            'backup_members' => (int) $memberStats->backup_members,
+            'round_robin' => (int) $groupStats->round_robin,
+            'load_balance' => (int) $groupStats->load_balance,
+            'priority' => (int) $groupStats->priority,
         ];
 
         return view('helpdesk::managers.settings.helpdesk.team.groups', [
@@ -226,7 +268,7 @@ class TeamController extends Controller
 
         $agents = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
-        })->orderBy('firstname')->get();
+        })->orderBy('firstname')->limit(200)->get();
 
         return view('helpdesk::managers.settings.helpdesk.team.group-create', [
             'agents' => $agents,
@@ -287,7 +329,7 @@ class TeamController extends Controller
 
         $agents = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
-        })->orderBy('firstname')->get();
+        })->orderBy('firstname')->limit(200)->get();
 
         return view('helpdesk::managers.settings.helpdesk.team.group-edit', [
             'group' => $group,

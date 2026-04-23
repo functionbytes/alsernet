@@ -100,4 +100,27 @@ return [
         'api_key' => env('DEEPL_API_KEY', null),
         'target_language' => env('DEEPL_TARGET_LANG', 'ES'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Health Check Thresholds
+    |--------------------------------------------------------------------------
+    |
+    | Thresholds for the health check endpoint.
+    |
+    */
+    'health_thresholds' => [
+        'pending_syncs' => [
+            'critical' => 50,
+            'warning' => 20,
+        ],
+        'failed_replies' => [
+            'critical' => 20,
+            'warning' => 5,
+        ],
+        'last_sync_minutes' => [
+            'critical' => 60,
+            'warning' => 30,
+        ],
+    ],
 ];

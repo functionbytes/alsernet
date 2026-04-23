@@ -56,6 +56,7 @@ class BlogPublicController extends Controller
             ->topLevel()
             ->with('replies')
             ->orderBy('created_at')
+            ->limit(200)
             ->get();
 
         $commentsEnabled = config('blog.allow_comments', false);

@@ -36,13 +36,20 @@ class PageApprovalController extends Controller
             $query->where('status', $request->status);
         }
 
-        $approvals = $query->latest('requested_at')->get();
+        $approvals = $query->latest('requested_at')->paginate(25);
+
+        $statsRaw = PageApproval::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending")
+            ->selectRaw("SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved")
+            ->selectRaw("SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected")
+            ->first();
 
         $stats = [
-            'total' => PageApproval::query()->count(),
-            'pending' => PageApproval::query()->where('status', 'pending')->count(),
-            'approved' => PageApproval::query()->where('status', 'approved')->count(),
-            'rejected' => PageApproval::query()->where('status', 'rejected')->count(),
+            'total' => (int) $statsRaw->total,
+            'pending' => (int) $statsRaw->pending,
+            'approved' => (int) $statsRaw->approved,
+            'rejected' => (int) $statsRaw->rejected,
         ];
 
         return view('page::pages.approvals.index', compact('approvals', 'stats'));

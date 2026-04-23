@@ -33,10 +33,16 @@ class TagsController extends Controller
         $tags = $query->latest()->paginate(20);
 
         // Calculate statistics
+        $row = ConversationTag::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
+        ')->first();
+
         $stats = [
-            'total' => ConversationTag::count(),
-            'active' => ConversationTag::active()->count(),
-            'inactive' => ConversationTag::where('is_active', false)->count(),
+            'total' => (int) $row->total,
+            'active' => (int) $row->active,
+            'inactive' => (int) $row->inactive,
         ];
 
         return view('helpdesk::managers.settings.helpdesk.tags.index', [

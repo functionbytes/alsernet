@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Captcha\Providers;
 
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Factory;
 use Modules\Captcha\Facades\Captcha as CaptchaFacade;
+use Modules\Captcha\Policies\CaptchaSettingPolicy;
 use Modules\Captcha\Services\Captcha;
 use Modules\Captcha\Services\CaptchaV3;
 use Modules\Captcha\Services\MathCaptcha;
@@ -29,6 +34,7 @@ class CaptchaServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->bootValidator();
+        $this->registerPolicies();
         $this->registerMenus();
     }
 
@@ -42,7 +48,7 @@ class CaptchaServiceProvider extends ServiceProvider
         // Register captcha singleton
         $this->app->singleton('captcha', function () {
             $key = setting('captcha_site_key');
-            $secret = setting('captcha_secret');
+            $secret = $this->resolveSecret();
 
             if (setting('captcha_type') === 'v3') {
                 return new CaptchaV3($key, $secret);
@@ -180,8 +186,13 @@ class CaptchaServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registrar menus del modulo Captcha
+     * Register Captcha module menus.
      */
+    protected function registerPolicies(): void
+    {
+        Gate::define('captcha.settings.update', [CaptchaSettingPolicy::class, 'update']);
+    }
+
     protected function registerMenus(): void
     {
         NavService::addItemsToSection('settings', 'Configuraciones', [
@@ -207,5 +218,26 @@ class CaptchaServiceProvider extends ServiceProvider
         }
 
         return $paths;
+    }
+
+    private function resolveSecret(): ?string
+    {
+        $secret = setting('captcha_secret');
+
+        if (! is_string($secret)) {
+            return null;
+        }
+
+        if (str_starts_with($secret, 'encrypted:')) {
+            try {
+                return decrypt(substr($secret, 10));
+            } catch (DecryptException $e) {
+                logger()->error('Captcha secret decryption failed during service registration', ['error' => $e->getMessage()]);
+
+                return null;
+            }
+        }
+
+        return $secret;
     }
 }

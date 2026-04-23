@@ -200,6 +200,10 @@ class AiAgent extends Model
 
     public function getActiveSessionsAttribute(): int
     {
-        return $this->sessions()->where('status', 'active')->count();
+        $counts = $this->sessions()
+            ->selectRaw('COUNT(*) as total, SUM(status = ?) as active', ['active'])
+            ->first();
+
+        return (int) ($counts->active ?? 0);
     }
 }

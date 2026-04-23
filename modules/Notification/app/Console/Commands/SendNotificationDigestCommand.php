@@ -21,9 +21,11 @@ class SendNotificationDigestCommand extends Command
                 $query->whereNull('read_at')
                     ->where('created_at', '>=', now()->subDay());
             })
-            ->each(function (User $user) use (&$dispatched) {
-                SendNotificationDigestJob::dispatch($user);
-                $dispatched++;
+            ->chunkById(500, function ($users) use (&$dispatched) {
+                foreach ($users as $user) {
+                    SendNotificationDigestJob::dispatch($user);
+                    $dispatched++;
+                }
             });
 
         $this->info("Digest jobs dispatched for {$dispatched} user(s).");

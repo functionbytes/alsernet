@@ -131,6 +131,8 @@ return [
 
     'email_inbound' => [
         'mailgun_signing_key' => env('HELPDESK_MAILGUN_WEBHOOK_SIGNING_KEY', env('MAILGUN_WEBHOOK_SIGNING_KEY', '')),
+        'sendgrid_webhook_secret' => env('HELPDESK_SENDGRID_WEBHOOK_SECRET', ''),
+        'postmark_webhook_secret' => env('HELPDESK_POSTMARK_WEBHOOK_SECRET', ''),
     ],
 
     'escalation' => [

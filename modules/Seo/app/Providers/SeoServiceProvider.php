@@ -34,6 +34,7 @@ use Modules\Seo\Models\SeoMeta;
 use Modules\Seo\Observers\SeoMetaObserver;
 use Modules\Seo\Services\SchemaOrgService;
 use Modules\Seo\Services\SeoService;
+use Modules\Seo\Services\SitemapCallbackRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -297,7 +298,11 @@ class SeoServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             // Añadir sitemaps especializados al índice
-            $canonicalBase = rtrim((string) (seo_setting('canonical_base_url') ?: config('app.url')), '/');
+            try {
+                $canonicalBase = rtrim((string) (seo_setting('canonical_base_url') ?: config('app.url')), '/');
+            } catch (\Throwable) {
+                $canonicalBase = rtrim((string) config('app.url'), '/');
+            }
             config(['sitemap.index_extra' => array_merge(
                 config('sitemap.index_extra', []),
                 [
@@ -307,25 +312,21 @@ class SeoServiceProvider extends ServiceProvider
                 ]
             )]);
 
-            $callbacks = config('sitemap.post_callbacks', []);
-
             if (class_exists(BlogCategory::class)) {
-                $callbacks[] = function ($builder) {
+                SitemapCallbackRegistry::register(function ($builder) {
                     foreach (BlogCategory::published()->get() as $cat) {
                         $builder->add($cat->url, $cat->updated_at->toAtomString(), '0.6', 'weekly');
                     }
-                };
+                });
             }
 
             if (class_exists(BlogTag::class)) {
-                $callbacks[] = function ($builder) {
+                SitemapCallbackRegistry::register(function ($builder) {
                     foreach (BlogTag::published()->get() as $tag) {
                         $builder->add($tag->url, $tag->updated_at->toAtomString(), '0.4', 'monthly');
                     }
-                };
+                });
             }
-
-            config(['sitemap.post_callbacks' => $callbacks]);
         });
     }
 

@@ -130,7 +130,20 @@ class AssetContainer
 
             if ($group === 'style') {
                 $media = $attributes['media'] ?? 'all';
-                $html .= '<link rel="stylesheet" href="'.e($source).'" media="'.e($media).'">'.PHP_EOL;
+                $extras = '';
+                foreach ($attributes as $key => $value) {
+                    if ($key === 'media') {
+                        continue;
+                    }
+                    if (is_bool($value)) {
+                        if ($value) {
+                            $extras .= ' '.$key;
+                        }
+                    } else {
+                        $extras .= ' '.$key.'="'.e($value).'"';
+                    }
+                }
+                $html .= '<link rel="stylesheet" href="'.e($source).'" media="'.e($media).'"'.$extras.'>'.PHP_EOL;
             } else {
                 $extras = '';
                 foreach ($attributes as $key => $value) {

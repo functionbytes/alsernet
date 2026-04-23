@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Boost\KimiCode;
 use App\Services\DeepLTranslationService;
 use App\Services\GlobalSearchService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Boost\Boost;
 use Laravel\Horizon\Horizon;
 use Modules\Page\Services\PageService;
 use Modules\System\Services\GlobalSearchRegistrar;
@@ -43,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
         $this->shareGlobalViewData();
         $this->app->make(GlobalSearchRegistrar::class)->register();
         $this->configureRateLimiters();
+
+        Boost::registerCodeEnvironment('.kimi', KimiCode::class);
     }
 
     private function configureHorizonGate(): void

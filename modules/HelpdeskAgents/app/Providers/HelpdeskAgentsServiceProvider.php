@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\HelpdeskAgents\Models\AiAgent;
 use Modules\HelpdeskAgents\Models\AiAgentFlow;
 use Modules\HelpdeskAgents\Policies\AiAgentFlowPolicy;
+use Modules\HelpdeskAgents\Policies\AiAgentPolicy;
 use Modules\HelpdeskAgents\Services\PromptSanitizer;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -41,6 +43,10 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
 
     protected function registerPolicies(): void
     {
+        if (class_exists(AiAgent::class) && class_exists(AiAgentPolicy::class)) {
+            Gate::policy(AiAgent::class, AiAgentPolicy::class);
+        }
+
         if (class_exists(AiAgentFlow::class) && class_exists(AiAgentFlowPolicy::class)) {
             Gate::policy(AiAgentFlow::class, AiAgentFlowPolicy::class);
         }

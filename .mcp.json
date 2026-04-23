@@ -1,34 +1,34 @@
 {
-  "mcpServers": {
-    "laravel-boost": {
-      "command": "php",
-      "args": [
-        "artisan",
-        "boost:mcp"
-      ]
-    },
-    "context7": {
-      "command": "npx",
-      "args": [
-        "--yes",
-        "@upstash/context7-mcp"
-      ]
-    },
-    "chrome-devtools": {
-      "command": "npx",
-      "args": [
-        "--yes",
-        "chrome-devtools-mcp",
-        "--browserUrl",
-        "http://127.0.0.1:9222"
-      ]
-    },
-    "redis": {
-      "command": "npx",
-      "args": [
-        "--yes",
-        "@nicholasxjy/redis-mcp"
-      ]
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ]
+        },
+        "context7": {
+            "command": "npx",
+            "args": [
+                "--yes",
+                "@upstash/context7-mcp"
+            ]
+        },
+        "chrome-devtools": {
+            "command": "npx",
+            "args": [
+                "--yes",
+                "chrome-devtools-mcp",
+                "--browserUrl",
+                "http://127.0.0.1:9222"
+            ]
+        },
+        "redis": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-redis"
+            ]
+        }
     }
-  }
 }

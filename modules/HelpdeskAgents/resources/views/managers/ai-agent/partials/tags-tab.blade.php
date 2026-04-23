@@ -1,7 +1,7 @@
 {{-- Tags tab partial - loaded via AJAX into #tags-container --}}
 
 @php
-    $total = $tags->count();
+    $total = $tags->total();
     $active = $tags->where('is_active', true)->count();
     $inactive = $total - $active;
 @endphp
@@ -135,6 +135,12 @@
             </tbody>
         </table>
     </div>
+
+    @if($tags->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $tags->links() }}
+        </div>
+    @endif
 @endif
 
 <script>

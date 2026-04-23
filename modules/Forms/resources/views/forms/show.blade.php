@@ -9,10 +9,7 @@
     @include('core::components.alerts')
 
     @php
-        $totalSubmissions = $form->submissions->count();
-        $unreadCount      = $form->submissions->where('is_read', false)->count();
-        $spamCount        = $form->submissions->where('is_spam', true)->count();
-        $fieldsCount      = $form->fields->count();
+        $fieldsCount = $form->fields->count();
 
         $accessLabels = [
             'public'        => 'Público',

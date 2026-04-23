@@ -15,6 +15,7 @@ use Modules\Media\Console\Commands\CleanOrphanedChunksCommand;
 use Modules\Media\Console\Commands\ConvertToWebpCommand;
 use Modules\Media\Console\Commands\GdprDeleteCommand;
 use Modules\Media\Console\Commands\GdprExportCommand;
+use Modules\Media\Console\Commands\GenerateSpriteSheetsCommand;
 use Modules\Media\Console\Commands\GenerateSrcsetCommand;
 use Modules\Media\Console\Commands\MediaStatsCommand;
 use Modules\Media\Console\Commands\OptimizeAllCommand;
@@ -115,6 +116,7 @@ class MediaServiceProvider extends ServiceProvider
                 SendMediaDigestCommand::class,
                 ConvertToWebpCommand::class,
                 GenerateSrcsetCommand::class,
+                GenerateSpriteSheetsCommand::class,
                 OptimizeAllCommand::class,
             ]);
         }

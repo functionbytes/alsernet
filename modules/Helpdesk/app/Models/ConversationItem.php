@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 
 class ConversationItem extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasCrossDatabaseUserRelation, HasFactory, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -62,19 +63,9 @@ class ConversationItem extends Model
      * Get the staff user who authored this message (if from agent)
      * Note: User model is on default mysql connection, not helpdesk
      */
-    public function user()
+    public function user(): BelongsTo
     {
-        // Create instance with explicit mysql connection for cross-database relationship
-        $user = new User;
-        $user->setConnection('mysql');
-
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        );
+        return $this->belongsToUser('user_id', 'user');
     }
 
     /**
@@ -274,12 +265,12 @@ class ConversationItem extends Model
      */
     public function getReadByUsers()
     {
-        return $this->reads()
+        $userIds = $this->reads()
             ->select('user_id')
             ->distinct()
-            ->pluck('user_id')
-            ->map(fn ($id) => User::find($id))
-            ->filter();
+            ->pluck('user_id');
+
+        return User::whereIn('id', $userIds)->get();
     }
 
     /**

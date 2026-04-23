@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
+use Modules\Media\Models\MediaFile;
 use Spatie\Permission\Models\Permission;
 
 class MediaHealthController extends Controller
@@ -61,7 +62,7 @@ class MediaHealthController extends Controller
     {
         try {
             DB::connection()->getPdo();
-            $count = DB::table('media_files')->count();
+            $count = MediaFile::query()->count();
 
             return ['status' => 'ok', 'details' => ['files_count' => $count]];
         } catch (\Throwable $e) {
@@ -139,7 +140,7 @@ class MediaHealthController extends Controller
         }
 
         try {
-            $total = (int) DB::table('media_files')->sum('size');
+            $total = (int) MediaFile::query()->sum('size');
             $quota = (int) config('media.quota.default_bytes', 1073741824);
 
             return [

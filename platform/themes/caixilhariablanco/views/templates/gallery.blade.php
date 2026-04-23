@@ -35,7 +35,7 @@
                 @foreach($galleryImages as $media)
                 <div class="col-6 col-md-4 col-lg-3">
                     <a href="{{ $media->getUrl() }}" class="popup-image d-block overflow-hidden rounded"
-                       style="height:200px;">
+                       class="h-200">
                         <img alt="" src="{{ $media->getUrl('thumbnail') ?: $media->getUrl() }}"
                              alt="{{ $media->name }}"
                              class="w-100 h-100 object-fit-cover"

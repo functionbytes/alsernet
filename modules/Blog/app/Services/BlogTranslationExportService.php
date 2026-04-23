@@ -58,6 +58,8 @@ class BlogTranslationExportService
         $skipped = 0;
         $errors = [];
 
+        $posts = BlogPost::query()->whereIn('id', array_filter(array_column($rows, 'post_id')))->get()->keyBy('id');
+
         foreach ($rows as $i => $row) {
             $postId = $row['post_id'] ?? null;
             $locale = $row['locale'] ?? null;
@@ -69,7 +71,7 @@ class BlogTranslationExportService
                 continue;
             }
 
-            $post = BlogPost::query()->find($postId);
+            $post = $posts[$postId] ?? null;
             if (! $post) {
                 $errors[] = "Fila {$i}: post {$postId} no encontrado";
                 $skipped++;

@@ -13,6 +13,9 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#b10100">
     <meta name="msapplication-TileColor" content="#b10100">
+
+    {{-- Preconnect hints are injected automatically by FontOptimizationMiddleware --}}
+    <link rel="preload" as="font" href="{{ asset('themes/caixilhariablanco/webfonts/fa-solid-900.woff2') }}" type="font/woff2" crossorigin>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -35,11 +38,11 @@
 
     @stack('canonical')
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     {!! BaseHelper::googleFonts('https://fonts.googleapis.com/css2?family=' . urlencode(theme_option('font_text', 'Poppins')) . ':ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap') !!}
 
     {!! Theme::asset()->container('default')->styles() !!}
+
+    {!! Theme::partial('critical-css') !!}
 
     @stack('head')
     {!! Theme::place('head') !!}
@@ -98,7 +101,7 @@
                     @if (theme_option('address'))
                         <li>
                             <a href="#">
-                                <img src="{{ asset('themes/caixilhariablanco/images/icon-location.svg') }}" alt="Dirección" loading="lazy">
+                                <i class="fa-solid fa-location-dot"></i>
                                 {{ theme_option('address') }}
                             </a>
                         </li>
@@ -106,7 +109,7 @@
                     @if (theme_option('email'))
                         <li>
                             <a href="mailto:{{ theme_option('email') }}">
-                                <img src="{{ asset('themes/caixilhariablanco/images/icon-mail.svg') }}" alt="Correo electrónico" loading="lazy">
+                                <i class="fa-solid fa-envelope"></i>
                                 {{ theme_option('email') }}
                             </a>
                         </li>
@@ -121,7 +124,7 @@
                         <ul>
                             <li>
                                 <a href="{{ theme_option('phone') ? 'tel:' . theme_option('phone') : '#' }}">
-                                    <img src="{{ asset('themes/caixilhariablanco/images/icon-clock.svg') }}" alt="Horario de atención" loading="lazy">
+                                    <i class="fa-solid fa-clock"></i>
                                     @if (theme_option('opening_hours'))
                                         {{ theme_option('opening_hours') }}
                                     @endif
@@ -149,7 +152,7 @@
             <div class="container">
                 <!-- Logo Start -->
                 @if (theme_option('logo'))
-                    <a class="navbar-brand" href="{{ BaseHelper::getHomepageUrl() }}"><img src="{{ RvMedia::getImageUrl(theme_option('logo')) }}" alt="{{ theme_option('site_title') }}"></a>
+                    <a class="navbar-brand" href="{{ BaseHelper::getHomepageUrl() }}"><img src="{{ RvMedia::getImageUrl(theme_option('logo')) }}" alt="{{ theme_option('site_title') }}" fetchpriority="high" width="242" height="76"></a>
                 @endif
                 <!-- Logo End -->
 

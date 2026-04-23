@@ -23,6 +23,7 @@ class SessionController extends Controller
         $sessions = Session::query()
             ->where('user_id', Auth::id())
             ->orderByDesc('last_activity')
+            ->limit(200)
             ->get()
             ->map(fn (Session $s) => [
                 'id' => $s->id,

@@ -164,12 +164,11 @@ class BlogPostService
      */
     public function getStats(): array
     {
-        return [
-            'total' => BlogPost::query()->count(),
-            'published' => BlogPost::query()->where('status', PostStatus::Published)->count(),
-            'draft' => BlogPost::query()->where('status', PostStatus::Draft)->count(),
-            'pending' => BlogPost::query()->where('status', PostStatus::Pending)->count(),
-        ];
+        $row = BlogPost::query()
+            ->selectRaw('COUNT(*) as total, SUM(status=?) as published, SUM(status=?) as draft, SUM(status=?) as pending', [PostStatus::Published->value, PostStatus::Draft->value, PostStatus::Pending->value])
+            ->first();
+
+        return ['total' => (int) $row->total, 'published' => (int) $row->published, 'draft' => (int) $row->draft, 'pending' => (int) $row->pending];
     }
 
     private function markTranslationsStale(BlogPost $post): void

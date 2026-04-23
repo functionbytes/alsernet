@@ -13,6 +13,7 @@ class TokenApiController extends Controller
     {
         $tokens = $request->user()->tokens()
             ->orderByDesc('last_used_at')
+            ->limit(100)
             ->get()
             ->map(fn (PersonalAccessToken $t) => [
                 'id' => $t->id,

@@ -78,10 +78,17 @@ class MailerEndpointController extends Controller
             ->toArray();
 
         // Pre-calculate stats for header cards (across ALL endpoints, not just current page)
-        $totalEndpoints = MailerEndpoint::count();
-        $activeCount = MailerEndpoint::active()->count();
-        $inactiveCount = MailerEndpoint::inactive()->count();
-        $totalRequests = MailerEndpoint::sum('requests_count');
+        $statsRaw = MailerEndpoint::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
+            ->selectRaw('COALESCE(SUM(requests_count), 0) as total_requests')
+            ->first();
+
+        $totalEndpoints = (int) $statsRaw->total;
+        $activeCount = (int) $statsRaw->active;
+        $inactiveCount = (int) $statsRaw->inactive;
+        $totalRequests = (int) $statsRaw->total_requests;
 
         return view('mailer::endpoints.index', compact(
             'endpoints', 'sources', 'status', 'source',
@@ -98,10 +105,12 @@ class MailerEndpointController extends Controller
         $this->authorize('create', MailerEndpoint::class);
 
         $templates = MailerTemplate::enabled()
+            ->with('lang')
             ->orderBy('name')
+            ->limit(200)
             ->get();
 
-        $langs = MailerLang::available()->get();
+        $langs = MailerLang::available()->limit(50)->get();
 
         return view('mailer::endpoints.create', compact('templates', 'langs'));
     }
@@ -147,10 +156,12 @@ class MailerEndpointController extends Controller
         $this->authorize('view', $emailEndpoint);
 
         $templates = MailerTemplate::enabled()
+            ->with('lang')
             ->orderBy('name')
+            ->limit(200)
             ->get();
 
-        $langs = MailerLang::available()->get();
+        $langs = MailerLang::available()->limit(50)->get();
 
         $logs = $emailEndpoint->logs()
             ->latest()
@@ -159,10 +170,17 @@ class MailerEndpointController extends Controller
 
         // Pre-calculate stats
         $endpoint = $emailEndpoint;
-        $successCount = $emailEndpoint->successLogs()->count();
-        $failedCount = $emailEndpoint->failedLogs()->count();
-        $last24h = $emailEndpoint->logs()->where('created_at', '>=', now()->subDay())->count();
-        $successRate = $emailEndpoint->successRate($successCount);
+        $statsRaw = $emailEndpoint->logs()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as success', ['success'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed', ['failed'])
+            ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as last24h', [now()->subDay()])
+            ->first();
+
+        $successCount = (int) $statsRaw->success;
+        $failedCount = (int) $statsRaw->failed;
+        $last24h = (int) $statsRaw->last24h;
+        $successRate = $emailEndpoint->successRate($successCount, (int) $statsRaw->total);
 
         return view('mailer::endpoints.edit', compact(
             'emailEndpoint', 'endpoint', 'templates', 'langs', 'logs',
@@ -246,11 +264,18 @@ class MailerEndpointController extends Controller
         $logs = $query->paginate(20)->withQueryString();
 
         // Pre-calculate statistics to avoid expensive queries in the view
-        $totalCount = $emailEndpoint->logs()->count();
-        $successCount = $emailEndpoint->successLogs()->count();
-        $failedCount = $emailEndpoint->failedLogs()->count();
+        $statsRaw = $emailEndpoint->logs()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as success', ['success'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed', ['failed'])
+            ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as last24h', [now()->subDay()])
+            ->first();
+
+        $totalCount = (int) $statsRaw->total;
+        $successCount = (int) $statsRaw->success;
+        $failedCount = (int) $statsRaw->failed;
         $successRate = $emailEndpoint->successRate($successCount, $totalCount);
-        $last24h = $emailEndpoint->logs()->where('created_at', '>=', now()->subDay())->count();
+        $last24h = (int) $statsRaw->last24h;
 
         $endpoint = $emailEndpoint;
 

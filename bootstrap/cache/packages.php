@@ -19,6 +19,14 @@ return [
             0 => 'AshAllenDesign\\ConfigValidator\\Providers\\ConfigValidatorProvider',
         ],
     ],
+    'barryvdh/laravel-debugbar' => [
+        'aliases' => [
+            'Debugbar' => 'Fruitcake\\LaravelDebugbar\\Facades\\Debugbar',
+        ],
+        'providers' => [
+            0 => 'Fruitcake\\LaravelDebugbar\\ServiceProvider',
+        ],
+    ],
     'barryvdh/laravel-dompdf' => [
         'aliases' => [
             'PDF' => 'Barryvdh\\DomPDF\\Facade\\Pdf',

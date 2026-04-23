@@ -23,7 +23,7 @@ class BulkTicketsController extends Controller
             'ticket_ids.*' => 'integer',
             'action' => 'required|string|in:assign,close,reopen,change_status,delete',
             'agent_id' => 'required_if:action,assign|nullable|integer|exists:users,id',
-            'status_id' => 'required_if:action,change_status|nullable|integer|exists:helpdesk_statuses,id',
+            'status_id' => 'required_if:action,change_status|nullable|integer|exists:helpdesk_ticket_statuses,id',
         ]);
 
         $ids = $validated['ticket_ids'];
@@ -32,7 +32,8 @@ class BulkTicketsController extends Controller
             $count = DB::transaction(function () use ($validated, $ids): int {
                 return match ($validated['action']) {
                     'assign' => Ticket::whereIn('id', $ids)->update([
-                        'assigned_to' => $validated['agent_id'],
+                        'assignee_id' => $validated['agent_id'],
+                        'assigned_at' => now(),
                         'updated_at' => now(),
                     ]),
                     'close' => Ticket::whereIn('id', $ids)

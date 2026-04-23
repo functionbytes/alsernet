@@ -51,25 +51,28 @@ trait HasNotificationSystem
     /**
      * Obtener notificaciones no leídas con datos formateados
      */
-    public function getFormattedUnreadNotifications(): SupportCollection
+    public function getFormattedUnreadNotifications(int $limit = 50): SupportCollection
     {
-        return $this->unreadNotifications->map(function ($notification) {
-            $data = $notification->data;
+        return $this->unreadNotifications()
+            ->limit($limit)
+            ->get()
+            ->map(function ($notification) {
+                $data = $notification->data;
 
-            return [
-                'id' => $notification->id,
-                'type' => $notification->type,
-                'title' => $data['title'] ?? 'Notificación',
-                'message' => $data['message'] ?? '',
-                'icon' => $data['icon'] ?? 'fas fa-bell',
-                'color' => $data['color'] ?? 'primary',
-                'action_url' => $data['action_url'] ?? null,
-                'action_text' => $data['action_text'] ?? 'Ver',
-                'priority' => $data['priority'] ?? 'normal',
-                'created_at' => $notification->created_at->diffForHumans(),
-                'is_read' => false,
-            ];
-        });
+                return [
+                    'id' => $notification->id,
+                    'type' => $notification->type,
+                    'title' => $data['title'] ?? 'Notificación',
+                    'message' => $data['message'] ?? '',
+                    'icon' => $data['icon'] ?? 'fas fa-bell',
+                    'color' => $data['color'] ?? 'primary',
+                    'action_url' => $data['action_url'] ?? null,
+                    'action_text' => $data['action_text'] ?? 'Ver',
+                    'priority' => $data['priority'] ?? 'normal',
+                    'created_at' => $notification->created_at->diffForHumans(),
+                    'is_read' => false,
+                ];
+            });
     }
 
     /**

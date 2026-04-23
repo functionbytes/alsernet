@@ -14,7 +14,7 @@ class AlertThresholdController extends Controller
 {
     public function index(): View
     {
-        $thresholds = AlertThreshold::query()->latest()->get();
+        $thresholds = AlertThreshold::query()->latest()->limit(500)->get();
 
         return view('health::settings.alerts.index', compact('thresholds'));
     }

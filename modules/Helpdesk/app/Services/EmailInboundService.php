@@ -56,13 +56,16 @@ class EmailInboundService
             ->orderByDesc('is_default')
             ->value('id') ?? 1;
 
-        return Conversation::create([
+        $conversation = Conversation::create([
             'customer_id' => $customerId,
             'channel' => 'email',
             'subject' => $subject ?: 'Email sin asunto',
-            'status_id' => $statusId,
             'last_message_at' => now(),
         ]);
+        $conversation->status_id = $statusId;
+        $conversation->save();
+
+        return $conversation;
     }
 
     private function addMessage(Conversation $conversation, int $customerId, string $body, ?string $externalId): void

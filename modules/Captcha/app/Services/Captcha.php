@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Captcha\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Captcha\Contracts\Captcha as CaptchaContract;
@@ -19,35 +22,12 @@ class Captcha extends CaptchaContract
             return null;
         }
 
-        $name = 'captcha_'.md5(uniqid((string) rand(), true));
+        $name = 'captcha_'.md5(uniqid((string) random_int(0, PHP_INT_MAX), true));
 
         $headContent = $this->headRender();
         $footerContent = $this->footerRender($name);
 
         CaptchaRendering::dispatch($attributes, $options, $headContent, $footerContent);
-
-        // NOTE: add_filter() is a Botble CMS function, not available in Laravel.
-        if (function_exists('add_filter')) {
-            add_filter(['theme-front-header', 'ecommerce_checkout_header'], function ($html) use ($headContent) {
-                return $html.$headContent;
-            }, 299);
-
-            add_filter(['theme-front-footer', 'ecommerce_checkout_footer'], function (?string $html) use ($footerContent): string {
-                return $html.$footerContent;
-            }, 99);
-
-            if (defined('BASE_FILTER_HEAD_LAYOUT_TEMPLATE')) {
-                add_filter(BASE_FILTER_HEAD_LAYOUT_TEMPLATE, function ($html) use ($headContent) {
-                    return $html.$headContent;
-                }, 299);
-            }
-
-            if (defined('BASE_FILTER_FOOTER_LAYOUT_TEMPLATE')) {
-                add_filter(BASE_FILTER_FOOTER_LAYOUT_TEMPLATE, function (?string $html) use ($footerContent): string {
-                    return $html.$footerContent;
-                }, 99);
-            }
-        }
 
         $this->rendered = true;
 
@@ -77,10 +57,13 @@ class Captcha extends CaptchaContract
             return false;
         }
 
-        $circuit = new CircuitBreaker('captcha', 5, 60);
+        $circuit = new CircuitBreaker('captcha.v2', 5, 60);
 
         if (! $circuit->isAvailable()) {
-            Log::warning('Captcha circuit breaker open — verification skipped, returning false');
+            Log::warning('Captcha circuit breaker open — verification skipped, returning false', [
+                'type' => 'v2',
+                'ip' => $clientIp,
+            ]);
 
             return false;
         }
@@ -91,18 +74,70 @@ class Captcha extends CaptchaContract
                 $http = $http->withoutVerifying();
             }
 
-            $httpResponse = $http->post(self::RECAPTCHA_VERIFY_API_URL, [
+            $payload = [
                 'secret' => $this->secretKey,
                 'response' => $response,
-                'remoteip' => $clientIp,
-            ]);
+            ];
+
+            if ($clientIp !== null) {
+                $payload['remoteip'] = $clientIp;
+            }
+
+            $httpResponse = $http->post(self::RECAPTCHA_VERIFY_API_URL, $payload);
 
             $circuit->recordSuccess();
 
-            return $httpResponse->json('success');
+            $data = $httpResponse->json() ?? [];
+
+            if (! empty($data['error-codes'])) {
+                Log::warning('Captcha v2 verification error codes', [
+                    'codes' => $data['error-codes'],
+                    'ip' => $clientIp,
+                ]);
+            }
+
+            if (! isset($data['success']) || ! $data['success']) {
+                return false;
+            }
+
+            // Validate hostname to prevent tokens generated for other domains.
+            $expectedHost = request()->getHost();
+            if (isset($data['hostname']) && $data['hostname'] !== $expectedHost) {
+                Log::channel('security')->warning('Captcha v2 hostname mismatch', [
+                    'expected' => $expectedHost,
+                    'actual' => $data['hostname'],
+                    'ip' => $clientIp,
+                    'user_id' => auth()->id(),
+                    'url' => request()->url(),
+                ]);
+
+                return false;
+            }
+
+            // Validate challenge timestamp to prevent replay attacks with old tokens.
+            if (isset($data['challenge_ts'])) {
+                $challengeTime = Carbon::parse($data['challenge_ts']);
+                if (now()->diffInMinutes($challengeTime) > 5) {
+                    Log::channel('security')->warning('Captcha v2 challenge timestamp expired', [
+                        'challenge_ts' => $data['challenge_ts'],
+                        'ip' => $clientIp,
+                        'user_id' => auth()->id(),
+                        'url' => request()->url(),
+                    ]);
+
+                    return false;
+                }
+            }
+
+            return true;
         } catch (\Throwable $e) {
             $circuit->recordFailure();
-            Log::warning('Captcha verification failed: '.$e->getMessage());
+            Log::warning('Captcha verification failed: '.$e->getMessage(), [
+                'ip' => $clientIp,
+                'type' => 'v2',
+                'user_id' => auth()->id(),
+                'url' => request()->url(),
+            ]);
 
             return false;
         }

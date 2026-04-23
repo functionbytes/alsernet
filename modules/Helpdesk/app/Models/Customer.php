@@ -64,10 +64,9 @@ class Customer extends Model
         ];
     }
 
-    protected $appends = [
-        'is_banned',
-        'is_verified',
-    ];
+    // Previously had is_banned and is_verified in $appends, which caused
+    // unnecessary computation on every serialization. Removed for performance;
+    // use ->append('is_banned') or ->append('is_verified') explicitly when needed.
 
     /**
      * Get all tickets for this customer
@@ -139,9 +138,11 @@ class Customer extends Model
      */
     public function scopeSearch($query, $term)
     {
-        return $query->where('name', 'like', "%{$term}%")
-            ->orWhere('email', 'like', "%{$term}%")
-            ->orWhere('phone', 'like', "%{$term}%");
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('phone', 'like', "%{$term}%");
+        });
     }
 
     /**
@@ -232,7 +233,7 @@ class Customer extends Model
     public function getUnreadConversationsCount()
     {
         return $this->conversations()
-            ->whereHas('status', fn ($q) => $q->where('category', 'open'))
+            ->whereHas('status', fn ($q) => $q->where('is_open', true))
             ->count();
     }
 

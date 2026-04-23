@@ -250,10 +250,10 @@
 <script>
 $(document).ready(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
+        toastr.success(@json(session('success')), 'Exito');
     @endif
     @if(session('error'))
-        toastr.error('{{ session('error') }}', 'Error');
+        toastr.error(@json(session('error')), 'Error');
     @endif
 
     $(document).on('click', '.delete-btn', function () {

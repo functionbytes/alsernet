@@ -43,7 +43,7 @@ echo dynamic_sidebar('top_footer_sidebar'); ?>
 
                     <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (theme_option('logo_light')) { ?>
                         <div class="footer-logo">
-                            <img src="<?php echo e(RvMedia::getImageUrl(theme_option('logo_light'))); ?>" alt="<?php echo e(theme_option('site_title')); ?>">
+                            <img src="<?php echo e(RvMedia::getImageUrl(theme_option('logo_light'))); ?>" alt="<?php echo e(theme_option('site_title')); ?>" width="242" height="76">
                         </div>
                     <?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
 
@@ -109,7 +109,7 @@ echo dynamic_sidebar('top_footer_sidebar'); ?>
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <div class="footer-contact-content">
-                                <p><a href="mailto:<?php echo e(Theme::getSiteEmail()); ?>" style="color:inherit;"><?php echo e(Theme::getSiteEmail()); ?></a></p>
+                                <p><a href="mailto:<?php echo e(Theme::getSiteEmail()); ?>" class="color-inherit"><?php echo e(Theme::getSiteEmail()); ?></a></p>
                             </div>
                         </div>
                     <?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
@@ -120,7 +120,7 @@ echo dynamic_sidebar('top_footer_sidebar'); ?>
                                 <i class="fas fa-phone"></i>
                             </div>
                             <div class="footer-contact-content">
-                                <p><a href="tel:<?php echo e(Theme::getSiteCellphone()); ?>" style="color:inherit;"><?php echo e(Theme::getSiteCellphone()); ?></a></p>
+                                <p><a href="tel:<?php echo e(Theme::getSiteCellphone()); ?>" class="color-inherit"><?php echo e(Theme::getSiteCellphone()); ?></a></p>
                             </div>
                         </div>
                     <?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>

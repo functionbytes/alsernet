@@ -16,6 +16,7 @@ use Modules\Media\Http\Requests\UploadMediaFileRequest;
 use Modules\Media\Models\MediaAccessLog;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Models\MediaFileVersion;
+use Modules\Media\Models\MediaShareRevocation;
 use Modules\Media\Services\MediaFileService;
 
 class MediaFileController extends Controller
@@ -352,6 +353,7 @@ class MediaFileController extends Controller
             ->where('media_file_id', $file->id)
             ->with('user:id,name')
             ->orderByDesc('version_number')
+            ->limit(100)
             ->get();
 
         return response()->json(['versions' => $versions]);
@@ -407,7 +409,7 @@ class MediaFileController extends Controller
 
         $request->validate(['token' => ['required', 'string']]);
 
-        \DB::table('media_share_revocations')->updateOrInsert(
+        MediaShareRevocation::updateOrCreate(
             ['token_hash' => hash('sha256', $request->string('token'))],
             [
                 'revoked_by_user_id' => auth()->id(),

@@ -92,7 +92,7 @@
                                 <p class="text-muted small mb-0">Proporcione sus datos de contacto para recibir respuesta</p>
                             </div>
 
-                            <div class="alert alert-info border-0 mb-4" style="background-color:#e8f4fd;">
+                            <div class="alert alert-info border-0 mb-4 bg-alert-info">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input" type="checkbox" name="is_anonymous" id="is_anonymous"
                                            value="1" {{ old('is_anonymous') ? 'checked' : '' }}>
@@ -304,19 +304,19 @@
 
             {{-- Sidebar (solo desktop) --}}
             <div class="col-lg-4 d-none d-lg-block">
-                <div class="sticky-top" style="top:6rem;">
+                <div class="sticky-top sticky-top-6">
 
                     <div class="card mb-4">
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-3">
-                                <i class="fas fa-circle-info me-2" style="color:#90bb13;"></i>¿Que es una PQRSF?
+                                <i class="fas fa-circle-info me-2 pqrsf-info-icon"></i>¿Que es una PQRSF?
                             </h6>
                             <ul class="list-unstyled small mb-0">
-                                <li class="mb-2"><strong style="color:#90bb13;">Peticion:</strong> Solicitud de informacion o de acceso a un servicio.</li>
-                                <li class="mb-2"><strong style="color:#90bb13;">Queja:</strong> Manifestacion de inconformidad por un mal servicio o atencion.</li>
-                                <li class="mb-2"><strong style="color:#90bb13;">Reclamo:</strong> Solicitud de correccion o solucion de un problema.</li>
-                                <li class="mb-2"><strong style="color:#90bb13;">Sugerencia:</strong> Propuesta para mejorar el servicio.</li>
-                                <li class="mb-0"><strong style="color:#90bb13;">Felicitacion:</strong> Reconocimiento por un buen servicio.</li>
+                                <li class="mb-2"><strong class="pqrsf-info-icon">Peticion:</strong> Solicitud de informacion o de acceso a un servicio.</li>
+                                <li class="mb-2"><strong class="pqrsf-info-icon">Queja:</strong> Manifestacion de inconformidad por un mal servicio o atencion.</li>
+                                <li class="mb-2"><strong class="pqrsf-info-icon">Reclamo:</strong> Solicitud de correccion o solucion de un problema.</li>
+                                <li class="mb-2"><strong class="pqrsf-info-icon">Sugerencia:</strong> Propuesta para mejorar el servicio.</li>
+                                <li class="mb-0"><strong class="pqrsf-info-icon">Felicitacion:</strong> Reconocimiento por un buen servicio.</li>
                             </ul>
                         </div>
                     </div>
@@ -327,8 +327,8 @@
                                 <i class="fas fa-clock text-success me-2"></i>Tiempos de respuesta
                             </h6>
                             <div class="d-flex align-items-start mb-3">
-                                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
-                                     style="width:32px;height:32px;">
+                                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0 pqrsf-sidebar-icon"
+                                    >
                                     <i class="fas fa-bolt text-success"></i>
                                 </div>
                                 <div class="ms-3">
@@ -337,8 +337,8 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-start mb-3">
-                                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
-                                     style="width:32px;height:32px;">
+                                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0 pqrsf-sidebar-icon"
+                                    >
                                     <i class="fas fa-message text-warning"></i>
                                 </div>
                                 <div class="ms-3">
@@ -347,8 +347,8 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-start">
-                                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
-                                     style="width:32px;height:32px;">
+                                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0 pqrsf-sidebar-icon"
+                                    >
                                     <i class="fas fa-lightbulb text-info"></i>
                                 </div>
                                 <div class="ms-3">
@@ -360,7 +360,7 @@
                     </div>
 
                     <div class="alert alert-light border mb-0">
-                        <p class="small mb-2"><i class="fas fa-question-circle me-2" style="color:#90bb13;"></i><strong>¿Necesita ayuda?</strong></p>
+                        <p class="small mb-2"><i class="fas fa-question-circle me-2 pqrsf-help-icon"></i><strong>¿Necesita ayuda?</strong></p>
                         <p class="text-muted mb-0 small">Si tiene dudas, puede comunicarse con nuestra linea de atencion al ciudadano.</p>
                     </div>
 
@@ -371,105 +371,7 @@
     </div>
 </section>
 
-@push('css')
-<style>
-    .section-header {
-        padding: 1rem;
-        border-left: 4px solid #90bb13;
-        background: linear-gradient(90deg, rgba(144,187,19,0.05) 0%, transparent 100%);
-        border-radius: 0 0.5rem 0.5rem 0;
-    }
 
-    .response-type-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 1rem;
-    }
-
-    .response-type-card {
-        cursor: pointer;
-        position: relative;
-    }
-
-    .response-type-card input[type="radio"] {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .response-type-content {
-        padding: 1.25rem;
-        border: 2px solid #e0e0e0;
-        border-radius: 0.75rem;
-        text-align: center;
-        transition: all 0.3s ease;
-        background: #fff;
-    }
-
-    .response-type-content i {
-        display: block;
-        font-size: 1.5rem;
-        color: #6c757d;
-        margin-bottom: 0.5rem;
-        transition: color 0.3s ease;
-    }
-
-    .response-type-content span {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #495057;
-    }
-
-    .response-type-card:hover .response-type-content,
-    .response-type-card input[type="radio"]:checked ~ .response-type-content {
-        border-color: #90bb13;
-        box-shadow: 0 4px 12px rgba(144,187,19,0.15);
-    }
-
-    .response-type-card input[type="radio"]:checked ~ .response-type-content {
-        background: rgba(144,187,19,0.05);
-    }
-
-    .response-type-card input[type="radio"]:checked ~ .response-type-content i,
-    .response-type-card input[type="radio"]:checked ~ .response-type-content span {
-        color: #90bb13;
-    }
-
-    .file-upload-area {
-        position: relative;
-        border: 2px dashed #d0d5dd;
-        border-radius: 0.75rem;
-        padding: 2.5rem;
-        text-align: center;
-        background: #f9fafb;
-        transition: border-color 0.3s ease;
-    }
-
-    .file-upload-area:hover {
-        border-color: #90bb13;
-    }
-
-    .file-upload-input {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-    }
-
-    .submit-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-    }
-
-    @media (max-width: 576px) {
-        .response-type-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>

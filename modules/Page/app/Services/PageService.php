@@ -93,6 +93,49 @@ class PageService
     }
 
     /**
+     * Sanitize visual-editor HTML while preserving editor-specific attributes.
+     *
+     * Blocks scripts, event handlers, and dangerous URIs but keeps data-ve-sc,
+     * data-condition, inline styles, IDs and classes that the visual editor uses.
+     */
+    public function sanitizeVisualEditorContent(?string $content): ?string
+    {
+        if ($content === null) {
+            return null;
+        }
+
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed',
+            'p,br,strong,b,em,i,u,s,del,ins,ul,ol,li,'
+            .'h1,h2,h3,h4,h5,h6,blockquote,pre,code,'
+            .'a[href|title|target|rel|id|class|style],'
+            .'img[src|alt|title|width|height|id|class|style],'
+            .'table,thead,tbody,tr,th[colspan|rowspan],td[colspan|rowspan],'
+            .'div[id|class|style],span[id|class|style],'
+            .'figure,figcaption,hr,sub,sup,'
+            .'section,article,header,footer,nav,aside,main,address,time,mark,small,'
+            .'dl,dt,dd,iframe[src|width|height|frameborder|allowfullscreen]'
+        );
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+        $config->set('AutoFormat.RemoveEmpty', false);
+        $config->set('Output.Newline', "\n");
+        $config->set('Cache.DefinitionImpl', null);
+
+        $def = $config->maybeGetRawHTMLDefinition();
+        if ($def) {
+            $tags = ['div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'img', 'section', 'article', 'td', 'th'];
+            foreach ($tags as $tag) {
+                $def->addAttribute($tag, 'data-ve-sc', 'Text');
+                $def->addAttribute($tag, 'data-condition', 'Text');
+            }
+        }
+
+        $purifier = new \HTMLPurifier($config);
+
+        return $purifier->purify($content);
+    }
+
+    /**
      * Create a new page.
      *
      * @throws Exception
@@ -110,13 +153,17 @@ class PageService
                 $data['slug'] = $this->generateUniqueSlug($data['title']);
             }
 
-            if (Auth::check() && ! isset($data['user_id'])) {
-                $data['user_id'] = Auth::id();
-            }
+            $userId = $data['user_id'] ?? (Auth::check() ? Auth::id() : null);
+            unset($data['user_id']);
 
             $data = $this->applySchedulingDefaults($data);
 
             $page = Page::create($data);
+
+            if ($userId) {
+                $page->user_id = $userId;
+                $page->saveQuietly();
+            }
 
             if (! empty($data['translations'])) {
                 $this->syncTranslations($page, $data['translations']);
@@ -391,12 +438,15 @@ class PageService
 
     /**
      * Get pages with filters.
-     *
-     * @return LengthAwarePaginator
      */
-    public function getPages(array $filters = [])
+    public function getPages(array $filters = []): LengthAwarePaginator
     {
-        $query = Page::with([
+        $query = Page::select([
+            'id', 'parent_id', 'title', 'slug', 'template', 'page_type',
+            'description', 'status', 'user_id', 'published_at', 'publish_at',
+            'unpublish_at', 'views_count', 'order', 'created_at', 'updated_at',
+            'deleted_at', 'featured_image_url', 'header_style',
+        ])->with([
             'user:id,firstname,lastname,email',
             'translations:id,page_id,locale_id,slug,status',
             'categories:id,name,color,slug',
@@ -441,12 +491,15 @@ class PageService
 
     /**
      * Get soft-deleted (trashed) pages with filters.
-     *
-     * @return LengthAwarePaginator
      */
-    public function getTrashedPages(array $filters = [])
+    public function getTrashedPages(array $filters = []): LengthAwarePaginator
     {
-        $query = Page::onlyTrashed()->with([
+        $query = Page::onlyTrashed()->select([
+            'id', 'parent_id', 'title', 'slug', 'template', 'page_type',
+            'description', 'status', 'user_id', 'published_at', 'publish_at',
+            'unpublish_at', 'views_count', 'order', 'created_at', 'updated_at',
+            'deleted_at', 'featured_image_url', 'header_style',
+        ])->with([
             'user:id,firstname,lastname,email',
             'translations:id,page_id,locale_id,slug,status',
             'categories:id,name,color,slug',
@@ -576,9 +629,15 @@ class PageService
     {
         $supported = self::getSupportedLocales();
         $localeIdMap = $this->getLocaleIdMap();
+        $existingTrans = $page->translations()->get()->keyBy('locale_id');
 
         foreach ($translations as $locale => $data) {
             if (! in_array($locale, $supported)) {
+                continue;
+            }
+
+            $localeId = $localeIdMap[$locale] ?? null;
+            if (! $localeId) {
                 continue;
             }
 
@@ -592,33 +651,28 @@ class PageService
                 'published_at' => isset($data['status']) && $data['status'] === PageStatus::Published->value
                     ? ($data['published_at'] ?? now()->toDateTimeString())
                     : ($data['published_at'] ?? null),
-                'locale_id' => $localeIdMap[$locale] ?? null,
+                'locale_id' => $localeId,
             ], fn ($v) => $v !== null);
 
             if (empty($fillable)) {
                 continue;
             }
 
-            if (! isset($localeIdMap[$locale])) {
-                continue;
-            }
-
             $newSlug = $fillable['slug'] ?? null;
             if ($newSlug) {
-                $existingTrans = $page->translations()->forLocale($locale)->first();
-                $oldSlug = $existingTrans?->slug;
+                $existingTransModel = $existingTrans->get($localeId);
+                $oldSlug = $existingTransModel?->slug;
                 if ($oldSlug && $oldSlug !== $newSlug) {
-                    $slugStillInUse = $page->translations()
-                        ->notLocale($locale)
-                        ->where('slug', $oldSlug)
-                        ->exists();
+                    $slugStillInUse = $existingTrans->contains(
+                        fn ($t) => $t->locale_id !== $localeId && $t->slug === $oldSlug
+                    );
                     if (! $slugStillInUse) {
                         $this->handleRedirectCreation($oldSlug, $newSlug);
                     }
                 }
             }
 
-            $page->translations()->updateOrCreate(['locale_id' => $localeIdMap[$locale]], $fillable);
+            $page->translations()->updateOrCreate(['locale_id' => $localeId], $fillable);
 
             if (($fillable['status'] ?? '') === PageStatus::Published->value && PageCacheService::isEnabled()) {
                 $page->load('translations');
@@ -689,11 +743,28 @@ class PageService
     {
         $tagNames = array_filter(array_map('trim', explode(',', $tagsInput ?? '')));
 
-        $tagIds = collect($tagNames)->map(fn (string $name) => PageTag::firstOrCreate(
-            ['slug' => Str::slug($name)],
-            ['name' => $name]
-        )->id);
+        if (empty($tagNames)) {
+            $page->tags()->detach();
 
-        $page->tags()->sync($tagIds->all());
+            return;
+        }
+
+        $slugs = array_map(fn (string $name) => Str::slug($name), $tagNames);
+        $existing = PageTag::whereIn('slug', $slugs)->get()->keyBy('slug');
+        $tagIds = [];
+
+        foreach ($tagNames as $name) {
+            $slug = Str::slug($name);
+            $tag = $existing->get($slug);
+
+            if (! $tag) {
+                $tag = PageTag::create(['slug' => $slug, 'name' => $name]);
+                $existing->put($slug, $tag);
+            }
+
+            $tagIds[] = $tag->id;
+        }
+
+        $page->tags()->sync($tagIds);
     }
 }

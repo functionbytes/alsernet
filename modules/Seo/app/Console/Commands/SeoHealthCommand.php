@@ -3,7 +3,6 @@
 namespace Modules\Seo\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Modules\Core\Models\Setting;
 use Modules\Seo\Models\Seo404Log;
@@ -118,7 +117,8 @@ class SeoHealthCommand extends Command
             return;
         }
 
-        $chainCount = DB::table('seo_redirects as a')
+        $chainCount = SeoRedirect::query()
+            ->from('seo_redirects as a')
             ->join('seo_redirects as b', 'a.target_path', '=', 'b.source_path')
             ->where('a.is_active', true)
             ->where('b.is_active', true)

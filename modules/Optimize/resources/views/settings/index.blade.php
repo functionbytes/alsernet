@@ -62,7 +62,9 @@
                                         <i class="fa-solid fa-chart-line me-1"></i>
                                         Últimos 7 días
                                     </div>
-                                    <canvas id="optimize-chart" height="80"></canvas>
+                                    <div class="position-relative has-fixed-height-250">
+                                        <canvas id="optimize-chart"></canvas>
+                                    </div>
                                 </div>
                             @endif
                             @endif
@@ -87,8 +89,15 @@
                                     ['id' => 'remove_quotes',       'icon' => 'fa-quote-left',     'label' => 'Eliminar comillas innecesarias',  'desc' => 'Elimina comillas en atributos HTML cuando es seguro'],
                                     ['id' => 'defer_javascript',    'icon' => 'fa-clock',          'label' => 'Diferir JavaScript',              'desc' => 'Agrega defer a scripts externos para no bloquear renderizado'],
                                     ['id' => 'add_loading_lazy',    'icon' => 'fa-images',         'label' => 'Carga diferida de imágenes',      'desc' => 'Agrega loading="lazy" a imágenes e iframes'],
+                                    ['id' => 'add_image_decoding',  'icon' => 'fa-bolt',           'label' => 'Decodificación asíncrona',        'desc' => 'Agrega decoding="async" para decodificar imágenes fuera del hilo principal'],
+                                    ['id' => 'inject_font_display', 'icon' => 'fa-font',           'label' => 'Font display swap',               'desc' => 'Agrega font-display:swap a fuentes web para evitar FOIT'],
+                                    ['id' => 'inject_critical_preload', 'icon' => 'fa-bolt',       'label' => 'Precarga crítica',                'desc' => 'Inyecta preload para CSS críticos del tema e imagen hero'],
+                                    ['id' => 'inject_critical_css', 'icon' => 'fa-file-code',      'label' => 'Critical CSS inline',             'desc' => 'Inyecta CSS crítico inline y carga el resto de forma async'],
+                                    ['id' => 'add_image_dimensions','icon' => 'fa-ruler-combined', 'label' => 'Dimensiones de imágenes',         'desc' => 'Agrega width y height a imágenes locales para reducir CLS'],
                                     ['id' => 'minify_inline_styles','icon' => 'fa-file-code',      'label' => 'Minificar estilos en línea',      'desc' => 'Minifica el contenido de los bloques <style>'],
                                     ['id' => 'minify_inline_scripts','icon' => 'fa-code',          'label' => 'Minificar scripts en línea',      'desc' => 'Minifica el contenido de los bloques <script>'],
+                                    ['id' => 'rewrite_min_assets',  'icon' => 'fa-compress',       'label' => 'Reescribir a minificados',        'desc' => 'Sirve .min.css y .min.js cuando existen versiones minificadas'],
+                                    ['id' => 'link_preload_header', 'icon' => 'fa-link',           'label' => 'Preload HTTP/2',                  'desc' => 'Envía cabeceras Link: rel=preload para assets críticos'],
                                 ];
                                 @endphp
 
@@ -169,6 +178,20 @@
 
                 <div class="card mb-3">
                     <div class="card-header border-bottom">
+                        <h6 class="mb-0 fw-bold">Herramientas de optimización</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0">Ejecuta tareas pesadas que mejoran PageSpeed de forma manual. Se corren de forma síncrona y pueden tardar varios segundos en sitios grandes.</p>
+                    </div>
+                    <div class="card-footer border-top">
+                        <a href="{{ route('settings.optimize.tools') }}" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-terminal me-2"></i>Abrir herramientas
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header border-bottom">
                         <h6 class="mb-0 fw-bold">Qué hace la optimización</h6>
                     </div>
                     <div class="card-body">
@@ -213,95 +236,6 @@
 
             </div>
 
-            {{-- ── Ejecutar comandos de optimización ────────────────────── --}}
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="fa-solid fa-terminal me-2 text-muted"></i>Herramientas de optimización
-                    </h5>
-                    <p class="text-muted small mb-3">
-                        Ejecuta tareas pesadas que mejoran PageSpeed. Se corren de forma síncrona —
-                        pueden tardar varios segundos en sitios grandes.
-                    </p>
-
-                    {{-- Botón orquestador: corre toda la secuencia de optimización --}}
-                    <div class="alert alert-primary d-flex align-items-center justify-content-between mb-3">
-                        <div>
-                            <strong><i class="fa-solid fa-rocket me-2"></i>Ejecutar toda la optimización</strong>
-                            <div class="small text-muted">
-                                enable-all → minify theme → webp → srcset → audit-a11y --fix → purge-cache
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="text" id="run-all-slug" class="form-control form-control-sm"
-                                   value="caixilhariablanco" style="width:180px"
-                                   placeholder="slug del theme">
-                            <button type="button" id="btn-run-all" class="btn btn-primary btn-sm">
-                                <i class="fa-solid fa-play me-1"></i>Ejecutar todo
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        @foreach ($commands as $signature => $meta)
-                            <div class="col-md-6">
-                                <div class="border rounded p-3 h-100 d-flex flex-column">
-                                    <div class="mb-2">
-                                        <strong>{{ $meta['label'] }}</strong>
-                                        <small class="text-muted d-block mt-1">{{ $meta['description'] }}</small>
-                                        <code class="small text-muted">{{ $signature }}</code>
-                                    </div>
-
-                                    <div class="mt-2 mb-2 flex-grow-1">
-                                        @foreach ($meta['params'] as $param)
-                                            @if ($param === 'ttl')
-                                                <label class="form-label small mb-1">TTL (segundos)</label>
-                                                <input type="number" class="form-control form-control-sm mb-2"
-                                                       data-cmd-param="{{ $param }}" value="3600" min="60">
-                                            @elseif ($param === 'quality')
-                                                <label class="form-label small mb-1">Calidad WebP (0-100)</label>
-                                                <input type="number" class="form-control form-control-sm mb-2"
-                                                       data-cmd-param="{{ $param }}" value="82" min="0" max="100">
-                                            @elseif ($param === 'limit')
-                                                <label class="form-label small mb-1">Límite (0 = todos)</label>
-                                                <input type="number" class="form-control form-control-sm mb-2"
-                                                       data-cmd-param="{{ $param }}" value="0" min="0">
-                                            @elseif ($param === 'slug')
-                                                <label class="form-label small mb-1">Slug del theme</label>
-                                                <input type="text" class="form-control form-control-sm mb-2"
-                                                       data-cmd-param="{{ $param }}" value="caixilhariablanco">
-                                            @elseif ($param === 'fix')
-                                                <div class="form-check mb-2">
-                                                    <input type="checkbox" class="form-check-input"
-                                                           id="fix-{{ \Illuminate\Support\Str::slug($signature) }}"
-                                                           data-cmd-param="{{ $param }}" value="1">
-                                                    <label class="form-check-label small"
-                                                           for="fix-{{ \Illuminate\Support\Str::slug($signature) }}">
-                                                        Aplicar correcciones automáticas (--fix)
-                                                    </label>
-                                                </div>
-                                            @endif
-                                        @endforeach
-                                    </div>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-primary run-command-btn align-self-start"
-                                            data-command="{{ $signature }}">
-                                        <i class="fa-solid fa-play me-1"></i>Ejecutar
-                                    </button>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <div id="command-output-wrap" class="mt-3 d-none">
-                        <label class="form-label small mb-1">Salida del comando</label>
-                        <pre id="command-output" class="bg-dark text-light p-3 rounded small"
-                             style="max-height:360px; overflow:auto; white-space:pre-wrap;"></pre>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
     </div>
@@ -328,17 +262,18 @@ $(document).ready(function () {
                         {
                             label: 'Requests optimizados',
                             data: @json($chartRequests ?? []),
-                            backgroundColor: 'rgba(144, 187, 19, .6)',
-                            borderColor: '#90bb13',
+                            backgroundColor: 'rgba(177, 1, 0, .6)',
+                            borderColor: '#b10100',
                             borderWidth: 1,
+                            borderRadius: 4,
                             yAxisID: 'y',
                         },
                         {
                             label: 'Ahorro (KB)',
                             data: @json($chartBytesSaved ?? []),
                             type: 'line',
-                            borderColor: '#b10100',
-                            backgroundColor: 'rgba(177, 1, 0, .1)',
+                            borderColor: '#333333',
+                            backgroundColor: 'rgba(51, 51, 51, .1)',
                             tension: .3,
                             yAxisID: 'y1',
                         },
@@ -349,10 +284,24 @@ $(document).ready(function () {
                     maintainAspectRatio: false,
                     plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } },
                     scales: {
-                        y: { beginAtZero: true, position: 'left', ticks: { font: { size: 10 } } },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
-                        x: { ticks: { font: { size: 10 } } },
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            ticks: { font: { size: 10 } },
+                            grid: { drawOnChartArea: true },
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { font: { size: 10 } },
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } },
+                            grid: { display: false },
+                        },
                     },
+                    layout: { padding: { top: 4, right: 4, bottom: 0, left: 4 } },
                 },
             });
         }
@@ -367,85 +316,7 @@ $(document).ready(function () {
         $('#response-cache-ttl').toggleClass('d-none', $(this).val() !== '1');
     });
 
-    // ── Ejecutar comandos de optimización ──
-    $('.run-command-btn').on('click', function () {
-        var $btn = $(this);
-        var $card = $btn.closest('.border');
-        var command = $btn.data('command');
 
-        // Recolectar parámetros del card.
-        var payload = { command: command, _token: '{{ csrf_token() }}' };
-        $card.find('[data-cmd-param]').each(function () {
-            var $el = $(this);
-            var name = $el.data('cmd-param');
-            if ($el.is(':checkbox')) {
-                if ($el.is(':checked')) { payload[name] = '1'; }
-            } else {
-                var val = String($el.val() || '').trim();
-                if (val !== '') { payload[name] = val; }
-            }
-        });
-
-        var originalHtml = $btn.html();
-        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>Ejecutando…');
-
-        $.ajax({
-            url: '{{ route("settings.optimize.run-command") }}',
-            method: 'POST',
-            data: payload,
-        })
-        .done(function (res) {
-            $('#command-output-wrap').removeClass('d-none');
-            var header = '$ php artisan ' + res.command + ' (' + res.elapsed_ms + ' ms)\n'
-                       + '─'.repeat(60) + '\n';
-            $('#command-output').text(header + (res.output || '').trim());
-        })
-        .fail(function (xhr) {
-            $('#command-output-wrap').removeClass('d-none');
-            var msg = xhr.responseJSON?.message || 'Error al ejecutar el comando';
-            $('#command-output').text('[ERROR] ' + msg);
-        })
-        .always(function () {
-            $btn.prop('disabled', false).html(originalHtml);
-        });
-    });
-
-    // ── Botón "Ejecutar toda la optimización" ──
-    $('#btn-run-all').on('click', function () {
-        var $btn = $(this);
-        var slug = String($('#run-all-slug').val() || '').trim();
-        var originalHtml = $btn.html();
-
-        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>Ejecutando…');
-
-        $.ajax({
-            url: '{{ route("settings.optimize.run-all") }}',
-            method: 'POST',
-            timeout: 300000, // 5 min — convert-webp puede tardar en catálogos grandes
-            data: { _token: '{{ csrf_token() }}', slug: slug },
-        })
-        .done(function (res) {
-            $('#command-output-wrap').removeClass('d-none');
-            var total = res.total_elapsed_ms || 0;
-            var out = '$ Optimización completa en ' + (total/1000).toFixed(1) + ' s\n';
-            out += '─'.repeat(60) + '\n';
-            (res.steps || []).forEach(function (s, i) {
-                out += '\n[' + (i+1) + '/' + res.steps.length + '] ' + s.command;
-                if (s.skipped) { out += '  (omitido: ' + s.reason + ')\n'; return; }
-                if (s.error) { out += '  [ERROR] ' + s.error + '\n'; return; }
-                out += '  (' + s.elapsed_ms + ' ms)\n';
-                if (s.output) { out += s.output + '\n'; }
-            });
-            $('#command-output').text(out);
-        })
-        .fail(function (xhr) {
-            $('#command-output-wrap').removeClass('d-none');
-            $('#command-output').text('[ERROR] ' + (xhr.responseJSON?.message || 'Error al ejecutar la secuencia'));
-        })
-        .always(function () {
-            $btn.prop('disabled', false).html(originalHtml);
-        });
-    });
 });
 </script>
 @endpush

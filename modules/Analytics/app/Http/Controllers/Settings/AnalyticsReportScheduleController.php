@@ -33,14 +33,18 @@ class AnalyticsReportScheduleController extends Controller
 
         $schedules = $query->paginate(10)->withQueryString();
 
+        $statsRaw = AnalyticsReportSchedule::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 AND next_run_at IS NOT NULL AND next_run_at <= ? THEN 1 ELSE 0 END) as pending', [now()->addDays(7)])
+            ->first();
+
         $stats = [
-            'total' => AnalyticsReportSchedule::count(),
-            'active' => AnalyticsReportSchedule::where('is_active', true)->count(),
-            'inactive' => AnalyticsReportSchedule::where('is_active', false)->count(),
-            'pending' => AnalyticsReportSchedule::where('is_active', true)
-                ->whereNotNull('next_run_at')
-                ->where('next_run_at', '<=', now()->addDays(7))
-                ->count(),
+            'total' => (int) $statsRaw->total,
+            'active' => (int) $statsRaw->active,
+            'inactive' => (int) $statsRaw->inactive,
+            'pending' => (int) $statsRaw->pending,
         ];
 
         return view('analytics::settings.schedules.index', compact('schedules', 'stats', 'search'));

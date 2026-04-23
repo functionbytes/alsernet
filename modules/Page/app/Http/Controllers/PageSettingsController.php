@@ -19,9 +19,11 @@ class PageSettingsController extends Controller
 
     public function edit(): View
     {
+        $this->authorize('viewAny', Page::class);
         $publishedPages = Page::query()
             ->where('status', PageStatus::Published)
             ->orderBy('title')
+            ->limit(500)
             ->get(['id', 'title', 'slug']);
 
         $activeLocales = collect();
@@ -37,6 +39,7 @@ class PageSettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $this->authorize('update', Page::class);
         $errorPageRules = [];
         foreach (self::ERROR_CODES as $code) {
             $errorPageRules["error_page_{$code}"] = ['nullable', 'integer', 'exists:pages,id'];

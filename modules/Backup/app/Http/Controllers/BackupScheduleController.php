@@ -40,7 +40,7 @@ class BackupScheduleController extends Controller
             }
         }
 
-        $schedules = $query->get();
+        $schedules = $query->paginate(50)->withQueryString();
         $searchKey = $request->get('search');
 
         $statsRow = BackupSchedule::selectRaw('
@@ -253,18 +253,15 @@ class BackupScheduleController extends Controller
             'ids.*' => 'integer',
         ]);
 
-        $schedules = BackupSchedule::whereIn('id', $request->ids)->get();
+        $ids = $request->input('ids', []);
 
-        $count = 0;
+        match ($request->action) {
+            'activate' => BackupSchedule::whereIn('id', $ids)->update(['enabled' => true]),
+            'deactivate' => BackupSchedule::whereIn('id', $ids)->update(['enabled' => false]),
+            'delete' => BackupSchedule::whereIn('id', $ids)->delete(),
+        };
 
-        foreach ($schedules as $schedule) {
-            match ($request->action) {
-                'activate' => $schedule->update(['enabled' => true]),
-                'deactivate' => $schedule->update(['enabled' => false]),
-                'delete' => $schedule->delete(),
-            };
-            $count++;
-        }
+        $count = count($ids);
 
         $messages = [
             'activate' => "{$count} programación(es) activada(s) correctamente.",

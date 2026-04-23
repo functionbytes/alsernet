@@ -136,12 +136,13 @@ class Group extends Model
      */
     protected function getNextAgentLoadBalanced($agents): User
     {
-        // Get agent with least active conversations
-        return $agents->sortBy(function ($agent) {
-            return $agent->conversations()
-                ->whereIn('status', ['open', 'pending'])
-                ->count();
-        })->first();
+        $counts = Conversation::whereIn('assignee_id', $agents->pluck('id'))
+            ->whereNull('closed_at')
+            ->selectRaw('assignee_id, COUNT(*) as count')
+            ->groupBy('assignee_id')
+            ->pluck('count', 'assignee_id');
+
+        return $agents->sortBy(fn ($agent) => $counts[$agent->id] ?? 0)->first();
     }
 
     /**

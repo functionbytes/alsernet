@@ -45,7 +45,9 @@ if (! function_exists('setting')) {
      */
     function setting($key, $default = '')
     {
-        return Setting::where('key', '=', $key)->first()->value ?? $default;
+        return Cache::remember("setting.{$key}", 300, function () use ($key, $default) {
+            return Setting::where('key', '=', $key)->value('value') ?? $default;
+        });
     }
 }
 
@@ -57,9 +59,17 @@ if (! function_exists('getLogo')) {
      */
     function getLogo()
     {
-        $setting = Setting::where('key', '=', 'page_logo')->first();
+        return Cache::remember('setting.logo_url', 300, function () {
+            $setting = Setting::where('key', '=', 'page_logo')->first();
 
-        return count($setting->getMedia('logo')) > 0 ? $setting->getfirstMedia('logo')->getfullUrl() : asset('/pages/images/logo.png');
+            if (! $setting) {
+                return asset('/pages/images/logo.png');
+            }
+
+            $media = $setting->getMedia('logo');
+
+            return count($media) > 0 ? $media->first()->getFullUrl() : asset('/pages/images/logo.png');
+        });
     }
 }
 

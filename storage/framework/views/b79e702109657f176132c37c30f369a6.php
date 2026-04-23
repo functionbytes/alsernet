@@ -17,6 +17,10 @@ echo Theme::htmlAttributes(); ?>>
     <link rel="manifest" href="<?php echo e(asset('manifest.json')); ?>">
     <meta name="theme-color" content="#b10100">
     <meta name="msapplication-TileColor" content="#b10100">
+
+    
+    <link rel="preload" as="font" href="<?php echo e(asset('themes/caixilhariablanco/webfonts/fa-solid-900.woff2')); ?>" type="font/woff2" crossorigin>
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Caixilharia Blanco">
@@ -38,12 +42,13 @@ echo Theme::htmlAttributes(); ?>>
 
     <?php echo $__env->yieldPushContent('canonical'); ?>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <?php echo BaseHelper::googleFonts('https://fonts.googleapis.com/css2?family='.urlencode(theme_option('font_text', 'Poppins')).':ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap'); ?>
 
 
     <?php echo Theme::asset()->container('default')->styles(); ?>
+
+
+    <?php echo Theme::partial('critical-css'); ?>
 
 
     <?php echo $__env->yieldPushContent('head'); ?>
@@ -71,8 +76,25 @@ $page = Theme::get('page');
 ?>
 
     <?php echo view('Seo::partials.web-vitals-beacon')->render(); ?>
+    <?php echo view('Seo::partials.gtm-head')->render(); ?>
+    <?php if ($__env->exists('analytics::partials._gtag')) {
+        echo $__env->make('analytics::partials._gtag', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render();
+    } ?>
+    <?php if ($__env->exists('analytics::partials._meta_pixel')) {
+        echo $__env->make('analytics::partials._meta_pixel', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render();
+    } ?>
+    <?php if ($__env->exists('analytics::partials._microsoft_clarity')) {
+        echo $__env->make('analytics::partials._microsoft_clarity', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render();
+    } ?>
+    <?php if ($__env->exists('analytics::partials._tiktok_pixel')) {
+        echo $__env->make('analytics::partials._tiktok_pixel', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render();
+    } ?>
+    <?php if ($__env->exists('analytics::partials._linkedin_insight')) {
+        echo $__env->make('analytics::partials._linkedin_insight', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render();
+    } ?>
 </head>
 <body <?php echo Theme::bodyAttributes(); ?> class="<?php if (BaseHelper::isRtlEnabled()) { ?> rtl <?php } ?>  <?php if (Theme::get('bodyClass')) { ?> <?php echo e(Theme::get('bodyClass')); ?> <?php } ?>">
+<?php echo view('Seo::partials.gtm-body')->render(); ?>
 <?php echo apply_filters(THEME_FRONT_BODY, null); ?>
 
 <div id="alert-container"></div>
@@ -84,7 +106,7 @@ $page = Theme::get('page');
 <div class="topbar">
     <div class="container">
         <?php
-        $activeLang = $currentPageLocale ?? app()->getLocale();
+            $activeLang = $currentPageLocale ?? app()->getLocale();
 $hasLangLinks = collect($pageLangLinks ?? [])
     ->filter(fn ($info, $lang) => $lang !== $activeLang && ! empty($info['url']) && $info['published'])
     ->isNotEmpty();
@@ -99,7 +121,7 @@ $hasLangLinks = collect($pageLangLinks ?? [])
                     <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (theme_option('address')) { ?>
                         <li>
                             <a href="#">
-                                <img src="<?php echo e(asset('themes/caixilhariablanco/images/icon-location.svg')); ?>" alt="Dirección" loading="lazy">
+                                <i class="fa-solid fa-location-dot"></i>
                                 <?php echo e(theme_option('address')); ?>
 
                             </a>
@@ -108,7 +130,7 @@ $hasLangLinks = collect($pageLangLinks ?? [])
                     <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (theme_option('email')) { ?>
                         <li>
                             <a href="mailto:<?php echo e(theme_option('email')); ?>">
-                                <img src="<?php echo e(asset('themes/caixilhariablanco/images/icon-mail.svg')); ?>" alt="Correo electrónico" loading="lazy">
+                                <i class="fa-solid fa-envelope"></i>
                                 <?php echo e(theme_option('email')); ?>
 
                             </a>
@@ -124,7 +146,7 @@ $hasLangLinks = collect($pageLangLinks ?? [])
                         <ul>
                             <li>
                                 <a href="<?php echo e(theme_option('phone') ? 'tel:'.theme_option('phone') : '#'); ?>">
-                                    <img src="<?php echo e(asset('themes/caixilhariablanco/images/icon-clock.svg')); ?>" alt="Horario de atención" loading="lazy">
+                                    <i class="fa-solid fa-clock"></i>
                                     <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (theme_option('opening_hours')) { ?>
                                         <?php echo e(theme_option('opening_hours')); ?>
 
@@ -154,7 +176,7 @@ $hasLangLinks = collect($pageLangLinks ?? [])
             <div class="container">
                 <!-- Logo Start -->
                 <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (theme_option('logo')) { ?>
-                    <a class="navbar-brand" href="<?php echo e(BaseHelper::getHomepageUrl()); ?>"><img src="<?php echo e(RvMedia::getImageUrl(theme_option('logo'))); ?>" alt="<?php echo e(theme_option('site_title')); ?>"></a>
+                    <a class="navbar-brand" href="<?php echo e(BaseHelper::getHomepageUrl()); ?>"><img src="<?php echo e(RvMedia::getImageUrl(theme_option('logo'))); ?>" alt="<?php echo e(theme_option('site_title')); ?>" fetchpriority="high" width="242" height="76"></a>
                 <?php } ?><?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if ENDBLOCK]><![endif]--><?php } ?>
                 <!-- Logo End -->
 
@@ -162,8 +184,8 @@ $hasLangLinks = collect($pageLangLinks ?? [])
                 <div class="collapse navbar-collapse main-menu">
 
                             <?php echo Menu::renderMenuLocation('main-menu', [
-                                'view' => 'main-menu',
-                            ]); ?>
+                        'view' => 'main-menu',
+                    ]); ?>
 
 
                             <?php if (ExtendBlade::isRenderingLivewireComponent()) { ?><!--[if BLOCK]><![endif]--><?php } ?><?php if (($socialLinks = theme_option('social_links')) && $socialLinks = json_decode($socialLinks, true)) { ?>

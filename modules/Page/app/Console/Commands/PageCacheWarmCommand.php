@@ -16,17 +16,19 @@ class PageCacheWarmCommand extends Command
     {
         if (! PageCacheService::isEnabled()) {
             $this->error('Page cache is not enabled.');
+
             return self::FAILURE;
         }
 
         if ($this->option('all')) {
-            $pages = Page::published()->get();
             $count = 0;
 
-            foreach ($pages as $page) {
-                PageCacheService::warm($page);
-                $count++;
-            }
+            Page::published()->chunk(100, function ($pages) use (&$count) {
+                foreach ($pages as $page) {
+                    PageCacheService::warm($page);
+                    $count++;
+                }
+            });
 
             $this->info("Warmed cache for {$count} pages.");
         } else {

@@ -148,11 +148,12 @@ Route::middleware(['auth'])->prefix('panel')->group(function () {
     Route::get('pages/{page}/analytics/view', [PageController::class, 'analytics'])->name('pages.analytics.view');
 });
 
-Route::get('/preview/{slug}/{token}', [PreviewController::class, 'show'])->name('page.preview')->where('slug', '[\p{L}0-9\-\/]+')->where('token', '[a-zA-Z0-9]{64}');
+Route::get('/preview/{slug}/{token}', [PreviewController::class, 'show'])->name('page.preview')->where('slug', '[\p{L}0-9\-\/]+')->where('token', '[a-zA-Z0-9]{64}')->middleware('throttle:30,1');
 
 // Homepage
 Route::get('/', [PublicController::class, 'showHomepage'])->name('page.home');
 
 // Catchall route for pages - must be last
 Route::get('/{path}', [PublicController::class, 'show'])->name('page.show')
-    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|templates|reply-templates|blog|helpdesk|forms|mailrelay)([\p{L}0-9\-\/]+)$');
+    ->where('path', '^(?!panel|dashboard|login|logout|register|password|settings|manager|setting|api|up|broadcasting|pages|preview|pqrsf|attentions|media|templates|reply-templates|blog|helpdesk|forms|mailrelay)([\p{L}0-9\-\/]+)$')
+    ->middleware('throttle:public-pages');

@@ -2,6 +2,7 @@
 
 namespace Modules\Reviews\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class ReviewAiSetting extends Model
@@ -22,10 +23,33 @@ class ReviewAiSetting extends Model
     protected function casts(): array
     {
         return [
-            'api_key' => 'encrypted',
             'is_enabled' => 'boolean',
             'max_tokens' => 'integer',
         ];
+    }
+
+    protected function apiKey(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if (blank($value)) {
+                    return null;
+                }
+
+                try {
+                    return decrypt($value);
+                } catch (\Exception) {
+                    return null;
+                }
+            },
+            set: function (?string $value): ?string {
+                if (blank($value)) {
+                    return null;
+                }
+
+                return encrypt($value);
+            }
+        );
     }
 
     public static function getInstance(): ?static

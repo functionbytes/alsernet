@@ -31,11 +31,18 @@ class SeoAuditHistoryController extends Controller
             ->paginate(25)
             ->withQueryString();
 
+        $row = SeoAuditLog::query()->selectRaw('
+            COUNT(*) as total_audits,
+            AVG(score) as avg_score,
+            SUM(CASE WHEN grade = ? THEN 1 ELSE 0 END) as grade_a,
+            SUM(CASE WHEN grade = ? THEN 1 ELSE 0 END) as grade_f
+        ', ['A', 'F'])->first();
+
         $stats = [
-            'total_audits' => SeoAuditLog::count(),
-            'avg_score' => round(SeoAuditLog::avg('score') ?? 0, 1),
-            'grade_a' => SeoAuditLog::where('grade', 'A')->count(),
-            'grade_f' => SeoAuditLog::where('grade', 'F')->count(),
+            'total_audits' => (int) $row->total_audits,
+            'avg_score' => round($row->avg_score ?? 0, 1),
+            'grade_a' => (int) $row->grade_a,
+            'grade_f' => (int) $row->grade_f,
         ];
 
         return view('Seo::settings.audit.history', compact('logs', 'stats'));

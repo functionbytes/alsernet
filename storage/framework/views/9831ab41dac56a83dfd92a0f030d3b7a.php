@@ -2,7 +2,7 @@
 
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 
-$btnClass = 'btn btn-'.($form->button_variant ?? 'primary');
+    $btnClass = 'btn btn-'.($form->button_variant ?? 'primary');
 $btnSize = match ($form->button_size ?? 'md') {
     'sm' => 'btn-sm', 'lg' => 'btn-lg', default => ''
 };

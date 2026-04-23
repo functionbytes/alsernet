@@ -21,6 +21,7 @@ class DeviceController extends Controller
         $devices = TrustedDevice::query()
             ->where('user_id', $request->user()->id)
             ->orderByDesc('last_seen_at')
+            ->limit(200)
             ->get()
             ->map(fn (TrustedDevice $d) => [
                 'id' => $d->id,

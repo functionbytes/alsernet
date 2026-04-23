@@ -3,8 +3,9 @@
 namespace Modules\Forms\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Modules\Forms\Models\Form;
+use Modules\Forms\Models\FormAbandonTracking;
+use Modules\Forms\Models\FormSubmission;
 use Modules\Page\Models\Page;
 
 class FormAnalyticsService
@@ -21,7 +22,7 @@ class FormAnalyticsService
      */
     public function overview(Form $form, int $daysBack = 30): array
     {
-        $submissionsByDay = DB::table('form_submissions')
+        $submissionsByDay = FormSubmission::query()
             ->where('form_id', $form->id)
             ->where('created_at', '>=', now()->subDays($daysBack))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
@@ -29,13 +30,13 @@ class FormAnalyticsService
             ->orderBy('date')
             ->get();
 
-        $submissionsByStatus = DB::table('form_submissions')
+        $submissionsByStatus = FormSubmission::query()
             ->where('form_id', $form->id)
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get();
 
-        $submissionsByHour = DB::table('form_submissions')
+        $submissionsByHour = FormSubmission::query()
             ->where('form_id', $form->id)
             ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
             ->groupBy('hour')
@@ -43,7 +44,7 @@ class FormAnalyticsService
             ->get();
 
         $totalSubmissions = $form->submissions()->count();
-        $abandonCount = DB::table('form_abandon_tracking')
+        $abandonCount = FormAbandonTracking::query()
             ->where('form_id', $form->id)
             ->count();
 
@@ -71,9 +72,10 @@ class FormAnalyticsService
             return collect();
         }
 
-        return DB::table('form_submissions')
+        return FormSubmission::query()
             ->join('pages', 'pages.id', '=', 'form_submissions.source_page_id')
-            ->select('pages.id', 'pages.title', 'pages.slug', DB::raw('COUNT(*) as submissions_count'))
+            ->select('pages.id', 'pages.title', 'pages.slug')
+            ->selectRaw('COUNT(*) as submissions_count')
             ->where('form_submissions.form_id', $form->id)
             ->whereNotNull('form_submissions.source_page_id')
             ->groupBy('pages.id', 'pages.title', 'pages.slug')

@@ -110,12 +110,15 @@ class BulkConversationsTest extends TestCase
      */
     private function createConversation(array $overrides = []): Conversation
     {
-        return Conversation::create(array_merge([
+        $conversation = Conversation::create(array_merge([
             'subject' => 'Test conversation',
-            'status_id' => $this->openStatus->id,
             'priority' => 'normal',
             'channel' => 'web',
         ], $overrides));
+        $conversation->status_id = $this->openStatus->id;
+        $conversation->save();
+
+        return $conversation;
     }
 
     private function helpdeskConnectionAvailable(): bool

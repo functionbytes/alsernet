@@ -16,17 +16,51 @@ class AddImageDimensions extends PageSpeed
     public function apply(string $buffer): string
     {
         return preg_replace_callback(
-            '/<img(?![^>]*\bwidth=)(?![^>]*\bheight=)([^>]*\bsrc=["\']([^"\']+)["\'][^>]*)>/i',
+            '/<img\b([^>]*)>/i',
             function (array $m): string {
                 $attrs = $m[1];
-                $src = $m[2];
+                $full = $m[0];
+
+                // Already has both width and height
+                if (preg_match('/\bwidth\s*=\s*["\']?[^"\'>\s]+["\']?/i', $attrs)
+                    && preg_match('/\bheight\s*=\s*["\']?[^"\'>\s]+["\']?/i', $attrs)) {
+                    return $full;
+                }
+
+                // Extract src
+                if (! preg_match('/\bsrc\s*=\s*["\']([^"\']+)["\']/i', $attrs, $srcMatch)) {
+                    return $full;
+                }
+                $src = $srcMatch[1];
 
                 [$w, $h] = $this->resolveDimensions($src);
                 if (! $w || ! $h) {
-                    return $m[0];
+                    return $full;
                 }
 
-                return '<img width="'.$w.'" height="'.$h.'"'.$attrs.'>';
+                $hasWidth = preg_match('/\bwidth\s*=\s*["\']?([^"\'>\s]+)["\']?/i', $attrs, $wMatch);
+                $hasHeight = preg_match('/\bheight\s*=\s*["\']?([^"\'>\s]+)["\']?/i', $attrs, $hMatch);
+
+                if (! $hasWidth && ! $hasHeight) {
+                    // Insert both before src
+                    return '<img width="'.$w.'" height="'.$h.'"'.$attrs.'>';
+                }
+
+                if ($hasWidth && ! $hasHeight) {
+                    $width = (int) $wMatch[1];
+                    $computedHeight = (int) round($width * ($h / $w));
+
+                    return str_replace($wMatch[0], $wMatch[0].' height="'.$computedHeight.'"', $full);
+                }
+
+                if (! $hasWidth && $hasHeight) {
+                    $height = (int) $hMatch[1];
+                    $computedWidth = (int) round($height * ($w / $h));
+
+                    return str_replace($hMatch[0], 'width="'.$computedWidth.'" '.$hMatch[0], $full);
+                }
+
+                return $full;
             },
             $buffer
         ) ?? $buffer;
@@ -42,6 +76,11 @@ class AddImageDimensions extends PageSpeed
             if (! $path || ! is_file($path)) {
                 return [null, null];
             }
+
+            if (str_ends_with(strtolower($path), '.svg')) {
+                return $this->resolveSvgDimensions($path);
+            }
+
             $info = @getimagesize($path);
             if (! $info) {
                 return [null, null];
@@ -51,10 +90,37 @@ class AddImageDimensions extends PageSpeed
         });
     }
 
+    /** @return array{0:int|null,1:int|null} */
+    private function resolveSvgDimensions(string $path): array
+    {
+        $svg = @file_get_contents($path);
+        if (! $svg) {
+            return [null, null];
+        }
+
+        if (preg_match('/viewBox=["\']\s*[\d\.]+\s+[\d\.]+\s+([\d\.]+)\s+([\d\.]+)\s*["\']/i', $svg, $m)) {
+            $w = (float) $m[1];
+            $h = (float) $m[2];
+            if ($w > 0 && $h > 0) {
+                return [(int) round($w), (int) round($h)];
+            }
+        }
+
+        if (preg_match('/<svg[^>]*\swidth=["\']([\d\.]+)(?:px)?["\']/i', $svg, $mW)
+            && preg_match('/<svg[^>]*\sheight=["\']([\d\.]+)(?:px)?["\']/i', $svg, $mH)) {
+            $w = (float) $mW[1];
+            $h = (float) $mH[1];
+            if ($w > 0 && $h > 0) {
+                return [(int) round($w), (int) round($h)];
+            }
+        }
+
+        return [null, null];
+    }
+
     /** Map a URL or relative path to a readable file in the public dir. */
     private function pathForUrl(string $src): ?string
     {
-        // Data URIs are skipped.
         if (str_starts_with($src, 'data:')) {
             return null;
         }
@@ -62,7 +128,6 @@ class AddImageDimensions extends PageSpeed
         $host = parse_url(config('app.url', ''), PHP_URL_HOST) ?: '';
         $parsed = parse_url($src);
 
-        // External host → skip to avoid network I/O.
         if (isset($parsed['host']) && $host && $parsed['host'] !== $host) {
             return null;
         }

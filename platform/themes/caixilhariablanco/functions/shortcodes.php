@@ -15,56 +15,60 @@ use Modules\Template\Facades\Theme;
  * Registra un shortcode cuyo template HTML está almacenado en la tabla `shortcodes`.
  * El campo `render_template` se compila con Blade::render($template, $attrs).
  */
-function add_db_shortcode(string $key): void
-{
-    if (! function_exists('add_shortcode')) {
-        return;
+if (! function_exists('add_db_shortcode')) {
+    function add_db_shortcode(string $key): void
+    {
+        if (! function_exists('add_shortcode')) {
+            return;
+        }
+
+        add_shortcode($key, $key, $key, function ($shortcode) use ($key) {
+            $row = DB::table('shortcodes')->where('key', $key)->first();
+            if (! $row || empty($row->render_template)) {
+                return '';
+            }
+            $attrs = is_object($shortcode) ? (array) $shortcode : (array) ($shortcode ?? []);
+            try {
+                $html = Blade::render($row->render_template, $attrs);
+            } catch (Throwable) {
+                $html = $row->render_template;
+            }
+
+            // Procesar shortcodes anidados en el template (ej: [form] dentro del hero)
+            return function_exists('shortcode') ? shortcode($html) : $html;
+        });
     }
-
-    add_shortcode($key, $key, $key, function ($shortcode) use ($key) {
-        $row = DB::table('shortcodes')->where('key', $key)->first();
-        if (! $row || empty($row->render_template)) {
-            return '';
-        }
-        $attrs = is_object($shortcode) ? (array) $shortcode : (array) ($shortcode ?? []);
-        try {
-            $html = Blade::render($row->render_template, $attrs);
-        } catch (Throwable) {
-            $html = $row->render_template;
-        }
-
-        // Procesar shortcodes anidados en el template (ej: [form] dentro del hero)
-        return function_exists('shortcode') ? shortcode($html) : $html;
-    });
 }
 
 /**
  * Registra un shortcode parametrizado que carga su template desde la tabla `shortcodes`
  * usando la clave compuesta: "{base}-{service}" (ej: service-content-ventanas).
  */
-function add_db_shortcode_keyed(string $shortcodeName, string $keyPrefix): void
-{
-    if (! function_exists('add_shortcode')) {
-        return;
+if (! function_exists('add_db_shortcode_keyed')) {
+    function add_db_shortcode_keyed(string $shortcodeName, string $keyPrefix): void
+    {
+        if (! function_exists('add_shortcode')) {
+            return;
+        }
+
+        add_shortcode($shortcodeName, $shortcodeName, $shortcodeName, function ($shortcode) use ($keyPrefix) {
+            $service = is_object($shortcode) ? ($shortcode->service ?? '') : ($shortcode['service'] ?? '');
+            if (! $service) {
+                return '';
+            }
+            $row = DB::table('shortcodes')->where('key', "{$keyPrefix}-{$service}")->first();
+            if (! $row || empty($row->render_template)) {
+                return '';
+            }
+            try {
+                $html = Blade::render($row->render_template, []);
+            } catch (Throwable) {
+                $html = $row->render_template;
+            }
+
+            return function_exists('shortcode') ? shortcode($html) : $html;
+        });
     }
-
-    add_shortcode($shortcodeName, $shortcodeName, $shortcodeName, function ($shortcode) use ($keyPrefix) {
-        $service = is_object($shortcode) ? ($shortcode->service ?? '') : ($shortcode['service'] ?? '');
-        if (! $service) {
-            return '';
-        }
-        $row = DB::table('shortcodes')->where('key', "{$keyPrefix}-{$service}")->first();
-        if (! $row || empty($row->render_template)) {
-            return '';
-        }
-        try {
-            $html = Blade::render($row->render_template, []);
-        } catch (Throwable) {
-            $html = $row->render_template;
-        }
-
-        return function_exists('shortcode') ? shortcode($html) : $html;
-    });
 }
 
 app()->booted(function (): void {

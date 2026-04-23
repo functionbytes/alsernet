@@ -19,17 +19,17 @@ class AuditPermissionsCommand extends Command
         $filter = $this->option('module');
         $missingOnly = $this->option('missing');
 
-        $permissions = Permission::with('roles')->orderBy('name')->get();
+        $permissions = Permission::with('roles')->orderBy('name');
 
         if ($filter) {
-            $permissions = $permissions->filter(
-                fn ($p) => str_contains(strtolower($this->moduleSegment($p->name)), strtolower($filter))
-            );
+            $permissions->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($filter).'%']);
         }
 
         if ($missingOnly) {
-            $permissions = $permissions->filter(fn ($p) => $p->roles->isEmpty());
+            $permissions->doesntHave('roles');
         }
+
+        $permissions = $permissions->get();
 
         // Group by module: first segment before the first dot
         // Handles both "Backup.backups.index" → "Backup" and "blog.post.view" → "blog"

@@ -14,7 +14,7 @@ class CookieConsentController extends Controller
 {
     public function policy(): View
     {
-        $inventory = CookieInventory::query()->active()->ordered()->get()->groupBy('category');
+        $inventory = CookieInventory::query()->active()->ordered()->limit(500)->get()->groupBy('category');
         $categories = config('Cookie.general.cookie_categories', []);
 
         return view('cookie::policy', compact('inventory', 'categories'));

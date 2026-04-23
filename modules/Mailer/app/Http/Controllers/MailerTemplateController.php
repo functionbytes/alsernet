@@ -35,8 +35,7 @@ class MailerTemplateController extends Controller
         $module = $request->input('module');
         $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId()); // Default to first language for preview
 
-        $query = MailerTemplate::distinct('key')
-            ->select('mailer_templates.*')
+        $query = MailerTemplate::query()
             ->orderByDesc('updated_at');
 
         // Búsqueda por nombre, key o descripción

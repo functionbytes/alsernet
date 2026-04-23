@@ -4,8 +4,11 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -13,8 +16,8 @@ use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\ConversationView;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
+use Modules\Helpdesk\Services\ConversationMessageService;
 use Modules\Helpdesk\Services\ConversationTagService;
-use Modules\Helpdesk\Services\OutboundMessageService;
 
 class ConversationsController extends Controller
 {
@@ -23,7 +26,7 @@ class ConversationsController extends Controller
     /**
      * Display a listing of conversations
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $this->authorize('manager.helpdesk.conversations.index');
 
@@ -69,7 +72,7 @@ class ConversationsController extends Controller
     /**
      * Show the form for creating a new conversation
      */
-    public function create(Request $request)
+    public function create(Request $request): View
     {
         $this->authorize('manager.helpdesk.conversations.create');
 
@@ -89,7 +92,7 @@ class ConversationsController extends Controller
     /**
      * Store a newly created conversation
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.create');
 
@@ -100,7 +103,13 @@ class ConversationsController extends Controller
             'status_id' => 'required|exists:helpdesk_conversation_statuses,id',
         ]);
 
-        $conversation = Conversation::create($validated);
+        $conversation = Conversation::create([
+            'customer_id' => $validated['customer_id'],
+            'subject' => $validated['subject'],
+            'priority' => $validated['priority'],
+        ]);
+        $conversation->status_id = $validated['status_id'];
+        $conversation->save();
 
         return redirect()->route('manager.helpdesk.conversations.show', $conversation)
             ->with('success', __('helpdesk::helpdesk.messages.conversation_created'));
@@ -109,7 +118,7 @@ class ConversationsController extends Controller
     /**
      * Display the specified conversation
      */
-    public function show(Conversation $conversation, Request $request)
+    public function show(Conversation $conversation, Request $request): View
     {
         $this->authorize('manager.helpdesk.conversations.show');
 
@@ -118,7 +127,7 @@ class ConversationsController extends Controller
         $statuses = ConversationStatus::orderBy('order')->get();
 
         // Get available tags for the modal
-        $availableTags = ConversationTag::active()->orderBy('firstname')->get();
+        $availableTags = ConversationTag::active()->orderBy('name')->get();
 
         // Get views for sidebar (same as index)
         $views = ConversationView::query()
@@ -179,7 +188,7 @@ class ConversationsController extends Controller
     /**
      * Show the form for editing the conversation
      */
-    public function edit(Conversation $conversation)
+    public function edit(Conversation $conversation): View
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -195,7 +204,7 @@ class ConversationsController extends Controller
     /**
      * Update the specified conversation
      */
-    public function update(Request $request, Conversation $conversation)
+    public function update(Request $request, Conversation $conversation): RedirectResponse|JsonResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -249,11 +258,13 @@ class ConversationsController extends Controller
                     }
                 }
 
-                $data = ['assignee_id' => $request->assignee_id];
                 if ($request->assignee_id) {
-                    $data['assigned_at'] = now();
+                    $conversation->assignTo($request->assignee_id);
+                } else {
+                    $conversation->assignee_id = null;
+                    $conversation->assigned_at = null;
+                    $conversation->save();
                 }
-                $conversation->update($data);
 
                 return response()->json(['success' => true, 'message' => __('helpdesk::helpdesk.messages.assignment_updated')]);
             }
@@ -270,12 +281,27 @@ class ConversationsController extends Controller
             'is_archived' => 'boolean',
         ]);
 
-        // If assigning to someone new, update assigned_at
-        if (isset($validated['assignee_id']) && $validated['assignee_id'] && $validated['assignee_id'] !== $conversation->assignee_id) {
-            $validated['assigned_at'] = now();
+        $conversation->update([
+            'subject' => $validated['subject'],
+            'priority' => $validated['priority'],
+        ]);
+
+        $conversation->status_id = $validated['status_id'];
+
+        if (isset($validated['assignee_id'])) {
+            if ($validated['assignee_id'] && $validated['assignee_id'] !== $conversation->assignee_id) {
+                $conversation->assignTo($validated['assignee_id']);
+            } elseif (! $validated['assignee_id']) {
+                $conversation->assignee_id = null;
+                $conversation->assigned_at = null;
+            }
         }
 
-        $conversation->update($validated);
+        if (isset($validated['is_archived'])) {
+            $conversation->is_archived = $validated['is_archived'];
+        }
+
+        $conversation->save();
 
         return redirect()->route('manager.helpdesk.conversations.show', $conversation)
             ->with('success', __('helpdesk::helpdesk.messages.conversation_updated'));
@@ -284,7 +310,7 @@ class ConversationsController extends Controller
     /**
      * Remove the specified conversation (soft delete)
      */
-    public function destroy(Conversation $conversation)
+    public function destroy(Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.delete');
 
@@ -297,7 +323,7 @@ class ConversationsController extends Controller
     /**
      * Restore a soft-deleted conversation
      */
-    public function restore($id)
+    public function restore($id): RedirectResponse
     {
         $conversation = Conversation::onlyTrashed()->findOrFail($id);
         $this->authorize('manager.helpdesk.conversations.delete');
@@ -311,7 +337,7 @@ class ConversationsController extends Controller
     /**
      * Permanently delete a conversation
      */
-    public function forceDelete($id)
+    public function forceDelete($id): RedirectResponse
     {
         $conversation = Conversation::withTrashed()->findOrFail($id);
         $this->authorize('manager.helpdesk.conversations.delete');
@@ -325,7 +351,7 @@ class ConversationsController extends Controller
     /**
      * Close a conversation
      */
-    public function close(Request $request, Conversation $conversation)
+    public function close(Request $request, Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -338,7 +364,7 @@ class ConversationsController extends Controller
     /**
      * Reopen a conversation
      */
-    public function reopen(Request $request, Conversation $conversation)
+    public function reopen(Request $request, Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -351,7 +377,7 @@ class ConversationsController extends Controller
     /**
      * Archive a conversation
      */
-    public function archive(Request $request, Conversation $conversation)
+    public function archive(Request $request, Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -364,7 +390,7 @@ class ConversationsController extends Controller
     /**
      * Unarchive a conversation
      */
-    public function unarchive(Request $request, Conversation $conversation)
+    public function unarchive(Request $request, Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -377,7 +403,7 @@ class ConversationsController extends Controller
     /**
      * Store a new message in a conversation
      */
-    public function storeMessage(Request $request, Conversation $conversation)
+    public function storeMessage(Request $request, Conversation $conversation): RedirectResponse
     {
         $this->authorize('manager.helpdesk.conversations.update');
 
@@ -388,58 +414,12 @@ class ConversationsController extends Controller
             'action' => 'nullable|in:send,send_and_close',
         ]);
 
-        // Handle attachments
-        $attachmentUrls = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('helpdesk/attachments', 'public');
-                $attachmentUrls[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'url' => asset('storage/'.$path),
-                    'size' => $file->getSize(),
-                    'mime' => $file->getMimeType(),
-                ];
-            }
-        }
-
-        // Create the message
-        $item = $conversation->items()->create([
-            'user_id' => auth()->id(),
-            'type' => 'message',
+        [, $successMessage] = app(ConversationMessageService::class)->store($conversation, [
             'body' => $validated['body'],
-            'html_body' => nl2br(e($validated['body'])),
             'is_internal' => $request->boolean('is_internal'),
-            'attachment_urls' => ! empty($attachmentUrls) ? $attachmentUrls : null,
+            'attachments' => $request->file('attachments', []),
+            'action' => $request->input('action'),
         ]);
-
-        // Send outbound reply via social channel if applicable
-        if (! $request->boolean('is_internal')) {
-            /** @var OutboundMessageService $outbound */
-            $outbound = app(OutboundMessageService::class);
-            $externalMessageId = $outbound->sendReply($conversation, strip_tags($validated['body']));
-
-            if ($externalMessageId) {
-                $item->update(['metadata' => array_merge($item->metadata ?? [], [
-                    'outbound_message_id' => $externalMessageId,
-                    'sent_via' => $conversation->channel,
-                ])]);
-            }
-        }
-
-        // Update conversation timestamps in a single query
-        $data = ['last_message_at' => now()];
-        if (! $conversation->first_response_at) {
-            $data['first_response_at'] = now();
-        }
-        $conversation->update($data);
-
-        // Close conversation if requested
-        if ($request->input('action') === 'send_and_close') {
-            $conversation->close();
-            $successMessage = __('helpdesk::helpdesk.messages.conversation_message_sent_and_closed');
-        } else {
-            $successMessage = __('helpdesk::helpdesk.messages.conversation_message_sent');
-        }
 
         return redirect()->route('manager.helpdesk.conversations.show', $conversation)
             ->with('success', $successMessage);

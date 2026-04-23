@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Modules\Cache\Http\Requests\Settings\CacheSettingsRequest;
@@ -51,7 +52,7 @@ class CacheSettingsController extends Controller
     public function redisStats(): JsonResponse
     {
         try {
-            $info = Redis::connection()->info();
+            $info = Cache::remember('redis.stats', 5, fn () => Redis::connection()->info());
 
             $hits = (int) ($info['keyspace_hits'] ?? 0);
             $misses = (int) ($info['keyspace_misses'] ?? 0);
@@ -107,16 +108,18 @@ class CacheSettingsController extends Controller
             $checkboxes[] = 'pages_enabled';
         }
 
-        foreach ($checkboxes as $field) {
-            Setting::set(self::PREFIX.$field, $request->has($field) ? '1' : '0');
-        }
+        DB::transaction(function () use ($request, $checkboxes): void {
+            foreach ($checkboxes as $field) {
+                Setting::set(self::PREFIX.$field, $request->has($field) ? '1' : '0');
+            }
 
-        Setting::set(self::PREFIX.'sitemap_ttl', $request->validated()['sitemap_ttl']);
+            Setting::set(self::PREFIX.'sitemap_ttl', $request->validated()['sitemap_ttl']);
 
-        // Only save pages_ttl if the Page module is active
-        if (ModuleStatusHelper::isModuleEnabled('Page') && $request->has('pages_ttl')) {
-            Setting::set(self::PREFIX.'pages_ttl', $request->validated()['pages_ttl']);
-        }
+            // Only save pages_ttl if the Page module is active
+            if (ModuleStatusHelper::isModuleEnabled('Page') && $request->has('pages_ttl')) {
+                Setting::set(self::PREFIX.'pages_ttl', $request->validated()['pages_ttl']);
+            }
+        });
 
         Setting::clearPrefixCache(self::PREFIX);
 

@@ -74,6 +74,10 @@ class FormsServiceProvider extends ServiceProvider
                 Limit::perHour($perFormLimit)->by($request->ip()),
             ];
         });
+
+        RateLimiter::for('forms.public', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
     }
 
     /**

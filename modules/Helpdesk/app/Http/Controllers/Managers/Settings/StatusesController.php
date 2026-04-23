@@ -28,11 +28,18 @@ class StatusesController extends Controller
         $statuses = $query->ordered()->paginate(20);
 
         // Calculate statistics
+        $row = ConversationStatus::query()->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inactive,
+            SUM(CASE WHEN is_system = 1 THEN 1 ELSE 0 END) as system
+        ')->first();
+
         $stats = [
-            'total' => ConversationStatus::count(),
-            'active' => ConversationStatus::where('active', true)->count(),
-            'inactive' => ConversationStatus::where('active', false)->count(),
-            'system' => ConversationStatus::where('is_system', true)->count(),
+            'total' => (int) $row->total,
+            'active' => (int) $row->active,
+            'inactive' => (int) $row->inactive,
+            'system' => (int) $row->system,
         ];
 
         return view('theme.views.backups.helpdesk.statuses.index', [

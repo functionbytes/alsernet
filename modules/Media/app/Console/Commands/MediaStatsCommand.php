@@ -3,7 +3,6 @@
 namespace Modules\Media\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Modules\Media\Models\MediaFile;
 
 class MediaStatsCommand extends Command
@@ -42,7 +41,7 @@ class MediaStatsCommand extends Command
             $byType->map(fn ($r) => [$r->type, $r->count, $this->formatBytes((int) $r->total_size)])->all()
         );
 
-        $topUsers = DB::table('media_files')
+        $topUsers = MediaFile::query()
             ->selectRaw('user_id, count(*) as count, sum(size) as total_size')
             ->groupBy('user_id')
             ->orderByDesc('total_size')

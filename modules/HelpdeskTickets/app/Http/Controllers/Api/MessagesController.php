@@ -29,6 +29,8 @@ class MessagesController extends Controller
 
     public function store(StoreMessageApiRequest $request, string $ticketNumber): JsonResponse
     {
+        $this->authorize('helpdesk.tickets.update');
+
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
         $allowedTags = '<p><br><strong><em><b><i><u><ul><ol><li><a><blockquote><pre><code><h1><h2><h3><h4><h5><h6><table><thead><tbody><tr><th><td><span><div>';

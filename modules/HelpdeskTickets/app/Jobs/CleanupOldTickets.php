@@ -58,7 +58,7 @@ class CleanupOldTickets implements ShouldQueue
                 ->where('status', 'closed')
                 ->where('closed_at', '<', $cutoffDate)
                 ->whereNull('deleted_at')
-                ->get();
+                ->cursor();
 
             $archivedCount = 0;
 

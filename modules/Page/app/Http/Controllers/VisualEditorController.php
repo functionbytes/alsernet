@@ -25,6 +25,7 @@ class VisualEditorController extends Controller
     public function __construct(
         private readonly TemplateManager $templateManager,
         private readonly PageAutoSaveService $autoSaveService,
+        private readonly PageService $pageService,
     ) {}
 
     /**
@@ -47,7 +48,8 @@ class VisualEditorController extends Controller
         $shortcodes = [];
         try {
             $shortcodes = app('shortcode')->getRegistered();
-        } catch (\Throwable) {
+        } catch (\Exception $e) {
+            Log::warning('Visual editor: failed to load shortcodes', ['error' => $e->getMessage()]);
         }
 
         if ($shortcodes) {
@@ -232,6 +234,9 @@ class VisualEditorController extends Controller
 
         $locale = $data['locale'];
         $content = $data['content'] ?? null;
+        if ($content !== null) {
+            $content = $this->pageService->sanitizeVisualEditorContent($content);
+        }
 
         // Idempotency (W): prevent duplicate versions from double-clicks on
         // the Save button. Atomically check-and-set a per-user-per-page lock

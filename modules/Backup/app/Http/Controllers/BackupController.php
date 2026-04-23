@@ -383,7 +383,7 @@ class BackupController extends Controller
             return $b['timestamp'] <=> $a['timestamp'];
         });
 
-        return $backups;
+        return array_slice($backups, 0, 500);
     }
 
     /**

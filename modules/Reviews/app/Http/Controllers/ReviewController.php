@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -47,16 +46,18 @@ class ReviewController extends Controller
 
     public function index(Request $request): View
     {
-        $row = DB::table('reviews')->selectRaw('
-            COUNT(*) as total,
-            COALESCE(SUM(CASE star_rating WHEN \'FIVE\' THEN 5.0 WHEN \'FOUR\' THEN 4.0 WHEN \'THREE\' THEN 3.0 WHEN \'TWO\' THEN 2.0 WHEN \'ONE\' THEN 1.0 ELSE 0 END) / NULLIF(COUNT(*), 0), 0) as avg_rating,
-            SUM(CASE WHEN google_reply_text IS NULL THEN 1 ELSE 0 END) as unanswered,
-            SUM(CASE WHEN EXISTS (
-                SELECT 1 FROM review_replies
-                WHERE review_replies.review_id = reviews.id
-                AND review_replies.created_at >= CURDATE() AND review_replies.created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
-            ) THEN 1 ELSE 0 END) as replied_today
-        ')->first();
+        $row = Review::query()
+            ->selectRaw('
+                COUNT(*) as total,
+                COALESCE(SUM(CASE star_rating WHEN \'FIVE\' THEN 5.0 WHEN \'FOUR\' THEN 4.0 WHEN \'THREE\' THEN 3.0 WHEN \'TWO\' THEN 2.0 WHEN \'ONE\' THEN 1.0 ELSE 0 END) / NULLIF(COUNT(*), 0), 0) as avg_rating,
+                SUM(CASE WHEN google_reply_text IS NULL THEN 1 ELSE 0 END) as unanswered,
+                SUM(CASE WHEN EXISTS (
+                    SELECT 1 FROM review_replies
+                    WHERE review_replies.review_id = reviews.id
+                    AND review_replies.created_at >= CURDATE() AND review_replies.created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                ) THEN 1 ELSE 0 END) as replied_today
+            ')
+            ->first();
 
         $stats = [
             'total' => (int) $row->total,
@@ -538,7 +539,7 @@ class ReviewController extends Controller
                 ->with(['review.location', 'createdBy', 'approvalRequestedBy'])
                 ->where('status', ReplyStatus::PENDING_APPROVAL)
                 ->latest('approval_requested_at')
-                ->get();
+                ->paginate(50);
 
             return response()->json([
                 'success' => true,
