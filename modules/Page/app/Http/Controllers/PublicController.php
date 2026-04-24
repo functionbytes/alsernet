@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Modules\Page\Enums\PageStatus;
 use Modules\Page\Http\Resources\PublicPageResource;
@@ -20,6 +21,16 @@ use Modules\Template\Services\TemplateManager;
 
 class PublicController extends Controller
 {
+    /**
+     * Cookie name used to persist the visitor's preferred locale across sessions.
+     */
+    private const LOCALE_COOKIE = 'preferred_locale';
+
+    /**
+     * Cookie lifetime in minutes (1 year).
+     */
+    private const LOCALE_COOKIE_LIFETIME = 60 * 24 * 365;
+
     public function __construct(
         private readonly TemplateManager $templateManager
     ) {}
@@ -49,6 +60,14 @@ class PublicController extends Controller
 
         $locale = app()->getLocale();
         $langLinks = $this->buildLangLinks($page, '', $locale);
+
+        // Auto-detect visitor language on first visit and redirect if a better match exists.
+        $redirect = $this->detectAndRedirectLocale($locale, $langLinks);
+        if ($redirect) {
+            return $redirect;
+        }
+
+        $this->persistLocaleCookie($locale);
 
         view()->share('pageLangLinks', $langLinks);
         view()->share('currentPageLocale', $locale);
@@ -85,6 +104,8 @@ class PublicController extends Controller
             return $redirect;
         }
 
+        $this->persistLocaleCookie($detectedLocale);
+
         view()->share('pageLangLinks', $langLinks);
         view()->share('currentPageLocale', $detectedLocale);
         view()->share('supportedLocales', PageService::getSupportedLocales());
@@ -102,8 +123,10 @@ class PublicController extends Controller
     }
 
     /**
-     * On the visitor's first page view, detect preferred language from Accept-Language
-     * and redirect to the matching translation if one exists and differs from current.
+     * On the visitor's first page view, detect preferred language and redirect to the
+     * matching translation if one exists and differs from current.
+     *
+     * Priority: cookie (persisted choice) -> Accept-Language header -> GeoIP country.
      */
     private function detectAndRedirectLocale(string $currentLocale, array $langLinks): ?RedirectResponse
     {
@@ -115,15 +138,7 @@ class PublicController extends Controller
             return null;
         }
 
-        // For external arrivals, only auto-redirect once per session.
-        if (session()->has('locale_detected')) {
-            return null;
-        }
-
-        session(['locale_detected' => true]);
-
-        $supported = PageService::getSupportedLocales();
-        $preferred = $this->parseAcceptLanguage(request()->header('Accept-Language', ''), $supported);
+        $preferred = $this->resolvePreferredLocale();
 
         if (! $preferred || $preferred === $currentLocale) {
             return null;
@@ -135,7 +150,46 @@ class PublicController extends Controller
             return null;
         }
 
+        // Persist the detected preference so the browser remembers it on the very first visit,
+        // even before the user follows the 302 to the matching translation.
+        $this->persistLocaleCookie($preferred);
+
         return redirect($target['url'], 302);
+    }
+
+    /**
+     * Resolve the visitor's preferred locale from available signals.
+     *
+     * Priority:
+     *   1. Cookie (persisted from a previous visit or explicit switcher click)
+     *   2. Accept-Language header (parsed once per session)
+     *   3. GeoIP country mapping (parsed once per session)
+     *
+     * Returns null if no signal yields a supported locale.
+     */
+    private function resolvePreferredLocale(): ?string
+    {
+        $supported = PageService::getSupportedLocales();
+
+        // 1. Cookie — highest priority, represents a persisted user choice.
+        $cookieLocale = request()->cookie(self::LOCALE_COOKIE);
+        if ($cookieLocale && in_array($cookieLocale, $supported, true)) {
+            return $cookieLocale;
+        }
+
+        // 2 & 3. Accept-Language + GeoIP — run once per session to avoid redirect loops.
+        if (session()->has('locale_detected')) {
+            return null;
+        }
+
+        session(['locale_detected' => true]);
+
+        $fromHeader = $this->parseAcceptLanguage(request()->header('Accept-Language', ''), $supported);
+        if ($fromHeader) {
+            return $fromHeader;
+        }
+
+        return $this->detectLocaleFromGeoIp($supported);
     }
 
     /**
@@ -167,6 +221,72 @@ class PublicController extends Controller
 
         return null;
     }
+
+    /**
+     * Look up the visitor's country via GeoIP and map it to a supported locale.
+     *
+     * Returns null when GeoIP lookup fails, the IP is reserved/local, or no mapping exists.
+     *
+     * @param  string[]  $supported
+     */
+    private function detectLocaleFromGeoIp(array $supported): ?string
+    {
+        if (! function_exists('geoip')) {
+            return null;
+        }
+
+        try {
+            $location = geoip(request()->ip());
+            $countryCode = strtoupper((string) ($location->iso_code ?? ''));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $countryCode) {
+            return null;
+        }
+
+        $mapped = self::COUNTRY_TO_LOCALE[$countryCode] ?? null;
+
+        return $mapped && in_array($mapped, $supported, true) ? $mapped : null;
+    }
+
+    /**
+     * Persist the visitor's current locale in a long-lived cookie so future visits
+     * bypass Accept-Language and GeoIP detection. Refreshes on every request.
+     */
+    private function persistLocaleCookie(string $locale): void
+    {
+        $supported = PageService::getSupportedLocales();
+
+        if (! in_array($locale, $supported, true)) {
+            return;
+        }
+
+        if (request()->cookie(self::LOCALE_COOKIE) === $locale) {
+            return;
+        }
+
+        Cookie::queue(self::LOCALE_COOKIE, $locale, self::LOCALE_COOKIE_LIFETIME);
+    }
+
+    /**
+     * ISO 3166-1 alpha-2 country code → preferred locale.
+     *
+     * Only primary markets are mapped; missing countries fall through to the default locale.
+     */
+    private const COUNTRY_TO_LOCALE = [
+        // Portuguese
+        'PT' => 'pt', 'BR' => 'pt', 'AO' => 'pt', 'MZ' => 'pt', 'CV' => 'pt', 'GW' => 'pt', 'ST' => 'pt', 'TL' => 'pt',
+        // Spanish
+        'ES' => 'es', 'MX' => 'es', 'AR' => 'es', 'CO' => 'es', 'CL' => 'es', 'PE' => 'es', 'VE' => 'es', 'EC' => 'es',
+        'GT' => 'es', 'CU' => 'es', 'BO' => 'es', 'DO' => 'es', 'HN' => 'es', 'PY' => 'es', 'SV' => 'es', 'NI' => 'es',
+        'CR' => 'es', 'PA' => 'es', 'UY' => 'es', 'PR' => 'es',
+        // French
+        'FR' => 'fr', 'BE' => 'fr', 'CH' => 'fr', 'LU' => 'fr', 'MC' => 'fr', 'CI' => 'fr', 'SN' => 'fr', 'CM' => 'fr',
+        // English
+        'US' => 'en', 'GB' => 'en', 'IE' => 'en', 'CA' => 'en', 'AU' => 'en', 'NZ' => 'en', 'ZA' => 'en', 'IN' => 'en',
+    ];
 
     /**
      * Return a paginated JSON listing of published pages (safe public fields only).
