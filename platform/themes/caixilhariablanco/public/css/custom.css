@@ -706,29 +706,9 @@ header.main-header .header-sticky.active{
 /***        04. Hero css	      ***/
 /************************************/
 
-/* Owl Carousel fixes */
+/* Carousel Owl Fix */
 .slider-header-carousel {
     position: relative;
-}
-
-.slider-header-carousel .owl-stage-outer {
-    position: relative;
-    overflow: hidden;
-}
-
-.slider-header-carousel .owl-stage {
-    display: flex;
-    transition: all 0.6s ease 0s !important;
-}
-
-.slider-header-carousel .owl-item {
-    flex: 0 0 100%;
-    min-height: auto;
-}
-
-.slider-header-carousel .hero1-section-area {
-    width: 100%;
-    min-height: 600px;
 }
 
 .hero{

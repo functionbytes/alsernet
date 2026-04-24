@@ -48,4 +48,23 @@
     object-fit: cover;
     display: block;
   }
+
+  /*
+   * Before Owl Carousel initializes (no owl-loaded class yet), show the first
+   * slide's content so users don't see an empty hero while JS loads.
+   */
+  .slider-header-carousel:not(.owl-loaded) .hero1-section-area:first-child .hero-heading-area span,
+  .slider-header-carousel:not(.owl-loaded) .hero1-section-area:first-child .hero-heading-area h1.main-heading,
+  .slider-header-carousel:not(.owl-loaded) .hero1-section-area:first-child .hero-heading-area p.pera,
+  .slider-header-carousel:not(.owl-loaded) .hero1-section-area:first-child .hero-heading-area .btn-area,
+  .slider-header-carousel:not(.owl-loaded) .hero1-section-area:first-child .hero-heading-area .header-bottom-images {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /*
+   * After Owl Carousel loads, only the active slide's content is visible.
+   * Non-active slide content stays hidden (opacity: 0) as set by styles.min.css.
+   * The .active class on .owl-item triggers the built-in fade-in styles.
+   */
 </style>

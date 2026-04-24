@@ -48,6 +48,49 @@ if (typeof AOS !== 'undefined') {
 //========== SELECT2 ============= //
 $('select').select2({ minimumResultsForSearch: 6 });
 
+//========== HERO SLIDER (Owl Carousel - matches reference site) ============= //
+var $heroCarousel = $('.slider-header-carousel');
+if ($heroCarousel.length > 0 && typeof $.fn.owlCarousel === 'function') {
+  $heroCarousel.owlCarousel({
+    loop: true,
+    margin: 0,
+    nav: true,
+    dots: true,
+    mouseDrag: false,
+    items: 1,
+    autoplay: true,
+    vertical: true,
+    navText: ["<i class='fa-solid fa-angle-up'></i>", "<i class='fa-solid fa-angle-down'></i>"],
+    animateOut: 'fadeOut',
+    animateIn: 'fadeIn',
+    active: true,
+    smartSpeed: 4000,
+    autoplayTimeout: 4000,
+    autoplayHoverPause: false,
+    responsiveClass: true,
+    responsive: {
+      0: { items: 1, nav: true },
+      600: { items: 1 },
+      1000: { items: 1 }
+    }
+  });
+
+  // Accessibility
+  $heroCarousel.find('.owl-nav button').each(function() {
+    var $btn = $(this);
+    if ($btn.hasClass('owl-prev')) {
+      $btn.attr('aria-label', 'Diapositiva anterior');
+    } else if ($btn.hasClass('owl-next')) {
+      $btn.attr('aria-label', 'Diapositiva siguiente');
+    }
+    $btn.removeAttr('role');
+  });
+
+  $heroCarousel.find('.owl-dot').each(function(index) {
+    $(this).attr('aria-label', 'Ir a diapositiva ' + (index + 1));
+  });
+}
+
 });
 
 //========== COUNTER UP ============= //
@@ -59,77 +102,6 @@ if (ucounter.length > 0) {
     console.error('Error while executing counterUp:', error);
   }
 }
-
-//========== HERO SLIDER ============= //
-$(document).ready(function() {
-  var carouselEl = $('.slider-header-carousel');
-  if (carouselEl.length === 0) return;
-
-  carouselEl.owlCarousel({
-    loop: true,
-    margin: 0,
-    nav: true,
-    dots: true,
-    mouseDrag: false,
-    items: 1,
-    autoplay: false,
-    vertical: false,
-    navText: ["<i class='fa-solid fa-angle-left'></i>", "<i class='fa-solid fa-angle-right'></i>"],
-    active: true,
-    smartSpeed: 1000,
-    responsiveClass: true,
-    responsive: {
-      0: { items: 1, nav: true },
-      600: { items: 1 },
-      1000: { items: 1 }
-    }
-  });
-
-  var owl = carouselEl.data('owl.carousel');
-  var autoplayInterval;
-  var totalSlides = carouselEl.find('.hero1-section-area').length / 2;
-
-  function goToSlide(slideIndex) {
-    var realSlide = (slideIndex % totalSlides) + 1;
-    owl.to(realSlide);
-  }
-
-  function nextSlide() {
-    var current = owl.current();
-    owl.next();
-  }
-
-  function startAutoplay() {
-    autoplayInterval = setInterval(nextSlide, 4000);
-  }
-
-  function stopAutoplay() {
-    clearInterval(autoplayInterval);
-  }
-
-  startAutoplay();
-  carouselEl.on('mouseenter', stopAutoplay).on('mouseleave', startAutoplay);
-  carouselEl.find('.owl-nav button').on('click', function() {
-    stopAutoplay();
-    setTimeout(startAutoplay, 100);
-  });
-
-  // Accessibility: add aria-labels to nav buttons
-  carouselEl.find('.owl-nav button').each(function() {
-    var $btn = $(this);
-    if ($btn.hasClass('owl-prev')) {
-      $btn.attr('aria-label', 'Diapositiva anterior');
-    } else if ($btn.hasClass('owl-next')) {
-      $btn.attr('aria-label', 'Diapositiva siguiente');
-    }
-    $btn.removeAttr('role');
-  });
-
-  // Accessibility: add aria-labels to dot buttons
-  carouselEl.find('.owl-dots button').each(function(index) {
-    $(this).attr('aria-label', 'Ir a diapositiva ' + (index + 1));
-  });
-});
 
 //========== PRELOADER ============= //
 $(window).on("load", function (event) {

@@ -57,7 +57,7 @@ return [
             $theme->asset()->usePath()->add('fontawesome-css', 'css/all.min.css', [], [], '3');
             $theme->asset()->usePath()->add('animate-css', 'css/animate.css', [], [], '3');
             $theme->asset()->usePath()->add('mousecursor-css', 'css/mousecursor.css', [], [], '3');
-            $theme->asset()->usePath()->add('styles-css', 'css/styles.min.css', [], [], '5');
+            $theme->asset()->usePath()->add('styles-css', 'css/styles.min.css', [], [], '6');
 
             // ===== CSS POR GRUPO =====
             // Select2 (todos los select del sitio)
@@ -92,7 +92,7 @@ return [
                 $theme->asset()->container('footer')->usePath()->add('counterup-js', 'js/jquery.counterup.min.js', [], [], '3');
                 $theme->asset()->container('footer')->usePath()->add('aos-js', 'js/plugins/aos.js', [], [], '3');
                 $theme->asset()->container('footer')->usePath()->add('owlcarousel-js', 'js/plugins/owlcarousel.min.js', [], [], '3');
-                $theme->asset()->container('footer')->usePath()->add('main-js', 'js/main-home.min.js', [], [], '3');
+                $theme->asset()->container('footer')->usePath()->add('main-js', 'js/main-home.min.js', [], [], '6');
             } else {
                 // Páginas internas: magnific-popup (galerías)
                 $theme->asset()->container('footer')->usePath()->add('magnific-js', 'js/jquery.magnific-popup.min.js', [], [], '3');

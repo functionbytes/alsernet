@@ -42,6 +42,9 @@
 
     {!! Theme::asset()->container('default')->styles() !!}
 
+    <!-- Swiper CSS for testimonials carousel -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
     {!! Theme::partial('critical-css') !!}
 
     @stack('head')

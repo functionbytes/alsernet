@@ -167,6 +167,49 @@
 
 {!! Theme::asset()->container('footer')->scripts() !!}
 
+<!-- Swiper JS for testimonials carousel -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    // Initialize Swiper for testimonials
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.querySelector('.testimonialSwiper')) {
+            const swiperConfig = {
+                slidesPerView: 1,
+                spaceBetween: 20,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                    dynamicBullets: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true,
+                breakpoints: {
+                    640: {
+                        slidesPerView: 1,
+                    },
+                    768: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                    },
+                    1024: {
+                        slidesPerView: 2,
+                        spaceBetween: 30,
+                    },
+                }
+            };
+
+            new Swiper('.testimonialSwiper', swiperConfig);
+        }
+    });
+</script>
+
 <script>
     window.trans = {
         "Views": "{{ __('Views') }}",

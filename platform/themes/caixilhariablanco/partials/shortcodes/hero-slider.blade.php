@@ -38,14 +38,6 @@
                             <div class="img1">
                                 <img src="/pages/images/all-images/header-bottom.webp?v=2" alt="" width="138" height="52" loading="lazy">
                             </div>
-                            <div class="content">
-                                <ul>
-                                    @for($i = 0; $i < 5; $i++)
-                                        <li><i class="fa-solid fa-star"></i></li>
-                                    @endfor
-                                </ul>
-                                <p><span>{{ $slide['stat'] }}</span> {{ $slide['stat_label'] ?? '' }}</p>
-                            </div>
                         </div>
                         @endif
                     </div>
