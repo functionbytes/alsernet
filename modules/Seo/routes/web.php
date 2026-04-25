@@ -100,7 +100,7 @@ Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->g
 
         // Unified SEO settings (admin-editable values, no .env required)
         Route::get('settings', [SeoSettingsController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [SeoSettingsController::class, 'update'])->name('settings.update');
+        Route::post('settings', [SeoSettingsController::class, 'update'])->name('settings.update');
         Route::get('settings/export', [SeoSettingsController::class, 'export'])->name('settings.export');
         Route::post('settings/import', [SeoSettingsController::class, 'import'])->middleware('throttle:5,60')->name('settings.import');
 

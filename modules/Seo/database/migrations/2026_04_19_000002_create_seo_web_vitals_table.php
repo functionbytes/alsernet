@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('url_path', 500)->nullable()->index();
             $table->string('metric', 16)->comment('LCP, INP, CLS, FCP, TTFB');
             $table->decimal('value', 12, 4)->comment('ms (LCP/INP/FCP/TTFB) o score (CLS)');
-            $table->string('rating', 16)->nullable()->comment('good | needs-improvement | poor');
+            $table->string('rating', 32)->nullable()->comment('good | needs-improvement | poor');
             $table->string('device', 16)->nullable();
             $table->string('connection', 16)->nullable();
             $table->string('navigation_type', 32)->nullable();

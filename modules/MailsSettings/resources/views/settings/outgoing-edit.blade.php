@@ -13,9 +13,8 @@
         {{-- Formulario --}}
         <div class="col-lg-8">
             <div class="card">
-                <form id="formEmail" method="POST" action="{{ route('settings.email.update') }}">
+                <form id="formEmail" method="POST" action="{{ route('settings.outgoing-email.update') }}">
                     @csrf
-                    @method('PUT')
 
                     <div class="card-header border-bottom p-3">
                         <h5 class="mb-0 fw-bold">Configuración SMTP</h5>
@@ -102,7 +101,7 @@
                         <button type="submit" class="btn btn-primary w-100 mb-1">
                             Guardar configuración
                         </button>
-                        <a href="{{ route('settings.email.index') }}" class="btn btn-light w-100">
+                        <a href="{{ route('settings.outgoing-email.index') }}" class="btn btn-light w-100">
                             Cancelar
                         </a>
                     </div>

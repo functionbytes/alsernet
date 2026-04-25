@@ -20,6 +20,7 @@ use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Models\Form;
 use Modules\Forms\Models\FormCategory;
 use Modules\Forms\Models\FormFieldTypeSetting;
+use Modules\Forms\Models\FormSubmission;
 use Modules\Forms\Services\FormAnalyticsService;
 use Modules\Forms\Services\FormService;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
