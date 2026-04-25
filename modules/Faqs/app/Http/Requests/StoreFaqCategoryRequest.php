@@ -16,8 +16,10 @@ class StoreFaqCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'translations' => ['required', 'array'],
+            'translations.*.locale' => ['required', 'string', 'max:10'],
+            'translations.*.name' => ['required', 'string', 'max:120'],
+            'translations.*.description' => ['nullable', 'string', 'max:2000'],
             'status' => ['required', 'string', Rule::in(array_map(fn ($s) => $s->value, FaqStatus::cases()))],
             'order' => ['nullable', 'integer', 'min:0'],
         ];
@@ -26,7 +28,8 @@ class StoreFaqCategoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'El nombre de la categoría es obligatorio.',
+            'translations.required' => 'Debe proporcionar al menos una traducción.',
+            'translations.*.name.required' => 'El nombre es obligatorio para cada idioma.',
         ];
     }
 }

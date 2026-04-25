@@ -11,6 +11,7 @@ use Modules\Faqs\Http\Requests\StoreFaqRequest;
 use Modules\Faqs\Http\Requests\UpdateFaqRequest;
 use Modules\Faqs\Models\Faq;
 use Modules\Faqs\Models\FaqCategory;
+use Modules\Locales\Models\Locale;
 
 class FaqController extends Controller
 {
@@ -54,8 +55,9 @@ class FaqController extends Controller
         $this->authorize('faqs.create');
 
         return view('faqs::admin.faqs.create', [
-            'categories' => FaqCategory::query()->orderBy('name')->get(),
+            'categories' => FaqCategory::query()->with('translations')->orderBy('name')->get(),
             'statuses' => FaqStatus::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Nueva pregunta',
             'breadcrumb' => 'FAQs',
         ]);
@@ -63,7 +65,18 @@ class FaqController extends Controller
 
     public function store(StoreFaqRequest $request): RedirectResponse
     {
-        Faq::query()->create($request->validated());
+        $data = $request->validated();
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['question'] = $defaultTranslation['question'];
+        $data['answer'] = $defaultTranslation['answer'];
+
+        $faq = Faq::query()->create($data);
+        $this->syncTranslations($faq, $translations);
 
         return redirect()->route('faqs.index')
             ->with('success', 'Pregunta creada correctamente.');
@@ -74,9 +87,10 @@ class FaqController extends Controller
         $this->authorize('faqs.update');
 
         return view('faqs::admin.faqs.edit', [
-            'faq' => $faq,
-            'categories' => FaqCategory::query()->orderBy('name')->get(),
+            'faq' => $faq->load('translations'),
+            'categories' => FaqCategory::query()->with('translations')->orderBy('name')->get(),
             'statuses' => FaqStatus::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Editar pregunta',
             'breadcrumb' => 'FAQs',
         ]);
@@ -84,7 +98,18 @@ class FaqController extends Controller
 
     public function update(UpdateFaqRequest $request, Faq $faq): RedirectResponse
     {
-        $faq->update($request->validated());
+        $data = $request->validated();
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['question'] = $defaultTranslation['question'];
+        $data['answer'] = $defaultTranslation['answer'];
+
+        $faq->update($data);
+        $this->syncTranslations($faq, $translations);
 
         return redirect()->route('faqs.index')
             ->with('success', 'Pregunta actualizada correctamente.');
@@ -98,5 +123,42 @@ class FaqController extends Controller
 
         return redirect()->route('faqs.index')
             ->with('success', 'Pregunta eliminada correctamente.');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getActiveLocales(): array
+    {
+        try {
+            return Locale::active()->get(['code', 'name', 'native_name', 'is_default'])->toArray();
+        } catch (\Throwable) {
+            return [['code' => config('app.locale', 'es'), 'name' => 'Default', 'native_name' => 'Default', 'is_default' => true]];
+        }
+    }
+
+    private function getDefaultLocale(): string
+    {
+        try {
+            return Locale::active()->firstWhere('is_default', true)?->code ?? config('app.locale', 'es');
+        } catch (\Throwable) {
+            return config('app.locale', 'es');
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $translations
+     */
+    private function syncTranslations(Faq $faq, array $translations): void
+    {
+        foreach ($translations as $translation) {
+            $faq->translations()->updateOrCreate(
+                ['locale' => $translation['locale']],
+                [
+                    'question' => $translation['question'],
+                    'answer' => $translation['answer'],
+                ]
+            );
+        }
     }
 }

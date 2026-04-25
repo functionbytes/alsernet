@@ -58,6 +58,29 @@ class Ads extends Model
         return $query->where('location', $location);
     }
 
+    public function translations(): HasMany
+    {
+        return $this->hasMany(AdsTranslation::class, 'ad_id');
+    }
+
+    /**
+     * Get a translated field value with fallback to the base field.
+     */
+    public function trans(string $field, ?string $locale = null): mixed
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        $translation = $this->relationLoaded('translations')
+            ? $this->translations->firstWhere('locale', $locale)
+            : $this->translations()->where('locale', $locale)->first();
+
+        if ($translation && filled($translation->$field)) {
+            return $translation->$field;
+        }
+
+        return $this->$field ?? null;
+    }
+
     public function clicks(): HasMany
     {
         return $this->hasMany(AdsClick::class, 'ads_id');

@@ -17,7 +17,9 @@ class StoreAdsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'translations' => ['required', 'array'],
+            'translations.*.locale' => ['required', 'string', 'max:10'],
+            'translations.*.name' => ['required', 'string', 'max:255'],
             'key' => ['required', 'string', 'max:120', 'unique:ads,key'],
             'status' => ['required', 'string', Rule::in(array_map(fn ($s) => $s->value, AdsStatus::cases()))],
             'ads_type' => ['required', 'string', Rule::in(array_map(fn ($t) => $t->value, AdsType::cases()))],
@@ -36,7 +38,8 @@ class StoreAdsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'El nombre del anuncio es obligatorio.',
+            'translations.required' => 'Debe proporcionar al menos una traducción.',
+            'translations.*.name.required' => 'El nombre es obligatorio para cada idioma.',
             'key.required' => 'La clave única es obligatoria.',
             'key.unique' => 'Esta clave ya está en uso.',
             'url.url' => 'La URL debe ser válida.',

@@ -44,7 +44,9 @@ class AdsAdminTest extends TestCase
     public function test_store_creates_ad(): void
     {
         $data = [
-            'name' => 'Test Ad',
+            'translations' => [
+                ['locale' => 'es', 'name' => 'Test Ad'],
+            ],
             'key' => 'test-ad',
             'status' => AdsStatus::PUBLISHED->value,
             'url' => 'https://example.com',
@@ -54,6 +56,7 @@ class AdsAdminTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('ads', ['key' => 'test-ad', 'name' => 'Test Ad']);
+        $this->assertDatabaseHas('ad_translations', ['locale' => 'es', 'name' => 'Test Ad']);
     }
 
     public function test_edit_route_returns_ok(): void
@@ -70,13 +73,16 @@ class AdsAdminTest extends TestCase
         $ad = Ads::factory()->create(['name' => 'Old Name']);
 
         $response = $this->actingAs($this->admin)->put(route('ads.update', $ad), [
-            'name' => 'New Name',
+            'translations' => [
+                ['locale' => 'es', 'name' => 'New Name'],
+            ],
             'key' => $ad->key,
             'status' => $ad->status->value,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('ads', ['id' => $ad->id, 'name' => 'New Name']);
+        $this->assertDatabaseHas('ad_translations', ['ad_id' => $ad->id, 'locale' => 'es', 'name' => 'New Name']);
     }
 
     public function test_destroy_deletes_ad(): void

@@ -18,11 +18,31 @@
 
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-8">
+                    <div class="col-12">
                         <label class="form-label fw-semibold">Pregunta <span class="text-danger">*</span></label>
-                        <input type="text" name="question" class="form-control @error('question') is-invalid @enderror"
-                               value="{{ old('question', $faq->question) }}" required>
-                        @error('question')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <ul class="nav nav-tabs" id="questionLangTabs" role="tablist">
+                            @foreach($locales as $locale)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ $locale['is_default'] ? 'active' : '' }}" id="q-tab-{{ $locale['code'] }}"
+                                        data-bs-toggle="tab" data-bs-target="#q-pane-{{ $locale['code'] }}"
+                                        type="button" role="tab">{{ $locale['native_name'] }}</button>
+                            </li>
+                            @endforeach
+                        </ul>
+                        <div class="tab-content pt-2" id="questionLangTabContent">
+                            @foreach($locales as $locale)
+                            @php
+                                $translation = $faq->translations->firstWhere('locale', $locale['code']);
+                            @endphp
+                            <div class="tab-pane fade {{ $locale['is_default'] ? 'show active' : '' }}" id="q-pane-{{ $locale['code'] }}" role="tabpanel">
+                                <input type="text" name="translations[{{ $loop->index }}][question]"
+                                       class="form-control @error('translations.*.question') is-invalid @enderror"
+                                       value="{{ old('translations.'.$loop->index.'.question', $translation?->question ?? $faq->question) }}" required>
+                                <input type="hidden" name="translations[{{ $loop->index }}][locale]" value="{{ $locale['code'] }}">
+                                @error('translations.*.question')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="col-md-4">
@@ -40,8 +60,27 @@
 
                     <div class="col-12">
                         <label class="form-label fw-semibold">Respuesta <span class="text-danger">*</span></label>
-                        <textarea name="answer" rows="6" class="form-control @error('answer') is-invalid @enderror" required>{{ old('answer', $faq->answer) }}</textarea>
-                        @error('answer')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <ul class="nav nav-tabs" id="answerLangTabs" role="tablist">
+                            @foreach($locales as $locale)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ $locale['is_default'] ? 'active' : '' }}" id="a-tab-{{ $locale['code'] }}"
+                                        data-bs-toggle="tab" data-bs-target="#a-pane-{{ $locale['code'] }}"
+                                        type="button" role="tab">{{ $locale['native_name'] }}</button>
+                            </li>
+                            @endforeach
+                        </ul>
+                        <div class="tab-content pt-2" id="answerLangTabContent">
+                            @foreach($locales as $locale)
+                            @php
+                                $translation = $faq->translations->firstWhere('locale', $locale['code']);
+                            @endphp
+                            <div class="tab-pane fade {{ $locale['is_default'] ? 'show active' : '' }}" id="a-pane-{{ $locale['code'] }}" role="tabpanel">
+                                <textarea name="translations[{{ $loop->index }}][answer]" rows="6"
+                                          class="form-control @error('translations.*.answer') is-invalid @enderror" required>{{ old('translations.'.$loop->index.'.answer', $translation?->answer ?? $faq->answer) }}</textarea>
+                                @error('translations.*.answer')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="col-md-4">

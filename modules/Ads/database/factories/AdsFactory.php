@@ -27,6 +27,16 @@ class AdsFactory extends Factory
         ];
     }
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Ads $ad) {
+            $ad->translations()->create([
+                'locale' => 'es',
+                'name' => $ad->name,
+            ]);
+        });
+    }
+
     public function googleAdsense(): self
     {
         return $this->state(fn () => [

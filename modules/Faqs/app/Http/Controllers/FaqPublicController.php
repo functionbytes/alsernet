@@ -12,7 +12,7 @@ class FaqPublicController extends Controller
     {
         $categories = FaqCategory::query()
             ->published()
-            ->with('publishedFaqs')
+            ->with(['publishedFaqs.translations', 'translations'])
             ->orderBy('order')
             ->get();
 

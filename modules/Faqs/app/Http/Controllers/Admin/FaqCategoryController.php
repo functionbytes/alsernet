@@ -10,6 +10,7 @@ use Modules\Faqs\Enums\FaqStatus;
 use Modules\Faqs\Http\Requests\StoreFaqCategoryRequest;
 use Modules\Faqs\Http\Requests\UpdateFaqCategoryRequest;
 use Modules\Faqs\Models\FaqCategory;
+use Modules\Locales\Models\Locale;
 
 class FaqCategoryController extends Controller
 {
@@ -45,6 +46,7 @@ class FaqCategoryController extends Controller
 
         return view('faqs::admin.categories.create', [
             'statuses' => FaqStatus::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Nueva categoría',
             'breadcrumb' => 'FAQs',
         ]);
@@ -52,7 +54,18 @@ class FaqCategoryController extends Controller
 
     public function store(StoreFaqCategoryRequest $request): RedirectResponse
     {
-        FaqCategory::query()->create($request->validated());
+        $data = $request->validated();
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['name'] = $defaultTranslation['name'];
+        $data['description'] = $defaultTranslation['description'] ?? null;
+
+        $category = FaqCategory::query()->create($data);
+        $this->syncTranslations($category, $translations);
 
         return redirect()->route('faqs.categories.index')
             ->with('success', 'Categoría creada correctamente.');
@@ -63,8 +76,9 @@ class FaqCategoryController extends Controller
         $this->authorize('faqs.categories.update');
 
         return view('faqs::admin.categories.edit', [
-            'category' => $category,
+            'category' => $category->load('translations'),
             'statuses' => FaqStatus::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Editar categoría',
             'breadcrumb' => 'FAQs',
         ]);
@@ -72,7 +86,18 @@ class FaqCategoryController extends Controller
 
     public function update(UpdateFaqCategoryRequest $request, FaqCategory $category): RedirectResponse
     {
-        $category->update($request->validated());
+        $data = $request->validated();
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['name'] = $defaultTranslation['name'];
+        $data['description'] = $defaultTranslation['description'] ?? null;
+
+        $category->update($data);
+        $this->syncTranslations($category, $translations);
 
         return redirect()->route('faqs.categories.index')
             ->with('success', 'Categoría actualizada correctamente.');
@@ -86,5 +111,42 @@ class FaqCategoryController extends Controller
 
         return redirect()->route('faqs.categories.index')
             ->with('success', 'Categoría eliminada correctamente.');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getActiveLocales(): array
+    {
+        try {
+            return Locale::active()->get(['code', 'name', 'native_name', 'is_default'])->toArray();
+        } catch (\Throwable) {
+            return [['code' => config('app.locale', 'es'), 'name' => 'Default', 'native_name' => 'Default', 'is_default' => true]];
+        }
+    }
+
+    private function getDefaultLocale(): string
+    {
+        try {
+            return Locale::active()->firstWhere('is_default', true)?->code ?? config('app.locale', 'es');
+        } catch (\Throwable) {
+            return config('app.locale', 'es');
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $translations
+     */
+    private function syncTranslations(FaqCategory $category, array $translations): void
+    {
+        foreach ($translations as $translation) {
+            $category->translations()->updateOrCreate(
+                ['locale' => $translation['locale']],
+                [
+                    'name' => $translation['name'],
+                    'description' => $translation['description'] ?? null,
+                ]
+            );
+        }
     }
 }

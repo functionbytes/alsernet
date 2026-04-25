@@ -50,8 +50,9 @@ class FaqsAdminTest extends TestCase
     {
         $category = FaqCategory::factory()->create();
         $data = [
-            'question' => 'What is this?',
-            'answer' => 'This is a test.',
+            'translations' => [
+                ['locale' => 'es', 'question' => 'What is this?', 'answer' => 'This is a test.'],
+            ],
             'category_id' => $category->id,
             'status' => FaqStatus::PUBLISHED->value,
         ];
@@ -60,6 +61,7 @@ class FaqsAdminTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('faqs', ['question' => 'What is this?']);
+        $this->assertDatabaseHas('faq_translations', ['locale' => 'es', 'question' => 'What is this?']);
     }
 
     public function test_faq_edit_route_returns_ok(): void
@@ -76,14 +78,16 @@ class FaqsAdminTest extends TestCase
         $faq = Faq::factory()->create(['question' => 'Old Question?']);
 
         $response = $this->actingAs($this->admin)->put(route('faqs.update', $faq), [
-            'question' => 'New Question?',
-            'answer' => $faq->answer,
+            'translations' => [
+                ['locale' => 'es', 'question' => 'New Question?', 'answer' => $faq->answer],
+            ],
             'category_id' => $faq->category_id,
             'status' => $faq->status->value,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('faqs', ['id' => $faq->id, 'question' => 'New Question?']);
+        $this->assertDatabaseHas('faq_translations', ['faq_id' => $faq->id, 'locale' => 'es', 'question' => 'New Question?']);
     }
 
     public function test_faq_destroy_deletes_faq(): void
@@ -106,7 +110,9 @@ class FaqsAdminTest extends TestCase
     public function test_category_store_creates_category(): void
     {
         $data = [
-            'name' => 'General',
+            'translations' => [
+                ['locale' => 'es', 'name' => 'General', 'description' => 'Desc'],
+            ],
             'order' => 1,
             'status' => FaqStatus::PUBLISHED->value,
         ];
@@ -115,6 +121,7 @@ class FaqsAdminTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('faq_categories', ['name' => 'General']);
+        $this->assertDatabaseHas('faq_category_translations', ['locale' => 'es', 'name' => 'General']);
     }
 
     public function test_guest_cannot_access_admin_routes(): void

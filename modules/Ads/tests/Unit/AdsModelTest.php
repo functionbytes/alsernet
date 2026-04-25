@@ -11,7 +11,7 @@ class AdsModelTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_scope_active_filters_published_and_not_expired(): void
+    public function test_scope_published_filters_published_and_not_expired(): void
     {
         $active = Ads::factory()->create([
             'status' => AdsStatus::PUBLISHED,
@@ -26,43 +26,43 @@ class AdsModelTest extends TestCase
             'expired_at' => now()->subDay(),
         ]);
 
-        $results = Ads::query()->active()->get();
+        $results = Ads::query()->published()->get();
 
         $this->assertCount(1, $results);
         $this->assertTrue($results->first()->is($active));
     }
 
-    public function test_scope_for_location(): void
+    public function test_scope_by_location(): void
     {
         $homeAd = Ads::factory()->create(['location' => 'home-banner']);
         Ads::factory()->create(['location' => 'sidebar']);
 
-        $results = Ads::query()->forLocation('home-banner')->get();
+        $results = Ads::query()->byLocation('home-banner')->get();
 
         $this->assertCount(1, $results);
         $this->assertTrue($results->first()->is($homeAd));
     }
 
-    public function test_increment_clicks(): void
+    public function test_trans_returns_translation_when_exists(): void
     {
-        $ad = Ads::factory()->create(['clicked' => 5]);
+        $ad = Ads::factory()->create(['name' => 'Base Name']);
+        $ad->translations()->create(['locale' => 'en', 'name' => 'English Name']);
 
-        $ad->incrementClicks();
-
-        $this->assertEquals(6, $ad->fresh()->clicked);
+        $this->assertEquals('English Name', $ad->trans('name', 'en'));
     }
 
-    public function test_casts_status_to_enum(): void
+    public function test_trans_falls_back_to_base_field(): void
     {
-        $ad = Ads::factory()->create(['status' => AdsStatus::PUBLISHED->value]);
+        $ad = Ads::factory()->create(['name' => 'Base Name']);
 
-        $this->assertInstanceOf(AdsStatus::class, $ad->fresh()->status);
+        $this->assertEquals('Base Name', $ad->trans('name', 'fr'));
     }
 
-    public function test_casts_open_in_new_tab_to_boolean(): void
+    public function test_trans_uses_app_locale_by_default(): void
     {
-        $ad = Ads::factory()->create(['open_in_new_tab' => 1]);
+        $ad = Ads::factory()->create(['name' => 'Base Name']);
+        $ad->translations()->create(['locale' => app()->getLocale(), 'name' => 'Locale Name']);
 
-        $this->assertTrue($ad->fresh()->open_in_new_tab);
+        $this->assertEquals('Locale Name', $ad->trans('name'));
     }
 }

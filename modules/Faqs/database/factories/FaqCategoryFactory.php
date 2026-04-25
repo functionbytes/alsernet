@@ -19,4 +19,15 @@ class FaqCategoryFactory extends Factory
             'status' => FaqStatus::PUBLISHED->value,
         ];
     }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (FaqCategory $category) {
+            $category->translations()->create([
+                'locale' => 'es',
+                'name' => $category->name,
+                'description' => $category->description,
+            ]);
+        });
+    }
 }

@@ -24,7 +24,7 @@
 
     <div class="ad-container mb-3">
         @if ($ad->url)
-            <a href="{{ route('ads.click', $ad->key) }}" @if($ad->open_in_new_tab) target="_blank" rel="noopener" @endif title="{{ $ad->name }}">
+            <a href="{{ route('ads.click', $ad->key) }}" @if($ad->open_in_new_tab) target="_blank" rel="noopener" @endif title="{{ $ad->trans('name') }}">
         @endif
             <picture>
                 @if($ad->tablet_image)
@@ -33,7 +33,7 @@
                 @if($ad->mobile_image)
                     <source srcset="{{ $ad->mobileImageUrl() }}" media="(max-width: 767px)">
                 @endif
-                <img src="{{ $ad->imageUrl() }}" alt="{{ $ad->name }}" class="img-fluid rounded" style="max-width:100%;">
+                <img src="{{ $ad->imageUrl() }}" alt="{{ $ad->trans('name') }}" class="img-fluid rounded" style="max-width:100%;">
             </picture>
         @if($ad->url)
             </a>

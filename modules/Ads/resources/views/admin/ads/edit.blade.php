@@ -18,11 +18,31 @@
 
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name', $ad->name) }}" required>
-                        @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <ul class="nav nav-tabs" id="nameLangTabs" role="tablist">
+                            @foreach($locales as $locale)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ $locale['is_default'] ? 'active' : '' }}" id="name-tab-{{ $locale['code'] }}"
+                                        data-bs-toggle="tab" data-bs-target="#name-pane-{{ $locale['code'] }}"
+                                        type="button" role="tab">{{ $locale['native_name'] }}</button>
+                            </li>
+                            @endforeach
+                        </ul>
+                        <div class="tab-content pt-2" id="nameLangTabContent">
+                            @foreach($locales as $locale)
+                            @php
+                                $translation = $ad->translations->firstWhere('locale', $locale['code']);
+                            @endphp
+                            <div class="tab-pane fade {{ $locale['is_default'] ? 'show active' : '' }}" id="name-pane-{{ $locale['code'] }}" role="tabpanel">
+                                <input type="text" name="translations[{{ $loop->index }}][name]"
+                                       class="form-control @error('translations.*.name') is-invalid @enderror"
+                                       value="{{ old('translations.'.$loop->index.'.name', $translation?->name ?? $ad->name) }}" required>
+                                <input type="hidden" name="translations[{{ $loop->index }}][locale]" value="{{ $locale['code'] }}">
+                                @error('translations.*.name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="col-md-6">

@@ -21,4 +21,15 @@ class FaqFactory extends Factory
             'status' => FaqStatus::PUBLISHED->value,
         ];
     }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Faq $faq) {
+            $faq->translations()->create([
+                'locale' => 'es',
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+            ]);
+        });
+    }
 }

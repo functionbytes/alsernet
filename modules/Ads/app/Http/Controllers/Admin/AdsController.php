@@ -11,6 +11,7 @@ use Modules\Ads\Enums\AdsType;
 use Modules\Ads\Http\Requests\StoreAdsRequest;
 use Modules\Ads\Http\Requests\UpdateAdsRequest;
 use Modules\Ads\Models\Ads;
+use Modules\Locales\Models\Locale;
 
 class AdsController extends Controller
 {
@@ -51,6 +52,7 @@ class AdsController extends Controller
         return view('ads::admin.ads.create', [
             'statuses' => AdsStatus::cases(),
             'types' => AdsType::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Nuevo anuncio',
             'breadcrumb' => 'Ads',
         ]);
@@ -61,7 +63,16 @@ class AdsController extends Controller
         $data = $request->validated();
         $data['open_in_new_tab'] = $request->boolean('open_in_new_tab', false);
 
-        Ads::query()->create($data);
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['name'] = $defaultTranslation['name'];
+
+        $ad = Ads::query()->create($data);
+        $this->syncTranslations($ad, $translations);
 
         return redirect()->route('ads.index')
             ->with('success', 'Anuncio creado correctamente.');
@@ -72,9 +83,10 @@ class AdsController extends Controller
         $this->authorize('ads.update');
 
         return view('ads::admin.ads.edit', [
-            'ad' => $ad,
+            'ad' => $ad->load('translations'),
             'statuses' => AdsStatus::cases(),
             'types' => AdsType::cases(),
+            'locales' => $this->getActiveLocales(),
             'pageTitle' => 'Editar anuncio',
             'breadcrumb' => 'Ads',
         ]);
@@ -85,7 +97,16 @@ class AdsController extends Controller
         $data = $request->validated();
         $data['open_in_new_tab'] = $request->boolean('open_in_new_tab', false);
 
+        $translations = $data['translations'];
+        unset($data['translations']);
+
+        $defaultLocale = $this->getDefaultLocale();
+        $defaultTranslation = collect($translations)->firstWhere('locale', $defaultLocale)
+            ?? $translations[array_key_first($translations)];
+        $data['name'] = $defaultTranslation['name'];
+
         $ad->update($data);
+        $this->syncTranslations($ad, $translations);
 
         return redirect()->route('ads.index')
             ->with('success', 'Anuncio actualizado correctamente.');
@@ -99,5 +120,39 @@ class AdsController extends Controller
 
         return redirect()->route('ads.index')
             ->with('success', 'Anuncio eliminado correctamente.');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getActiveLocales(): array
+    {
+        try {
+            return Locale::active()->get(['code', 'name', 'native_name', 'is_default'])->toArray();
+        } catch (\Throwable) {
+            return [['code' => config('app.locale', 'es'), 'name' => 'Default', 'native_name' => 'Default', 'is_default' => true]];
+        }
+    }
+
+    private function getDefaultLocale(): string
+    {
+        try {
+            return Locale::active()->firstWhere('is_default', true)?->code ?? config('app.locale', 'es');
+        } catch (\Throwable) {
+            return config('app.locale', 'es');
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $translations
+     */
+    private function syncTranslations(Ads $ad, array $translations): void
+    {
+        foreach ($translations as $translation) {
+            $ad->translations()->updateOrCreate(
+                ['locale' => $translation['locale']],
+                ['name' => $translation['name']]
+            );
+        }
     }
 }

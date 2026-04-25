@@ -34,6 +34,29 @@ class FaqCategory extends Model
         return $query->where('status', FaqStatus::PUBLISHED);
     }
 
+    public function translations(): HasMany
+    {
+        return $this->hasMany(FaqCategoryTranslation::class, 'faq_category_id');
+    }
+
+    /**
+     * Get a translated field value with fallback to the base field.
+     */
+    public function trans(string $field, ?string $locale = null): mixed
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        $translation = $this->relationLoaded('translations')
+            ? $this->translations->firstWhere('locale', $locale)
+            : $this->translations()->where('locale', $locale)->first();
+
+        if ($translation && filled($translation->$field)) {
+            return $translation->$field;
+        }
+
+        return $this->$field ?? null;
+    }
+
     public function faqs(): HasMany
     {
         return $this->hasMany(Faq::class, 'category_id')->orderBy('order');
