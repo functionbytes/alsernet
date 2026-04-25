@@ -729,4 +729,13 @@ class ShortcodeCompiler
     {
         return array_merge($defaults, array_intersect_key($atts, $defaults));
     }
+
+    /**
+     * Stub de compatibilidad con temas Botble.
+     * No-op en el frontend; el admin usa su propio picker.
+     */
+    public function setAdminConfig(string $name, callable $callback): void
+    {
+        // No-op
+    }
 }

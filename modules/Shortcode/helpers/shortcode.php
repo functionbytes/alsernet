@@ -2,11 +2,17 @@
 
 if (! function_exists('shortcode')) {
     /**
-     * Compile shortcodes in content.
+     * Compile shortcodes in content, or return the compiler instance when called with no args.
      */
-    function shortcode(string $content): string
+    function shortcode(?string $content = null): mixed
     {
-        return app('shortcode')->compile($content);
+        $compiler = app('shortcode');
+
+        if ($content === null) {
+            return $compiler;
+        }
+
+        return $compiler->compile($content);
     }
 }
 

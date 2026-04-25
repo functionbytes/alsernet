@@ -1,0 +1,11 @@
+{
+    "name": "EcommercePayment",
+    "alias": "ecommerce-payment",
+    "description": "Módulo de pasarelas de pago para ecommerce con integración Wompi",
+    "keywords": ["payment", "wompi", "ecommerce", "pasarela", "pago"],
+    "priority": 51,
+    "providers": [
+        "Modules\\EcommercePayment\\Providers\\EcommercePaymentServiceProvider"
+    ],
+    "files": []
+}

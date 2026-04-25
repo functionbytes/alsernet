@@ -271,6 +271,8 @@ class Theme
      */
     public function styles(string $container = 'default'): string
     {
+        $this->fireEventGlobalAssets();
+
         return $this->asset->container($container)->styles();
     }
 
@@ -279,6 +281,8 @@ class Theme
      */
     public function scripts(string $container = 'footer'): string
     {
+        $this->fireEventGlobalAssets();
+
         return $this->asset->container($container)->scripts();
     }
 
@@ -310,6 +314,15 @@ class Theme
         $paths = array_map(fn ($v) => $namespace.'.'.$v, $views);
 
         $this->view->composer($paths, $callback);
+    }
+
+    /**
+     * Theme::registerRoutes() - compatibilidad con temas Botble.
+     * Ejecuta el callback directamente para registrar rutas del tema.
+     */
+    public function registerRoutes(Closure $callback): void
+    {
+        $callback();
     }
 
     /**
@@ -469,6 +482,15 @@ class Theme
     public function header(): string
     {
         return $this->styles();
+    }
+
+    /**
+     * Devuelve el HTML de scripts del tema (footer container).
+     * Compatibilidad con temas diseñados para Botble.
+     */
+    public function footer(): string
+    {
+        return $this->scripts();
     }
 
     /**

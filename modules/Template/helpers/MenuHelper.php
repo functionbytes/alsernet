@@ -8,6 +8,7 @@ use Modules\Template\Helpers\BaseHelper;
 use Modules\Template\Models\Menu;
 use Modules\Template\Services\MenuService;
 use Modules\Template\Theme\Theme;
+use Nwidart\Modules\Facades\Module;
 
 if (! function_exists('render_menu')) {
     /**
@@ -80,12 +81,12 @@ if (! function_exists('apply_filters')) {
 if (! function_exists('is_plugin_active')) {
     /**
      * Indica si un plugin/módulo está activo.
-     * 'language' está disponible en inoqualabs mediante $pageLangLinks.
      */
     function is_plugin_active(string $plugin): bool
     {
         return match ($plugin) {
             'language' => true,
+            'ecommerce' => Module::has('Ecommerce') && Module::find('Ecommerce')?->isEnabled(),
             default => false,
         };
     }

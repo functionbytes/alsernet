@@ -44,5 +44,7 @@
     "HelpdeskAgents": true,
     "HelpdeskCampaigns": true,
     "Locales": true,
-    "Newsletter": true
+    "Newsletter": true,
+    "Ecommerce": true,
+    "EcommercePayment": true
 }

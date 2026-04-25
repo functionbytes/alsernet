@@ -48,6 +48,7 @@ $allProviders = [
     'Modules\User\Providers\UserServiceProvider' => 'User',
     'Modules\Webhook\Providers\WebhookServiceProvider' => 'Webhook',
     'Modules\Blog\Providers\BlogServiceProvider' => 'Blog',
+    'Modules\Ecommerce\Providers\EcommerceServiceProvider' => 'Ecommerce',
     'Modules\Newsletter\Providers\NewsletterServiceProvider' => 'Newsletter',
     'Modules\Attention\Providers\AttentionServiceProvider' => 'Attention',
     'Modules\Page\Providers\PageServiceProvider' => 'Page',

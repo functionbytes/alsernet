@@ -110,5 +110,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('helpdesk-export', function (Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
+
+        RateLimiter::for('wompi-webhook', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
     }
 }

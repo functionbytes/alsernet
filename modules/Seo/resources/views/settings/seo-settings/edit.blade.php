@@ -7,6 +7,7 @@
 
     <form method="POST" action="{{ route('setting.seo.settings.update') }}">
         @csrf
+        @method('PUT')
 
         <div class="row g-4">
             <div class="col-lg-8">
