@@ -17,10 +17,10 @@
                         <p class="small mb-0 text-muted">Componentes dinamicos que puedes insertar en cualquier contenido</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('setting.shortcode.tester') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('settings.shortcode.tester') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-vial me-1"></i> Tester visual
                         </a>
-                        <a href="{{ route('setting.shortcode.reference') }}" class="btn btn-outline-primary">
+                        <a href="{{ route('settings.shortcode.reference') }}" class="btn btn-outline-primary">
                             <i class="fas fa-book me-1"></i> Referencia completa
                         </a>
                     </div>
@@ -368,7 +368,7 @@ $(document).on('click', '.copy-btn', function() {
         if (inflight) { inflight.abort(); }
 
         inflight = $.ajax({
-            url: '{{ route("setting.shortcode.preview") }}',
+            url: '{{ route("settings.shortcode.preview") }}',
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -397,7 +397,7 @@ $(document).on('click', '#btnResetStats', function () {
     if (! confirm('¿Resetear todos los contadores de uso?')) return;
 
     $.ajax({
-        url: '{{ route("setting.shortcode.stats.reset") }}',
+        url: '{{ route("settings.shortcode.stats.reset") }}',
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),

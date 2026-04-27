@@ -609,7 +609,7 @@
                                         <dt class="text-muted fw-normal mb-1">Descripción</dt>
                                         <dd class="text-muted mb-0" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ $seoMeta->description ?: '—' }}</dd>
                                     </dl>
-                                    <a href="{{ route('setting.seo.metas.edit', $seoMeta) }}" class="btn btn-info w-100">
+                                    <a href="{{ route('settings.seo.metas.edit', $seoMeta) }}" class="btn btn-info w-100">
                                         Editar SEO
                                     </a>
                                 </div>

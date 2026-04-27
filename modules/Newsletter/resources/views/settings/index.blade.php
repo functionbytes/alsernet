@@ -111,7 +111,7 @@
                             </div>
                             <small class="text-muted d-block mt-1">
                                 Requiere configurar las claves de reCAPTCHA en
-                                <a href="{{ route('captcha.settings') }}">Configuración › Captcha</a>.
+                                <a href="{{ route('settings.captcha.edit') }}">Configuración › Captcha</a>.
                             </small>
                         </div>
 

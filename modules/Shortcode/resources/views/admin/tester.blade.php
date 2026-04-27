@@ -13,7 +13,7 @@
                         <h5 class="mb-1 fw-bold">Tester de shortcodes</h5>
                         <p class="small mb-0 text-muted">Renderiza el ejemplo de cada shortcode registrado. Útil para QA visual tras cambios de estilos.</p>
                     </div>
-                    <a href="{{ route('setting.shortcode.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ route('settings.shortcodes.index') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-arrow-left me-1"></i> Volver
                     </a>
                 </div>

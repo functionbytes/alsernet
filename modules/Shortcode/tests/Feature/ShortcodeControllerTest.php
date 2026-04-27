@@ -32,14 +32,14 @@ class ShortcodeControllerTest extends TestCase
 
     public function test_guest_cannot_access_index(): void
     {
-        $this->get(route('setting.shortcode.index'))
+        $this->get(route('settings.shortcodes.index'))
             ->assertRedirect(route('login'));
     }
 
     public function test_user_without_permission_cannot_access_index(): void
     {
         $this->actingAs($this->user)
-            ->get(route('setting.shortcode.index'))
+            ->get(route('settings.shortcodes.index'))
             ->assertForbidden();
     }
 
@@ -48,7 +48,7 @@ class ShortcodeControllerTest extends TestCase
         $this->user->givePermissionTo('shortcode.view');
 
         $this->actingAs($this->user)
-            ->get(route('setting.shortcode.index'))
+            ->get(route('settings.shortcodes.index'))
             ->assertOk()
             ->assertViewIs('shortcode::admin.index');
     }
@@ -58,7 +58,7 @@ class ShortcodeControllerTest extends TestCase
         $this->user->givePermissionTo('shortcode.view');
 
         $this->actingAs($this->user)
-            ->get(route('setting.shortcode.reference'))
+            ->get(route('settings.shortcode.reference'))
             ->assertOk()
             ->assertViewIs('shortcode::admin.reference');
     }

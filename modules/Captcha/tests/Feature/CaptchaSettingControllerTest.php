@@ -11,7 +11,7 @@ class CaptchaSettingControllerTest extends TestCase
 {
     public function test_guest_cannot_access_settings_page(): void
     {
-        $this->get(route('captcha.settings'))
+        $this->get(route('settings.captcha.edit'))
             ->assertRedirect(route('login'));
     }
 
@@ -20,7 +20,7 @@ class CaptchaSettingControllerTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('captcha.settings'))
+            ->get(route('settings.captcha.edit'))
             ->assertForbidden();
     }
 
@@ -29,7 +29,7 @@ class CaptchaSettingControllerTest extends TestCase
         $admin = $this->createAdmin();
 
         $this->actingAs($admin)
-            ->get(route('captcha.settings'))
+            ->get(route('settings.captcha.edit'))
             ->assertOk()
             ->assertViewIs('captcha::settings.edit');
     }

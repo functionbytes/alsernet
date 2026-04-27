@@ -19,7 +19,7 @@
                                 <i class="fas fa-cog me-1"></i> Gestionar shortcodes
                             </a>
                         @endif
-                        <a href="{{ route('setting.shortcode.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <a href="{{ route('settings.shortcodes.index') }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-arrow-left me-1"></i> Volver
                         </a>
                     </div>
