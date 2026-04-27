@@ -13,6 +13,9 @@ class EcommerceDatabaseSeeder extends Seeder
     {
         $this->call([
             EcommercePermissionsSeeder::class,
+            EcommerceAbandonedCartTemplatesSeeder::class,
+            EcommerceOrderEmailTemplatesSeeder::class,
+            EcommerceLegalPagesSeeder::class,
             EcommerceDemoSeeder::class,
         ]);
     }

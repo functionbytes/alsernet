@@ -13,7 +13,7 @@ class Seo404LogTest extends TestCase
 
     public function test_404_index_requires_auth(): void
     {
-        $this->get(route('setting.seo.404-logs.index'))
+        $this->get(route('settings.seo.404-logs.index'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -26,7 +26,7 @@ class Seo404LogTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.404-logs.index'))
+            ->get(route('settings.seo.404-logs.index'))
             ->assertForbidden();
     }
 
@@ -43,7 +43,7 @@ class Seo404LogTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.404-logs.index'))
+            ->get(route('settings.seo.404-logs.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.404-logs.index')
             ->assertSee('/test-missing-page');
@@ -54,7 +54,7 @@ class Seo404LogTest extends TestCase
         $user = $this->createUser(['Seo.redirects.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.404-logs.index'))
+            ->get(route('settings.seo.404-logs.index'))
             ->assertOk()
             ->assertViewHas(['logs', 'stats']);
     }
@@ -107,7 +107,7 @@ class Seo404LogTest extends TestCase
             'last_seen_at' => now(),
         ]);
 
-        $this->delete(route('setting.seo.404-logs.destroy', $log))
+        $this->delete(route('settings.seo.404-logs.destroy', $log))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -123,7 +123,7 @@ class Seo404LogTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->delete(route('setting.seo.404-logs.destroy', $log))
+            ->delete(route('settings.seo.404-logs.destroy', $log))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('seo_404_logs', ['id' => $log->id]);
@@ -135,7 +135,7 @@ class Seo404LogTest extends TestCase
 
     public function test_clear_requires_auth(): void
     {
-        $this->post(route('setting.seo.404-logs.clear'))
+        $this->post(route('settings.seo.404-logs.clear'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -147,7 +147,7 @@ class Seo404LogTest extends TestCase
         Seo404Log::create(['path' => '/b', 'hit_count' => 2, 'first_seen_at' => now(), 'last_seen_at' => now()]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.404-logs.clear'), ['confirm' => 'yes'])
+            ->post(route('settings.seo.404-logs.clear'), ['confirm' => 'yes'])
             ->assertRedirect();
 
         $this->assertEquals(0, Seo404Log::count());
@@ -170,7 +170,7 @@ class Seo404LogTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patchJson(route('setting.seo.404-logs.mark-resolved', $log))
+            ->patchJson(route('settings.seo.404-logs.mark-resolved', $log))
             ->assertOk()
             ->assertJson(['status' => true]);
 

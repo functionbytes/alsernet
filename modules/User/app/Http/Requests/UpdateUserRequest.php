@@ -2,13 +2,14 @@
 
 namespace Modules\User\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('edit-users');
     }
 
     /**
@@ -16,7 +17,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = optional(\App\Models\User::where('uid', $this->input('uid'))->first())->id;
+        $userId = optional(User::where('uid', $this->input('uid'))->first())->id;
 
         return [
             'firstname' => ['required', 'string', 'min:2', 'max:100'],

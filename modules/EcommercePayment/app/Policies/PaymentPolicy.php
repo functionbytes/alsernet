@@ -9,16 +9,21 @@ class PaymentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('ecommerce.payment.view');
+        return $user->hasPermissionTo('ecommerce-payment.view');
     }
 
     public function view(User $user, Payment $payment): bool
     {
-        return $user->hasPermissionTo('ecommerce.payment.view');
+        return $user->hasPermissionTo('ecommerce-payment.view');
     }
 
     public function refund(User $user, Payment $payment): bool
     {
-        return $user->hasPermissionTo('ecommerce.payment.refund');
+        return $user->hasPermissionTo('ecommerce-payment.refund');
+    }
+
+    public function confirm(User $user, Payment $payment): bool
+    {
+        return $user->hasPermissionTo('ecommerce-payment.confirm');
     }
 }

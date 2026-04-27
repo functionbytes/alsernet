@@ -14,7 +14,7 @@ class SeoTemplateTest extends TestCase
 
     public function test_template_index_requires_auth(): void
     {
-        $this->get(route('setting.seo.templates.index'))
+        $this->get(route('settings.seo.templates.index'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -27,7 +27,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.templates.index'))
+            ->get(route('settings.seo.templates.index'))
             ->assertForbidden();
     }
 
@@ -36,7 +36,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.templates.index'))
+            ->get(route('settings.seo.templates.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.templates.index')
             ->assertViewHas(['templates', 'stats']);
@@ -48,7 +48,7 @@ class SeoTemplateTest extends TestCase
 
     public function test_store_requires_auth(): void
     {
-        $this->post(route('setting.seo.templates.store'), ['name' => 'Test', 'robots' => 'index,follow'])
+        $this->post(route('settings.seo.templates.store'), ['name' => 'Test', 'robots' => 'index,follow'])
             ->assertRedirect(route('auth.login'));
     }
 
@@ -57,7 +57,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.templates.store'), ['name' => 'Test', 'robots' => 'index,follow'])
+            ->post(route('settings.seo.templates.store'), ['name' => 'Test', 'robots' => 'index,follow'])
             ->assertForbidden();
     }
 
@@ -78,8 +78,8 @@ class SeoTemplateTest extends TestCase
         ];
 
         $this->actingAs($user)
-            ->post(route('setting.seo.templates.store'), $data)
-            ->assertRedirect(route('setting.seo.templates.index'));
+            ->post(route('settings.seo.templates.store'), $data)
+            ->assertRedirect(route('settings.seo.templates.index'));
 
         $this->assertDatabaseHas('seo_templates', ['name' => 'Test Template', 'robots' => 'index,follow']);
     }
@@ -89,7 +89,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.templates.store'), [])
+            ->post(route('settings.seo.templates.store'), [])
             ->assertSessionHasErrors(['name', 'robots']);
     }
 
@@ -98,7 +98,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.templates.store'), [
+            ->post(route('settings.seo.templates.store'), [
                 'name' => 'Template',
                 'robots' => 'index,follow',
                 'og_type' => 'invalid-type',
@@ -111,7 +111,7 @@ class SeoTemplateTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.templates.store'), [
+            ->post(route('settings.seo.templates.store'), [
                 'name' => 'Template',
                 'robots' => 'index,follow',
                 'twitter_card' => 'not-valid',
@@ -127,7 +127,7 @@ class SeoTemplateTest extends TestCase
     {
         $template = SeoTemplate::create(['name' => 'Old', 'robots' => 'index,follow', 'is_active' => true, 'priority' => 0]);
 
-        $this->put(route('setting.seo.templates.update', $template), ['name' => 'New', 'robots' => 'index,follow'])
+        $this->put(route('settings.seo.templates.update', $template), ['name' => 'New', 'robots' => 'index,follow'])
             ->assertRedirect(route('auth.login'));
     }
 
@@ -143,11 +143,11 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.templates.update', $template), [
+            ->put(route('settings.seo.templates.update', $template), [
                 'name' => 'New Name',
                 'robots' => 'noindex',
             ])
-            ->assertRedirect(route('setting.seo.templates.index'));
+            ->assertRedirect(route('settings.seo.templates.index'));
 
         $this->assertDatabaseHas('seo_templates', [
             'id' => $template->id,
@@ -164,7 +164,7 @@ class SeoTemplateTest extends TestCase
     {
         $template = SeoTemplate::create(['name' => 'T', 'robots' => 'index,follow', 'is_active' => true, 'priority' => 0]);
 
-        $this->patch(route('setting.seo.templates.toggle-active', $template))
+        $this->patch(route('settings.seo.templates.toggle-active', $template))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -180,7 +180,7 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patchJson(route('setting.seo.templates.toggle-active', $template))
+            ->patchJson(route('settings.seo.templates.toggle-active', $template))
             ->assertOk()
             ->assertJson(['status' => true, 'is_active' => false]);
 
@@ -199,7 +199,7 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patchJson(route('setting.seo.templates.toggle-active', $template))
+            ->patchJson(route('settings.seo.templates.toggle-active', $template))
             ->assertOk()
             ->assertJson(['status' => true, 'is_active' => true]);
 
@@ -214,7 +214,7 @@ class SeoTemplateTest extends TestCase
     {
         $template = SeoTemplate::create(['name' => 'Del', 'robots' => 'index,follow', 'is_active' => true, 'priority' => 0]);
 
-        $this->delete(route('setting.seo.templates.destroy', $template))
+        $this->delete(route('settings.seo.templates.destroy', $template))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -230,7 +230,7 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->delete(route('setting.seo.templates.destroy', $template))
+            ->delete(route('settings.seo.templates.destroy', $template))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('seo_templates', ['id' => $template->id]);
@@ -252,7 +252,7 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.templates.bulk-apply', $template))
+            ->postJson(route('settings.seo.templates.bulk-apply', $template))
             ->assertUnprocessable()
             ->assertJson(['status' => false]);
     }
@@ -269,7 +269,7 @@ class SeoTemplateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.templates.bulk-apply', $template))
+            ->postJson(route('settings.seo.templates.bulk-apply', $template))
             ->assertOk()
             ->assertJson(['status' => true]);
     }

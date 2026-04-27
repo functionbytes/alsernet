@@ -139,11 +139,18 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Route::middleware(['web', 'auth', CheckSessionLock::class, CheckPasswordExpired::class])
-            ->prefix('panel/setting/auth')
+            ->prefix('panel/settings/auth')
             ->name('settings.auth.')
             ->group(function () use ($settingsPath) {
                 require $settingsPath;
             });
+
+        // Legacy redirects (singular → plural). TODO remove after 2026-12-31
+        Route::redirect('panel/setting/auth/{any}', 'panel/settings/auth/{any}', 301)
+            ->where('any', '.*')
+            ->middleware('web');
+        Route::redirect('panel/setting/auth', 'panel/settings/auth', 301)
+            ->middleware('web');
 
         Route::middleware(['api', AddRateLimitHeaders::class])
             ->prefix('api/auth')

@@ -17,7 +17,7 @@
                         <p class="small mb-0 text-muted">Visualiza clics, impresiones y posiciones de tus páginas en Google</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('setting.seo.search-console.import') }}" class="btn btn-primary">
+                        <a href="{{ route('settings.seo.search-console.import') }}" class="btn btn-primary">
                             <i class="fas fa-upload me-1"></i> Importar datos
                         </a>
                     </div>
@@ -78,7 +78,7 @@
 
             {{-- Search --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.analytics.index') }}">
+                <form method="GET" action="{{ route('settings.seo.analytics.index') }}">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -95,7 +95,7 @@
                                 <i class="fas fa-search"></i>
                             </button>
                             @if(request('search'))
-                                <a href="{{ route('setting.seo.analytics.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.analytics.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -164,7 +164,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.metas.edit', $page->id) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.metas.edit', $page->id) }}">
                                                             Editar meta SEO
                                                         </a>
                                                     </li>
@@ -194,7 +194,7 @@
                                 @endif
                             </p>
                             @if(!request('search'))
-                                <a href="{{ route('setting.seo.search-console.import') }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('settings.seo.search-console.import') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-upload me-1"></i> Importar datos de Search Console
                                 </a>
                             @endif

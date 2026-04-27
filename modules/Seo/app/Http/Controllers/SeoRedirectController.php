@@ -112,12 +112,12 @@ class SeoRedirectController extends Controller
 
         if (count($chain) > 2) {
             return redirect()
-                ->route('setting.seo.redirects.index')
+                ->route('settings.seo.redirects.index')
                 ->with('warning', 'Redireccion creada. Advertencia: cadena de redirecciones detectada: '.implode(' → ', $chain));
         }
 
         return redirect()
-            ->route('setting.seo.redirects.index')
+            ->route('settings.seo.redirects.index')
             ->with('success', 'Redireccion creada correctamente.');
     }
 
@@ -153,12 +153,12 @@ class SeoRedirectController extends Controller
 
         if (count($chain) > 2) {
             return redirect()
-                ->route('setting.seo.redirects.index')
+                ->route('settings.seo.redirects.index')
                 ->with('warning', 'Redireccion actualizada. Advertencia: cadena de redirecciones detectada: '.implode(' → ', $chain));
         }
 
         return redirect()
-            ->route('setting.seo.redirects.index')
+            ->route('settings.seo.redirects.index')
             ->with('success', 'Redireccion actualizada correctamente.');
     }
 
@@ -174,7 +174,7 @@ class SeoRedirectController extends Controller
         $this->clearRedirectCache($sourcePath);
 
         return redirect()
-            ->route('setting.seo.redirects.index')
+            ->route('settings.seo.redirects.index')
             ->with('success', 'Redireccion eliminada correctamente.');
     }
 
@@ -402,7 +402,7 @@ class SeoRedirectController extends Controller
         );
 
         return redirect()
-            ->route('setting.seo.redirects.index')
+            ->route('settings.seo.redirects.index')
             ->with('success', "Importación completada: {$imported} importados, {$skipped} omitidos, {$errors} con error.");
     }
 
@@ -493,7 +493,7 @@ class SeoRedirectController extends Controller
         }
 
         return redirect()
-            ->route('setting.seo.redirects.index')
+            ->route('settings.seo.redirects.index')
             ->with('success', "Importación .htaccess: {$imported} importados, {$skipped} omitidos, {$errors} con error.");
     }
 

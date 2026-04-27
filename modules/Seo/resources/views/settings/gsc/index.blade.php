@@ -22,7 +22,7 @@
                                         <span class="badge bg-success-subtle text-success fs-6">Sí</span>
                                     @else
                                         <span class="badge bg-danger-subtle text-danger fs-6">No</span>
-                                        <p class="small text-muted mt-2 mb-0">Falta client_id / client_secret. Configúralos en <a href="{{ route('setting.seo.settings.edit') }}">Configuración SEO</a>.</p>
+                                        <p class="small text-muted mt-2 mb-0">Falta client_id / client_secret. Configúralos en <a href="{{ route('settings.seo.settings.edit') }}">Configuración SEO</a>.</p>
                                     @endif
                                 </div>
                             </div>
@@ -48,18 +48,18 @@
                     </div>
 
                     @if(! $status['connected'])
-                        <a href="{{ route('setting.seo.gsc.connect') }}" class="btn btn-primary w-100 mb-2" @if(! $status['configured']) aria-disabled="true" @endif>
+                        <a href="{{ route('settings.seo.gsc.connect') }}" class="btn btn-primary w-100 mb-2" @if(! $status['configured']) aria-disabled="true" @endif>
                             Conectar con Google Search Console
                         </a>
                     @else
-                        <form method="POST" action="{{ route('setting.seo.gsc.import') }}" class="mb-2">
+                        <form method="POST" action="{{ route('settings.seo.gsc.import') }}" class="mb-2">
                             @csrf
                             <div class="d-flex gap-2">
                                 <input type="number" name="days" min="1" max="90" value="28" class="form-control" style="max-width:120px;">
                                 <button type="submit" class="btn btn-primary flex-fill">Importar últimos N días</button>
                             </div>
                         </form>
-                        <form method="POST" action="{{ route('setting.seo.gsc.disconnect') }}">
+                        <form method="POST" action="{{ route('settings.seo.gsc.disconnect') }}">
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary w-100">Desconectar</button>
                         </form>
@@ -74,8 +74,8 @@
                     <h6 class="fw-bold mb-2 border-bottom pb-2">Cómo configurar</h6>
                     <ol class="small text-muted mb-0 ps-3">
                         <li class="mb-2"><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a> → crear OAuth Client ID (Web application).</li>
-                        <li class="mb-2">Agregar redirect URI: <code class="small text-break">{{ route('setting.seo.gsc.callback') }}</code></li>
-                        <li class="mb-2">Copiar client_id y client_secret a <a href="{{ route('setting.seo.settings.edit') }}">Configuración SEO</a>.</li>
+                        <li class="mb-2">Agregar redirect URI: <code class="small text-break">{{ route('settings.seo.gsc.callback') }}</code></li>
+                        <li class="mb-2">Copiar client_id y client_secret a <a href="{{ route('settings.seo.settings.edit') }}">Configuración SEO</a>.</li>
                         <li class="mb-2">Activar la "Search Console API" para ese proyecto Google Cloud.</li>
                         <li>Pulsar "Conectar" arriba y autorizar.</li>
                     </ol>

@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('ecommerce_orders', function (Blueprint $table): void {
             $table->id();
             $table->string('code')->unique();
+            $table->string('token')->nullable()->unique();
             $table->foreignId('customer_id')->nullable()->constrained('ecommerce_customers')->nullOnDelete();
             $table->string('status', 60)->default('pending');
             $table->decimal('sub_total', 15, 2)->default(0);

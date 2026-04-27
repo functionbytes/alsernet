@@ -5,7 +5,7 @@
          colors="true">
     <testsuites>
         <testsuite name="User Module">
-            <directory>Tests</directory>
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
     <php>

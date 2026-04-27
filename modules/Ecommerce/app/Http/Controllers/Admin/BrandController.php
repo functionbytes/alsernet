@@ -15,12 +15,12 @@ class BrandController extends Controller
     {
         $brands = Brand::query()->latest()->paginate(20);
 
-        return view('ecommerce::admin.brands.index', compact('brands'));
+        return view('ecommerce::brands.index', compact('brands'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.brands.create');
+        return view('ecommerce::brands.create');
     }
 
     public function store(StoreBrandRequest $request): RedirectResponse
@@ -32,7 +32,7 @@ class BrandController extends Controller
 
     public function edit(Brand $brand): View
     {
-        return view('ecommerce::admin.brands.edit', compact('brand'));
+        return view('ecommerce::brands.edit', compact('brand'));
     }
 
     public function update(UpdateBrandRequest $request, Brand $brand): RedirectResponse

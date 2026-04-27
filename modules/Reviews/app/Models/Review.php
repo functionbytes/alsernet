@@ -58,11 +58,7 @@ class Review extends Model
         'translation_cached_at',
     ];
 
-    protected $appends = [
-        'location_name',
-        'reply_status',
-        'is_visible',
-    ];
+    protected $appends = [];
 
     protected function casts(): array
     {

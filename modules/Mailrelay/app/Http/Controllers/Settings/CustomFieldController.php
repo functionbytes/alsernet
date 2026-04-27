@@ -3,12 +3,13 @@
 namespace Modules\Mailrelay\Http\Controllers\Settings;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\CustomField;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreCustomFieldRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateCustomFieldRequest;
 
 class CustomFieldController extends Controller
 {
@@ -39,19 +40,10 @@ class CustomFieldController extends Controller
     /**
      * Store a newly created custom field.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCustomFieldRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.custom-fields.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'mailrelay_field_id' => 'nullable|integer',
-                'field_type' => 'required|string|in:text,number,date,boolean,select',
-                'mapping' => 'nullable|string|max:255',
-                'default_value' => 'nullable|string',
-                'required' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             CustomField::create($validated);
 
@@ -85,21 +77,13 @@ class CustomFieldController extends Controller
     /**
      * Update the specified custom field.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateCustomFieldRequest $request, int $id): RedirectResponse
     {
         Gate::authorize('mailrelay.settings.custom-fields.edit');
 
         try {
             $customField = CustomField::findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'mailrelay_field_id' => 'nullable|integer',
-                'field_type' => 'required|string|in:text,number,date,boolean,select',
-                'mapping' => 'nullable|string|max:255',
-                'default_value' => 'nullable|string',
-                'required' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             $customField->update($validated);
 

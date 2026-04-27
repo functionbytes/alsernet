@@ -17,7 +17,7 @@ class SeoBulkAuditTest extends TestCase
         $user = $this->createUser(['Seo.audit.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.audit.bulk-start'))
+            ->postJson(route('settings.seo.audit.bulk-start'))
             ->assertOk();
 
         Queue::assertPushed(BulkSeoAuditJob::class);
@@ -30,7 +30,7 @@ class SeoBulkAuditTest extends TestCase
         $user = $this->createUser(['Seo.audit.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.audit.bulk-start'))
+            ->postJson(route('settings.seo.audit.bulk-start'))
             ->assertStatus(409);
     }
 
@@ -41,7 +41,7 @@ class SeoBulkAuditTest extends TestCase
         $user = $this->createUser(['Seo.audit.index']);
 
         $this->actingAs($user)
-            ->getJson(route('setting.seo.audit.bulk-progress'))
+            ->getJson(route('settings.seo.audit.bulk-progress'))
             ->assertOk()
             ->assertJsonFragment(['status' => 'idle']);
     }
@@ -53,7 +53,7 @@ class SeoBulkAuditTest extends TestCase
         $user = $this->createUser(['Seo.audit.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.audit.broken-links-start'))
+            ->postJson(route('settings.seo.audit.broken-links-start'))
             ->assertOk();
 
         Queue::assertPushed(CheckBrokenLinksJob::class);

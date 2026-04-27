@@ -51,6 +51,27 @@ class UpdateProductRequest extends FormRequest
             'barcode' => ['nullable', 'string', 'max:255'],
             'stock_status' => ['nullable', 'string', 'in:in_stock,out_of_stock,backorder'],
             'order' => ['nullable', 'integer'],
+            'label_id' => ['nullable', 'exists:ecommerce_product_labels,id'],
+            'attribute_sets' => ['nullable', 'array'],
+            'attribute_sets.*' => ['integer', 'exists:ecommerce_product_attribute_sets,id'],
+            'specification_tables' => ['nullable', 'array'],
+            'specification_tables.*' => ['integer', 'exists:ecommerce_specification_tables,id'],
+            'options' => ['nullable', 'array'],
+            'options.*.name' => ['required_with:options', 'string', 'max:255'],
+            'options.*.option_type' => ['nullable', 'string', 'in:text,textarea,select,checkbox,radio,file'],
+            'options.*.required' => ['nullable', 'boolean'],
+            'options.*.order' => ['nullable', 'integer'],
+            'options.*.values' => ['nullable', 'array'],
+            'options.*.values.*.option_value' => ['required_with:options.*.values', 'string', 'max:255'],
+            'options.*.values.*.affect_price' => ['nullable', 'numeric'],
+            'options.*.values.*.affect_type' => ['nullable', 'in:plus,minus,percent'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            'cross_sales' => ['nullable', 'array'],
+            'cross_sales.*' => ['integer', 'exists:ecommerce_products,id'],
+            'related_products' => ['nullable', 'array'],
+            'related_products.*' => ['integer', 'exists:ecommerce_products,id'],
+            'spec_attributes' => ['nullable', 'array'],
         ];
     }
 
@@ -86,6 +107,15 @@ class UpdateProductRequest extends FormRequest
             'barcode' => 'codigo de barras',
             'stock_status' => 'estado de stock',
             'order' => 'orden',
+            'label_id' => 'etiqueta',
+            'attribute_sets' => 'conjuntos de atributos',
+            'specification_tables' => 'tablas de especificacion',
+            'options' => 'opciones',
+            'meta_title' => 'titulo SEO',
+            'meta_description' => 'descripcion SEO',
+            'cross_sales' => 'ventas cruzadas',
+            'related_products' => 'productos relacionados',
+            'spec_attributes' => 'atributos de especificacion',
         ];
     }
 }

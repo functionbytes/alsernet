@@ -1,16 +1,11 @@
-@extends('template::layouts.default')
+@extends('layouts.theme')
 
 @section('title', 'Configuracion de pagos Wompi')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">{{ __('Configuracion de pagos Wompi') }}</h4>
-    </div>
+    @include('core::components.card', ['title' => 'Configuracion de pagos Wompi'])
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    @include('core::components.alerts')
 
     <div class="card">
         <div class="card-body">

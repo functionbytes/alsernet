@@ -26,7 +26,7 @@ class SeoLlmsTxtTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.llms.edit'))
+            ->get(route('settings.seo.llms.edit'))
             ->assertForbidden();
     }
 
@@ -35,7 +35,7 @@ class SeoLlmsTxtTest extends TestCase
         $user = $this->createUser(['Seo.llms.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.llms.edit'))
+            ->get(route('settings.seo.llms.edit'))
             ->assertOk()
             ->assertViewIs('Seo::settings.llms-txt.edit');
     }
@@ -46,7 +46,7 @@ class SeoLlmsTxtTest extends TestCase
         $content = "# Test\n\n> desc\n\n## Links\n\n- [Home](/)";
 
         $this->actingAs($user)
-            ->post(route('setting.seo.llms.update'), ['llms_txt' => $content])
+            ->post(route('settings.seo.llms.update'), ['llms_txt' => $content])
             ->assertRedirect();
 
         $this->assertEquals(trim($content), Setting::get('seo.llms_txt'));
@@ -57,7 +57,7 @@ class SeoLlmsTxtTest extends TestCase
         $user = $this->createUser(['Seo.llms.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.llms.update'), ['llms_txt' => 'hacked'])
+            ->post(route('settings.seo.llms.update'), ['llms_txt' => 'hacked'])
             ->assertForbidden();
     }
 
@@ -66,7 +66,7 @@ class SeoLlmsTxtTest extends TestCase
         $user = $this->createUser(['Seo.llms.update']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.llms.update'), ['llms_txt' => str_repeat('a', 60000)])
+            ->post(route('settings.seo.llms.update'), ['llms_txt' => str_repeat('a', 60000)])
             ->assertSessionHasErrors('llms_txt');
     }
 
@@ -76,7 +76,7 @@ class SeoLlmsTxtTest extends TestCase
         Setting::set('seo.llms_txt', 'custom content');
 
         $this->actingAs($user)
-            ->post(route('setting.seo.llms.reset'))
+            ->post(route('settings.seo.llms.reset'))
             ->assertRedirect();
 
         // After reset, the served content should be the default (not 'custom content')

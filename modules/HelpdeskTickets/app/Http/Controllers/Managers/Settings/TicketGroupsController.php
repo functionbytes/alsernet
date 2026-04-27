@@ -5,6 +5,8 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketGroupRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketGroupRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketGroup;
 
@@ -62,19 +64,9 @@ class TicketGroupsController extends Controller
     /**
      * Store a newly created group.
      */
-    public function store(Request $request)
+    public function store(StoreTicketGroupRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'assignment_mode' => 'required|in:manual,round_robin,load_balanced',
-            'is_default' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'users' => 'nullable|array',
-            'users.*' => 'exists:users,id',
-            'user_priorities' => 'nullable|array',
-            'user_priorities.*' => 'in:primary,backup',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_default'] = $request->boolean('is_default');
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -117,19 +109,9 @@ class TicketGroupsController extends Controller
     /**
      * Update the specified group.
      */
-    public function update(Request $request, TicketGroup $group)
+    public function update(UpdateTicketGroupRequest $request, TicketGroup $group)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'assignment_mode' => 'required|in:manual,round_robin,load_balanced',
-            'is_default' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'users' => 'nullable|array',
-            'users.*' => 'exists:users,id',
-            'user_priorities' => 'nullable|array',
-            'user_priorities.*' => 'in:primary,backup',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_default'] = $request->boolean('is_default');
         $validated['is_active'] = $request->boolean('is_active');

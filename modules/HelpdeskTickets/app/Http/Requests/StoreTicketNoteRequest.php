@@ -12,10 +12,7 @@ class StoreTicketNoteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $ticket = $this->route('ticket');
-
-        // User must be able to update the ticket
-        return $this->user()->can('update', $ticket);
+        return $this->user()?->can('helpdesk.tickets.update') ?? false;
     }
 
     /**

@@ -8,7 +8,7 @@ class StoreBlogCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('blog.category.create');
     }
 
     protected function prepareForValidation(): void

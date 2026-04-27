@@ -4,11 +4,19 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Modules\Helpdesk\Http\Requests\StoreConversationStatusRequest;
 use Modules\Helpdesk\Models\ConversationStatus;
 
 class StatusesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.statuses.view')->only(['index']);
+        $this->middleware('can:helpdesk.statuses.create')->only(['create', 'store']);
+        $this->middleware('can:helpdesk.statuses.update')->only(['edit', 'update', 'toggleActive', 'reorder']);
+        $this->middleware('can:helpdesk.statuses.delete')->only(['destroy']);
+    }
+
     /**
      * Display a listing of statuses.
      */
@@ -59,19 +67,9 @@ class StatusesController extends Controller
     /**
      * Store a newly created status.
      */
-    public function store(Request $request)
+    public function store(StoreConversationStatusRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:helpdesk_conversation_statuses,slug|regex:/^[a-z0-9_-]+$/',
-            'color' => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'description' => 'nullable|string|max:1000',
-            'is_default' => 'nullable|boolean',
-            'active' => 'nullable|boolean',
-        ], [
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números, guiones y guiones bajos.',
-            'color.regex' => 'El color debe ser un código hexadecimal válido (#RRGGBB).',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_default'] = $request->boolean('is_default');
         $validated['active'] = $request->boolean('active', true);

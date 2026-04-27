@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\MailrelayLayout;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreComponentRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateComponentRequest;
 use Modules\Mailrelay\Services\TemplateRendererService;
 use Modules\Mailrelay\Services\VariableReplacementService;
 
@@ -78,20 +80,10 @@ class ComponentController extends Controller
     /**
      * Store a newly created layout/component.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreComponentRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.components.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:partial,layout,component',
-                'content' => 'required|string',
-                'description' => 'nullable|string',
-                'status' => 'in:active,inactive',
-                'is_default' => 'boolean',
-                'sort_order' => 'nullable|integer',
-            ]);
+            $validated = $request->validated();
 
             $component = MailrelayLayout::create($validated);
 
@@ -132,22 +124,12 @@ class ComponentController extends Controller
     /**
      * Update the specified layout/component.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateComponentRequest $request, int $id): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.components.edit');
-
         try {
             $component = MailrelayLayout::findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'type' => 'required|in:partial,layout,component',
-                'content' => 'required|string',
-                'description' => 'nullable|string',
-                'status' => 'in:active,inactive',
-                'is_default' => 'boolean',
-                'sort_order' => 'nullable|integer',
-            ]);
+            $validated = $request->validated();
 
             $component->update($validated);
 

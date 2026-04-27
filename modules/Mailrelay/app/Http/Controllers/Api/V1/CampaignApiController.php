@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\Campaign;
+use Modules\Mailrelay\Http\Requests\Api\V1\ScheduleCampaignApiRequest;
+use Modules\Mailrelay\Http\Requests\Api\V1\SendCampaignRequest;
+use Modules\Mailrelay\Http\Requests\Api\V1\SendTestCampaignRequest;
+use Modules\Mailrelay\Http\Requests\Api\V1\UpdateCampaignRequest;
+use Modules\Mailrelay\Http\Requests\Managers\StoreCampaignRequest;
 use Modules\Mailrelay\Http\Resources\V1\CampaignResource;
 use Modules\Mailrelay\Services\CampaignService;
 
@@ -70,21 +75,11 @@ class CampaignApiController extends Controller
     /**
      * Store a newly created campaign.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCampaignRequest $request): JsonResponse
     {
         $this->authorize('create', Campaign::class);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'mailer_template_id' => 'nullable|exists:mailer_templates,id',
-            'html_content' => 'nullable|string',
-            'lang_id' => 'nullable|exists:langs,id',
-            'mail_provider_id' => 'required|exists:mail_providers,id',
-            'template_variables' => 'nullable|array',
-            'track_opens' => 'boolean',
-            'track_clicks' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             $campaign = $this->campaignService->create($validated);
@@ -123,23 +118,13 @@ class CampaignApiController extends Controller
     /**
      * Update the specified campaign.
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateCampaignRequest $request, int $id): JsonResponse
     {
         $campaign = Campaign::findOrFail($id);
 
         $this->authorize('update', $campaign);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'mailer_template_id' => 'nullable|exists:mailer_templates,id',
-            'html_content' => 'nullable|string',
-            'lang_id' => 'nullable|exists:langs,id',
-            'mail_provider_id' => 'required|exists:mail_providers,id',
-            'template_variables' => 'nullable|array',
-            'track_opens' => 'boolean',
-            'track_clicks' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->campaignService->update($campaign, $validated);
@@ -243,15 +228,13 @@ class CampaignApiController extends Controller
     /**
      * Send test email.
      */
-    public function sendTest(Request $request, int $id): JsonResponse
+    public function sendTest(SendTestCampaignRequest $request, int $id): JsonResponse
     {
         $campaign = Campaign::findOrFail($id);
 
         $this->authorize('sendTest', $campaign);
 
-        $validated = $request->validate([
-            'test_email' => 'required|email',
-        ]);
+        $validated = $request->validated();
 
         try {
             $result = $this->campaignService->sendTest($campaign, $validated['test_email']);
@@ -270,17 +253,13 @@ class CampaignApiController extends Controller
     /**
      * Send campaign.
      */
-    public function send(Request $request, int $id): JsonResponse
+    public function send(SendCampaignRequest $request, int $id): JsonResponse
     {
         $campaign = Campaign::findOrFail($id);
 
         $this->authorize('send', $campaign);
 
-        $validated = $request->validate([
-            'recipients' => 'required|array|min:1',
-            'recipients.*.email' => 'required|email',
-            'send_async' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             if ($validated['send_async'] ?? false) {
@@ -309,16 +288,13 @@ class CampaignApiController extends Controller
     /**
      * Schedule campaign.
      */
-    public function schedule(Request $request, int $id): JsonResponse
+    public function schedule(ScheduleCampaignApiRequest $request, int $id): JsonResponse
     {
         $campaign = Campaign::findOrFail($id);
 
         $this->authorize('schedule', $campaign);
 
-        $validated = $request->validate([
-            'scheduled_at' => 'required|date|after:now',
-            'recipients' => 'required|array|min:1',
-        ]);
+        $validated = $request->validated();
 
         try {
             $scheduledAt = new \DateTime($validated['scheduled_at']);

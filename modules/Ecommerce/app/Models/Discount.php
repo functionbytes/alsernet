@@ -4,11 +4,20 @@ namespace Modules\Ecommerce\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Ecommerce\Database\Factories\DiscountFactory;
 use Modules\Ecommerce\Enums\DiscountType;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Discount extends Model
 {
     use HasFactory;
+    use LogsActivity;
+
+    protected static function newFactory(): DiscountFactory
+    {
+        return DiscountFactory::new();
+    }
 
     protected $table = 'ecommerce_discounts';
 
@@ -26,6 +35,23 @@ class Discount extends Model
         'is_active',
         'description',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'title',
+                'code',
+                'value',
+                'type',
+                'is_active',
+                'quantity',
+                'total_used',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ecommerce_discount');
+    }
 
     protected function casts(): array
     {

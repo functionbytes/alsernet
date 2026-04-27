@@ -9,7 +9,7 @@
         {{-- Formulario principal --}}
         <div class="col-lg-8">
             <div class="card w-100">
-                <form id="formStaticUrl" action="{{ route('setting.seo.static-urls.store') }}" method="POST" novalidate>
+                <form id="formStaticUrl" action="{{ route('settings.seo.static-urls.store') }}" method="POST" novalidate>
                     @csrf
 
                     <div class="card-body">
@@ -139,7 +139,7 @@
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             Guardar
                         </button>
-                        <a href="{{ route('setting.seo.static-urls.index') }}"
+                        <a href="{{ route('settings.seo.static-urls.index') }}"
                            class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>

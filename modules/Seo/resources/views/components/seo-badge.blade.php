@@ -29,7 +29,7 @@
 @endphp
 
 @if($seoMeta)
-    <a href="{{ route('setting.seo.metas.edit', $metaId) }}"
+    <a href="{{ route('settings.seo.metas.edit', $metaId) }}"
        class="badge {{ $badgeClass }} text-decoration-none"
        title="Score SEO: {{ $score }}/100 — Grado: {{ $grade }}">
         SEO {{ $grade ?? '?' }}

@@ -3,8 +3,11 @@
 namespace Modules\Newsletter\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Newsletter\Models\Subscriber;
+use Modules\Newsletter\Policies\SubscriberPolicy;
 use Modules\Newsletter\Services\MailjetService;
 use Modules\Newsletter\Services\SubscriberService;
 use Modules\Theme\Services\NavService;
@@ -28,6 +31,7 @@ class NewsletterServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->registerMenus();
         $this->registerComponents();
+        $this->registerPolicies();
     }
 
     public function register(): void
@@ -58,6 +62,11 @@ class NewsletterServiceProvider extends ServiceProvider
     {
         Blade::component('newsletter-inline', 'newsletter::components.inline');
         Blade::component('newsletter-unsubscribe', 'newsletter::shortcodes.unsubscribe');
+    }
+
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Subscriber::class, SubscriberPolicy::class);
     }
 
     protected function registerMenus(): void

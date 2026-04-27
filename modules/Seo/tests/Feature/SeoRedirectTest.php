@@ -14,13 +14,13 @@ class SeoRedirectTest extends TestCase
 
     public function test_redirect_list_requires_auth(): void
     {
-        $this->get(route('setting.seo.redirects.index'))
+        $this->get(route('settings.seo.redirects.index'))
             ->assertRedirect(route('auth.login'));
     }
 
     public function test_create_form_requires_auth(): void
     {
-        $this->get(route('setting.seo.redirects.create'))
+        $this->get(route('settings.seo.redirects.create'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -36,12 +36,12 @@ class SeoRedirectTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.redirects.store'), [
+            ->post(route('settings.seo.redirects.store'), [
                 'source_path' => '/old-page',
                 'target_path' => '/new-page',
                 'status_code' => 301,
             ])
-            ->assertRedirect(route('setting.seo.redirects.index'));
+            ->assertRedirect(route('settings.seo.redirects.index'));
 
         $this->assertDatabaseHas('seo_redirects', [
             'source_path' => '/old-page',
@@ -62,7 +62,7 @@ class SeoRedirectTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.redirects.store'), [
+            ->post(route('settings.seo.redirects.store'), [
                 'source_path' => '',
                 'target_path' => '/destination',
                 'status_code' => 301,
@@ -80,7 +80,7 @@ class SeoRedirectTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.redirects.store'), [
+            ->post(route('settings.seo.redirects.store'), [
                 'source_path' => '/some-page',
                 'target_path' => '/destination',
                 'status_code' => 200,
@@ -102,7 +102,7 @@ class SeoRedirectTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.redirects.store'), [
+            ->post(route('settings.seo.redirects.store'), [
                 'source_path' => '/existing-path',
                 'target_path' => '/other-destination',
                 'status_code' => 302,
@@ -118,7 +118,7 @@ class SeoRedirectTest extends TestCase
 
     public function test_detect_chains_requires_auth(): void
     {
-        $this->get(route('setting.seo.redirects.detect-chains'))
+        $this->get(route('settings.seo.redirects.detect-chains'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -127,7 +127,7 @@ class SeoRedirectTest extends TestCase
         $user = $this->createUser(['Seo.redirects.index']);
 
         $response = $this->actingAs($user)
-            ->getJson(route('setting.seo.redirects.detect-chains'));
+            ->getJson(route('settings.seo.redirects.detect-chains'));
 
         $response->assertOk()
             ->assertJsonStructure(['chains', 'count']);
@@ -154,12 +154,12 @@ class SeoRedirectTest extends TestCase
 
         // Now create A -> B, which forms the chain A -> B -> C
         $this->actingAs($user)
-            ->post(route('setting.seo.redirects.store'), [
+            ->post(route('settings.seo.redirects.store'), [
                 'source_path' => '/page-a',
                 'target_path' => '/page-b',
                 'status_code' => 301,
             ])
-            ->assertRedirect(route('setting.seo.redirects.index'))
+            ->assertRedirect(route('settings.seo.redirects.index'))
             ->assertSessionHas('warning');
     }
 
@@ -169,7 +169,7 @@ class SeoRedirectTest extends TestCase
 
     public function test_robots_txt_edit_requires_auth(): void
     {
-        $this->get(route('setting.seo.robots.edit'))
+        $this->get(route('settings.seo.robots.edit'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -180,7 +180,7 @@ class SeoRedirectTest extends TestCase
         $newContent = "User-agent: *\nDisallow: /admin";
 
         $this->actingAs($user)
-            ->post(route('setting.seo.robots.update'), [
+            ->post(route('settings.seo.robots.update'), [
                 'robots_txt' => $newContent,
             ])
             ->assertRedirect();
@@ -206,7 +206,7 @@ class SeoRedirectTest extends TestCase
 
     public function test_sitemap_admin_page_requires_auth(): void
     {
-        $this->get(route('setting.seo.sitemap.index'))
+        $this->get(route('settings.seo.sitemap.index'))
             ->assertRedirect(route('auth.login'));
     }
 

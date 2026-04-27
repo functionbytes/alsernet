@@ -17,7 +17,7 @@
                         <p class="small mb-0 text-muted">Gestiona las URLs estáticas que se incluirán en el sitemap XML</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('setting.seo.static-urls.create') }}" class="btn btn-primary">
+                        <a href="{{ route('settings.seo.static-urls.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Nueva URL
                         </a>
                     </div>
@@ -59,7 +59,7 @@
 
             {{-- Search --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.static-urls.index') }}">
+                <form method="GET" action="{{ route('settings.seo.static-urls.index') }}">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -83,7 +83,7 @@
                                 <i class="fas fa-search"></i>
                             </button>
                             @if(request('search') || request('status'))
-                                <a href="{{ route('setting.seo.static-urls.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.static-urls.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -137,13 +137,13 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.static-urls.edit', $url) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.static-urls.edit', $url) }}">
                                                             Editar
                                                         </a>
                                                     </li>
                                                     <li>
                                                         <a class="dropdown-item toggle-active" href="javascript:void(0)"
-                                                           data-url="{{ route('setting.seo.static-urls.toggle-active', $url) }}">
+                                                           data-url="{{ route('settings.seo.static-urls.toggle-active', $url) }}">
                                                             {{ $url->is_active ? 'Desactivar' : 'Activar' }}
                                                         </a>
                                                     </li>
@@ -152,7 +152,7 @@
                                                         <a class="dropdown-item delete-btn" href="#"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.static-urls.destroy', $url) }}"
+                                                           data-url="{{ route('settings.seo.static-urls.destroy', $url) }}"
                                                            data-title="Eliminar: {{ $url->url }}">
                                                             Eliminar
                                                         </a>
@@ -183,7 +183,7 @@
                                 @endif
                             </p>
                             @if(!request('search') && !request('status'))
-                                <a href="{{ route('setting.seo.static-urls.create') }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('settings.seo.static-urls.create') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus me-1"></i> Agregar primera URL
                                 </a>
                             @endif
@@ -291,7 +291,7 @@ $(document).ready(function () {
             $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
             $.ajax({
-                url: '{{ route('setting.seo.static-urls.bulk-action') }}',
+                url: '{{ route('settings.seo.static-urls.bulk-action') }}',
                 method: 'POST',
                 data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
                 contentType: 'application/json',

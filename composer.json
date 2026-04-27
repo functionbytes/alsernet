@@ -3,18 +3,24 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.4",
         "aerni/cloudflared": "^1.1",
+        "darkaonline/l5-swagger": "^11.0",
         "guzzlehttp/psr7": "2.7",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.45",
         "laravel/mcp": "^0.5.1",
+        "laravel/pennant": "^1.23",
         "laravel/reverb": "^1.10",
         "laravel/sanctum": "^4.0",
         "laravel/scout": "^10.0",
+        "laravel/socialite": "^5.26",
         "laravel/telescope": "^5.19",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.6",
@@ -22,6 +28,7 @@
         "nwidart/laravel-modules": "^12.0",
         "ramsey/uuid": "^4.7",
         "sentry/sentry-laravel": "^4.24",
+        "spatie/laravel-backup": "^9.4",
         "symfony/finder": "^7.2",
         "symfony/mime": "^7.2"
     },
@@ -75,6 +82,17 @@
             "Modules\\Attention\\": "modules/Attention/app/",
             "Modules\\Blog\\": "modules/Blog/app/",
             "Modules\\Cache\\": "modules/Cache/app/",
+            "Modules\\Cache\\Database\\Seeders\\": "modules/Cache/database/seeders/",
+            "Modules\\Activity\\Database\\Seeders\\": "modules/Activity/database/seeders/",
+            "Modules\\Optimize\\Database\\Seeders\\": "modules/Optimize/database/seeders/",
+            "Modules\\Pulse\\Database\\Seeders\\": "modules/Pulse/database/seeders/",
+            "Modules\\Health\\Database\\Seeders\\": "modules/Health/database/seeders/",
+            "Modules\\Locales\\Database\\Seeders\\": "modules/Locales/database/seeders/",
+            "Modules\\User\\Database\\Seeders\\": "modules/User/database/seeders/",
+            "Modules\\Theme\\Database\\Seeders\\": "modules/Theme/database/seeders/",
+            "Modules\\MailsSettings\\Database\\Seeders\\": "modules/MailsSettings/database/seeders/",
+            "Modules\\System\\Database\\Seeders\\": "modules/System/database/seeders/",
+            "Modules\\Captcha\\Database\\Seeders\\": "modules/Captcha/database/seeders/",
             "Modules\\Ads\\": "modules/Ads/app/",
             "Modules\\Ads\\Database\\Factories\\": "modules/Ads/database/factories/",
             "Modules\\Ads\\Database\\Seeders\\": "modules/Ads/database/seeders/",
@@ -95,6 +113,7 @@
             "Modules\\Reviews\\": "modules/Reviews/app/",
             "Modules\\Seo\\": "modules/Seo/app/",
             "Modules\\Shortcode\\": "modules/Shortcode/app/",
+            "Modules\\SimpleSlider\\": "modules/SimpleSlider/app/",
             "Modules\\Sitemap\\": "modules/Sitemap/app/",
             "Modules\\Storage\\": "modules/Storage/app/",
             "Modules\\System\\": "modules/System/app/",
@@ -106,7 +125,9 @@
             "Modules\\Webhook\\": "modules/Webhook/app/",
             "Modules\\Widget\\": "modules/Widget/app/",
             "Modules\\Locales\\": "modules/Locales/app/",
-            "Modules\\Locales\\Database\\Seeders\\": "modules/Locales/database/seeders/"
+            "Modules\\Locations\\": "modules/Locations/app/",
+            "Modules\\Locations\\Database\\Factories\\": "modules/Locations/database/factories/",
+            "Modules\\Locations\\Database\\Seeders\\": "modules/Locations/database/seeders/"
         },
         "files": [
             "app/helpers.php",
@@ -138,7 +159,8 @@
             "Modules\\Notification\\Tests\\": "Modules/Notification/tests/",
             "Modules\\Reviews\\Tests\\": "Modules/Reviews/tests/",
             "Modules\\Role\\Tests\\": "Modules/Role/tests/",
-            "Modules\\Seo\\Tests\\": "Modules/Seo/tests/"
+            "Modules\\Seo\\Tests\\": "Modules/Seo/tests/",
+            "Modules\\Captcha\\Tests\\": "modules/Captcha/tests/"
         },
         "files": [
             "modules/Core/app/Helpers/Helper.php"

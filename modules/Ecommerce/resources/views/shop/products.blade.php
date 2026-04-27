@@ -6,6 +6,31 @@
 
 @section('title', $pageTitle)
 
+@section('meta')
+@php
+    $og            = $ogData ?? [];
+    $ogType        = $og['type']        ?? 'website';
+    $ogTitle       = $og['title']       ?? $pageTitle;
+    $ogDescription = $og['description'] ?? $pageTitle;
+    $ogImage       = $og['image']       ?? asset('modules/ecommerce/images/404.png');
+    $ogUrl         = $og['url']         ?? url()->current();
+@endphp
+<link rel="canonical" href="{{ $ogUrl }}">
+<meta name="description" content="{{ $ogDescription }}">
+{{-- Open Graph --}}
+<meta property="og:type" content="{{ $ogType }}">
+<meta property="og:title" content="{{ $ogTitle }}">
+<meta property="og:description" content="{{ $ogDescription }}">
+<meta property="og:url" content="{{ $ogUrl }}">
+<meta property="og:image" content="{{ $ogImage }}">
+<meta property="og:site_name" content="{{ config('app.name') }}">
+{{-- Twitter Cards --}}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $ogTitle }}">
+<meta name="twitter:description" content="{{ $ogDescription }}">
+<meta name="twitter:image" content="{{ $ogImage }}">
+@endsection
+
 @section('breadcrumb')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
@@ -20,59 +45,22 @@
 @section('content')
 <section class="mt-60 mb-60">
     <div class="container mb-30">
-        <div class="row">
-            <div class="col-lg-12 m-auto mt-4">
-                <div class="products-listing position-relative">
+        <button type="button" class="mobile-filters-toggle mb-3" id="openMobileFilters" aria-label="Abrir filtros">
+            <i class="fas fa-filter"></i> Filtros
+        </button>
+        <div class="filter-overlay" id="filterOverlay"></div>
+
+        <div class="row g-4">
+            <div class="col-lg-3">
+                @include('ecommerce::shop.partials._product-filters')
+            </div>
+
+            <div class="col-lg-9">
+                <div id="productsContainer">
                     <div class="row">
                         @forelse($products as $product)
-                            <div class="col-lg-3 col-md-4 col-12 col-sm-6">
-                                <div class="product-cart-wrap mb-30">
-                                    <div class="product-img-action-wrap">
-                                        <div class="product-img product-img-zoom">
-                                            <a href="{{ route('shop.product', $product->slug) }}">
-                                                @if($product->featured_image)
-                                                    <img class="default-img" src="{{ $product->featured_image }}" alt="{{ $product->name }}">
-                                                @else
-                                                    <img class="default-img" src="{{ asset('modules/ecommerce/images/404.png') }}" alt="{{ $product->name }}">
-                                                @endif
-                                            </a>
-                                        </div>
-                                        <div class="product-action-1">
-                                            <a aria-label="{{ __('Ver') }}" href="{{ route('shop.product', $product->slug) }}" class="action-btn hover-up"><i class="fa fa-eye"></i></a>
-                                            <a aria-label="{{ __('Favoritos') }}" href="{{ route('ecommerce.wishlist.store', $product) }}" class="action-btn hover-up" onclick="event.preventDefault(); document.getElementById('wishlist-form-{{ $product->id }}').submit();"><i class="fa fa-heart"></i></a>
-                                            <form id="wishlist-form-{{ $product->id }}" action="{{ route('ecommerce.wishlist.store', $product) }}" method="POST" class="d-none">@csrf</form>
-                                        </div>
-                                        @if($product->is_on_sale)
-                                            <div class="product-badges product-badges-position product-badges-mrg">
-                                                <span class="hot">-{{ round((1 - $product->final_price / $product->price) * 100) }}%</span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="product-content-wrap">
-                                        <div class="product-category">
-                                            @php $category = $product->categories->first(); @endphp
-                                            @if($category)
-                                                <a href="{{ route('shop.category', $category->slug) }}">{{ $category->name }}</a>
-                                            @else
-                                                &nbsp;
-                                            @endif
-                                        </div>
-                                        <h2 class="text-truncate"><a href="{{ route('shop.product', $product->slug) }}" title="{{ $product->name }}">{{ $product->name }}</a></h2>
-                                        <div class="product-price">
-                                            <span>${{ number_format($product->final_price, 2) }}</span>
-                                            @if($product->is_on_sale)
-                                                <span class="old-price">${{ number_format($product->price, 2) }}</span>
-                                            @endif
-                                        </div>
-                                        <div class="product-action-1 show" style="bottom: 10px;">
-                                            <form action="{{ route('cart.add', $product) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="qty" value="1">
-                                                <button type="submit" aria-label="{{ __('Agregar al carrito') }}" class="action-btn hover-up border-0 bg-transparent"><i class="fa fa-shopping-bag"></i></button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+                                @include('ecommerce::shop.partials._product-card', ['product' => $product])
                             </div>
                         @empty
                             <div class="col-12">

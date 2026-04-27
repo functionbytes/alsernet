@@ -1,6 +1,45 @@
 # Mailrelay Module
 
-Módulo completo de email marketing y automatización con integración Mailrelay API para la plataforma Alsernet.
+Modulo completo de email marketing y automatizacion con integracion Mailrelay API para la plataforma Alsernet.
+
+## Responsabilidad
+
+Este modulo gestiona **email marketing y campanas masivas**: newsletters, automation, drip campaigns, segmentacion, multi-provider routing.
+
+### Casos de uso
+
+- Envio masivo de newsletters
+- Campanas de email marketing
+- Automation flows (drip campaigns, welcome series)
+- Segmentacion de audiencia (lists, tags)
+- A/B testing de campanas
+- Multi-provider routing (Mailrelay, Mailtrap, SendGrid, AWS SES, Postmark)
+- Tracking de open/click rates
+- Subscriber management
+
+### NO usar para
+
+- Notificaciones transaccionales (password reset, ticket assigned, etc.)
+- Emails 1-a-1 triggered por eventos de aplicacion
+- Confirmaciones de cuenta
+
+Para esos casos, usar el modulo `Mailer`.
+
+## Diferencia con Mailer
+
+| Caracteristica | Mailer | Mailrelay |
+|---|---|---|
+| Tipo de email | Transaccional | Marketing/masivo |
+| Volumen tipico | 1-10/usuario | 1000-100000/campana |
+| Audience | Individual users | Subscriber lists |
+| Provider | SMTP unico (config Laravel) | Multi-provider (Mailrelay, Mailtrap, SendGrid, AWS SES, Postmark) |
+| Templates | i18n por user locale | Marketing en idioma de la lista |
+| Trigger | Application events | Manual schedule / automation |
+| Tracking | Bounce/unsubscribe via webhook | Open/click tracking nativo |
+
+## Estado del modulo
+
+Nota tecnica: este modulo tiene deuda tecnica documentada en `docs/adr/0001-mailer-vs-mailrelay.md`. Hay 33 migraciones en `acas/` pendientes de evaluacion y posibles inline validates por convertir a Form Requests. Estable para produccion pero con cleanup planificado.
 
 ## Características Principales
 

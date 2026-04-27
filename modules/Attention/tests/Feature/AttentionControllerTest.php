@@ -32,14 +32,10 @@ class AttentionControllerTest extends TestCase
 
     protected AttentionSede $sede;
 
-    /**
-     * Setup test environment
-     */
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create test data
         $this->adminUser = User::factory()->create();
         $this->type = AttentionType::factory()->create();
         $this->category = AttentionCategory::factory()->create();
@@ -52,9 +48,6 @@ class AttentionControllerTest extends TestCase
     // PUBLIC ENDPOINTS TESTS
     // ========================================================================
 
-    /**
-     * Test: Can submit a new peticiones (public endpoint)
-     */
     public function test_can_submit_peticiones_as_citizen(): void
     {
         $data = [
@@ -73,7 +66,7 @@ class AttentionControllerTest extends TestCase
             'response_type' => 'email',
         ];
 
-        $response = $this->postJson('/api/peticiones', $data);
+        $response = $this->postJson('/api/peticiones/submit', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -91,7 +84,6 @@ class AttentionControllerTest extends TestCase
                 'success' => true,
             ]);
 
-        // Verify database
         $this->assertDatabaseHas('attentions', [
             'subject' => $data['subject'],
             'customer_email' => $data['customer_email'],
@@ -99,9 +91,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Can submit anonymous peticiones
-     */
     public function test_can_submit_anonymous_peticiones(): void
     {
         $data = [
@@ -112,7 +101,7 @@ class AttentionControllerTest extends TestCase
             'is_anonymous' => true,
         ];
 
-        $response = $this->postJson('/api/peticiones', $data);
+        $response = $this->postJson('/api/peticiones/submit', $data);
 
         $response->assertStatus(201)
             ->assertJson(['success' => true]);
@@ -124,12 +113,9 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Validates required fields when submitting
-     */
     public function test_validates_required_fields_on_submit(): void
     {
-        $response = $this->postJson('/api/peticiones', []);
+        $response = $this->postJson('/api/peticiones/submit', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
@@ -140,9 +126,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Validates citizen info when not anonymous
-     */
     public function test_validates_citizen_info_when_not_anonymous(): void
     {
         $data = [
@@ -151,10 +134,9 @@ class AttentionControllerTest extends TestCase
             'subject' => 'Test subject',
             'description' => 'Test description with enough characters',
             'is_anonymous' => false,
-            // Missing citizen info
         ];
 
-        $response = $this->postJson('/api/peticiones', $data);
+        $response = $this->postJson('/api/peticiones/submit', $data);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
@@ -164,9 +146,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Can submit with file attachments
-     */
     public function test_can_submit_with_file_attachments(): void
     {
         $file = UploadedFile::fake()->create('document.pdf', 1024);
@@ -182,18 +161,14 @@ class AttentionControllerTest extends TestCase
             'attachments' => [$file],
         ];
 
-        $response = $this->postJson('/api/peticiones', $data);
+        $response = $this->postJson('/api/peticiones/submit', $data);
 
         $response->assertStatus(201);
 
-        // Verify file was uploaded
         $attention = Attention::first();
         $this->assertCount(1, $attention->getMedia('attachments'));
     }
 
-    /**
-     * Test: Can track peticiones by radicado
-     */
     public function test_can_track_peticiones_by_radicado(): void
     {
         $attention = Attention::factory()->create([
@@ -201,7 +176,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/peticiones/{$attention->radicado}");
+        $response = $this->getJson("/api/peticiones/track/{$attention->radicado}");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -213,12 +188,9 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Returns 404 when radicado not found
-     */
     public function test_returns_404_when_radicado_not_found(): void
     {
-        $response = $this->getJson('/api/peticiones/INVALID-RADICADO');
+        $response = $this->getJson('/api/peticiones/track/INVALID-RADICADO');
 
         $response->assertStatus(404)
             ->assertJson([
@@ -230,9 +202,6 @@ class AttentionControllerTest extends TestCase
     // ADMIN ENDPOINTS TESTS
     // ========================================================================
 
-    /**
-     * Test: Admin can list all peticiones
-     */
     public function test_admin_can_list_all_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -242,7 +211,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/peticiones');
+        $response = $this->getJson('/api/attentions');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -257,9 +226,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Can filter peticiones by status
-     */
     public function test_can_filter_peticiones_by_status(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -276,15 +242,12 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/peticiones?status=received');
+        $response = $this->getJson('/api/attentions?status=received');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
     }
 
-    /**
-     * Test: Can search peticiones
-     */
     public function test_can_search_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -295,15 +258,12 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/peticiones?search=searchme');
+        $response = $this->getJson('/api/attentions?search=searchme');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
     }
 
-    /**
-     * Test: Admin can view peticiones detail
-     */
     public function test_admin_can_view_peticiones_detail(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -313,7 +273,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}");
+        $response = $this->getJson("/api/attentions/{$attention->radicado}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -330,9 +290,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Admin can update peticiones
-     */
     public function test_admin_can_update_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -349,7 +306,7 @@ class AttentionControllerTest extends TestCase
             'description' => 'Updated description with enough characters',
         ];
 
-        $response = $this->patchJson("/api/settings/peticiones/{$attention->radicado}", $updateData);
+        $response = $this->patchJson("/api/attentions/{$attention->radicado}", $updateData);
 
         $response->assertStatus(200)
             ->assertJson([
@@ -362,9 +319,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Cannot update closed peticiones
-     */
     public function test_cannot_update_closed_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -375,16 +329,13 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->patchJson("/api/settings/peticiones/{$attention->radicado}", [
+        $response = $this->patchJson("/api/attentions/{$attention->radicado}", [
             'subject' => 'New subject',
         ]);
 
         $response->assertStatus(422);
     }
 
-    /**
-     * Test: Can assign peticiones to department
-     */
     public function test_can_assign_to_department(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -396,7 +347,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-department", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/assign-department", [
             'department_id' => $department->id,
             'comment' => 'Assigned by test',
         ]);
@@ -410,9 +361,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Can assign peticiones to user
-     */
     public function test_can_assign_to_user(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -424,7 +372,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/assign-user", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/assign-user", [
             'user_id' => $assignedUser->id,
         ]);
 
@@ -436,9 +384,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Can change peticiones status
-     */
     public function test_can_change_status(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -449,7 +394,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/change-status", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/change-status", [
             'status' => 'in_process',
             'comment' => 'Starting work',
         ]);
@@ -462,9 +407,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Can resolve peticiones
-     */
     public function test_can_resolve_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -476,10 +418,10 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/resolve", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/resolve", [
             'resolution' => 'Esta es la respuesta completa a su solicitud. Hemos procesado su petición y adjuntamos la información solicitada.',
             'response_type' => 'email',
-            'send_notification' => false, // Disable for testing
+            'send_notification' => false,
         ]);
 
         $response->assertStatus(200);
@@ -490,9 +432,6 @@ class AttentionControllerTest extends TestCase
         $this->assertNotNull($attention->resolved_at);
     }
 
-    /**
-     * Test: Can close peticiones
-     */
     public function test_can_close_peticiones(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -503,7 +442,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/close", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/close", [
             'comment' => 'Closing after resolution',
         ]);
 
@@ -514,9 +453,6 @@ class AttentionControllerTest extends TestCase
         $this->assertNotNull($attention->closed_at);
     }
 
-    /**
-     * Test: Can add note to peticiones
-     */
     public function test_can_add_note(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -526,7 +462,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->postJson("/api/settings/peticiones/{$attention->radicado}/notes", [
+        $response = $this->postJson("/api/attentions/{$attention->radicado}/notes", [
             'content' => 'This is a test note with sufficient length',
         ]);
 
@@ -538,9 +474,6 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Can get notes list
-     */
     public function test_can_get_notes(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -552,7 +485,7 @@ class AttentionControllerTest extends TestCase
 
         $attention->addNote('Test note', $this->adminUser->id);
 
-        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/notes");
+        $response = $this->getJson("/api/attentions/{$attention->radicado}/notes");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -561,9 +494,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Can get action history
-     */
     public function test_can_get_actions(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -573,7 +503,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson("/api/settings/peticiones/{$attention->radicado}/actions");
+        $response = $this->getJson("/api/attentions/{$attention->radicado}/actions");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -582,9 +512,6 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Can get statistics
-     */
     public function test_can_get_statistics(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -594,7 +521,7 @@ class AttentionControllerTest extends TestCase
             'category_id' => $this->category->id,
         ]);
 
-        $response = $this->getJson('/api/settings/peticiones/stats');
+        $response = $this->getJson('/api/attentions/stats');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -608,11 +535,10 @@ class AttentionControllerTest extends TestCase
             ]);
     }
 
-    /**
-     * Test: Can submit satisfaction survey
-     */
     public function test_can_submit_satisfaction_survey(): void
     {
+        $this->actingAs($this->adminUser, 'sanctum');
+
         $attention = Attention::factory()->create([
             'status' => AttentionStatus::RESOLVED,
             'type_id' => $this->type->id,
@@ -632,11 +558,10 @@ class AttentionControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test: Cannot submit satisfaction for unresolved peticiones
-     */
     public function test_cannot_submit_satisfaction_for_unresolved(): void
     {
+        $this->actingAs($this->adminUser, 'sanctum');
+
         $attention = Attention::factory()->create([
             'status' => AttentionStatus::IN_PROCESS,
             'type_id' => $this->type->id,
@@ -654,12 +579,9 @@ class AttentionControllerTest extends TestCase
     // AUTHORIZATION TESTS
     // ========================================================================
 
-    /**
-     * Test: Requires authentication for settings endpoints
-     */
     public function test_requires_authentication_for_admin_endpoints(): void
     {
-        $response = $this->getJson('/api/settings/peticiones');
+        $response = $this->getJson('/api/attentions');
 
         $response->assertStatus(401);
     }

@@ -88,7 +88,7 @@
                                 <td class="text-end">{{ number_format($row->samples) }}</td>
                                 <td class="text-end">{{ $avg }}{{ $unit }}</td>
                                 <td class="text-end">
-                                    <a href="{{ route('setting.seo.web-vitals.show', ['path' => ltrim($row->url_path, '/')]) }}"
+                                    <a href="{{ route('settings.seo.web-vitals.show', ['path' => ltrim($row->url_path, '/')]) }}"
                                        class="btn btn-sm btn-outline-secondary">Ver detalle</a>
                                 </td>
                             </tr>

@@ -16,23 +16,18 @@ class LocaleController extends Controller
 {
     public function index(): View
     {
-        $locales = Locale::query()->ordered()->paginate(20);
+        $locales = Locale::query()->ordered()->get();
 
-        $statsRaw = Locale::query()
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
-            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive')
-            ->selectRaw('MAX(CASE WHEN is_default = 1 THEN name END) as default_name')
-            ->first();
-
-        $stats = [
-            'total' => (int) $statsRaw->total,
-            'active' => (int) $statsRaw->active,
-            'inactive' => (int) $statsRaw->inactive,
-            'default' => $statsRaw->default_name ?? '—',
+        $settings = [
+            'hide_default_from_url' => setting('locales.hide_default_from_url', '0'),
+            'language_display' => setting('locales.language_display', 'flags_names'),
+            'selector_type' => setting('locales.selector_type', 'dropdown'),
+            'auto_detect' => setting('locales.auto_detect', '0'),
         ];
 
-        return view('locales::locales.index', compact('locales', 'stats'));
+        $presetLanguages = $this->presetLanguages();
+
+        return view('locales::locales.index', compact('locales', 'settings', 'presetLanguages'));
     }
 
     public function bulkAction(Request $request): JsonResponse
@@ -125,6 +120,27 @@ class LocaleController extends Controller
         return redirect()->route('locales.index')->with('success', 'Idioma eliminado correctamente.');
     }
 
+    public function storeSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'hide_default_from_url' => ['boolean'],
+            'language_display' => ['required', 'in:flags_names,flag,name'],
+            'selector_type' => ['required', 'in:dropdown,list'],
+            'auto_detect' => ['boolean'],
+        ]);
+
+        updateSettings([
+            'locales.hide_default_from_url' => $request->has('hide_default_from_url') ? '1' : '0',
+            'locales.language_display' => $request->input('language_display', 'flags_names'),
+            'locales.selector_type' => $request->input('selector_type', 'dropdown'),
+            'locales.auto_detect' => $request->has('auto_detect') ? '1' : '0',
+        ]);
+
+        LocaleService::clearCache();
+
+        return redirect()->route('locales.index', ['tab' => 'config'])->with('success', 'Ajustes guardados.');
+    }
+
     public function setDefault(Locale $locale): JsonResponse
     {
         Locale::query()->where('is_default', true)->update(['is_default' => false]);
@@ -147,5 +163,28 @@ class LocaleController extends Controller
         LocaleService::clearCache();
 
         return response()->json(['success' => true, 'is_active' => $locale->is_active]);
+    }
+
+    /**
+     * @return array<string, array{name: string, native_name: string, code: string, language_code: string, flag: string, rtl: bool}>
+     */
+    private function presetLanguages(): array
+    {
+        return [
+            'ar' => ['name' => 'Arabic',     'native_name' => 'العربية',    'code' => 'ar', 'language_code' => 'ar',    'flag' => '🇸🇦', 'rtl' => true],
+            'zh' => ['name' => 'Chinese',    'native_name' => '中文',       'code' => 'zh', 'language_code' => 'zh_CN', 'flag' => '🇨🇳', 'rtl' => false],
+            'nl' => ['name' => 'Dutch',      'native_name' => 'Nederlands', 'code' => 'nl', 'language_code' => 'nl',    'flag' => '🇳🇱', 'rtl' => false],
+            'en' => ['name' => 'English',    'native_name' => 'English',    'code' => 'en', 'language_code' => 'en',    'flag' => '🇺🇸', 'rtl' => false],
+            'fr' => ['name' => 'French',     'native_name' => 'Français',   'code' => 'fr', 'language_code' => 'fr',    'flag' => '🇫🇷', 'rtl' => false],
+            'de' => ['name' => 'German',     'native_name' => 'Deutsch',    'code' => 'de', 'language_code' => 'de',    'flag' => '🇩🇪', 'rtl' => false],
+            'it' => ['name' => 'Italian',    'native_name' => 'Italiano',   'code' => 'it', 'language_code' => 'it',    'flag' => '🇮🇹', 'rtl' => false],
+            'ja' => ['name' => 'Japanese',   'native_name' => '日本語',     'code' => 'ja', 'language_code' => 'ja',    'flag' => '🇯🇵', 'rtl' => false],
+            'ko' => ['name' => 'Korean',     'native_name' => '한국어',     'code' => 'ko', 'language_code' => 'ko',    'flag' => '🇰🇷', 'rtl' => false],
+            'pl' => ['name' => 'Polish',     'native_name' => 'Polski',     'code' => 'pl', 'language_code' => 'pl',    'flag' => '🇵🇱', 'rtl' => false],
+            'pt' => ['name' => 'Portuguese', 'native_name' => 'Português',  'code' => 'pt', 'language_code' => 'pt_BR', 'flag' => '🇧🇷', 'rtl' => false],
+            'ru' => ['name' => 'Russian',    'native_name' => 'Русский',    'code' => 'ru', 'language_code' => 'ru',    'flag' => '🇷🇺', 'rtl' => false],
+            'es' => ['name' => 'Spanish',    'native_name' => 'Español',    'code' => 'es', 'language_code' => 'es',    'flag' => '🇪🇸', 'rtl' => false],
+            'tr' => ['name' => 'Turkish',    'native_name' => 'Türkçe',     'code' => 'tr', 'language_code' => 'tr',    'flag' => '🇹🇷', 'rtl' => false],
+        ];
     }
 }

@@ -13,7 +13,7 @@ class SeoKeywordTrackingTest extends TestCase
         $user = $this->createUser(['Seo.metas.index', 'Seo.metas.update']);
 
         $this->actingAs($user)
-            ->patchJson(route('setting.seo.metas.inline-update', $meta), [
+            ->patchJson(route('settings.seo.metas.inline-update', $meta), [
                 'field' => 'target_keyword',
                 'value' => 'test keyword',
             ])
@@ -29,7 +29,7 @@ class SeoKeywordTrackingTest extends TestCase
         $user = $this->createUser(['Seo.metas.index', 'Seo.metas.update']);
 
         $this->actingAs($user)
-            ->patchJson(route('setting.seo.metas.inline-update', $meta), [
+            ->patchJson(route('settings.seo.metas.inline-update', $meta), [
                 'field' => 'robots',  // not in allowed fields
                 'value' => 'noindex',
             ])
@@ -44,7 +44,7 @@ class SeoKeywordTrackingTest extends TestCase
         $user = $this->createUser(['Seo.dashboard.view', 'Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.dashboard'))
+            ->get(route('settings.seo.dashboard'))
             ->assertOk()
             ->assertSee('same keyword');
     }

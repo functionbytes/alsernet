@@ -4,6 +4,8 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Helpdesk\Http\Requests\StoreCustomerRequest;
+use Modules\Helpdesk\Http\Requests\UpdateCustomerRequest;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\CustomerStatsService;
 
@@ -68,18 +70,9 @@ class CustomersController extends Controller
     /**
      * Store a newly created customer in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)
     {
-        $this->authorize('create', Customer::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:helpdesk_customers,email',
-            'phone' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:2',
-            'language' => 'nullable|string|max:5',
-            'timezone' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $customer = Customer::create($validated);
 
@@ -122,19 +115,9 @@ class CustomersController extends Controller
     /**
      * Update the specified customer in storage.
      */
-    public function update(Request $request, Customer $customer)
+    public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $this->authorize('update', $customer);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => "required|email|unique:helpdesk_customers,email,{$customer->id}",
-            'phone' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:2',
-            'language' => 'nullable|string|max:5',
-            'timezone' => 'nullable|string',
-            'internal_notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $customer->update($validated);
 

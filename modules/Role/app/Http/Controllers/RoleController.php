@@ -25,7 +25,12 @@ class RoleController extends Controller
 {
     public function __construct(
         private readonly ActivePermissionService $activePermissionService,
-    ) {}
+    ) {
+        $this->middleware('can:roles.view')->only(['index', 'show', 'showPermissions', 'showModules', 'showUsers', 'compare', 'export', 'showPermissionMatrix']);
+        $this->middleware('can:roles.create')->only(['create', 'store', 'duplicate', 'clone']);
+        $this->middleware('can:roles.edit')->only(['edit', 'update', 'updatePermissions', 'assignUsers', 'removeUser', 'updateModules', 'copyPermissionsFrom', 'bulkRemoveUsers']);
+        $this->middleware('can:roles.delete')->only(['destroy', 'bulkAction']);
+    }
 
     /**
      * Display a listing of roles

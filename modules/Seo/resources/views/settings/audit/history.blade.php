@@ -22,7 +22,7 @@
                                 Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('setting.seo.audit.index') }}">Volver a auditoría</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.audit.index') }}">Volver a auditoría</a>
                                 <div class="dropdown-divider"></div>
                                 <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#clear-modal">Limpiar todo</button>
                             </div>
@@ -75,7 +75,7 @@
 
             {{-- Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.audit.history') }}" id="filter-form">
+                <form method="GET" action="{{ route('settings.seo.audit.history') }}" id="filter-form">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -100,7 +100,7 @@
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request('search') || request('grade'))
-                                <a href="{{ route('setting.seo.audit.history') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.audit.history') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -172,7 +172,7 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     @if($log->seoMeta)
                                                         <li>
-                                                            <a class="dropdown-item" href="{{ route('setting.seo.audit.history.meta', $log->seoMeta) }}">
+                                                            <a class="dropdown-item" href="{{ route('settings.seo.audit.history.meta', $log->seoMeta) }}">
                                                                 Ver historial de meta
                                                             </a>
                                                         </li>
@@ -183,7 +183,7 @@
                                                            href="#"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.audit.history.destroy', $log) }}"
+                                                           data-url="{{ route('settings.seo.audit.history.destroy', $log) }}"
                                                            data-title="Eliminar auditoría: {{ $log->url }}">
                                                             Eliminar
                                                         </a>
@@ -217,7 +217,7 @@
                                 @endif
                             </p>
                             @if(!request('search') && !request('grade'))
-                                <a href="{{ route('setting.seo.audit.index') }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('settings.seo.audit.index') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-search me-1"></i> Realizar primera auditoría
                                 </a>
                             @endif
@@ -281,7 +281,7 @@
                     <h4 class="mb-2">Limpiar todo el historial</h4>
                     <p class="text-muted mb-4">Se eliminarán todos los registros de auditoría. Esta acción no se puede deshacer.</p>
                     <div class="d-grid gap-2">
-                        <form method="POST" action="{{ route('setting.seo.audit.history.clear') }}">
+                        <form method="POST" action="{{ route('settings.seo.audit.history.clear') }}">
                             @csrf
                             <button type="submit" class="btn btn-danger w-100">
                                 <i class="fas fa-trash me-2"></i> Confirmar y limpiar
@@ -337,7 +337,7 @@ $(document).ready(function () {
         const doAction = function () {
             $btn.prop('disabled', true).text('Procesando...');
             $.ajax({
-                url: '{{ route("setting.seo.audit.history.bulk-action") }}',
+                url: '{{ route("settings.seo.audit.history.bulk-action") }}',
                 method: 'POST',
                 data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
                 contentType: 'application/json',

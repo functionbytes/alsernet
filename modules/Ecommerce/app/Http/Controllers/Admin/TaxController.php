@@ -14,12 +14,12 @@ class TaxController extends Controller
     {
         $taxes = Tax::query()->paginate(20);
 
-        return view('ecommerce::admin.taxes.index', compact('taxes'));
+        return view('ecommerce::taxes.index', compact('taxes'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.taxes.create');
+        return view('ecommerce::taxes.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -38,7 +38,9 @@ class TaxController extends Controller
 
     public function edit(Tax $tax): View
     {
-        return view('ecommerce::admin.taxes.edit', compact('tax'));
+        $tax->load('rules');
+
+        return view('ecommerce::taxes.edit', compact('tax'));
     }
 
     public function update(Request $request, Tax $tax): RedirectResponse

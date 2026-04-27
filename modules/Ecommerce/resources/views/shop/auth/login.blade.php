@@ -39,6 +39,18 @@
 
                             <button type="submit" class="btn btn-primary w-100">Iniciar sesion</button>
                         </form>
+
+                        <div class="text-center my-3">
+                            <span class="text-muted small">o continua con</span>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('ecommerce.social.redirect', 'google') }}" class="btn btn-outline-danger">
+                                <i class="fab fa-google me-2"></i>Iniciar sesion con Google
+                            </a>
+                            <a href="{{ route('ecommerce.social.redirect', 'facebook') }}" class="btn btn-outline-primary">
+                                <i class="fab fa-facebook-f me-2"></i>Iniciar sesion con Facebook
+                            </a>
+                        </div>
                     </div>
                     <div class="card-footer text-center">
                         <small class="text-muted">No tienes cuenta? <a href="{{ route('ecommerce.register') }}">Registrate</a></small>

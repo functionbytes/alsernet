@@ -2,17 +2,25 @@
 
 namespace Modules\Ecommerce\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 use Modules\Ecommerce\Database\Factories\ProductFactory;
 use Modules\Ecommerce\Enums\ProductStatus;
+use Modules\Ecommerce\Traits\HasTranslations;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
     use HasFactory;
+    use HasTranslations;
+    use LogsActivity;
+    use Searchable;
 
     protected $table = 'ecommerce_products';
 
@@ -52,12 +60,39 @@ class Product extends Model
         'cost_per_item',
         'minimum_order_quantity',
         'maximum_order_quantity',
+        'label_id',
+        'product_type',
+        'meta_title',
+        'meta_description',
+        'is_subscription',
+        'subscription_interval',
+        'subscription_discount_percent',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'name',
+                'sku',
+                'price',
+                'sale_price',
+                'quantity',
+                'status',
+                'brand_id',
+                'meta_title',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ecommerce_product');
+    }
 
     protected function casts(): array
     {
         return [
             'status' => ProductStatus::class,
+            'images' => 'array',
+            'product_type' => 'string',
             'allow_checkout_when_out_of_stock' => 'boolean',
             'with_storehouse_management' => 'boolean',
             'is_featured' => 'boolean',
@@ -72,6 +107,40 @@ class Product extends Model
             'weight' => 'decimal:2',
             'cost_per_item' => 'decimal:2',
         ];
+    }
+
+    public function searchableAs(): string
+    {
+        return 'ecommerce_products';
+    }
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'sku' => $this->sku ?? '',
+            'description' => strip_tags($this->description ?? ''),
+            'meta_title' => $this->meta_title ?? '',
+            'meta_description' => $this->meta_description ?? '',
+            'brand_name' => $this->brand?->name ?? '',
+            'category_names' => $this->categories->pluck('name')->implode(' '),
+        ];
+    }
+
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === ProductStatus::PUBLISHED && ! $this->is_variation;
+    }
+
+    protected function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query->with(['brand', 'categories']);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(ProductFile::class);
     }
 
     public function brand(): BelongsTo
@@ -104,9 +173,45 @@ class Product extends Model
         return $this->belongsToMany(ProductCollection::class, 'ecommerce_product_collection_products', 'product_id', 'product_collection_id');
     }
 
+    public function label(): BelongsTo
+    {
+        return $this->belongsTo(ProductLabel::class)->withDefault();
+    }
+
+    public function attributeSets(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductAttributeSet::class, 'ecommerce_product_with_attribute_set', 'product_id', 'attribute_set_id');
+    }
+
+    public function specificationTables(): BelongsToMany
+    {
+        return $this->belongsToMany(SpecificationTable::class, 'ecommerce_product_specification_tables', 'product_id', 'table_id');
+    }
+
+    public function options(): HasMany
+    {
+        return $this->hasMany(ProductOption::class)->orderBy('order');
+    }
+
     public function variations(): HasMany
     {
         return $this->hasMany(ProductVariation::class);
+    }
+
+    public function crossSales(): BelongsToMany
+    {
+        return $this->belongsToMany(static::class, 'ecommerce_product_cross_sale_relations', 'from_product_id', 'to_product_id');
+    }
+
+    public function relatedProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(static::class, 'ecommerce_product_related_relations', 'from_product_id', 'to_product_id');
+    }
+
+    public function specificationAttributes(): BelongsToMany
+    {
+        return $this->belongsToMany(SpecificationAttribute::class, 'ecommerce_product_specification_attribute', 'product_id', 'attribute_id')
+            ->withPivot(['value', 'hidden', 'order']);
     }
 
     public function getFinalPriceAttribute(): float

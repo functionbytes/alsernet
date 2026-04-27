@@ -131,7 +131,7 @@ class SchemaOrgController extends Controller
         ]);
 
         return redirect()
-            ->route('setting.seo.metas.edit', $meta)
+            ->route('settings.seo.metas.edit', $meta)
             ->with('success', 'Schema.org actualizado correctamente.');
     }
 

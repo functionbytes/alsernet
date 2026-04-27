@@ -74,12 +74,6 @@ class ReviewsPermissionsSeeder extends Seeder
             );
         }
 
-        // Manager gets settings.view (read-only settings)
-        $manager = Role::findByName('manager', 'web');
-        if ($manager) {
-            $manager->givePermissionTo('reviews.settings.view');
-        }
-
         // Manager - View, moderate, reply (no approval/publish)
         $manager = Role::findByName('manager', 'web');
         if ($manager) {
@@ -93,6 +87,7 @@ class ReviewsPermissionsSeeder extends Seeder
                 'reviews.templates.view',
                 'reviews.templates.create',
                 'reviews.templates.update',
+                'reviews.settings.view',
             ]);
         }
     }

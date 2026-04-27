@@ -77,7 +77,7 @@
 
             {{-- Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.404-logs.index') }}" id="filter-form">
+                <form method="GET" action="{{ route('settings.seo.404-logs.index') }}" id="filter-form">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -101,7 +101,7 @@
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request('search') || request('status'))
-                                <a href="{{ route('setting.seo.404-logs.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.404-logs.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -167,7 +167,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <form action="{{ route('setting.seo.404-logs.create-redirect', $log) }}" method="POST">
+                                                        <form action="{{ route('settings.seo.404-logs.create-redirect', $log) }}" method="POST">
                                                             @csrf
                                                             <button type="submit" class="dropdown-item">
                                                                 Crear redirect
@@ -180,7 +180,7 @@
                                                            href="#"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.404-logs.destroy', $log) }}"
+                                                           data-url="{{ route('settings.seo.404-logs.destroy', $log) }}"
                                                            data-title="Eliminar: {{ $log->path }}">
                                                             Eliminar
                                                         </a>
@@ -274,7 +274,7 @@
                     <h4 class="mb-2">Limpiar todos los registros 404</h4>
                     <p class="text-muted mb-4">Se eliminarán todos los registros de errores 404. Esta acción no se puede deshacer.</p>
                     <div class="d-grid gap-2">
-                        <form method="POST" action="{{ route('setting.seo.404-logs.clear') }}">
+                        <form method="POST" action="{{ route('settings.seo.404-logs.clear') }}">
                             @csrf
                             <button type="submit" class="btn btn-danger w-100">
                                 <i class="fas fa-trash me-2"></i> Confirmar y limpiar
@@ -380,7 +380,7 @@ $(document).ready(function () {
         $('#suggestModal').modal('show');
         $('#suggestions-body').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
 
-        $.get('{{ route("setting.seo.404-logs.suggest-redirects") }}', function (data) {
+        $.get('{{ route("settings.seo.404-logs.suggest-redirects") }}', function (data) {
             if (!data.suggestions || data.suggestions.length === 0) {
                 $('#suggestions-body').html('<p class="text-muted">No hay sugerencias disponibles. Asegúrate de tener páginas con URLs canónicas configuradas.</p>');
                 return;
@@ -433,7 +433,7 @@ $(document).ready(function () {
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...');
 
         $.ajax({
-            url: '{{ route("setting.seo.404-logs.bulk-create-redirects") }}',
+            url: '{{ route("settings.seo.404-logs.bulk-create-redirects") }}',
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
@@ -473,7 +473,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '{{ route("setting.seo.404-logs.bulk-create-redirects") }}',
+            url: '{{ route("settings.seo.404-logs.bulk-create-redirects") }}',
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
@@ -519,7 +519,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '{{ route("setting.seo.404-logs.bulk-action") }}',
+            url: '{{ route("settings.seo.404-logs.bulk-action") }}',
             method: 'POST',
             data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
             contentType: 'application/json',

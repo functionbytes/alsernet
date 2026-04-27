@@ -5,7 +5,8 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCategoryRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketCategoryRequest;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketGroup;
@@ -67,27 +68,9 @@ class TicketCategoriesController extends Controller
     /**
      * Store a newly created category.
      */
-    public function store(Request $request)
+    public function store(StoreTicketCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:helpdesk_ticket_categories,slug|regex:/^[a-z0-9_-]+$/',
-            'description' => 'nullable|string|max:1000',
-            'icon' => 'nullable|string|max:100',
-            'color' => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'default_sla_policy_id' => 'nullable|exists:helpdesk_ticket_sla_policies,id',
-            'custom_form_fields' => 'nullable|json',
-            'required_fields' => 'nullable|array',
-            'active' => 'nullable|boolean',
-            'groups' => 'nullable|array',
-            'groups.*' => 'exists:helpdesk_ticket_groups,id',
-            'default_group' => 'nullable|exists:helpdesk_ticket_groups,id',
-            'canned_replies' => 'nullable|array',
-            'canned_replies.*' => 'exists:helpdesk_ticket_canned_replies,id',
-        ], [
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números, guiones y guiones bajos.',
-            'color.regex' => 'El color debe ser un código hexadecimal válido (#RRGGBB).',
-        ]);
+        $validated = $request->validated();
 
         // Auto-generate slug if not provided
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
@@ -142,33 +125,9 @@ class TicketCategoriesController extends Controller
     /**
      * Update the specified category.
      */
-    public function update(Request $request, TicketCategory $category)
+    public function update(UpdateTicketCategoryRequest $request, TicketCategory $category)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => [
-                'nullable',
-                'string',
-                'max:255',
-                'regex:/^[a-z0-9_-]+$/',
-                Rule::unique('helpdesk_ticket_categories', 'slug')->ignore($category->id),
-            ],
-            'description' => 'nullable|string|max:1000',
-            'icon' => 'nullable|string|max:100',
-            'color' => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'default_sla_policy_id' => 'nullable|exists:helpdesk_ticket_sla_policies,id',
-            'custom_form_fields' => 'nullable|json',
-            'required_fields' => 'nullable|array',
-            'active' => 'nullable|boolean',
-            'groups' => 'nullable|array',
-            'groups.*' => 'exists:helpdesk_ticket_groups,id',
-            'default_group' => 'nullable|exists:helpdesk_ticket_groups,id',
-            'canned_replies' => 'nullable|array',
-            'canned_replies.*' => 'exists:helpdesk_ticket_canned_replies,id',
-        ], [
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números, guiones y guiones bajos.',
-            'color.regex' => 'El color debe ser un código hexadecimal válido (#RRGGBB).',
-        ]);
+        $validated = $request->validated();
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['active'] = $request->boolean('active');

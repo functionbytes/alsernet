@@ -14,7 +14,7 @@ class TicketSearchController extends Controller
 {
     public function index(Request $request): View
     {
-        $this->authorize('manager.helpdesk.tickets.index');
+        $this->authorize('helpdesk.tickets.view');
 
         $query = Ticket::query()->with(['customer', 'category', 'status', 'assignee']);
 

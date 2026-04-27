@@ -4,7 +4,6 @@ namespace Modules\Mailrelay\Http\Controllers\Settings;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +11,8 @@ use Illuminate\View\View;
 use Modules\Mailrelay\Entities\MailrelayGroup;
 use Modules\Mailrelay\Entities\MailrelaySettings;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreGroupRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateGroupRequest;
 
 class GroupController extends Controller
 {
@@ -42,17 +43,10 @@ class GroupController extends Controller
     /**
      * Store a newly created group.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreGroupRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.groups.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'mailrelay_group_id' => 'nullable|integer',
-                'description' => 'nullable|string',
-                'sync_enabled' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             MailrelayGroup::create($validated);
 
@@ -86,19 +80,13 @@ class GroupController extends Controller
     /**
      * Update the specified group.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateGroupRequest $request, int $id): RedirectResponse
     {
         Gate::authorize('mailrelay.settings.groups.edit');
 
         try {
             $group = MailrelayGroup::findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'mailrelay_group_id' => 'nullable|integer',
-                'description' => 'nullable|string',
-                'sync_enabled' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             $group->update($validated);
 

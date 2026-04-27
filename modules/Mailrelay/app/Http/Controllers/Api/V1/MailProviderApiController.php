@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\MailProvider;
+use Modules\Mailrelay\Http\Requests\Api\V1\StoreMailProviderApiRequest;
 use Modules\Mailrelay\Http\Resources\V1\MailProviderResource;
 use Modules\Mailrelay\Services\ProviderManager;
 
@@ -59,20 +60,9 @@ class MailProviderApiController extends Controller
     /**
      * Store a newly created mail provider.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreMailProviderApiRequest $request): JsonResponse
     {
-        $this->authorize('create', MailProvider::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'driver' => 'required|string|in:mailrelay,mailtrap,sendgrid,aws_ses,postmark',
-            'credentials' => 'required|array',
-            'is_active' => 'boolean',
-            'is_default' => 'boolean',
-            'priority' => 'integer|min:0|max:100',
-            'limits' => 'nullable|array',
-            'metadata' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         try {
             // Test credentials before saving

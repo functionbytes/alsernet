@@ -6,7 +6,7 @@
     @include('core::components.alerts')
 
     <div class="mb-3">
-        <a href="{{ route('setting.seo.web-vitals.index') }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('settings.seo.web-vitals.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> Volver
         </a>
     </div>

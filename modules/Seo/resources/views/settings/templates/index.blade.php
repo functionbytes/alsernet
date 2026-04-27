@@ -16,7 +16,7 @@
                         <p class="small mb-0 text-muted">Define patrones de título y descripción para aplicar automáticamente a modelos</p>
                     </div>
                     <div>
-                        <a href="{{ route('setting.seo.templates.create') }}" class="btn btn-primary">
+                        <a href="{{ route('settings.seo.templates.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Nueva plantilla
                         </a>
                     </div>
@@ -95,7 +95,7 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-link p-0 border-0 toggle-active-btn"
                                                     data-id="{{ $template->id }}"
-                                                    data-url="{{ route('setting.seo.templates.toggle-active', $template) }}"
+                                                    data-url="{{ route('settings.seo.templates.toggle-active', $template) }}"
                                                     title="Cambiar estado">
                                                 @if($template->is_active)
                                                     <span class="badge bg-success text-white">Activo</span>
@@ -111,7 +111,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.templates.edit', $template) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.templates.edit', $template) }}">
                                                             Editar
                                                         </a>
                                                     </li>
@@ -128,7 +128,7 @@
                                                            href="#"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.templates.destroy', $template) }}"
+                                                           data-url="{{ route('settings.seo.templates.destroy', $template) }}"
                                                            data-title="Eliminar: {{ $template->name }}">
                                                             Eliminar
                                                         </a>
@@ -146,7 +146,7 @@
                         <i class="fas fa-file-code fa-4x text-muted opacity-50 mb-3"></i>
                         <h5 class="text-muted mb-2">No hay plantillas configuradas</h5>
                         <p class="text-muted mb-4">Crea una plantilla para aplicar patrones SEO automáticamente</p>
-                        <a href="{{ route('setting.seo.templates.create') }}" class="btn btn-primary">
+                        <a href="{{ route('settings.seo.templates.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Crear primera plantilla
                         </a>
                     </div>
@@ -242,7 +242,7 @@ $(document).ready(function () {
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
         $.ajax({
-            url: '{{ route('setting.seo.templates.bulk-action') }}',
+            url: '{{ route('settings.seo.templates.bulk-action') }}',
             method: 'POST',
             data: JSON.stringify({ action, ids, _token: $('meta[name="csrf-token"]').attr('content') }),
             contentType: 'application/json',

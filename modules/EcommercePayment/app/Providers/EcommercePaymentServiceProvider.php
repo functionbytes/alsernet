@@ -7,6 +7,9 @@ use Illuminate\Support\ServiceProvider;
 use Modules\EcommercePayment\Console\Commands\CleanupPendingPaymentsCommand;
 use Modules\EcommercePayment\Models\Payment;
 use Modules\EcommercePayment\Policies\PaymentPolicy;
+use Modules\EcommercePayment\Services\BankTransferGateway;
+use Modules\EcommercePayment\Services\CodGateway;
+use Modules\EcommercePayment\Services\GatewayRegistry;
 use Modules\EcommercePayment\Services\PaymentGatewayManager;
 use Modules\EcommercePayment\Services\WompiGateway;
 use Modules\Theme\Services\NavService;
@@ -42,9 +45,21 @@ class EcommercePaymentServiceProvider extends ServiceProvider
     {
         $this->app->register(RouteServiceProvider::class);
 
+        $this->app->singleton(GatewayRegistry::class, fn () => new GatewayRegistry);
+
         $this->app->singleton(PaymentGatewayManager::class, function ($app) {
             $manager = new PaymentGatewayManager($app);
+
+            // Built-in gateways — always available regardless of modules
+            $manager->register('cod', CodGateway::class);
+            $manager->register('bank_transfer', BankTransferGateway::class);
             $manager->register('wompi', WompiGateway::class);
+
+            // Auto-discover gateways from installed modules
+            // Any module with "type": "payment-gateway" in its module.json is registered here
+            foreach ($app->make(GatewayRegistry::class)->discover() as $channel => $class) {
+                $manager->register($channel, $class);
+            }
 
             return $manager;
         });
@@ -97,6 +112,7 @@ class EcommercePaymentServiceProvider extends ServiceProvider
     {
         NavService::addItemsToSection('ecommerce', 'Ecommerce', [
             ['label' => 'Pagos', 'route' => 'ecommerce-payment.payments.index'],
+            ['label' => 'Métodos de pago', 'route' => 'ecommerce-payment.methods.index'],
             ['label' => 'Configuracion de pagos', 'route' => 'ecommerce-payment.settings'],
         ]);
     }

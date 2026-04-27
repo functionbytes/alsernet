@@ -14,7 +14,7 @@ class TicketTemplatesController extends Controller
 {
     public function index(): View
     {
-        $this->authorize('manager.helpdesk.tickets.index');
+        $this->authorize('helpdesk.tickets.view');
 
         $templates = TicketTemplate::query()
             ->with(['category', 'priority'])
@@ -36,7 +36,7 @@ class TicketTemplatesController extends Controller
 
     public function create(): View
     {
-        $this->authorize('manager.helpdesk.tickets.create');
+        $this->authorize('helpdesk.tickets.create');
 
         $categories = TicketCategory::active()->ordered()->get();
         $priorities = Priority::where('is_active', true)->orderBy('level')->get();
@@ -50,7 +50,7 @@ class TicketTemplatesController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.create');
+        $this->authorize('helpdesk.tickets.create');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -73,7 +73,7 @@ class TicketTemplatesController extends Controller
 
     public function edit(TicketTemplate $ticketTemplate): View
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $categories = TicketCategory::active()->ordered()->get();
         $priorities = Priority::where('is_active', true)->orderBy('level')->get();
@@ -87,7 +87,7 @@ class TicketTemplatesController extends Controller
 
     public function update(Request $request, TicketTemplate $ticketTemplate): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -110,7 +110,7 @@ class TicketTemplatesController extends Controller
 
     public function destroy(TicketTemplate $ticketTemplate): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.delete');
+        $this->authorize('helpdesk.tickets.delete');
 
         $ticketTemplate->delete();
 

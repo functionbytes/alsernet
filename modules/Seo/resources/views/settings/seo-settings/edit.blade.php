@@ -5,7 +5,7 @@
 @section('content')
     @include('core::components.alerts')
 
-    <form method="POST" action="{{ route('setting.seo.settings.update') }}">
+    <form method="POST" action="{{ route('settings.seo.settings.update') }}">
         @csrf
 
         <div class="row g-4">
@@ -212,7 +212,7 @@
 
                 <div class="d-flex justify-content-between">
                     <div>
-                        <a href="{{ route('setting.seo.settings.export') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('settings.seo.settings.export') }}" class="btn btn-outline-secondary">
                             Exportar JSON
                         </a>
                         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importConfigModal">
@@ -244,12 +244,12 @@
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-2 border-bottom pb-2">Accesos rápidos</h6>
                         <ul class="list-unstyled mb-0 small">
-                            <li class="mb-1"><a href="{{ route('setting.seo.dashboard') }}">Dashboard SEO</a></li>
-                            <li class="mb-1"><a href="{{ route('setting.seo.robots.edit') }}">robots.txt</a></li>
-                            <li class="mb-1"><a href="{{ route('setting.seo.llms.edit') }}">llms.txt</a></li>
-                            <li class="mb-1"><a href="{{ route('setting.seo.indexnow.index') }}">IndexNow</a></li>
-                            <li class="mb-1"><a href="{{ route('setting.seo.web-vitals.index') }}">Core Web Vitals</a></li>
-                            <li><a href="{{ route('setting.seo.verification.index') }}">Códigos de verificación</a></li>
+                            <li class="mb-1"><a href="{{ route('settings.seo.dashboard') }}">Dashboard SEO</a></li>
+                            <li class="mb-1"><a href="{{ route('settings.seo.robots.edit') }}">robots.txt</a></li>
+                            <li class="mb-1"><a href="{{ route('settings.seo.llms.edit') }}">llms.txt</a></li>
+                            <li class="mb-1"><a href="{{ route('settings.seo.indexnow.index') }}">IndexNow</a></li>
+                            <li class="mb-1"><a href="{{ route('settings.seo.web-vitals.index') }}">Core Web Vitals</a></li>
+                            <li><a href="{{ route('settings.seo.verification.index') }}">Códigos de verificación</a></li>
                         </ul>
                     </div>
                 </div>
@@ -261,7 +261,7 @@
     <div class="modal fade" id="importConfigModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form method="POST" action="{{ route('setting.seo.settings.import') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('settings.seo.settings.import') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Importar configuración SEO</h5>

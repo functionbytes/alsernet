@@ -19,12 +19,11 @@ class TaxService
 
         $rule = TaxRule::query()
             ->where('tax_id', $tax->id)
-            ->where(function ($q) use ($country) {
-                $q->whereNull('country')->orWhere('country', $country);
+            ->where('price_from', '<=', $amount)
+            ->where(function ($q) use ($amount) {
+                $q->whereNull('price_to')->orWhere('price_to', '>=', $amount);
             })
-            ->where(function ($q) use ($state) {
-                $q->whereNull('state')->orWhere('state', $state);
-            })
+            ->orderBy('order')
             ->first();
 
         $percentage = $rule ? $rule->percentage : $tax->percentage;

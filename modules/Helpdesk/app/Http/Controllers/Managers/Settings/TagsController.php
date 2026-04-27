@@ -9,6 +9,14 @@ use Modules\Helpdesk\Models\ConversationTag;
 
 class TagsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tags.view')->only(['index', 'create', 'edit']);
+        $this->middleware('can:helpdesk.tags.create')->only(['store']);
+        $this->middleware('can:helpdesk.tags.update')->only(['update']);
+        $this->middleware('can:helpdesk.tags.delete')->only(['destroy']);
+    }
+
     /**
      * Display a listing of tags.
      */

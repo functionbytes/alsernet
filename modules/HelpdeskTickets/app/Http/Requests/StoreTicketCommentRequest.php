@@ -12,10 +12,7 @@ class StoreTicketCommentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $ticket = $this->route('ticket');
-
-        // User must be the ticket owner, assigned agent, or an admin
-        return $this->user()->can('update', $ticket);
+        return $this->user()?->can('helpdesk.tickets.update') ?? false;
     }
 
     /**

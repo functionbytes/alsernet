@@ -5,7 +5,8 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketStatusRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketStatusRequest;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 
 class TicketStatusesController extends Controller
@@ -53,20 +54,9 @@ class TicketStatusesController extends Controller
     /**
      * Store a newly created status.
      */
-    public function store(Request $request)
+    public function store(StoreTicketStatusRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:helpdesk_ticket_statuses,slug|regex:/^[a-z0-9_-]+$/',
-            'color' => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'description' => 'nullable|string|max:1000',
-            'is_open' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-            'stops_sla_timer' => 'nullable|boolean',
-        ], [
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números, guiones y guiones bajos.',
-            'color.regex' => 'El color debe ser un código hexadecimal válido (#RRGGBB).',
-        ]);
+        $validated = $request->validated();
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['is_open'] = $request->boolean('is_open', true);
@@ -90,26 +80,9 @@ class TicketStatusesController extends Controller
     /**
      * Update the specified status.
      */
-    public function update(Request $request, TicketStatus $status)
+    public function update(UpdateTicketStatusRequest $request, TicketStatus $status)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => [
-                'nullable',
-                'string',
-                'max:255',
-                'regex:/^[a-z0-9_-]+$/',
-                Rule::unique('helpdesk_ticket_statuses', 'slug')->ignore($status->id),
-            ],
-            'color' => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'description' => 'nullable|string|max:1000',
-            'is_open' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-            'stops_sla_timer' => 'nullable|boolean',
-        ], [
-            'slug.regex' => 'El slug solo puede contener letras minúsculas, números, guiones y guiones bajos.',
-            'color.regex' => 'El color debe ser un código hexadecimal válido (#RRGGBB).',
-        ]);
+        $validated = $request->validated();
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['is_open'] = $request->boolean('is_open');

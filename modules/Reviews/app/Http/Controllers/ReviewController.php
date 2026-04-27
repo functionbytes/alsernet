@@ -13,8 +13,16 @@ use Illuminate\View\View;
 use Modules\Locales\Services\LocaleService;
 use Modules\Reviews\Enums\ReplyStatus;
 use Modules\Reviews\Http\Requests\BulkModerationRequest;
+use Modules\Reviews\Http\Requests\BulkReplyIdsRequest;
+use Modules\Reviews\Http\Requests\GenerateAiReplyRequest;
+use Modules\Reviews\Http\Requests\RejectReplyRequest;
+use Modules\Reviews\Http\Requests\ReportReviewRequest;
+use Modules\Reviews\Http\Requests\RequestReplyApprovalRequest;
 use Modules\Reviews\Http\Requests\ReviewFilterRequest;
+use Modules\Reviews\Http\Requests\TranslateReviewRequest;
 use Modules\Reviews\Http\Requests\UpdateModerationRequest;
+use Modules\Reviews\Http\Requests\UpdateReplyInlineRequest;
+use Modules\Reviews\Http\Requests\VelocityDataRequest;
 use Modules\Reviews\Jobs\ExportReviewsJob;
 use Modules\Reviews\Models\Review;
 use Modules\Reviews\Models\ReviewAiSetting;
@@ -170,15 +178,11 @@ class ReviewController extends Controller
         return view('reviews::reviews.show', compact('review', 'aiEnabled', 'templates', 'activeLocales'));
     }
 
-    public function generateAiReply(Request $request, Review $review): JsonResponse
+    public function generateAiReply(GenerateAiReplyRequest $request, Review $review): JsonResponse
     {
         $this->authorize('view', $review);
 
-        $validated = $request->validate([
-            'tone' => ['nullable', 'string', 'in:professional,friendly,apologetic,grateful,concise'],
-        ]);
-
-        $tone = $validated['tone'] ?? 'professional';
+        $tone = $request->validated('tone') ?? 'professional';
 
         $review->load('location');
 
@@ -377,16 +381,11 @@ class ReviewController extends Controller
         }, basename($file));
     }
 
-    public function bulkApproveReplies(Request $request): JsonResponse
+    public function bulkApproveReplies(BulkReplyIdsRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Review::class);
 
-        $validated = $request->validate([
-            'reply_ids' => ['required', 'array', 'max:50'],
-            'reply_ids.*' => ['integer'],
-        ]);
-
-        $result = $this->replyService->bulkApprove($validated['reply_ids'], auth()->user());
+        $result = $this->replyService->bulkApprove($request->validated('reply_ids'), auth()->user());
 
         return response()->json([
             'success' => true,
@@ -395,16 +394,11 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function bulkPublishReplies(Request $request): JsonResponse
+    public function bulkPublishReplies(BulkReplyIdsRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Review::class);
 
-        $validated = $request->validate([
-            'reply_ids' => ['required', 'array', 'max:50'],
-            'reply_ids.*' => ['integer'],
-        ]);
-
-        $result = $this->replyService->bulkPublish($validated['reply_ids'], auth()->user());
+        $result = $this->replyService->bulkPublish($request->validated('reply_ids'), auth()->user());
 
         return response()->json([
             'success' => true,
@@ -445,13 +439,9 @@ class ReviewController extends Controller
         return response()->json(['success' => true, 'data' => $data]);
     }
 
-    public function requestReplyApproval(Request $request, ReviewReply $reply): JsonResponse
+    public function requestReplyApproval(RequestReplyApprovalRequest $request, ReviewReply $reply): JsonResponse
     {
         $this->authorize('update', $reply);
-
-        $validated = $request->validate([
-            'note' => ['nullable', 'string', 'max:500'],
-        ]);
 
         if ($reply->created_by !== auth()->id() && ! auth()->user()->hasRole('super-admin')) {
             return response()->json([
@@ -461,7 +451,7 @@ class ReviewController extends Controller
         }
 
         try {
-            $reply = $this->replyService->requestApproval($reply, auth()->user(), $validated['note'] ?? '');
+            $reply = $this->replyService->requestApproval($reply, auth()->user(), $request->validated('note') ?? '');
 
             return response()->json([
                 'success' => true,
@@ -496,7 +486,7 @@ class ReviewController extends Controller
         }
     }
 
-    public function rejectReply(Request $request, ReviewReply $reply): JsonResponse
+    public function rejectReply(RejectReplyRequest $request, ReviewReply $reply): JsonResponse
     {
         if (! auth()->user()->can('reviews.replies.approve')) {
             return response()->json([
@@ -505,12 +495,8 @@ class ReviewController extends Controller
             ], 403);
         }
 
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
-
         try {
-            $reply = $this->replyService->rejectApproval($reply, auth()->user(), $validated['reason']);
+            $reply = $this->replyService->rejectApproval($reply, auth()->user(), $request->validated('reason'));
 
             return response()->json([
                 'success' => true,
@@ -556,12 +542,8 @@ class ReviewController extends Controller
         return view('reviews::replies.pending-approvals', compact('replies'));
     }
 
-    public function updateReplyInline(Request $request, ReviewReply $reply): JsonResponse
+    public function updateReplyInline(UpdateReplyInlineRequest $request, ReviewReply $reply): JsonResponse
     {
-        $validated = $request->validate([
-            'text' => ['required', 'string', 'max:4096'],
-        ]);
-
         $connectionUserId = $reply->review?->location?->connection?->user_id;
 
         if ($connectionUserId !== auth()->id() && ! auth()->user()->hasRole('super-admin')) {
@@ -579,7 +561,7 @@ class ReviewController extends Controller
         }
 
         try {
-            $reply = $this->replyService->updateDraft($reply, $validated['text'], auth()->user());
+            $reply = $this->replyService->updateDraft($reply, $request->validated('text'), auth()->user());
 
             return response()->json([
                 'success' => true,
@@ -594,13 +576,9 @@ class ReviewController extends Controller
         }
     }
 
-    public function reportReview(Request $request, Review $review): JsonResponse
+    public function reportReview(ReportReviewRequest $request, Review $review): JsonResponse
     {
         $this->authorize('view', $review);
-
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'in:SPAM,FAKE_REVIEW,HATE_SPEECH,HARASSMENT,OTHER'],
-        ]);
 
         $connectionUserId = $review->location?->connection?->user_id;
 
@@ -613,7 +591,7 @@ class ReviewController extends Controller
 
         $review->loadMissing('location.connection');
 
-        $reported = app(GoogleReviewService::class)->reportReview($review, $validated['reason']);
+        $reported = app(GoogleReviewService::class)->reportReview($review, $request->validated('reason'));
 
         if (! $reported) {
             return response()->json([
@@ -628,15 +606,10 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function velocityData(Request $request): JsonResponse
+    public function velocityData(VelocityDataRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'location_id' => ['nullable', 'integer', 'exists:review_google_locations,id'],
-            'days' => ['nullable', 'integer', 'in:30,60,90'],
-        ]);
-
-        $locationId = isset($validated['location_id']) ? (int) $validated['location_id'] : null;
-        $days = (int) ($validated['days'] ?? 90);
+        $locationId = $request->validated('location_id') ? (int) $request->validated('location_id') : null;
+        $days = (int) ($request->validated('days') ?? 90);
 
         $dashboardService = app(ReviewDashboardService::class);
 
@@ -650,15 +623,11 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function translate(Request $request, Review $review): JsonResponse
+    public function translate(TranslateReviewRequest $request, Review $review): JsonResponse
     {
         $this->authorize('view', $review);
 
-        $validated = $request->validate([
-            'target_lang' => ['nullable', 'string', 'size:2'],
-        ]);
-
-        $targetLang = strtoupper($validated['target_lang'] ?? config('reviews.general.deepl.target_language', 'ES'));
+        $targetLang = strtoupper($request->validated('target_lang') ?? config('reviews.general.deepl.target_language', 'ES'));
 
         $translationService = app(ReviewTranslationService::class);
         $result = $translationService->translateReview($review, $targetLang);
@@ -681,18 +650,14 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function updateTranslation(Request $request, Review $review, string $locale): JsonResponse
+    public function updateTranslation(UpdateTranslationRequest $request, Review $review, string $locale): JsonResponse
     {
         $this->authorize('update', $review);
-
-        $validated = $request->validate([
-            'translated_text' => ['required', 'string', 'max:5000'],
-        ]);
 
         $translation = ReviewTranslation::updateOrCreate(
             ['review_id' => $review->id, 'locale_code' => strtoupper($locale)],
             [
-                'translated_text' => $validated['translated_text'],
+                'translated_text' => $request->validated('translated_text'),
                 'translated_at' => now(),
             ]
         );

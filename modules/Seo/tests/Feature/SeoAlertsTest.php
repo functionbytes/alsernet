@@ -72,7 +72,7 @@ class SeoAlertsTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.alerts.index'))
+            ->get(route('settings.seo.alerts.index'))
             ->assertForbidden();
     }
 
@@ -83,7 +83,7 @@ class SeoAlertsTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.alerts.index'))
+            ->get(route('settings.seo.alerts.index'))
             ->assertOk()
             ->assertSee('Visible alert');
     }
@@ -94,7 +94,7 @@ class SeoAlertsTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.alerts.acknowledge', $alert))
+            ->post(route('settings.seo.alerts.acknowledge', $alert))
             ->assertRedirect();
 
         $this->assertNotNull($alert->fresh()->acknowledged_at);
@@ -108,7 +108,7 @@ class SeoAlertsTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.alerts.acknowledge-all'))
+            ->post(route('settings.seo.alerts.acknowledge-all'))
             ->assertRedirect();
 
         $this->assertEquals(0, SeoAlert::unacknowledged()->count());

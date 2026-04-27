@@ -17,7 +17,6 @@ class AttentionFactory extends Factory
     {
         return [
             'uid' => $this->faker->uuid(),
-            'radicado' => Attention::generateRadicado(),
             'type_id' => AttentionType::factory(),
             'category_id' => AttentionCategory::factory(),
             'sede_id' => AttentionSede::factory(),

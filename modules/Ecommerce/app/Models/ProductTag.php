@@ -5,6 +5,7 @@ namespace Modules\Ecommerce\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Str;
 
 class ProductTag extends Model
 {
@@ -14,9 +15,19 @@ class ProductTag extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $tag) {
+            if (empty($tag->slug)) {
+                $tag->slug = Str::slug($tag->name);
+            }
+        });
+    }
 
     public function products(): BelongsToMany
     {

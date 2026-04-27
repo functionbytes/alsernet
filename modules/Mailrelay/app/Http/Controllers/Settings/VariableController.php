@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\MailrelayVariable;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreVariableRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateVariableRequest;
 
 class VariableController extends Controller
 {
@@ -76,28 +78,10 @@ class VariableController extends Controller
     /**
      * Store a newly created variable.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreVariableRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.variables.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'variable_key' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:mailrelay_variables,variable_key',
-                    'regex:/^[A-Z_]+$/',
-                ],
-                'category' => 'required|in:system,customer,order,document,custom',
-                'module' => 'nullable|string|max:100',
-                'description' => 'nullable|string',
-                'example_value' => 'nullable|string|max:255',
-                'status' => 'in:active,inactive',
-                'is_system' => 'boolean',
-                'sort_order' => 'nullable|integer',
-            ]);
+            $validated = $request->validated();
 
             MailrelayVariable::create($validated);
 
@@ -131,30 +115,12 @@ class VariableController extends Controller
     /**
      * Update the specified variable.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateVariableRequest $request, int $id): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.variables.edit');
-
         try {
             $variable = MailrelayVariable::findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'variable_key' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:mailrelay_variables,variable_key,'.$id,
-                    'regex:/^[A-Z_]+$/',
-                ],
-                'category' => 'required|in:system,customer,order,document,custom',
-                'module' => 'nullable|string|max:100',
-                'description' => 'nullable|string',
-                'example_value' => 'nullable|string|max:255',
-                'status' => 'in:active,inactive',
-                'is_system' => 'boolean',
-                'sort_order' => 'nullable|integer',
-            ]);
+            $validated = $request->validated();
 
             $variable->update($validated);
 

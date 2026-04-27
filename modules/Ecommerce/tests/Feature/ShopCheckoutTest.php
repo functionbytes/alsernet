@@ -3,6 +3,7 @@
 namespace Modules\Ecommerce\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Core\Models\Setting;
 use Modules\Ecommerce\Models\Customer;
 use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Models\Product;
@@ -22,6 +23,7 @@ class ShopCheckoutTest extends TestCase
     {
         parent::setUp();
         $this->customer = Customer::factory()->create();
+        Setting::set('ecommerce_payment.cod.status', '1');
     }
 
     public function test_checkout_redirects_when_cart_is_empty(): void
@@ -66,11 +68,11 @@ class ShopCheckoutTest extends TestCase
                 'city' => 'Bogota',
                 'country' => 'Colombia',
                 'zip_code' => '11001',
-                'payment_method' => 'cash',
+                'payment_method' => 'cod',
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('ecommerce_orders', ['payment_method' => 'cash']);
+        $this->assertDatabaseHas('ecommerce_orders', ['payment_method' => 'cod']);
         $this->assertDatabaseHas('ecommerce_order_items', ['product_id' => $product->id, 'qty' => 2]);
         $this->assertDatabaseHas('ecommerce_order_histories', ['action' => 'create_order']);
         $this->assertDatabaseCount('ecommerce_carts', 0);
@@ -96,7 +98,7 @@ class ShopCheckoutTest extends TestCase
                 'address' => 'Calle 123',
                 'city' => 'Bogota',
                 'country' => 'Colombia',
-                'payment_method' => 'cash',
+                'payment_method' => 'cod',
             ]);
 
         $response->assertRedirect(route('cart.index'));
@@ -134,7 +136,7 @@ class ShopCheckoutTest extends TestCase
                 'address' => 'Calle 123',
                 'city' => 'Bogota',
                 'country' => 'Colombia',
-                'payment_method' => 'cash',
+                'payment_method' => 'cod',
             ]);
 
         $order = Order::query()->first();

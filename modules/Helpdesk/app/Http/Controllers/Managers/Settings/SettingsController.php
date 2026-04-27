@@ -3,11 +3,20 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Modules\Helpdesk\Http\Requests\UpdateAiSettingsRequest;
+use Modules\Helpdesk\Http\Requests\UpdateLivechatSettingsRequest;
+use Modules\Helpdesk\Http\Requests\UpdateTicketsSettingsRequest;
+use Modules\Helpdesk\Http\Requests\UpdateUploadingSettingsRequest;
 use Modules\Helpdesk\Models\Setting;
 
 class SettingsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.settings.view')->only(['ticketsIndex', 'livechatIndex', 'aiIndex', 'uploadingIndex']);
+        $this->middleware('can:helpdesk.settings.update')->only(['ticketsUpdate', 'livechatUpdate', 'aiUpdate', 'uploadingUpdate']);
+    }
+
     /**
      * Tickets Settings
      */
@@ -84,69 +93,9 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function ticketsUpdate(Request $request)
+    public function ticketsUpdate(UpdateTicketsSettingsRequest $request)
     {
-        $validated = $request->validate([
-            // ID y Caracteres
-            'customer_ticketid' => 'required|string|min:1|max:4',
-            'ticket_character' => 'required|integer|min:10|max:500',
-
-            // Restricciones de creación
-            'restrict_to_create_ticket' => 'nullable|boolean',
-            'maximum_allow_tickets' => 'nullable|integer|min:1|max:100',
-            'maximum_allow_hours' => 'nullable|integer|min:1|max:168',
-
-            // Restricciones de respuesta
-            'restrict_to_reply_ticket' => 'nullable|boolean',
-            'maximum_allow_replies' => 'nullable|integer|min:1|max:100',
-            'reply_allow_in_hours' => 'nullable|integer|min:1|max:24',
-
-            // Tiempo de respuesta automática
-            'auto_responsetime_ticket' => 'nullable|boolean',
-            'auto_responsetime_ticket_time' => 'nullable|integer|min:1|max:365',
-
-            // Cierre automático
-            'auto_close_ticket' => 'nullable|boolean',
-            'auto_close_ticket_time' => 'nullable|integer|min:1|max:365',
-
-            // Reapertura
-            'user_reopen_issue' => 'nullable|boolean',
-            'user_reopen_time' => 'nullable|integer|min:0|max:365',
-
-            // Infracciones
-            'auto_overdue_ticket' => 'nullable|boolean',
-            'auto_overdue_ticket_time' => 'nullable|integer|min:1|max:100',
-
-            // Edición de respuestas
-            'restrict_reply_edit' => 'nullable|boolean',
-            'reply_edit_with_in_time' => 'nullable|integer|min:1|max:1440',
-
-            // Tickets vencidos
-            'auto_overdue_customer' => 'nullable|boolean',
-
-            // Eliminación automática
-            'trashed_ticket_autodelete' => 'nullable|boolean',
-            'trashed_ticket_delete_time' => 'nullable|integer|min:1|max:365',
-
-            // Notificaciones
-            'auto_notification_delete_enable' => 'nullable|boolean',
-            'auto_notification_delete_days' => 'nullable|integer|min:1|max:365',
-
-            // Privacidad
-            'customer_panel_employee_protect' => 'nullable|boolean',
-            'employee_protect_name' => 'nullable|string|min:3|max:50',
-
-            // Opciones generales
-            'guest_ticket' => 'nullable|boolean',
-            'note_create_mails' => 'nullable|boolean',
-            'restict_to_delete_ticket' => 'nullable|boolean',
-            'user_file_upload_enable' => 'nullable|boolean',
-            'guest_file_upload_enable' => 'nullable|boolean',
-            'guest_ticket_otp' => 'nullable|boolean',
-            'customer_ticket' => 'nullable|boolean',
-            'ticket_rating' => 'nullable|boolean',
-            'cc_email' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         // Convert null values to false for checkboxes
         foreach ($validated as $key => $value) {
@@ -218,7 +167,7 @@ class SettingsController extends Controller
             // Security
             'trusted_domains' => '',
             'enforce_identity_verification' => false,
-            'secret_key' => \Str::random(40),
+            'secret_key' => Setting::get('livechat.secret_key') ?? tap(\Str::random(40), fn ($key) => Setting::set('livechat.secret_key', $key, 'livechat')),
         ]);
 
         $positions = [
@@ -236,54 +185,9 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function livechatUpdate(Request $request)
+    public function livechatUpdate(UpdateLivechatSettingsRequest $request)
     {
-        $validated = $request->validate([
-            // Widget - Home Screen
-            'show_avatars' => 'boolean',
-            'show_help_center' => 'boolean',
-            'hide_suggested_articles' => 'boolean',
-            'show_tickets_section' => 'boolean',
-            'enable_send_message' => 'boolean',
-            'enable_create_ticket' => 'boolean',
-            'enable_search_help' => 'boolean',
-
-            // Widget - Chat Screen
-            'welcome_message' => 'required|string|max:200',
-            'input_placeholder' => 'nullable|string|max:100',
-            'no_agents_message' => 'nullable|string|max:500',
-            'queue_message' => 'nullable|string|max:500',
-
-            // Widget - Launcher
-            'position' => 'required|in:bottom-right,bottom-left,top-right,top-left',
-            'side_spacing' => 'nullable|integer|min:0|max:100',
-            'bottom_spacing' => 'nullable|integer|min:0|max:100',
-            'hide_launcher' => 'boolean',
-
-            // Widget - Style
-            'primary_color' => 'required|regex:/^#[0-9a-f]{6}$/i',
-            'secondary_color' => 'required|regex:/^#[0-9a-f]{6}$/i',
-            'header_title' => 'required|string|max:100',
-            'show_dark_mode_preview' => 'boolean',
-
-            // Widget - Additional Options
-            'show_timestamps' => 'boolean',
-            'typing_indicator' => 'boolean',
-            'sound_notifications' => 'boolean',
-            'enable_email_transcripts' => 'boolean',
-
-            // Timeouts
-            'enable_auto_transfer' => 'boolean',
-            'auto_transfer_minutes' => 'nullable|integer|min:1|max:60',
-            'enable_auto_inactive' => 'boolean',
-            'auto_inactive_minutes' => 'nullable|integer|min:1|max:120',
-            'enable_auto_close' => 'boolean',
-            'auto_close_minutes' => 'nullable|integer|min:1|max:240',
-
-            // Security
-            'trusted_domains' => 'nullable|string',
-            'enforce_identity_verification' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         // Map field names if needed
         if (isset($validated['no_agents_message'])) {
@@ -336,23 +240,9 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function aiUpdate(Request $request)
+    public function aiUpdate(UpdateAiSettingsRequest $request)
     {
-        $validated = $request->validate([
-            'llm_provider' => 'required|in:openai,anthropic,gemini',
-            'openai_api_key' => 'nullable|string',
-            'openai_model' => 'nullable|string',
-            'anthropic_api_key' => 'nullable|string',
-            'anthropic_model' => 'nullable|string',
-            'gemini_api_key' => 'nullable|string',
-            'gemini_model' => 'nullable|string',
-            'embeddings_provider' => 'required|in:openai,gemini',
-            'enable_embeddings' => 'boolean',
-            'enable_rag' => 'boolean',
-            'temperature' => 'required|numeric|min:0|max:2',
-            'max_tokens' => 'required|integer|min:100|max:128000',
-            'top_p' => 'required|numeric|min:0|max:1',
-        ]);
+        $validated = $request->validated();
 
         $this->saveSettings('helpdesk.ai', $validated);
 
@@ -387,18 +277,9 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function uploadingUpdate(Request $request)
+    public function uploadingUpdate(UpdateUploadingSettingsRequest $request)
     {
-        $validated = $request->validate([
-            'max_file_size_mb' => 'required|integer|min:1|max:1000',
-            'allowed_extensions' => 'required|string',
-            'enable_image_compression' => 'boolean',
-            'image_max_width' => 'required|integer|min:100|max:4000',
-            'image_max_height' => 'required|integer|min:100|max:4000',
-            'image_quality' => 'required|integer|min:10|max:100',
-            'enable_virus_scan' => 'boolean',
-            'enable_quarantine' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $this->saveSettings('helpdesk.uploading', $validated);
 

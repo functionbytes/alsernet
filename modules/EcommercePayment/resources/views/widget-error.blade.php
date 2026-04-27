@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Error de pago') }} - {{ config('app.name') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ themeAsset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ themeAsset('libs/fontawesome/fontawesome.css') }}" rel="stylesheet">
     <style>
         body { background: #fbfbfb; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         .error-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }

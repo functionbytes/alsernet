@@ -3,11 +3,14 @@
 namespace Modules\Ecommerce\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Ecommerce\Http\Requests\Admin\StoreCategoryRequest;
 use Modules\Ecommerce\Http\Requests\Admin\UpdateCategoryRequest;
 use Modules\Ecommerce\Models\ProductCategory;
+use Modules\Ecommerce\Supports\ProductCategoryHelper;
 
 class ProductCategoryController extends Controller
 {
@@ -15,17 +18,20 @@ class ProductCategoryController extends Controller
     {
         $categories = ProductCategory::query()
             ->with('parent')
+            ->withCount('products')
             ->orderBy('order')
-            ->paginate(20);
+            ->paginate(50);
 
-        return view('ecommerce::admin.categories.index', compact('categories'));
+        $parents = ProductCategory::query()->where('status', 'published')->pluck('name', 'id');
+
+        return view('ecommerce::categories.index', compact('categories', 'parents'));
     }
 
     public function create(): View
     {
         $parents = ProductCategory::query()->where('status', 'published')->pluck('name', 'id');
 
-        return view('ecommerce::admin.categories.create', compact('parents'));
+        return view('ecommerce::categories.create', compact('parents'));
     }
 
     public function store(StoreCategoryRequest $request): RedirectResponse
@@ -42,7 +48,7 @@ class ProductCategoryController extends Controller
             ->where('id', '!=', $category->id)
             ->pluck('name', 'id');
 
-        return view('ecommerce::admin.categories.edit', compact('category', 'parents'));
+        return view('ecommerce::categories.edit', compact('category', 'parents'));
     }
 
     public function update(UpdateCategoryRequest $request, ProductCategory $category): RedirectResponse
@@ -57,5 +63,21 @@ class ProductCategoryController extends Controller
         $category->delete();
 
         return redirect()->route('ecommerce.categories.index')->with('success', 'Categoria eliminada exitosamente.');
+    }
+
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer'],
+        ]);
+
+        foreach ($request->input('ids') as $order => $id) {
+            ProductCategory::query()->where('id', $id)->update(['order' => $order]);
+        }
+
+        ProductCategoryHelper::clearCache();
+
+        return response()->json(['ok' => true]);
     }
 }

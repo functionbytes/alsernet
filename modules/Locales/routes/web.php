@@ -8,6 +8,7 @@ Route::middleware(['auth'])->prefix('panel/settings')->group(function () {
 
     Route::prefix('locales')->name('locales.')->group(function () {
         Route::get('/', [LocaleController::class, 'index'])->name('index');
+        Route::patch('/config', [LocaleController::class, 'storeSettings'])->name('config');
         Route::post('/bulk-action', [LocaleController::class, 'bulkAction'])->name('bulk-action');
         Route::get('/create', [LocaleController::class, 'create'])->name('create');
         Route::post('/', [LocaleController::class, 'store'])->name('store');

@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Ecommerce\Database\Factories\BrandFactory;
+use Modules\Ecommerce\Traits\HasTranslations;
 
 class Brand extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'ecommerce_brands';
 

@@ -205,10 +205,10 @@
                     <h6 class="fw-bold mb-1">Acciones</h6>
                     <p class="text-muted mb-3">Modifica o elimina la configuración de meta SEO de este recurso.</p>
                     <div class="d-grid gap-2">
-                        <a href="{{ route('setting.seo.metas.edit', $meta) }}" class="btn btn-primary w-100">
+                        <a href="{{ route('settings.seo.metas.edit', $meta) }}" class="btn btn-primary w-100">
                             Editar meta
                         </a>
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
                             Volver al listado
                         </a>
                         <button type="button" class="btn btn-outline-danger w-100 delete-btn"
@@ -315,7 +315,7 @@
 $(document).ready(function() {
     $('.delete-btn').on('click', function() {
         $('#delete-modal .modal-title').text('Eliminar meta SEO');
-        $('#delete-form').attr('action', '{{ route('setting.seo.metas.destroy', $meta) }}');
+        $('#delete-form').attr('action', '{{ route('settings.seo.metas.destroy', $meta) }}');
     });
 });
 </script>

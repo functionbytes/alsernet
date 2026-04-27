@@ -3,9 +3,10 @@
 namespace Modules\Mailrelay\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Modules\Mailrelay\Entities\MailProvider;
+use Modules\Mailrelay\Http\Requests\Managers\StoreMailProviderRequest;
+use Modules\Mailrelay\Http\Requests\Managers\UpdateMailProviderRequest;
 use Modules\Mailrelay\Services\ProviderManager;
 
 /**
@@ -65,16 +66,9 @@ class MailProviderController extends Controller
     /**
      * Guardar nuevo provider
      */
-    public function store(Request $request)
+    public function store(StoreMailProviderRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'driver' => 'required|string|in:mailrelay,mailtrap',
-            'credentials' => 'required|array',
-            'is_active' => 'boolean',
-            'is_default' => 'boolean',
-            'priority' => 'integer|min:0|max:100',
-        ]);
+        $validated = $request->validated();
 
         try {
             // Validar credenciales antes de guardar
@@ -127,17 +121,11 @@ class MailProviderController extends Controller
     /**
      * Actualizar provider
      */
-    public function update(Request $request, int $id)
+    public function update(UpdateMailProviderRequest $request, int $id)
     {
         $provider = MailProvider::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'credentials' => 'required|array',
-            'is_active' => 'boolean',
-            'is_default' => 'boolean',
-            'priority' => 'integer|min:0|max:100',
-        ]);
+        $validated = $request->validated();
 
         try {
             $provider->update([

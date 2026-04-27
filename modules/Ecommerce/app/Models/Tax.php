@@ -34,6 +34,6 @@ class Tax extends Model
 
     public function rules(): HasMany
     {
-        return $this->hasMany(TaxRule::class, 'tax_id');
+        return $this->hasMany(TaxRule::class, 'tax_id')->orderBy('order');
     }
 }

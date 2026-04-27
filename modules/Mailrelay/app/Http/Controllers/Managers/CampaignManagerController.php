@@ -10,6 +10,10 @@ use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailrelay\Entities\Campaign;
 use Modules\Mailrelay\Entities\MailProvider;
 use Modules\Mailrelay\Enums\CampaignStatus;
+use Modules\Mailrelay\Http\Requests\Managers\ScheduleCampaignRequest;
+use Modules\Mailrelay\Http\Requests\Managers\SendCampaignManagerRequest;
+use Modules\Mailrelay\Http\Requests\Managers\StoreCampaignRequest;
+use Modules\Mailrelay\Http\Requests\Managers\UpdateCampaignRequest;
 use Modules\Mailrelay\Services\CampaignService;
 
 /**
@@ -101,19 +105,9 @@ class CampaignManagerController extends Controller
     /**
      * Guardar nueva campaign
      */
-    public function store(Request $request)
+    public function store(StoreCampaignRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'mailer_template_id' => 'nullable|exists:mailer_templates,id',
-            'html_content' => 'nullable|string',
-            'lang_id' => 'nullable|exists:langs,id',
-            'mail_provider_id' => 'required|exists:mail_providers,id',
-            'template_variables' => 'nullable|array',
-            'track_opens' => 'boolean',
-            'track_clicks' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             $campaign = $this->campaignService->create($validated);
@@ -184,21 +178,11 @@ class CampaignManagerController extends Controller
     /**
      * Actualizar campaign
      */
-    public function update(Request $request, int $id)
+    public function update(UpdateCampaignRequest $request, int $id)
     {
         $campaign = Campaign::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'mailer_template_id' => 'nullable|exists:mailer_templates,id',
-            'html_content' => 'nullable|string',
-            'lang_id' => 'nullable|exists:langs,id',
-            'mail_provider_id' => 'required|exists:mail_providers,id',
-            'template_variables' => 'nullable|array',
-            'track_opens' => 'boolean',
-            'track_clicks' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->campaignService->update($campaign, $validated);
@@ -291,9 +275,8 @@ class CampaignManagerController extends Controller
     {
         $campaign = Campaign::findOrFail($id);
 
-        $validated = $request->validate([
-            'test_email' => 'required|email',
-        ]);
+        // Single-rule inline validate is justified here (trivial, no reuse)
+        $validated = $request->validate(['test_email' => 'required|email']);
 
         try {
             $result = $this->campaignService->sendTest($campaign, $validated['test_email']);
@@ -310,15 +293,11 @@ class CampaignManagerController extends Controller
     /**
      * Enviar campaign a lista de destinatarios
      */
-    public function send(Request $request, int $id)
+    public function send(SendCampaignManagerRequest $request, int $id)
     {
         $campaign = Campaign::findOrFail($id);
 
-        $validated = $request->validate([
-            'recipients' => 'required|array|min:1',
-            'recipients.*.email' => 'required|email',
-            'send_async' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             if ($validated['send_async'] ?? false) {
@@ -347,14 +326,11 @@ class CampaignManagerController extends Controller
     /**
      * Programar envío de campaign
      */
-    public function schedule(Request $request, int $id)
+    public function schedule(ScheduleCampaignRequest $request, int $id)
     {
         $campaign = Campaign::findOrFail($id);
 
-        $validated = $request->validate([
-            'scheduled_at' => 'required|date|after:now',
-            'recipients' => 'required|array|min:1',
-        ]);
+        $validated = $request->validated();
 
         try {
             $scheduledAt = new \DateTime($validated['scheduled_at']);

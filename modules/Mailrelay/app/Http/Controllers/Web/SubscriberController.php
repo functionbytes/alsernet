@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\MailrelayGroup;
 use Modules\Mailrelay\Entities\Subscriber;
+use Modules\Mailrelay\Http\Requests\Web\StoreSubscriberRequest;
+use Modules\Mailrelay\Http\Requests\Web\UpdateSubscriberRequest;
 use Modules\Mailrelay\Jobs\SyncMailrelaySubscriberJob;
 use Modules\Mailrelay\Services\EmailValidation\EmailValidatorService;
 
@@ -78,17 +80,9 @@ class SubscriberController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSubscriberRequest $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email|unique:mails_subscribers,email',
-            'name' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:active,pending,unsubscribed,bounced,banned',
-            'metadata' => 'nullable|string|json',
-            'custom_fields' => 'nullable|array',
-            'mailrelay_groups' => 'nullable|array',
-            'mailrelay_groups.*' => 'integer|exists:mails_mailrelay_groups,id',
-        ]);
+        $validated = $request->validated();
 
         $subscriber = Subscriber::create([
             'email' => $validated['email'],
@@ -138,19 +132,11 @@ class SubscriberController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateSubscriberRequest $request, string $id)
     {
         $subscriber = Subscriber::findOrFail($id);
 
-        $validated = $request->validate([
-            'email' => 'required|email|unique:mails_subscribers,email,'.$id,
-            'name' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:active,pending,unsubscribed,bounced,banned',
-            'metadata' => 'nullable|string|json',
-            'custom_fields' => 'nullable|array',
-            'mailrelay_groups' => 'nullable|array',
-            'mailrelay_groups.*' => 'integer|exists:mails_mailrelay_groups,id',
-        ]);
+        $validated = $request->validated();
 
         $updateData = [
             'email' => $validated['email'],

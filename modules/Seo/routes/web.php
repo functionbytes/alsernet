@@ -35,7 +35,7 @@ use Modules\Seo\Http\Controllers\WebVitalsController;
 |
 */
 
-Route::prefix('panel/setting')->middleware(['web', 'auth'])->name('setting.')->group(function () {
+Route::prefix('panel/settings')->middleware(['web', 'auth'])->name('settings.')->group(function () {
     Route::prefix('seo')->name('seo.')->group(function () {
         // Dashboard
         Route::get('dashboard', [SeoDashboardController::class, 'index'])->name('dashboard');
@@ -218,3 +218,9 @@ Route::post('/api/seo/web-vitals', [SeoWebVitalsController::class, 'store'])
 Route::get('/sitemap-images.xml', [SitemapController::class, 'images'])->name('sitemap.images');
 Route::get('/sitemap-video.xml', [SitemapController::class, 'videos'])->name('sitemap.videos');
 Route::get('/sitemap-news.xml', [SitemapController::class, 'news'])->name('sitemap.news');
+
+// Legacy redirects: panel/setting/seo (singular) → panel/settings/seo (plural)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::redirect('panel/setting/seo/{any}', 'panel/settings/seo/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/seo', 'panel/settings/seo', 301);
+});

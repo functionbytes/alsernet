@@ -12,7 +12,7 @@ class StoreTicketRequest extends BaseTicketRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasPermissionTo('create_tickets');
+        return $this->user()?->can('helpdesk.tickets.create') ?? false;
     }
 
     /**

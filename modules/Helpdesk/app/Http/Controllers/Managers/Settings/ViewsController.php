@@ -5,12 +5,23 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\Helpdesk\Http\Requests\ReorderConversationViewsRequest;
+use Modules\Helpdesk\Http\Requests\StoreConversationViewRequest;
+use Modules\Helpdesk\Http\Requests\UpdateConversationViewRequest;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\ConversationView;
 use Modules\Helpdesk\Models\Group;
 
 class ViewsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.views.view')->only(['index', 'show']);
+        $this->middleware('can:helpdesk.views.create')->only(['create', 'store']);
+        $this->middleware('can:helpdesk.views.update')->only(['edit', 'update', 'reorder']);
+        $this->middleware('can:helpdesk.views.delete')->only(['destroy']);
+    }
+
     /**
      * Display a listing of views.
      */
@@ -71,15 +82,9 @@ class ViewsController extends Controller
     /**
      * Store a newly created view.
      */
-    public function store(Request $request)
+    public function store(StoreConversationViewRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'filters' => 'nullable|array',
-            'is_public' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['user_id'] = Auth::id();
         $validated['is_public'] = $request->boolean('is_public');
@@ -113,20 +118,14 @@ class ViewsController extends Controller
     /**
      * Update the specified view.
      */
-    public function update(Request $request, ConversationView $view)
+    public function update(UpdateConversationViewRequest $request, ConversationView $view)
     {
         // Check if user can edit this view
         if (! $view->canEdit(Auth::id())) {
             return back()->with('error', 'No tienes permiso para editar esta vista.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'filters' => 'nullable|array',
-            'is_public' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_public'] = $request->boolean('is_public');
         $validated['is_default'] = $request->boolean('is_default');
@@ -161,12 +160,9 @@ class ViewsController extends Controller
     /**
      * Reorder views via drag and drop.
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderConversationViewsRequest $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:helpdesk_conversation_views,id',
-        ]);
+        $validated = $request->validated();
 
         ConversationView::reorder($validated['ids'], Auth::id());
 

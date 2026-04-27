@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form action="{{ route('setting.seo.redirects.htaccess-import.store') }}" method="POST" novalidate>
+    <form action="{{ route('settings.seo.redirects.htaccess-import.store') }}" method="POST" novalidate>
         @csrf
 
         <div class="row">
@@ -39,10 +39,10 @@ RedirectPermanent /another-old /another-new</pre>
                         <h5 class="mb-0 fw-bold">Otras opciones</h5>
                     </div>
                     <div class="card-body">
-                        <a href="{{ route('setting.seo.redirects.import') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <a href="{{ route('settings.seo.redirects.import') }}" class="btn btn-outline-primary w-100 mb-2">
                             <i class="fas fa-file-csv me-1"></i> Importar desde CSV
                         </a>
-                        <a href="{{ route('setting.seo.redirects.export') }}" class="btn btn-outline-success w-100">
+                        <a href="{{ route('settings.seo.redirects.export') }}" class="btn btn-outline-success w-100">
                             <i class="fas fa-download me-1"></i> Exportar redirecciones
                         </a>
                     </div>
@@ -108,7 +108,7 @@ RedirectPermanent /another-old /another-new</pre>
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             <i class="fas fa-upload me-1"></i> Importar redirecciones
                         </button>
-                        <a href="{{ route('setting.seo.redirects.index') }}" class="btn btn-light border w-100 py-2">
+                        <a href="{{ route('settings.seo.redirects.index') }}" class="btn btn-light border w-100 py-2">
                             <i class="fas fa-arrow-left me-1"></i> Volver a redirecciones
                         </a>
                     </div>

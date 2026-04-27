@@ -4,6 +4,7 @@ namespace Modules\Attention\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Models\Attention;
 use Modules\Attention\Models\AttentionDepartment;
 
@@ -78,12 +79,12 @@ class AttentionPolicy
         }
 
         // Cannot update closed requests
-        if ($attention->status === 'closed') {
+        if ($attention->status === AttentionStatus::CLOSED) {
             return false;
         }
 
         // Creator can update their own request if not resolved
-        if ($attention->user_id === $user->id && $attention->status !== 'resolved') {
+        if ($attention->user_id === $user->id && $attention->status !== AttentionStatus::RESOLVED) {
             return true;
         }
 
@@ -181,7 +182,7 @@ class AttentionPolicy
         }
 
         // Cannot change status of closed requests
-        if ($attention->status === 'closed') {
+        if ($attention->status === AttentionStatus::CLOSED) {
             return false;
         }
 
@@ -214,7 +215,7 @@ class AttentionPolicy
         }
 
         // Cannot resolve already resolved or closed requests
-        if (in_array($attention->status, ['resolved', 'closed'])) {
+        if (in_array($attention->status, [AttentionStatus::RESOLVED, AttentionStatus::CLOSED])) {
             return false;
         }
 
@@ -247,12 +248,12 @@ class AttentionPolicy
         }
 
         // Cannot close already closed requests
-        if ($attention->status === 'closed') {
+        if ($attention->status === AttentionStatus::CLOSED) {
             return false;
         }
 
         // Only resolved requests can be closed
-        if ($attention->status !== 'resolved') {
+        if ($attention->status !== AttentionStatus::RESOLVED) {
             return false;
         }
 

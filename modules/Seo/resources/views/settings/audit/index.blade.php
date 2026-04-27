@@ -151,7 +151,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Historial de auditorías</h6>
                         <p class="text-muted mb-3">Consulta el historial de auditorías realizadas y su evolución.</p>
-                        <a href="{{ route('setting.seo.audit.history') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.audit.history') }}" class="btn btn-outline-secondary w-100">
                             Ver historial
                         </a>
                     </div>
@@ -161,7 +161,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Dashboard SEO</h6>
                         <p class="text-muted mb-3">Vuelve al panel principal de SEO.</p>
-                        <a href="{{ route('setting.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
                             Ir al dashboard
                         </a>
                     </div>
@@ -262,7 +262,7 @@
         }
 
         function pollProgress() {
-            $.get('{{ route("setting.seo.audit.broken-links-progress") }}', function (data) {
+            $.get('{{ route("settings.seo.audit.broken-links-progress") }}', function (data) {
                 var checked = data.checked || 0;
                 var total = data.total || 0;
                 var pct = total > 0 ? Math.round(checked / total * 100) : 0;
@@ -290,7 +290,7 @@
             $('#broken-links-results').addClass('d-none').html('');
 
             $.ajax({
-                url: '{{ route("setting.seo.audit.broken-links-start") }}',
+                url: '{{ route("settings.seo.audit.broken-links-start") }}',
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken },
                 success: function () {
@@ -316,7 +316,7 @@
         }
 
         function pollProgress() {
-            $.get('{{ route("setting.seo.audit.bulk-progress") }}', function (data) {
+            $.get('{{ route("settings.seo.audit.bulk-progress") }}', function (data) {
                 var processed = data.processed || 0;
                 var total = data.total || 0;
                 var pct = total > 0 ? Math.round(processed / total * 100) : 0;
@@ -348,7 +348,7 @@
             $('#audit-progress-text').text('Iniciando...');
 
             $.ajax({
-                url: '{{ route("setting.seo.audit.bulk-start") }}',
+                url: '{{ route("settings.seo.audit.bulk-start") }}',
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken },
                 success: function () {
@@ -374,7 +374,7 @@
         $('#url-audit-result').html('<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><p class="mt-2 text-muted small">Analizando...</p></div>');
 
         $.ajax({
-            url: '{{ route("setting.seo.audit.url") }}',
+            url: '{{ route("settings.seo.audit.url") }}',
             method: 'POST',
             data: { url, _token: csrfToken },
             success: (res) => {
@@ -396,7 +396,7 @@
         $('#bulk-summary').html('<div class="col-12 text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
         $('#bulk-audit-results').html('');
 
-        $.get('{{ route("setting.seo.audit.all") }}', (res) => {
+        $.get('{{ route("settings.seo.audit.all") }}', (res) => {
             if (!res.status) return;
             const s = res.summary;
 
@@ -433,7 +433,7 @@
         $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
-            url: '{{ route("setting.seo.audit.core-web-vitals") }}',
+            url: '{{ route("settings.seo.audit.core-web-vitals") }}',
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken },
             data: { url: url, strategy: $('#cwv-strategy').val() },
@@ -479,7 +479,7 @@
         $(this).html('<span class="spinner-border spinner-border-sm me-1"></span>Verificando...').prop('disabled', true);
         $('#canonicals-result').removeClass('d-none').html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
 
-        $.get('{{ route("setting.seo.audit.check-canonicals") }}', function (res) {
+        $.get('{{ route("settings.seo.audit.check-canonicals") }}', function (res) {
             if (!res.status) return;
             const s = res.summary;
             let html = `<div class="row g-3 mb-3">

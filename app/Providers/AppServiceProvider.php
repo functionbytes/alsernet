@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Boost\KimiCode;
+use App\Features\EcommerceFeatures;
 use App\Services\DeepLTranslationService;
 use App\Services\GlobalSearchService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Boost\Boost;
 use Laravel\Horizon\Horizon;
+use Laravel\Pennant\Feature;
 use Modules\Page\Services\PageService;
 use Modules\System\Services\GlobalSearchRegistrar;
 
@@ -47,6 +49,22 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiters();
 
         Boost::registerCodeEnvironment('.kimi', KimiCode::class);
+
+        $this->defineFeatureFlags();
+    }
+
+    private function defineFeatureFlags(): void
+    {
+        Feature::define(EcommerceFeatures::AI_DESCRIPTIONS, fn () => config('features.ai_descriptions', true));
+        Feature::define(EcommerceFeatures::ADVANCED_RECOMMENDATIONS, fn () => config('features.advanced_recommendations', true));
+        Feature::define(EcommerceFeatures::CHATBOT_LLM, fn () => config('features.chatbot_llm', false));
+        Feature::define(EcommerceFeatures::SUBSCRIPTIONS, fn () => config('features.subscriptions', true));
+        Feature::define(EcommerceFeatures::BUNDLES, fn () => config('features.bundles', true));
+        Feature::define(EcommerceFeatures::GIFT_CARDS, fn () => config('features.gift_cards', true));
+        Feature::define(EcommerceFeatures::SAVED_SEARCHES, fn () => config('features.saved_searches', true));
+        Feature::define(EcommerceFeatures::EXIT_INTENT, fn () => config('features.exit_intent', true));
+        Feature::define(EcommerceFeatures::VISUAL_SEARCH, fn () => false);
+        Feature::define(EcommerceFeatures::MULTI_WAREHOUSE, fn () => false);
     }
 
     private function configureHorizonGate(): void
@@ -74,6 +92,13 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiters(): void
     {
+        RateLimiter::for('login', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by(($request->input('email') ?? '').'|'.$request->ip()),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
+
         RateLimiter::for('global-search', function (Request $request) {
             return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });

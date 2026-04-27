@@ -3,8 +3,8 @@
 namespace Modules\Helpdesk\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\SubmitFeedbackRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 class FeedbackController extends Controller
@@ -20,14 +20,11 @@ class FeedbackController extends Controller
         return view('helpdesk::public.feedback-form', compact('ticket'));
     }
 
-    public function submit(Request $request, string $ticketNumber)
+    public function submit(SubmitFeedbackRequest $request, string $ticketNumber)
     {
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
-        $validated = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         if (! $ticket->rated_at) {
             $ticket->update([

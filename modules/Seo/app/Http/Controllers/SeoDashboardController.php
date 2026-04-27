@@ -217,7 +217,7 @@ class SeoDashboardController extends Controller
     {
         $this->clearDashboardCache();
 
-        return redirect()->route('setting.seo.dashboard')
+        return redirect()->route('settings.seo.dashboard')
             ->with('success', 'Cache del dashboard SEO eliminado correctamente.');
     }
 
@@ -305,7 +305,7 @@ class SeoDashboardController extends Controller
 
         fclose($handle);
 
-        return redirect()->route('setting.seo.report.index')
+        return redirect()->route('settings.seo.report.index')
             ->with('success', "Search Console: {$imported} páginas actualizadas, {$skipped} sin coincidencia.");
     }
 

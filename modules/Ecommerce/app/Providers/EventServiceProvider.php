@@ -3,6 +3,8 @@
 namespace Modules\Ecommerce\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Ecommerce\Events\CustomerEmailVerified;
+use Modules\Ecommerce\Events\CustomerRegistered;
 use Modules\Ecommerce\Events\OrderCancelled;
 use Modules\Ecommerce\Events\OrderCompleted;
 use Modules\Ecommerce\Events\OrderCreated;
@@ -20,10 +22,17 @@ use Modules\Ecommerce\Listeners\GenerateLicenseCodeAfterOrderCompleted;
 use Modules\Ecommerce\Listeners\OrderCancelledNotification;
 use Modules\Ecommerce\Listeners\OrderCreatedNotification;
 use Modules\Ecommerce\Listeners\OrderPaymentConfirmedNotification;
+use Modules\Ecommerce\Listeners\RegisterAffiliateReferral;
 use Modules\Ecommerce\Listeners\SaveProductFaqListener;
+use Modules\Ecommerce\Listeners\SendMailsAfterCustomerEmailVerified;
+use Modules\Ecommerce\Listeners\SendMailsAfterCustomerRegistered;
 use Modules\Ecommerce\Listeners\SendProductFileUpdatedNotification;
 use Modules\Ecommerce\Listeners\SendProductReviewsMailAfterOrderCompleted;
 use Modules\Ecommerce\Listeners\SendShippingStatusChangedNotification;
+use Modules\Ecommerce\Listeners\SendWebhookWhenOrderCancelled;
+use Modules\Ecommerce\Listeners\SendWebhookWhenOrderPaid;
+use Modules\Ecommerce\Listeners\SendWebhookWhenOrderPlaced;
+use Modules\Ecommerce\Listeners\SendWebhookWhenShipmentUpdated;
 use Modules\Ecommerce\Listeners\UpdateInvoiceAndShippingWhenOrderCancelled;
 use Modules\Ecommerce\Listeners\UpdateInvoiceWhenOrderCompleted;
 use Modules\Ecommerce\Listeners\UpdateInvoiceWhenPaymentConfirmed;
@@ -34,6 +43,12 @@ use Modules\Ecommerce\Listeners\UpdateProductView;
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
+        CustomerRegistered::class => [
+            SendMailsAfterCustomerRegistered::class,
+        ],
+        CustomerEmailVerified::class => [
+            SendMailsAfterCustomerEmailVerified::class,
+        ],
         OrderPlaced::class => [
             UpdateProductStockStatus::class,
             GenerateInvoiceListener::class,
@@ -41,6 +56,8 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderCreated::class => [
             OrderCreatedNotification::class,
+            SendWebhookWhenOrderPlaced::class,
+            RegisterAffiliateReferral::class,
         ],
         OrderCompleted::class => [
             UpdateInvoiceWhenOrderCompleted::class,
@@ -50,14 +67,17 @@ class EventServiceProvider extends ServiceProvider
         OrderPaymentConfirmed::class => [
             OrderPaymentConfirmedNotification::class,
             UpdateInvoiceWhenPaymentConfirmed::class,
+            SendWebhookWhenOrderPaid::class,
         ],
         OrderCancelled::class => [
             OrderCancelledNotification::class,
             UpdateInvoiceAndShippingWhenOrderCancelled::class,
             ClearShippingRuleCache::class,
+            SendWebhookWhenOrderCancelled::class,
         ],
         ShippingStatusChanged::class => [
             SendShippingStatusChangedNotification::class,
+            SendWebhookWhenShipmentUpdated::class,
         ],
         ProductViewed::class => [
             UpdateProductView::class,

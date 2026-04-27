@@ -6,18 +6,23 @@ use Modules\Backup\Http\Controllers\BackupNotificationController;
 use Modules\Backup\Http\Controllers\BackupScheduleController;
 
 Route::middleware(['web', 'auth'])
-    ->prefix('panel/setting/backups')
+    ->prefix('panel/settings/backups')
     ->group(function () {
         // Backup management
         Route::get('/', [BackupController::class, 'index'])->name('settings.backups.index');
         Route::get('/guide', [BackupController::class, 'guide'])->name('settings.backups.guide');
         Route::get('/setup', [BackupController::class, 'setup'])->name('settings.backups.setup');
         Route::get('/setup/prerequisites', [BackupController::class, 'prerequisites'])->name('settings.backups.prerequisites');
-        Route::post('/setup/scheduler-configure', [BackupController::class, 'schedulerConfigure'])->name('settings.backups.scheduler.configure');
+        Route::get('/setup/scheduler-configure-instructions', [BackupController::class, 'schedulerConfigureInstructions'])->name('settings.backups.scheduler.configure-instructions');
         Route::get('/setup/supervisor-status', [BackupController::class, 'supervisorStatus'])->name('settings.backups.supervisor.status');
-        Route::post('/setup/supervisor-install', [BackupController::class, 'supervisorInstall'])->name('settings.backups.supervisor.install');
-        Route::post('/setup/supervisor-apply', [BackupController::class, 'supervisorApply'])->name('settings.backups.supervisor.apply');
-        Route::post('/setup/supervisor-restart', [BackupController::class, 'supervisorRestart'])->name('settings.backups.supervisor.restart');
+        Route::get('/setup/supervisor-install-instructions', [BackupController::class, 'supervisorInstallInstructions'])->name('settings.backups.supervisor.install-instructions');
+        Route::get('/setup/supervisor-apply-instructions', [BackupController::class, 'supervisorApplyInstructions'])->name('settings.backups.supervisor.apply-instructions');
+        Route::get('/setup/supervisor-restart-instructions', [BackupController::class, 'supervisorRestartInstructions'])->name('settings.backups.supervisor.restart-instructions');
+        // 301 redirects for backward compatibility with old bookmarks/integrations
+        Route::redirect('/setup/scheduler-configure', '/panel/settings/backups/setup/scheduler-configure-instructions', 301);
+        Route::redirect('/setup/supervisor-install', '/panel/settings/backups/setup/supervisor-install-instructions', 301);
+        Route::redirect('/setup/supervisor-apply', '/panel/settings/backups/setup/supervisor-apply-instructions', 301);
+        Route::redirect('/setup/supervisor-restart', '/panel/settings/backups/setup/supervisor-restart-instructions', 301);
         Route::get('/create', [BackupController::class, 'create'])->name('settings.backups.create');
         Route::post('/', [BackupController::class, 'store'])->name('settings.backups.store');
         Route::get('/{filename}/download', [BackupController::class, 'download'])->where('filename', '[^/]+')->name('settings.backups.download');
@@ -42,3 +47,9 @@ Route::middleware(['web', 'auth'])
         });
 
     });
+
+// Legacy redirects (singular → plural). TODO remove after 2026-12-31
+Route::middleware(['web'])->group(function () {
+    Route::redirect('panel/setting/backups/{any}', 'panel/settings/backups/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/backups', 'panel/settings/backups', 301);
+});

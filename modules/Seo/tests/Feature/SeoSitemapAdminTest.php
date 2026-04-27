@@ -113,14 +113,14 @@ class SeoSitemapAdminTest extends TestCase
 
     public function test_index_requires_auth(): void
     {
-        $this->get(route('setting.seo.sitemap.index'))
+        $this->get(route('settings.seo.sitemap.index'))
             ->assertRedirect(route('auth.login'));
     }
 
     public function test_index_returns_view(): void
     {
         $this->actingAs($this->user)
-            ->get(route('setting.seo.sitemap.index'))
+            ->get(route('settings.seo.sitemap.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.sitemap.index')
             ->assertViewHas('sitemaps')
@@ -131,7 +131,7 @@ class SeoSitemapAdminTest extends TestCase
 
     public function test_generate_requires_auth(): void
     {
-        $this->post(route('setting.seo.sitemap.generate'))
+        $this->post(route('settings.seo.sitemap.generate'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -143,7 +143,7 @@ class SeoSitemapAdminTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('setting.seo.sitemap.generate'))
+            ->post(route('settings.seo.sitemap.generate'))
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -167,7 +167,7 @@ class SeoSitemapAdminTest extends TestCase
         });
 
         $this->actingAs($this->user)
-            ->post(route('setting.seo.sitemap.generate'))
+            ->post(route('settings.seo.sitemap.generate'))
             ->assertRedirect()
             ->assertSessionHas('error');
 
@@ -178,7 +178,7 @@ class SeoSitemapAdminTest extends TestCase
 
     public function test_clear_cache_requires_auth(): void
     {
-        $this->post(route('setting.seo.sitemap.clear-cache'))
+        $this->post(route('settings.seo.sitemap.clear-cache'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -187,7 +187,7 @@ class SeoSitemapAdminTest extends TestCase
         Cache::put('sitemap-xml', '<xml/>', 3600);
 
         $this->actingAs($this->user)
-            ->post(route('setting.seo.sitemap.clear-cache'))
+            ->post(route('settings.seo.sitemap.clear-cache'))
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -198,7 +198,7 @@ class SeoSitemapAdminTest extends TestCase
 
     public function test_verify_urls_requires_auth(): void
     {
-        $this->getJson(route('setting.seo.sitemap.verify-urls'))
+        $this->getJson(route('settings.seo.sitemap.verify-urls'))
             ->assertUnauthorized();
     }
 
@@ -207,7 +207,7 @@ class SeoSitemapAdminTest extends TestCase
         Http::fake(['*' => Http::response('', 200)]);
 
         $this->actingAs($this->user)
-            ->getJson(route('setting.seo.sitemap.verify-urls'))
+            ->getJson(route('settings.seo.sitemap.verify-urls'))
             ->assertOk()
             ->assertJsonStructure(['status', 'results', 'summary' => ['total', 'ok', 'broken']]);
     }
@@ -216,14 +216,14 @@ class SeoSitemapAdminTest extends TestCase
 
     public function test_calculate_priorities_requires_auth(): void
     {
-        $this->getJson(route('setting.seo.sitemap.calculate-priorities'))
+        $this->getJson(route('settings.seo.sitemap.calculate-priorities'))
             ->assertUnauthorized();
     }
 
     public function test_calculate_priorities_returns_priorities_key(): void
     {
         $this->actingAs($this->user)
-            ->getJson(route('setting.seo.sitemap.calculate-priorities'))
+            ->getJson(route('settings.seo.sitemap.calculate-priorities'))
             ->assertOk()
             ->assertJsonStructure(['priorities']);
     }
@@ -240,7 +240,7 @@ class SeoSitemapAdminTest extends TestCase
         $noPermUser->exists = true;
 
         $this->actingAs($noPermUser)
-            ->get(route('setting.seo.sitemap.index'))
+            ->get(route('settings.seo.sitemap.index'))
             ->assertForbidden();
     }
 
@@ -253,7 +253,7 @@ class SeoSitemapAdminTest extends TestCase
         $noPermUser->exists = true;
 
         $this->actingAs($noPermUser)
-            ->post(route('setting.seo.sitemap.generate'))
+            ->post(route('settings.seo.sitemap.generate'))
             ->assertForbidden();
     }
 
@@ -266,7 +266,7 @@ class SeoSitemapAdminTest extends TestCase
         $noPermUser->exists = true;
 
         $this->actingAs($noPermUser)
-            ->post(route('setting.seo.sitemap.clear-cache'))
+            ->post(route('settings.seo.sitemap.clear-cache'))
             ->assertForbidden();
     }
 }

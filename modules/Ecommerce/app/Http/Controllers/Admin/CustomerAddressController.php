@@ -15,12 +15,12 @@ class CustomerAddressController extends Controller
     {
         $addresses = $customer->addresses()->latest()->paginate(20);
 
-        return view('ecommerce::admin.customers.addresses.index', compact('customer', 'addresses'));
+        return view('ecommerce::customers.addresses.index', compact('customer', 'addresses'));
     }
 
     public function create(Customer $customer): View
     {
-        return view('ecommerce::admin.customers.addresses.create', compact('customer'));
+        return view('ecommerce::customers.addresses.create', compact('customer'));
     }
 
     public function store(Request $request, Customer $customer): RedirectResponse
@@ -49,7 +49,7 @@ class CustomerAddressController extends Controller
 
     public function edit(Customer $customer, CustomerAddress $address): View
     {
-        return view('ecommerce::admin.customers.addresses.edit', compact('customer', 'address'));
+        return view('ecommerce::customers.addresses.edit', compact('customer', 'address'));
     }
 
     public function update(Request $request, Customer $customer, CustomerAddress $address): RedirectResponse

@@ -17,17 +17,33 @@ use Modules\HelpdeskTickets\Jobs\CleanupOldTickets;
 use Modules\HelpdeskTickets\Jobs\EscalateTicketsJob;
 use Modules\HelpdeskTickets\Jobs\ProcessRecurringTicketsJob;
 use Modules\HelpdeskTickets\Jobs\SendSlaWarnings;
+use Modules\HelpdeskTickets\Models\Automation;
+use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketCannedReply;
+use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketComment;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketNote;
+use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
+use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTemplate;
 use Modules\HelpdeskTickets\Models\TicketTimeEntry;
+use Modules\HelpdeskTickets\Models\TicketView;
+use Modules\HelpdeskTickets\Policies\AutomationPolicy;
+use Modules\HelpdeskTickets\Policies\MacroPolicy;
 use Modules\HelpdeskTickets\Policies\RecurringTicketPolicy;
+use Modules\HelpdeskTickets\Policies\SlaPolicyPolicy;
+use Modules\HelpdeskTickets\Policies\TicketCannedReplyPolicy;
+use Modules\HelpdeskTickets\Policies\TicketCategoryPolicy;
 use Modules\HelpdeskTickets\Policies\TicketCommentPolicy;
+use Modules\HelpdeskTickets\Policies\TicketGroupPolicy;
 use Modules\HelpdeskTickets\Policies\TicketNotePolicy;
 use Modules\HelpdeskTickets\Policies\TicketPolicy;
+use Modules\HelpdeskTickets\Policies\TicketStatusPolicy;
 use Modules\HelpdeskTickets\Policies\TicketTemplatePolicy;
+use Modules\HelpdeskTickets\Policies\TicketViewPolicy;
 use Modules\HelpdeskTickets\Policies\TimeEntryPolicy;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Services\AutomationEngine;
@@ -108,6 +124,14 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             RecurringTicket::class => RecurringTicketPolicy::class,
             TicketTemplate::class => TicketTemplatePolicy::class,
             TicketTimeEntry::class => TimeEntryPolicy::class,
+            TicketStatus::class => TicketStatusPolicy::class,
+            TicketCategory::class => TicketCategoryPolicy::class,
+            TicketGroup::class => TicketGroupPolicy::class,
+            Macro::class => MacroPolicy::class,
+            Automation::class => AutomationPolicy::class,
+            TicketSlaPolicy::class => SlaPolicyPolicy::class,
+            TicketCannedReply::class => TicketCannedReplyPolicy::class,
+            TicketView::class => TicketViewPolicy::class,
         ];
 
         foreach ($map as $model => $policy) {

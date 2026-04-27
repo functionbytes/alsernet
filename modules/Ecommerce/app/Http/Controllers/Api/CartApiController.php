@@ -6,9 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Ecommerce\Models\Cart;
+use Modules\Ecommerce\Services\CartService;
 
 class CartApiController extends Controller
 {
+    public function count(CartService $cartService): JsonResponse
+    {
+        return response()->json([
+            'count' => $cartService->count(),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $items = Cart::query()

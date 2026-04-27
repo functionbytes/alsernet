@@ -4,6 +4,7 @@ namespace Modules\Ecommerce\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Modules\Ecommerce\Enums\OrderStatus;
+use Modules\Ecommerce\Events\AdminOrderReceived;
 use Modules\Ecommerce\Events\OrderPlaced;
 use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Supports\OrderHelper;
@@ -19,6 +20,7 @@ class OrderService
         }
 
         OrderPlaced::dispatch($order);
+        AdminOrderReceived::dispatch($order);
 
         return $order;
     }

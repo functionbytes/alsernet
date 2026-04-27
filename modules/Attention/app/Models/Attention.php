@@ -4,11 +4,13 @@ namespace Modules\Attention\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Attention\Database\Factories\AttentionFactory;
 use Modules\Attention\Enums\AttentionStatus;
 use Modules\Attention\Enums\ResponseType;
 use Modules\Attention\Traits\HasAttachments;
@@ -25,6 +27,11 @@ class Attention extends Model implements HasMedia
 {
     use HasAttachments, HasFactory, HasUid, InteractsWithMedia, SoftDeletes {
         HasAttachments::registerMediaCollections insteadof InteractsWithMedia;
+    }
+
+    protected static function newFactory(): Factory
+    {
+        return AttentionFactory::new();
     }
 
     protected $table = 'attentions';
@@ -92,6 +99,15 @@ class Attention extends Model implements HasMedia
         'status_label',
         'full_name',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $attention): void {
+            if (! $attention->radicado) {
+                $attention->radicado = static::generateRadicado();
+            }
+        });
+    }
 
     // =========================================================================
     // MUTATORS - Transformaciones automáticas

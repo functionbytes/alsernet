@@ -5,6 +5,8 @@ namespace Modules\Mailrelay\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\Lists;
+use Modules\Mailrelay\Http\Requests\Web\StoreListRequest;
+use Modules\Mailrelay\Http\Requests\Web\UpdateListRequest;
 
 class ListWebController extends Controller
 {
@@ -40,12 +42,9 @@ class ListWebController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreListRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:mails_lists,name',
-            'description' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         Lists::create($validated);
 
@@ -74,12 +73,9 @@ class ListWebController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Lists $list)
+    public function update(UpdateListRequest $request, Lists $list)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:mails_lists,name,'.$list->id,
-            'description' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         $list->update($validated);
 

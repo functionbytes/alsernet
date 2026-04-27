@@ -32,7 +32,7 @@ class GscController extends Controller
     public function connect(GoogleSearchConsoleService $service): RedirectResponse
     {
         if (! $service->isConfigured()) {
-            return redirect()->route('setting.seo.gsc.index')
+            return redirect()->route('settings.seo.gsc.index')
                 ->with('error', 'Configura client_id y client_secret en /panel/setting/seo/settings antes de conectar.');
         }
 
@@ -42,13 +42,13 @@ class GscController extends Controller
     public function callback(Request $request, GoogleSearchConsoleService $service): RedirectResponse
     {
         if (! $request->filled('code')) {
-            return redirect()->route('setting.seo.gsc.index')
+            return redirect()->route('settings.seo.gsc.index')
                 ->with('error', 'Google no devolvió un código de autorización.');
         }
 
         $ok = $service->handleCallback((string) $request->input('code'));
 
-        return redirect()->route('setting.seo.gsc.index')
+        return redirect()->route('settings.seo.gsc.index')
             ->with($ok ? 'success' : 'error', $ok
                 ? 'Conectado a Google Search Console.'
                 : 'No se pudo canjear el código por un refresh token.');
@@ -58,7 +58,7 @@ class GscController extends Controller
     {
         $service->disconnect();
 
-        return redirect()->route('setting.seo.gsc.index')
+        return redirect()->route('settings.seo.gsc.index')
             ->with('success', 'Desconectado de Google Search Console.');
     }
 
@@ -69,7 +69,7 @@ class GscController extends Controller
 
         $updated = $service->importIntoMetas($days);
 
-        return redirect()->route('setting.seo.gsc.index')
+        return redirect()->route('settings.seo.gsc.index')
             ->with('success', "Importadas {$updated} URLs desde Search Console.");
     }
 }

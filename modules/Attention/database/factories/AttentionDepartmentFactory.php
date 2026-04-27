@@ -12,19 +12,16 @@ class AttentionDepartmentFactory extends Factory
     public function definition(): array
     {
         $departments = [
-            ['name' => 'Atención al Cliente', 'code' => 'AC'],
-            ['name' => 'Recursos Humanos', 'code' => 'RH'],
-            ['name' => 'Administración', 'code' => 'AD'],
-            ['name' => 'Soporte Técnico', 'code' => 'ST'],
-            ['name' => 'Calidad', 'code' => 'CA'],
-            ['name' => 'Finanzas', 'code' => 'FI'],
+            'Atención al Cliente',
+            'Recursos Humanos',
+            'Administración',
+            'Soporte Técnico',
+            'Calidad',
+            'Finanzas',
         ];
 
-        $dept = $this->faker->randomElement($departments);
-
         return [
-            'name' => $dept['name'],
-            'code' => $dept['code'],
+            'name' => $this->faker->unique()->randomElement($departments),
             'description' => $this->faker->sentence(),
             'is_active' => true,
         ];

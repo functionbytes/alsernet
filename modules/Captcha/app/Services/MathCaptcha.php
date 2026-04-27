@@ -68,10 +68,10 @@ class MathCaptcha
             ->map(fn ($value, $key) => sprintf('%s="%s"', $key, htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8')))
             ->implode(' ');
 
-        return tap(
-            new HtmlString('<input '.$attributesString.'>'),
-            fn (HtmlString $rendered) => CaptchaRendered::dispatch($rendered->toHtml(), 'math'),
-        );
+        $html = new HtmlString('<input '.$attributesString.'>');
+        CaptchaRendered::dispatch($html->toHtml(), 'math');
+
+        return (string) $html;
     }
 
     /**
@@ -114,7 +114,7 @@ class MathCaptcha
             return true;
         }
 
-        return now()->diffInMinutes(Carbon::parse($generatedAt)) > $this->sessionTimeout;
+        return abs(now()->diffInMinutes(Carbon::parse($generatedAt))) > $this->sessionTimeout;
     }
 
     /**
@@ -160,6 +160,7 @@ class MathCaptcha
                     config('captcha.general.math-captcha.rand-max')
                 )
             );
+            $this->session->put('math-captcha.generated_at', now()->toDateTimeString());
         }
 
         return $this->session->get('math-captcha.first');

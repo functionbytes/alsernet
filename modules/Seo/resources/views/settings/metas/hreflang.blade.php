@@ -28,7 +28,7 @@
                                 <i class="fas fa-exclamation-triangle text-warning"></i>
                                 <div>
                                     <strong>{{ number_format($withoutLocale) }} páginas sin idioma configurado.</strong>
-                                    <a href="{{ route('setting.seo.metas.index') }}" class="ms-1 alert-link">Ver todas las metas</a> para asignarles un locale.
+                                    <a href="{{ route('settings.seo.metas.index') }}" class="ms-1 alert-link">Ver todas las metas</a> para asignarles un locale.
                                 </div>
                             </div>
                         </div>
@@ -116,7 +116,7 @@
                                                         </a>
                                                         <ul class="dropdown-menu dropdown-menu-end">
                                                             <li>
-                                                                <a class="dropdown-item" href="{{ route('setting.seo.metas.edit', $meta) }}">
+                                                                <a class="dropdown-item" href="{{ route('settings.seo.metas.edit', $meta) }}">
                                                                     Editar
                                                                 </a>
                                                             </li>
@@ -137,7 +137,7 @@
                         <div class="text-center py-5">
                             <h6 class="mb-1">No hay páginas con locale configurado</h6>
                             <p class="text-muted mb-3">Asigna un idioma (hreflang) a tus páginas SEO para configurar etiquetas de idioma alternativo</p>
-                            <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-sm btn-primary">
+                            <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-list me-1"></i> Ver todas las metas SEO
                             </a>
                         </div>
@@ -184,7 +184,7 @@
                             Administra los títulos, descripciones y configuración SEO de todas las páginas.
                         </p>
                     </div>
-                    <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-primary w-100 mt-2">Ver metas</a>
+                    <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-primary w-100 mt-2">Ver metas</a>
                 </div>
             </div>
 

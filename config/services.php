@@ -41,6 +41,15 @@ return [
 
     'google' => [
         'pagespeed_key' => env('GOOGLE_PAGESPEED_KEY', ''),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URL', '/tienda/auth/google/callback'),
+    ],
+
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URL', '/tienda/auth/facebook/callback'),
     ],
 
     'fcm' => [

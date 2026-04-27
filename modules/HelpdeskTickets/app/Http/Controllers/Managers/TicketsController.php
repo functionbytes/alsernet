@@ -46,7 +46,7 @@ class TicketsController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('manager.helpdesk.tickets.index');
+        $this->authorize('helpdesk.tickets.view');
 
         $userId = auth()->id();
 
@@ -100,7 +100,7 @@ class TicketsController extends Controller
      */
     public function create(Request $request)
     {
-        $this->authorize('manager.helpdesk.tickets.create');
+        $this->authorize('helpdesk.tickets.create');
 
         $customer = null;
         if ($request->has('customer')) {
@@ -194,7 +194,7 @@ class TicketsController extends Controller
      */
     public function show(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.show');
+        $this->authorize('helpdesk.tickets.view');
 
         // Load relationships
         $ticket->load(['customer', 'status', 'category', 'assignee', 'group', 'slaPolicy', 'items.user', 'items.author', 'watchers']);
@@ -270,7 +270,7 @@ class TicketsController extends Controller
      */
     public function edit(Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $categories = TicketCategory::active()->ordered()->get();
         $statuses = TicketStatus::active()->ordered()->get();
@@ -309,7 +309,7 @@ class TicketsController extends Controller
      */
     public function destroy(Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.delete');
+        $this->authorize('helpdesk.tickets.delete');
 
         $ticket->delete();
 
@@ -323,7 +323,7 @@ class TicketsController extends Controller
      */
     public function close(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.close');
+        $this->authorize('helpdesk.tickets.close');
 
         $ticket->close();
 
@@ -345,7 +345,7 @@ class TicketsController extends Controller
      */
     public function resolve(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.resolve');
+        $this->authorize('helpdesk.tickets.resolve');
 
         $ticket->resolve();
 
@@ -367,7 +367,7 @@ class TicketsController extends Controller
      */
     public function reopen(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.reopen');
+        $this->authorize('helpdesk.tickets.manage');
 
         $ticket->reopen();
 
@@ -389,7 +389,7 @@ class TicketsController extends Controller
      */
     public function archive(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.archive');
+        $this->authorize('helpdesk.tickets.manage');
 
         $ticket->archive();
 
@@ -453,7 +453,7 @@ class TicketsController extends Controller
      */
     public function merge(Request $request, Ticket $ticket): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $validated = $request->validate([
             'merge_into_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id', 'different:'.$ticket->id],
@@ -496,7 +496,7 @@ class TicketsController extends Controller
      */
     public function watch(Ticket $ticket): JsonResponse
     {
-        $this->authorize('manager.helpdesk.tickets.show');
+        $this->authorize('helpdesk.tickets.view');
 
         TicketWatcher::addWatcher($ticket->id, auth()->id());
 
@@ -510,7 +510,7 @@ class TicketsController extends Controller
      */
     public function unwatch(Ticket $ticket): JsonResponse
     {
-        $this->authorize('manager.helpdesk.tickets.show');
+        $this->authorize('helpdesk.tickets.view');
 
         TicketWatcher::removeWatcher($ticket->id, auth()->id());
 
@@ -544,7 +544,7 @@ class TicketsController extends Controller
      */
     public function bulkReply(Request $request): JsonResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $validated = $request->validate([
             'ticket_ids' => ['required', 'array', 'min:1'],
@@ -592,7 +592,7 @@ class TicketsController extends Controller
      */
     public function linkTicket(Request $request, Ticket $ticket): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $validated = $request->validate([
             'linked_ticket_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
@@ -622,7 +622,7 @@ class TicketsController extends Controller
      */
     public function unlinkTicket(Ticket $ticket, int $linkId): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         TicketLink::where('ticket_id', $ticket->id)
             ->where('id', $linkId)
@@ -636,7 +636,7 @@ class TicketsController extends Controller
      */
     public function storeMessage(Request $request, Ticket $ticket)
     {
-        $this->authorize('manager.helpdesk.tickets.reply');
+        $this->authorize('helpdesk.tickets.update');
 
         $request->validate([
             'body' => 'required|string|min:1|max:10000',
@@ -699,7 +699,7 @@ class TicketsController extends Controller
      */
     public function export(Request $request, string $format): StreamedResponse|Response
     {
-        $this->authorize('manager.helpdesk.tickets.export');
+        $this->authorize('helpdesk.tickets.manage');
 
         $query = Ticket::query()
             ->with(['customer', 'status', 'category', 'assignee'])

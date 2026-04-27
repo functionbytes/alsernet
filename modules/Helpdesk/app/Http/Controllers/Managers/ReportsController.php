@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Http\Requests\DateRangeRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketDailyReport;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -258,13 +259,8 @@ class ReportsController extends Controller
      *
      * @return array{0: Carbon, 1: Carbon}
      */
-    private function resolveDateRange(Request $request): array
+    private function resolveDateRange(DateRangeRequest $request): array
     {
-        $request->validate([
-            'from' => 'nullable|date',
-            'to' => 'nullable|date|after_or_equal:from',
-        ]);
-
         $from = $request->filled('from')
             ? Carbon::parse($request->from)->startOfDay()
             : now()->subDays(30)->startOfDay();

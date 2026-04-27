@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form action="{{ route('setting.seo.templates.store') }}" method="POST" novalidate>
+    <form action="{{ route('settings.seo.templates.store') }}" method="POST" novalidate>
         @csrf
 
         <div class="row">
@@ -186,7 +186,7 @@
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             Crear plantilla
                         </button>
-                        <a href="{{ route('setting.seo.templates.index') }}" class="btn btn-light border w-100 py-2">
+                        <a href="{{ route('settings.seo.templates.index') }}" class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>
                     </div>

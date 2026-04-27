@@ -15,12 +15,12 @@ class CustomerController extends Controller
     {
         $customers = Customer::query()->latest()->paginate(20);
 
-        return view('ecommerce::admin.customers.index', compact('customers'));
+        return view('ecommerce::customers.index', compact('customers'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.customers.create');
+        return view('ecommerce::customers.create');
     }
 
     public function store(StoreCustomerRequest $request): RedirectResponse
@@ -34,7 +34,7 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer): View
     {
-        return view('ecommerce::admin.customers.edit', compact('customer'));
+        return view('ecommerce::customers.edit', compact('customer'));
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer): RedirectResponse

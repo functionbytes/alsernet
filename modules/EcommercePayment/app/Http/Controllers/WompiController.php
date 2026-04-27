@@ -94,7 +94,7 @@ class WompiController extends Controller
             $configErrors[] = $e->getMessage();
         }
 
-        return view('ecommerce-payment::settings', compact(
+        return view('ecommerce-payment::settings.wompi', compact(
             'settings',
             'configValid',
             'configErrors',

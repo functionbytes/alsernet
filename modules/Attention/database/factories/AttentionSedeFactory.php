@@ -13,7 +13,6 @@ class AttentionSedeFactory extends Factory
     {
         return [
             'name' => 'Sede '.$this->faker->city(),
-            'code' => strtoupper($this->faker->unique()->lexify('??')),
             'address' => $this->faker->address(),
             'city' => $this->faker->city(),
             'phone' => $this->faker->numerify('3#########'),

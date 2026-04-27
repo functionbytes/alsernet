@@ -12,6 +12,8 @@ use Illuminate\View\View;
 use Modules\Mailrelay\Entities\EmailTemplate;
 use Modules\Mailrelay\Entities\MailrelayLayout;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreTemplateRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateTemplateRequest;
 use Modules\Mailrelay\Services\TemplateRendererService;
 use Modules\Mailrelay\Services\VariableReplacementService;
 
@@ -81,22 +83,10 @@ class TemplateController extends Controller
     /**
      * Store a newly created template.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTemplateRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.templates.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'event_type' => 'required|string|max:100',
-                'subject' => 'required|string|max:255',
-                'body' => 'required|string',
-                'active' => 'boolean',
-                'use_html' => 'boolean',
-                'mailrelay_template_id' => 'nullable|integer',
-                'layout_id' => 'nullable|exists:mailrelay_layouts,id',
-                'use_layout' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             EmailTemplate::create($validated);
 
@@ -132,24 +122,13 @@ class TemplateController extends Controller
     /**
      * Update the specified template.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateTemplateRequest $request, int $id): RedirectResponse
     {
         Gate::authorize('mailrelay.settings.templates.edit');
 
         try {
             $template = EmailTemplate::findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'event_type' => 'required|string|max:100',
-                'subject' => 'required|string|max:255',
-                'body' => 'required|string',
-                'active' => 'boolean',
-                'use_html' => 'boolean',
-                'mailrelay_template_id' => 'nullable|integer',
-                'layout_id' => 'nullable|exists:mailrelay_layouts,id',
-                'use_layout' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             $template->update($validated);
 
@@ -319,10 +298,9 @@ class TemplateController extends Controller
     {
         Gate::authorize('mailrelay.settings.templates.edit');
 
+        $validated = $request->validate(['email' => 'required|email']);
+
         try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-            ]);
 
             $template = EmailTemplate::findOrFail($id);
 

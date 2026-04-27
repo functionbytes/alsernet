@@ -14,7 +14,7 @@
 
             {{-- Columna izquierda --}}
             <div class="col-lg-8">
-                <form method="POST" action="{{ route('setting.seo.verification.update') }}" id="verificationForm">
+                <form method="POST" action="{{ route('settings.seo.verification.update') }}" id="verificationForm">
                     @csrf
                     @method('PUT')
 

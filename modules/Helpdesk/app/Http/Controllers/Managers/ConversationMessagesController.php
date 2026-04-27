@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationMessageRead;
 use Modules\Helpdesk\Events\ConversationUserTyping;
+use Modules\Helpdesk\Http\Requests\BroadcastTypingRequest;
+use Modules\Helpdesk\Http\Requests\StoreConversationMessageRequest;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
@@ -20,7 +22,7 @@ class ConversationMessagesController extends Controller
      */
     public function index(Conversation $conversation)
     {
-        $this->authorize('manager.helpdesk.conversations.show');
+        $this->authorize('helpdesk.conversations.show');
 
         $items = $conversation->items()
             ->with(['author', 'user'])
@@ -33,16 +35,9 @@ class ConversationMessagesController extends Controller
     /**
      * Store a new message in a conversation
      */
-    public function store(Request $request, Conversation $conversation)
+    public function store(StoreConversationMessageRequest $request, Conversation $conversation)
     {
-        $this->authorize('manager.helpdesk.conversations.update');
-
-        $validated = $request->validate([
-            'body' => 'required|string|max:5000',
-            'html_body' => 'nullable|string',
-            'is_internal' => 'boolean',
-            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip,mp4,mp3,ogg',
-        ]);
+        $validated = $request->validated();
 
         // Handle attachments
         $attachmentUrls = [];
@@ -99,7 +94,7 @@ class ConversationMessagesController extends Controller
      */
     public function markAsRead(Request $request, ConversationItem $item)
     {
-        $this->authorize('manager.helpdesk.conversations.show');
+        $this->authorize('helpdesk.conversations.show');
 
         // Create or update read record
         ConversationRead::firstOrCreate([
@@ -116,13 +111,11 @@ class ConversationMessagesController extends Controller
     /**
      * Broadcast typing indicator
      */
-    public function broadcastTyping(Request $request, Conversation $conversation)
+    public function broadcastTyping(BroadcastTypingRequest $request, Conversation $conversation)
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('helpdesk.conversations.update');
 
-        $validated = $request->validate([
-            'is_typing' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         broadcast(new ConversationUserTyping(
             $conversation,
@@ -138,7 +131,7 @@ class ConversationMessagesController extends Controller
      */
     public function destroy(Request $request, ConversationItem $item)
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('helpdesk.conversations.update');
 
         // Only allow deleting own messages or if admin
         if ($item->user_id !== auth()->id() && ! auth()->user()->hasRole('admin')) {

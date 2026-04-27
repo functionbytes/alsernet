@@ -11,7 +11,7 @@ class ReplaceTicketRequest extends BaseTicketRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasPermissionTo('edit_tickets');
+        return $this->user()?->can('helpdesk.tickets.update') ?? false;
     }
 
     /**

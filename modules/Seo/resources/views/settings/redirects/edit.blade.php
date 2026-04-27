@@ -9,7 +9,7 @@
         <!-- Formulario principal -->
         <div class="col-lg-8">
             <div class="card w-100">
-                <form id="formRedirect" action="{{ route('setting.seo.redirects.update', $redirect) }}" method="POST" novalidate>
+                <form id="formRedirect" action="{{ route('settings.seo.redirects.update', $redirect) }}" method="POST" novalidate>
                     @csrf
                     @method('PUT')
 
@@ -190,7 +190,7 @@
                         <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                             Guardar cambios
                         </button>
-                        <a href="{{ route('setting.seo.redirects.index') }}"
+                        <a href="{{ route('settings.seo.redirects.index') }}"
                            class="btn btn-secondary px-4 waves-effect waves-light mt-2 w-100">
                             Volver
                         </a>
@@ -295,7 +295,7 @@
                     <button type="button" class="btn btn-danger w-100 delete-btn"
                             data-bs-toggle="modal"
                             data-bs-target="#delete-modal"
-                            data-url="{{ route('setting.seo.redirects.destroy', $redirect) }}"
+                            data-url="{{ route('settings.seo.redirects.destroy', $redirect) }}"
                             data-title="Eliminar: {{ $redirect->source_path }}">
                         <i class="fas fa-trash me-2"></i>Eliminar redireccion
                     </button>

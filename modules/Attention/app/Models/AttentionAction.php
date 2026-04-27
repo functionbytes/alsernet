@@ -3,9 +3,11 @@
 namespace Modules\Attention\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Attention\Database\Factories\AttentionActionFactory;
 
 /**
  * Historial de acciones realizadas en un peticiones
@@ -14,6 +16,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AttentionAction extends Model
 {
     use HasFactory;
+
+    protected static function newFactory(): Factory
+    {
+        return AttentionActionFactory::new();
+    }
 
     protected $table = 'attention_actions';
 

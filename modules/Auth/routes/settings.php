@@ -17,7 +17,7 @@ use Modules\Auth\Http\Controllers\Settings\TwoFactorAuthenticationController;
 | Auth Settings Routes
 |--------------------------------------------------------------------------
 |
-| Prefix: /panel/setting/auth (ServiceProvider)
+| Prefix: /panel/settings/auth (ServiceProvider)
 | Name: settings.auth.* (ServiceProvider)
 | Middleware: web, auth, auth.session.lock (ServiceProvider)
 |

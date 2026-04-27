@@ -7,6 +7,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\StoreHelpCenterArticleRequest;
+use Modules\Helpdesk\Http\Requests\StoreHelpCenterCategoryRequest;
+use Modules\Helpdesk\Http\Requests\StoreHelpCenterSectionRequest;
+use Modules\Helpdesk\Http\Requests\UpdateHelpCenterArticleRequest;
+use Modules\Helpdesk\Http\Requests\UpdateHelpCenterCategoryRequest;
+use Modules\Helpdesk\Http\Requests\UpdateHelpCenterSectionRequest;
 use Modules\Helpdesk\Models\HelpCenterArticle;
 use Modules\Helpdesk\Models\HelpCenterCategory;
 use Modules\Helpdesk\Models\HelpCenterTag;
@@ -55,16 +61,9 @@ class HelpCenterController extends Controller
         Cache::increment('helpdesk:widget:version');
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHelpCenterCategoryRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|string',
-            'icon' => 'nullable|string|max:100',
-            'visible_to_role' => 'nullable|string|max:255',
-            'managed_by_role' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $position = HelpCenterCategory::whereNull('parent_id')->max('position') + 1;
         $validated['position'] = $position;
@@ -94,17 +93,9 @@ class HelpCenterController extends Controller
     /**
      * Update category
      */
-    public function update(Request $request): JsonResponse
+    public function update(UpdateHelpCenterCategoryRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|string',
-            'icon' => 'nullable|string|max:100',
-            'visible_to_role' => 'nullable|string|max:255',
-            'managed_by_role' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $category = HelpCenterCategory::findOrFail($validated['id']);
         $category->update($validated);
@@ -184,13 +175,9 @@ class HelpCenterController extends Controller
     /**
      * Store new section
      */
-    public function storeSection(Request $request): JsonResponse
+    public function storeSection(StoreHelpCenterSectionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-        ]);
+        $validated = $request->validated();
 
         $position = HelpCenterCategory::where('parent_id', $validated['parent_id'])->max('position') + 1;
         $validated['position'] = $position;
@@ -224,14 +211,9 @@ class HelpCenterController extends Controller
     /**
      * Update section
      */
-    public function updateSection(Request $request): JsonResponse
+    public function updateSection(UpdateHelpCenterSectionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-        ]);
+        $validated = $request->validated();
 
         $section = HelpCenterCategory::findOrFail($validated['id']);
         $section->update($validated);
@@ -334,21 +316,9 @@ class HelpCenterController extends Controller
     /**
      * Store new article
      */
-    public function storeArticle(Request $request): JsonResponse
+    public function storeArticle(StoreHelpCenterArticleRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'body' => 'nullable|string',
-            'description' => 'nullable|string',
-            'meta_description' => 'nullable|string|max:500',
-            'section_id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-            'position' => 'nullable|integer|min:0',
-            'draft' => 'boolean',
-            'hide_from_structure' => 'boolean',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ]);
+        $validated = $request->validated();
 
         $article = HelpCenterArticle::create([
             'title' => $validated['title'],
@@ -409,22 +379,9 @@ class HelpCenterController extends Controller
     /**
      * Update article
      */
-    public function updateArticle(Request $request): JsonResponse
+    public function updateArticle(UpdateHelpCenterArticleRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:helpdesk_helpcenter_articles,id',
-            'title' => 'required|string|max:255',
-            'body' => 'nullable|string',
-            'description' => 'nullable|string',
-            'meta_description' => 'nullable|string|max:500',
-            'section_id' => 'required|integer|exists:helpdesk_helpcenter_categories,id',
-            'position' => 'nullable|integer|min:0',
-            'draft' => 'boolean',
-            'hide_from_structure' => 'boolean',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ]);
+        $validated = $request->validated();
 
         $article = HelpCenterArticle::findOrFail($validated['id']);
         $article->update([

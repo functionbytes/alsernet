@@ -12,7 +12,7 @@ class SeoOrphanTest extends TestCase
 
     public function test_orphans_index_requires_auth(): void
     {
-        $this->get(route('setting.seo.orphans.index'))
+        $this->get(route('settings.seo.orphans.index'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -25,7 +25,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.orphans.index'))
+            ->get(route('settings.seo.orphans.index'))
             ->assertForbidden();
     }
 
@@ -34,7 +34,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.orphans.index'))
+            ->get(route('settings.seo.orphans.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.orphans.index')
             ->assertViewHas('orphans');
@@ -44,7 +44,7 @@ class SeoOrphanTest extends TestCase
     {
         $user = $this->createUser(['Seo.metas.index']);
 
-        $response = $this->actingAs($user)->get(route('setting.seo.orphans.index'));
+        $response = $this->actingAs($user)->get(route('settings.seo.orphans.index'));
 
         $response->assertOk();
         $this->assertIsArray($response->viewData('orphans'));
@@ -56,7 +56,7 @@ class SeoOrphanTest extends TestCase
 
     public function test_generate_requires_auth(): void
     {
-        $this->postJson(route('setting.seo.orphans.generate'), [
+        $this->postJson(route('settings.seo.orphans.generate'), [
             'model_class' => 'App\\Models\\User',
             'model_id' => 1,
         ])->assertUnauthorized();
@@ -67,7 +67,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.orphans.generate'), [
+            ->postJson(route('settings.seo.orphans.generate'), [
                 'model_class' => 'App\\Models\\User',
                 'model_id' => 1,
             ])
@@ -80,7 +80,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.orphans.generate'), [])
+            ->postJson(route('settings.seo.orphans.generate'), [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['model_class', 'model_id']);
     }
@@ -91,7 +91,7 @@ class SeoOrphanTest extends TestCase
 
     public function test_bulk_generate_requires_auth(): void
     {
-        $this->postJson(route('setting.seo.orphans.bulk-generate'), [
+        $this->postJson(route('settings.seo.orphans.bulk-generate'), [
             'model_class' => 'App\\Models\\User',
         ])->assertUnauthorized();
     }
@@ -101,7 +101,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.orphans.bulk-generate'), [
+            ->postJson(route('settings.seo.orphans.bulk-generate'), [
                 'model_class' => 'App\\Models\\User',
             ])
             ->assertUnprocessable()
@@ -113,7 +113,7 @@ class SeoOrphanTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.orphans.bulk-generate'), [])
+            ->postJson(route('settings.seo.orphans.bulk-generate'), [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['model_class']);
     }

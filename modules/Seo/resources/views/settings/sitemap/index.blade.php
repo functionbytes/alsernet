@@ -211,7 +211,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Regenerar sitemap</h6>
                         <p class="text-muted mb-3">Regenera el archivo sitemap.xml con el contenido actual del sitio.</p>
-                        <form method="POST" action="{{ route('setting.seo.sitemap.generate') }}" data-confirm="¿Regenerar el sitemap?">
+                        <form method="POST" action="{{ route('settings.seo.sitemap.generate') }}" data-confirm="¿Regenerar el sitemap?">
                             @csrf
                             <button type="submit" class="btn btn-primary w-100">
                                 Regenerar sitemap
@@ -224,7 +224,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Limpiar caché</h6>
                         <p class="text-muted mb-3">Limpia la caché del sitemap. Se volverá a cachear automáticamente al acceder.</p>
-                        <form method="POST" action="{{ route('setting.seo.sitemap.clear-cache') }}" data-confirm="¿Limpiar la caché del sitemap?">
+                        <form method="POST" action="{{ route('settings.seo.sitemap.clear-cache') }}" data-confirm="¿Limpiar la caché del sitemap?">
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary w-100">
                                 Limpiar caché
@@ -250,7 +250,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">URLs estáticas</h6>
                         <p class="text-muted mb-3">Administra las URLs estáticas que se incluyen en el sitemap.</p>
-                        <a href="{{ route('setting.seo.static-urls.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.static-urls.index') }}" class="btn btn-outline-secondary w-100">
                             Gestionar URLs estáticas
                         </a>
                     </div>
@@ -260,7 +260,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Dashboard SEO</h6>
                         <p class="text-muted mb-3">Vuelve al panel principal de SEO.</p>
-                        <a href="{{ route('setting.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
                             Ir al dashboard
                         </a>
                     </div>
@@ -293,7 +293,7 @@ $(document).on('submit', 'form[data-confirm]', function (e) {
         $('#priorities-result').hide();
 
         $.ajax({
-            url: '{{ route("setting.seo.sitemap.calculate-priorities") }}',
+            url: '{{ route("settings.seo.sitemap.calculate-priorities") }}',
             method: 'GET',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (res) {
@@ -339,7 +339,7 @@ $(document).on('submit', 'form[data-confirm]', function (e) {
         $result.hide();
 
         $.ajax({
-            url: '{{ route("setting.seo.sitemap.validate") }}',
+            url: '{{ route("settings.seo.sitemap.validate") }}',
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (data) {
@@ -367,7 +367,7 @@ $(document).on('submit', 'form[data-confirm]', function (e) {
         $('#verify-urls-result').hide();
 
         $.ajax({
-            url: '{{ route("setting.seo.sitemap.verify-urls") }}',
+            url: '{{ route("settings.seo.sitemap.verify-urls") }}',
             method: 'GET',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (res) {

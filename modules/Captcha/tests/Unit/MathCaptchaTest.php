@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Modules\Captcha\Services\MathCaptcha;
 use Modules\Captcha\Tests\TestCase;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 class MathCaptchaTest extends TestCase
 {
@@ -20,7 +19,46 @@ class MathCaptchaTest extends TestCase
     {
         parent::setUp();
 
-        $this->session = new Store('test', new MockArraySessionStorage);
+        $handler = new class implements \SessionHandlerInterface
+        {
+            private array $data = [];
+
+            public function open(string $path, string $name): bool
+            {
+                return true;
+            }
+
+            public function close(): bool
+            {
+                return true;
+            }
+
+            public function read(string $id): string|false
+            {
+                return $this->data[$id] ?? '';
+            }
+
+            public function write(string $id, string $data): bool
+            {
+                $this->data[$id] = $data;
+
+                return true;
+            }
+
+            public function destroy(string $id): bool
+            {
+                unset($this->data[$id]);
+
+                return true;
+            }
+
+            public function gc(int $max_lifetime): int|false
+            {
+                return 0;
+            }
+        };
+
+        $this->session = new Store('test', $handler);
         $this->mathCaptcha = new MathCaptcha($this->session);
     }
 
@@ -46,7 +84,7 @@ class MathCaptchaTest extends TestCase
 
     public function test_input_escapes_special_characters(): void
     {
-        $input = $this->mathCaptcha->input(['value' => '" onclick="alert(1)']);
+        $input = $this->mathCaptcha->input(['value' => '" onclick="alert(1)"']);
 
         $this->assertStringNotContainsString('" onclick="alert(1)"', $input);
         $this->assertStringContainsString('&quot; onclick=&quot;alert(1)&quot;', $input);

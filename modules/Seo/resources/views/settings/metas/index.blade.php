@@ -23,12 +23,12 @@
                                 Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('setting.seo.metas.export') }}">Exportar CSV</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.metas.import') }}">Importar CSV</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.metas.export-json') }}">Exportar JSON</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.metas.import-json') }}">Importar JSON</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.metas.export') }}">Exportar CSV</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.metas.import') }}">Importar CSV</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.metas.export-json') }}">Exportar JSON</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.metas.import-json') }}">Importar JSON</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('setting.seo.audit.index') }}">Auditoría SEO</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.audit.index') }}">Auditoría SEO</a>
                                 <button class="dropdown-item" type="button" id="btn-bulk-canonical">Generar canónicas faltantes</button>
                                 <button class="dropdown-item" type="button" data-action="reload">Actualizar</button>
                             </div>
@@ -110,7 +110,7 @@
 
             <!-- Filters Section -->
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.metas.index') }}" id="filter-form">
+                <form method="GET" action="{{ route('settings.seo.metas.index') }}" id="filter-form">
                     <input type="hidden" name="tab" value="{{ $tab }}">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
@@ -155,7 +155,7 @@
                                 <i class="fas fa-search"></i>
                             </button>
                             @if(request()->hasAny(['search', 'seoable_type', 'sort_by', 'sort_direction']))
-                                <a href="{{ route('setting.seo.metas.index', ['tab' => $tab]) }}"
+                                <a href="{{ route('settings.seo.metas.index', ['tab' => $tab]) }}"
                                    class="btn btn-outline-secondary"
                                    title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
@@ -169,28 +169,28 @@
             <!-- Tabs -->
             <ul class="nav nav-tabs border-0 user-profile-tab" id="seo-settings-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('setting.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'all'])) }}"
+                    <a href="{{ route('settings.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'all'])) }}"
                        class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'all' ? 'active' : '' }}"
                        role="tab">
                         <span class="d-none d-md-block">Todas</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('setting.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'indexable'])) }}"
+                    <a href="{{ route('settings.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'indexable'])) }}"
                        class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'indexable' ? 'active' : '' }}"
                        role="tab">
                         <span class="d-none d-md-block">Indexables</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('setting.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'noindex'])) }}"
+                    <a href="{{ route('settings.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'noindex'])) }}"
                        class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'noindex' ? 'active' : '' }}"
                        role="tab">
                         <span class="d-none d-md-block">No indexables</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('setting.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'unoptimized'])) }}"
+                    <a href="{{ route('settings.seo.metas.index', array_merge(request()->except('tab', 'page'), ['tab' => 'unoptimized'])) }}"
                        class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'unoptimized' ? 'active' : '' }}"
                        role="tab">
                         <span class="d-none d-md-block">Sin optimizar</span>
@@ -236,7 +236,7 @@
                 </div>
 
                 @if($metas->count() > 0)
-                    <form id="bulk-robots-form" method="POST" action="{{ route('setting.seo.metas.bulk-robots') }}" class="d-none">
+                    <form id="bulk-robots-form" method="POST" action="{{ route('settings.seo.metas.bulk-robots') }}" class="d-none">
                         @csrf
                         <input type="hidden" name="ids" id="bulk-robots-ids">
                         <input type="hidden" name="robots" id="bulk-robots-value">
@@ -353,12 +353,12 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.metas.show', $meta) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.metas.show', $meta) }}">
                                                             Ver detalle
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.metas.edit', $meta) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.metas.edit', $meta) }}">
                                                             Editar
                                                         </a>
                                                     </li>
@@ -367,7 +367,7 @@
                                                         <a class="dropdown-item delete-btn"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.metas.destroy', $meta) }}"
+                                                           data-url="{{ route('settings.seo.metas.destroy', $meta) }}"
                                                            data-title="Eliminar meta SEO: {{ Str::limit($meta->title ?? 'Sin título', 30) }}">
                                                            Eliminar
                                                         </a>
@@ -450,7 +450,7 @@
                 <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="bulk-delete-form" method="POST" action="{{ route('setting.seo.metas.bulk-delete') }}">
+                <form id="bulk-delete-form" method="POST" action="{{ route('settings.seo.metas.bulk-delete') }}">
                     @csrf
                     @method('DELETE')
                     <input type="hidden" name="ids" id="bulk-delete-ids">
@@ -516,7 +516,7 @@ $(document).ready(function() {
         if (!confirm('¿Generar URLs canónicas automáticamente para todas las páginas que no tienen una?')) return;
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Generando...');
-        $.post('{{ route("setting.seo.metas.bulk-generate-canonicals") }}', {
+        $.post('{{ route("settings.seo.metas.bulk-generate-canonicals") }}', {
             _token: $('meta[name="csrf-token"]').attr('content')
         }, function(data) {
             toastr.success(data.message);

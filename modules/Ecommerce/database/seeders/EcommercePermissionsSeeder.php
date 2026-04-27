@@ -20,6 +20,9 @@ class EcommercePermissionsSeeder extends Seeder
     protected function createPermissions(): array
     {
         $permissions = [
+            // Module nav access
+            ['name' => 'modules.view.ecommerce', 'description' => 'Ver modulo Ecommerce en el nav', 'guard_name' => 'web'],
+
             // Product permissions
             ['name' => 'ecommerce.product.view', 'description' => 'Ver productos', 'guard_name' => 'web'],
             ['name' => 'ecommerce.product.create', 'description' => 'Crear productos', 'guard_name' => 'web'],
@@ -59,6 +62,37 @@ class EcommercePermissionsSeeder extends Seeder
             // Review permissions
             ['name' => 'ecommerce.review.moderate', 'description' => 'Moderar resenas', 'guard_name' => 'web'],
 
+            // Newsletter permissions
+            ['name' => 'newsletter.view', 'description' => 'Ver suscriptores newsletter', 'guard_name' => 'web'],
+            ['name' => 'newsletter.delete', 'description' => 'Eliminar suscriptores newsletter', 'guard_name' => 'web'],
+            ['name' => 'newsletter.export', 'description' => 'Exportar suscriptores newsletter', 'guard_name' => 'web'],
+            ['name' => 'newsletter.manage', 'description' => 'Gestionar newsletter completamente', 'guard_name' => 'web'],
+
+            // Legal page permissions
+            ['name' => 'ecommerce.legal-page.view', 'description' => 'Ver páginas legales', 'guard_name' => 'web'],
+            ['name' => 'ecommerce.legal-page.manage', 'description' => 'Gestionar páginas legales (crear, editar, eliminar)', 'guard_name' => 'web'],
+
+            // Bundle permissions
+            ['name' => 'bundle.view', 'description' => 'Ver bundles de productos', 'guard_name' => 'web'],
+            ['name' => 'bundle.manage', 'description' => 'Gestionar bundles (crear, editar, eliminar)', 'guard_name' => 'web'],
+
+            // Gift card permissions
+            ['name' => 'gift-card.view', 'description' => 'Ver gift cards', 'guard_name' => 'web'],
+            ['name' => 'gift-card.manage', 'description' => 'Gestionar gift cards (crear, eliminar)', 'guard_name' => 'web'],
+
+            // Email campaign permissions
+            ['name' => 'email-campaign.view', 'description' => 'Ver campañas de email', 'guard_name' => 'web'],
+            ['name' => 'email-campaign.manage', 'description' => 'Gestionar campañas de email', 'guard_name' => 'web'],
+            ['name' => 'email-campaign.send', 'description' => 'Enviar campañas de email', 'guard_name' => 'web'],
+
+            // Subscription permissions
+            ['name' => 'subscription.view', 'description' => 'Ver suscripciones', 'guard_name' => 'web'],
+            ['name' => 'subscription.manage', 'description' => 'Gestionar suscripciones', 'guard_name' => 'web'],
+
+            // Reports permissions
+            ['name' => 'ecommerce.reports.view', 'description' => 'Ver reportes ecommerce', 'guard_name' => 'web'],
+            ['name' => 'ecommerce.reports.financial', 'description' => 'Ver reportes financieros (margen, LTV)', 'guard_name' => 'web'],
+
             // Settings permission
             ['name' => 'ecommerce.settings', 'description' => 'Configuracion ecommerce', 'guard_name' => 'web'],
 
@@ -83,37 +117,10 @@ class EcommercePermissionsSeeder extends Seeder
 
     protected function createRoles(array $permissions): void
     {
-        $ecommerceAdmin = Role::firstOrCreate(['name' => 'ecommerce-admin', 'guard_name' => 'web']);
-        $ecommerceAdmin->givePermissionTo([
-            'ecommerce.product.view', 'ecommerce.product.create', 'ecommerce.product.update', 'ecommerce.product.delete',
-            'ecommerce.category.view', 'ecommerce.category.create', 'ecommerce.category.update', 'ecommerce.category.delete',
-            'ecommerce.brand.view', 'ecommerce.brand.create', 'ecommerce.brand.update', 'ecommerce.brand.delete',
-            'ecommerce.customer.view', 'ecommerce.customer.create', 'ecommerce.customer.update', 'ecommerce.customer.delete',
-            'ecommerce.order.view', 'ecommerce.order.create', 'ecommerce.order.update', 'ecommerce.order.delete',
-            'ecommerce.discount.view', 'ecommerce.discount.create', 'ecommerce.discount.update', 'ecommerce.discount.delete',
-            'ecommerce.review.moderate',
-            'ecommerce.settings',
-            'ecommerce.payment.view',
-            'ecommerce.payment.refund',
-        ]);
-        $this->command->info('Rol creado: ecommerce-admin');
-
-        $ecommerceManager = Role::firstOrCreate(['name' => 'ecommerce-manager', 'guard_name' => 'web']);
-        $ecommerceManager->givePermissionTo([
-            'ecommerce.product.view', 'ecommerce.product.create', 'ecommerce.product.update',
-            'ecommerce.category.view', 'ecommerce.category.create', 'ecommerce.category.update',
-            'ecommerce.brand.view', 'ecommerce.brand.create', 'ecommerce.brand.update',
-            'ecommerce.customer.view', 'ecommerce.customer.create', 'ecommerce.customer.update',
-            'ecommerce.order.view', 'ecommerce.order.create', 'ecommerce.order.update',
-            'ecommerce.discount.view', 'ecommerce.discount.create', 'ecommerce.discount.update',
-            'ecommerce.review.moderate',
-            'ecommerce.payment.view',
-        ]);
-        $this->command->info('Rol creado: ecommerce-manager');
-
-        $adminRole = Role::where('name', 'admin')->where('guard_name', 'web')->first();
-        if ($adminRole) {
-            $adminRole->givePermissionTo([
+        try {
+            $ecommerceAdmin = Role::firstOrCreate(['name' => 'ecommerce-admin', 'guard_name' => 'web']);
+            $ecommerceAdmin->givePermissionTo([
+                'modules.view.ecommerce',
                 'ecommerce.product.view', 'ecommerce.product.create', 'ecommerce.product.update', 'ecommerce.product.delete',
                 'ecommerce.category.view', 'ecommerce.category.create', 'ecommerce.category.update', 'ecommerce.category.delete',
                 'ecommerce.brand.view', 'ecommerce.brand.create', 'ecommerce.brand.update', 'ecommerce.brand.delete',
@@ -121,21 +128,76 @@ class EcommercePermissionsSeeder extends Seeder
                 'ecommerce.order.view', 'ecommerce.order.create', 'ecommerce.order.update', 'ecommerce.order.delete',
                 'ecommerce.discount.view', 'ecommerce.discount.create', 'ecommerce.discount.update', 'ecommerce.discount.delete',
                 'ecommerce.review.moderate',
+                'ecommerce.legal-page.view', 'ecommerce.legal-page.manage',
+                'bundle.view', 'bundle.manage',
+                'gift-card.view', 'gift-card.manage',
+                'email-campaign.view', 'email-campaign.manage', 'email-campaign.send',
+                'subscription.view', 'subscription.manage',
+                'ecommerce.reports.view', 'ecommerce.reports.financial',
                 'ecommerce.settings',
                 'ecommerce.payment.view',
                 'ecommerce.payment.refund',
+                'newsletter.view',
+                'newsletter.delete',
+                'newsletter.export',
+                'newsletter.manage',
             ]);
-            $this->command->info('Permisos de ecommerce asignados al rol: admin');
-        }
+            $this->command->info('Rol creado: ecommerce-admin');
 
-        $this->command->info('');
-        $this->command->info('=================================================');
-        $this->command->info('Permisos y roles de ecommerce creados exitosamente!');
-        $this->command->info('=================================================');
-        $this->command->info('');
-        $this->command->info('Roles creados:');
-        $this->command->info('  - ecommerce-admin: Acceso completo al modulo');
-        $this->command->info('  - ecommerce-manager: Gestion sin eliminar');
-        $this->command->info('');
+            $ecommerceManager = Role::firstOrCreate(['name' => 'ecommerce-manager', 'guard_name' => 'web']);
+            $ecommerceManager->givePermissionTo([
+                'modules.view.ecommerce',
+                'ecommerce.product.view', 'ecommerce.product.create', 'ecommerce.product.update',
+                'ecommerce.category.view', 'ecommerce.category.create', 'ecommerce.category.update',
+                'ecommerce.brand.view', 'ecommerce.brand.create', 'ecommerce.brand.update',
+                'ecommerce.customer.view', 'ecommerce.customer.create', 'ecommerce.customer.update',
+                'ecommerce.order.view', 'ecommerce.order.create', 'ecommerce.order.update',
+                'ecommerce.discount.view', 'ecommerce.discount.create', 'ecommerce.discount.update',
+                'ecommerce.review.moderate',
+                'ecommerce.legal-page.view',
+                'bundle.view', 'bundle.manage',
+                'gift-card.view', 'gift-card.manage',
+                'ecommerce.payment.view',
+                'newsletter.view',
+                'newsletter.export',
+            ]);
+            $this->command->info('Rol creado: ecommerce-manager');
+
+            $adminRole = Role::where('name', 'admin')->where('guard_name', 'web')->first();
+            if ($adminRole) {
+                $adminRole->givePermissionTo([
+                    'modules.view.ecommerce',
+                    'ecommerce.product.view', 'ecommerce.product.create', 'ecommerce.product.update', 'ecommerce.product.delete',
+                    'ecommerce.category.view', 'ecommerce.category.create', 'ecommerce.category.update', 'ecommerce.category.delete',
+                    'ecommerce.brand.view', 'ecommerce.brand.create', 'ecommerce.brand.update', 'ecommerce.brand.delete',
+                    'ecommerce.customer.view', 'ecommerce.customer.create', 'ecommerce.customer.update', 'ecommerce.customer.delete',
+                    'ecommerce.order.view', 'ecommerce.order.create', 'ecommerce.order.update', 'ecommerce.order.delete',
+                    'ecommerce.discount.view', 'ecommerce.discount.create', 'ecommerce.discount.update', 'ecommerce.discount.delete',
+                    'ecommerce.review.moderate',
+                    'bundle.view', 'bundle.manage',
+                    'gift-card.view', 'gift-card.manage',
+                    'ecommerce.settings',
+                    'ecommerce.payment.view',
+                    'ecommerce.payment.refund',
+                    'newsletter.view',
+                    'newsletter.delete',
+                    'newsletter.export',
+                    'newsletter.manage',
+                ]);
+                $this->command->info('Permisos de ecommerce asignados al rol: admin');
+            }
+
+            $this->command->info('');
+            $this->command->info('=================================================');
+            $this->command->info('Permisos y roles de ecommerce creados exitosamente!');
+            $this->command->info('=================================================');
+            $this->command->info('');
+            $this->command->info('Roles creados:');
+            $this->command->info('  - ecommerce-admin: Acceso completo al modulo');
+            $this->command->info('  - ecommerce-manager: Gestion sin eliminar');
+            $this->command->info('');
+        } catch (\Exception $e) {
+            $this->command->warn('Roles no creados (tabla roles custom): '.$e->getMessage());
+        }
     }
 }

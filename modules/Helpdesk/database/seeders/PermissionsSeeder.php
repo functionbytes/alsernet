@@ -25,6 +25,22 @@ class PermissionsSeeder extends Seeder
             'helpdesk.cannedreplies.view', 'helpdesk.cannedreplies.create', 'helpdesk.cannedreplies.update', 'helpdesk.cannedreplies.delete', 'helpdesk.cannedreplies.manage',
             // Settings
             'helpdesk.settings.view', 'helpdesk.settings.update',
+            // Tags
+            'helpdesk.tags.view', 'helpdesk.tags.create', 'helpdesk.tags.update', 'helpdesk.tags.delete', 'helpdesk.tags.manage',
+            // Statuses
+            'helpdesk.statuses.view', 'helpdesk.statuses.create', 'helpdesk.statuses.update', 'helpdesk.statuses.delete', 'helpdesk.statuses.manage',
+            // Views
+            'helpdesk.views.view', 'helpdesk.views.create', 'helpdesk.views.update', 'helpdesk.views.delete', 'helpdesk.views.manage',
+            // Groups
+            'helpdesk.groups.view', 'helpdesk.groups.create', 'helpdesk.groups.update', 'helpdesk.groups.delete', 'helpdesk.groups.manage',
+            // Webhooks
+            'helpdesk.webhooks.view', 'helpdesk.webhooks.create', 'helpdesk.webhooks.update', 'helpdesk.webhooks.delete', 'helpdesk.webhooks.manage',
+            // Schedule (shifts & on-call)
+            'helpdesk.schedule.view', 'helpdesk.schedule.create', 'helpdesk.schedule.update', 'helpdesk.schedule.delete', 'helpdesk.schedule.manage',
+            // Help center categories
+            'helpdesk.helpcenter.categories.view', 'helpdesk.helpcenter.categories.create', 'helpdesk.helpcenter.categories.update', 'helpdesk.helpcenter.categories.delete', 'helpdesk.helpcenter.categories.manage',
+            // Custom attributes
+            'helpdesk.attributes.view', 'helpdesk.attributes.create', 'helpdesk.attributes.update', 'helpdesk.attributes.delete', 'helpdesk.attributes.manage',
         ];
 
         foreach ($permissions as $name) {

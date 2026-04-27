@@ -11,6 +11,8 @@ use Illuminate\View\View;
 use Modules\Mailrelay\Entities\EmailTemplate;
 use Modules\Mailrelay\Entities\MailrelayEndpoint;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreEndpointRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateEndpointRequest;
 use Modules\Mailrelay\Services\EndpointExecutionService;
 
 class EndpointController extends Controller
@@ -77,21 +79,10 @@ class EndpointController extends Controller
     /**
      * Store a newly created endpoint.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreEndpointRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.endpoints.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'endpoint_key' => 'required|string|max:255|unique:mailrelay_endpoints,endpoint_key|alpha_dash',
-                'description' => 'nullable|string',
-                'template_id' => 'required|exists:mails_email_templates,id',
-                'status' => 'in:active,inactive',
-                'rate_limit' => 'nullable|integer|min:1|max:1000',
-                'allowed_ips' => 'nullable|string',
-                'webhook_url' => 'nullable|url|max:500',
-            ]);
+            $validated = $request->validated();
 
             // Process allowed_ips (convert comma-separated string to array)
             if (! empty($validated['allowed_ips'])) {
@@ -143,23 +134,13 @@ class EndpointController extends Controller
     /**
      * Update the specified endpoint.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateEndpointRequest $request, int $id): RedirectResponse
     {
         Gate::authorize('mailrelay.settings.endpoints.edit');
 
         try {
             $endpoint = MailrelayEndpoint::findOrFail($id);
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'endpoint_key' => 'required|string|max:255|alpha_dash|unique:mailrelay_endpoints,endpoint_key,'.$id,
-                'description' => 'nullable|string',
-                'template_id' => 'required|exists:mails_email_templates,id',
-                'status' => 'in:active,inactive',
-                'rate_limit' => 'nullable|integer|min:1|max:1000',
-                'allowed_ips' => 'nullable|string',
-                'webhook_url' => 'nullable|url|max:500',
-            ]);
+            $validated = $request->validated();
 
             // Process allowed_ips
             if (! empty($validated['allowed_ips'])) {

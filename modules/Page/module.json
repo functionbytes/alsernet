@@ -5,7 +5,7 @@
     "keywords": [],
     "priority": 999,
     "providers": [
-        "modules\\Page\\Providers\\PageServiceProvider"
+        "Modules\\Page\\Providers\\PageServiceProvider"
     ],
     "files": []
 }

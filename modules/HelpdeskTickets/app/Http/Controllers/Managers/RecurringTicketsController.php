@@ -15,7 +15,7 @@ class RecurringTicketsController extends Controller
 {
     public function index(): View
     {
-        $this->authorize('manager.helpdesk.tickets.index');
+        $this->authorize('helpdesk.tickets.view');
 
         $recurringTickets = RecurringTicket::query()
             ->with(['category', 'priority', 'assignee'])
@@ -37,7 +37,7 @@ class RecurringTicketsController extends Controller
 
     public function create(): View
     {
-        $this->authorize('manager.helpdesk.tickets.create');
+        $this->authorize('helpdesk.tickets.create');
 
         return view('helpdesktickets::managers.recurring-tickets.form', [
             'recurringTicket' => null,
@@ -49,7 +49,7 @@ class RecurringTicketsController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.create');
+        $this->authorize('helpdesk.tickets.create');
 
         $validated = $this->validatedData($request);
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -63,7 +63,7 @@ class RecurringTicketsController extends Controller
 
     public function edit(RecurringTicket $recurringTicket): View
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         return view('helpdesktickets::managers.recurring-tickets.form', [
             'recurringTicket' => $recurringTicket,
@@ -75,7 +75,7 @@ class RecurringTicketsController extends Controller
 
     public function update(Request $request, RecurringTicket $recurringTicket): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $validated = $this->validatedData($request);
         $validated['is_active'] = $request->boolean('is_active');
@@ -89,7 +89,7 @@ class RecurringTicketsController extends Controller
 
     public function destroy(RecurringTicket $recurringTicket): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.delete');
+        $this->authorize('helpdesk.tickets.delete');
 
         $recurringTicket->delete();
 
@@ -103,7 +103,7 @@ class RecurringTicketsController extends Controller
      */
     public function toggle(RecurringTicket $recurringTicket): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.tickets.update');
+        $this->authorize('helpdesk.tickets.update');
 
         $recurringTicket->update(['is_active' => ! $recurringTicket->is_active]);
 

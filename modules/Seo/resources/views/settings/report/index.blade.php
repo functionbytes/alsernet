@@ -76,7 +76,7 @@
                                         <div class="fw-semibold">Metas SEO (CSV)</div>
                                         <small class="text-muted">Título, descripción, keywords, Open Graph, Twitter Card, canonical, robots y score.</small>
                                     </div>
-                                    <a href="{{ route('setting.seo.report.export') }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                                    <a href="{{ route('settings.seo.report.export') }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
                                         Descargar
                                     </a>
                                 </div>
@@ -87,7 +87,7 @@
                                         <div class="fw-semibold">Reporte completo (CSV)</div>
                                         <small class="text-muted">Metas SEO + redirecciones activas e inactivas con estadísticas de uso.</small>
                                     </div>
-                                    <a href="{{ route('setting.seo.report.export', ['format' => 'full']) }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                                    <a href="{{ route('settings.seo.report.export', ['format' => 'full']) }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
                                         Descargar
                                     </a>
                                 </div>
@@ -98,7 +98,7 @@
                                         <div class="fw-semibold">Reporte PDF</div>
                                         <small class="text-muted">Resumen con tabla de páginas y código de colores por grado SEO.</small>
                                     </div>
-                                    <a href="{{ route('setting.seo.report.export-pdf') }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                                    <a href="{{ route('settings.seo.report.export-pdf') }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
                                         Descargar
                                     </a>
                                 </div>
@@ -123,7 +123,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Metas SEO</h6>
                         <p class="text-muted mb-3">Administra las metas SEO de todas las páginas del sitio.</p>
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
                             Ver metas SEO
                         </a>
                     </div>
@@ -133,7 +133,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">Dashboard SEO</h6>
                         <p class="text-muted mb-3">Vuelve al panel principal de SEO.</p>
-                        <a href="{{ route('setting.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.dashboard') }}" class="btn btn-outline-secondary w-100">
                             Ir al dashboard
                         </a>
                     </div>

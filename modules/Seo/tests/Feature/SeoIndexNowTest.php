@@ -75,7 +75,7 @@ class SeoIndexNowTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.indexnow.index'))
+            ->get(route('settings.seo.indexnow.index'))
             ->assertForbidden();
     }
 
@@ -87,7 +87,7 @@ class SeoIndexNowTest extends TestCase
         $user = $this->createUser(['Seo.indexnow.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.indexnow.index'))
+            ->get(route('settings.seo.indexnow.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.indexnow.index')
             ->assertViewHas('status');
@@ -98,7 +98,7 @@ class SeoIndexNowTest extends TestCase
         $user = $this->createUser(['Seo.indexnow.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.indexnow.submit'), ['urls' => 'https://x.com/a'])
+            ->post(route('settings.seo.indexnow.submit'), ['urls' => 'https://x.com/a'])
             ->assertForbidden();
     }
 }

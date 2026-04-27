@@ -42,7 +42,7 @@ class SeoTemplateController extends Controller
         SeoTemplate::create($request->validated());
 
         return redirect()
-            ->route('setting.seo.templates.index')
+            ->route('settings.seo.templates.index')
             ->with('success', 'Plantilla SEO creada correctamente.');
     }
 
@@ -56,7 +56,7 @@ class SeoTemplateController extends Controller
         $template->update($request->validated());
 
         return redirect()
-            ->route('setting.seo.templates.index')
+            ->route('settings.seo.templates.index')
             ->with('success', 'Plantilla SEO actualizada correctamente.');
     }
 

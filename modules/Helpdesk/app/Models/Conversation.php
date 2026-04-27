@@ -2,7 +2,6 @@
 
 namespace Modules\Helpdesk\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Modules\Helpdesk\Concerns\HasMessageThread;
 use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 
 class Conversation extends Model
 {
-    use HasCrossDatabaseUserRelation, HasCustomAttributes, HasFactory, SoftDeletes;
+    use HasCrossDatabaseUserRelation, HasCustomAttributes, HasFactory, HasMessageThread, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -49,14 +49,6 @@ class Conversation extends Model
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Get the customer that owns this conversation
-     */
-    public function customer(): BelongsTo
-    {
-        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     /**
@@ -165,30 +157,6 @@ class Conversation extends Model
     }
 
     /**
-     * Scope: Get by priority
-     */
-    public function scopeByPriority($query, $priority)
-    {
-        return $query->where('priority', $priority);
-    }
-
-    /**
-     * Scope: Get archived conversations
-     */
-    public function scopeArchived($query)
-    {
-        return $query->where('is_archived', true);
-    }
-
-    /**
-     * Scope: Get active conversations
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_archived', false);
-    }
-
-    /**
      * Scope: Search by subject or customer name
      */
     public function scopeSearch($query, $term)
@@ -197,22 +165,6 @@ class Conversation extends Model
             $q->where('subject', 'like', "%{$term}%")
                 ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$term}%"));
         });
-    }
-
-    /**
-     * Check if conversation is open
-     */
-    public function isOpen()
-    {
-        return $this->status && $this->status->is_open;
-    }
-
-    /**
-     * Check if conversation is closed
-     */
-    public function isClosed()
-    {
-        return ! $this->isOpen();
     }
 
     /**
@@ -266,26 +218,6 @@ class Conversation extends Model
             'status_id' => $openStatus->id ?? $this->status_id,
             'closed_at' => null,
         ]);
-
-        return $this;
-    }
-
-    /**
-     * Archive conversation
-     */
-    public function archive()
-    {
-        $this->update(['is_archived' => true]);
-
-        return $this;
-    }
-
-    /**
-     * Unarchive conversation
-     */
-    public function unarchive()
-    {
-        $this->update(['is_archived' => false]);
 
         return $this;
     }

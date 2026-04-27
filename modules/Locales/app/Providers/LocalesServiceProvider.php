@@ -3,11 +3,13 @@
 namespace Modules\Locales\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Locales\Console\Commands\SyncLangsCommand;
 use Modules\Locales\Console\Commands\TranslationsMissingCommand;
 use Modules\Locales\Models\Locale;
 use Modules\Locales\Observers\LocaleObserver;
+use Modules\Locales\Policies\LocalePolicy;
 use Modules\Locales\Services\LocaleService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -29,6 +31,7 @@ class LocalesServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerMenus();
+        $this->registerPolicies();
 
         Locale::observe(LocaleObserver::class);
 
@@ -132,6 +135,11 @@ class LocalesServiceProvider extends ServiceProvider
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->nameLower);
 
         Blade::componentNamespace(config('modules.namespace').'\\'.$this->name.'\\View\\Components', $this->nameLower);
+    }
+
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Locale::class, LocalePolicy::class);
     }
 
     protected function registerMenus(): void

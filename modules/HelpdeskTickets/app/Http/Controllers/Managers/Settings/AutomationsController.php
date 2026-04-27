@@ -4,8 +4,9 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreAutomationRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateAutomationRequest;
 use Modules\HelpdeskTickets\Models\Automation;
 
 class AutomationsController extends Controller
@@ -41,20 +42,9 @@ class AutomationsController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreAutomationRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'trigger_event' => ['required', 'string', 'in:'.implode(',', array_keys(Automation::$triggerEvents))],
-            'conditions' => ['required', 'json'],
-            'actions' => ['required', 'json'],
-            'order' => ['nullable', 'integer', 'min:0'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'conditions.json' => 'Las condiciones deben ser un JSON valido.',
-            'actions.json' => 'Las acciones deben ser un JSON valido.',
-        ]);
+        $validated = $request->validated();
 
         $validated['conditions'] = json_decode($validated['conditions'], true);
         $validated['actions'] = json_decode($validated['actions'], true);
@@ -76,20 +66,9 @@ class AutomationsController extends Controller
         ]);
     }
 
-    public function update(Request $request, Automation $automation): RedirectResponse
+    public function update(UpdateAutomationRequest $request, Automation $automation): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'trigger_event' => ['required', 'string', 'in:'.implode(',', array_keys(Automation::$triggerEvents))],
-            'conditions' => ['required', 'json'],
-            'actions' => ['required', 'json'],
-            'order' => ['nullable', 'integer', 'min:0'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'conditions.json' => 'Las condiciones deben ser un JSON valido.',
-            'actions.json' => 'Las acciones deben ser un JSON valido.',
-        ]);
+        $validated = $request->validated();
 
         $validated['conditions'] = json_decode($validated['conditions'], true);
         $validated['actions'] = json_decode($validated['actions'], true);

@@ -74,7 +74,7 @@ SEO_INDEXNOW_BATCH_SIZE=100</pre>
                     <p class="small mb-0 text-muted">Una URL por línea. Deben compartir el host configurado: <code>{{ $status['host'] ?: '—' }}</code>.</p>
                 </div>
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('setting.seo.indexnow.submit') }}">
+                    <form method="POST" action="{{ route('settings.seo.indexnow.submit') }}">
                         @csrf
 
                         <div class="mb-3">

@@ -20,7 +20,7 @@
             <div class="col-12 section--shopping-cart">
                 @if($cartItems->count() > 0)
                     <div class="table-responsive">
-                        <table class="table shopping-summery text-center clean table--cart">
+                        <table class="table shopping-summery text-center clean table--cart cart-table-responsive">
                             <thead>
                                 <tr class="main-heading">
                                     <th scope="col">{{ __('Imagen') }}</th>
@@ -43,18 +43,18 @@
                                                 @endif
                                             </a>
                                         </td>
-                                        <td class="product-des product-name">
+                                        <td class="product-des product-name" data-label="{{ __('Producto') }}">
                                             <p class="product-name">
                                                 <a href="{{ route('shop.product', $item->product->slug) }}">{{ $item->product->name }}</a>
                                             </p>
                                         </td>
-                                        <td class="price" data-title="{{ __('Precio') }}">
+                                        <td class="price" data-label="{{ __('Precio') }}">
                                             <span>${{ number_format($item->product->final_price, 2) }}</span>
                                             @if($item->product->is_on_sale)
                                                 <small><del>${{ number_format($item->product->price, 2) }}</del></small>
                                             @endif
                                         </td>
-                                        <td class="text-center" data-title="{{ __('Cantidad') }}">
+                                        <td class="text-center" data-label="{{ __('Cantidad') }}">
                                             <div class="detail-qty border radius m-auto">
                                                 <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-flex align-items-center">
                                                     @csrf @method('PUT')
@@ -64,10 +64,10 @@
                                                 </form>
                                             </div>
                                         </td>
-                                        <td class="text-right" data-title="{{ __('Subtotal') }}">
+                                        <td class="text-right" data-label="{{ __('Subtotal') }}">
                                             <span>${{ number_format($item->product->final_price * $item->qty, 2) }}</span>
                                         </td>
-                                        <td class="action" data-title="{{ __('Eliminar') }}">
+                                        <td class="action" data-label="{{ __('Eliminar') }}">
                                             <form action="{{ route('cart.remove', $item->id) }}" method="POST" class="d-inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="text-muted border-0 bg-transparent"><i class="fa fa-trash-alt"></i></button>
@@ -94,6 +94,32 @@
                         </div>
                         <div class="col-lg-6 col-md-12">
                             <div class="border p-md-4 p-30 border-radius-10 cart-totals">
+                                @php
+                                    $freeShippingMin = (float) \Modules\Core\Models\Setting::get('ecommerce.free_shipping_min', 200);
+                                    $cartTotal = $cartItems->sum(fn ($i) => ($i->product->final_price ?? $i->product->price ?? 0) * $i->qty);
+                                    $remaining = max(0, $freeShippingMin - $cartTotal);
+                                    $progress  = $freeShippingMin > 0 ? min(100, (int) round(($cartTotal / $freeShippingMin) * 100)) : 100;
+                                @endphp
+
+                                @if($freeShippingMin > 0)
+                                <div class="alert {{ $remaining > 0 ? 'alert-info' : 'alert-success' }} mb-3">
+                                    @if($remaining > 0)
+                                        <p class="mb-2 fw-semibold">
+                                            <i class="fas fa-truck me-1"></i>
+                                            Agrega <strong>${{ number_format($remaining, 2) }}</strong> más para envío gratis
+                                        </p>
+                                        <div class="progress" style="height:10px">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width:{{ $progress }}%" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    @else
+                                        <p class="mb-0 fw-semibold">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            ¡Felicitaciones! Tu pedido tiene envío gratis.
+                                        </p>
+                                    @endif
+                                </div>
+                                @endif
+
                                 <div class="heading_s1 mb-3">
                                     <h4>{{ __('Total del carrito') }}</h4>
                                 </div>

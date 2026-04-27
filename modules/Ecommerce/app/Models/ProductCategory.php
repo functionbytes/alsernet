@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Ecommerce\Database\Factories\ProductCategoryFactory;
+use Modules\Ecommerce\Traits\HasTranslations;
 
 class ProductCategory extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'ecommerce_product_categories';
 
@@ -50,6 +52,6 @@ class ProductCategory extends Model
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'ecommerce_product_category');
+        return $this->belongsToMany(Product::class, 'ecommerce_product_category', 'category_id', 'product_id');
     }
 }

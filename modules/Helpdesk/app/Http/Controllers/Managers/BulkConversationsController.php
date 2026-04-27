@@ -3,29 +3,27 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Http\Requests\BulkConversationActionRequest;
 use Modules\Helpdesk\Models\Conversation;
 
 class BulkConversationsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.conversations.update');
+    }
+
     /**
      * Handle bulk conversation operations.
      *
      * Actions: assign, close, reopen, archive, delete
      */
-    public function handle(Request $request): RedirectResponse
+    public function handle(BulkConversationActionRequest $request): RedirectResponse
     {
-        $this->authorize('helpdesk.conversations.manage');
-
-        $validated = $request->validate([
-            'conversation_ids' => 'required|array|min:1|max:100',
-            'conversation_ids.*' => 'integer',
-            'action' => 'required|string|in:assign,close,reopen,archive,delete',
-            'agent_id' => 'required_if:action,assign|nullable|integer|exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         $ids = $validated['conversation_ids'];
 

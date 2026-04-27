@@ -21,15 +21,15 @@
                             <i class="fas fa-ellipsis-vertical"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.audit.index') }}">Auditar todo el sitio</a></li>
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.orphans.index') }}">Ver páginas huérfanas</a></li>
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.redirects.index') }}">Gestionar redirects</a></li>
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.sitemap.index') }}">Ver sitemap</a></li>
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.report.index') }}">Exportar reporte SEO</a></li>
-                            <li><a class="dropdown-item" href="{{ route('setting.seo.metas.index') }}">Ver todos los meta SEO</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.audit.index') }}">Auditar todo el sitio</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.orphans.index') }}">Ver páginas huérfanas</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.redirects.index') }}">Gestionar redirects</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.sitemap.index') }}">Ver sitemap</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.report.index') }}">Exportar reporte SEO</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.seo.metas.index') }}">Ver todos los meta SEO</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="POST" action="{{ route('setting.seo.dashboard.clear-cache') }}">
+                                <form method="POST" action="{{ route('settings.seo.dashboard.clear-cache') }}">
                                     @csrf
                                     <button type="submit" class="dropdown-item">Actualizar datos</button>
                                 </form>
@@ -453,7 +453,7 @@
                                                 </td>
                                                 <td><span class="badge fw-semibold py-1" class="brand-badge-red">{{ $item->page_count }}</span></td>
                                                 <td>
-                                                    <a href="{{ route('setting.seo.metas.index', ['target_keyword' => $item->target_keyword]) }}"
+                                                    <a href="{{ route('settings.seo.metas.index', ['target_keyword' => $item->target_keyword]) }}"
                                                        class="btn btn-xs btn-outline-secondary">
                                                         <i class="fas fa-eye"></i> Ver páginas
                                                     </a>
@@ -519,7 +519,7 @@
                                                         <tr>
                                                             <td class="ps-0">
                                                                 <h6 class="mb-0 fw-semibold text-truncate" style="max-width:300px">
-                                                                    <a href="{{ route('setting.seo.metas.index', ['search' => $dup->title]) }}"
+                                                                    <a href="{{ route('settings.seo.metas.index', ['search' => $dup->title]) }}"
                                                                        class="text-decoration-none">
                                                                         {{ Str::limit($dup->title, 60) }}
                                                                     </a>
@@ -559,7 +559,7 @@
                                                         <tr>
                                                             <td class="ps-0">
                                                                 <h6 class="mb-0 fw-semibold text-truncate" style="max-width:300px">
-                                                                    <a href="{{ route('setting.seo.metas.index', ['search' => $dup->description]) }}"
+                                                                    <a href="{{ route('settings.seo.metas.index', ['search' => $dup->description]) }}"
                                                                        class="text-decoration-none">
                                                                         {{ Str::limit($dup->description, 60) }}
                                                                     </a>

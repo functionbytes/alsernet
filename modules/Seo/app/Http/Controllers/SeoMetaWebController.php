@@ -176,7 +176,7 @@ class SeoMetaWebController extends Controller
             ->first();
 
         if ($existing) {
-            return redirect()->route('setting.seo.metas.edit', $existing)
+            return redirect()->route('settings.seo.metas.edit', $existing)
                 ->with('info', 'Ya existe un meta para este idioma.');
         }
 
@@ -187,7 +187,7 @@ class SeoMetaWebController extends Controller
             'robots' => 'index,follow',
         ]);
 
-        return redirect()->route('setting.seo.metas.edit', $newMeta)
+        return redirect()->route('settings.seo.metas.edit', $newMeta)
             ->with('success', 'Meta SEO creado para el idioma '.strtoupper($locale).'.');
     }
 
@@ -199,7 +199,7 @@ class SeoMetaWebController extends Controller
         $meta->update($request->validated());
 
         return redirect()
-            ->route('setting.seo.metas.show', $meta)
+            ->route('settings.seo.metas.show', $meta)
             ->with('success', 'Meta SEO actualizado correctamente.');
     }
 
@@ -211,7 +211,7 @@ class SeoMetaWebController extends Controller
         $meta->delete();
 
         return redirect()
-            ->route('setting.seo.metas.index')
+            ->route('settings.seo.metas.index')
             ->with('success', 'Meta SEO eliminado correctamente.');
     }
 
@@ -632,7 +632,7 @@ class SeoMetaWebController extends Controller
 
         fclose($handle);
 
-        return redirect()->route('setting.seo.metas.index')
+        return redirect()->route('settings.seo.metas.index')
             ->with('success', "Importación completada: {$created} creados, {$updated} actualizados, {$skipped} omitidos, {$errors} errores.");
     }
 
@@ -919,7 +919,7 @@ class SeoMetaWebController extends Controller
 
         $summary = collect($imported)->map(fn ($c, $k) => "{$c} {$k}")->implode(', ');
 
-        return redirect()->route('setting.seo.metas.index')
+        return redirect()->route('settings.seo.metas.index')
             ->with('success', "Importación JSON: {$summary}.");
     }
 

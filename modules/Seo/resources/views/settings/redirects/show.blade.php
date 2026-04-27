@@ -100,7 +100,7 @@
                     {{-- Section 3: Test redirect --}}
                     <div class="card-body">
                         <button type="button" class="btn btn-outline-info w-100" id="btn-test-redirect"
-                                data-url="{{ route('setting.seo.redirects.test', $redirect) }}">
+                                data-url="{{ route('settings.seo.redirects.test', $redirect) }}">
                             <i class="fas fa-vial me-1"></i> Probar redireccion
                         </button>
                         <div id="test-result" class="mt-3 d-none"></div>
@@ -122,24 +122,24 @@
                         <h6 class="fw-bold mb-0">Acciones</h6>
                     </div>
                     <div class="card-body d-grid gap-2">
-                        <a href="{{ route('setting.seo.redirects.edit', $redirect) }}" class="btn btn-primary w-100">
+                        <a href="{{ route('settings.seo.redirects.edit', $redirect) }}" class="btn btn-primary w-100">
                             Editar redireccion
                         </a>
-                        <form action="{{ route('setting.seo.redirects.toggle-active', $redirect) }}" method="POST">
+                        <form action="{{ route('settings.seo.redirects.toggle-active', $redirect) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="btn btn-outline-{{ $redirect->is_active ? 'warning' : 'success' }} w-100">
                                 {{ $redirect->is_active ? 'Desactivar' : 'Activar' }}
                             </button>
                         </form>
-                        <a href="{{ route('setting.seo.redirects.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.redirects.index') }}" class="btn btn-outline-secondary w-100">
                             Volver al listado
                         </a>
                         <hr class="my-1">
                         <button type="button" class="btn btn-outline-danger w-100 delete-btn"
                                 data-bs-toggle="modal"
                                 data-bs-target="#delete-modal"
-                                data-url="{{ route('setting.seo.redirects.destroy', $redirect) }}"
+                                data-url="{{ route('settings.seo.redirects.destroy', $redirect) }}"
                                 data-title="Eliminar: {{ $redirect->source_path }}">
                             Eliminar redireccion
                         </button>

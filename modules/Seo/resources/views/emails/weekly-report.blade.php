@@ -103,7 +103,7 @@
                                         </span>
                                     </td>
                                     <td style="padding:8px 12px; text-align:center; border-bottom:1px solid #eeeeee;">
-                                        <a href="{{ route('setting.seo.metas.edit', $page->id) }}"
+                                        <a href="{{ route('settings.seo.metas.edit', $page->id) }}"
                                            style="color:#90bb13; font-size:12px; text-decoration:none;">Ver</a>
                                     </td>
                                 </tr>
@@ -141,7 +141,7 @@
                     <!-- CTA -->
                     <tr>
                         <td style="padding:28px 32px;">
-                            <a href="{{ route('setting.seo.report.index') }}"
+                            <a href="{{ route('settings.seo.report.index') }}"
                                style="display:inline-block; background-color:#90bb13; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:4px; font-size:15px; font-weight:bold;">
                                 Ver reporte completo
                             </a>

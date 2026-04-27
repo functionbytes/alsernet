@@ -9,6 +9,11 @@ use Modules\Helpdesk\Models\ConversationTag;
 
 class TagsAutocompleteController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tags.view');
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         $q = $request->input('q', '');

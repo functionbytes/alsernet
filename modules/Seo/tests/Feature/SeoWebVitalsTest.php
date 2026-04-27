@@ -149,7 +149,7 @@ class SeoWebVitalsTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.web-vitals.index'))
+            ->get(route('settings.seo.web-vitals.index'))
             ->assertForbidden();
     }
 
@@ -158,7 +158,7 @@ class SeoWebVitalsTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.web-vitals.index'))
+            ->get(route('settings.seo.web-vitals.index'))
             ->assertOk()
             ->assertViewIs('Seo::settings.web-vitals.index');
     }
@@ -180,7 +180,7 @@ class SeoWebVitalsTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.web-vitals.index'))
+            ->get(route('settings.seo.web-vitals.index'))
             ->assertOk()
             ->assertViewHas('globalP75');
     }

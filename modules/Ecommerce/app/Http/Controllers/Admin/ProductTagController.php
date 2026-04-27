@@ -18,12 +18,12 @@ class ProductTagController extends Controller
             })
             ->paginate(20);
 
-        return view('ecommerce::admin.tags.index', compact('tags'));
+        return view('ecommerce::tags.index', compact('tags'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.tags.create');
+        return view('ecommerce::tags.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -41,7 +41,7 @@ class ProductTagController extends Controller
 
     public function edit(ProductTag $tag): View
     {
-        return view('ecommerce::admin.tags.edit', compact('tag'));
+        return view('ecommerce::tags.edit', compact('tag'));
     }
 
     public function update(Request $request, ProductTag $tag): RedirectResponse

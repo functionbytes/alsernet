@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Backup\Events\BackupDeleted;
 use Modules\Backup\Events\BackupDownloaded;
@@ -109,7 +108,7 @@ class BackupController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:Backup.backups.index')->only('index', 'create', 'store', 'getStatus', 'setup', 'guide', 'prerequisites', 'schedulerConfigure', 'supervisorStatus', 'supervisorInstall', 'supervisorApply', 'supervisorRestart');
+        $this->middleware('can:Backup.backups.index')->only('index', 'create', 'store', 'getStatus', 'setup', 'guide', 'prerequisites', 'schedulerConfigureInstructions', 'supervisorStatus', 'supervisorInstallInstructions', 'supervisorApplyInstructions', 'supervisorRestartInstructions');
         $this->middleware('can:Backup.backups.download')->only('download');
         $this->middleware('can:Backup.backups.delete')->only('destroy');
     }
@@ -466,53 +465,29 @@ class BackupController extends Controller
      * Detect whether the Laravel scheduler has run recently
      */
     /**
-     * Add a crontab entry for the Laravel scheduler
+     * Return copy-paste crontab instructions for the Laravel scheduler.
+     * No execution — the admin runs this manually in their terminal.
      */
-    public function schedulerConfigure(): JsonResponse
+    public function schedulerConfigureInstructions(): JsonResponse
     {
         if (PHP_OS_FAMILY === 'Windows') {
             return response()->json([
                 'success' => false,
-                'message' => 'La configuración automática de cron no está disponible en Windows.',
+                'message' => 'La configuración de cron no está disponible en Windows. Usa el Programador de tareas.',
             ], 422);
         }
 
-        $projectPath = base_path();
-        $phpBinary = PHP_BINARY;
-        $cronLine = "* * * * * cd {$projectPath} && {$phpBinary} artisan schedule:run >> /dev/null 2>&1";
-
-        // Check if already configured
-        $existing = (string) shell_exec('crontab -l 2>/dev/null');
-        if (str_contains($existing, 'artisan schedule:run')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'El scheduler ya está configurado en el crontab.',
-            ]);
-        }
-
-        // Append the new line safely
-        $newCrontab = trim($existing)."\n".$cronLine."\n";
-        $tmpFile = tempnam(sys_get_temp_dir(), 'cron_');
-        file_put_contents($tmpFile, $newCrontab);
-
-        $output = shell_exec("crontab {$tmpFile} 2>&1");
-        @unlink($tmpFile);
-
-        // Verify it was added
-        $verify = (string) shell_exec('crontab -l 2>/dev/null');
-        if (str_contains($verify, 'artisan schedule:run')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Scheduler configurado correctamente en el crontab.',
-                'cron' => $cronLine,
-            ]);
-        }
+        $phpBinary = $this->phpBinaryCli();
+        $artisan = base_path('artisan');
+        $logFile = storage_path('logs/scheduler.log');
+        $cronLine = "* * * * * {$phpBinary} {$artisan} schedule:run >> {$logFile} 2>&1";
 
         return response()->json([
-            'success' => false,
-            'message' => 'No se pudo escribir en el crontab.',
-            'output' => trim((string) $output),
-        ], 500);
+            'success' => true,
+            'instructions' => 'Ejecuta `crontab -e` en tu terminal y agrega esta línea al final:',
+            'cron_line' => $cronLine,
+            'verify_command' => 'crontab -l | grep schedule:run',
+        ]);
     }
 
     private function detectSchedulerActive(): bool
@@ -603,105 +578,78 @@ class BackupController extends Controller
     }
 
     /**
-     * Install Supervisor on the system
+     * Return copy-paste installation instructions for Supervisor.
+     * No execution — the admin runs these commands manually in their terminal.
      */
-    public function supervisorInstall(Request $request): JsonResponse
+    public function supervisorInstallInstructions(): JsonResponse
     {
-        $sudoPassword = $request->input('sudo_password');
+        $packageManager = $this->detectPackageManager();
 
-        if (PHP_OS_FAMILY === 'Darwin') {
-            // Find brew — no sudo needed
-            $brew = '/opt/homebrew/bin/brew';
-            if (! is_executable($brew)) {
-                $brew = '/usr/local/bin/brew';
-            }
-
-            if (! is_executable($brew)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se encontró Homebrew. Instálalo desde https://brew.sh y luego vuelve aquí.',
-                ], 422);
-            }
-
-            $result = $this->shellExec("{$brew} install supervisor 2>&1 && {$brew} services start supervisor 2>&1");
-
-            return response()->json([
-                'success' => $result['success'],
-                'output' => $result['output'],
-                'message' => $result['success'] ? 'Supervisor instalado correctamente.' : 'Error durante la instalación.',
-                'reload' => $result['success'],
-            ]);
-        }
-
-        // Linux — requires sudo
-        if (empty($sudoPassword)) {
-            return response()->json([
-                'success' => false,
-                'requires_sudo' => true,
-                'message' => 'Se necesita contraseña sudo para instalar Supervisor.',
-            ], 403);
-        }
-
-        // Detect package manager
-        if (is_executable('/usr/bin/apt-get')) {
-            $result = $this->sudoExec(['/usr/bin/apt-get', 'update', '-qq'], $sudoPassword);
-            if ($result['success']) {
-                $result = $this->sudoExec(['/usr/bin/apt-get', 'install', '-y', 'supervisor'], $sudoPassword);
-            }
-            if ($result['success']) {
-                $this->sudoExec(['/bin/systemctl', 'enable', 'supervisor'], $sudoPassword);
-                $this->sudoExec(['/bin/systemctl', 'start', 'supervisor'], $sudoPassword);
-            }
-        } elseif (is_executable('/usr/bin/yum')) {
-            $result = $this->sudoExec(['/usr/bin/yum', 'install', '-y', 'supervisor'], $sudoPassword);
-            if ($result['success']) {
-                $this->sudoExec(['/bin/systemctl', 'enable', 'supervisord'], $sudoPassword);
-                $this->sudoExec(['/bin/systemctl', 'start', 'supervisord'], $sudoPassword);
-            }
-        } elseif (is_executable('/usr/bin/dnf')) {
-            $result = $this->sudoExec(['/usr/bin/dnf', 'install', '-y', 'supervisor'], $sudoPassword);
-            if ($result['success']) {
-                $this->sudoExec(['/bin/systemctl', 'enable', 'supervisord'], $sudoPassword);
-                $this->sudoExec(['/bin/systemctl', 'start', 'supervisord'], $sudoPassword);
-            }
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'No se reconoció el gestor de paquetes. Instala Supervisor manualmente.',
-            ], 422);
-        }
-
-        $installed = is_executable($this->supervisorctlBin());
+        $commands = match ($packageManager) {
+            'brew' => [
+                'brew install supervisor',
+                'brew services start supervisor',
+            ],
+            'apt' => [
+                'sudo apt-get update',
+                'sudo apt-get install -y supervisor',
+                'sudo systemctl enable supervisor',
+                'sudo systemctl start supervisor',
+            ],
+            'yum' => [
+                'sudo yum install -y supervisor',
+                'sudo systemctl enable supervisord',
+                'sudo systemctl start supervisord',
+            ],
+            default => [
+                '# Sistema operativo no detectado automáticamente.',
+                '# Consulta: http://supervisord.org/installing.html',
+            ],
+        };
 
         return response()->json([
-            'success' => $installed,
-            'output' => $result['output'] ?? '',
-            'message' => $installed ? 'Supervisor instalado correctamente.' : 'La instalación finalizó pero no se detectó supervisorctl. Revisa el log.',
-            'reload' => $installed,
+            'success' => true,
+            'os' => PHP_OS_FAMILY,
+            'package_manager' => $packageManager,
+            'instructions' => 'Ejecuta estos comandos en tu terminal con privilegios de administrador:',
+            'commands' => $commands,
+            'docs_url' => 'http://supervisord.org/installing.html',
         ]);
     }
 
+    private function detectPackageManager(): string
+    {
+        if (PHP_OS_FAMILY === 'Darwin') {
+            return (is_executable('/opt/homebrew/bin/brew') || is_executable('/usr/local/bin/brew'))
+                ? 'brew'
+                : 'manual';
+        }
+
+        if (is_executable('/usr/bin/apt-get')) {
+            return 'apt';
+        }
+
+        if (is_executable('/usr/bin/yum') || is_executable('/usr/bin/dnf')) {
+            return 'yum';
+        }
+
+        return 'manual';
+    }
+
     /**
-     * Write supervisor config and activate worker
+     * Generate supervisor config file in storage and return copy-paste instructions.
+     * No execution — the admin copies the file and runs supervisorctl manually.
      */
-    public function supervisorApply(Request $request): JsonResponse
+    public function supervisorApplyInstructions(): JsonResponse
     {
         $projectPath = base_path();
         $phpBinary = $this->phpBinaryCli();
         $program = self::SUPERVISOR_PROGRAM;
-        $sudoPassword = $request->input('sudo_password');
-
-        $configPath = $this->supervisorConfigPath();
-        $confDir = dirname($configPath);
-
-        // On macOS the www-data user doesn't exist; run as current process user
         $userLine = PHP_OS_FAMILY !== 'Darwin' ? "\nuser=www-data" : '';
-
-        // Quote binary and path to handle spaces (supervisord uses Python shlex)
         $cmd = "\"{$phpBinary}\" \"{$projectPath}/artisan\" queue:work --sleep=3 --tries=3 --max-time=3600";
         $logFile = "{$projectPath}/storage/logs/worker.log";
 
-        $config = implode("\n", array_map('ltrim', explode("\n", <<<INI
+        $configContent = implode("\n", array_map('ltrim', explode("\n", <<<INI
             [program:{$program}]
             process_name=%(program_name)s_%(process_num)02d
             command={$cmd}
@@ -715,168 +663,43 @@ class BackupController extends Controller
             stopwaitsecs=3600
             INI)));
 
-        // Try direct write
-        $written = @file_put_contents($configPath, $config);
+        $tempPath = storage_path("app/{$program}.conf");
+        file_put_contents($tempPath, $configContent);
 
-        if ($written === false) {
-            if (empty($sudoPassword)) {
-                return response()->json([
-                    'success' => false,
-                    'requires_sudo' => true,
-                    'message' => 'El proceso web no tiene permisos. Introduce tu contraseña sudo para continuar.',
-                ], 403);
-            }
-
-            // Ensure the conf.d directory exists (sudo mkdir -p)
-            if (! is_dir($confDir)) {
-                $mkdir = $this->sudoExec(['/bin/mkdir', '-p', $confDir], $sudoPassword);
-                if (! $mkdir['success']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No se pudo crear el directorio de configuración.',
-                        'output' => $mkdir['output'],
-                    ], 403);
-                }
-            }
-
-            // Write via temp file + sudo mv (avoids stdin conflict with sudo -S)
-            $tmpFile = tempnam(sys_get_temp_dir(), 'bkp_worker_');
-            file_put_contents($tmpFile, $config);
-
-            $mv = $this->sudoExec(['/bin/mv', $tmpFile, $configPath], $sudoPassword);
-
-            if (! $mv['success']) {
-                @unlink($tmpFile);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Contraseña incorrecta o sin permisos de sudo.',
-                    'output' => $mv['output'],
-                ], 403);
-            }
-        }
-
-        // Reload supervisor configuration
-        $lines = [];
-        $ctl = $this->supervisorctlBin();
-
-        foreach (['reread', 'update'] as $sub) {
-            $result = empty($sudoPassword)
-                ? $this->shellExec("{$ctl} {$sub}")
-                : $this->sudoExec([$ctl, $sub], $sudoPassword);
-            if (trim($result['output']) !== '') {
-                $lines[] = $result['output'];
-            }
-        }
-
-        // Attempt to start the worker
-        $startResult = empty($sudoPassword)
-            ? $this->shellExec("{$ctl} start {$program}:*")
-            : $this->sudoExec([$ctl, 'start', "{$program}:*"], $sudoPassword);
-        $lines[] = $startResult['output'];
-
-        // macOS Homebrew fallback: supervisorctl reread/update silently fails when
-        // supervisord is not running as a daemon. Restart via brew so supervisord
-        // re-reads conf.d on startup; autostart=true will launch the worker.
-        if (! $startResult['success'] && PHP_OS_FAMILY === 'Darwin') {
-            $brew = is_executable('/opt/homebrew/bin/brew') ? '/opt/homebrew/bin/brew' : '/usr/local/bin/brew';
-            if (is_executable($brew)) {
-                $brewResult = $this->shellExec("{$brew} services restart supervisor 2>&1");
-                $lines[] = 'brew restart: '.$brewResult['output'];
-                sleep(4); // wait for supervisord to fully start and auto-launch workers
-            }
-        }
-
-        // Verify final state — "already started" also counts as success
-        $statusResult = $this->shellExec("{$ctl} status {$program}: 2>&1");
-        $isRunning = str_contains($statusResult['output'], 'RUNNING');
-        $alreadyUp = str_contains(strtolower($startResult['output']), 'already started');
-        $success = $isRunning || $alreadyUp;
-
-        $output = implode("\n", array_filter(array_map('trim', $lines)));
-
-        Log::info('Supervisor worker applied', ['output' => $output, 'running' => $isRunning]);
+        $confDir = $this->supervisorConfDir();
+        $ext = PHP_OS_FAMILY === 'Darwin' ? 'ini' : 'conf';
+        $targetFile = "{$confDir}/{$program}.{$ext}";
 
         return response()->json([
-            'success' => $success,
-            'output' => trim($output),
-            'message' => $success
-                ? 'Worker configurado y activo.'
-                : 'La configuración fue escrita pero el worker no pudo iniciarse. Revisa la salida.',
+            'success' => true,
+            'config_path' => $tempPath,
+            'config_content' => $configContent,
+            'instructions' => 'Configuración generada. Aplica con estos comandos en tu terminal:',
+            'commands' => [
+                "sudo cp {$tempPath} {$targetFile}",
+                'sudo supervisorctl reread',
+                'sudo supervisorctl update',
+                "sudo supervisorctl start {$program}:*",
+            ],
+            'target_file' => $targetFile,
         ]);
     }
 
     /**
-     * Restart supervisor worker
+     * Return copy-paste commands to restart the supervisor worker.
+     * No execution — the admin runs these commands manually in their terminal.
      */
-    public function supervisorRestart(Request $request): JsonResponse
+    public function supervisorRestartInstructions(): JsonResponse
     {
         $program = self::SUPERVISOR_PROGRAM;
-        $sudoPassword = $request->input('sudo_password');
-
-        $result = empty($sudoPassword)
-            ? $this->shellExec($this->supervisorctlBin()." restart {$program}:*")
-            : $this->sudoExec([$this->supervisorctlBin(), 'restart', "{$program}:*"], $sudoPassword);
-
-        if (! $result['success'] && str_contains(strtolower($result['output']), 'permission') && empty($sudoPassword)) {
-            return response()->json([
-                'success' => false,
-                'requires_sudo' => true,
-                'message' => 'Se requieren permisos de sudo para reiniciar el worker.',
-            ], 403);
-        }
 
         return response()->json([
-            'success' => $result['success'],
-            'output' => $result['output'],
-            'message' => $result['success'] ? 'Worker reiniciado correctamente.' : 'Error al reiniciar el worker.',
+            'success' => true,
+            'instructions' => 'Para reiniciar el worker, ejecuta en tu terminal:',
+            'commands' => [
+                "sudo supervisorctl restart {$program}:*",
+            ],
+            'verify_command' => "sudo supervisorctl status {$program}:*",
         ]);
-    }
-
-    /**
-     * Run a shell command and return success + output
-     *
-     * @return array{success: bool, output: string}
-     */
-    private function shellExec(string $command): array
-    {
-        $output = shell_exec("{$command} 2>&1");
-        $success = $output !== null && ! str_contains(strtolower((string) $output), 'error');
-
-        return ['success' => $success, 'output' => trim((string) $output)];
-    }
-
-    /**
-     * Run a command with sudo, piping the password via stdin
-     *
-     * @param  string[]  $command
-     * @return array{success: bool, output: string}
-     */
-    private function sudoExec(array $command, string $password): array
-    {
-        $process = proc_open(
-            array_merge(['sudo', '-S'], $command),
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-            $pipes
-        );
-
-        if (! is_resource($process)) {
-            return ['success' => false, 'output' => 'No se pudo iniciar el proceso.'];
-        }
-
-        fwrite($pipes[0], $password."\n");
-        fclose($pipes[0]);
-
-        $out = stream_get_contents($pipes[1]);
-        $err = stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        $code = proc_close($process);
-
-        return [
-            'success' => $code === 0,
-            'output' => trim(implode("\n", array_filter([$out, $err]))),
-        ];
     }
 }

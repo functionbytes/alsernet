@@ -6,10 +6,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Shipment extends Model
 {
     use HasFactory;
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status',
+                'tracking_id',
+                'shipping_company_name',
+                'delivered_at',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ecommerce_shipment');
+    }
 
     protected $table = 'ecommerce_shipments';
 
@@ -26,6 +43,14 @@ class Shipment extends Model
         'cross_checking_status',
         'price',
         'store_id',
+        'tracking_id',
+        'tracking_link',
+        'shipping_company_name',
+        'estimate_date_shipped',
+        'date_shipped',
+        'delivery_token',
+        'delivered_at',
+        'delivered_by',
     ];
 
     protected function casts(): array
@@ -33,6 +58,9 @@ class Shipment extends Model
         return [
             'cod_amount' => 'decimal:2',
             'price' => 'decimal:2',
+            'estimate_date_shipped' => 'date',
+            'date_shipped' => 'date',
+            'delivered_at' => 'datetime',
         ];
     }
 

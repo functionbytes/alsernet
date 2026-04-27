@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Mailrelay\Entities\Campaign;
 use Modules\Mailrelay\Entities\Lists;
+use Modules\Mailrelay\Http\Requests\Web\StoreCampaignWebRequest;
+use Modules\Mailrelay\Http\Requests\Web\UpdateCampaignWebRequest;
 use Modules\Mailrelay\Services\MailRelayService;
 
 class CampaignWebController extends Controller
@@ -42,17 +44,9 @@ class CampaignWebController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCampaignWebRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'html_content' => 'required|string',
-            'text_content' => 'nullable|string',
-            'list_id' => 'nullable|exists:mails_lists,id',
-            'sender_id' => 'nullable|integer',
-            'scheduled_at' => 'nullable|date|after:now',
-        ]);
+        $validated = $request->validated();
 
         $campaign = Campaign::create($validated);
 
@@ -95,7 +89,7 @@ class CampaignWebController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCampaignWebRequest $request, string $id)
     {
         $campaign = Campaign::findOrFail($id);
 
@@ -104,15 +98,7 @@ class CampaignWebController extends Controller
                 ->with('error', 'Cannot edit a sent campaign.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
-            'html_content' => 'required|string',
-            'text_content' => 'nullable|string',
-            'list_id' => 'nullable|exists:mails_lists,id',
-            'sender_id' => 'nullable|integer',
-            'scheduled_at' => 'nullable|date|after:now',
-        ]);
+        $validated = $request->validated();
 
         $campaign->update($validated);
 

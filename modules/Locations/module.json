@@ -1,0 +1,13 @@
+{
+    "name": "Locations",
+    "alias": "locations",
+    "description": "Gestión de países, estados y ciudades",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Locations\\Providers\\LocationsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

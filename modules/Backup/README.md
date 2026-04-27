@@ -87,6 +87,23 @@ Modules/Backup/
 └── README.md
 ```
 
+## Cambio critico: endpoints de Supervisor
+
+> **IMPORTANTE**: Los endpoints de Supervisor ya NO ejecutan comandos `sudo` directamente.
+
+En lugar de ejecutar, generan instrucciones copy-paste que el administrador debe ejecutar manualmente en el servidor. Los endpoints detectan el OS automaticamente y generan el comando correcto (`apt` / `yum` / `brew`).
+
+Endpoints renombrados:
+
+| Nombre anterior | Nombre actual |
+|---|---|
+| `supervisorInstall` | `supervisorInstallInstructions` |
+| `supervisorStart` | `supervisorStartInstructions` |
+| `supervisorStop` | `supervisorStopInstructions` |
+| `supervisorRestart` | `supervisorRestartInstructions` |
+
+El response devuelve `{ instructions: string, os_detected: string }` en lugar de ejecutar el comando.
+
 ## Integration Points
 
 - **Laravel Backup (Spatie)** - Backup functionality

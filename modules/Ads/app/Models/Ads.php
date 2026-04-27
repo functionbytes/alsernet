@@ -3,15 +3,22 @@
 namespace Modules\Ads\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Ads\Database\Factories\AdsFactory;
 use Modules\Ads\Enums\AdsStatus;
 use Modules\Ads\Enums\AdsType;
 
 class Ads extends Model
 {
     use HasFactory;
+
+    protected static function newFactory(): Factory
+    {
+        return AdsFactory::new();
+    }
 
     protected $table = 'ads';
 

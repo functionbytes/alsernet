@@ -19,9 +19,11 @@ class Locale extends Model
 
     protected $fillable = [
         'code',
+        'language_code',
         'name',
         'native_name',
         'flag',
+        'rtl',
         'is_default',
         'is_active',
         'order',
@@ -30,6 +32,7 @@ class Locale extends Model
     protected function casts(): array
     {
         return [
+            'rtl' => 'boolean',
             'is_default' => 'boolean',
             'is_active' => 'boolean',
             'order' => 'integer',

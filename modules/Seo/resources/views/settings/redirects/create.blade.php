@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form id="formRedirect" action="{{ route('setting.seo.redirects.store') }}" method="POST" novalidate>
+    <form id="formRedirect" action="{{ route('settings.seo.redirects.store') }}" method="POST" novalidate>
         @csrf
 
         <div class="row">
@@ -231,7 +231,7 @@
                         <button type="submit" id="connect-google" class="btn btn-primary w-100 py-2">
                             Crear redirección
                         </button>
-                        <a href="{{ route('setting.seo.redirects.index') }}" class="btn btn-light border w-100 py-2">
+                        <a href="{{ route('settings.seo.redirects.index') }}" class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>
                     </div>

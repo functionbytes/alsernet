@@ -20,17 +20,20 @@ class TaxRule extends Model
 
     protected $fillable = [
         'tax_id',
-        'country',
-        'state',
-        'city',
-        'zip_code',
+        'name',
+        'basis',
+        'price_from',
+        'price_to',
         'percentage',
+        'order',
     ];
 
     protected function casts(): array
     {
         return [
-            'percentage' => 'float',
+            'price_from' => 'decimal:2',
+            'price_to' => 'decimal:2',
+            'percentage' => 'decimal:2',
         ];
     }
 

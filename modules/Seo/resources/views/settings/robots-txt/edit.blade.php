@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('setting.seo.robots.update') }}" id="robots-txt-form">
+                    <form method="POST" action="{{ route('settings.seo.robots.update') }}" id="robots-txt-form">
                         @csrf
 
                         <div class="mb-4">
@@ -41,7 +41,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('setting.seo.robots.reset') }}" id="form-reset-robots" class="d-none">
+                    <form method="POST" action="{{ route('settings.seo.robots.reset') }}" id="form-reset-robots" class="d-none">
                         @csrf
                     </form>
                 </div>
@@ -191,7 +191,7 @@ $(document).ready(function () {
 
         $(this).prop('disabled', true).text('Probando...');
 
-        $.post('{{ route("setting.seo.robots.test-url") }}', {
+        $.post('{{ route("settings.seo.robots.test-url") }}', {
             _token: $('meta[name="csrf-token"]').attr('content'),
             url: url,
         }, function (data) {

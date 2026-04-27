@@ -4,12 +4,13 @@ namespace Modules\Mailrelay\Http\Controllers\Settings;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\Automation;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreAutomationRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateAutomationRequest;
 
 class AutomationController extends Controller
 {
@@ -40,19 +41,10 @@ class AutomationController extends Controller
     /**
      * Store a newly created automation.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreAutomationRequest $request): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.automations.create');
-
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'trigger_event' => 'required|string|max:100',
-                'conditions' => 'nullable|json',
-                'actions' => 'required|json',
-                'active' => 'boolean',
-                'priority' => 'integer|min:0|max:100',
-            ]);
+            $validated = $request->validated();
 
             Automation::create($validated);
 
@@ -86,21 +78,12 @@ class AutomationController extends Controller
     /**
      * Update the specified automation.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateAutomationRequest $request, int $id): RedirectResponse
     {
-        Gate::authorize('mailrelay.settings.automations.edit');
-
         try {
             $automation = Automation::findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'trigger_event' => 'required|string|max:100',
-                'conditions' => 'nullable|json',
-                'actions' => 'required|json',
-                'active' => 'boolean',
-                'priority' => 'integer|min:0|max:100',
-            ]);
+            $validated = $request->validated();
 
             $automation->update($validated);
 

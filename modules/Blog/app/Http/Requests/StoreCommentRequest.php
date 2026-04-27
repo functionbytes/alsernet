@@ -8,6 +8,7 @@ class StoreCommentRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        // Public endpoint: anonymous users are allowed to submit comments.
         return true;
     }
 

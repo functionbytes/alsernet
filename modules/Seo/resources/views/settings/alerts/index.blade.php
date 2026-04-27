@@ -31,7 +31,7 @@
                 <p class="small mb-0 text-muted">Eventos SEO recientes. Deduplicadas por (tipo, URL) en 24h.</p>
             </div>
             @if($stats['unacknowledged'] > 0)
-                <form method="POST" action="{{ route('setting.seo.alerts.acknowledge-all') }}">
+                <form method="POST" action="{{ route('settings.seo.alerts.acknowledge-all') }}">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-outline-secondary">Marcar todas como revisadas</button>
                 </form>
@@ -69,7 +69,7 @@
                                 <td class="small">{{ $alert->created_at->diffForHumans() }}</td>
                                 <td>
                                     @if(! $alert->acknowledged_at)
-                                        <form method="POST" action="{{ route('setting.seo.alerts.acknowledge', $alert) }}" class="d-inline">
+                                        <form method="POST" action="{{ route('settings.seo.alerts.acknowledge', $alert) }}" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-secondary">Revisar</button>
                                         </form>

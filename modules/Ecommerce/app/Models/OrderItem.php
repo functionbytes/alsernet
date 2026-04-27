@@ -27,6 +27,8 @@ class OrderItem extends Model
         'price',
         'total',
         'options',
+        'product_type',
+        'times_downloaded',
     ];
 
     protected function casts(): array
@@ -35,6 +37,7 @@ class OrderItem extends Model
             'price' => 'decimal:2',
             'total' => 'decimal:2',
             'options' => 'json',
+            'times_downloaded' => 'integer',
         ];
     }
 

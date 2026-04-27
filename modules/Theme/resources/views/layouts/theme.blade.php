@@ -45,8 +45,6 @@
     <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
-
     <link rel="stylesheet" href="{{ url('core/tooltipster/css/tooltipster.bundle.min.css') }}">
     <link rel="stylesheet" href="{{ url('core/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-light.min.css') }}">
     <link rel="stylesheet" href="{{ url('core/css/google-font-icon.css') }}">

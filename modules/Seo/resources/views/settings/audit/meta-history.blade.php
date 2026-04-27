@@ -19,7 +19,7 @@
                         <small class="text-muted">{{ $meta->canonical_url }}</small>
                     @endif
                 </div>
-                <a href="{{ route('setting.seo.audit.history') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="{{ route('settings.seo.audit.history') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-arrow-left me-1"></i> Volver al historial
                 </a>
             </div>

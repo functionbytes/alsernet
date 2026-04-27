@@ -240,21 +240,20 @@
     </div>
 
     @if($os !== 'Windows')
-    <div class="modal fade" id="modal-sudo" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    {{-- Instructions modal: shows copy-paste commands for the admin --}}
+    <div class="modal fade" id="modal-instructions" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title fw-semibold">Autenticación requerida</h6>
+                    <h6 class="modal-title fw-semibold" id="modal-instructions-title">Instrucciones</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="small text-muted mb-3" id="sudo-modal-message">Introduce tu contraseña sudo para continuar.</p>
-                    <input type="password" class="form-control" id="sudo-password-input"
-                           placeholder="Contraseña sudo" autocomplete="current-password">
+                    <p class="small text-muted mb-3" id="modal-instructions-text"></p>
+                    <div id="modal-instructions-list"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-sudo-confirm">Confirmar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -268,8 +267,7 @@
 $(document).ready(function () {
 
     @if($os !== 'Windows')
-    var sudoModal   = new bootstrap.Modal(document.getElementById('modal-sudo'));
-    var pendingAction = null;
+    var instructionsModal = new bootstrap.Modal(document.getElementById('modal-instructions'));
     @endif
 
     function pill(type, label) {
@@ -284,20 +282,31 @@ $(document).ready(function () {
         $('#health-sub').text(sub);
     }
 
-    function showOutput(text) {
-        if (!text) { return; }
-        $('#detail-output').text(text);
-        $('#detail-area').removeClass('d-none');
+    @if($os !== 'Windows')
+    function showInstructions(title, text, commands) {
+        $('#modal-instructions-title').text(title);
+        $('#modal-instructions-text').text(text);
+
+        var html = '';
+        $.each(commands, function (i, cmd) {
+            html += '<div class="input-group mb-2">' +
+                '<code class="form-control bg-light small" id="modal-cmd-' + i + '">' + $('<span>').text(cmd).html() + '</code>' +
+                '<button class="btn btn-outline-secondary btn-copy-modal" data-idx="' + i + '" type="button">Copiar</button>' +
+                '</div>';
+        });
+        $('#modal-instructions-list').html(html);
+        instructionsModal.show();
     }
 
-    @if($os !== 'Windows')
-    function openSudoModal(action, message) {
-        pendingAction = action;
-        if (message) { $('#sudo-modal-message').text(message); }
-        $('#sudo-password-input').val('').removeClass('is-invalid');
-        sudoModal.show();
-        setTimeout(function () { $('#sudo-password-input').focus(); }, 400);
-    }
+    $(document).on('click', '.btn-copy-modal', function () {
+        var idx = $(this).data('idx');
+        var text = $('#modal-cmd-' + idx).text().trim();
+        navigator.clipboard.writeText(text).then(function () {
+            toastr.success('Copiado al portapapeles');
+        }).catch(function () {
+            toastr.error('No se pudo copiar');
+        });
+    });
     @endif
 
     // ── Status load ───────────────────────────────────────────────────────────
@@ -305,7 +314,6 @@ $(document).ready(function () {
     function loadStatus() {
         $('#status-loading').removeClass('d-none');
         $('#status-content').addClass('d-none');
-        $('#detail-area').addClass('d-none');
 
         var prereqDone = false, supervisorDone = false;
         var prereqData = {}, supervisorData = {};
@@ -332,7 +340,7 @@ $(document).ready(function () {
                 @if($os !== 'Windows')
                 $('#action-scheduler').html(
                     '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-cron">' +
-                    '<i class="fas fa-terminal me-1"></i>Configurar cron</button>'
+                    '<i class="fas fa-terminal me-1"></i>Ver instrucciones cron</button>'
                 ).removeClass('d-none');
                 @else
                 $('#action-scheduler').html(
@@ -351,7 +359,7 @@ $(document).ready(function () {
             if (!supOk) {
                 $('#action-supervisor').html(
                     '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-install">' +
-                    '<i class="fas fa-download me-1"></i>Instalar Supervisor</button>'
+                    '<i class="fas fa-terminal me-1"></i>Ver instrucciones</button>'
                 ).removeClass('d-none');
             } else {
                 $('#action-supervisor').addClass('d-none');
@@ -365,23 +373,23 @@ $(document).ready(function () {
                 $('#badge-worker').html(pill('ok', 'En ejecución'));
                 $('#action-worker').html(
                     '<div class="d-flex gap-2">' +
-                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-restart"><i class="fas fa-rotate-right me-1"></i>Reiniciar</button>' +
-                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-apply"><i class="fas fa-wrench me-1"></i>Reconfigurar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-restart"><i class="fas fa-terminal me-1"></i>Ver cómo reiniciar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-apply"><i class="fas fa-terminal me-1"></i>Ver cómo reconfigurar</button>' +
                     '</div>'
                 ).removeClass('d-none');
             } else if (configExists) {
                 $('#badge-worker').html(pill('warn', 'Detenido'));
                 $('#action-worker').html(
                     '<div class="d-flex gap-2">' +
-                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-restart"><i class="fas fa-play me-1"></i>Iniciar</button>' +
-                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-apply"><i class="fas fa-wrench me-1"></i>Reconfigurar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-restart"><i class="fas fa-terminal me-1"></i>Ver cómo iniciar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-apply"><i class="fas fa-terminal me-1"></i>Ver cómo reconfigurar</button>' +
                     '</div>'
                 ).removeClass('d-none');
             } else {
                 $('#badge-worker').html(pill('danger', 'Sin configurar'));
                 $('#action-worker').html(
                     '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-apply">' +
-                    '<i class="fas fa-gear me-1"></i>Configurar worker</button>'
+                    '<i class="fas fa-terminal me-1"></i>Ver instrucciones</button>'
                 ).removeClass('d-none');
             }
 
@@ -389,7 +397,7 @@ $(document).ready(function () {
             if (schedulerOk && supOk && workerOk) {
                 setHealth('ok', 'Sistema completamente operativo', 'El scheduler, supervisor y worker están funcionando correctamente.');
             } else if (!supOk || !workerOk) {
-                setHealth('danger', 'Hay componentes que requieren atención', 'Revisa las tarjetas a continuación y aplica las acciones sugeridas.');
+                setHealth('danger', 'Hay componentes que requieren atención', 'Revisa las tarjetas a continuación y sigue las instrucciones en terminal.');
             } else {
                 setHealth('warn', 'Scheduler no configurado', 'Los backups automáticos no se ejecutarán hasta configurar el crontab.');
             }
@@ -409,101 +417,39 @@ $(document).ready(function () {
         @endif
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
+    // ── Actions (fetch instructions and show in modal) ────────────────────────
 
     @if($os !== 'Windows')
 
-    function doInstall(sudo) {
-        toastr.info('Instalando Supervisor...');
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.install') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: sudo ? { sudo_password: sudo } : {},
-            success: function (res) {
-                showOutput(res.output);
-                if (res.success) { toastr.success(res.message); setTimeout(loadStatus, 800); }
-                else { toastr.error(res.message); }
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) { openSudoModal('install', res.message); }
-                else { toastr.error(res.message || 'Error durante la instalación.'); }
-            }
+    $(document).on('click', '#btn-install', function () {
+        $.get('{{ route('settings.backups.supervisor.install-instructions') }}', function (res) {
+            showInstructions('Instalar Supervisor', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
-    }
-
-    function doApply(sudo) {
-        toastr.info('Aplicando configuración...');
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.apply') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: sudo ? { sudo_password: sudo } : {},
-            success: function (res) {
-                showOutput(res.output);
-                if (res.success) { toastr.success(res.message); setTimeout(loadStatus, 800); }
-                else { toastr.error(res.message); }
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) { openSudoModal('apply', res.message); }
-                else { showOutput(res.output); toastr.error(res.message || 'Error al aplicar la configuración.'); }
-            }
-        });
-    }
-
-    function doRestart(sudo) {
-        toastr.info('Reiniciando worker...');
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.restart') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: sudo ? { sudo_password: sudo } : {},
-            success: function (res) {
-                showOutput(res.output);
-                if (res.success) { toastr.success(res.message); setTimeout(loadStatus, 800); }
-                else { toastr.error(res.message); }
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) { openSudoModal('restart', res.message); }
-                else { toastr.error(res.message || 'Error al reiniciar el worker.'); }
-            }
-        });
-    }
-
-    $(document).on('click', '#btn-install', function () { doInstall(null); });
-    $(document).on('click', '#btn-apply',   function () { doApply(null); });
-    $(document).on('click', '#btn-restart', function () { doRestart(null); });
-
-    $('#btn-sudo-confirm').on('click', function () {
-        var pw = $('#sudo-password-input').val();
-        if (!pw) { $('#sudo-password-input').addClass('is-invalid').focus(); return; }
-        sudoModal.hide();
-        if (pendingAction === 'install')      { doInstall(pw); }
-        else if (pendingAction === 'apply')   { doApply(pw); }
-        else if (pendingAction === 'restart') { doRestart(pw); }
     });
 
-    $('#sudo-password-input').on('keydown', function (e) {
-        if (e.key === 'Enter') { $('#btn-sudo-confirm').trigger('click'); }
+    $(document).on('click', '#btn-apply', function () {
+        $.get('{{ route('settings.backups.supervisor.apply-instructions') }}', function (res) {
+            showInstructions('Configurar worker de cola', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
+        });
+    });
+
+    $(document).on('click', '#btn-restart', function () {
+        $.get('{{ route('settings.backups.supervisor.restart-instructions') }}', function (res) {
+            showInstructions('Reiniciar worker', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
+        });
     });
 
     $(document).on('click', '#btn-cron', function () {
-        var $btn = $(this).prop('disabled', true).text('Configurando...');
-        $.ajax({
-            url: '{{ route('settings.backups.scheduler.configure') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                if (res.success) { toastr.success(res.message); setTimeout(loadStatus, 800); }
-                else { toastr.error(res.message); $btn.prop('disabled', false).text('Configurar cron'); }
-            },
-            error: function () {
-                toastr.error('Error al configurar el crontab.');
-                $btn.prop('disabled', false).text('Configurar cron');
-            }
+        $.get('{{ route('settings.backups.scheduler.configure-instructions') }}', function (res) {
+            showInstructions('Configurar crontab', res.instructions, [res.cron_line]);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
     });
 

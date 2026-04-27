@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('ecommerce_payment_logs')) {
+            return;
+        }
+
         Schema::create('ecommerce_payment_logs', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('payment_id')->nullable()->constrained('ecommerce_payments')->nullOnDelete();

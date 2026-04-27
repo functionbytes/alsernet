@@ -13,7 +13,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.schema-org.edit', $meta))
+            ->get(route('settings.seo.schema-org.edit', $meta))
             ->assertForbidden();
     }
 
@@ -23,7 +23,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.schema-org.edit', $meta))
+            ->get(route('settings.seo.schema-org.edit', $meta))
             ->assertOk()
             ->assertViewIs('Seo::settings.schema-org.edit')
             ->assertViewHas(['meta', 'types', 'templates']);
@@ -41,7 +41,7 @@ class SeoSchemaOrgTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.schema-org.update', $meta), [
+            ->put(route('settings.seo.schema-org.update', $meta), [
                 'schema_type' => 'Article',
                 'schema_custom' => $schema,
             ])
@@ -58,7 +58,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.schema-org.update', $meta), [
+            ->put(route('settings.seo.schema-org.update', $meta), [
                 'schema_type' => 'Article',
                 'schema_custom' => '{broken json',
             ])
@@ -71,7 +71,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.schema-org.update', $meta), [
+            ->put(route('settings.seo.schema-org.update', $meta), [
                 'schema_custom' => json_encode(['@type' => 'Article', 'headline' => 'x']),
             ])
             ->assertSessionHasErrors('schema_custom');
@@ -83,7 +83,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.schema-org.update', $meta), [
+            ->put(route('settings.seo.schema-org.update', $meta), [
                 'schema_custom' => json_encode(['@context' => 'https://schema.org', 'name' => 'x']),
             ])
             ->assertSessionHasErrors('schema_custom');
@@ -95,7 +95,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.schema-org.update', $meta), [
+            ->put(route('settings.seo.schema-org.update', $meta), [
                 'schema_type' => 'Book',
                 'schema_custom' => json_encode(['@context' => 'https://schema.org', '@type' => 'Book']),
             ])
@@ -108,7 +108,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->getJson(route('setting.seo.schema-org.template', 'Article'))
+            ->getJson(route('settings.seo.schema-org.template', 'Article'))
             ->assertOk()
             ->assertJsonStructure(['type', 'template']);
     }
@@ -125,7 +125,7 @@ class SeoSchemaOrgTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.schema-org.validate', $meta), ['schema_custom' => $schema])
+            ->postJson(route('settings.seo.schema-org.validate', $meta), ['schema_custom' => $schema])
             ->assertOk()
             ->assertJson(['valid' => true]);
     }
@@ -136,7 +136,7 @@ class SeoSchemaOrgTest extends TestCase
         $user = $this->createUser(['Seo.metas.update']);
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.schema-org.validate', $meta), ['schema_custom' => '{not json'])
+            ->postJson(route('settings.seo.schema-org.validate', $meta), ['schema_custom' => '{not json'])
             ->assertOk()
             ->assertJson(['valid' => false]);
     }

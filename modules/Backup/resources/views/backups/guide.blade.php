@@ -315,25 +315,20 @@ stopwaitsecs=3600</pre>
     </div>
 
     @if($os !== 'Windows')
-    {{-- Sudo password modal --}}
-    <div class="modal fade" id="modal-sudo" tabindex="-1" aria-labelledby="modal-sudo-label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    {{-- Instructions modal: shows copy-paste commands for the admin --}}
+    <div class="modal fade" id="modal-instructions" tabindex="-1" aria-labelledby="modal-instructions-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title fw-semibold" id="modal-sudo-label">Autenticación requerida</h6>
+                    <h6 class="modal-title fw-semibold" id="modal-instructions-label">Instrucciones</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="small text-muted mb-3" id="sudo-modal-message">El proceso web no tiene permisos para escribir en <code>/etc/supervisor/conf.d/</code>. Introduce tu contraseña sudo para continuar.</p>
-                    <div class="mb-0">
-                        <label for="sudo-password-input" class="form-label small fw-semibold">Contraseña sudo</label>
-                        <input type="password" class="form-control" id="sudo-password-input"
-                               placeholder="Contraseña del sistema" autocomplete="current-password">
-                    </div>
+                    <p class="small text-muted mb-3" id="modal-instructions-text"></p>
+                    <div id="modal-instructions-list"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-sudo-confirm">Confirmar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -359,34 +354,43 @@ $(document).ready(function () {
 
     @if($os !== 'Windows')
 
-    // Configurar cron del scheduler
+    // Mostrar instrucciones para configurar el cron del scheduler
     @if(!$schedulerActive)
     $('#btn-configure-cron').on('click', function () {
-        var $btn = $(this).prop('disabled', true).text('Configurando...');
-        $.ajax({
-            url: '{{ route('settings.backups.scheduler.configure') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) {
-                if (res.success) {
-                    toastr.success(res.message);
-                    $btn.closest('.card').find('.badge').replaceWith('<span class="badge bg-success-subtle text-success fs-6 mb-1">Activo</span>');
-                    $btn.replaceWith('<small class="text-muted">schedule:run detectado en crontab</small>');
-                } else {
-                    toastr.error(res.message);
-                    $btn.prop('disabled', false).text('Configurar cron');
-                }
-            },
-            error: function () {
-                toastr.error('Error al configurar el crontab.');
-                $btn.prop('disabled', false).text('Configurar cron');
-            }
+        $.get('{{ route('settings.backups.scheduler.configure-instructions') }}', function (res) {
+            showInstructions('Configurar crontab', res.instructions, [res.cron_line]);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
     });
     @endif
 
-    var sudoModal    = new bootstrap.Modal(document.getElementById('modal-sudo'));
-    var pendingAction = null; // 'install' | 'apply' | 'restart'
+    var instructionsModal = new bootstrap.Modal(document.getElementById('modal-instructions'));
+
+    function showInstructions(title, text, commands) {
+        $('#modal-instructions-label').text(title);
+        $('#modal-instructions-text').text(text);
+
+        var html = '';
+        $.each(commands, function (i, cmd) {
+            html += '<div class="input-group mb-2">' +
+                '<code class="form-control bg-light small" id="guide-cmd-' + i + '">' + $('<span>').text(cmd).html() + '</code>' +
+                '<button class="btn btn-outline-secondary btn-copy-guide" data-idx="' + i + '" type="button">Copiar</button>' +
+                '</div>';
+        });
+        $('#modal-instructions-list').html(html);
+        instructionsModal.show();
+    }
+
+    $(document).on('click', '.btn-copy-guide', function () {
+        var idx = $(this).data('idx');
+        var text = $('#guide-cmd-' + idx).text().trim();
+        navigator.clipboard.writeText(text).then(function () {
+            toastr.success('Copiado al portapapeles');
+        }).catch(function () {
+            toastr.error('No se pudo copiar');
+        });
+    });
 
     function loadSupervisorStatus() {
         $.get('{{ route('settings.backups.supervisor.status') }}', function (data) {
@@ -407,11 +411,11 @@ $(document).ready(function () {
                 $restart.removeClass('d-none');
             } else if (data.config_exists) {
                 $badge.html('<span class="badge bg-warning-subtle text-warning">Configurado pero inactivo</span>');
-                $apply.text('Activar worker').removeClass('d-none');
+                $apply.text('Ver cómo activar').removeClass('d-none');
                 $restart.addClass('d-none');
             } else {
                 $badge.html('<span class="badge bg-danger-subtle text-danger">No configurado</span>');
-                $apply.text('Instalar configuración').removeClass('d-none');
+                $apply.text('Ver instrucciones').removeClass('d-none');
                 $restart.addClass('d-none');
             }
         }).fail(function () {
@@ -419,147 +423,34 @@ $(document).ready(function () {
         });
     }
 
-    function showOutput(text) {
-        $('#supervisor-output').text(text);
-        $('#supervisor-output-area').removeClass('d-none');
-    }
-
-    function openSudoModal(action, message) {
-        pendingAction = action;
-        if (message) {
-            $('#sudo-modal-message').html(message);
-        }
-        $('#sudo-password-input').val('');
-        sudoModal.show();
-        setTimeout(function () { $('#sudo-password-input').focus(); }, 400);
-    }
-
-    function doApply(sudoPassword) {
-        var data = {};
-        if (sudoPassword) {
-            data.sudo_password = sudoPassword;
-        }
-        var $btn = $('#btn-supervisor-apply').prop('disabled', true).text('Aplicando...');
-
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.apply') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: data,
-            success: function (res) {
-                toastr.success(res.message);
-                if (res.output) { showOutput(res.output); }
-                loadSupervisorStatus();
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) {
-                    openSudoModal('apply', res.message);
-                } else {
-                    toastr.error(res.message || 'Error al aplicar la configuración.');
-                    if (res.output) { showOutput(res.output); }
-                }
-            },
-            complete: function () {
-                $btn.prop('disabled', false);
-            }
+    $('#btn-supervisor-install').on('click', function () {
+        $.get('{{ route('settings.backups.supervisor.install-instructions') }}', function (res) {
+            showInstructions('Instalar Supervisor', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
-    }
+    });
 
-    function doRestart(sudoPassword) {
-        var data = {};
-        if (sudoPassword) {
-            data.sudo_password = sudoPassword;
-        }
-        var $btn = $('#btn-supervisor-restart').prop('disabled', true).text('Reiniciando...');
-
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.restart') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: data,
-            success: function (res) {
-                toastr.success(res.message);
-                if (res.output) { showOutput(res.output); }
-                loadSupervisorStatus();
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) {
-                    openSudoModal('restart', res.message);
-                } else {
-                    toastr.error(res.message || 'Error al reiniciar el worker.');
-                    if (res.output) { showOutput(res.output); }
-                }
-            },
-            complete: function () {
-                $btn.prop('disabled', false).text('Reiniciar worker');
-            }
+    $('#btn-supervisor-apply').on('click', function () {
+        $.get('{{ route('settings.backups.supervisor.apply-instructions') }}', function (res) {
+            showInstructions('Configurar worker de cola', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
-    }
+    });
 
-    function doInstall(sudoPassword) {
-        var data = {};
-        if (sudoPassword) { data.sudo_password = sudoPassword; }
-        var $btn = $('#btn-supervisor-install').prop('disabled', true).text('Instalando...');
-
-        $.ajax({
-            url: '{{ route('settings.backups.supervisor.install') }}',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: data,
-            success: function (res) {
-                toastr.success(res.message);
-                if (res.output) { showOutput(res.output); }
-                if (res.reload) { setTimeout(function () { location.reload(); }, 1500); }
-            },
-            error: function (xhr) {
-                var res = xhr.responseJSON || {};
-                if (res.requires_sudo) {
-                    openSudoModal('install', res.message);
-                } else {
-                    toastr.error(res.message || 'Error durante la instalación.');
-                    if (res.output) { showOutput(res.output); }
-                }
-            },
-            complete: function () {
-                $btn.prop('disabled', false).text('Instalar Supervisor');
-            }
+    $('#btn-supervisor-restart').on('click', function () {
+        $.get('{{ route('settings.backups.supervisor.restart-instructions') }}', function (res) {
+            showInstructions('Reiniciar worker', res.instructions, res.commands);
+        }).fail(function () {
+            toastr.error('No se pudieron obtener las instrucciones.');
         });
-    }
-
-    $('#btn-supervisor-install').on('click', function () { doInstall(null); });
-    $('#btn-supervisor-apply').on('click', function () { doApply(null); });
-    $('#btn-supervisor-restart').on('click', function () { doRestart(null); });
+    });
 
     $('#btn-supervisor-refresh').on('click', function () {
         $('#supervisor-status-badge').html('<span class="badge bg-secondary-subtle text-secondary">Verificando...</span>');
         $('#btn-supervisor-apply, #btn-supervisor-restart').addClass('d-none');
         loadSupervisorStatus();
-    });
-
-    // Confirm sudo modal
-    $('#btn-sudo-confirm').on('click', function () {
-        var password = $('#sudo-password-input').val();
-        if (!password) {
-            $('#sudo-password-input').addClass('is-invalid').focus();
-            return;
-        }
-        $('#sudo-password-input').removeClass('is-invalid');
-        sudoModal.hide();
-
-        if (pendingAction === 'install') {
-            doInstall(password);
-        } else if (pendingAction === 'apply') {
-            doApply(password);
-        } else if (pendingAction === 'restart') {
-            doRestart(password);
-        }
-    });
-
-    // Allow Enter key in modal
-    $('#sudo-password-input').on('keydown', function (e) {
-        if (e.key === 'Enter') { $('#btn-sudo-confirm').trigger('click'); }
     });
 
     loadSupervisorStatus();

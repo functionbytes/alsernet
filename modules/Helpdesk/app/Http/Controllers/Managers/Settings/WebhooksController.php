@@ -6,11 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\StoreWebhookRequest;
 use Modules\Helpdesk\Models\Webhook;
 use Modules\Helpdesk\Models\WebhookDelivery;
 
 class WebhooksController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.webhooks.view')->only(['index', 'show']);
+        $this->middleware('can:helpdesk.webhooks.create')->only(['create', 'store']);
+        $this->middleware('can:helpdesk.webhooks.update')->only(['edit', 'update', 'toggleActive', 'test']);
+        $this->middleware('can:helpdesk.webhooks.delete')->only(['destroy']);
+    }
+
     public const AVAILABLE_EVENTS = [
         'conversation.created' => 'Conversacion creada',
         'conversation.updated' => 'Conversacion actualizada',
@@ -57,25 +66,9 @@ class WebhooksController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreWebhookRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'url' => ['required', 'url', 'max:500'],
-            'integration_type' => ['nullable', 'string', 'in:generic,slack,discord,teams'],
-            'events' => ['required', 'array', 'min:1'],
-            'events.*' => ['string', 'in:'.implode(',', array_keys(self::AVAILABLE_EVENTS))],
-            'secret' => ['nullable', 'string', 'max:64'],
-            'headers' => ['nullable', 'string'],
-            'is_active' => ['boolean'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'url.required' => 'La URL es obligatoria.',
-            'url.url' => 'La URL no tiene un formato valido.',
-            'events.required' => 'Debes seleccionar al menos un evento.',
-            'events.min' => 'Debes seleccionar al menos un evento.',
-        ]);
-
+        $validated = $request->validated();
         $validated['headers'] = $this->parseHeaders($request->input('headers'));
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['integration_type'] = $validated['integration_type'] ?? 'generic';

@@ -38,6 +38,7 @@
     "Reviews": true,
     "Role": true,
     "Seo": true,
+    "SimpleSlider": true,
     "Shortcode": true,
     "Sitemap": true,
     "Slug": false,
@@ -48,5 +49,6 @@
     "Theme": true,
     "User": true,
     "Webhook": false,
-    "Widget": false
+    "Widget": false,
+    "Locations": true
 }

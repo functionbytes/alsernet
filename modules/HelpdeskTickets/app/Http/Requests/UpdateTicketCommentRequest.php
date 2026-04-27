@@ -13,10 +13,11 @@ class UpdateTicketCommentRequest extends FormRequest
     public function authorize(): bool
     {
         $comment = $this->route('comment');
+        $user = $this->user();
 
-        // Only the comment author or admins can edit comments
-        return $this->user()->id === $comment->user_id ||
-               $this->user()->hasPermissionTo('edit all ticket comments');
+        return $user?->id === $comment?->user_id
+            || $user?->can('helpdesk.tickets.manage')
+            ?? false;
     }
 
     /**

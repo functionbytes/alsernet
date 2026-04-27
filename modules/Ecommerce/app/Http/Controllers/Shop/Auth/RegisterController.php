@@ -3,10 +3,10 @@
 namespace Modules\Ecommerce\Http\Controllers\Shop\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Ecommerce\Events\CustomerRegistered;
 use Modules\Ecommerce\Models\Customer;
 
 class RegisterController extends Controller
@@ -33,7 +33,7 @@ class RegisterController extends Controller
             'status' => 'active',
         ]);
 
-        event(new Registered($customer));
+        CustomerRegistered::dispatch($customer);
         auth('ecommerce')->login($customer);
 
         return redirect()->route('shop.index');

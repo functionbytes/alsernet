@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Services\NotificationService;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Events\SlaWarning;
 use Modules\HelpdeskTickets\Models\SlaPolicy; // TODO: migrate to TicketSlaPolicy

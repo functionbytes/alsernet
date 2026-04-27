@@ -2,10 +2,13 @@
 
 namespace Modules\Activity\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Activity\Console\Commands\PruneActivityLogsCommand;
+use Modules\Activity\Policies\ActivityPolicy;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
+use Spatie\Activitylog\Models\Activity;
 
 class ActivityServiceProvider extends ServiceProvider
 {
@@ -20,6 +23,8 @@ class ActivityServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'activity');
         $this->registerMenus();
         $this->registerCommands();
+
+        Gate::policy(Activity::class, ActivityPolicy::class);
     }
 
     protected function registerCommands(): void

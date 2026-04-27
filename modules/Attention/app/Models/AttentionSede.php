@@ -2,16 +2,24 @@
 
 namespace Modules\Attention\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Attention\Database\Factories\AttentionSedeFactory;
 
 /**
  * Sedes físicas donde se reciben peticiones
  */
 class AttentionSede extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
+
+    protected static function newFactory(): Factory
+    {
+        return AttentionSedeFactory::new();
+    }
 
     protected $table = 'attention_sedes';
 

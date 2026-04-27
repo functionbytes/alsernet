@@ -16,9 +16,27 @@
 @section('content')
 <section class="mt-60 mb-60">
     <div class="container">
+        <div class="mb-4">
+            <div class="checkout-stepper d-flex align-items-center justify-content-center gap-2">
+                <div class="stepper-item active">
+                    <div class="stepper-circle"><i class="fas fa-shopping-cart"></i></div>
+                    <span>{{ __('Carrito') }}</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item active">
+                    <div class="stepper-circle"><i class="fas fa-truck"></i></div>
+                    <span>{{ __('Envio y pago') }}</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item">
+                    <div class="stepper-circle"><i class="fas fa-check"></i></div>
+                    <span>{{ __('Confirmacion') }}</span>
+                </div>
+            </div>
+        </div>
         <div class="row">
-            <div class="col-md-7">
-                <form action="{{ route('checkout.store') }}" method="POST">
+            <div class="col-lg-8 col-md-12">
+                <form id="checkout-form" action="{{ route('checkout.store') }}" method="POST">
                     @csrf
                     <div class="mb-4">
                         <h4 class="mb-3">{{ __('Informacion de envio') }}</h4>
@@ -37,15 +55,24 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('Pais') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="country" class="form-control" required value="{{ old('country') }}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{{ __('Ciudad') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="city" class="form-control" required value="{{ old('city') }}">
+                                <select name="country_id" id="country_id" class="form-select" required>
+                                    <option value="">Selecciona un país...</option>
+                                </select>
+                                <input type="hidden" name="country" id="country_text">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('Departamento / Region') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="region" class="form-control" required value="{{ old('region') }}">
+                                <select name="state_id" id="state_id" class="form-select" required disabled>
+                                    <option value="">Selecciona primero el país</option>
+                                </select>
+                                <input type="hidden" name="region" id="region_text">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('Ciudad') }} <span class="text-danger">*</span></label>
+                                <select name="city_id" id="city_id" class="form-select" required disabled>
+                                    <option value="">Selecciona primero el departamento</option>
+                                </select>
+                                <input type="hidden" name="city" id="city_text">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('Codigo postal') }}</label>
@@ -60,28 +87,43 @@
 
                     <div class="mb-4">
                         <h4 class="mb-3">{{ __('Metodo de pago') }} <span class="text-danger">*</span></h4>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" value="cash" id="pay_cash" checked>
-                            <label class="form-check-label" for="pay_cash">{{ __('Efectivo / Contra entrega') }}</label>
+                        @forelse($paymentMethods as $index => $method)
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="payment_method"
+                                       value="{{ $method['key'] }}"
+                                       id="pay_{{ $method['key'] }}"
+                                       {{ $index === 0 ? 'checked' : '' }}>
+                                <label class="form-check-label" for="pay_{{ $method['key'] }}">
+                                    @if($method['key'] === 'wompi')
+                                        <i class="fas fa-credit-card me-1"></i>
+                                    @elseif($method['key'] === 'cod')
+                                        <i class="fas fa-motorcycle me-1"></i>
+                                    @elseif($method['key'] === 'bank_transfer')
+                                        <i class="fas fa-university me-1"></i>
+                                    @endif
+                                    {{ $method['name'] }}
+                                    @if(!empty($method['description']))
+                                        <small class="text-muted d-block">{{ $method['description'] }}</small>
+                                    @endif
+                                </label>
+                            </div>
+                        @empty
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {{ __('No hay métodos de pago disponibles.') }}
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="mb-3">{{ __('Cupon de descuento') }}</h4>
+                        <div class="input-group">
+                            <input type="text" name="coupon_code" class="form-control" placeholder="{{ __('Codigo de cupon (opcional)') }}" value="{{ old('coupon_code') }}">
+                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
                         </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" value="transfer" id="pay_transfer">
-                            <label class="form-check-label" for="pay_transfer">{{ __('Transferencia bancaria') }}</label>
-                        </div>
-                        @if(!empty($paymentMethods) && isset($paymentMethods['wompi']))
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" value="card" id="pay_card">
-                            <label class="form-check-label" for="pay_card">
-                                <i class="fas fa-credit-card text-primary me-1"></i>{{ __('Tarjeta de credito / debito') }}
-                                <small class="text-muted d-block">{{ __('Paga con Wompi: Tarjeta, PSE, Nequi y mas') }}</small>
-                            </label>
-                        </div>
-                        @else
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" value="card" id="pay_card">
-                            <label class="form-check-label" for="pay_card">{{ __('Tarjeta de credito / debito') }}</label>
-                        </div>
-                        @endif
+                        @error('coupon_code')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-4">
@@ -93,7 +135,8 @@
                 </form>
             </div>
 
-            <div class="col-md-5">
+            <div class="col-lg-4 col-md-12">
+                <div class="checkout-summary-sticky">
                 <div class="border p-md-4 p-30 border-radius-10 cart-totals">
                     <div class="heading_s1 mb-3">
                         <h4>{{ __('Resumen de orden') }}</h4>
@@ -117,6 +160,12 @@
                                     <td class="cart_total_label">{{ __('Envio') }}</td>
                                     <td class="cart_total_amount"><span class="font-lg fw-900 text-brand">${{ number_format($shipping, 2) }}</span></td>
                                 </tr>
+                                @if($tax > 0)
+                                <tr>
+                                    <td class="cart_total_label">{{ __('Impuesto') }}</td>
+                                    <td class="cart_total_amount"><span class="font-lg fw-900 text-brand">${{ number_format($tax, 2) }}</span></td>
+                                </tr>
+                                @endif
                                 <tr>
                                     <td class="cart_total_label">{{ __('Total') }}</td>
                                     <td class="cart_total_amount">
@@ -127,8 +176,67 @@
                         </table>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+$(function () {
+    // Load countries on page load
+    $.getJSON('/api/locations/countries', function (data) {
+        var $country = $('#country_id');
+        $.each(data, function (i, c) {
+            $country.append($('<option>').val(c.id).text(c.name));
+        });
+    });
+
+    // Country → States
+    $('#country_id').on('change', function () {
+        var id = $(this).val();
+        var text = $(this).find('option:selected').text();
+        $('#country_text').val(text);
+        $('#state_id').prop('disabled', true).html('<option value="">Cargando...</option>');
+        $('#city_id').prop('disabled', true).html('<option value="">Selecciona primero el departamento</option>');
+        $('#region_text, #city_text').val('');
+
+        if (!id) { return; }
+
+        $.getJSON('/api/locations/states', { country_id: id }, function (data) {
+            var $state = $('#state_id').empty().append('<option value="">Selecciona un departamento...</option>');
+            $.each(data, function (i, s) {
+                $state.append($('<option>').val(s.id).text(s.name));
+            });
+            $state.prop('disabled', false);
+        });
+    });
+
+    // State → Cities
+    $('#state_id').on('change', function () {
+        var id = $(this).val();
+        var text = $(this).find('option:selected').text();
+        $('#region_text').val(text);
+        $('#city_id').prop('disabled', true).html('<option value="">Cargando...</option>');
+        $('#city_text').val('');
+
+        if (!id) { return; }
+
+        $.getJSON('/api/locations/cities', { state_id: id }, function (data) {
+            var $city = $('#city_id').empty().append('<option value="">Selecciona una ciudad...</option>');
+            $.each(data, function (i, c) {
+                $city.append($('<option>').val(c.id).text(c.name));
+            });
+            $city.prop('disabled', false);
+        });
+    });
+
+    $('#city_id').on('change', function () {
+        $('#city_text').val($(this).find('option:selected').text());
+    });
+});
+</script>
+@include('ecommerce::shop.partials._checkout-validation-script')
+@endpush

@@ -14,6 +14,7 @@ class ProductLabel extends Model
     protected $fillable = [
         'name',
         'color',
+        'text_color',
         'status',
     ];
 }

@@ -21,7 +21,21 @@ use Modules\Page\Console\InstallPageCommand;
 use Modules\Page\Console\PublishScheduledPagesCommand;
 use Modules\Page\Console\ReindexPagesCommand;
 use Modules\Page\Models\Page;
+use Modules\Page\Models\PageApproval;
+use Modules\Page\Models\PageAutoSave;
+use Modules\Page\Models\PageCategory;
+use Modules\Page\Models\PageLock;
+use Modules\Page\Models\PageTag;
+use Modules\Page\Models\PageVersion;
+use Modules\Page\Models\PageWebhook;
+use Modules\Page\Policies\PageApprovalPolicy;
+use Modules\Page\Policies\PageAutoSavePolicy;
+use Modules\Page\Policies\PageCategoryPolicy;
+use Modules\Page\Policies\PageLockPolicy;
 use Modules\Page\Policies\PagePolicy;
+use Modules\Page\Policies\PageTagPolicy;
+use Modules\Page\Policies\PageVersionPolicy;
+use Modules\Page\Policies\PageWebhookPolicy;
 use Modules\Page\Services\PageAutoSaveService;
 use Modules\Page\Services\PageCacheService;
 use Modules\Page\Services\PageLockService;
@@ -226,6 +240,13 @@ class PageServiceProvider extends ServiceProvider
     protected function registerPolicies(): void
     {
         Gate::policy(Page::class, PagePolicy::class);
+        Gate::policy(PageWebhook::class, PageWebhookPolicy::class);
+        Gate::policy(PageVersion::class, PageVersionPolicy::class);
+        Gate::policy(PageCategory::class, PageCategoryPolicy::class);
+        Gate::policy(PageTag::class, PageTagPolicy::class);
+        Gate::policy(PageApproval::class, PageApprovalPolicy::class);
+        Gate::policy(PageAutoSave::class, PageAutoSavePolicy::class);
+        Gate::policy(PageLock::class, PageLockPolicy::class);
     }
 
     /**

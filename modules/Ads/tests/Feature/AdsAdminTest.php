@@ -4,7 +4,9 @@ namespace Modules\Ads\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Ads\Database\Seeders\AdsPermissionsSeeder;
 use Modules\Ads\Enums\AdsStatus;
+use Modules\Ads\Enums\AdsType;
 use Modules\Ads\Models\Ads;
 use Tests\TestCase;
 
@@ -17,6 +19,8 @@ class AdsAdminTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed(AdsPermissionsSeeder::class);
 
         $this->admin = User::factory()->create();
         $this->admin->givePermissionTo([
@@ -49,6 +53,7 @@ class AdsAdminTest extends TestCase
             ],
             'key' => 'test-ad',
             'status' => AdsStatus::PUBLISHED->value,
+            'ads_type' => AdsType::IMAGE->value,
             'url' => 'https://example.com',
         ];
 
@@ -78,6 +83,7 @@ class AdsAdminTest extends TestCase
             ],
             'key' => $ad->key,
             'status' => $ad->status->value,
+            'ads_type' => $ad->ads_type->value,
         ]);
 
         $response->assertRedirect();
@@ -99,6 +105,6 @@ class AdsAdminTest extends TestCase
     {
         $response = $this->get(route('ads.index'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertRedirect(route('auth.login'));
     }
 }

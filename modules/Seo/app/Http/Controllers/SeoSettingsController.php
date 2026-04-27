@@ -110,7 +110,7 @@ class SeoSettingsController extends Controller
         }
 
         return redirect()
-            ->route('setting.seo.settings.edit')
+            ->route('settings.seo.settings.edit')
             ->with('success', 'Configuración SEO guardada correctamente.');
     }
 
@@ -170,7 +170,7 @@ class SeoSettingsController extends Controller
         }
 
         return redirect()
-            ->route('setting.seo.settings.edit')
+            ->route('settings.seo.settings.edit')
             ->with('success', "Configuración SEO importada: {$imported} valores aplicados.");
     }
 }

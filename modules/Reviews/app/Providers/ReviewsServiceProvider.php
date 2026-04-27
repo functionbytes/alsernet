@@ -33,6 +33,9 @@ use Modules\Reviews\Events\ReplyPublished;
 use Modules\Reviews\Events\ReviewAnomalyDetected;
 use Modules\Reviews\Events\ReviewSynced;
 use Modules\Reviews\Jobs\SyncGoogleReviewsJob;
+use Modules\Reviews\Listeners\DispatchWebhookOnAnomalyDetected;
+use Modules\Reviews\Listeners\DispatchWebhookOnReplyPublished;
+use Modules\Reviews\Listeners\DispatchWebhookOnReviewSynced;
 use Modules\Reviews\Listeners\HandleConnectionRevoked;
 use Modules\Reviews\Listeners\HandleReplyFailed;
 use Modules\Reviews\Listeners\LogReplyPublished;
@@ -255,44 +258,12 @@ class ReviewsServiceProvider extends ServiceProvider
         Event::listen(ReviewSynced::class, SendUrgentReviewNotification::class);
         Event::listen(ReviewSynced::class, LogReviewSync::class);
         Event::listen(ReviewSynced::class, ProcessAutoReplies::class);
+        Event::listen(ReviewSynced::class, DispatchWebhookOnReviewSynced::class);
         Event::listen(ReplyPublished::class, LogReplyPublished::class);
+        Event::listen(ReplyPublished::class, DispatchWebhookOnReplyPublished::class);
         Event::listen(ConnectionRevoked::class, HandleConnectionRevoked::class);
         Event::listen(ReplyFailed::class, HandleReplyFailed::class);
-
-        // Outbound webhooks (Zapier integration)
-        Event::listen(ReviewSynced::class, function (ReviewSynced $event): void {
-            app(OutboundWebhookService::class)->dispatch('review.created', [
-                'event' => 'review.created',
-                'review_id' => $event->review->id,
-                'location_id' => $event->review->location_id,
-                'reviewer_name' => $event->review->reviewer_name,
-                'star_rating' => $event->review->star_rating->value(),
-                'comment' => $event->review->comment,
-                'review_time' => $event->review->review_time?->toIso8601String(),
-            ]);
-        });
-
-        Event::listen(ReplyPublished::class, function (ReplyPublished $event): void {
-            app(OutboundWebhookService::class)->dispatch('reply.published', [
-                'event' => 'reply.published',
-                'reply_id' => $event->reply->id,
-                'review_id' => $event->reply->review_id,
-                'body' => $event->reply->body,
-                'published_at' => now()->toIso8601String(),
-            ]);
-        });
-
-        Event::listen(ReviewAnomalyDetected::class, function (ReviewAnomalyDetected $event): void {
-            app(OutboundWebhookService::class)->dispatch('review.anomaly', [
-                'event' => 'review.anomaly',
-                'location_id' => $event->anomaly->locationId,
-                'location_name' => $event->anomaly->locationName,
-                'current_count' => $event->anomaly->currentCount,
-                'historical_average' => $event->anomaly->historicalAverage,
-                'multiplier' => $event->anomaly->multiplier,
-                'detected_at' => $event->anomaly->detectedAt->toIso8601String(),
-            ]);
-        });
+        Event::listen(ReviewAnomalyDetected::class, DispatchWebhookOnAnomalyDetected::class);
     }
 
     protected function registerMenus(): void

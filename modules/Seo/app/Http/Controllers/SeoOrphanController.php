@@ -126,7 +126,7 @@ class SeoOrphanController extends Controller
                     'title' => $p->title ?? "Página #{$p->id}",
                     'slug' => $p->slug ?? '',
                     'type' => 'Page',
-                    'create_url' => route('setting.seo.metas.index'),
+                    'create_url' => route('settings.seo.metas.index'),
                     'modelClass' => Page::class,
                 ])->toArray();
             }
@@ -147,7 +147,7 @@ class SeoOrphanController extends Controller
                     'title' => $p->title ?? "Post #{$p->id}",
                     'slug' => $p->slug ?? '',
                     'type' => 'BlogPost',
-                    'create_url' => route('setting.seo.metas.index'),
+                    'create_url' => route('settings.seo.metas.index'),
                     'modelClass' => BlogPost::class,
                 ])->toArray();
             }

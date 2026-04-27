@@ -136,7 +136,7 @@ class TicketCategory extends Model
      */
     public function getIconClassAttribute(): string
     {
-        return $this->icon ?? 'ti ti-ticket';
+        return $this->icon ?? 'fas fa-ticket';
     }
 
     /**

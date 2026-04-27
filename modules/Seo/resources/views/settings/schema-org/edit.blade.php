@@ -15,7 +15,7 @@
                     </p>
                 </div>
 
-                <form method="POST" action="{{ route('setting.seo.schema-org.update', $meta) }}" id="schema-form">
+                <form method="POST" action="{{ route('settings.seo.schema-org.update', $meta) }}" id="schema-form">
                     @csrf
                     @method('PUT')
 
@@ -53,7 +53,7 @@
 
                     <div class="card-footer p-4 d-flex gap-2">
                         <button type="submit" class="btn btn-primary flex-fill">Guardar</button>
-                        <a href="{{ route('setting.seo.metas.edit', $meta) }}" class="btn btn-outline-secondary">Volver al meta</a>
+                        <a href="{{ route('settings.seo.metas.edit', $meta) }}" class="btn btn-outline-secondary">Volver al meta</a>
                     </div>
                 </form>
             </div>
@@ -134,7 +134,7 @@ $('#btn-format').on('click', function () {
 $('#btn-validate').on('click', function () {
     const $result = $('#validation-result');
     $.ajax({
-        url: '{{ route('setting.seo.schema-org.validate', $meta) }}',
+        url: '{{ route('settings.seo.schema-org.validate', $meta) }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',

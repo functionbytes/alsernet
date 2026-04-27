@@ -3,12 +3,15 @@
 namespace Modules\Health\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Health\Checks\DatabaseCheck;
 use Modules\Health\Checks\RedisCheck;
 use Modules\Health\Checks\StorageCheck;
 use Modules\Health\Console\Commands\CheckAlertThresholdsCommand;
 use Modules\Health\Console\Commands\HealthCheckAlertCommand;
+use Modules\Health\Models\AlertThreshold;
+use Modules\Health\Policies\AlertThresholdPolicy;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Spatie\Health\Checks\Checks\CacheCheck;
@@ -72,6 +75,9 @@ class HealthServiceProvider extends ServiceProvider
 
         // Register menus
         $this->registerMenus();
+
+        // Register policies
+        Gate::policy(AlertThreshold::class, AlertThresholdPolicy::class);
     }
 
     protected function registerHealthChecks()

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
-use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Concerns\HasMessageThread;
 use Modules\Helpdesk\Models\Group;
 use Modules\HelpdeskTickets\Database\Factories\TicketFactory;
 use Modules\HelpdeskTickets\Models\Concerns\HasCustomAttributes;
@@ -21,7 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
-    use HasCustomAttributes, HasFactory, LogsActivity, SoftDeletes;
+    use HasCustomAttributes, HasFactory, HasMessageThread, LogsActivity, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -239,14 +239,6 @@ class Ticket extends Model
     }
 
     /**
-     * Get the customer that owns this ticket
-     */
-    public function customer(): BelongsTo
-    {
-        return $this->belongsTo(Customer::class, 'customer_id');
-    }
-
-    /**
      * Get the category of this ticket
      */
     public function category(): BelongsTo
@@ -460,30 +452,6 @@ class Ticket extends Model
     }
 
     /**
-     * Scope: Get tickets assigned to a user
-     */
-    public function scopeAssignedTo($query, $userId)
-    {
-        return $query->where('assignee_id', $userId);
-    }
-
-    /**
-     * Scope: Get unassigned tickets
-     */
-    public function scopeUnassigned($query)
-    {
-        return $query->whereNull('assignee_id');
-    }
-
-    /**
-     * Scope: Get tickets by priority
-     */
-    public function scopeByPriority($query, $priority)
-    {
-        return $query->where('priority', $priority);
-    }
-
-    /**
      * Scope: Get tickets by category
      */
     public function scopeByCategory($query, $categoryId)
@@ -497,22 +465,6 @@ class Ticket extends Model
     public function scopeBySource($query, $source)
     {
         return $query->where('source', $source);
-    }
-
-    /**
-     * Scope: Get archived tickets
-     */
-    public function scopeArchived($query)
-    {
-        return $query->where('is_archived', true);
-    }
-
-    /**
-     * Scope: Get active tickets
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_archived', false);
     }
 
     /**
@@ -588,22 +540,6 @@ class Ticket extends Model
         return $query->where('ticket_number', 'like', "%{$term}%")
             ->orWhere('subject', 'like', "%{$term}%")
             ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$term}%"));
-    }
-
-    /**
-     * Check if ticket is open
-     */
-    public function isOpen(): bool
-    {
-        return $this->status && $this->status->is_open;
-    }
-
-    /**
-     * Check if ticket is closed
-     */
-    public function isClosed(): bool
-    {
-        return ! $this->isOpen();
     }
 
     /**
@@ -862,26 +798,6 @@ class Ticket extends Model
             'type' => 'reopened',
             'body' => 'Ticket reopened',
         ]);
-
-        return $this;
-    }
-
-    /**
-     * Archive ticket
-     */
-    public function archive(): self
-    {
-        $this->update(['is_archived' => true]);
-
-        return $this;
-    }
-
-    /**
-     * Unarchive ticket
-     */
-    public function unarchive(): self
-    {
-        $this->update(['is_archived' => false]);
 
         return $this;
     }

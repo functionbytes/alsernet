@@ -28,7 +28,7 @@
                     <hr class="my-4">
 
                     {{-- Formulario --}}
-                    <form id="import-form" action="{{ route('setting.seo.search-console.import.store') }}" method="POST" enctype="multipart/form-data">
+                    <form id="import-form" action="{{ route('settings.seo.search-console.import.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mb-4">
@@ -131,7 +131,7 @@
                     <button type="submit" form="import-form" class="btn btn-primary w-100 py-2">
                         Importar datos
                     </button>
-                    <a href="{{ route('setting.seo.report.index') }}" class="btn btn-light border w-100 py-2">
+                    <a href="{{ route('settings.seo.report.index') }}" class="btn btn-light border w-100 py-2">
                         Cancelar
                     </a>
                 </div>

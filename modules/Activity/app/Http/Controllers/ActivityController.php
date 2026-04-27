@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Modules\Activity\Http\Resources\ActivityResource;
 use Modules\Activity\Services\ActivityLogService;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -194,30 +195,14 @@ class ActivityController extends Controller
 
         $activities = $query->paginate(paginationNumber());
 
-        $data = $activities->getCollection()->map(function (Activity $activity) {
-            return [
-                'id' => $activity->id,
-                'log_name' => $activity->log_name,
-                'event' => $activity->event,
-                'description' => $activity->description,
-                'subject_type' => $activity->subject_type ? class_basename($activity->subject_type) : null,
-                'subject_id' => $activity->subject_id,
-                'causer_name' => optional($activity->causer)->name ?? 'Sistema',
-                'causer_email' => optional($activity->causer)->email ?? '',
-                'properties' => $activity->properties?->toArray() ?? [],
-                'created_at' => $activity->created_at?->format('d/m/Y H:i:s'),
-                'created_at_human' => $activity->created_at?->diffForHumans(),
-            ];
-        });
-
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data' => ActivityResource::collection($activities->getCollection()),
             'pagination' => [
                 'total' => $activities->total(),
-                'per_page' => $activities->perPage(),
-                'current_page' => $activities->currentPage(),
-                'last_page' => $activities->lastPage(),
+                'perPage' => $activities->perPage(),
+                'currentPage' => $activities->currentPage(),
+                'lastPage' => $activities->lastPage(),
             ],
         ]);
     }

@@ -34,7 +34,7 @@ class SeoHealthCommandTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $response = $this->actingAs($user)
-            ->postJson(route('setting.seo.health.run'));
+            ->postJson(route('settings.seo.health.run'));
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -49,7 +49,7 @@ class SeoHealthCommandTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->postJson(route('setting.seo.health.run'))
+            ->postJson(route('settings.seo.health.run'))
             ->assertForbidden();
     }
 

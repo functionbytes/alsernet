@@ -4,12 +4,13 @@ namespace Modules\Mailrelay\Http\Controllers\Settings;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Mailrelay\Entities\Webhook;
 use Modules\Mailrelay\Http\Controllers\Controller;
+use Modules\Mailrelay\Http\Requests\Settings\StoreWebhookRequest;
+use Modules\Mailrelay\Http\Requests\Settings\UpdateWebhookRequest;
 
 class WebhookController extends Controller
 {
@@ -36,17 +37,10 @@ class WebhookController extends Controller
     /**
      * Store a newly created webhook.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreWebhookRequest $request): RedirectResponse
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'url' => 'required|url|max:255',
-                'event_type' => 'required|string|max:100',
-                'secret' => 'nullable|string|max:255',
-                'active' => 'boolean',
-                'verify_ssl' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             Webhook::create($validated);
 
@@ -78,19 +72,12 @@ class WebhookController extends Controller
     /**
      * Update the specified webhook.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateWebhookRequest $request, int $id): RedirectResponse
     {
         try {
             $webhook = Webhook::findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'url' => 'required|url|max:255',
-                'event_type' => 'required|string|max:100',
-                'secret' => 'nullable|string|max:255',
-                'active' => 'boolean',
-                'verify_ssl' => 'boolean',
-            ]);
+            $validated = $request->validated();
 
             $webhook->update($validated);
 

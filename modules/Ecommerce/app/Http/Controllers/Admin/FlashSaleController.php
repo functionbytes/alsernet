@@ -19,12 +19,12 @@ class FlashSaleController extends Controller
             ->latest()
             ->paginate(20);
 
-        return view('ecommerce::admin.flash-sales.index', compact('flashSales'));
+        return view('ecommerce::flash-sales.index', compact('flashSales'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.flash-sales.create');
+        return view('ecommerce::flash-sales.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,7 +43,7 @@ class FlashSaleController extends Controller
 
     public function edit(FlashSale $flashSale): View
     {
-        return view('ecommerce::admin.flash-sales.edit', compact('flashSale'));
+        return view('ecommerce::flash-sales.edit', compact('flashSale'));
     }
 
     public function update(Request $request, FlashSale $flashSale): RedirectResponse

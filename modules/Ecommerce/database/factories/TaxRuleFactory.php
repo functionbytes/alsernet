@@ -14,11 +14,12 @@ class TaxRuleFactory extends Factory
     {
         return [
             'tax_id' => Tax::factory(),
-            'country' => null,
-            'state' => null,
-            'city' => null,
-            'zip_code' => null,
+            'name' => fake()->words(2, true),
+            'basis' => 'price',
+            'price_from' => 0,
+            'price_to' => null,
             'percentage' => fake()->randomFloat(2, 0, 20),
+            'order' => 0,
         ];
     }
 }

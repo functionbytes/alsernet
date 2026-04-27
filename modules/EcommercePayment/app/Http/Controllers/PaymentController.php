@@ -30,9 +30,9 @@ class PaymentController extends Controller
 
         $gateway = $this->gatewayManager->get($gatewayName);
 
-        if ($gatewayName === 'wompi' && method_exists($gateway, 'isEnabled') && ! $gateway->isEnabled()) {
+        if (! $gateway->isEnabled()) {
             return redirect()->route('checkout.index')
-                ->with('error', 'El método de pago Wompi no está habilitado.');
+                ->with('error', 'El método de pago seleccionado no está habilitado.');
         }
 
         $customerData = [

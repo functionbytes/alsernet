@@ -114,7 +114,7 @@ abstract class TestCase extends BaseTestCase
         $sede = $this->createSede();
 
         return Attention::create(array_merge([
-            'uid' => Str::uuid(),
+            'uid' => (string) Str::uuid(),
             'radicado' => Attention::generateRadicado(),
             'type_id' => $type->id,
             'category_id' => $category->id,

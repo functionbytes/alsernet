@@ -1,14 +1,19 @@
-@extends('template::layouts.default')
+@extends('layouts.theme')
 
 @section('title', 'Detalle de pago #' . $payment->id)
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">{{ __('Pago') }} #{{ $payment->id }}</h4>
-        <a href="{{ route('ecommerce-payment.payments.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>{{ __('Volver') }}
-        </a>
+    @include('core::components.card', ['title' => 'Ecommerce - Detalle de pago'])
+
+    @include('core::components.alerts')
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Pago #{{ $payment->id }}</h5>
+            <a href="{{ route('ecommerce-payment.payments.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+        </div>
     </div>
 
     <div class="row">
@@ -102,6 +107,28 @@
         </div>
         <div class="card-body">
             <pre class="mb-0"><code>{{ json_encode($payment->metadata, JSON_PRETTY_PRINT) }}</code></pre>
+        </div>
+    </div>
+    @endif
+
+    @if($payment->status->value === 'pending' && in_array($payment->payment_channel, ['cod', 'bank_transfer']))
+    <div class="card border-success mt-4">
+        <div class="card-header bg-success-subtle py-3">
+            <h6 class="mb-0 fw-bold text-success">
+                <i class="fas fa-check-circle me-2"></i> Confirmar pago recibido
+            </h6>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">
+                Confirma que recibiste el pago de este pedido para actualizar el estado de la orden.
+            </p>
+            <form action="{{ route('ecommerce-payment.payments.confirm', $payment) }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-success w-100"
+                        onclick="return confirm('¿Confirmar que recibiste el pago de ${{ number_format($payment->amount, 2) }}?')">
+                    <i class="fas fa-check me-2"></i> Marcar como pagado
+                </button>
+            </form>
         </div>
     </div>
     @endif

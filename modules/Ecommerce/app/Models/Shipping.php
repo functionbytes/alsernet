@@ -21,7 +21,15 @@ class Shipping extends Model
     protected $fillable = [
         'title',
         'country',
+        'is_active',
     ];
+
+    public function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function rules(): HasMany
     {

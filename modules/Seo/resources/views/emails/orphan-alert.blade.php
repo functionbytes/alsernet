@@ -50,7 +50,7 @@
                                 Se recomienda revisar el módulo "Contenido sin SEO" para asignar configuraciones SEO a estas páginas y mejorar su visibilidad en buscadores.
                             </p>
 
-                            <a href="{{ route('setting.seo.orphans.index') }}"
+                            <a href="{{ route('settings.seo.orphans.index') }}"
                                style="display:inline-block; background-color:#90bb13; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:4px; font-size:15px; font-weight:bold;">
                                 Ver páginas sin SEO
                             </a>

@@ -4,6 +4,8 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreSlaPolicyRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateSlaPolicyRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
@@ -53,23 +55,9 @@ class TicketSlaPoliciesController extends Controller
     /**
      * Store a newly created SLA policy.
      */
-    public function store(Request $request)
+    public function store(StoreSlaPolicyRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'first_response_time' => 'required|integer|min:1',
-            'next_response_time' => 'nullable|integer|min:1',
-            'resolution_time' => 'required|integer|min:1',
-            'business_hours_only' => 'nullable|boolean',
-            'business_hours' => 'nullable|array',
-            'timezone' => 'required|string|timezone',
-            'priority_multipliers' => 'nullable|array',
-            'enable_escalation' => 'nullable|boolean',
-            'escalation_threshold_percent' => 'nullable|integer|min:1|max:100',
-            'escalation_recipients' => 'nullable|array',
-            'active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['business_hours_only'] = $request->boolean('business_hours_only');
         $validated['enable_escalation'] = $request->boolean('enable_escalation');
@@ -111,23 +99,9 @@ class TicketSlaPoliciesController extends Controller
     /**
      * Update the specified SLA policy.
      */
-    public function update(Request $request, TicketSlaPolicy $policy)
+    public function update(UpdateSlaPolicyRequest $request, TicketSlaPolicy $policy)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'first_response_time' => 'required|integer|min:1',
-            'next_response_time' => 'nullable|integer|min:1',
-            'resolution_time' => 'required|integer|min:1',
-            'business_hours_only' => 'nullable|boolean',
-            'business_hours' => 'nullable|array',
-            'timezone' => 'required|string|timezone',
-            'priority_multipliers' => 'nullable|array',
-            'enable_escalation' => 'nullable|boolean',
-            'escalation_threshold_percent' => 'nullable|integer|min:1|max:100',
-            'escalation_recipients' => 'nullable|array',
-            'active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['business_hours_only'] = $request->boolean('business_hours_only');
         $validated['enable_escalation'] = $request->boolean('enable_escalation');

@@ -14,7 +14,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <form action="{{ route('ecommerce.register') }}" method="POST">
+                        <form id="register-form" action="{{ route('ecommerce.register') }}" method="POST">
                             @csrf
 
                             <div class="mb-3">
@@ -57,3 +57,7 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+@include('ecommerce::shop.partials._register-validation-script')
+@endpush

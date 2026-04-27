@@ -57,9 +57,7 @@ class CaptchaSettingRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->can('captcha.settings.update')
-            || $this->user()?->hasRole(['admin', 'super-admin'])
-            || false;
+        return $this->user()?->can('captcha.settings.update') ?? false;
     }
 
     public function messages(): array

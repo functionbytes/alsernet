@@ -4,8 +4,9 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreMacroRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateMacroRequest;
 use Modules\HelpdeskTickets\Models\Macro;
 
 class MacrosController extends Controller
@@ -41,17 +42,9 @@ class MacrosController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreMacroRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'actions' => ['required', 'json'],
-            'is_shared' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'actions.json' => 'Las acciones deben ser un JSON valido.',
-        ]);
+        $validated = $request->validated();
 
         $validated['actions'] = json_decode($validated['actions'], true);
         $validated['is_shared'] = $request->boolean('is_shared', true);
@@ -73,17 +66,9 @@ class MacrosController extends Controller
         ]);
     }
 
-    public function update(Request $request, Macro $macro): RedirectResponse
+    public function update(UpdateMacroRequest $request, Macro $macro): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'actions' => ['required', 'json'],
-            'is_shared' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'actions.json' => 'Las acciones deben ser un JSON valido.',
-        ]);
+        $validated = $request->validated();
 
         $validated['actions'] = json_decode($validated['actions'], true);
         $validated['is_shared'] = $request->boolean('is_shared', true);

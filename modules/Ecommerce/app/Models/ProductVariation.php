@@ -13,6 +13,8 @@ class ProductVariation extends Model
 
     protected $table = 'ecommerce_product_variations';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'product_id',
         'configurable_product_id',

@@ -7,12 +7,32 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
 use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
+use Modules\Helpdesk\Models\AgentShift;
+use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationStatus;
+use Modules\Helpdesk\Models\ConversationTag;
+use Modules\Helpdesk\Models\ConversationView;
+use Modules\Helpdesk\Models\CustomAttribute;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\HelpCenterArticle;
+use Modules\Helpdesk\Models\HelpCenterCategory;
+use Modules\Helpdesk\Models\OncallRotation;
+use Modules\Helpdesk\Models\Webhook;
+use Modules\Helpdesk\Policies\AgentShiftPolicy;
+use Modules\Helpdesk\Policies\CannedReplyPolicy;
 use Modules\Helpdesk\Policies\ConversationPolicy;
+use Modules\Helpdesk\Policies\ConversationStatusPolicy;
+use Modules\Helpdesk\Policies\ConversationTagPolicy;
+use Modules\Helpdesk\Policies\ConversationViewPolicy;
+use Modules\Helpdesk\Policies\CustomAttributePolicy;
 use Modules\Helpdesk\Policies\CustomerPolicy;
+use Modules\Helpdesk\Policies\GroupPolicy;
 use Modules\Helpdesk\Policies\HelpCenterArticlePolicy;
+use Modules\Helpdesk\Policies\HelpCenterCategoryPolicy;
+use Modules\Helpdesk\Policies\OncallRotationPolicy;
+use Modules\Helpdesk\Policies\WebhookPolicy;
 use Modules\Helpdesk\Services\CannedReplyService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CustomerStatsService;
@@ -79,6 +99,16 @@ class HelpdeskServiceProvider extends ServiceProvider
             Conversation::class => ConversationPolicy::class,
             Customer::class => CustomerPolicy::class,
             HelpCenterArticle::class => HelpCenterArticlePolicy::class,
+            ConversationStatus::class => ConversationStatusPolicy::class,
+            ConversationTag::class => ConversationTagPolicy::class,
+            ConversationView::class => ConversationViewPolicy::class,
+            Group::class => GroupPolicy::class,
+            Webhook::class => WebhookPolicy::class,
+            AgentShift::class => AgentShiftPolicy::class,
+            OncallRotation::class => OncallRotationPolicy::class,
+            HelpCenterCategory::class => HelpCenterCategoryPolicy::class,
+            CustomAttribute::class => CustomAttributePolicy::class,
+            CannedReply::class => CannedReplyPolicy::class,
         ];
 
         foreach ($policies as $model => $policy) {

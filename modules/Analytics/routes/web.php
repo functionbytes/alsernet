@@ -12,7 +12,7 @@ Route::middleware(['web', 'module:Analytics'])->group(function () {
 
     // Settings routes
     Route::middleware(['auth'])
-        ->prefix('panel/setting/analytics')
+        ->prefix('panel/settings/analytics')
         ->name('settings.analytics.')
         ->group(function () {
             Route::get('/', [AnalyticsSettingController::class, 'index'])->name('index');
@@ -80,4 +80,10 @@ Route::middleware(['web', 'module:Analytics'])->group(function () {
             Route::get('/dashboard-widget', [AnalyticsController::class, 'dashboardWidget'])->name('dashboard-widget');
         });
 
+});
+
+// Legacy redirects (singular → plural). TODO remove after 2026-12-31
+Route::middleware(['web'])->group(function () {
+    Route::redirect('panel/setting/analytics/{any}', 'panel/settings/analytics/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/analytics', 'panel/settings/analytics', 301);
 });

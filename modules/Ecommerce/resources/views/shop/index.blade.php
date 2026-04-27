@@ -3,6 +3,64 @@
 @section('title', 'Tienda')
 
 @section('content')
+<section class="hero-banner mb-5">
+    <div class="container-fluid p-0">
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="hero-slide" style="background:linear-gradient(135deg,#90bb13 0%,#7da210 100%)">
+                        <div class="container">
+                            <div class="row align-items-center min-vh-50 py-5">
+                                <div class="col-md-7 text-white">
+                                    <span class="badge bg-light text-dark mb-3">{{ __('Nueva colección') }}</span>
+                                    <h1 class="display-4 fw-bold mb-3">{{ __('Compra inteligente, vive mejor') }}</h1>
+                                    <p class="lead mb-4">{{ __('Descubre productos seleccionados con la mejor calidad y los mejores precios.') }}</p>
+                                    <a href="#productos-destacados" class="btn btn-light btn-lg">{{ __('Ver catálogo') }} <i class="fas fa-arrow-right ms-2"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="hero-slide" style="background:linear-gradient(135deg,#1a2030 0%,#3a4256 100%)">
+                        <div class="container">
+                            <div class="row align-items-center min-vh-50 py-5">
+                                <div class="col-md-7 text-white">
+                                    <span class="badge bg-warning text-dark mb-3">{{ __('Ofertas limitadas') }}</span>
+                                    <h1 class="display-4 fw-bold mb-3">{{ __('Hasta 50% OFF') }}</h1>
+                                    <p class="lead mb-4">{{ __('Aprovecha nuestras ofertas relámpago. Stock limitado.') }}</p>
+                                    <a href="{{ route('shop.index', ['filter' => 'on_sale']) }}" class="btn btn-warning btn-lg">{{ __('Ver ofertas') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="hero-slide" style="background:linear-gradient(135deg,#13C672 0%,#0f9d5b 100%)">
+                        <div class="container">
+                            <div class="row align-items-center min-vh-50 py-5">
+                                <div class="col-md-7 text-white">
+                                    <span class="badge bg-light text-dark mb-3">{{ __('Envío gratis') }}</span>
+                                    <h1 class="display-4 fw-bold mb-3">{{ __('Recíbelo en tu puerta') }}</h1>
+                                    <p class="lead mb-4">{{ __('Envío gratis en compras mayores a $200. Sin mínimos en zona metropolitana.') }}</p>
+                                    <a href="{{ route('shop.legal.show', 'shipping-policy') }}" class="btn btn-light btn-lg">{{ __('Ver política') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+        </div>
+    </div>
+</section>
+
 <section class="mt-60 mb-60">
     <div class="container mb-30">
         <div class="row">
@@ -39,54 +97,8 @@
                 <div class="products-listing position-relative">
                     <div class="row">
                         @forelse($products as $product)
-                            <div class="col-lg-4 col-md-4 col-12 col-sm-6">
-                                <div class="product-cart-wrap mb-30">
-                                    <div class="product-img-action-wrap">
-                                        <div class="product-img product-img-zoom">
-                                            <a href="{{ route('shop.product', $product->slug) }}">
-                                                @if($product->featured_image)
-                                                    <img class="default-img" src="{{ $product->featured_image }}" alt="{{ $product->name }}">
-                                                @else
-                                                    <img class="default-img" src="{{ asset('modules/ecommerce/images/404.png') }}" alt="{{ $product->name }}">
-                                                @endif
-                                            </a>
-                                        </div>
-                                        <div class="product-action-1">
-                                            <a aria-label="{{ __('Ver') }}" href="{{ route('shop.product', $product->slug) }}" class="action-btn hover-up"><i class="fa fa-eye"></i></a>
-                                            <a aria-label="{{ __('Favoritos') }}" href="{{ route('ecommerce.wishlist.store', $product) }}" class="action-btn hover-up" onclick="event.preventDefault(); document.getElementById('wishlist-form-{{ $product->id }}').submit();"><i class="fa fa-heart"></i></a>
-                                            <form id="wishlist-form-{{ $product->id }}" action="{{ route('ecommerce.wishlist.store', $product) }}" method="POST" class="d-none">@csrf</form>
-                                        </div>
-                                        @if($product->is_on_sale)
-                                            <div class="product-badges product-badges-position product-badges-mrg">
-                                                <span class="hot">-{{ round((1 - $product->final_price / $product->price) * 100) }}%</span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="product-content-wrap">
-                                        <div class="product-category">
-                                            @php $pcategory = $product->categories->first(); @endphp
-                                            @if($pcategory)
-                                                <a href="{{ route('shop.category', $pcategory->slug) }}">{{ $pcategory->name }}</a>
-                                            @else
-                                                &nbsp;
-                                            @endif
-                                        </div>
-                                        <h2 class="text-truncate"><a href="{{ route('shop.product', $product->slug) }}" title="{{ $product->name }}">{{ $product->name }}</a></h2>
-                                        <div class="product-price">
-                                            <span>${{ number_format($product->final_price, 2) }}</span>
-                                            @if($product->is_on_sale)
-                                                <span class="old-price">${{ number_format($product->price, 2) }}</span>
-                                            @endif
-                                        </div>
-                                        <div class="product-action-1 show" style="bottom: 10px;">
-                                            <form action="{{ route('cart.add', $product) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="qty" value="1">
-                                                <button type="submit" aria-label="{{ __('Agregar al carrito') }}" class="action-btn hover-up border-0 bg-transparent"><i class="fa fa-shopping-bag"></i></button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                @include('ecommerce::shop.partials._product-card', ['product' => $product])
                             </div>
                         @empty
                             <div class="col-12">
@@ -103,6 +115,16 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<section class="mt-0 mb-60">
+    <div class="container">
+        @include('ecommerce::shop.partials._recommendations-section', [
+            'products' => $suggestedProducts ?? collect(),
+            'title' => auth('ecommerce')->check() ? __('Recomendado para ti') : __('Productos populares'),
+            'icon' => 'fas fa-magic',
+        ])
     </div>
 </section>
 @endsection

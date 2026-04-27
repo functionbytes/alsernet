@@ -11,6 +11,12 @@ use Modules\Helpdesk\Services\WhatsAppBusinessService;
 
 class SocialIntegrationsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.settings.view')->only(['index', 'testWhatsapp', 'testFacebook', 'testInstagram']);
+        $this->middleware('can:helpdesk.settings.update')->only(['update', 'connect', 'disconnect']);
+    }
+
     public function index(): View
     {
         return view('helpdesk::managers.settings.helpdesk.social-integrations', [

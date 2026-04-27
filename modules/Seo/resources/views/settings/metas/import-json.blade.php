@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form action="{{ route('setting.seo.metas.import-json.store') }}" method="POST" enctype="multipart/form-data" novalidate>
+    <form action="{{ route('settings.seo.metas.import-json.store') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
 
         <div class="row">
@@ -25,7 +25,7 @@
                             <i class="fas fa-exclamation-triangle me-1"></i>
                             Los metas existentes no se sobreescriben por defecto. Usa la opción "Omitir existentes" desmarcada para actualizar.
                         </div>
-                        <a href="{{ route('setting.seo.metas.export-json') }}" class="btn btn-outline-secondary btn-sm w-100">
+                        <a href="{{ route('settings.seo.metas.export-json') }}" class="btn btn-outline-secondary btn-sm w-100">
                             <i class="fas fa-file-code me-1"></i> Descargar backup JSON actual
                         </a>
                     </div>
@@ -36,7 +36,7 @@
                         <h5 class="mb-0 fw-bold">Volver</h5>
                     </div>
                     <div class="card-body">
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-arrow-left me-1"></i> Volver al listado
                         </a>
                     </div>
@@ -97,7 +97,7 @@
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             <i class="fas fa-file-import me-1"></i> Importar JSON
                         </button>
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-light border w-100 py-2">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>
                     </div>

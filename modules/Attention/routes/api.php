@@ -1,13 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Attention\Http\Controllers\AttentionBulkApiController;
 use Modules\Attention\Http\Controllers\AttentionCategoriesController;
 use Modules\Attention\Http\Controllers\AttentionController;
 use Modules\Attention\Http\Controllers\AttentionDepartmentsController;
 use Modules\Attention\Http\Controllers\AttentionEmailController;
+use Modules\Attention\Http\Controllers\AttentionExportApiController;
 use Modules\Attention\Http\Controllers\AttentionFileController;
+use Modules\Attention\Http\Controllers\AttentionNotificationApiController;
+use Modules\Attention\Http\Controllers\AttentionPublicApiController;
 use Modules\Attention\Http\Controllers\AttentionSedesController;
+use Modules\Attention\Http\Controllers\AttentionSlaApiController;
 use Modules\Attention\Http\Controllers\AttentionSlaPoliciesController;
+use Modules\Attention\Http\Controllers\AttentionStatsApiController;
 use Modules\Attention\Http\Controllers\AttentionTypesController;
 
 /*
@@ -23,21 +29,36 @@ use Modules\Attention\Http\Controllers\AttentionTypesController;
 
 // ===== PÚBLICAS (Rate limited 60/min) =====
 Route::middleware(['api', 'throttle:60,1'])->prefix('peticiones')->name('api.peticiones.')->group(function () {
-    // Enviar peticiones
-    Route::post('/submit', [AttentionController::class, 'submit'])->name('submit');
-
-    // Consultar estado por radicado
-    Route::get('/track/{radicado}', [AttentionController::class, 'track'])->name('track');
-
-    // Encuesta de satisfacción
-    Route::post('/{radicado}/satisfaction', [AttentionController::class, 'submitSatisfaction'])->name('satisfaction');
+    Route::post('/submit', [AttentionPublicApiController::class, 'submit'])->name('submit');
+    Route::get('/track/{radicado}', [AttentionPublicApiController::class, 'track'])->name('track');
+    Route::post('/{radicado}/satisfaction', [AttentionPublicApiController::class, 'submitSatisfaction'])->name('satisfaction');
 });
 
 // ===== AUTENTICADAS =====
 Route::middleware(['api', 'auth:sanctum'])->prefix('attentions')->name('api.attentions.')->group(function () {
 
-    // Gestión
+    // Listado principal
     Route::get('/', [AttentionController::class, 'index'])->name('index');
+
+    // Stats y reporting (antes de /{radicado} para evitar captura por wildcard)
+    Route::get('/stats', [AttentionStatsApiController::class, 'stats'])->name('stats');
+    Route::get('/stats/dashboard', [AttentionStatsApiController::class, 'dashboardStats'])->name('stats.dashboard');
+    Route::get('/stats/by-type', [AttentionStatsApiController::class, 'statsByType'])->name('stats.by-type');
+    Route::get('/stats/by-status', [AttentionStatsApiController::class, 'statsByStatus'])->name('stats.by-status');
+
+    // SLA (antes de /{radicado})
+    Route::get('/sla-breaches', [AttentionSlaApiController::class, 'slaBreaches'])->name('sla-breaches');
+
+    // Bulk actions (antes de /{radicado})
+    Route::post('/bulk-assign', [AttentionBulkApiController::class, 'bulkAssign'])->name('bulk-assign');
+    Route::post('/bulk-close', [AttentionBulkApiController::class, 'bulkClose'])->name('bulk-close');
+    Route::delete('/bulk-delete', [AttentionBulkApiController::class, 'bulkDelete'])->name('bulk-delete');
+
+    // Export (antes de /{radicado})
+    Route::post('/export', [AttentionExportApiController::class, 'export'])->name('export');
+    Route::get('/export/{token}', [AttentionExportApiController::class, 'downloadExport'])->name('export.download');
+
+    // Rutas con parámetro {radicado}
     Route::get('/{radicado}', [AttentionController::class, 'show'])->name('show');
     Route::patch('/{radicado}', [AttentionController::class, 'update'])->name('update');
 
@@ -54,7 +75,7 @@ Route::middleware(['api', 'auth:sanctum'])->prefix('attentions')->name('api.atte
     Route::get('/{radicado}/notes', [AttentionController::class, 'getNotes'])->name('notes');
     Route::post('/{radicado}/notes', [AttentionController::class, 'addNote'])->name('notes.add');
 
-    // Emails - Sistema completo de gestión de emails
+    // Emails — Sistema completo de gestión de emails
     Route::prefix('{radicado}/emails')->name('emails.')->group(function () {
         Route::get('/', [AttentionEmailController::class, 'index'])->name('index');
         Route::post('/send-custom', [AttentionEmailController::class, 'sendCustom'])->name('send-custom');
@@ -62,8 +83,8 @@ Route::middleware(['api', 'auth:sanctum'])->prefix('attentions')->name('api.atte
     });
 
     // Emails legacy
-    Route::post('/{radicado}/send-confirmation', [AttentionController::class, 'sendConfirmation'])->name('send-confirmation');
-    Route::post('/{radicado}/send-resolution', [AttentionController::class, 'sendResolution'])->name('send-resolution');
+    Route::post('/{radicado}/send-confirmation', [AttentionNotificationApiController::class, 'sendConfirmation'])->name('send-confirmation');
+    Route::post('/{radicado}/send-resolution', [AttentionNotificationApiController::class, 'sendResolution'])->name('send-resolution');
 
     // Archivos
     Route::post('/{radicado}/files', [AttentionFileController::class, 'upload'])->name('files.upload');
@@ -74,24 +95,8 @@ Route::middleware(['api', 'auth:sanctum'])->prefix('attentions')->name('api.atte
     Route::get('/{radicado}/actions', [AttentionController::class, 'getActions'])->name('actions');
     Route::get('/{radicado}/emails', [AttentionController::class, 'getEmails'])->name('emails');
 
-    // Stats y reporting
-    Route::get('/stats', [AttentionController::class, 'stats'])->name('stats');
-    Route::get('/stats/dashboard', [AttentionController::class, 'dashboardStats'])->name('stats.dashboard');
-    Route::get('/stats/by-type', [AttentionController::class, 'statsByType'])->name('stats.by-type');
-    Route::get('/stats/by-status', [AttentionController::class, 'statsByStatus'])->name('stats.by-status');
-
-    // SLA
-    Route::get('/{radicado}/sla-status', [AttentionController::class, 'slaStatus'])->name('sla-status');
-    Route::get('/sla-breaches', [AttentionController::class, 'slaBreaches'])->name('sla-breaches');
-
-    // Bulk actions
-    Route::post('/bulk-assign', [AttentionController::class, 'bulkAssign'])->name('bulk-assign');
-    Route::post('/bulk-close', [AttentionController::class, 'bulkClose'])->name('bulk-close');
-    Route::delete('/bulk-delete', [AttentionController::class, 'bulkDelete'])->name('bulk-delete');
-
-    // Export
-    Route::post('/export', [AttentionController::class, 'export'])->name('export');
-    Route::get('/export/{token}', [AttentionController::class, 'downloadExport'])->name('export.download');
+    // SLA por radicado
+    Route::get('/{radicado}/sla-status', [AttentionSlaApiController::class, 'slaStatus'])->name('sla-status');
 });
 
 // ===== CONFIGURACIÓN (autenticadas) =====

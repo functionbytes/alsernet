@@ -4,9 +4,9 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\UpdateAgentSettingsRequest;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\HelpdeskTickets\Models\Ticket;
 
@@ -63,14 +63,9 @@ class AgentsController extends Controller
         return view('helpdesk::managers.helpdesk.agents.edit', compact('agent', 'agentSettings'));
     }
 
-    public function update(Request $request, User $agent): RedirectResponse
+    public function update(UpdateAgentSettingsRequest $request, User $agent): RedirectResponse
     {
-        $this->authorize('helpdesk.manage');
-
-        $validated = $request->validate([
-            'accepts_conversations' => ['required', 'in:yes,no,working_hours'],
-            'max_concurrent_conversations' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
+        $validated = $request->validated();
 
         $agent->agentSettings()->updateOrCreate(
             ['user_id' => $agent->id],

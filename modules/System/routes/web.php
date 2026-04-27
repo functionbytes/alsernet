@@ -15,14 +15,14 @@ use Modules\System\Http\Controllers\SystemInfoController;
 |--------------------------------------------------------------------------
 |
 | System configuration, cache management, and system information
-| Prefix: /backups/system (applied by ServiceProvider)
+| Prefix: /panel/settings/system
 | Name: backups.system.* (applied by ServiceProvider)
 | Middleware: web, auth, settings
 |
 */
 
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/setting/system')
+    ->prefix('panel/settings/system')
     ->name('settings.system.')
     ->group(function () {
         // System Settings — read-only
@@ -131,3 +131,9 @@ Route::middleware(['web', 'auth', 'settings'])
                 });
             });
     });
+
+// Legacy redirects (singular → plural). TODO remove after 2026-12-31
+Route::middleware(['web'])->group(function () {
+    Route::redirect('panel/setting/system/{any}', 'panel/settings/system/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/system', 'panel/settings/system', 301);
+});

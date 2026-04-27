@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('setting.seo.llms.update') }}" id="llms-txt-form">
+                    <form method="POST" action="{{ route('settings.seo.llms.update') }}" id="llms-txt-form">
                         @csrf
 
                         <div class="mb-4">
@@ -39,7 +39,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('setting.seo.llms.reset') }}" id="form-reset-llms" class="d-none">
+                    <form method="POST" action="{{ route('settings.seo.llms.reset') }}" id="form-reset-llms" class="d-none">
                         @csrf
                     </form>
                 </div>

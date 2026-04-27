@@ -196,7 +196,7 @@ class GoogleSearchConsoleService
     {
         $configured = (string) seo_setting('gsc.redirect_uri', config('Seo.gsc.redirect_uri', ''));
 
-        return $configured !== '' ? $configured : route('setting.seo.gsc.callback');
+        return $configured !== '' ? $configured : route('settings.seo.gsc.callback');
     }
 
     private function propertyUrl(): string

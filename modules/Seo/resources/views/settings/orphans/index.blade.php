@@ -28,7 +28,7 @@
                         <p class="small mb-0 text-muted">Contenido publicado que no tiene metadatos SEO configurados</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-outline-secondary">
                             Ver metas SEO
                         </a>
                     </div>
@@ -63,7 +63,7 @@
 
             {{-- Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.orphans.index') }}">
+                <form method="GET" action="{{ route('settings.seo.orphans.index') }}">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -90,7 +90,7 @@
                                 <i class="fas fa-search"></i>
                             </button>
                             @if(request('search') || $activeGroup)
-                                <a href="{{ route('setting.seo.orphans.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.orphans.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -106,7 +106,7 @@
                         <div class="d-flex flex-column align-items-center">
                             <h6 class="mb-1">Todo el contenido tiene SEO</h6>
                             <p class="text-muted mb-3">No hay contenido sin metadatos SEO configurados</p>
-                            <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-sm btn-outline-secondary">
+                            <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-sm btn-outline-secondary">
                                 Ver metas SEO
                             </a>
                         </div>
@@ -208,7 +208,7 @@
 @push('scripts')
 <script>
 $(function () {
-    var generateUrl = '{{ route('setting.seo.orphans.generate') }}';
+    var generateUrl = '{{ route('settings.seo.orphans.generate') }}';
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
     @if(session('success'))

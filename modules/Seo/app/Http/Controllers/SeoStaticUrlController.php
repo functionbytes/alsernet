@@ -66,7 +66,7 @@ class SeoStaticUrlController extends Controller
         SeoStaticUrl::create($request->validated());
 
         return redirect()
-            ->route('setting.seo.static-urls.index')
+            ->route('settings.seo.static-urls.index')
             ->with('success', __('seo::static-urls.created_successfully'));
     }
 
@@ -86,7 +86,7 @@ class SeoStaticUrlController extends Controller
         $seoStaticUrl->update($request->validated());
 
         return redirect()
-            ->route('setting.seo.static-urls.index')
+            ->route('settings.seo.static-urls.index')
             ->with('success', __('seo::static-urls.updated_successfully'));
     }
 
@@ -98,7 +98,7 @@ class SeoStaticUrlController extends Controller
         $seoStaticUrl->delete();
 
         return redirect()
-            ->route('setting.seo.static-urls.index')
+            ->route('settings.seo.static-urls.index')
             ->with('success', __('seo::static-urls.deleted_successfully'));
     }
 

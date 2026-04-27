@@ -22,8 +22,8 @@
                                 Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.index') }}">Ver redirecciones</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.create') }}">Nueva redirección</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.index') }}">Ver redirecciones</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.create') }}">Nueva redirección</a>
                             </div>
                         </div>
                     </div>
@@ -74,7 +74,7 @@
 
             {{-- Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.page-urls.index') }}" id="filter-form">
+                <form method="GET" action="{{ route('settings.seo.page-urls.index') }}" id="filter-form">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -99,7 +99,7 @@
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request('search') || request('status'))
-                                <a href="{{ route('setting.seo.page-urls.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.page-urls.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -214,14 +214,14 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     @if($row['has_redirect'])
                                                         <li>
-                                                            <a class="dropdown-item" href="{{ route('setting.seo.redirects.edit', $row['redirect']->id) }}">
+                                                            <a class="dropdown-item" href="{{ route('settings.seo.redirects.edit', $row['redirect']->id) }}">
                                                                 Editar redirección
                                                             </a>
                                                         </li>
                                                     @else
                                                         <li>
                                                             <a class="dropdown-item"
-                                                               href="{{ route('setting.seo.redirects.create', ['source_path' => $row['full_path']]) }}">
+                                                               href="{{ route('settings.seo.redirects.create', ['source_path' => $row['full_path']]) }}">
                                                                 Crear redirección
                                                             </a>
                                                         </li>
@@ -331,7 +331,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '{{ route("setting.seo.page-urls.bulk-action") }}',
+            url: '{{ route("settings.seo.page-urls.bulk-action") }}',
             method: 'POST',
             data: JSON.stringify({ action: action, paths: paths, _token: $('meta[name="csrf-token"]').attr('content') }),
             contentType: 'application/json',

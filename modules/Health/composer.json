@@ -19,14 +19,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Modules\\HealthCheck\\": "app/",
-            "Modules\\HealthCheck\\Database\\Factories\\": "database/factories/",
-            "Modules\\HealthCheck\\Database\\Seeders\\": "database/seeders/"
+            "Modules\\Health\\": "app/",
+            "Modules\\Health\\Database\\Factories\\": "database/factories/",
+            "Modules\\Health\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Modules\\HealthCheck\\Tests\\": "tests/"
+            "Modules\\Health\\Tests\\": "tests/"
         }
     }
 }

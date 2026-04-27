@@ -17,14 +17,14 @@
     },
     "autoload": {
         "psr-4": {
-            "modules\\Page\\": "app/",
-            "modules\\Page\\Database\\Factories\\": "database/factories/",
-            "modules\\Page\\Database\\Seeders\\": "database/seeders/"
+            "Modules\\Page\\": "app/",
+            "Modules\\Page\\Database\\Factories\\": "database/factories/",
+            "Modules\\Page\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "modules\\Page\\Tests\\": "tests/"
+            "Modules\\Page\\Tests\\": "tests/"
         }
     }
 }

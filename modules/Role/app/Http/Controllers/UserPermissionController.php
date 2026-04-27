@@ -14,7 +14,9 @@ class UserPermissionController extends Controller
 {
     public function __construct(
         private readonly ActivePermissionService $activePermissionService,
-    ) {}
+    ) {
+        $this->middleware('can:users.permissions.assign')->only(['index', 'show', 'update', 'sync']);
+    }
 
     public function index(Request $request): View
     {

@@ -17,7 +17,7 @@ use Modules\MailsSettings\Http\Controllers\OutgoingEmailSettingsController;
 
 // Email settings routes
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/setting/email')
+    ->prefix('panel/settings/email')
     ->name('settings.email.')
     ->group(function () {
         Route::get('/', [EmailSettingsController::class, 'index'])->name('index');
@@ -26,7 +26,7 @@ Route::middleware(['web', 'auth', 'settings'])
 
 // Incoming email settings routes
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/setting/incoming-email')
+    ->prefix('panel/settings/incoming-email')
     ->name('settings.incoming-email.')
     ->group(function () {
         Route::get('/', [IncomingEmailSettingsController::class, 'index'])->name('index');
@@ -59,7 +59,7 @@ Route::middleware(['web', 'auth', 'settings'])
 
 // Outgoing email settings routes
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/setting/outgoing-email')
+    ->prefix('panel/settings/outgoing-email')
     ->name('settings.outgoing-email.')
     ->group(function () {
         Route::get('/', [OutgoingEmailSettingsController::class, 'index'])->name('index');
@@ -68,3 +68,13 @@ Route::middleware(['web', 'auth', 'settings'])
         Route::post('/test-connection', [OutgoingEmailSettingsController::class, 'testConnection'])->name('test-connection');
         Route::post('/send-test', [OutgoingEmailSettingsController::class, 'sendTestEmail'])->name('send-test');
     });
+
+// Legacy redirects: panel/setting/{email,incoming-email,outgoing-email} → panel/settings/...
+Route::middleware(['web'])->group(function () {
+    Route::redirect('panel/setting/email/{any}', 'panel/settings/email/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/email', 'panel/settings/email', 301);
+    Route::redirect('panel/setting/incoming-email/{any}', 'panel/settings/incoming-email/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/incoming-email', 'panel/settings/incoming-email', 301);
+    Route::redirect('panel/setting/outgoing-email/{any}', 'panel/settings/outgoing-email/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/outgoing-email', 'panel/settings/outgoing-email', 301);
+});

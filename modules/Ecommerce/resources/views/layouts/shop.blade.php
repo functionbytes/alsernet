@@ -8,9 +8,9 @@
     <title>@yield('title', 'Tienda') - {{ config('app.name', 'Alsernet') }}</title>
 
     {{-- Bootstrap 5.3 --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ themeAsset('css/bootstrap.min.css') }}" rel="stylesheet">
     {{-- Font Awesome 6 --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ themeAsset('libs/fontawesome/fontawesome.css') }}">
     {{-- Toastr --}}
     <link rel="stylesheet" href="{{ themeAsset('libs/toastr/toastr.css') }}">
 
@@ -96,6 +96,7 @@
         .breadcrumb a { color: #90bb13; }
     </style>
 
+    @yield('meta')
     @stack('styles')
 </head>
 <body>
@@ -120,6 +121,7 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('cart.index') ? 'active' : '' }}" href="{{ route('cart.index') }}">
                             <i class="fas fa-shopping-cart me-1"></i> Carrito
+                            <span class="badge bg-primary js-cart-count ms-1">{{ app(\Modules\Ecommerce\Services\CartService::class)->count() }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -152,8 +154,8 @@
                                 <i class="fas fa-user-circle me-1"></i> {{ auth('ecommerce')->user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Mi cuenta</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-box me-2"></i> Mis pedidos</a></li>
+                                <li><a class="dropdown-item" href="{{ route('account.dashboard') }}"><i class="fas fa-user me-2"></i> Mi cuenta</a></li>
+                                <li><a class="dropdown-item" href="{{ route('account.orders') }}"><i class="fas fa-box me-2"></i> Mis pedidos</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" href="{{ route('ecommerce.logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -199,6 +201,7 @@
 
     {{-- Footer --}}
     <footer class="shop-footer">
+        @include('ecommerce::shop.partials.newsletter-form')
         <div class="container text-center">
             <p class="mb-1">&copy; {{ date('Y') }} {{ config('app.name', 'Alsernet') }}. Todos los derechos reservados.</p>
             <p class="mb-0"><small>Tienda en linea</small></p>
@@ -206,7 +209,7 @@
     </footer>
 
     {{-- Scripts --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ themeAsset('libs/toastr/toastr.min.js') }}"></script>
     <script>
@@ -222,5 +225,8 @@
     </script>
 
     @stack('scripts')
+    @include('ecommerce::shop.partials.cart-ajax-script')
+    @include('ecommerce::shop.partials.newsletter-script')
+    @include('ecommerce::shop.partials.restock-alert-script')
 </body>
 </html>

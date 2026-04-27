@@ -59,7 +59,7 @@ class Seo404Controller extends Controller
     {
         $log->update(['has_redirect' => true]);
 
-        return redirect()->route('setting.seo.redirects.create', [
+        return redirect()->route('settings.seo.redirects.create', [
             'source_path' => $log->path,
         ]);
     }

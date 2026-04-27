@@ -14,7 +14,10 @@ class ProductFile extends Model
 
     protected $fillable = [
         'product_id',
+        'url',
         'name',
+        'mime_type',
+        'size',
         'description',
         'file',
         'file_size',
@@ -26,6 +29,7 @@ class ProductFile extends Model
     protected function casts(): array
     {
         return [
+            'size' => 'integer',
             'is_free' => 'boolean',
             'sort_order' => 'integer',
         ];

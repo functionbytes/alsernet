@@ -4,6 +4,8 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCannedReplyRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketCannedReplyRequest;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
@@ -72,20 +74,9 @@ class TicketCannedRepliesController extends Controller
     /**
      * Store a newly created canned reply.
      */
-    public function store(Request $request)
+    public function store(StoreTicketCannedReplyRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'html_body' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
-            'tags' => 'nullable|array',
-            'short_code' => 'nullable|string|max:50|unique:helpdesk.helpdesk_ticket_canned_replies,short_code',
-            'is_global' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'ticket_categories' => 'nullable|array',
-            'ticket_categories.*' => 'exists:helpdesk_ticket_categories,id',
-        ]);
+        $validated = $request->validated();
 
         $validated['user_id'] = auth()->id();
         $validated['is_global'] = $request->boolean('is_global');
@@ -129,25 +120,14 @@ class TicketCannedRepliesController extends Controller
     /**
      * Update the specified canned reply.
      */
-    public function update(Request $request, TicketCannedReply $reply)
+    public function update(UpdateTicketCannedReplyRequest $request, TicketCannedReply $reply)
     {
         // Check permissions
         if (! $reply->canBeEditedBy(auth()->id())) {
             abort(403, 'No tienes permisos para editar esta respuesta.');
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'html_body' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
-            'tags' => 'nullable|array',
-            'short_code' => 'nullable|string|max:50|unique:helpdesk.helpdesk_ticket_canned_replies,short_code,'.$reply->id,
-            'is_global' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'ticket_categories' => 'nullable|array',
-            'ticket_categories.*' => 'exists:helpdesk_ticket_categories,id',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_global'] = $request->boolean('is_global');
         $validated['is_active'] = $request->boolean('is_active');

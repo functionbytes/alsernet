@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
 use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Services\OrderStockService;
+use Modules\EcommercePayment\Contracts\PaymentGatewayContract;
 use Modules\EcommercePayment\Enums\PaymentStatus;
 use Modules\EcommercePayment\Events\PaymentCompleted;
 use Modules\EcommercePayment\Mail\PaymentFailedMail;
@@ -17,9 +18,39 @@ use Modules\EcommercePayment\Models\Payment;
 use Modules\EcommercePayment\Models\PaymentLog;
 use Symfony\Component\HttpFoundation\Response;
 
-class WompiGateway
+class WompiGateway implements PaymentGatewayContract
 {
     public const CHANNEL_NAME = 'wompi';
+
+    public function getChannel(): string
+    {
+        return self::CHANNEL_NAME;
+    }
+
+    public function getName(): string
+    {
+        return 'Wompi';
+    }
+
+    public function getSettingsView(): ?string
+    {
+        return 'ecommerce-payment::settings.wompi';
+    }
+
+    public function getSettingsRoute(): ?string
+    {
+        return 'ecommerce-payment.settings';
+    }
+
+    public function getDescription(): string
+    {
+        return Setting::get('ecommerce_payment.wompi.description', 'Paga con tarjeta, PSE, Nequi y más.');
+    }
+
+    public function getFee(float $subtotal): float
+    {
+        return 0.0;
+    }
 
     public function makePayment(Order $order, array $customerData): Response
     {

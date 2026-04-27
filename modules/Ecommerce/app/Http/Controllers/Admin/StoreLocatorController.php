@@ -14,12 +14,12 @@ class StoreLocatorController extends Controller
     {
         $storeLocators = StoreLocator::query()->paginate(20);
 
-        return view('ecommerce::admin.store-locators.index', compact('storeLocators'));
+        return view('ecommerce::store-locators.index', compact('storeLocators'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.store-locators.create');
+        return view('ecommerce::store-locators.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,7 +43,7 @@ class StoreLocatorController extends Controller
 
     public function edit(StoreLocator $storeLocator): View
     {
-        return view('ecommerce::admin.store-locators.edit', compact('storeLocator'));
+        return view('ecommerce::store-locators.edit', compact('storeLocator'));
     }
 
     public function update(Request $request, StoreLocator $storeLocator): RedirectResponse

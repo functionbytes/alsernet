@@ -9,14 +9,14 @@ use Modules\Health\Http\Controllers\HealthController;
 |--------------------------------------------------------------------------
 |
 | Health monitoring and system diagnostics routes
-| Prefix: /backups/health (applied by ServiceProvider)
+| Prefix: /panel/settings/health
 | Name: backups.health.* (applied by ServiceProvider)
 | Middleware: web, auth, settings
 |
 */
 
 Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/setting/health')
+    ->prefix('panel/settings/health')
     ->name('settings.health.')
     ->group(function () {
         Route::get('/', [HealthController::class, 'index'])->name('index');
@@ -35,6 +35,12 @@ Route::middleware(['web', 'auth', 'settings'])
         Route::post('/supervisor/generate', [HealthController::class, 'generateSupervisorConfig'])->name('supervisor.generate');
         Route::get('/supervisor/download', [HealthController::class, 'downloadSupervisorConfig'])->name('supervisor.download');
     });
+
+// Legacy redirects (singular → plural). TODO remove after 2026-12-31
+Route::middleware(['web'])->group(function () {
+    Route::redirect('panel/setting/health/{any}', 'panel/settings/health/{any}', 301)->where('any', '.*');
+    Route::redirect('panel/setting/health', 'panel/settings/health', 301);
+});
 
 // Health Check API Routes (rate limited, no authentication - for external monitoring)
 Route::prefix('api/health')->middleware(['throttle:30,1'])->group(function () {

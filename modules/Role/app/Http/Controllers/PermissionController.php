@@ -13,6 +13,14 @@ use Spatie\Permission\Models\Role;
 
 class PermissionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:permissions.view')->only(['index', 'create', 'edit']);
+        $this->middleware('can:permissions.create')->only(['store']);
+        $this->middleware('can:permissions.edit')->only(['update']);
+        $this->middleware('can:permissions.delete')->only(['destroy', 'bulkAction']);
+    }
+
     /**
      * Display a listing of permissions
      */

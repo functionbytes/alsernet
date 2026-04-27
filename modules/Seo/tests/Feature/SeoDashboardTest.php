@@ -9,7 +9,7 @@ class SeoDashboardTest extends TestCase
 {
     public function test_dashboard_requires_authentication(): void
     {
-        $this->get(route('setting.seo.dashboard'))
+        $this->get(route('settings.seo.dashboard'))
             ->assertRedirect(route('auth.login'));
     }
 
@@ -18,7 +18,7 @@ class SeoDashboardTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.dashboard'))
+            ->get(route('settings.seo.dashboard'))
             ->assertForbidden();
     }
 
@@ -27,7 +27,7 @@ class SeoDashboardTest extends TestCase
         $user = $this->createUser(['Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.dashboard'))
+            ->get(route('settings.seo.dashboard'))
             ->assertOk()
             ->assertViewIs('Seo::settings.dashboard.index')
             ->assertViewHas(['metaStats', 'redirectStats', 'recentAudits']);
@@ -44,7 +44,7 @@ class SeoDashboardTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.dashboard'))
+            ->get(route('settings.seo.dashboard'))
             ->assertOk()
             ->assertViewHas('metaStats', fn ($stats) => $stats['total'] >= 3);
     }
@@ -53,7 +53,7 @@ class SeoDashboardTest extends TestCase
     {
         $user = $this->createUser(['Seo.metas.index']);
 
-        $response = $this->actingAs($user)->get(route('setting.seo.dashboard'));
+        $response = $this->actingAs($user)->get(route('settings.seo.dashboard'));
 
         $response->assertOk();
         $response->assertViewHas([
@@ -73,7 +73,7 @@ class SeoDashboardTest extends TestCase
     {
         $user = $this->createUser(['Seo.metas.index']);
 
-        $response = $this->actingAs($user)->get(route('setting.seo.dashboard'));
+        $response = $this->actingAs($user)->get(route('settings.seo.dashboard'));
 
         $response->assertOk();
 

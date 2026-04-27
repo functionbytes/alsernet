@@ -7,7 +7,7 @@
 
     @include('core::components.alerts')
 
-    <form action="{{ route('setting.seo.metas.import') }}" method="POST" enctype="multipart/form-data" novalidate>
+    <form action="{{ route('settings.seo.metas.import') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
 
         <div class="row">
@@ -50,7 +50,7 @@ BlogPost,5,Mi Post,Descripción del post,blog seo,,,,,summary_large_image,index,
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-3">Descarga las metas SEO actuales como CSV para usarlo de referencia o para hacer modificaciones masivas.</p>
-                        <a href="{{ route('setting.seo.metas.export') }}" class="btn btn-outline-success w-100">
+                        <a href="{{ route('settings.seo.metas.export') }}" class="btn btn-outline-success w-100">
                             <i class="fas fa-download me-1"></i> Descargar metas actuales (CSV)
                         </a>
                     </div>
@@ -117,7 +117,7 @@ BlogPost,5,Mi Post,Descripción del post,blog seo,,,,,summary_large_image,index,
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             <i class="fas fa-upload me-1"></i> Importar
                         </button>
-                        <a href="{{ route('setting.seo.metas.index') }}" class="btn btn-light border w-100 py-2">
+                        <a href="{{ route('settings.seo.metas.index') }}" class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>
                     </div>

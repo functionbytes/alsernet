@@ -10,6 +10,39 @@ Modulo de helpdesk empresarial que cubre dos flujos principales: **tickets** (so
 
 El modulo usa tres providers: `HelpdeskServiceProvider`, `RouteServiceProvider` y `EventServiceProvider`. Las rutas estan separadas en archivos por rol de usuario y tipo de acceso.
 
+### Policies
+
+13 policies registradas en `HelpdeskServiceProvider`, siguiendo la convencion `{Entity}Policy`:
+
+`ConversationPolicy`, `TicketPolicy`, `CustomerPolicy`, `GroupPolicy`, `PriorityPolicy`, `CannedReplyPolicy`, `AiAgentPolicy`, `CampaignPolicy`, `HelpCenterArticlePolicy`, `HelpCenterCategoryPolicy`, `TicketCannedReplyPolicy`, `TicketTemplatePolicy`, `CustomAttributePolicy`
+
+Todas usan permisos Spatie con convencion `helpdesk.{entity}.{action}` (ver tabla de permisos).
+
+### Notifications y Listeners
+
+6 notifications con channels `database` + `broadcast` (la de StatusChanged envia `mail` al cliente):
+
+| Notification | Canal(es) | Disparada por |
+|---|---|---|
+| `NewConversationNotification` | database, broadcast | `ConversationCreated` |
+| `ConversationAssignedNotification` | database, broadcast | `ConversationAssigned` |
+| `MessageReceivedNotification` | database, broadcast | `MessageReceived` |
+| `MentionNotification` | database, broadcast | `MentionDetected` |
+| `EscalationNotification` | database, broadcast | `ConversationEscalated` |
+| `StatusChangedNotification` | database, broadcast (agents) / mail (customer) | `ConversationStatusChanged` |
+
+6 listeners en `app/Listeners/Send*Notification.php`, todos con `ShouldQueue`, registrados en `EventServiceProvider`.
+
+### Trait HasMessageThread
+
+El trait `Concerns\HasMessageThread` es compartido entre el modelo `Conversation` (Helpdesk) y los modelos del modulo `HelpdeskTickets`. Provee la logica de hilo de mensajes reutilizable.
+
+### Convencion de permisos
+
+**Formato correcto**: `helpdesk.{entity}.{action}` — por ejemplo: `helpdesk.conversations.view`, `helpdesk.tickets.create`.
+
+**Incorrecto**: `manager.helpdesk.X` (no usar este prefijo).
+
 ## Modelos principales
 
 **Tickets**: `Ticket`, `TicketMessage`, `TicketStatus`, `TicketCategory`, `TicketGroup`, `SlaPolicy`, `TicketSlaBreach`, `TicketCannedReply`, `TicketTemplate`, `RecurringTicket`, `TicketTimeEntry`, `TicketAssignment`, `TicketWatcher`, `TicketNote`, `TicketComment`

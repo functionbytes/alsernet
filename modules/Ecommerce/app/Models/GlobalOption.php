@@ -26,8 +26,15 @@ class GlobalOption extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (self $model) {
+            $model->values()->delete();
+        });
+    }
+
     public function values(): HasMany
     {
-        return $this->hasMany(GlobalOptionValue::class, 'option_id');
+        return $this->hasMany(GlobalOptionValue::class, 'option_id')->orderBy('order');
     }
 }

@@ -2,9 +2,12 @@
 
 namespace Modules\Attention\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Attention\Database\Factories\AttentionCategoryFactory;
 
 /**
  * Categorías temáticas para peticiones
@@ -12,7 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class AttentionCategory extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
+
+    protected static function newFactory(): Factory
+    {
+        return AttentionCategoryFactory::new();
+    }
 
     protected $table = 'attention_categories';
 

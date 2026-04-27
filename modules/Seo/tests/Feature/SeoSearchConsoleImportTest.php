@@ -13,7 +13,7 @@ class SeoSearchConsoleImportTest extends TestCase
         $user = $this->createUser(['Seo.dashboard.view', 'Seo.metas.index']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.search-console.import'))
+            ->get(route('settings.seo.search-console.import'))
             ->assertOk();
     }
 
@@ -27,8 +27,8 @@ class SeoSearchConsoleImportTest extends TestCase
         $user = $this->createUser(['Seo.dashboard.view', 'Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.search-console.import.store'), ['csv_file' => $file])
-            ->assertRedirect(route('setting.seo.report.index'))
+            ->post(route('settings.seo.search-console.import.store'), ['csv_file' => $file])
+            ->assertRedirect(route('settings.seo.report.index'))
             ->assertSessionHas('success');
 
         $this->assertEquals(150, $meta->fresh()->gsc_clicks);
@@ -44,7 +44,7 @@ class SeoSearchConsoleImportTest extends TestCase
         $user = $this->createUser(['Seo.dashboard.view', 'Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.search-console.import.store'), ['csv_file' => $file])
+            ->post(route('settings.seo.search-console.import.store'), ['csv_file' => $file])
             ->assertSessionHas('success');
     }
 
@@ -55,7 +55,7 @@ class SeoSearchConsoleImportTest extends TestCase
         $user = $this->createUser(['Seo.dashboard.view', 'Seo.metas.index']);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.search-console.import.store'), ['csv_file' => $file])
+            ->post(route('settings.seo.search-console.import.store'), ['csv_file' => $file])
             ->assertSessionHasErrors('csv_file');
     }
 }

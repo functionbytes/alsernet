@@ -13,10 +13,11 @@ class UpdateTicketNoteRequest extends FormRequest
     public function authorize(): bool
     {
         $note = $this->route('note');
+        $user = $this->user();
 
-        // Only the note author or admins can edit notes
-        return $this->user()->id === $note->user_id ||
-               $this->user()->hasPermissionTo('edit all ticket notes');
+        return $user?->id === $note?->user_id
+            || $user?->can('helpdesk.tickets.manage')
+            ?? false;
     }
 
     /**

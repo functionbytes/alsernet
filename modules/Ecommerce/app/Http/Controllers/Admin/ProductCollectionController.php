@@ -18,12 +18,12 @@ class ProductCollectionController extends Controller
             })
             ->paginate(20);
 
-        return view('ecommerce::admin.collections.index', compact('collections'));
+        return view('ecommerce::collections.index', compact('collections'));
     }
 
     public function create(): View
     {
-        return view('ecommerce::admin.collections.create');
+        return view('ecommerce::collections.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -42,7 +42,7 @@ class ProductCollectionController extends Controller
 
     public function edit(ProductCollection $collection): View
     {
-        return view('ecommerce::admin.collections.edit', compact('collection'));
+        return view('ecommerce::collections.edit', compact('collection'));
     }
 
     public function update(Request $request, ProductCollection $collection): RedirectResponse

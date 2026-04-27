@@ -23,16 +23,16 @@
                                 Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.create') }}">
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.create') }}">
                                     Nueva redireccion
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <button class="dropdown-item" type="button" id="detect-chains-btn">Detectar cadenas</button>
                                 <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#clear-cache-modal">Limpiar caché</button>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.export') }}">Exportar CSV</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.import') }}">Importar CSV</a>
-                                <a class="dropdown-item" href="{{ route('setting.seo.redirects.htaccess-import') }}">Importar .htaccess</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.export') }}">Exportar CSV</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.import') }}">Importar CSV</a>
+                                <a class="dropdown-item" href="{{ route('settings.seo.redirects.htaccess-import') }}">Importar .htaccess</a>
                             </div>
                         </div>
                     </div>
@@ -99,7 +99,7 @@
 
             <!-- Filters Section -->
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('setting.seo.redirects.index') }}" id="filter-form">
+                <form method="GET" action="{{ route('settings.seo.redirects.index') }}" id="filter-form">
                     <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
                         <div class="flex-fill">
                             <div class="input-group h-100">
@@ -131,7 +131,7 @@
                                 <i class="fas fa-search me-1"></i>
                             </button>
                             @if(request()->hasAny(['search', 'status_code', 'is_active']))
-                                <a href="{{ route('setting.seo.redirects.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <a href="{{ route('settings.seo.redirects.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </a>
                             @endif
@@ -166,7 +166,7 @@
                                             <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $redirect->id }}">
                                         </td>
                                         <td>
-                                            <a href="{{ route('setting.seo.redirects.show', $redirect) }}" class="text-decoration-none">
+                                            <a href="{{ route('settings.seo.redirects.show', $redirect) }}" class="text-decoration-none">
                                                 <code class="text-primary">{{ $redirect->source_path }}</code>
                                             </a>
                                             @if($redirect->is_regex)
@@ -193,7 +193,7 @@
                                             <span class="badge bg-light text-dark text-black">{{ number_format($redirect->hits_count) }}</span>
                                         </td>
                                         <td class="text-center">
-                                            <form action="{{ route('setting.seo.redirects.toggle-active', $redirect) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('settings.seo.redirects.toggle-active', $redirect) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm btn-link p-0 border-0">
@@ -215,18 +215,18 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.redirects.show', $redirect) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.redirects.show', $redirect) }}">
                                                             Ver detalle
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{{ route('setting.seo.redirects.edit', $redirect) }}">
+                                                        <a class="dropdown-item" href="{{ route('settings.seo.redirects.edit', $redirect) }}">
                                                             Editar
                                                         </a>
                                                     </li>
                                                     <li>
                                                         <a class="dropdown-item analytics-btn" href="#"
-                                                           data-url="{{ route('setting.seo.redirects.analytics', $redirect) }}"
+                                                           data-url="{{ route('settings.seo.redirects.analytics', $redirect) }}"
                                                            data-source="{{ $redirect->source_path }}">
                                                             Ver analíticas
                                                         </a>
@@ -236,7 +236,7 @@
                                                         <a class="dropdown-item delete-btn"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
-                                                           data-url="{{ route('setting.seo.redirects.destroy', $redirect) }}"
+                                                           data-url="{{ route('settings.seo.redirects.destroy', $redirect) }}"
                                                            data-title="Eliminar: {{ $redirect->source_path }}">
                                                             Eliminar
                                                         </a>
@@ -256,7 +256,7 @@
                         </div>
                         <h5 class="text-muted mb-2">No hay redirecciones configuradas</h5>
                         <p class="text-muted mb-4">Comienza creando tu primera redirección para mejorar el SEO de tu sitio</p>
-                        <a href="{{ route('setting.seo.redirects.create') }}" class="btn btn-primary">
+                        <a href="{{ route('settings.seo.redirects.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Crear primera redireccion
                         </a>
                     </div>
@@ -293,7 +293,7 @@
                 <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="bulk-delete-form" method="POST" action="{{ route('setting.seo.redirects.bulk-delete') }}">
+                <form id="bulk-delete-form" method="POST" action="{{ route('settings.seo.redirects.bulk-delete') }}">
                     @csrf
                     @method('DELETE')
                     <input type="hidden" name="ids" id="bulk-delete-ids">
@@ -389,7 +389,7 @@
                         Se limpiará toda la cache de redirecciones almacenada. Las redirecciones se volverán a cachear automáticamente cuando se utilicen.
                     </p>
                     <div class="d-grid gap-2">
-                        <form method="POST" action="{{ route('setting.seo.redirects.clear-cache') }}">
+                        <form method="POST" action="{{ route('settings.seo.redirects.clear-cache') }}">
                             @csrf
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-sync me-2"></i>Confirmar y limpiar cache
@@ -518,7 +518,7 @@ $(document).ready(function() {
         $modal.modal('show');
 
         $.ajax({
-            url: '{{ route("setting.seo.redirects.detect-chains") }}',
+            url: '{{ route("settings.seo.redirects.detect-chains") }}',
             method: 'GET',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function(res) {

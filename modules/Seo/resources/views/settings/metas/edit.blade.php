@@ -23,7 +23,7 @@
                     $hasIssue = !$isActive && (empty($siblingMeta->title) || empty($siblingMeta->description));
                 @endphp
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('setting.seo.metas.edit', $siblingMeta) }}"
+                    <a href="{{ route('settings.seo.metas.edit', $siblingMeta) }}"
                        class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $isActive ? 'active' : '' }}"
                        role="tab">
                         <span class="d-none d-md-block">
@@ -46,7 +46,7 @@
                     <ul class="dropdown-menu">
                         @foreach($missingLocaleObjects as $missingLocale)
                         <li>
-                            <form action="{{ route('setting.seo.metas.create-locale', $meta) }}" method="POST" class="d-inline">
+                            <form action="{{ route('settings.seo.metas.create-locale', $meta) }}" method="POST" class="d-inline">
                                 @csrf
                                 <input type="hidden" name="locale" value="{{ $missingLocale->code }}">
                                 <button type="submit" class="dropdown-item">{{ $missingLocale->name }}</button>
@@ -66,7 +66,7 @@
         <div class="row g-4 align-items-start">
         <div class="col-lg-8">
             <div class="card">
-                <form action="{{ route('setting.seo.metas.update', $meta) }}" method="POST">
+                <form action="{{ route('settings.seo.metas.update', $meta) }}" method="POST">
                     @if($meta->seoable instanceof \Modules\Page\Models\Page)
                     <div class="alert alert-info border-0 bg-info-subtle mb-0 p-3 rounded-0 rounded-top" style="border-bottom:1px solid #bee2fd!important;">
                         <div class="d-flex align-items-start gap-2">
@@ -87,7 +87,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <i class="fas fa-language flex-shrink-0"></i>
                             <div>
-                                <strong>Versión de idioma</strong> — Los campos vacíos heredan los valores del meta <a href="{{ route('setting.seo.metas.edit', $globalMeta) }}" class="alert-link">Global</a>. Rellena solo lo que quieras personalizar para este idioma.
+                                <strong>Versión de idioma</strong> — Los campos vacíos heredan los valores del meta <a href="{{ route('settings.seo.metas.edit', $globalMeta) }}" class="alert-link">Global</a>. Rellena solo lo que quieras personalizar para este idioma.
                             </div>
                         </div>
                     </div>
@@ -571,10 +571,10 @@
                         <button type="submit" class="btn btn-primary w-100 mb-2">
                             Guardar cambios
                         </button>
-                        <a href="{{ route('setting.seo.schema-org.edit', $meta) }}" class="btn btn-outline-primary w-100 mb-2">
+                        <a href="{{ route('settings.seo.schema-org.edit', $meta) }}" class="btn btn-outline-primary w-100 mb-2">
                             Editar Schema.org
                         </a>
-                        <a href="{{ route('setting.seo.metas.show', $meta) }}" class="btn btn-secondary w-100">
+                        <a href="{{ route('settings.seo.metas.show', $meta) }}" class="btn btn-secondary w-100">
                             Cancelar
                         </a>
                     </div>
@@ -1318,7 +1318,7 @@ $(document).ready(function() {
     // Delete modal
     $('.delete-btn').on('click', function () {
         $('#delete-modal .modal-title').text('Eliminar meta SEO');
-        $('#delete-form').attr('action', '{{ route("setting.seo.metas.destroy", $meta) }}');
+        $('#delete-form').attr('action', '{{ route("settings.seo.metas.destroy", $meta) }}');
     });
 
     // ── Audit history loader ──────────────────────────────────────────
@@ -1335,7 +1335,7 @@ $(document).ready(function() {
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cargando...');
 
-        $.get('{{ route("setting.seo.audit.history.meta.json", $meta) }}', function (data) {
+        $.get('{{ route("settings.seo.audit.history.meta.json", $meta) }}', function (data) {
             auditHistoryLoaded = true;
 
             if (!data.length) {
@@ -1375,7 +1375,7 @@ $(document).ready(function() {
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Generando...');
 
         $.ajax({
-            url: '{{ route("setting.seo.orphans.generate") }}',
+            url: '{{ route("settings.seo.orphans.generate") }}',
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: {
@@ -1398,7 +1398,7 @@ $(document).ready(function() {
     $('#btn-load-checklist').on('click', function () {
         $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
-        $.get('{{ route("setting.seo.metas.checklist", $meta) }}', function (data) {
+        $.get('{{ route("settings.seo.metas.checklist", $meta) }}', function (data) {
             var statusIcon = {
                 pass:    '<i class="fas fa-check-circle text-success"></i>',
                 warning: '<i class="fas fa-exclamation-triangle text-warning"></i>',
@@ -1450,7 +1450,7 @@ $(document).ready(function() {
         var metaId = $(this).data('meta-id');
         $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generando...');
 
-        $.post('{{ route("setting.seo.metas.generate-og-image", $meta) }}', {
+        $.post('{{ route("settings.seo.metas.generate-og-image", $meta) }}', {
             _token: $('meta[name="csrf-token"]').attr('content'),
             text: $('#og_title').val() || $('#title').val() || '',
             template: $('#btn-generate-og').data('template') || 'default'
@@ -1469,7 +1469,7 @@ $(document).ready(function() {
         var metaId = $(this).data('meta-id');
         $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
-        $.post('{{ route("setting.seo.metas.generate-canonical", $meta) }}', {
+        $.post('{{ route("settings.seo.metas.generate-canonical", $meta) }}', {
             _token: $('meta[name="csrf-token"]').attr('content')
         }, function (data) {
             $('#canonical_url').val(data.canonical_url);
@@ -1508,7 +1508,7 @@ $(document).ready(function() {
             return;
         }
         kwTimeout = setTimeout(function () {
-            $.get('{{ route("setting.seo.metas.keyword-suggestions") }}', { q: q }, function (data) {
+            $.get('{{ route("settings.seo.metas.keyword-suggestions") }}', { q: q }, function (data) {
                 var $list = $('#keyword-suggestions').empty();
                 if (!data.suggestions.length && !data.variations.length) {
                     $list.hide();
@@ -1550,7 +1550,7 @@ $(document).ready(function() {
 
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Traduciendo...');
 
-        $.post('{{ route("setting.seo.metas.translate", $meta) }}', {
+        $.post('{{ route("settings.seo.metas.translate", $meta) }}', {
             _token: $('meta[name="csrf-token"]').attr('content'),
             target_lang: targetLang,
             fields: fields
@@ -1609,7 +1609,7 @@ $(document).ready(function() {
     });
 
     // ── Score SEO badge (sidebar) ─────────────────────────────────────
-    $.get('{{ route("setting.seo.metas.score-history", $meta) }}', function (data) {
+    $.get('{{ route("settings.seo.metas.score-history", $meta) }}', function (data) {
         if (!data || !data.length) { return; }
         var last = data[data.length - 1];
         var score = last.score;
@@ -1694,7 +1694,7 @@ $(document).ready(function() {
         });
     }
 
-    $.get('{{ route("setting.seo.metas.score-history", $meta) }}', function(data) {
+    $.get('{{ route("settings.seo.metas.score-history", $meta) }}', function(data) {
         var waitForChart = function() {
             if (typeof Chart !== 'undefined') {
                 renderSparkline(data);

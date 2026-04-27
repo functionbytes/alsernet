@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Notification\Http\Requests\Api\RegisterPushTokenRequest;
 use Modules\Notification\Http\Requests\Api\UpdatePreferencesRequest;
+use Modules\Notification\Http\Resources\NotificationResource;
 use Modules\Notification\Models\NotificationPreference;
 use Modules\Notification\Models\NotificationPushToken;
 
@@ -27,30 +28,10 @@ class NotificationController extends Controller
             $query->whereNull('read_at');
         }
 
-        $notifications = $query->take($limit)
-            ->get()
-            ->map(function ($notification) {
-                $data = $notification->data;
-
-                return [
-                    'id' => $notification->id,
-                    'type' => $notification->type,
-                    'title' => $data['title'] ?? 'Notificación',
-                    'message' => $data['message'] ?? '',
-                    'icon' => $data['icon'] ?? 'fas fa-bell',
-                    'color' => $data['color'] ?? 'primary',
-                    'action_url' => $data['action_url'] ?? null,
-                    'action_text' => $data['action_text'] ?? 'Ver',
-                    'priority' => $data['priority'] ?? 'normal',
-                    'is_read' => $notification->read_at !== null,
-                    'read_at' => $notification->read_at?->toIso8601String(),
-                    'created_at' => $notification->created_at->diffForHumans(),
-                    'created_at_full' => $notification->created_at->toIso8601String(),
-                ];
-            });
+        $notifications = $query->take($limit)->get();
 
         return response()->json([
-            'notifications' => $notifications,
+            'notifications' => NotificationResource::collection($notifications),
             'unread_count' => $user->unreadNotificationsCount(),
         ]);
     }

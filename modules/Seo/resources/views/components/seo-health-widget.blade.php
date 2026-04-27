@@ -48,7 +48,7 @@ $vitalColor = fn ($rating) => match ($rating) {
             <button type="button" class="btn btn-sm btn-outline-secondary" data-action="seo-health-run" title="Ejecutar chequeo completo">
                 Chequeo
             </button>
-            <a href="{{ route('setting.seo.dashboard') }}" class="small">Ver detalle</a>
+            <a href="{{ route('settings.seo.dashboard') }}" class="small">Ver detalle</a>
         </div>
     </div>
 
@@ -113,19 +113,19 @@ $vitalColor = fn ($rating) => match ($rating) {
             @if($data['alerts']['chains'] > 0)
                 <li class="mb-1">
                     <i class="fas fa-link text-warning me-1"></i>
-                    <a href="{{ route('setting.seo.redirects.detect-chains') }}">{{ $data['alerts']['chains'] }} cadenas de redirects</a>
+                    <a href="{{ route('settings.seo.redirects.detect-chains') }}">{{ $data['alerts']['chains'] }} cadenas de redirects</a>
                 </li>
             @endif
             @if($data['alerts']['open_404s'] > 0)
                 <li class="mb-1">
                     <i class="fas fa-exclamation-triangle text-danger me-1"></i>
-                    <a href="{{ route('setting.seo.404-logs.index') }}">{{ $data['alerts']['open_404s'] }} errores 404 sin resolver</a>
+                    <a href="{{ route('settings.seo.404-logs.index') }}">{{ $data['alerts']['open_404s'] }} errores 404 sin resolver</a>
                 </li>
             @endif
             @if($data['alerts']['missing_desc'] > 0)
                 <li>
                     <i class="fas fa-align-left text-warning me-1"></i>
-                    <a href="{{ route('setting.seo.metas.index', ['tab' => 'unoptimized']) }}">{{ $data['alerts']['missing_desc'] }} páginas sin descripción</a>
+                    <a href="{{ route('settings.seo.metas.index', ['tab' => 'unoptimized']) }}">{{ $data['alerts']['missing_desc'] }} páginas sin descripción</a>
                 </li>
             @endif
         </ul>
@@ -149,7 +149,7 @@ $(document).on('click', '[data-action="seo-health-run"]', function () {
     $out.removeClass('d-none').html('<div class="text-center text-muted small py-2">Ejecutando seo:health…</div>');
 
     $.ajax({
-        url: @json(route('setting.seo.health.run')),
+        url: @json(route('settings.seo.health.run')),
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function (res) {

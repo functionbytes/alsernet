@@ -13,7 +13,7 @@ class SeoSettingsTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('setting.seo.settings.edit'))
+            ->get(route('settings.seo.settings.edit'))
             ->assertForbidden();
     }
 
@@ -24,7 +24,7 @@ class SeoSettingsTest extends TestCase
         $user = $this->createUser(['Seo.settings.view']);
 
         $this->actingAs($user)
-            ->get(route('setting.seo.settings.edit'))
+            ->get(route('settings.seo.settings.edit'))
             ->assertOk()
             ->assertViewHas('settings')
             ->assertSee('abc123def456');
@@ -35,7 +35,7 @@ class SeoSettingsTest extends TestCase
         $user = $this->createUser(['Seo.settings.view', 'Seo.settings.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.settings.update'), [
+            ->put(route('settings.seo.settings.update'), [
                 'indexnow_key' => 'mynewkey12345',
                 'preconnect' => 'https://example.com',
                 'html_cache_seconds' => 300,
@@ -51,7 +51,7 @@ class SeoSettingsTest extends TestCase
         $user = $this->createUser(['Seo.settings.view', 'Seo.settings.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.settings.update'), [
+            ->put(route('settings.seo.settings.update'), [
                 'indexnow_key' => 'has spaces & symbols!',
             ])
             ->assertSessionHasErrors('indexnow_key');
@@ -62,7 +62,7 @@ class SeoSettingsTest extends TestCase
         $user = $this->createUser(['Seo.settings.view', 'Seo.settings.update']);
 
         $this->actingAs($user)
-            ->put(route('setting.seo.settings.update'), [
+            ->put(route('settings.seo.settings.update'), [
                 'gtm_container_id' => 'not-a-gtm-id',
             ])
             ->assertSessionHasErrors('gtm_container_id');
@@ -74,7 +74,7 @@ class SeoSettingsTest extends TestCase
 
         $user = $this->createUser(['Seo.settings.view']);
 
-        $response = $this->actingAs($user)->get(route('setting.seo.settings.export'));
+        $response = $this->actingAs($user)->get(route('settings.seo.settings.export'));
         $response->assertOk();
         $content = $response->streamedContent();
         $decoded = json_decode($content, true);
@@ -99,7 +99,7 @@ class SeoSettingsTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('config.json', $payload);
 
         $this->actingAs($user)
-            ->post(route('setting.seo.settings.import'), ['config_file' => $file])
+            ->post(route('settings.seo.settings.import'), ['config_file' => $file])
             ->assertRedirect();
 
         $this->assertEquals('imported_key', Setting::get('seo.indexnow.key'));
@@ -113,7 +113,7 @@ class SeoSettingsTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('bad.json', '{garbage}');
 
         $this->actingAs($user)
-            ->post(route('setting.seo.settings.import'), ['config_file' => $file])
+            ->post(route('settings.seo.settings.import'), ['config_file' => $file])
             ->assertRedirect();
 
         $this->assertNull(Setting::get('seo.indexnow.key'));

@@ -9,7 +9,7 @@
         {{-- Formulario principal --}}
         <div class="col-lg-8">
             <div class="card w-100">
-                <form id="formStaticUrl" action="{{ route('setting.seo.static-urls.update', $seoStaticUrl) }}" method="POST" novalidate>
+                <form id="formStaticUrl" action="{{ route('settings.seo.static-urls.update', $seoStaticUrl) }}" method="POST" novalidate>
                     @csrf
                     @method('PUT')
 
@@ -143,7 +143,7 @@
                         <button type="submit" class="btn btn-primary w-100 py-2">
                             Guardar cambios
                         </button>
-                        <a href="{{ route('setting.seo.static-urls.index') }}"
+                        <a href="{{ route('settings.seo.static-urls.index') }}"
                            class="btn btn-light border w-100 py-2">
                             Cancelar
                         </a>
@@ -216,7 +216,7 @@
                             class="btn btn-danger w-100 delete-btn"
                             data-bs-toggle="modal"
                             data-bs-target="#delete-modal"
-                            data-url="{{ route('setting.seo.static-urls.destroy', $seoStaticUrl) }}"
+                            data-url="{{ route('settings.seo.static-urls.destroy', $seoStaticUrl) }}"
                             data-title="Eliminar: {{ $seoStaticUrl->url }}">
                         Eliminar URL
                     </button>

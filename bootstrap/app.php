@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CompressResponse;
+use App\Http\Middleware\IdempotencyKey;
 use App\Http\Middleware\RemoveRobotsTag;
 use App\Providers\AppServiceProvider;
 use App\Providers\RouteServiceProvider;
@@ -41,6 +43,7 @@ use Modules\Core\Http\Middleware\TrimStrings;
 use Modules\Core\Http\Middleware\TrustProxies;
 use Modules\Core\Http\Middleware\ValidateSignature;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
+use Modules\Ecommerce\Http\Middleware\TrackAffiliateReferral;
 use Modules\Health\Mail\CriticalErrorMail;
 use Modules\Modules\Http\Middleware\EnsureModuleEnabled;
 use Modules\Page\Http\Middleware\PageCacheMiddleware;
@@ -108,6 +111,8 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureModuleIsActive::class,
             RegisterTemplateViewPath::class,
             PageCacheMiddleware::class,
+            CompressResponse::class,
+            TrackAffiliateReferral::class,
         ]);
 
         $middleware->group('api', [
@@ -123,6 +128,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cache.headers' => SetCacheHeaders::class,
             'can' => Authorize::class,
             'guest' => RedirectIfAuthenticated::class,
+            'idempotency' => IdempotencyKey::class,
             'password.confirm' => RequirePassword::class,
             'precognitive' => HandlePrecognitiveRequests::class,
             'signed' => ValidateSignature::class,

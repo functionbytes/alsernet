@@ -3,13 +3,16 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Modules\Helpdesk\Filters\ConversationFilter;
+use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
+use Modules\Helpdesk\Http\Requests\StoreConversationMessageRequest;
+use Modules\Helpdesk\Http\Requests\StoreConversationRequest;
+use Modules\Helpdesk\Http\Requests\UpdateConversationRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\ConversationTag;
@@ -21,14 +24,20 @@ use Modules\Helpdesk\Services\ConversationTagService;
 
 class ConversationsController extends Controller
 {
-    public function __construct(private ConversationTagService $tagService) {}
+    public function __construct(private ConversationTagService $tagService)
+    {
+        $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show']);
+        $this->middleware('can:helpdesk.conversations.create')->only(['create', 'store']);
+        $this->middleware('can:helpdesk.conversations.update')->only(['edit', 'update', 'close', 'reopen', 'archive', 'unarchive', 'storeMessage']);
+        $this->middleware('can:helpdesk.conversations.delete')->only(['destroy', 'restore', 'forceDelete']);
+    }
 
     /**
      * Display a listing of conversations
      */
     public function index(Request $request): View
     {
-        $this->authorize('manager.helpdesk.conversations.index');
+        $this->authorize('viewAny', Conversation::class);
 
         $userId = auth()->id();
 
@@ -74,7 +83,7 @@ class ConversationsController extends Controller
      */
     public function create(Request $request): View
     {
-        $this->authorize('manager.helpdesk.conversations.create');
+        $this->authorize('create', Conversation::class);
 
         $customer = null;
         if ($request->has('customer')) {
@@ -92,16 +101,9 @@ class ConversationsController extends Controller
     /**
      * Store a newly created conversation
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreConversationRequest $request): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.create');
-
-        $validated = $request->validate([
-            'customer_id' => 'required|exists:helpdesk_customers,id',
-            'subject' => 'required|string|max:255',
-            'priority' => 'required|in:low,normal,high,urgent',
-            'status_id' => 'required|exists:helpdesk_conversation_statuses,id',
-        ]);
+        $validated = $request->validated();
 
         $conversation = Conversation::create([
             'customer_id' => $validated['customer_id'],
@@ -120,7 +122,7 @@ class ConversationsController extends Controller
      */
     public function show(Conversation $conversation, Request $request): View
     {
-        $this->authorize('manager.helpdesk.conversations.show');
+        $this->authorize('view', $conversation);
 
         $conversation->load(['customer', 'status', 'assignee', 'items.user', 'items.author', 'conversationTags']);
 
@@ -190,7 +192,7 @@ class ConversationsController extends Controller
      */
     public function edit(Conversation $conversation): View
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
         $conversation->load(['customer', 'status', 'assignee']);
         $statuses = ConversationStatus::orderBy('order')->get();
@@ -206,80 +208,15 @@ class ConversationsController extends Controller
      */
     public function update(Request $request, Conversation $conversation): RedirectResponse|JsonResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
-        // Handle AJAX requests (priority, assignee, tags)
+        // AJAX path: lightweight partial updates (tag/priority/assignee) — handled by ConversationAjaxActionRequest
         if ($request->ajax() || $request->wantsJson()) {
-            // Handle tag actions
-            if ($request->has('action')) {
-                if ($request->action === 'add_tag') {
-                    $request->validate([
-                        'tag_id' => 'required|exists:helpdesk.helpdesk_conversation_tags,id',
-                    ]);
-
-                    $tag = $this->tagService->addTag($conversation, (int) $request->tag_id);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => __('helpdesk::helpdesk.messages.tag_added'),
-                        'tag' => $tag,
-                    ]);
-                }
-
-                if ($request->action === 'remove_tag') {
-                    $request->validate([
-                        'tag_id' => 'required|exists:helpdesk.helpdesk_conversation_tags,id',
-                    ]);
-
-                    $this->tagService->removeTag($conversation, (int) $request->tag_id);
-
-                    return response()->json(['success' => true, 'message' => __('helpdesk::helpdesk.messages.tag_removed')]);
-                }
-            }
-
-            // Handle priority update
-            if ($request->has('priority')) {
-                $request->validate([
-                    'priority' => 'required|in:low,normal,high,urgent',
-                ]);
-
-                $conversation->update(['priority' => $request->priority]);
-
-                return response()->json(['success' => true, 'message' => __('helpdesk::helpdesk.messages.priority_updated')]);
-            }
-
-            // Handle assignee update
-            if ($request->has('assignee_id')) {
-                // Validate assignee exists in the default database (not helpdesk)
-                if ($request->assignee_id) {
-                    $user = User::find($request->assignee_id);
-                    if (! $user) {
-                        return response()->json(['success' => false, 'message' => 'Usuario no encontrado'], 404);
-                    }
-                }
-
-                if ($request->assignee_id) {
-                    $conversation->assignTo($request->assignee_id);
-                } else {
-                    $conversation->assignee_id = null;
-                    $conversation->assigned_at = null;
-                    $conversation->save();
-                }
-
-                return response()->json(['success' => true, 'message' => __('helpdesk::helpdesk.messages.assignment_updated')]);
-            }
-
-            return response()->json(['success' => true]);
+            return $this->handleAjaxUpdate($conversation);
         }
 
-        // Handle regular form submissions
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'status_id' => 'required|exists:helpdesk_conversation_statuses,id',
-            'assignee_id' => 'nullable|exists:users,id',
-            'priority' => 'required|in:low,normal,high,urgent',
-            'is_archived' => 'boolean',
-        ]);
+        // Regular form submission — validate via UpdateConversationRequest
+        $validated = app(UpdateConversationRequest::class)->validated();
 
         $conversation->update([
             'subject' => $validated['subject'],
@@ -308,11 +245,67 @@ class ConversationsController extends Controller
     }
 
     /**
+     * Handle AJAX partial updates (tag toggle, priority, assignee).
+     */
+    private function handleAjaxUpdate(Conversation $conversation): JsonResponse
+    {
+        $request = app(ConversationAjaxActionRequest::class);
+        $action = $request->input('action');
+
+        if ($action === 'add_tag') {
+            $tag = $this->tagService->addTag($conversation, (int) $request->validated()['tag_id']);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('helpdesk::helpdesk.messages.tag_added'),
+                'tag' => $tag,
+            ]);
+        }
+
+        if ($action === 'remove_tag') {
+            $this->tagService->removeTag($conversation, (int) $request->validated()['tag_id']);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('helpdesk::helpdesk.messages.tag_removed'),
+            ]);
+        }
+
+        if ($request->has('priority')) {
+            $conversation->update(['priority' => $request->validated()['priority']]);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('helpdesk::helpdesk.messages.priority_updated'),
+            ]);
+        }
+
+        if ($request->has('assignee_id')) {
+            $assigneeId = $request->validated()['assignee_id'] ?? null;
+
+            if ($assigneeId) {
+                $conversation->assignTo($assigneeId);
+            } else {
+                $conversation->assignee_id = null;
+                $conversation->assigned_at = null;
+                $conversation->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => __('helpdesk::helpdesk.messages.assignment_updated'),
+            ]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Remove the specified conversation (soft delete)
      */
     public function destroy(Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.delete');
+        $this->authorize('delete', $conversation);
 
         $conversation->delete();
 
@@ -326,7 +319,7 @@ class ConversationsController extends Controller
     public function restore($id): RedirectResponse
     {
         $conversation = Conversation::onlyTrashed()->findOrFail($id);
-        $this->authorize('manager.helpdesk.conversations.delete');
+        $this->authorize('restore', $conversation);
 
         $conversation->restore();
 
@@ -340,7 +333,7 @@ class ConversationsController extends Controller
     public function forceDelete($id): RedirectResponse
     {
         $conversation = Conversation::withTrashed()->findOrFail($id);
-        $this->authorize('manager.helpdesk.conversations.delete');
+        $this->authorize('forceDelete', $conversation);
 
         $conversation->forceDelete();
 
@@ -353,7 +346,7 @@ class ConversationsController extends Controller
      */
     public function close(Request $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
         $conversation->close();
 
@@ -366,7 +359,7 @@ class ConversationsController extends Controller
      */
     public function reopen(Request $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
         $conversation->reopen();
 
@@ -379,7 +372,7 @@ class ConversationsController extends Controller
      */
     public function archive(Request $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
         $conversation->archive();
 
@@ -392,7 +385,7 @@ class ConversationsController extends Controller
      */
     public function unarchive(Request $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
+        $this->authorize('update', $conversation);
 
         $conversation->unarchive();
 
@@ -403,16 +396,9 @@ class ConversationsController extends Controller
     /**
      * Store a new message in a conversation
      */
-    public function storeMessage(Request $request, Conversation $conversation): RedirectResponse
+    public function storeMessage(StoreConversationMessageRequest $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorize('manager.helpdesk.conversations.update');
-
-        $validated = $request->validate([
-            'body' => 'required|string',
-            'is_internal' => 'nullable|boolean',
-            'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip,mp4,mp3,ogg',
-            'action' => 'nullable|in:send,send_and_close',
-        ]);
+        $validated = $request->validated();
 
         [, $successMessage] = app(ConversationMessageService::class)->store($conversation, [
             'body' => $validated['body'],

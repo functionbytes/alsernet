@@ -5,7 +5,7 @@
     "keywords": ["sitemap", "seo", "xml"],
     "priority": 10,
     "providers": [
-        "modules\\Sitemap\\Providers\\SitemapServiceProvider"
+        "Modules\\Sitemap\\Providers\\SitemapServiceProvider"
     ],
     "files": []
 }

@@ -11,7 +11,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Modules\\Cache\\": "app/"
+            "Modules\\Cache\\": "app/",
+            "Modules\\Cache\\Database\\Factories\\": "database/factories/",
+            "Modules\\Cache\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Cache\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "dev"

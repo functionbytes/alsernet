@@ -1,97 +1,97 @@
 <?php
 
-/**
- * Module providers configuration
- *
- * This configuration dynamically loads service providers based on module activation status.
- * Modules listed in modules_statuses.json with 'false' will be excluded.
- *
- * Critical modules (always loaded): Core, Auth, Role, Modules, Theme
- */
+use App\Providers\AppServiceProvider;
+use App\Providers\SentryServiceProvider;
+use App\Providers\TelescopeServiceProvider;
+use Modules\Activity\Providers\ActivityServiceProvider;
+use Modules\Ads\Providers\AdsServiceProvider;
+use Modules\Analytics\Providers\AnalyticsServiceProvider;
+use Modules\Attention\Providers\AttentionServiceProvider;
+use Modules\Auth\Providers\AuthServiceProvider;
+use Modules\Backup\Providers\BackupServiceProvider;
+use Modules\Blog\Providers\BlogServiceProvider;
+use Modules\Cache\Providers\CacheServiceProvider;
+use Modules\Captcha\Providers\CaptchaServiceProvider;
+use Modules\Cookie\Providers\CookieServiceProvider;
+use Modules\Core\Providers\CoreServiceProvider;
+use Modules\Database\Providers\DatabaseServiceProvider;
+use Modules\Ecommerce\Providers\EcommerceServiceProvider;
+use Modules\Faqs\Providers\FaqsServiceProvider;
+use Modules\Forms\Providers\FormsServiceProvider;
+use Modules\Health\Providers\HealthServiceProvider;
+use Modules\Helpdesk\Providers\HelpdeskServiceProvider;
+use Modules\HelpdeskAgents\Providers\HelpdeskAgentsServiceProvider;
+use Modules\HelpdeskCampaigns\Providers\HelpdeskCampaignsServiceProvider;
+use Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider;
+use Modules\Locales\Providers\LocalesServiceProvider;
+use Modules\Locations\Providers\LocationsServiceProvider;
+use Modules\Mailer\Providers\MailerServiceProvider;
+use Modules\MailsSettings\Providers\MailsSettingsServiceProvider;
+use Modules\Media\Providers\MediaServiceProvider;
+use Modules\Modules\Providers\EventServiceProvider;
+use Modules\Newsletter\Providers\NewsletterServiceProvider;
+use Modules\Notification\Providers\NotificationServiceProvider;
+use Modules\Optimize\Providers\OptimizeServiceProvider;
+use Modules\Page\Providers\PageServiceProvider;
+use Modules\Queue\Providers\QueueServiceProvider;
+use Modules\Reverb\Providers\ReverServiceProvider;
+use Modules\Reviews\Providers\ReviewsServiceProvider;
+use Modules\Role\Providers\RoleServiceProvider;
+use Modules\Seo\Providers\SeoServiceProvider;
+use Modules\Shortcode\Providers\ShortcodeServiceProvider;
+use Modules\SimpleSlider\Providers\SimpleSliderServiceProvider;
+use Modules\Sitemap\Providers\SitemapServiceProvider;
+use Modules\Storage\Providers\StorageServiceProvider;
+use Modules\System\Providers\SystemServiceProvider;
+use Modules\Template\Providers\TemplateServiceProvider;
+use Modules\Theme\Providers\ThemeServiceProvider;
+use Modules\User\Providers\UserServiceProvider;
 
-// Define all available module providers
-$allProviders = [
-    // Core framework modules (always loaded)
-    'App\Providers\AppServiceProvider' => true,
-    'App\Providers\SentryServiceProvider' => true,
-
-    // Module providers - mapped by module name for dynamic loading
-    'Modules\Activity\Providers\ActivityServiceProvider' => 'Activity',
-    'Modules\Analytics\Providers\AnalyticsServiceProvider' => 'Analytics',
-    'Modules\Auth\Providers\AuthServiceProvider' => 'Auth',
-    'Modules\Backup\Providers\BackupServiceProvider' => 'Backup',
-    'Modules\Cache\Providers\CacheServiceProvider' => 'Cache',
-    'Modules\Campaign\Providers\CampaignServiceProvider' => 'Campaign',
-    'Modules\Catalog\Providers\CatalogServiceProvider' => 'Catalog',
-    'Modules\Core\Providers\CoreServiceProvider' => true, // Always load
-    'Modules\Database\Providers\DatabaseServiceProvider' => 'Database',
-    'Modules\Health\Providers\HealthServiceProvider' => 'Health',
-    'Modules\Mailer\Providers\MailerServiceProvider' => 'Mailer',
-    'Modules\Mailing\Providers\MailingServiceProvider' => 'Mailing',
-    'Modules\MailsSettings\Providers\MailsSettingsServiceProvider' => 'MailsSettings',
-    'Modules\Media\Providers\MediaServiceProvider' => 'Media',
-    'Modules\Modules\Providers\EventServiceProvider' => true, // Always load
-    'Modules\Notification\Providers\NotificationServiceProvider' => 'Notification',
-    'Modules\Optimize\Providers\OptimizeServiceProvider' => 'Optimize',
-    'Modules\Pulse\Providers\EventServiceProvider' => 'Pulse',
-    'Modules\Queue\Providers\QueueServiceProvider' => 'Queue',
-    'Modules\Return\Providers\ReturnsServiceProvider' => 'Return',
-    'Modules\Reverb\Providers\ReverServiceProvider' => 'Reverb',
-    'Modules\Role\Providers\RoleServiceProvider' => true, // Always load
-    'Modules\Seo\Providers\SeoServiceProvider' => 'Seo',
-    'Modules\Storage\Providers\StorageServiceProvider' => 'Storage',
-    'Modules\Subscriber\Providers\SubscriberServiceProvider' => 'Subscriber',
-    'Modules\Supplier\Providers\SupplierServiceProvider' => 'Supplier',
-    'Modules\System\Providers\SystemServiceProvider' => 'System',
-    'Modules\Telescope\Providers\TelescopeServiceProvider' => 'Telescope',
-    'Modules\Theme\Providers\ThemeServiceProvider' => true, // Always load
-    'Modules\User\Providers\UserServiceProvider' => 'User',
-    'Modules\Webhook\Providers\WebhookServiceProvider' => 'Webhook',
-    'Modules\Blog\Providers\BlogServiceProvider' => 'Blog',
-    'Modules\Ecommerce\Providers\EcommerceServiceProvider' => 'Ecommerce',
-    'Modules\Newsletter\Providers\NewsletterServiceProvider' => 'Newsletter',
-    'Modules\Attention\Providers\AttentionServiceProvider' => 'Attention',
-    'Modules\Page\Providers\PageServiceProvider' => 'Page',
-    'Modules\Shortcode\Providers\ShortcodeServiceProvider' => 'Shortcode',
-    'Modules\Sitemap\Providers\SitemapServiceProvider' => 'Sitemap',
-    'Modules\Ads\Providers\AdsServiceProvider' => 'Ads',
-    'Modules\Captcha\Providers\CaptchaServiceProvider' => 'Captcha',
-    'Modules\Cookie\Providers\CookieServiceProvider' => 'Cookie',
-    'Modules\Template\Providers\TemplateServiceProvider' => 'Template',
-    'Modules\Reviews\Providers\ReviewsServiceProvider' => 'Reviews',
-    'Modules\Faqs\Providers\FaqsServiceProvider' => 'Faqs',
-    'Modules\Forms\Providers\FormsServiceProvider' => 'Forms',
-    'Modules\Helpdesk\Providers\HelpdeskServiceProvider' => 'Helpdesk',
-    'Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider' => 'HelpdeskTickets',
-    'Modules\HelpdeskAgents\Providers\HelpdeskAgentsServiceProvider' => 'HelpdeskAgents',
-    'Modules\HelpdeskCampaigns\Providers\HelpdeskCampaignsServiceProvider' => 'HelpdeskCampaigns',
-    'Modules\Locales\Providers\LocalesServiceProvider' => 'Locales',
-    'Modules\Mailrelay\Providers\MailrelayServiceProvider' => 'Mailrelay',
+return [
+    AppServiceProvider::class,
+    SentryServiceProvider::class,
+    TelescopeServiceProvider::class,
+    ActivityServiceProvider::class,
+    AdsServiceProvider::class,
+    AnalyticsServiceProvider::class,
+    AttentionServiceProvider::class,
+    AuthServiceProvider::class,
+    BackupServiceProvider::class,
+    BlogServiceProvider::class,
+    CacheServiceProvider::class,
+    CaptchaServiceProvider::class,
+    CookieServiceProvider::class,
+    CoreServiceProvider::class,
+    DatabaseServiceProvider::class,
+    EcommerceServiceProvider::class,
+    FaqsServiceProvider::class,
+    FormsServiceProvider::class,
+    HealthServiceProvider::class,
+    HelpdeskAgentsServiceProvider::class,
+    HelpdeskCampaignsServiceProvider::class,
+    HelpdeskTicketsServiceProvider::class,
+    HelpdeskServiceProvider::class,
+    LocalesServiceProvider::class,
+    LocationsServiceProvider::class,
+    MailerServiceProvider::class,
+    MailsSettingsServiceProvider::class,
+    MediaServiceProvider::class,
+    EventServiceProvider::class,
+    NewsletterServiceProvider::class,
+    NotificationServiceProvider::class,
+    OptimizeServiceProvider::class,
+    PageServiceProvider::class,
+    QueueServiceProvider::class,
+    ReverServiceProvider::class,
+    ReviewsServiceProvider::class,
+    RoleServiceProvider::class,
+    SeoServiceProvider::class,
+    ShortcodeServiceProvider::class,
+    SimpleSliderServiceProvider::class,
+    SitemapServiceProvider::class,
+    StorageServiceProvider::class,
+    SystemServiceProvider::class,
+    TemplateServiceProvider::class,
+    ThemeServiceProvider::class,
+    UserServiceProvider::class,
 ];
-
-// Load module statuses
-$modulesStatusFile = base_path('modules_statuses.json');
-$modulesStatus = [];
-
-if (file_exists($modulesStatusFile)) {
-    $modulesStatus = json_decode(file_get_contents($modulesStatusFile), true) ?? [];
-}
-
-// Filter providers based on module activation status
-$providers = [];
-
-foreach ($allProviders as $providerClass => $moduleName) {
-    // Always load core app provider and critical modules
-    if ($moduleName === true) {
-        $providers[] = $providerClass;
-
-        continue;
-    }
-
-    // For module providers, check if the module is enabled
-    if (isset($modulesStatus[$moduleName]) && $modulesStatus[$moduleName] === true) {
-        $providers[] = $providerClass;
-    }
-}
-
-return $providers;

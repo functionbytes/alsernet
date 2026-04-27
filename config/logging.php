@@ -159,6 +159,14 @@ return [
             'tap' => [MaskSensitiveData::class],
         ],
 
+        // Slow query audit channel — written by app:audit-slow-queries command.
+        'slow-queries' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/slow-queries.log'),
+            'level' => 'debug',
+            'days' => 7,
+        ],
+
     ],
 
 ];

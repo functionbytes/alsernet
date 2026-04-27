@@ -61,6 +61,18 @@ class ModuleService
         $moduleConfig = json_decode(file_get_contents("$tempPath/$moduleDir/module.json"), true);
         $moduleName = preg_replace('/[^A-Za-z0-9_-]/', '', $moduleConfig['name'] ?? basename($moduleDir));
 
+        // Validate payment-gateway modules before installing
+        if (($moduleConfig['type'] ?? null) === 'payment-gateway') {
+            $gatewayRegistryClass = 'Modules\\EcommercePayment\\Services\\GatewayRegistry';
+            if (class_exists($gatewayRegistryClass)) {
+                $errors = $gatewayRegistryClass::validate($moduleConfig);
+                if (! empty($errors)) {
+                    $this->deleteDirectory($tempPath);
+                    throw new \Exception('Gateway inválido: '.implode(' ', $errors));
+                }
+            }
+        }
+
         if (empty($moduleName)) {
             $this->deleteDirectory($tempPath);
             throw new \Exception('Nombre de módulo inválido en module.json.');

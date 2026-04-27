@@ -3,6 +3,7 @@
 namespace Modules\Ecommerce\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,7 +23,7 @@ class CartController extends Controller
         return view('ecommerce::shop.cart', compact('cartItems', 'total'));
     }
 
-    public function add(Product $product, Request $request): RedirectResponse
+    public function add(Product $product, Request $request): JsonResponse|RedirectResponse
     {
         $qty = max(1, (int) $request->input('qty', 1));
         $customerId = auth('ecommerce')->id();
@@ -43,6 +44,10 @@ class CartController extends Controller
                 'product_id' => $product->id,
                 'qty' => $qty,
             ]);
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Producto agregado al carrito']);
         }
 
         return redirect()->route('cart.index')->with('success', 'Producto agregado al carrito.');

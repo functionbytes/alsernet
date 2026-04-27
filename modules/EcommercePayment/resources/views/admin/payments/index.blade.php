@@ -1,21 +1,19 @@
-@extends('template::layouts.default')
+@extends('layouts.theme')
 
 @section('title', 'Pagos')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">{{ __('Pagos') }}</h4>
-        <a href="{{ route('ecommerce-payment.payments.export', request()->only(['status', 'search', 'date_from', 'date_to'])) }}" class="btn btn-success">
-            <i class="fas fa-file-excel me-2"></i>{{ __('Exportar') }}
-        </a>
-    </div>
+    @include('core::components.card', ['title' => 'Ecommerce - Pagos'])
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    @include('core::components.alerts')
 
     <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Pagos</h5>
+            <a href="{{ route('ecommerce-payment.payments.export', request()->only(['status', 'search', 'date_from', 'date_to', 'payment_channel'])) }}" class="btn btn-sm btn-outline-success">
+                <i class="fas fa-file-excel me-1"></i> Exportar
+            </a>
+        </div>
         <div class="card-body">
             <form method="GET" class="row g-3 mb-4">
                 <div class="col-md-3">
@@ -32,6 +30,21 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <select name="payment_channel" class="form-select">
+                        <option value="">Todos los métodos</option>
+                        @foreach($channels as $channel)
+                            <option value="{{ $channel }}" {{ request('payment_channel') === $channel ? 'selected' : '' }}>
+                                {{ match($channel) {
+                                    'cod' => 'Contra entrega',
+                                    'bank_transfer' => 'Transferencia',
+                                    'wompi' => 'Wompi',
+                                    default => ucfirst(str_replace('_', ' ', $channel))
+                                } }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <input type="date" name="date_from" class="form-control" placeholder="Desde" value="{{ request('date_from') }}">
                 </div>
                 <div class="col-md-2">
@@ -42,7 +55,7 @@
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
-                @if(request()->hasAny(['search', 'status', 'date_from', 'date_to']))
+                @if(request()->hasAny(['search', 'status', 'date_from', 'date_to', 'payment_channel']))
                 <div class="col-md-2">
                     <a href="{{ route('ecommerce-payment.payments.index') }}" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-times me-2"></i>{{ __('Limpiar') }}
@@ -62,7 +75,7 @@
                             <th>{{ __('Canal') }}</th>
                             <th>{{ __('Estado') }}</th>
                             <th>{{ __('Fecha') }}</th>
-                            <th class="text-end">{{ __('Acciones') }}</th>
+                            <th class="text-center">{{ __('Acciones') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,10 +103,18 @@
                                     </span>
                                 </td>
                                 <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="text-end">
-                                    <a href="{{ route('ecommerce-payment.payments.show', $payment) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="{{ route('ecommerce-payment.payments.show', $payment) }}">Ver detalle</a></li>
+                                            @if($payment->order)
+                                                <li><a class="dropdown-item" href="{{ route('ecommerce.orders.show', $payment->order) }}">Ver orden</a></li>
+                                            @endif
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

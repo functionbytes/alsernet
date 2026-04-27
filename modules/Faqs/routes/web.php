@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Faqs\Http\Controllers\Admin\FaqCategoryController;
 use Modules\Faqs\Http\Controllers\Admin\FaqController;
+use Modules\Faqs\Http\Controllers\Admin\FaqSettingsController;
 use Modules\Faqs\Http\Controllers\FaqPublicController;
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -26,6 +27,13 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/{category}/edit', [FaqCategoryController::class, 'edit'])->name('edit');
             Route::put('/{category}', [FaqCategoryController::class, 'update'])->name('update');
             Route::delete('/{category}', [FaqCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::prefix('panel/settings/faqs')
+        ->name('settings.faqs.')
+        ->group(function () {
+            Route::get('/', [FaqSettingsController::class, 'index'])->name('index');
+            Route::patch('/', [FaqSettingsController::class, 'update'])->name('update');
         });
 });
 
