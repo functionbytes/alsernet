@@ -166,6 +166,8 @@ class RiodeContentShortcodes
                 return '';
             }
 
+            $content = $this->compiler->compile($content);
+
             return view('riode::shortcodes.counter-grid', compact('attrs', 'content'))->render();
         }, [
             'icon' => 'fa-table-cells',
@@ -225,6 +227,8 @@ class RiodeContentShortcodes
             if (trim($content) === '') {
                 return '';
             }
+
+            $content = $this->compiler->compile($content);
 
             return view('riode::shortcodes.icon-box-grid', compact('attrs', 'content'))->render();
         }, [

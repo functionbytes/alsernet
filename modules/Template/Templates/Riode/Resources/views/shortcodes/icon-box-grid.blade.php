@@ -36,10 +36,10 @@
         $extraClass,
     ])->filter()->implode(' ');
 
-    // Parse child [icon-box] items from rendered content
+    // Parse rendered icon-box items (content is already compiled by the shortcode callback)
     $children = array_filter(
         array_map('trim', preg_split('/(?=<(?:div|a) class="icon-box)/', $content) ?: []),
-        fn ($c) => $c !== ''
+        fn ($c) => str_contains($c, 'icon-box')
     );
 
     $childCount = count($children);
