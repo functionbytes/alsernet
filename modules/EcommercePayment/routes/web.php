@@ -30,6 +30,12 @@ Route::prefix('payment/wompi')->name('payment.wompi.')->group(function () {
     Route::get('transaction/{transactionId}', [WompiController::class, 'checkTransaction'])->name('transaction');
     Route::get('simulate-webhook/{transactionId}', [WompiController::class, 'simulateWebhook'])->name('simulate-webhook');
     Route::get('debug', [WompiController::class, 'debugConfig'])->name('debug');
+
+    // Mobile hosted checkout: shows the Wompi widget on a mobile-friendly page
+    // The page injects ?source=mobile&return_url=... into the redirect_url so
+    // the callback knows to deep link back into the Flutter app.
+    Route::get('mobile-checkout/{token}', [WompiController::class, 'mobileCheckout'])
+        ->name('mobile-checkout');
 });
 
 // Admin routes

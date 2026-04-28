@@ -29,6 +29,7 @@ class BackupServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(module_path('Backup', 'database/migrations'));
         if (Module::find('Backup')?->isDisabled()) {
             return;
         }

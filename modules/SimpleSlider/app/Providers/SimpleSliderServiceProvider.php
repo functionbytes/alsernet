@@ -15,6 +15,7 @@ class SimpleSliderServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(module_path('SimpleSlider', 'database/migrations'));
         if (Module::find($this->moduleName)?->isDisabled()) {
             return;
         }

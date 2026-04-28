@@ -1,0 +1,36 @@
+<?php
+
+namespace Illuminate\Contracts\Broadcasting;
+
+use Illuminate\Broadcasting\BroadcastException;
+use Illuminate\Http\Request;
+
+interface Broadcaster
+{
+    /**
+     * Authenticate the incoming request for a given channel.
+     *
+     * @param  Request  $request
+     * @return mixed
+     */
+    public function auth($request);
+
+    /**
+     * Return the valid authentication response.
+     *
+     * @param  Request  $request
+     * @param  mixed  $result
+     * @return mixed
+     */
+    public function validAuthenticationResponse($request, $result);
+
+    /**
+     * Broadcast the given event.
+     *
+     * @param  string  $event
+     * @return void
+     *
+     * @throws BroadcastException
+     */
+    public function broadcast(array $channels, $event, array $payload = []);
+}

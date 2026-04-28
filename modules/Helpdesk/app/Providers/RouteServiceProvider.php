@@ -41,6 +41,14 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('panel/helpdesk')
             ->group(module_path($this->name, 'routes/managers.php'));
 
+        // Bandeja v4 — Diseño nuevo (acceso solo con auth, sin role restrictivo)
+        Route::middleware(['web', 'auth'])
+            ->prefix('panel/helpdesk')
+            ->group(function () {
+                Route::view('/bandeja', 'helpdesk::managers.helpdesk.bandeja.index')
+                    ->name('manager.helpdesk.bandeja.index');
+            });
+
         // Portal + Agent routes moved to HelpdeskTickets module.
 
         // Public routes (feedback/CSAT survey — no auth)

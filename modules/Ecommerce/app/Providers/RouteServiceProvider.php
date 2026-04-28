@@ -16,7 +16,10 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map(): void
     {
-        $this->mapApiRoutes();
+        // Legacy api.php disabled — superseded by api-mobile.php (Mobile API v1).
+        // To re-enable for non-mobile clients, uncomment the line below.
+        // $this->mapApiRoutes();
+        $this->mapApiMobileRoutes();
         $this->mapWebRoutes();
     }
 
@@ -33,5 +36,12 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware('api')
             ->namespace($this->moduleNamespace.'\Api')
             ->group(module_path('Ecommerce', 'routes/api.php'));
+    }
+
+    protected function mapApiMobileRoutes(): void
+    {
+        Route::prefix('api/v1')
+            ->middleware('api')
+            ->group(module_path('Ecommerce', 'routes/api-mobile.php'));
     }
 }

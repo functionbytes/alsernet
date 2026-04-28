@@ -1,6 +1,9 @@
 <?php
 
+use App\Exceptions\Api\JsonExceptionRenderer;
+use App\Http\Middleware\AcceptLanguageMiddleware;
 use App\Http\Middleware\CompressResponse;
+use App\Http\Middleware\EnsureFrontendIsCustomer;
 use App\Http\Middleware\IdempotencyKey;
 use App\Http\Middleware\RemoveRobotsTag;
 use App\Providers\AppServiceProvider;
@@ -152,12 +155,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // API version header
             'api.version' => ApiVersionHeader::class,
+
+            // Mobile API audience guards
+            'customer' => EnsureFrontendIsCustomer::class,
+            'accept-language' => AcceptLanguageMiddleware::class,
         ]);
     })->withProviders([
         AppServiceProvider::class,
         RouteServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (Throwable $e, $request): ?JsonResponse {
+            return app(JsonExceptionRenderer::class)($e, $request);
+        });
+
         $exceptions->report(function (Throwable $e) {
             $statusCode = match (true) {
                 method_exists($e, 'getStatusCode') => $e->getStatusCode(),

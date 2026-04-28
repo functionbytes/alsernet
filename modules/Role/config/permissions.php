@@ -277,4 +277,78 @@ return [
             ],
         ],
     ],
+
+    // ================================================================
+    // MÓDULO: CAMPAIGNS (Email marketing)
+    // ================================================================
+    'campaigns' => [
+        'name' => 'Campañas',
+        'description' => 'Gestión de campañas de email marketing, listas, suscriptores, segmentos, plantillas y automatizaciones',
+        'permissions' => [
+            'view' => [
+                'all' => 'Ver campañas',
+            ],
+            'manage' => [
+                'all' => 'Crear, editar y eliminar campañas',
+            ],
+            'send' => [
+                'all' => 'Lanzar campañas (ejecutar envío)',
+            ],
+            'maillists' => [
+                'view' => 'Ver listas y suscriptores',
+                'manage' => 'Crear y editar listas y suscriptores',
+                'import' => 'Importar suscriptores desde CSV',
+                'export' => 'Exportar suscriptores',
+            ],
+            'templates' => [
+                'view' => 'Ver plantillas y layouts',
+                'manage' => 'Crear y editar plantillas',
+            ],
+            'automations' => [
+                'view' => 'Ver automatizaciones',
+                'manage' => 'Crear y editar automatizaciones',
+                'execute' => 'Activar/pausar/disparar automatizaciones',
+            ],
+            'webhooks' => [
+                'view' => 'Ver webhooks de campaña',
+                'manage' => 'Configurar webhooks de campaña',
+            ],
+        ],
+    ],
+
+    // ================================================================
+    // MÓDULO: CAMPAIGN_SENDING_SERVERS (Servidores de envío)
+    // ================================================================
+    'campaign_sending_servers' => [
+        'name' => 'Servidores de envío',
+        'description' => 'Configuración de servidores SMTP/SES/SendGrid/etc., dominios de envío y tracking, handlers de bounces/feedback, lista negra',
+        'permissions' => [
+            'view' => [
+                'all' => 'Ver servidores de envío',
+            ],
+            'manage' => [
+                'all' => 'Crear, editar y eliminar servidores de envío',
+            ],
+            'verify' => [
+                'all' => 'Verificar identidades y dominios',
+            ],
+            'domains' => [
+                'view' => 'Ver dominios de envío',
+                'manage' => 'Configurar DKIM/SPF de dominios de envío',
+            ],
+            'tracking_domains' => [
+                'view' => 'Ver dominios de tracking',
+                'manage' => 'Configurar dominios de tracking',
+            ],
+            'blacklist' => [
+                'view' => 'Ver lista negra',
+                'manage' => 'Añadir/eliminar emails de la lista negra',
+                'import' => 'Importar emails a la lista negra',
+            ],
+            'handlers' => [
+                'view' => 'Ver handlers de bounces y feedback',
+                'manage' => 'Configurar handlers de bounces y feedback',
+            ],
+        ],
+    ],
 ];

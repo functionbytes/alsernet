@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
+use Modules\Ecommerce\Models\Customer;
 use Modules\Page\Models\Page;
 
 /*
@@ -71,7 +73,16 @@ Broadcast::channel('user.{id}', function ($user, $id) {
 
 // Canal privado para gestores de atenciones PQRSF
 Broadcast::channel('attentions', function ($user) {
-    return $user->hasAnyRole(['admin', 'super-admin', 'administrative', 'manager', 'callcenter', 'support']);
+    return $user instanceof User
+        && method_exists($user, 'hasAnyRole')
+        && $user->hasAnyRole(['admin', 'super-admin', 'administrative', 'manager', 'callcenter', 'support']);
+});
+
+// Canal privado para clientes Ecommerce (mobile app via Sanctum)
+// Recibe: OrderStatusUpdated, OrderPaymentConfirmed, ShippingStatusChanged
+Broadcast::channel('customer.{id}', function ($user, $id) {
+    return $user instanceof Customer
+        && (int) $user->id === (int) $id;
 });
 
 // Presence channel para colaboracion en tiempo real en tickets de helpdesk

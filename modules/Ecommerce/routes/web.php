@@ -60,6 +60,7 @@ use Modules\Ecommerce\Http\Controllers\Admin\TaxRuleController;
 use Modules\Ecommerce\Http\Controllers\Admin\UploadProofController;
 use Modules\Ecommerce\Http\Controllers\Admin\WebhookLogController;
 use Modules\Ecommerce\Http\Controllers\ConfirmDeliveryController;
+use Modules\Ecommerce\Http\Controllers\EmailBridgeController;
 use Modules\Ecommerce\Http\Controllers\LocaleSwitchController;
 use Modules\Ecommerce\Http\Controllers\OrderTrackingController;
 use Modules\Ecommerce\Http\Controllers\RobotsController;
@@ -720,6 +721,12 @@ Route::middleware(['web', 'throttle:10,1'])->prefix('tienda')->name('ecommerce.'
     Route::post('/resend-verification', [EmailVerificationController::class, 'resend'])
         ->middleware('auth:ecommerce')
         ->name('email.resend');
+
+    // Email bridge: detects mobile UA and redirects to deep link, falls back to web
+    Route::get('/email-bridge/verify-email', [EmailBridgeController::class, 'verifyEmail'])
+        ->name('email.bridge.verify');
+    Route::get('/email-bridge/reset-password', [EmailBridgeController::class, 'resetPassword'])
+        ->name('email.bridge.reset');
 
     Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
         ->where('provider', 'google|facebook')

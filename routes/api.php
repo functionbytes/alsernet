@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Api\V1\Controllers\MeController;
 use Illuminate\Support\Facades\Route;
 use Modules\Backup\Http\Controllers\Api\BackupScheduleApiController;
 use Modules\Health\Http\Controllers\Api\HealthController;
@@ -27,11 +28,18 @@ Route::prefix('v1')
             ->name('pages.index')
             ->middleware('throttle:api-strict');
 
-        // Authenticated endpoints
+        // Mobile API — authenticated customer (Sanctum + audience guard)
+        Route::middleware(['auth:sanctum', 'customer', 'throttle:api-mobile'])->group(function () {
+            Route::get('me', [MeController::class, 'me'])->name('me');
+            Route::put('me', [MeController::class, 'updateProfile'])->name('me.update');
+            Route::get('me/modules', [MeController::class, 'modules'])->name('me.modules');
+        });
+
+        // Authenticated admin endpoints (existing API for panel)
         Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
-            // Current user profile
-            Route::get('me', [UserApiController::class, 'me'])->name('user.me');
+            // Admin profile (renamed from `me` to avoid clashing with the mobile customer `me` endpoint)
+            Route::get('admin/me', [UserApiController::class, 'me'])->name('admin.me');
 
             // Reviews
             Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');

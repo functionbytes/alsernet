@@ -68,7 +68,7 @@ class SettingsPanelController extends Controller
                 'items' => [
                     ['label' => 'Analytics',              'description' => 'Google Analytics, credenciales y reportes',          'route' => 'settings.analytics.index',      'icon' => 'fas fa-chart-bar'],
                     ['label' => 'Reportes programados',   'description' => 'Configura envío automático de informes',             'route' => 'settings.analytics.schedules.index', 'icon' => 'fas fa-calendar-alt'],
-                    ['label' => 'Captcha',                'description' => 'Configura Google reCAPTCHA en formularios',          'route' => 'captcha.settings',              'icon' => 'fas fa-shield-alt'],
+                    ['label' => 'Captcha',                'description' => 'Configura Google reCAPTCHA en formularios',          'route' => 'settings.captcha.edit',         'icon' => 'fas fa-shield-alt'],
                     ['label' => 'Reviews Google',         'description' => 'Conexiones y ubicaciones de Google My Business',    'route' => 'settings.reviews.connections.index', 'icon' => 'fab fa-google'],
                     ['label' => 'Configuración reviews',  'description' => 'Ajustes generales del módulo de reseñas',           'route' => 'settings.reviews.config.index', 'icon' => 'fas fa-star'],
                     ['label' => 'IA para reviews',        'description' => 'Configura respuestas automáticas con IA',           'route' => 'settings.reviews.ai.index',     'icon' => 'fas fa-robot', 'badge' => 'Nuevo'],

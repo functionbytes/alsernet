@@ -196,7 +196,7 @@ class CaptchaServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         NavService::addItemsToSection('settings', 'Configuraciones', [
-            ['label' => 'Captcha', 'route' => 'captcha.settings'],
+            ['label' => 'Captcha', 'route' => 'settings.captcha.edit'],
         ]);
     }
 

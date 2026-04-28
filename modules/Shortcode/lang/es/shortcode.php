@@ -57,4 +57,43 @@ return [
         'compilation' => 'Error compilando [:name]: :message',
         'invalid_name' => 'El nombre solo admite letras, números, guiones y guiones bajos.',
     ],
+
+    // Shortcode CTA
+    'cta_form_placeholder' => 'Tu dirección de email...',
+    'cta_form_button' => 'Suscribirme',
+    'cta_subscribe_success' => '¡Suscripción confirmada!',
+    'cta_subscribe_error' => 'Ocurrió un error. Inténtalo de nuevo.',
+
+    // Shortcode countdown
+    'countdown_days' => 'Días',
+    'countdown_hours' => 'Horas',
+    'countdown_minutes' => 'Min',
+    'countdown_seconds' => 'Seg',
+    'countdown_expired' => 'Esta oferta ha finalizado.',
+    'countdown_expires' => 'Finaliza el',
+
+    // Icon box grid carrusel
+    'icon_box_carousel_label' => 'Carrusel de características',
+
+    // Riode Structure Shortcodes
+    'tabs' => [
+        'tab_default' => 'Pestaña',
+    ],
+    'banner' => [
+        'shop_now' => 'Comprar ahora',
+        'play_video' => 'Reproducir video',
+    ],
+    'hotspot' => [
+        'view_product' => 'Ver producto',
+    ],
+    'blog_posts' => [
+        'read_more' => 'Leer más',
+        'comments' => 'Comentarios',
+    ],
+    'category_card' => [
+        'products' => 'Productos',
+    ],
+    'testimonial' => [
+        'rating' => 'Valoración: :n de 5',
+    ],
 ];

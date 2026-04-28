@@ -58,3 +58,33 @@ type: project
 - **File**: `modules/Reviews/app/Http/Controllers/ReviewController.php`
 - **Problem**: `DATE(review_replies.created_at) = CURDATE()` wraps column in a function, preventing index use.
 - **Fix**: Replaced with `created_at >= CURDATE() AND created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)` — sargable range that allows the index on `created_at` to be used.
+
+## Ecommerce Module Optimizations (2026-04-26)
+
+### Fix 8 — N+1 in ProductController::show() relatedProducts
+- **File**: `modules/Ecommerce/app/Http/Controllers/Shop/ProductController.php`
+- **Problem**: `$relatedProducts` query had no `->with()` — `_product-card.blade.php` lazy-loaded `categories` and `brand` for each of 4 products = 8 extra queries per product page.
+- **Measured**: 8 lazy queries confirmed via tinker for 4 products (2 per product).
+- **Fix**: Added `->with(['categories', 'brand'])` to the `$relatedProducts` query.
+
+### Fix 9 — N+1 in ProductRecommendationService (brand missing from eager load)
+- **File**: `modules/Ecommerce/app/Services/ProductRecommendationService.php`
+- **Problem**: All three methods (`suggestForCustomer`, `frequentlyBoughtTogether`, `popularProducts`) eager-loaded `categories` and `reviews` but NOT `brand`. The product card partial accesses `$product->brand?->name`, triggering 1 lazy query per product.
+- **Fix**: Added `'brand'` to all `->with([...])` calls in all three methods and both fallback paths in `popularProducts`.
+
+### Fix 10 — CompressResponse middleware
+- **File**: `app/Http/Middleware/CompressResponse.php` (new), `bootstrap/app.php`
+- **Problem**: No response compression on HTML/JSON/JS responses.
+- **Fix**: Created `CompressResponse` middleware (brotli if available, gzip fallback, skips small responses < 1KB and non-text content types). Registered at end of `web` middleware group.
+- **Verified**: `Content-Encoding: gzip` confirmed on homepage via curl.
+
+### Fix 11 — AuditSlowQueriesCommand
+- **File**: `app/Console/Commands/AuditSlowQueriesCommand.php` (new), `config/logging.php`
+- **Problem**: No tooling to detect slow queries in production.
+- **Fix**: New `php artisan app:audit-slow-queries --threshold=200` command that listens 60s and logs slow queries to `storage/logs/slow-queries.log` via new `slow-queries` daily log channel (7-day retention).
+
+### Fix 12 — ProductCategoryHelper cache tags
+- **File**: `modules/Ecommerce/app/Supports/ProductCategoryHelper.php`
+- **Problem**: `clearCache()` could only forget by exact key, no group invalidation.
+- **Fix**: Both `getTree()` and `getNavigationCategories()` use `Cache::tags(['ecommerce', 'categories'])` when driver is `redis` or `memcached`, enabling `Cache::tags(...)->flush()` group invalidation. Falls back to keyed `Cache::remember()` when driver is `file` (current default).
+- **Note**: Cache driver is currently `file` — tag path activates when switched to Redis.

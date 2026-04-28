@@ -46,6 +46,14 @@ return [
             0 => 'Barryvdh\\TranslationManager\\ManagerServiceProvider',
         ],
     ],
+    'darkaonline/l5-swagger' => [
+        'aliases' => [
+            'L5Swagger' => 'L5Swagger\\L5SwaggerFacade',
+        ],
+        'providers' => [
+            0 => 'L5Swagger\\L5SwaggerServiceProvider',
+        ],
+    ],
     'laravel/boost' => [
         'providers' => [
             0 => 'Laravel\\Boost\\BoostServiceProvider',
@@ -70,6 +78,14 @@ return [
     'laravel/pail' => [
         'providers' => [
             0 => 'Laravel\\Pail\\PailServiceProvider',
+        ],
+    ],
+    'laravel/pennant' => [
+        'aliases' => [
+            'Feature' => 'Laravel\\Pennant\\Feature',
+        ],
+        'providers' => [
+            0 => 'Laravel\\Pennant\\PennantServiceProvider',
         ],
     ],
     'laravel/pulse' => [
@@ -109,6 +125,14 @@ return [
     'laravel/sentinel' => [
         'providers' => [
             0 => 'Laravel\\Sentinel\\SentinelServiceProvider',
+        ],
+    ],
+    'laravel/socialite' => [
+        'aliases' => [
+            'Socialite' => 'Laravel\\Socialite\\Facades\\Socialite',
+        ],
+        'providers' => [
+            0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
         ],
     ],
     'laravel/telescope' => [

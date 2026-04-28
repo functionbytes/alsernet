@@ -220,6 +220,96 @@ When handling tasks, delegate to subagents using the Task tool. Use this section
 
 ---
 
+## [CUSTOMIZE] Templates & Shortcodes (Riode + Sistema Template-Specific)
+
+> Implementado 2026-04-28 — sistema de templates con shortcodes especificos por template activo.
+
+### Arquitectura
+
+- **Templates** se gestionan en tabla `templates` (modulo Template)
+- Solo UN template puede estar activo a la vez (`status='active'`)
+- Cada template vive en `modules/Template/Templates/{Name}/` con:
+  - `Shortcodes/*.php` — clases con metodo `registerAll()`
+  - `Resources/views/shortcodes/*.blade.php` — views via namespace `{slug}::`
+  - `Tests/Feature/*.php` — tests Feature para cada shortcode
+- `TemplateServiceProvider` auto-descubre clases via `glob()` al boot
+
+### Shortcodes globales (siempre activos)
+
+`button`, `alert`, `accordion`, `badge`, `card`, `columns`, `column`, `icon`, `image`,
+`quote`, `youtube`, `contact-form`, `form`, `page`, `post`, `media`, `menu`, y mas.
+
+### Shortcodes Riode-especificos
+
+Solo activos cuando el template `slug='riode'` esta en DB con `status='active'`.
+
+| Categoria   | Shortcodes |
+|-------------|-----------|
+| Content     | `cta`, `cta-column`, `countdown`, `counter`, `counter-grid`, `icon-box`, `icon-box-grid` |
+| Structure   | `title`, `tabs`, `tab`, `slider`, `slide`, `banner`, `hotspot`, `hotspot-pin` |
+| Utility     | `breadcrumb`, `page-header`, `social-links`, `image-box`, `video` |
+| Media       | `blog-posts`, `category-card`, `category-grid`, `creative-grid`, `grid-item`, `testimonials`, `testimonial` |
+| Effects     | `animate`, `floating`, `scroll-reveal`, `svg-float` |
+| Marketplace | `instagram-feed`, `subcategory-card`, `category-column`, `vendor-card` |
+
+### Activar / cambiar template
+
+```bash
+# Activar Riode
+php artisan db:seed --class="Modules\\Template\\Database\\Seeders\\RiodeTemplateSeeder"
+php artisan optimize:clear
+
+# Cambiar a otro template (SQL directo)
+# UPDATE templates SET status='inactive' WHERE slug='riode';
+# UPDATE templates SET status='active'   WHERE slug='wolmart';
+php artisan optimize:clear
+```
+
+### Verificar shortcodes registrados
+
+```bash
+php artisan shortcode:list
+```
+
+### Renderizar shortcodes en Blade
+
+```blade
+@shortcode('[countdown until="2026-12-31T23:59:59"]')
+@shortcode($page->content)
+
+{{-- Helper global --}}
+{!! shortcode($content) !!}
+```
+
+### Crear template nuevo desde plantilla HTML
+
+Usa la skill `template-builder`:
+
+```
+"Tengo Wolmart en /Users/me/Desktop/wolmart/. Genera el template Laravel."
+```
+
+La skill: analiza el HTML, extrae design tokens, genera
+`modules/Template/Templates/{Name}/` completo (shortcodes, views, seeder, tests),
+registra el autoload y activa el template. Tiempo estimado: 3-5 horas con agentes paralelos.
+
+### Convenciones obligatorias para templates/shortcodes
+
+- No usar `style=""` inline — utility classes o `data-*`
+- Font Awesome 6 ONLY (nunca `d-icon-*` ni Tabler `ti ti-*`)
+- jQuery + Bootstrap 5.3 nativo (no Livewire/React/Alpine)
+- Color primario `#90bb13` sustituye al `#26c` original de Riode
+- `loading="lazy"` + dimensiones explicitas en `<img>`
+- Multi-idioma con `__('shortcode::messages.X')`
+- Tests Feature: happy path + edge cases por cada shortcode
+
+### Documentacion de referencia
+
+- README Riode: `modules/Template/Templates/Riode/README.md`
+- Skill template-builder: `.claude/skills/template-builder/`
+
+---
+
 ## [CUSTOMIZE] Technology Stack & Context7
 
 Always use Context7 MCP tools for up-to-date documentation on project technologies:
@@ -613,4 +703,86 @@ protected function isAccessible(User $user, ?string $path = null): bool
 | overflow-ellipsis | text-ellipsis |
 | decoration-slice | box-decoration-slice |
 | decoration-clone | box-decoration-clone |
+
+---
+
+## [UNIVERSAL] Convenciones aplicadas (2026-04-27)
+
+Convenciones estandarizadas tras auditoría completa del proyecto:
+
+### Permisos Spatie
+- Convención: `{alias}.{action}` (2 segmentos) o `{alias}.{entity}.{action}` (3 segmentos)
+- Lowercase exclusivo (NO TitleCase ni snake_case con underscore)
+- Ejemplos correctos: `helpdesk.conversations.view`, `cache.settings.update`, `locale.create`
+- Ejemplos incorrectos: `Cache.settings.view`, `view-users`, `manager.helpdesk.conversations.update`
+
+### Routes
+- Prefix admin: `panel/{alias}` (ej: `panel/helpdesk`)
+- Prefix settings: `panel/settings/{alias}` (ej: `panel/settings/cache`) — plural exclusivo
+- Prefix API: `api/{alias}` con `auth:sanctum`
+- Names: `{alias}.action`, `settings.{alias}.action`, `api.{alias}.action`
+- Singular routes legacy: redirects 301 a plural
+
+### Form Requests
+- SIEMPRE para validation (no inline `$request->validate`)
+- Path: `modules/{Module}/app/Http/Requests/`
+- Subdirs por scope: `Settings/`, `Web/`, `Managers/`, `Api/`
+- `authorize()` con permiso Spatie real (NO `return true`)
+- `messages()` y `attributes()` en español
+
+### Policies
+- Path: `modules/{Module}/app/Policies/`
+- Métodos estándar: `viewAny`, `view`, `create`, `update`, `delete`, `manage`
+- Registrar en `{Module}ServiceProvider::registerPolicies()` con `Gate::policy()`
+- Usar Spatie permission con convención unificada
+
+### API Resources
+- Keys camelCase
+- Dates ISO8601: `->toIso8601String()`
+- Relaciones con `whenLoaded()`
+- Counts con `whenCounted()`
+- NO exponer columnas sensibles (secrets, passwords, tokens)
+
+### Notifications
+- ALWAYS implement `ShouldQueue`
+- `via()` con channels apropiados (database, broadcast, mail)
+- `toArray()` keys snake_case con `type`, `title`, `message`, `entity_id`, `action_url`
+- Naming: `{Entity}{Event}Notification` (ej: `ConversationAssignedNotification`)
+
+### Trait HasMessageThread
+- Path: `Modules\Helpdesk\Concerns\HasMessageThread`
+- Compartido entre Conversation y Ticket
+- Métodos: `assignTo`, `close`, `reopen`, `archive`, scopes Open/Closed/Assigned/Archived
+- Helpers: `isOpen()`, `isClosed()`, `isAssigned()`, `isArchived()`
+
+### ADRs documentados
+- `docs/adr/0001-mailer-vs-mailrelay.md` — Aceptado Opción C (status quo + fronteras)
+- Mailer = transactional emails
+- Mailrelay = email marketing/multi-provider
+
+### Tests
+- PHPUnit ONLY (no Pest)
+- `RefreshDatabase` trait
+- Path: `modules/{Module}/tests/Feature/` y `tests/Unit/` (lowercase)
+- Naming: `test_user_can_X` (snake_case con `test_` prefix)
+- Mock externos: `Notification::fake()`, `Mail::fake()`, `Queue::fake()`
+- Permission seeder en `setUp()`
+
+### Bugs específicos a evitar
+- Comparar enums con `===` (NO con strings — `$model->status === 'value'` falla si es enum cast)
+- `$appends` con accessor que ejecuta query → N+1
+- Closures como event listeners → rompen `event:cache`
+- `Tests/` con T mayúscula → falla PSR-4 case-sensitive en Linux
+- Namespace lowercase en composer.json (`modules\X` en vez de `Modules\X`) → falla autoload Linux
+- Form Request `authorize() { return true; }` → bypass de seguridad
+- `secret_key => Str::random(40)` en index method → regenera cada request
+- `shell_exec` con `sudo` desde HTTP endpoint → privilege escalation
+
+### Módulos con tratamiento estándar aplicado
+- Helpdesk core (13 policies, 12 Resources, 6 Notifications)
+- HelpdeskTickets (14 policies, 6 Resources, 32 Form Requests)
+- Reviews (7 policies, 23 Form Requests)
+- Page (8 policies)
+- Auth (4 policies, 0 Gates ad-hoc)
+- Cache, Optimize, Captcha, Pulse, Health, Activity, Locales, User, Theme, MailsSettings, System (permission seeders + tests básicos)
 </laravel-boost-guidelines>

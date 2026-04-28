@@ -2,6 +2,7 @@
 
 namespace Modules\Template\Services;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -56,8 +57,8 @@ class TemplateService
     public function activate(Template $template): Template
     {
         DB::transaction(function () use ($template): void {
-            $template->update(['status' => 'active']);
             Template::where('id', '!=', $template->id)->update(['status' => 'inactive']);
+            $template->update(['status' => 'active']);
             Setting::updateOrCreate(
                 ['key' => 'template'],
                 ['value' => $template->slug]
@@ -65,6 +66,7 @@ class TemplateService
         });
 
         Cache::forget('template.active');
+        Artisan::call('optimize:clear');
 
         return $template->fresh();
     }

@@ -5,3 +5,4 @@
 | [project_reviews_api.md](project_reviews_api.md) | project | Reviews module API conventions and structure |
 | [project_analytics_api.md](project_analytics_api.md) | project | Analytics module endpoint patterns, data format, and key implementation notes |
 | [project_helpdesk_api.md](project_helpdesk_api.md) | project | Helpdesk API resources, form requests, controllers, and policy registration map |
+| [project_ecommerce_api.md](project_ecommerce_api.md) | project | Ecommerce module API structure, controllers, auth guards, session use, and key implementation notes |

@@ -98,4 +98,32 @@ class Customer extends Authenticatable
             ->withTimestamps()
             ->latest('ecommerce_customer_recently_viewed_products.created_at');
     }
+
+    public function pushTokens(): HasMany
+    {
+        return $this->hasMany(CustomerPushToken::class);
+    }
+
+    /** @return string[] */
+    public function abilities(): array
+    {
+        $abilities = [];
+
+        if ($this->status === CustomerStatus::ACTIVE) {
+            $abilities[] = 'addresses.manage';
+            $abilities[] = 'wishlist.manage';
+            $abilities[] = 'reviews.create';
+        }
+
+        if ($this->email_verified_at !== null) {
+            $abilities[] = 'orders.create';
+            $abilities[] = 'orders.cancel';
+        }
+
+        if ($this->orders()->where('status', 'completed')->exists()) {
+            $abilities[] = 'reviews.replyOwn';
+        }
+
+        return $abilities;
+    }
 }

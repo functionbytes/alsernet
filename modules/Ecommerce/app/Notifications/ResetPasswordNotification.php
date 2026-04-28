@@ -19,11 +19,17 @@ class ResetPasswordNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $url = url('/email-bridge/reset-password').'?'.http_build_query([
+            'token' => $this->token,
+            'email' => $notifiable->email,
+        ]);
+
         return (new MailMessage)
-            ->subject('Reset Password Notification')
-            ->line('You are receiving this email because we received a password reset request for your account.')
-            ->action('Reset Password', url('/reset-password?token='.$this->token))
-            ->line('This password reset link will expire in 60 minutes.')
-            ->line('If you did not request a password reset, no further action is required.');
+            ->subject('Restablece tu contraseña')
+            ->greeting('Hola '.($notifiable->name ?? '').',')
+            ->line('Recibimos una solicitud para restablecer tu contraseña.')
+            ->action('Restablecer contraseña', $url)
+            ->line('Este enlace expira en 60 minutos.')
+            ->line('Si no solicitaste esto, puedes ignorar este mensaje.');
     }
 }

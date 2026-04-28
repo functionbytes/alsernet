@@ -75,4 +75,10 @@ return [
         'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.1),
     ],
 
+    'instagram' => [
+        'enabled' => env('INSTAGRAM_ENABLED', false),
+        'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+        'business_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),
+    ],
+
 ];

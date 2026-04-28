@@ -184,45 +184,260 @@ class ShortcodeServiceProvider extends ServiceProvider
             $shortcode->register($name, $callback, $meta);
         };
 
-        // Button shortcode: [button url="#" class="primary" target="_blank"]Click Me[/button]
+        // Button shortcode — extended with Riode variants.
+        // Backwards-compat: if new style/size/shape attrs absent, falls back to legacy `class` attr.
+        // [button url="#" style="primary" size="lg" shape="rounded" icon="fas fa-arrow-right"]Click[/button]
         $register('button', function ($attrs, $content) {
+            $url = $attrs['url'] ?? $attrs['href'] ?? '#';
+            $target = $attrs['target'] ?? '_self';
+            $id = $attrs['id'] ?? null;
+
+            $validStyles = ['solid', 'outline', 'outline-light', 'gradient', 'link'];
+            $validColors = ['default', 'primary', 'secondary', 'alert', 'success', 'dark', 'white', 'blue', 'orange', 'pink', 'green'];
+            $validShapes = ['rectangle', 'rounded', 'ellipse'];
+            $validSizes = ['sm', 'md', 'normal', 'lg', 'block'];
+            $validShadows = ['none', 'sm', 'md', 'lg'];
+            $validAnims = ['none', 'slide-left', 'slide-right', 'slide-up', 'slide-down', 'reveal-left', 'reveal-right'];
+
+            // New-style attributes take priority over legacy `class`.
+            $hasNewAttrs = isset($attrs['style']) || isset($attrs['color']) || isset($attrs['shape']) || isset($attrs['size']);
+
+            if ($hasNewAttrs) {
+                $style = in_array($attrs['style'] ?? 'solid', $validStyles) ? ($attrs['style'] ?? 'solid') : 'solid';
+                $color = in_array($attrs['color'] ?? 'primary', $validColors) ? ($attrs['color'] ?? 'primary') : 'primary';
+                $shape = in_array($attrs['shape'] ?? 'rounded', $validShapes) ? ($attrs['shape'] ?? 'rounded') : 'rounded';
+                $size = in_array($attrs['size'] ?? 'normal', $validSizes) ? ($attrs['size'] ?? 'normal') : 'normal';
+                $shadow = in_array($attrs['shadow'] ?? 'none', $validShadows) ? ($attrs['shadow'] ?? 'none') : 'none';
+                $anim = in_array($attrs['animation'] ?? 'none', $validAnims) ? ($attrs['animation'] ?? 'none') : 'none';
+                $iconPos = ($attrs['icon-position'] ?? 'right') === 'left' ? 'left' : 'right';
+                $icon = $attrs['icon'] ?? null;
+                $infinite = isset($attrs['infinite']) && $attrs['infinite'] === 'true';
+                $disabled = isset($attrs['disabled']) && $attrs['disabled'] === 'true';
+                $underline = $attrs['underline'] ?? 'none';
+                $extra = $attrs['class'] ?? '';
+
+                $classes = ['btn'];
+
+                match ($style) {
+                    'solid' => $classes[] = 'btn-'.$color,
+                    'outline' => array_push($classes, 'btn-outline', 'btn-'.$color),
+                    'outline-light' => array_push($classes, 'btn-outline', 'btn-outline-light', 'btn-'.$color),
+                    'gradient' => array_push($classes, 'btn-gradient', 'btn-'.$color),
+                    'link' => array_push($classes, 'btn-link', 'btn-'.$color),
+                    default => null,
+                };
+
+                if ($shape === 'rounded') {
+                    $classes[] = 'btn-rounded';
+                } elseif ($shape === 'ellipse') {
+                    $classes[] = 'btn-ellipse';
+                }
+
+                if (in_array($size, ['sm', 'md', 'lg'])) {
+                    $classes[] = 'btn-'.$size;
+                } elseif ($size === 'block') {
+                    $classes[] = 'btn-block';
+                }
+
+                if ($shadow !== 'none') {
+                    $classes[] = $shadow === 'md' ? 'btn-shadow' : 'btn-shadow-'.$shadow;
+                }
+
+                if ($icon) {
+                    $classes[] = 'btn-icon-'.$iconPos;
+                }
+
+                if ($anim !== 'none') {
+                    $classes[] = 'btn-'.$anim;
+                }
+
+                if ($infinite && $anim !== 'none') {
+                    $classes[] = 'btn-infinite';
+                }
+
+                if ($style === 'link' && $underline !== 'none') {
+                    $classes[] = 'btn-underline';
+                }
+
+                if ($disabled) {
+                    $classes[] = 'btn-disabled';
+                }
+
+                if ($extra) {
+                    $classes[] = htmlspecialchars($extra);
+                }
+
+                $classStr = implode(' ', $classes);
+
+                $iconHtml = $icon ? sprintf('<i class="%s" aria-hidden="true"></i>', htmlspecialchars($icon)) : '';
+                $innerLeft = ($icon && $iconPos === 'left') ? $iconHtml.' ' : '';
+                $innerRight = ($icon && $iconPos === 'right') ? ' '.$iconHtml : '';
+
+                $ariaDisabled = $disabled ? ' aria-disabled="true" tabindex="-1"' : '';
+                $rel = $target === '_blank' ? ' rel="noopener noreferrer"' : '';
+                $idAttr = $id ? sprintf(' id="%s"', htmlspecialchars($id)) : '';
+
+                return sprintf(
+                    '<a href="%s" class="%s" target="%s"%s%s%s>%s<span>%s</span>%s</a>',
+                    htmlspecialchars($url),
+                    $classStr,
+                    htmlspecialchars($target),
+                    $rel,
+                    $ariaDisabled,
+                    $idAttr,
+                    $innerLeft,
+                    $content,
+                    $innerRight
+                );
+            }
+
+            // Legacy path: [button url="#" class="btn-primary"]Text[/button]
             $class = $attrs['class'] ?? 'btn-primary';
-            $url = $attrs['url'] ?? '#';
-            $target = isset($attrs['target']) ? sprintf(' target="%s"', $attrs['target']) : '';
-            $id = isset($attrs['id']) ? sprintf(' id="%s"', $attrs['id']) : '';
+            $rel = $target === '_blank' ? ' rel="noopener noreferrer"' : '';
+            $idAttr = $id ? sprintf(' id="%s"', htmlspecialchars($id)) : '';
+            $targetAttr = sprintf(' target="%s"', htmlspecialchars($target));
 
             return sprintf(
-                '<a href="%s" class="btn %s"%s%s>%s</a>',
+                '<a href="%s" class="btn %s"%s%s%s>%s</a>',
                 htmlspecialchars($url),
                 htmlspecialchars($class),
-                $target,
-                $id,
+                $targetAttr,
+                $rel,
+                $idAttr,
                 $content
             );
         }, [
-            'description' => 'Inserta un botón con enlace.',
-            'example' => '[button url="#" class="btn-primary" target="_blank"]Haz clic[/button]',
-            'attributes' => ['url' => 'URL del enlace', 'class' => 'Clases CSS del botón', 'target' => 'Destino (_blank, _self)', 'id' => 'ID del elemento'],
+            'description' => 'Inserta un botón con enlace. Soporta estilos solid, outline, gradient, link con variantes de color, forma, tamaño, sombra, icono y animación.',
+            'example' => '[button url="/comprar" style="solid" color="primary" shape="rounded" size="lg" icon="fas fa-arrow-right"]Comprar ahora[/button]',
+            'attributes' => [
+                'url' => 'URL del enlace (alias: href)',
+                'target' => 'Destino del enlace (_self, _blank)',
+                'id' => 'ID del elemento HTML',
+                'style' => 'Estilo visual: solid | outline | outline-light | gradient | link (default: solid)',
+                'color' => 'Color: default | primary | secondary | alert | success | dark | white | blue | orange | pink | green (default: primary)',
+                'shape' => 'Forma: rectangle | rounded | ellipse (default: rounded)',
+                'size' => 'Tamaño: sm | md | normal | lg | block (default: normal)',
+                'shadow' => 'Sombra: none | sm | md | lg (default: none)',
+                'icon' => 'Icono Font Awesome 6 (ej: fas fa-arrow-right)',
+                'icon-position' => 'Posición del icono: left | right (default: right)',
+                'animation' => 'Animación CSS: none | slide-left | slide-right | slide-up | slide-down | reveal-left | reveal-right',
+                'infinite' => 'Animación en bucle (requiere animation != none): true | false',
+                'underline' => 'Subrayado (solo style=link): none | simple | active | custom',
+                'disabled' => 'Deshabilitado: true | false',
+                'class' => 'Clases CSS extra',
+            ],
         ]);
 
-        // Alert shortcode: [alert type="success" dismissible="true"]Message[/alert]
+        // Alert shortcode — extended with Riode variants.
+        // [alert type="success" style="simple" layout="inline" title="Ok" icon="auto" dismissible="true"]Msg[/alert]
         $register('alert', function ($attrs, $content) {
-            $type = $attrs['type'] ?? 'info';
-            $dismissible = isset($attrs['dismissible']) && $attrs['dismissible'] === 'true';
-            $dismissButton = $dismissible ? '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' : '';
-            $dismissClass = $dismissible ? ' alert-dismissible fade show' : '';
+            $validTypes = ['primary', 'success', 'warning', 'danger', 'info', 'dark'];
+            $validStyles = ['simple', 'dark', 'light'];
+            $validLayouts = ['inline', 'stacked', 'message', 'summary'];
+            $iconDefaults = [
+                'success' => 'fas fa-check-circle',
+                'danger' => 'fas fa-circle-exclamation',
+                'warning' => 'fas fa-triangle-exclamation',
+                'info' => 'fas fa-circle-info',
+            ];
+
+            $type = in_array($attrs['type'] ?? 'primary', $validTypes) ? ($attrs['type'] ?? 'primary') : 'primary';
+            $style = in_array($attrs['style'] ?? 'simple', $validStyles) ? ($attrs['style'] ?? 'simple') : 'simple';
+            $layout = in_array($attrs['layout'] ?? 'inline', $validLayouts) ? ($attrs['layout'] ?? 'inline') : 'inline';
+            $title = $attrs['title'] ?? null;
+            $round = isset($attrs['round']) && $attrs['round'] === 'true';
+            $buttonText = $attrs['button-text'] ?? null;
+            $buttonHref = $attrs['button-href'] ?? '#';
+            $linkHref = $attrs['link-href'] ?? null;
+            $extra = $attrs['class'] ?? '';
+
+            // Icon resolution: explicit FA class, "auto" uses type default, omit = no icon.
+            $iconAttr = $attrs['icon'] ?? null;
+            $icon = null;
+            if ($iconAttr === 'auto') {
+                $icon = $iconDefaults[$type] ?? null;
+            } elseif ($iconAttr !== null && $iconAttr !== '') {
+                $icon = $iconAttr;
+            }
+
+            // Dismissible: keep existing `dismissible` attr + new variant `dismissable`.
+            $dismissible = (isset($attrs['dismissible']) && $attrs['dismissible'] === 'true')
+                || (isset($attrs['dismissable']) && $attrs['dismissable'] === 'true');
+
+            $classes = ['alert', 'alert-'.$type];
+
+            if ($style === 'simple') {
+                $classes[] = 'alert-simple';
+            } elseif ($style === 'dark') {
+                $classes[] = 'alert-dark';
+            } elseif ($style === 'light') {
+                $classes[] = 'alert-light';
+            }
+
+            if ($layout === 'inline') {
+                $classes[] = 'alert-inline';
+            } elseif ($layout === 'message') {
+                $classes[] = 'alert-message';
+            } elseif ($layout === 'summary') {
+                array_push($classes, 'alert-summary', 'alert-message', 'alert-inline');
+            }
+
+            if ($round) {
+                $classes[] = 'alert-round';
+            }
+
+            if ($icon) {
+                $classes[] = 'alert-icon';
+            }
+
+            if ($buttonText) {
+                $classes[] = 'alert-btn';
+            }
+
+            if ($linkHref && ! $buttonText) {
+                $classes[] = 'alert-link';
+            }
+
+            if ($dismissible) {
+                array_push($classes, 'alert-dismissible', 'fade', 'show');
+            }
+
+            if ($extra) {
+                $classes[] = htmlspecialchars($extra);
+            }
+
+            $classStr = implode(' ', $classes);
+
+            $iconHtml = $icon ? sprintf('<i class="%s" aria-hidden="true"></i>', htmlspecialchars($icon)) : '';
+            $titleHtml = $title ? sprintf('<h4 class="alert-title">%s</h4>', htmlspecialchars($title)) : '';
+            $btnHtml = $buttonText ? sprintf('<a href="%s" class="btn btn-rounded btn-%s">%s</a>', htmlspecialchars($buttonHref), htmlspecialchars($type), htmlspecialchars($buttonText)) : '';
+            $closeHtml = $dismissible ? '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>' : '';
 
             return sprintf(
-                '<div class="alert alert-%s%s" role="alert">%s%s</div>',
-                htmlspecialchars($type),
-                $dismissClass,
+                '<div class="%s" role="alert">%s%s%s%s%s</div>',
+                $classStr,
+                $iconHtml,
+                $titleHtml,
                 $content,
-                $dismissButton
+                $btnHtml,
+                $closeHtml
             );
         }, [
-            'description' => 'Muestra un mensaje de alerta con estilo Bootstrap.',
-            'example' => '[alert type="success" dismissible="true"]Operación exitosa[/alert]',
-            'attributes' => ['type' => 'Tipo de alerta (success, danger, warning, info)', 'dismissible' => 'Mostrar botón cerrar (true/false)'],
+            'description' => 'Muestra un mensaje de alerta con estilo Bootstrap y variantes Riode (simple, dark, light, inline, message, summary).',
+            'example' => '[alert type="success" style="simple" title="Guardado" icon="auto" dismissible="true"]Operación completada.[/alert]',
+            'attributes' => [
+                'type' => 'Tipo semántico: primary | success | warning | danger | info | dark (default: primary)',
+                'style' => 'Variante visual: simple | dark | light (default: simple)',
+                'layout' => 'Distribución: inline | stacked | message | summary (default: inline)',
+                'title' => 'Título visible en negrita antes del mensaje',
+                'icon' => 'Icono FA6 (ej: fas fa-check) o "auto" para icono por tipo',
+                'round' => 'Bordes redondeados: true | false (default: false)',
+                'dismissible' => 'Botón cerrar: true | false (default: false)',
+                'button-text' => 'Texto del botón de acción',
+                'button-href' => 'URL del botón de acción',
+                'link-href' => 'URL de enlace inline (exclusivo con button-text)',
+                'class' => 'Clases CSS extra',
+            ],
         ]);
 
         // Columns shortcode: [columns count="3" gap="4"]Content[/columns]
@@ -382,56 +597,140 @@ class ShortcodeServiceProvider extends ServiceProvider
             'attributes' => ['title' => 'Título de la cabecera', 'class' => 'Clases CSS adicionales', 'header_class' => 'Clases de la cabecera'],
         ]);
 
-        // Accordion shortcode: [accordion id="acc1"]Content[/accordion]
+        // Accordion shortcode — extended with Riode variants.
+        // [accordion style="dropshadow" gutter="sm" multi-open="false"]...[/accordion]
         $register('accordion', function ($attrs, $content) {
+            $validStyles = ['simple', 'boxed', 'dropshadow', 'card-bg', 'background'];
+            $validColors = ['default', 'primary', 'secondary'];
+            $validIconStyles = ['plus-minus', 'none'];
+            $validGutters = ['none', 'sm', 'md', 'lg'];
+
             $id = $attrs['id'] ?? 'accordion-'.uniqid();
-            $class = $attrs['class'] ?? '';
+            $style = in_array($attrs['style'] ?? 'boxed', $validStyles) ? ($attrs['style'] ?? 'boxed') : 'boxed';
+            $color = in_array($attrs['color'] ?? 'default', $validColors) ? ($attrs['color'] ?? 'default') : 'default';
+            $iconStyle = in_array($attrs['icon-style'] ?? 'plus-minus', $validIconStyles) ? ($attrs['icon-style'] ?? 'plus-minus') : 'plus-minus';
+            $gutter = in_array($attrs['gutter'] ?? 'md', $validGutters) ? ($attrs['gutter'] ?? 'md') : 'md';
+            $cardBorder = isset($attrs['card-border']) && $attrs['card-border'] === 'true';
+            $border = isset($attrs['border']) && $attrs['border'] === 'true';
+            $multiOpen = isset($attrs['multi-open']) && $attrs['multi-open'] === 'true';
+            $extra = $attrs['class'] ?? '';
+
+            $classes = ['accordion'];
+
+            match ($style) {
+                'simple' => $classes[] = 'accordion-simple',
+                'boxed' => $classes[] = 'accordion-boxed',
+                'dropshadow' => array_push($classes, 'accordion-dropshadow', 'accordion-boxed'),
+                'card-bg' => array_push($classes, 'accordion-card-bg', 'accordion-boxed'),
+                'background' => array_push($classes, 'accordion-background', 'accordion-boxed', 'accordion-icon'),
+                default => null,
+            };
+
+            if ($iconStyle === 'plus-minus') {
+                $classes[] = 'accordion-plus';
+            }
+
+            if ($color === 'primary') {
+                $classes[] = 'accordion-primary';
+            } elseif ($color === 'secondary') {
+                $classes[] = 'accordion-secondary';
+            }
+
+            if ($gutter !== 'none') {
+                $classes[] = 'accordion-gutter-'.$gutter;
+            }
+
+            if ($cardBorder) {
+                $classes[] = 'accordion-card-border';
+            }
+
+            if ($border) {
+                $classes[] = 'accordion-border';
+            }
+
+            if ($extra) {
+                $classes[] = htmlspecialchars($extra);
+            }
+
+            $classStr = implode(' ', $classes);
 
             return sprintf(
-                '<div class="accordion %s" id="%s">%s</div>',
-                htmlspecialchars($class),
+                '<div class="%s" id="%s" data-multi-open="%s">%s</div>',
+                $classStr,
                 htmlspecialchars($id),
+                $multiOpen ? 'true' : 'false',
                 $content
             );
         }, [
-            'description' => 'Contenedor de acordeón Bootstrap.',
-            'example' => '[accordion id="faq"][accordion-item title="Pregunta 1" parent="faq"]Respuesta[/accordion-item][/accordion]',
-            'attributes' => ['id' => 'ID único del acordeón', 'class' => 'Clases CSS adicionales'],
+            'description' => 'Acordeón colapsable con variantes visuales Riode (simple, boxed, dropshadow, card-bg, background).',
+            'example' => '[accordion style="dropshadow" gutter="sm"][accordion-item title="Pregunta" open="true"]Respuesta[/accordion-item][/accordion]',
+            'attributes' => [
+                'id' => 'ID único del acordeón (auto-generado si no se indica)',
+                'style' => 'Variante visual: simple | boxed | dropshadow | card-bg | background (default: boxed)',
+                'color' => 'Color de cards: default | primary | secondary (default: default)',
+                'icon-style' => 'Icono toggle: plus-minus | none (default: plus-minus)',
+                'gutter' => 'Espacio entre items: none | sm | md | lg (default: md)',
+                'card-border' => 'Borde en cada card: true | false (default: false)',
+                'border' => 'Borde general: true | false (default: false)',
+                'multi-open' => 'Varios items abiertos a la vez: true | false (default: false)',
+                'class' => 'Clases CSS extra',
+            ],
         ]);
 
-        // Accordion Item shortcode: [accordion-item title="Item 1" parent="acc1"]Content[/accordion-item]
+        // Accordion Item — extended with open and icon attrs; keeps backwards-compat with show/parent.
+        // [accordion-item title="Pregunta" open="true" icon="far fa-heart"]Respuesta[/accordion-item]
         $register('accordion-item', function ($attrs, $content) {
             $title = $attrs['title'] ?? 'Accordion Item';
-            $parent = $attrs['parent'] ?? 'accordion';
             $id = $attrs['id'] ?? 'item-'.uniqid();
-            $show = isset($attrs['show']) && $attrs['show'] === 'true' ? ' show' : '';
-            $expanded = isset($attrs['show']) && $attrs['show'] === 'true' ? 'true' : 'false';
-            $collapsed = $show ? '' : ' collapsed';
+            $icon = $attrs['icon'] ?? null;
+
+            // Support both `open` (new) and `show` (legacy) attrs.
+            $isOpen = (isset($attrs['open']) && $attrs['open'] === 'true')
+                || (isset($attrs['show']) && $attrs['show'] === 'true');
+
+            // Legacy Bootstrap parent attr (kept for backwards-compat).
+            $parent = $attrs['parent'] ?? null;
+
+            $openClass = $isOpen ? ' expanded' : ' collapsed';
+            $linkClass = $isOpen ? 'collapse' : 'expand';
+            $ariaExpanded = $isOpen ? 'true' : 'false';
+            $parentAttr = $parent ? sprintf(' data-bs-parent="#%s"', htmlspecialchars($parent)) : '';
+            $iconHtml = $icon ? sprintf('<i class="%s" aria-hidden="true"></i> ', htmlspecialchars($icon)) : '';
 
             return sprintf(
-                '<div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button%s" type="button" data-bs-toggle="collapse" data-bs-target="#%s" aria-expanded="%s">
-                            %s
-                        </button>
-                    </h2>
-                    <div id="%s" class="accordion-collapse collapse%s" data-bs-parent="#%s">
-                        <div class="accordion-body">%s</div>
+                '<div class="card">
+                    <div class="card-header">
+                        <a href="#%s" class="%s" role="button" aria-expanded="%s" aria-controls="%s"%s>
+                            %s%s
+                        </a>
+                    </div>
+                    <div id="%s" class="%s"%s>
+                        <div class="card-body">%s</div>
                     </div>
                 </div>',
-                $collapsed,
                 htmlspecialchars($id),
-                $expanded,
+                $linkClass,
+                $ariaExpanded,
+                htmlspecialchars($id),
+                $parentAttr,
+                $iconHtml,
                 htmlspecialchars($title),
                 htmlspecialchars($id),
-                $show,
-                htmlspecialchars($parent),
+                ltrim($openClass),
+                $parentAttr,
                 $content
             );
         }, [
-            'description' => 'Elemento individual de acordeón.',
-            'example' => '[accordion-item title="¿Cómo funciona?" parent="faq" id="item1"]Descripción aquí[/accordion-item]',
-            'attributes' => ['title' => 'Texto del encabezado', 'parent' => 'ID del acordeón padre', 'id' => 'ID único del ítem', 'show' => 'Abierto por defecto (true/false)'],
+            'description' => 'Elemento individual de acordeón compatible con variantes Riode.',
+            'example' => '[accordion-item title="¿Cómo funciona?" open="true" icon="far fa-heart"]Descripción aquí[/accordion-item]',
+            'attributes' => [
+                'title' => 'Texto del encabezado del ítem',
+                'id' => 'ID único del ítem (auto-generado si no se indica)',
+                'open' => 'Abierto al cargar: true | false (default: false)',
+                'icon' => 'Icono FA6 al lado del título (ej: far fa-heart)',
+                'show' => 'Alias legacy de open: true | false',
+                'parent' => 'ID del acordeón padre (Bootstrap compat, opcional)',
+            ],
         ]);
 
         // Quote shortcode: [quote author="John Doe" cite="Book Title"]Quote text[/quote]

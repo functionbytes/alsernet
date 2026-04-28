@@ -17,12 +17,14 @@
         "psr-4": {
             "modules\\Template\\": "app/",
             "modules\\Template\\Database\\Factories\\": "database/factories/",
-            "modules\\Template\\Database\\Seeders\\": "database/seeders/"
+            "modules\\Template\\Database\\Seeders\\": "database/seeders/",
+            "modules\\Template\\Templates\\": "Templates/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "modules\\Template\\Tests\\": "tests/"
+            "modules\\Template\\Tests\\": "tests/",
+            "modules\\Template\\Templates\\Riode\\Tests\\": "Templates/Riode/Tests/"
         }
     }
 }

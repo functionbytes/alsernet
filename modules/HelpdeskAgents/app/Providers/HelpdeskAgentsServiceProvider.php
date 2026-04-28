@@ -24,6 +24,7 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(module_path('HelpdeskAgents', 'database/migrations'));
         if (Module::find($this->moduleName)?->isDisabled()) {
             return;
         }

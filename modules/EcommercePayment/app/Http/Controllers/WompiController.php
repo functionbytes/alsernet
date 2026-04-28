@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
+use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Services\CartService;
 use Modules\EcommercePayment\Http\Requests\WompiSettingsRequest;
 use Modules\EcommercePayment\Jobs\ProcessWompiWebhook;
@@ -21,19 +22,81 @@ class WompiController extends Controller
         protected CartService $cartService,
     ) {}
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): RedirectResponse|View
     {
         $result = $this->wompiGateway->handleCallback($request);
+        $isMobile = $request->input('source') === 'mobile';
+        $mobileReturnUrl = $request->input('return_url');
 
         if ($result['success']) {
             $this->cartService->clearCart();
+
+            if ($isMobile && $mobileReturnUrl) {
+                return view('ecommerce-payment::mobile-redirect', [
+                    'success' => true,
+                    'message' => $result['message'],
+                    'returnUrl' => $mobileReturnUrl,
+                ]);
+            }
 
             return redirect()->to($result['redirect_url'])
                 ->with('success', $result['message']);
         }
 
+        if ($isMobile && $mobileReturnUrl) {
+            return view('ecommerce-payment::mobile-redirect', [
+                'success' => false,
+                'message' => $result['message'],
+                'returnUrl' => $mobileReturnUrl,
+            ]);
+        }
+
         return redirect()->to($result['redirect_url'])
             ->with('error', $result['message']);
+    }
+
+    /**
+     * Mobile hosted checkout — renders a public page with the Wompi widget
+     * configured to call back with `source=mobile&return_url=...` so the
+     * Flutter app receives a deep link after payment completes.
+     */
+    public function mobileCheckout(Request $request, string $token): View
+    {
+        $order = Order::query()
+            ->where('token', $token)
+            ->with('customer', 'addresses')
+            ->firstOrFail();
+
+        $returnUrl = $request->input('return_url', 'inoqualabapp://orders/'.$order->id);
+        $shipping = $order->addresses->firstWhere('type', 'shipping');
+
+        $wompiService = new WompiService;
+        $wompiService->withData([
+            'reference' => $order->token ?? $order->code,
+            'amount' => $order->total,
+            'currency' => 'COP',
+            'customer_email' => $order->customer?->email ?? ($shipping->email ?? ''),
+            'customer_name' => $order->customer?->name ?? ($shipping->name ?? ''),
+            'customer_phone' => $shipping->phone ?? '',
+            'redirect_url' => route('payment.wompi.callback').'?'.http_build_query([
+                'source' => 'mobile',
+                'return_url' => $returnUrl,
+                'checkout_token' => $order->token,
+                'reference' => $order->token,
+            ]),
+            'shipping_address' => $shipping->address ?? '',
+            'shipping_city' => $shipping->city ?? '',
+            'shipping_region' => $shipping->state ?? '',
+            'shipping_phone' => $shipping->phone ?? '',
+        ]);
+
+        $widgetContent = $wompiService->getWidgetPageContent();
+
+        return view('ecommerce-payment::mobile-checkout', [
+            'order' => $order,
+            'widgetHtml' => $widgetContent,
+            'returnUrl' => $returnUrl,
+        ]);
     }
 
     public function webhook(Request $request)

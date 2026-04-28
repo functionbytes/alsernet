@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Boost\KimiCode;
 use App\Features\EcommerceFeatures;
+use App\Http\Api\V1\Manifest\MobileModuleRegistry;
 use App\Services\DeepLTranslationService;
 use App\Services\GlobalSearchService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(GlobalSearchService::class);
         $this->app->singleton(DeepLTranslationService::class);
+        $this->app->singleton(MobileModuleRegistry::class);
     }
 
     public function boot(): void
@@ -138,6 +140,27 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('wompi-webhook', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
+        });
+
+        // Mobile API rate limiters
+        RateLimiter::for('auth-login', function (Request $request) {
+            return Limit::perMinute(5)->by(($request->input('email') ?? '').'|'.$request->ip());
+        });
+
+        RateLimiter::for('auth-register', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
+
+        RateLimiter::for('auth-forgot', function (Request $request) {
+            return Limit::perHour(3)->by(($request->input('email') ?? '').'|'.$request->ip());
+        });
+
+        RateLimiter::for('api-mobile', function (Request $request) {
+            return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('api-mobile-write', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

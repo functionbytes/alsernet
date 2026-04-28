@@ -18,6 +18,7 @@ class HelpdeskCampaignsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(module_path('HelpdeskCampaigns', 'database/migrations'));
         if (Module::find($this->moduleName)?->isDisabled()) {
             return;
         }

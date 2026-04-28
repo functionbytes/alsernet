@@ -2,6 +2,7 @@
 
 namespace Modules\Ecommerce\Providers;
 
+use App\Http\Api\V1\Manifest\MobileModuleRegistry;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -15,8 +16,10 @@ use Modules\Ecommerce\Console\Commands\RefreshSitemapCommand;
 use Modules\Ecommerce\Console\Commands\SendAbandonedCartsEmailCommand;
 use Modules\Ecommerce\Console\Commands\SendRestockAlertsCommand;
 use Modules\Ecommerce\Console\Commands\UpdateFlashSaleStatus;
+use Modules\Ecommerce\Mobile\EcommerceMobileManifest;
 use Modules\Ecommerce\Models\Brand;
 use Modules\Ecommerce\Models\Customer;
+use Modules\Ecommerce\Models\CustomerAddress;
 use Modules\Ecommerce\Models\Discount;
 use Modules\Ecommerce\Models\FlashSale;
 use Modules\Ecommerce\Models\GlobalOption;
@@ -43,6 +46,7 @@ use Modules\Ecommerce\Observers\ProductCategoryObserver;
 use Modules\Ecommerce\Observers\ProductImageObserver;
 use Modules\Ecommerce\Observers\ProductObserver;
 use Modules\Ecommerce\Policies\BrandPolicy;
+use Modules\Ecommerce\Policies\CustomerAddressPolicy;
 use Modules\Ecommerce\Policies\CustomerPolicy;
 use Modules\Ecommerce\Policies\DiscountPolicy;
 use Modules\Ecommerce\Policies\FlashSalePolicy;
@@ -102,6 +106,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->registerPolicies();
         $this->registerObservers();
         $this->registerMenus();
+        $this->registerMobileManifest();
         $this->app->register(EventServiceProvider::class);
 
         if ($this->app->runningInConsole()) {
@@ -210,6 +215,7 @@ class EcommerceServiceProvider extends ServiceProvider
         Gate::policy(ProductCategory::class, ProductCategoryPolicy::class);
         Gate::policy(Brand::class, BrandPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(CustomerAddress::class, CustomerAddressPolicy::class);
         Gate::policy(Order::class, OrderPolicy::class);
         Gate::policy(Discount::class, DiscountPolicy::class);
         Gate::policy(FlashSale::class, FlashSalePolicy::class);
@@ -300,6 +306,12 @@ class EcommerceServiceProvider extends ServiceProvider
                 ['label' => 'Localizadores de tiendas', 'route' => 'settings.ecommerce.store-locators.index'],
             ],
         ]);
+    }
+
+    protected function registerMobileManifest(): void
+    {
+        $this->app->make(MobileModuleRegistry::class)
+            ->register(new EcommerceMobileManifest);
     }
 
     public function provides(): array

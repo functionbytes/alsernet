@@ -27,7 +27,7 @@ class TemplatePolicy
 
     public function update(User $user, Template $template): bool
     {
-        return $user->can('template.edit');
+        return $user->can('template.update');
     }
 
     public function delete(User $user, Template $template): bool
@@ -35,13 +35,8 @@ class TemplatePolicy
         return $user->can('template.delete');
     }
 
-    public function restore(User $user, Template $template): bool
+    public function manage(User $user): bool
     {
-        return $user->can('template.restore');
-    }
-
-    public function forceDelete(User $user, Template $template): bool
-    {
-        return $user->can('template.force-delete');
+        return $user->can('template.manage');
     }
 }

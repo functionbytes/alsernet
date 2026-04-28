@@ -19,10 +19,14 @@ class ConfirmEmailNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        // Web bridge URL detects User-Agent and redirects to deep link on mobile.
+        $url = url('/email-bridge/verify-email').'?token='.$this->token;
+
         return (new MailMessage)
-            ->subject('Confirm your email')
-            ->line('Please click the button below to confirm your email address.')
-            ->action('Confirm Email', url('/confirm-email?token='.$this->token))
-            ->line('If you did not create an account, no further action is required.');
+            ->subject('Confirma tu correo electrónico')
+            ->greeting('Hola '.($notifiable->name ?? '').',')
+            ->line('Confirma tu cuenta tocando el siguiente botón.')
+            ->action('Confirmar email', $url)
+            ->line('Si no creaste una cuenta, ignora este mensaje.');
     }
 }

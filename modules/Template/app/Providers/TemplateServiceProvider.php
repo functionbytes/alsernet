@@ -21,6 +21,7 @@ use Modules\Template\Helpers\RvMedia;
 use Modules\Template\Helpers\SeoHelper;
 use Modules\Template\Models\MenuItem;
 use Modules\Template\Models\Shortcode;
+use Modules\Template\Models\Template as TemplateModel;
 use Modules\Template\Observers\MenuItemObserver;
 use Modules\Template\Services\MenuService;
 use Modules\Template\Services\TemplateManager;
@@ -58,6 +59,61 @@ class TemplateServiceProvider extends ServiceProvider
         $this->loadThemeRoutes();
         $this->initializeThemeEngine();
         $this->registerDynamicShortcodes();
+        $this->registerActiveTemplateShortcodes();
+    }
+
+    /**
+     * Registra los shortcodes específicos del template activo.
+     *
+     * Convención: cada template vive en `modules/Template/Templates/{Slug}/`
+     * con clases en `Shortcodes/` y views en `Resources/views/shortcodes/`.
+     *
+     * Solo se cargan los shortcodes del template marcado como `status='active'`
+     * en la tabla `templates`. Si no hay template activo, no se registra nada.
+     *
+     * Las views del template se exponen bajo el namespace `{slug}::`
+     * (ej: `riode::shortcodes.cta` para template Riode).
+     */
+    protected function registerActiveTemplateShortcodes(): void
+    {
+        $this->app->booted(function () {
+            try {
+                $active = TemplateModel::query()->where('status', 'active')->first();
+
+                if (! $active) {
+                    return;
+                }
+
+                $slug = $active->slug;
+                $studlySlug = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $slug)));
+
+                // 1. Registrar namespace de views: {slug}::
+                $viewsPath = base_path("modules/Template/Templates/{$studlySlug}/Resources/views");
+                if (is_dir($viewsPath)) {
+                    view()->addNamespace($slug, $viewsPath);
+                }
+
+                // 2. Cargar todas las clases Shortcodes/*.php del template activo
+                $shortcodesPath = base_path("modules/Template/Templates/{$studlySlug}/Shortcodes");
+                if (! is_dir($shortcodesPath)) {
+                    return;
+                }
+
+                $compiler = app('shortcode');
+
+                foreach (glob($shortcodesPath.'/*.php') as $file) {
+                    $className = basename($file, '.php');
+                    $fqcn = "Modules\\Template\\Templates\\{$studlySlug}\\Shortcodes\\{$className}";
+
+                    if (class_exists($fqcn) && method_exists($fqcn, 'registerAll')) {
+                        (new $fqcn($compiler))->registerAll();
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Tabla templates puede no existir aún (durante migrations).
+                Log::debug('Active template shortcodes not registered: '.$e->getMessage());
+            }
+        });
     }
 
     /**

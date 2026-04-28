@@ -74,7 +74,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <h6 class="fw-bold text-dark mb-0">SEO global</h6>
-                                <a href="{{ route('setting.seo.metas.index') }}" class="small text-decoration-none">
+                                <a href="{{ route('settings.seo.metas.index') }}" class="small text-decoration-none">
                                     Gestionar SEO por página <i class="fas fa-arrow-right ms-1"></i>
                                 </a>
                             </div>

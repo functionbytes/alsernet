@@ -57,4 +57,43 @@ return [
         'compilation' => 'Error compiling [:name]: :message',
         'invalid_name' => 'Name can only contain letters, numbers, dashes and underscores.',
     ],
+
+    // CTA shortcode
+    'cta_form_placeholder' => 'Email address...',
+    'cta_form_button' => 'Subscribe',
+    'cta_subscribe_success' => 'Subscription confirmed!',
+    'cta_subscribe_error' => 'An error occurred. Please try again.',
+
+    // Countdown shortcode
+    'countdown_days' => 'Days',
+    'countdown_hours' => 'Hours',
+    'countdown_minutes' => 'Minutes',
+    'countdown_seconds' => 'Seconds',
+    'countdown_expired' => 'This offer has ended.',
+    'countdown_expires' => 'Expires on',
+
+    // Icon box grid carousel
+    'icon_box_carousel_label' => 'Features carousel',
+
+    // Riode Structure Shortcodes
+    'tabs' => [
+        'tab_default' => 'Tab',
+    ],
+    'banner' => [
+        'shop_now' => 'Shop now',
+        'play_video' => 'Play video',
+    ],
+    'hotspot' => [
+        'view_product' => 'View product',
+    ],
+    'blog_posts' => [
+        'read_more' => 'Read more',
+        'comments' => 'Comments',
+    ],
+    'category_card' => [
+        'products' => 'Products',
+    ],
+    'testimonial' => [
+        'rating' => 'Rating: :n out of 5',
+    ],
 ];

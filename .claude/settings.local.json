@@ -143,7 +143,13 @@
       "Bash(rm -f .git/index.lock)",
       "Bash(git push *)",
       "Bash(rm /Users/developerts/Herd/system/.git/index.lock)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(mkdir -p /Users/developerts/Herd/system/.claude/skills/template-builder/references)",
+      "Bash(mkdir -p /Users/developerts/Herd/system/.claude/skills/template-builder/scaffolds)",
+      "Bash(mkdir -p /Users/developerts/Herd/system/.claude/skills/template-builder/examples)",
+      "Bash(rm -rf storage/testing/database.sqlite)",
+      "Bash(rm -rf bootstrap/cache/)",
+      "Bash(rm -rf storage/framework/cache/*)"
     ],
     "deny": []
   },

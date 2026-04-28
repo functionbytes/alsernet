@@ -14,7 +14,7 @@
 
             {{-- Form (left) --}}
             <div class="col-lg-8">
-                <form action="{{ route('captcha.settings.update') }}" method="POST">
+                <form action="{{ route('settings.captcha.update') }}" method="POST">
                     @csrf
                     @method('PUT')
 

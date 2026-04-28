@@ -178,6 +178,10 @@ class AuthServiceProvider extends ServiceProvider
     protected function registerGates(): void
     {
         Gate::before(function ($user, $ability) {
+            if (! method_exists($user, 'hasRole')) {
+                return null;
+            }
+
             return $user->hasRole('super-settings') ? true : null;
         });
 

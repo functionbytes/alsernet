@@ -35,6 +35,7 @@ class HealthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(module_path('Health', 'database/migrations'));
         if (Module::find('Health')?->isDisabled()) {
             return;
         }

@@ -29,6 +29,51 @@ $categoryMap = [
     'site-features'  => 'tema',
     'testimonials'   => 'tema',
     'map'            => 'otros',
+
+    // Riode Content
+    'cta-column'     => 'contenido',
+    'countdown'      => 'contenido',
+    'counter'        => 'contenido',
+    'counter-grid'   => 'contenido',
+    'icon-box'       => 'contenido',
+    'icon-box-grid'  => 'contenido',
+
+    // Riode Structure
+    'title'          => 'estructura',
+    'tabs'           => 'estructura',
+    'tab'            => 'estructura',
+    'slider'         => 'media',
+    'slide'          => 'media',
+    'banner'         => 'media',
+    'hotspot'        => 'media',
+    'hotspot-pin'    => 'media',
+
+    // Riode Utility
+    'breadcrumb'     => 'estructura',
+    'page-header'    => 'estructura',
+    'social-links'   => 'contenido',
+    'image-box'      => 'contenido',
+
+    // Riode Media
+    'blog-posts'     => 'tema',
+    'category-card'  => 'tema',
+    'category-grid'  => 'tema',
+    'creative-grid'  => 'estructura',
+    'grid-item'      => 'estructura',
+    'testimonial'    => 'tema',
+
+    // Riode Effects
+    'animate'        => 'otros',
+    'floating'       => 'otros',
+    'scroll-reveal'  => 'otros',
+    'svg-float'      => 'otros',
+
+    // Riode Marketplace
+    'instagram-feed'   => 'media',
+    'subcategory-card' => 'tema',
+    'category-column'  => 'tema',
+    'category-box'     => 'tema',
+    'vendor-card'      => 'tema',
 ];
 
 $iconMap = [
@@ -60,6 +105,51 @@ $iconMap = [
     'cta'            => 'fa-bullhorn',
     'map'            => 'fa-map-marker-alt',
     'ticker'         => 'fa-scroll',
+
+    // Riode Content
+    'cta-column'     => 'fa-grip-vertical',
+    'countdown'      => 'fa-clock',
+    'counter'        => 'fa-hashtag',
+    'counter-grid'   => 'fa-table-cells',
+    'icon-box'       => 'fa-cube',
+    'icon-box-grid'  => 'fa-border-all',
+
+    // Riode Structure
+    'title'          => 'fa-heading',
+    'tabs'           => 'fa-folder-tree',
+    'tab'            => 'fa-folder',
+    'slider'         => 'fa-images',
+    'slide'          => 'fa-rectangle-ad',
+    'banner'         => 'fa-rectangle-ad',
+    'hotspot'        => 'fa-crosshairs',
+    'hotspot-pin'    => 'fa-thumbtack',
+
+    // Riode Utility
+    'breadcrumb'     => 'fa-route',
+    'page-header'    => 'fa-window-maximize',
+    'social-links'   => 'fa-share-nodes',
+    'image-box'      => 'fa-id-badge',
+
+    // Riode Media
+    'blog-posts'     => 'fa-newspaper',
+    'category-card'  => 'fa-tags',
+    'category-grid'  => 'fa-th-large',
+    'creative-grid'  => 'fa-shapes',
+    'grid-item'      => 'fa-square',
+    'testimonial'    => 'fa-comment',
+
+    // Riode Effects
+    'animate'        => 'fa-wand-magic-sparkles',
+    'floating'       => 'fa-arrows-up-down-left-right',
+    'scroll-reveal'  => 'fa-mouse',
+    'svg-float'      => 'fa-bezier-curve',
+
+    // Riode Marketplace
+    'instagram-feed'   => 'fa-square-instagram',
+    'subcategory-card' => 'fa-folder-open',
+    'category-column'  => 'fa-list',
+    'category-box'     => 'fa-list-ul',
+    'vendor-card'      => 'fa-store',
 ];
 
 $categoryLabels = \Modules\Template\Models\ShortcodeCategory::active()

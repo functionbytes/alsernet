@@ -20,6 +20,7 @@ class TemplatePermissionsSeeder extends Seeder
             ['name' => 'template.view', 'description' => 'Ver plantillas', 'guard_name' => 'web'],
             ['name' => 'template.create', 'description' => 'Crear plantillas', 'guard_name' => 'web'],
             ['name' => 'template.update', 'description' => 'Actualizar plantillas', 'guard_name' => 'web'],
+            ['name' => 'template.activate', 'description' => 'Activar plantilla', 'guard_name' => 'web'],
             ['name' => 'template.delete', 'description' => 'Eliminar plantillas', 'guard_name' => 'web'],
             ['name' => 'template.manage', 'description' => 'Gestionar completamente plantillas', 'guard_name' => 'web'],
 
