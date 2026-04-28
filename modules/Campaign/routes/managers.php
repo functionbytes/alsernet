@@ -3,13 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Automations\AutomationsController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Automations\AutoTrigger;
+use Modules\Campaign\Http\Controllers\Managers\Campaigns\CampaignsController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Layouts\LayoutController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Maillists\MaillistController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Maillists\SegmentController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Maillists\SubscriberController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Templates\BuilderController;
 use Modules\Campaign\Http\Controllers\Managers\Campaigns\Templates\TemplatesController;
-use Modules\Campaign\Http\Controllers\Managers\CampaignsController;
 
 /*
 |--------------------------------------------------------------------------

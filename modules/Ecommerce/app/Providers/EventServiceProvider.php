@@ -3,6 +3,7 @@
 namespace Modules\Ecommerce\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Ecommerce\Events\AccountDeleting;
 use Modules\Ecommerce\Events\CustomerEmailVerified;
 use Modules\Ecommerce\Events\CustomerRegistered;
 use Modules\Ecommerce\Events\OrderCancelled;
@@ -19,6 +20,7 @@ use Modules\Ecommerce\Listeners\AddLanguageForVariantsListener;
 use Modules\Ecommerce\Listeners\ClearShippingRuleCache;
 use Modules\Ecommerce\Listeners\GenerateInvoiceListener;
 use Modules\Ecommerce\Listeners\GenerateLicenseCodeAfterOrderCompleted;
+use Modules\Ecommerce\Listeners\HandleCustomerAccountDeletion;
 use Modules\Ecommerce\Listeners\OrderCancelledNotification;
 use Modules\Ecommerce\Listeners\OrderCreatedNotification;
 use Modules\Ecommerce\Listeners\OrderPaymentConfirmedNotification;
@@ -45,6 +47,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         CustomerRegistered::class => [
             SendMailsAfterCustomerRegistered::class,
+        ],
+        AccountDeleting::class => [
+            HandleCustomerAccountDeletion::class,
         ],
         CustomerEmailVerified::class => [
             SendMailsAfterCustomerEmailVerified::class,

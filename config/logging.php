@@ -59,6 +59,14 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'api-mobile' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api-mobile.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
+use Modules\Campaign\Http\Controllers\Public\DemoLoginController;
 use Modules\Campaign\Http\Controllers\Public\HealthController;
 use Modules\Campaign\Http\Controllers\Public\SubscriptionController;
 use Modules\Campaign\Http\Controllers\Public\TrackingController;
@@ -36,3 +37,7 @@ Route::post('manage/{subUid}', [SubscriptionController::class, 'updatePreference
 // Health check para monitoring (sin auth)
 Route::get('health', [HealthController::class, 'check'])->name('campaign.health');
 Route::get('health/simple', [HealthController::class, 'simple'])->name('campaign.health.simple');
+
+// Magic link para demo: auto-login con URL firmada (1h validez)
+Route::get('demo-login', [DemoLoginController::class, 'login'])
+    ->name('campaign.demo-login');

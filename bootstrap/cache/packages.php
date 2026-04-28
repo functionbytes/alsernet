@@ -54,6 +54,11 @@ return [
             0 => 'L5Swagger\\L5SwaggerServiceProvider',
         ],
     ],
+    'knuckleswtf/scribe' => [
+        'providers' => [
+            0 => 'Knuckles\\Scribe\\ScribeServiceProvider',
+        ],
+    ],
     'laravel/boost' => [
         'providers' => [
             0 => 'Laravel\\Boost\\BoostServiceProvider',
@@ -232,6 +237,11 @@ return [
     'spatie/laravel-permission' => [
         'providers' => [
             0 => 'Spatie\\Permission\\PermissionServiceProvider',
+        ],
+    ],
+    'spatie/laravel-query-builder' => [
+        'providers' => [
+            0 => 'Spatie\\QueryBuilder\\QueryBuilderServiceProvider',
         ],
     ],
     'spatie/laravel-signal-aware-command' => [

@@ -12,8 +12,29 @@ use Modules\Ecommerce\Http\Resources\Api\V1\ProductDetailResource;
 use Modules\Ecommerce\Http\Resources\Api\V1\ProductResource;
 use Modules\Ecommerce\Models\Product;
 
+/**
+ * @group Catálogo - Productos
+ *
+ * Listado, búsqueda y detalle de productos. Acceso público (sin autenticación).
+ */
 class CatalogController extends BaseApiController
 {
+    /**
+     * Listar productos
+     *
+     * Devuelve la lista paginada de productos con soporte para búsqueda full-text y filtros.
+     *
+     * @unauthenticated
+     *
+     * @queryParam q string Término de búsqueda (full-text). Example: camiseta azul
+     * @queryParam filter[brand] integer Filtrar por ID de marca. Example: 3
+     * @queryParam filter[category] integer Filtrar por ID de categoría. Example: 12
+     * @queryParam filter[priceMin] number Precio mínimo. Example: 10.00
+     * @queryParam filter[priceMax] number Precio máximo. Example: 150.00
+     * @queryParam filter[inStock] boolean Solo productos con stock. Example: true
+     * @queryParam sort string Ordenar: price,-price,name,-name,newest. Example: -price
+     * @queryParam per_page integer Items por página (máx 50). Example: 15
+     */
     public function index(ListProductsRequest $request): JsonResponse
     {
         $filter = new ProductFilter($request);
@@ -27,6 +48,15 @@ class CatalogController extends BaseApiController
         return $this->paginated($products, ProductResource::class);
     }
 
+    /**
+     * Detalle de producto
+     *
+     * Devuelve el detalle completo de un producto por su slug, incluyendo marca, categorías y estadísticas de reseñas.
+     *
+     * @unauthenticated
+     *
+     * @urlParam slug string required Slug del producto. Example: camiseta-polo-azul
+     */
     public function show(string $slug): JsonResponse
     {
         $cacheKey = 'mobile-api:product:'.app()->getLocale().':'.$slug;
@@ -43,6 +73,15 @@ class CatalogController extends BaseApiController
         return $this->ok(new ProductDetailResource($product));
     }
 
+    /**
+     * Productos relacionados
+     *
+     * Devuelve hasta 8 productos de las mismas categorías del producto indicado.
+     *
+     * @unauthenticated
+     *
+     * @urlParam slug string required Slug del producto. Example: camiseta-polo-azul
+     */
     public function related(string $slug): JsonResponse
     {
         $product = Product::query()->where('slug', $slug)->with('categories')->firstOrFail();
@@ -59,6 +98,15 @@ class CatalogController extends BaseApiController
         return $this->ok(ProductResource::collection($related)->toArray(request()));
     }
 
+    /**
+     * Sugerencias de búsqueda
+     *
+     * Devuelve hasta 8 sugerencias de productos para autocompletar. Requiere mínimo 2 caracteres.
+     *
+     * @unauthenticated
+     *
+     * @queryParam q string required Término de búsqueda (mín 2 chars). Example: polo
+     */
     public function suggestions(Request $request): JsonResponse
     {
         $request->validate(['q' => ['required', 'string', 'min:2', 'max:120']]);

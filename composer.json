@@ -13,6 +13,7 @@
         "aerni/cloudflared": "^1.1",
         "darkaonline/l5-swagger": "^11.0",
         "guzzlehttp/psr7": "2.7",
+        "knuckleswtf/scribe": "^5.9",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.45",
         "laravel/mcp": "^0.5.1",

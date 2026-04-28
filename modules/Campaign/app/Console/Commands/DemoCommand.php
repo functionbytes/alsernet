@@ -2,8 +2,10 @@
 
 namespace Modules\Campaign\Console\Commands;
 
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Modules\Campaign\Library\EmailBuilder\Renderer;
 use Modules\Campaign\Models\CampaignField;
@@ -120,15 +122,36 @@ class DemoCommand extends Command
         $blockCount = count($blocks);
         $this->line("✓ Plantilla creada con {$blockCount} bloques: {$template->name}");
 
-        // 5. Output con URLs Chrome-ready
-        $url = config('app.url').'/panel/campaign/templates/'.$template->uid.'/builder';
-        $previewUrl = config('app.url').'/panel/campaign/templates/'.$template->uid.'/builder/preview';
-        $listFieldsUrl = config('app.url').'/panel/campaign/maillists/'.$list->uid.'/fields';
-        $galleryUrl = config('app.url').'/panel/campaign/templates/gallery';
+        // 5. Output con URLs Chrome-ready (route() resuelve el prefijo correcto)
+        $base = rtrim((string) config('app.url'), '/');
+        $url = $base.'/panel/campaign/manager/templates/'.$template->uid.'/builder';
+        $previewUrl = $base.'/panel/campaign/manager/templates/'.$template->uid.'/builder/preview';
+        $listFieldsUrl = $base.'/panel/campaign/manager/maillists/'.$list->uid.'/fields';
+        $galleryUrl = $base.'/panel/campaign/manager/templates/gallery';
+
+        // 6. Magic link de auto-login (1h validez, primer admin)
+        $admin = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['super-admin', 'super-settings']))
+            ->orderBy('id')
+            ->first();
+        $magicUrl = null;
+        if ($admin) {
+            $relativeBuilder = '/panel/campaign/manager/templates/'.$template->uid.'/builder';
+            $magicUrl = URL::temporarySignedRoute(
+                'campaign.demo-login',
+                now()->addHour(),
+                ['user' => $admin->id, 'to' => $relativeBuilder],
+            );
+        }
 
         $this->newLine();
         $this->info('🚀 Demo listo. Abre en Chrome:');
         $this->newLine();
+        if ($magicUrl) {
+            $this->line('  ⚡ MAGIC LINK (auto-login, 1h):');
+            $this->line("     <fg=green>{$magicUrl}</>");
+            $this->line("     <fg=gray>(usuario: {$admin->email})</>");
+            $this->newLine();
+        }
         $this->line("  📝 BUILDER:  <fg=cyan>{$url}</>");
         $this->line("  👁  PREVIEW: <fg=cyan>{$previewUrl}</>");
         $this->line("  🏷️  CAMPOS:  <fg=cyan>{$listFieldsUrl}</>");
