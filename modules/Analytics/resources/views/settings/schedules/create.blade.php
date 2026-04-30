@@ -2,12 +2,14 @@
 
 @section('title', 'Nuevo reporte programado')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Nuevo reporte programado',
-        'back'  => route('settings.analytics.schedules.index'),
+    'title' => 'Nuevo reporte programado',
+    'back'  => route('settings.analytics.schedules.index'),
     ])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

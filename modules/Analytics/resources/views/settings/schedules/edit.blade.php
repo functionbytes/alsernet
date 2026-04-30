@@ -2,12 +2,14 @@
 
 @section('title', 'Editar reporte programado')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Editar reporte programado',
-        'back'  => route('settings.analytics.schedules.index'),
+    'title' => 'Editar reporte programado',
+    'back'  => route('settings.analytics.schedules.index'),
     ])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

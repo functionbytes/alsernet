@@ -1,8 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Google Analytics GA4'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

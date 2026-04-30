@@ -2,16 +2,18 @@
 
 @section('title', 'Reportes programados')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Reportes programados',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'Analytics', 'url' => ''],
-            ['label' => 'Reportes programados', 'active' => true],
-        ]
+    'title' => 'Reportes programados',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Analytics', 'url' => ''],
+    ['label' => 'Reportes programados', 'active' => true],
+    ]
     ])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
