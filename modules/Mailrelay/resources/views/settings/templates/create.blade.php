@@ -263,9 +263,9 @@
         border: 1px solid #dee2e6;
     }
     .variable-tag:hover {
-        background-color: #90bb13 !important;
+        background-color: #b10100 !important;
         color: white !important;
-        border-color: #90bb13;
+        border-color: #b10100;
     }
     .ql-editor {
         min-height: 350px;

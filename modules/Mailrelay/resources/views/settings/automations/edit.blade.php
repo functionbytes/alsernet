@@ -27,7 +27,7 @@
         right: 0.5rem;
     }
     .action-type-select {
-        border-left: 4px solid #90bb13;
+        border-left: 4px solid #b10100;
     }
     .sticky-sidebar {
         position: sticky;

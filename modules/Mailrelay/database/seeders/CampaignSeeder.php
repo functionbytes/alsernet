@@ -121,9 +121,9 @@ class CampaignSeeder extends Seeder
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #90bb13 0%, #7a9f11 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0; }
+                .header { background: linear-gradient(135deg, #b10100 0%, #7a9f11 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0; }
                 .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
-                .cta-button { display: inline-block; background: #90bb13; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+                .cta-button { display: inline-block; background: #b10100; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
                 .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 10px 10px; }
             </style>
         </head>
@@ -157,7 +157,7 @@ class CampaignSeeder extends Seeder
 
                 <div class="footer">
                     <p>Te has suscrito a nuestras newsletters de {SITE_NAME}</p>
-                    <p><a href="{UNSUBSCRIBE_URL}" style="color: #90bb13;">Cancelar suscripción</a></p>
+                    <p><a href="{UNSUBSCRIBE_URL}" style="color: #b10100;">Cancelar suscripción</a></p>
                     <p>{CURRENT_YEAR} {SITE_NAME}. Todos los derechos reservados.</p>
                 </div>
             </div>
@@ -180,10 +180,10 @@ class CampaignSeeder extends Seeder
             <style>
                 body { font-family: Arial, sans-serif; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; }
-                .header { background: #90bb13; color: white; padding: 30px; text-align: center; }
+                .header { background: #b10100; color: white; padding: 30px; text-align: center; }
                 .content { padding: 30px; background: white; }
-                .event-box { background: #f9f9f9; border-left: 4px solid #90bb13; padding: 20px; margin: 20px 0; }
-                .cta { background: #90bb13; color: white; padding: 15px 40px; text-decoration: none; display: inline-block; border-radius: 5px; margin: 20px 0; }
+                .event-box { background: #f9f9f9; border-left: 4px solid #b10100; padding: 20px; margin: 20px 0; }
+                .cta { background: #b10100; color: white; padding: 15px 40px; text-decoration: none; display: inline-block; border-radius: 5px; margin: 20px 0; }
             </style>
         </head>
         <body>

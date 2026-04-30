@@ -160,7 +160,7 @@
         }
 
         .device-btn.active {
-            background: #90bb13;
+            background: #b10100;
             color: #fff;
             border-color: #7a9f11;
         }
