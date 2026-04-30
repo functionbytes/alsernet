@@ -2,9 +2,11 @@
 
 @section('title', 'Guía de configuración')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Guía de configuración'])
+@endsection
+
+@section('content')
 
     @php
         $detectedTab = match($os) {

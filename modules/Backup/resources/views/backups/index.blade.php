@@ -2,9 +2,11 @@
 
 @section('title', 'Administrador de backups')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Administrador de backups'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
