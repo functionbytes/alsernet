@@ -2,9 +2,11 @@
 
 @section('title', 'Pronostico de demanda')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Reportes'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     {{-- Report navigation --}}

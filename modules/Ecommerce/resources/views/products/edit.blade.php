@@ -2,8 +2,11 @@
 
 @section('title', 'Editar producto')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar producto'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.products.update', $product) }}" method="POST">

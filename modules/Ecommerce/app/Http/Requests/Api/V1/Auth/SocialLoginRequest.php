@@ -25,4 +25,12 @@ class SocialLoginRequest extends BaseApiRequest
             'access_token.required' => 'El token de acceso del proveedor es obligatorio.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'access_token' => ['description' => 'Token de acceso del proveedor social (Google/Apple/Facebook).', 'example' => 'ya29.a0AfH6SMC...'],
+            'device_name' => ['description' => 'Nombre del dispositivo para el token Sanctum.', 'example' => 'Android de Juan'],
+        ];
+    }
 }

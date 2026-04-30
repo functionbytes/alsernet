@@ -2,9 +2,11 @@
 
 @section('title', 'Editar productos - ' . $order->code)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar productos de la orden #' . $order->code])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

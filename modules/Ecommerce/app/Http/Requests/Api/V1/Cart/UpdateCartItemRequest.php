@@ -17,4 +17,11 @@ class UpdateCartItemRequest extends BaseApiRequest
             'qty' => ['required', 'integer', 'min:1', 'max:999'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'qty' => ['description' => 'Nueva cantidad del ítem.', 'example' => 3],
+        ];
+    }
 }

@@ -2,8 +2,11 @@
 
 @section('title', 'Localizadores de tiendas')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Localizadores de tiendas'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <div class="card">

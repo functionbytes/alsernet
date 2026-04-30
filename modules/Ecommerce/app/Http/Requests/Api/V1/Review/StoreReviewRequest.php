@@ -29,4 +29,12 @@ class StoreReviewRequest extends BaseApiRequest
             'comment.min' => 'El comentario debe tener al menos 5 caracteres.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'star' => ['description' => 'Calificación del 1 al 5 estrellas.', 'example' => 5],
+            'comment' => ['description' => 'Texto de la reseña (mínimo 5 caracteres).', 'example' => 'Excelente producto, muy buena calidad.'],
+        ];
+    }
 }

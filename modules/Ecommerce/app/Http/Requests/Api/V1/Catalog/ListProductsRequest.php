@@ -38,4 +38,10 @@ class ListProductsRequest extends BaseApiRequest
             'per_page.max' => 'La paginación máxima es 100.',
         ];
     }
+
+    // GET request — query params documented via @queryParam in CatalogController.
+    public function bodyParameters(): array
+    {
+        return [];
+    }
 }

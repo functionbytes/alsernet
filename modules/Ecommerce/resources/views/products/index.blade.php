@@ -36,16 +36,18 @@
 .inline-edit-input {
     width: 100px;
     padding: 2px 6px;
-    border: 2px solid #90bb13;
+    border: 2px solid #b10100;
     border-radius: 3px;
     font-size: inherit;
 }
 </style>
 @endpush
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Productos'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

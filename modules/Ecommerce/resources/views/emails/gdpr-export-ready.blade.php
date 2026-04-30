@@ -3,7 +3,7 @@
 <p>Tu exportación de datos personales (GDPR) está lista para descargar.</p>
 
 <p style="text-align:center;margin:24px 0;">
-    <a href="{{ $downloadUrl }}" style="background:#90bb13;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;font-size:16px;">
+    <a href="{{ $downloadUrl }}" style="background:#b10100;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;font-size:16px;">
         Descargar mis datos
     </a>
 </p>

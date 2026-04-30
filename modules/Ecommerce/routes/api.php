@@ -39,8 +39,8 @@ Route::prefix('v1/ecommerce')->name('api.ecommerce.')->group(function () {
     Route::get('/cart/count', [CartApiController::class, 'count'])->name('cart.count');
     Route::get('/cart', [CartApiController::class, 'index'])->name('cart.index');
     Route::post('/cart', [CartApiController::class, 'store'])->name('cart.store');
-    Route::put('/cart/{rowId}', [CartApiController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/{rowId}', [CartApiController::class, 'destroy'])->name('cart.destroy');
+    Route::put('/cart/{rowId}', [CartApiController::class, 'update'])->name('cart.update')->whereNumber('rowId');
+    Route::delete('/cart/{rowId}', [CartApiController::class, 'destroy'])->name('cart.destroy')->whereNumber('rowId');
 
     // Public reviews
     Route::get('/products/{product}/reviews', [ReviewApiController::class, 'index'])->name('products.reviews.index');

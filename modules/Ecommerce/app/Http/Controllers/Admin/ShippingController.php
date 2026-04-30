@@ -11,6 +11,11 @@ use Modules\Ecommerce\Models\Shipping;
 
 class ShippingController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Shipping::class, 'shipping');
+    }
+
     public function index(): View
     {
         $shippings = Shipping::query()->with('rules')->paginate(20);
@@ -75,6 +80,7 @@ class ShippingController extends Controller
 
     public function toggleStatus(Shipping $shipping): JsonResponse
     {
+        $this->authorize('update', $shipping);
         $shipping->update(['is_active' => ! $shipping->is_active]);
 
         return response()->json([

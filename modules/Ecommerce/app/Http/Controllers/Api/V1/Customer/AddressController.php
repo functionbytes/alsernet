@@ -10,8 +10,18 @@ use Modules\Ecommerce\Http\Requests\Api\V1\Address\UpdateAddressRequest;
 use Modules\Ecommerce\Http\Resources\Api\V1\AddressResource;
 use Modules\Ecommerce\Models\CustomerAddress;
 
+/**
+ * @group Direcciones
+ *
+ * Gestión de direcciones de envío y facturación del cliente.
+ */
 class AddressController extends BaseApiController
 {
+    /**
+     * Listar direcciones
+     *
+     * Devuelve todas las direcciones del cliente, con la predeterminada primero.
+     */
     public function index(): JsonResponse
     {
         $addresses = CustomerAddress::query()
@@ -23,6 +33,7 @@ class AddressController extends BaseApiController
         return $this->ok(AddressResource::collection($addresses)->toArray(request()));
     }
 
+    /** Crear dirección */
     public function store(StoreAddressRequest $request): JsonResponse
     {
         $address = DB::transaction(function () use ($request) {
@@ -45,6 +56,7 @@ class AddressController extends BaseApiController
         return $this->created(new AddressResource($address));
     }
 
+    /** Ver dirección */
     public function show(CustomerAddress $address): JsonResponse
     {
         $this->authorize('view', $address);
@@ -52,6 +64,7 @@ class AddressController extends BaseApiController
         return $this->ok(new AddressResource($address));
     }
 
+    /** Actualizar dirección */
     public function update(UpdateAddressRequest $request, CustomerAddress $address): JsonResponse
     {
         DB::transaction(function () use ($request, $address) {
@@ -70,6 +83,7 @@ class AddressController extends BaseApiController
         return $this->ok(new AddressResource($address->fresh()));
     }
 
+    /** Eliminar dirección */
     public function destroy(CustomerAddress $address): JsonResponse
     {
         $this->authorize('delete', $address);
@@ -78,6 +92,11 @@ class AddressController extends BaseApiController
         return $this->noContent('Dirección eliminada.');
     }
 
+    /**
+     * Establecer dirección predeterminada
+     *
+     * Marca la dirección como predeterminada y desmarca la anterior.
+     */
     public function setDefault(CustomerAddress $address): JsonResponse
     {
         $this->authorize('update', $address);

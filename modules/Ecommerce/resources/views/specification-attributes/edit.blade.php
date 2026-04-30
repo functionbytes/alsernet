@@ -2,9 +2,11 @@
 
 @section('title', 'Editar atributo de especificacion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar atributo de especificacion'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.specification-attributes.update', $specificationAttribute) }}" method="POST">
         @csrf @method('PUT')
         <div class="row g-4 align-items-start">

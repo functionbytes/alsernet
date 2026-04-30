@@ -2,9 +2,11 @@
 
 @section('title', isset($option) ? 'Editar opcion de producto' : 'Nueva opcion de producto')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => isset($option) ? 'Editar opcion de producto' : 'Nueva opcion de producto'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         <form
             action="{{ isset($option) ? route('ecommerce.product-options.update', $option) : route('ecommerce.product-options.store') }}"

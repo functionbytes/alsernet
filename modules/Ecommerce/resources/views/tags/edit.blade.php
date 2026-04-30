@@ -2,8 +2,11 @@
 
 @section('title', 'Editar etiqueta')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar etiqueta'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.tags.update', $tag) }}" method="POST">

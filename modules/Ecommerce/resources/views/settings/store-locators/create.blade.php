@@ -2,8 +2,11 @@
 
 @section('title', 'Nueva tienda')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva tienda'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.ecommerce.store-locators.store') }}" method="POST">

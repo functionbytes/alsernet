@@ -2,7 +2,7 @@
 
 namespace Modules\Ecommerce\Tests\Feature\Api\V1\Customer;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Laravel\Sanctum\Sanctum;
 use Modules\Ecommerce\Models\Customer;
 use Modules\Ecommerce\Models\CustomerPushToken;
@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class DeviceTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_customer_can_register_device(): void
     {

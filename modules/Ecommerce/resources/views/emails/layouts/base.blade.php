@@ -11,7 +11,7 @@
         <td align="center">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                 <tr>
-                    <td style="background:#90bb13;padding:24px;text-align:center;">
+                    <td style="background:#b10100;padding:24px;text-align:center;">
                         <a href="{{ url('/') }}" style="color:#fff;text-decoration:none;font-size:22px;font-weight:700;">{{ config('app.name', 'Tienda') }}</a>
                     </td>
                 </tr>
@@ -24,9 +24,9 @@
                     <td style="background:#1a2030;padding:18px 24px;text-align:center;color:rgba(255,255,255,0.7);font-size:12px;">
                         <p style="margin:0 0 6px;">&copy; {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados.</p>
                         <p style="margin:0;">
-                            <a href="{{ url('/tienda') }}" style="color:#90bb13;text-decoration:none;">Visitar tienda</a>
+                            <a href="{{ url('/tienda') }}" style="color:#b10100;text-decoration:none;">Visitar tienda</a>
                             &nbsp;&middot;&nbsp;
-                            <a href="{{ route('shop.legal.show', 'privacy') }}" style="color:#90bb13;text-decoration:none;">Privacidad</a>
+                            <a href="{{ route('shop.legal.show', 'privacy') }}" style="color:#b10100;text-decoration:none;">Privacidad</a>
                         </p>
                     </td>
                 </tr>

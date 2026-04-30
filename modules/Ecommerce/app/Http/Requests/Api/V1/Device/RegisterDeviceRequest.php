@@ -41,4 +41,12 @@ class RegisterDeviceRequest extends BaseApiRequest
             'locale' => 'idioma',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'token' => ['description' => 'Token FCM del dispositivo para push notifications.', 'example' => 'fMb_xyz123...'],
+            'platform' => ['description' => 'Plataforma del dispositivo.', 'example' => 'android'],
+        ];
+    }
 }

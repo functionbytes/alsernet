@@ -38,6 +38,7 @@ class SettingController extends Controller
 
     public function index(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load($this->keys);
 
         return view('ecommerce::settings.index', compact('settings'));
@@ -45,6 +46,7 @@ class SettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'store_name' => ['nullable', 'string', 'max:100'],
             'store_company' => ['nullable', 'string', 'max:100'],
@@ -70,6 +72,7 @@ class SettingController extends Controller
 
     public function currencies(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.currency_auto_detect',
             'ecommerce.currency_space_between',
@@ -89,6 +92,7 @@ class SettingController extends Controller
 
     public function updateCurrencies(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'currency_thousands_separator' => ['nullable', 'string', 'max:5'],
             'currency_decimal_separator' => ['nullable', 'string', 'max:5'],
@@ -138,6 +142,7 @@ class SettingController extends Controller
 
     public function products(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.product_variation_images_type',
             'ecommerce.show_stock_count',
@@ -156,6 +161,7 @@ class SettingController extends Controller
 
     public function updateProducts(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'product_variation_images_type' => ['nullable', 'string', 'in:per_variation,all'],
             'auto_sku_format' => ['nullable', 'string', 'max:255'],
@@ -187,6 +193,7 @@ class SettingController extends Controller
 
     public function productSearch(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.search_exact_phrase',
             'ecommerce.search_field_name',
@@ -208,6 +215,7 @@ class SettingController extends Controller
 
     public function updateProductSearch(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'search_max_price' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -242,6 +250,7 @@ class SettingController extends Controller
 
     public function digitalProducts(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.digital_products_enabled',
             'ecommerce.digital_products_guest_checkout',
@@ -253,6 +262,7 @@ class SettingController extends Controller
 
     public function updateDigitalProducts(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $this->save($request, [
             'ecommerce.digital_products_enabled',
             'ecommerce.digital_products_guest_checkout',
@@ -272,6 +282,7 @@ class SettingController extends Controller
 
     public function productReviews(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.reviews_enabled',
             'ecommerce.review_buyers_only',
@@ -286,6 +297,7 @@ class SettingController extends Controller
 
     public function updateProductReviews(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'review_max_file_size' => ['nullable', 'numeric', 'min:0'],
             'review_max_files' => ['nullable', 'integer', 'min:1'],
@@ -309,6 +321,7 @@ class SettingController extends Controller
 
     public function shopping(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.cart_enabled',
             'ecommerce.quick_buy_enabled',
@@ -328,6 +341,7 @@ class SettingController extends Controller
 
     public function updateShopping(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'quick_buy_destination' => ['nullable', 'string', 'in:cart,checkout'],
             'wishlist_duration' => ['nullable', 'integer', 'min:0'],
@@ -360,6 +374,7 @@ class SettingController extends Controller
 
     public function checkout(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.allow_guest_checkout',
             'ecommerce.order_minimum_amount',
@@ -396,6 +411,7 @@ class SettingController extends Controller
 
     public function updateCheckout(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'order_minimum_amount' => ['nullable', 'numeric', 'min:0'],
             'order_minimum_quantity' => ['nullable', 'integer', 'min:0'],
@@ -455,6 +471,7 @@ class SettingController extends Controller
 
     public function returnSettings(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.returns_enabled',
             'ecommerce.returnable_days',
@@ -466,6 +483,7 @@ class SettingController extends Controller
 
     public function updateReturn(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'returnable_days' => ['nullable', 'integer', 'min:0'],
         ]);
@@ -485,6 +503,7 @@ class SettingController extends Controller
 
     public function invoices(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.invoice_company_name',
             'ecommerce.invoice_address',
@@ -510,6 +529,7 @@ class SettingController extends Controller
 
     public function updateInvoices(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'invoice_company_name' => ['nullable', 'string', 'max:255'],
             'invoice_address' => ['nullable', 'string', 'max:500'],
@@ -556,6 +576,7 @@ class SettingController extends Controller
 
     public function invoiceTemplate(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load(['ecommerce.invoice_template']);
 
         return view('ecommerce::settings.invoice-template', compact('settings'));
@@ -563,6 +584,7 @@ class SettingController extends Controller
 
     public function updateInvoiceTemplate(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'invoice_template' => ['nullable', 'string'],
         ]);
@@ -574,6 +596,7 @@ class SettingController extends Controller
 
     public function previewInvoiceTemplate(): Response
     {
+        $this->authorize('ecommerce.settings');
         $template = Setting::get('ecommerce.invoice_template', '');
 
         if (empty($template)) {
@@ -634,6 +657,7 @@ class SettingController extends Controller
 
     public function shippingLabelTemplate(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load(['ecommerce.shipping_label_template']);
 
         return view('ecommerce::settings.shipping-label-template', compact('settings'));
@@ -641,6 +665,7 @@ class SettingController extends Controller
 
     public function updateShippingLabelTemplate(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'shipping_label_template' => ['nullable', 'string'],
         ]);
@@ -652,6 +677,7 @@ class SettingController extends Controller
 
     public function previewShippingLabelTemplate(): Response
     {
+        $this->authorize('ecommerce.settings');
         $template = Setting::get('ecommerce.shipping_label_template', '');
 
         if (empty($template)) {
@@ -711,6 +737,7 @@ class SettingController extends Controller
 
     public function taxesSettings(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.taxes_enabled',
             'ecommerce.default_tax_rate',
@@ -726,6 +753,7 @@ class SettingController extends Controller
 
     public function updateTaxes(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'default_tax_rate' => ['nullable', 'integer', 'exists:ecommerce_taxes,id'],
         ]);
@@ -752,6 +780,7 @@ class SettingController extends Controller
 
     public function customers(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.enable_customer_registration',
             'ecommerce.verify_customer_email',
@@ -769,6 +798,7 @@ class SettingController extends Controller
 
     public function updateCustomers(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'login_option' => ['nullable', 'string', 'in:email,phone,email_or_phone'],
             'customer_default_avatar' => ['nullable', 'string', 'max:500'],
@@ -800,6 +830,7 @@ class SettingController extends Controller
 
     public function shippingSettings(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.hide_other_shipping_options_if_it_has_free_shipping',
             'ecommerce.sort_shipping_options_direction',
@@ -813,6 +844,7 @@ class SettingController extends Controller
 
     public function updateShippingSettings(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'sort_shipping_options_direction' => ['nullable', 'string', 'in:price_lower_to_higher,price_higher_to_lower'],
         ]);
@@ -832,6 +864,7 @@ class SettingController extends Controller
 
     public function webhook(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load(['ecommerce.order_placed_webhook_url']);
 
         return view('ecommerce::settings.webhook', compact('settings'));
@@ -839,6 +872,7 @@ class SettingController extends Controller
 
     public function updateWebhook(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'order_placed_webhook_url' => ['nullable', 'string', 'max:500'],
         ]);
@@ -854,6 +888,7 @@ class SettingController extends Controller
 
     public function tracking(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.facebook_pixel_enabled',
             'ecommerce.facebook_pixel_id',
@@ -865,6 +900,7 @@ class SettingController extends Controller
 
     public function updateTracking(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'facebook_pixel_id' => ['nullable', 'string', 'max:100'],
         ]);
@@ -884,6 +920,7 @@ class SettingController extends Controller
 
     public function standardAndFormat(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.store_order_prefix',
             'ecommerce.store_order_suffix',
@@ -896,6 +933,7 @@ class SettingController extends Controller
 
     public function updateStandardAndFormat(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'store_order_prefix' => ['nullable', 'string', 'max:50'],
             'store_order_suffix' => ['nullable', 'string', 'max:50'],
@@ -919,6 +957,7 @@ class SettingController extends Controller
 
     public function flashSale(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load(['ecommerce.flash_sale_enabled']);
 
         return view('ecommerce::settings.flash-sale', compact('settings'));
@@ -926,6 +965,7 @@ class SettingController extends Controller
 
     public function updateFlashSale(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $this->save($request, ['ecommerce.flash_sale_enabled'], ['flash_sale_enabled']);
 
         return redirect()->route('settings.ecommerce.flash-sale.index')->with('success', 'Configuracion actualizada.');
@@ -937,6 +977,7 @@ class SettingController extends Controller
 
     public function abandonedCart(): View
     {
+        $this->authorize('ecommerce.settings');
         $settings = $this->load([
             'ecommerce.abandoned_cart_enabled',
             'ecommerce.abandoned_cart_email_template',
@@ -956,6 +997,7 @@ class SettingController extends Controller
 
     public function updateAbandonedCart(Request $request): RedirectResponse
     {
+        $this->authorize('ecommerce.settings');
         $request->validate([
             'abandoned_cart_email_template' => ['nullable', 'string', 'in:abandoned_cart,order_recover'],
             'abandoned_cart_email_subject' => ['nullable', 'string', 'max:255'],

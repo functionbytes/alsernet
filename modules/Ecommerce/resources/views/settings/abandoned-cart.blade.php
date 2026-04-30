@@ -2,8 +2,11 @@
 
 @section('title', 'Carrito abandonado')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Carrito abandonado'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.ecommerce.abandoned-cart.update') }}" method="POST">

@@ -2,8 +2,11 @@
 
 @section('title', 'Checkout')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Checkout'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php

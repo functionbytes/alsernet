@@ -2,8 +2,11 @@
 
 @section('title', 'Reseñas de productos')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Reseñas de productos'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php $enabled = old('reviews_enabled', $settings['reviews_enabled'] ?? '') == '1'; @endphp

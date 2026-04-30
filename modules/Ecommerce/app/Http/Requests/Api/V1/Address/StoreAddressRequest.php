@@ -48,4 +48,17 @@ class StoreAddressRequest extends BaseApiRequest
             'is_default' => 'predeterminada',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Nombre del destinatario.', 'example' => 'María García'],
+            'phone' => ['description' => 'Teléfono del destinatario.', 'example' => '+57 300 123 4567'],
+            'address' => ['description' => 'Dirección completa.', 'example' => 'Calle 123 # 45-67'],
+            'city' => ['description' => 'Ciudad.', 'example' => 'Bogotá'],
+            'state' => ['description' => 'Departamento/Estado.', 'example' => 'Cundinamarca'],
+            'country' => ['description' => 'Código de país ISO 3166-1 alpha-2.', 'example' => 'CO'],
+            'is_default' => ['description' => 'Marcar como dirección predeterminada.', 'example' => true],
+        ];
+    }
 }

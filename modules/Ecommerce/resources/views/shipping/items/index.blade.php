@@ -2,9 +2,11 @@
 
 @section('title', 'Items de regla de envio')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Items de regla de envio'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="card">

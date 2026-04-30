@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva gift card')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva gift card'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.gift-cards.store') }}" method="POST">
         @csrf
         <div class="row g-4 align-items-start">

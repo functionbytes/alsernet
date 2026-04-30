@@ -26,7 +26,7 @@
 .search-suggestion-item:last-child { border-bottom: none; }
 .search-suggestion-item:hover { background: #f8f9fa; color: inherit; }
 .search-suggestion-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-.search-suggestion-price { color: #90bb13; font-weight: 600; margin-left: auto; white-space: nowrap; }
+.search-suggestion-price { color: #b10100; font-weight: 600; margin-left: auto; white-space: nowrap; }
 .search-style-2 { position: relative; }
 </style>
 

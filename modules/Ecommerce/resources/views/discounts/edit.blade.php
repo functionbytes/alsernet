@@ -2,8 +2,11 @@
 
 @section('title', 'Editar descuento')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar descuento'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.discounts.update', $discount) }}" method="POST">

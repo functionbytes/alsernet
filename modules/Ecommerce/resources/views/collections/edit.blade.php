@@ -2,9 +2,11 @@
 
 @section('title', 'Editar coleccion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar coleccion'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.collections.update', $collection) }}" method="POST">
         @csrf @method('PUT')
         <div class="row g-4 align-items-start">

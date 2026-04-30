@@ -13,7 +13,7 @@
             </div>
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <div class="hero-slide" style="background:linear-gradient(135deg,#90bb13 0%,#7da210 100%)">
+                    <div class="hero-slide" style="background:linear-gradient(135deg,#b10100 0%,#7da210 100%)">
                         <div class="container">
                             <div class="row align-items-center min-vh-50 py-5">
                                 <div class="col-md-7 text-white">

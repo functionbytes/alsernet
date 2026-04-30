@@ -112,7 +112,7 @@ class EcommerceOrderEmailTemplatesSeeder extends Seeder
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
 
-    <div style="background: #90bb13; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
+    <div style="background: #b10100; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
         <h1 style="color: #fff; margin: 0; font-size: 22px;">¡Orden recibida!</h1>
     </div>
 
@@ -121,7 +121,7 @@ class EcommerceOrderEmailTemplatesSeeder extends Seeder
         <p>Hola <strong>{CUSTOMER_NAME}</strong>,</p>
         <p>Hemos recibido tu orden y está siendo procesada. Te notificaremos cuando sea enviada.</p>
 
-        <div style="background: #f0f5e3; border-left: 4px solid #90bb13; padding: 12px 16px; margin: 20px 0; border-radius: 4px;">
+        <div style="background: #f0f5e3; border-left: 4px solid #b10100; padding: 12px 16px; margin: 20px 0; border-radius: 4px;">
             <p style="margin: 0; font-size: 18px; font-weight: bold;">Orden: #{ORDER_CODE}</p>
         </div>
 
@@ -248,7 +248,7 @@ HTML;
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
 
-    <div style="background: #90bb13; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
+    <div style="background: #b10100; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
         <h1 style="color: #fff; margin: 0; font-size: 22px;">¡Pago confirmado!</h1>
     </div>
 

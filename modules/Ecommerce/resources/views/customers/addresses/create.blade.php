@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva direccion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva direccion'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="card">

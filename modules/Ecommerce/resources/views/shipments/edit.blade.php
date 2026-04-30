@@ -2,9 +2,11 @@
 
 @section('title', 'Editar envío #' . ($shipment->shipment_id ?? $shipment->id))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar envío #' . ($shipment->shipment_id ?? $shipment->id)])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     @php

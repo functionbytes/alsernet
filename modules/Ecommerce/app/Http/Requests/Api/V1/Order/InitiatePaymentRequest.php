@@ -25,4 +25,12 @@ class InitiatePaymentRequest extends BaseApiRequest
             'channel.required' => 'El canal de pago es obligatorio.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'channel' => ['description' => 'Canal de pago.', 'example' => 'wompi'],
+            'return_url' => ['description' => 'URL de retorno tras el pago (para deep link).', 'example' => 'miapp://payment-result'],
+        ];
+    }
 }

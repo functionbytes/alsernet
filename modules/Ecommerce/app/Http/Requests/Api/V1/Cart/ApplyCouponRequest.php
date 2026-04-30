@@ -24,4 +24,11 @@ class ApplyCouponRequest extends BaseApiRequest
             'code.required' => 'El código del cupón es obligatorio.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'code' => ['description' => 'Código de cupón de descuento.', 'example' => 'VERANO20'],
+        ];
+    }
 }

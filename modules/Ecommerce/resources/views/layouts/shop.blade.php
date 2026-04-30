@@ -16,7 +16,7 @@
 
     <style>
         :root {
-            --bs-primary: #90bb13;
+            --bs-primary: #b10100;
             --bs-primary-rgb: 144, 187, 19;
             --bs-success: #13C672;
             --bs-danger: #FA896B;
@@ -41,7 +41,7 @@
         }
 
         .shop-navbar .navbar-brand i {
-            color: #90bb13;
+            color: #b10100;
         }
 
         .shop-navbar .nav-link {
@@ -52,7 +52,7 @@
 
         .shop-navbar .nav-link:hover,
         .shop-navbar .nav-link.active {
-            color: #90bb13;
+            color: #b10100;
         }
 
         .shop-footer {
@@ -64,8 +64,8 @@
         }
 
         .btn-primary {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
             font-weight: 600;
         }
 
@@ -75,25 +75,25 @@
         }
 
         .btn-outline-primary {
-            color: #90bb13;
-            border-color: #90bb13;
+            color: #b10100;
+            border-color: #b10100;
             font-weight: 600;
         }
 
         .btn-outline-primary:hover {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
             color: #fff;
         }
 
-        .text-primary { color: #90bb13 !important; }
+        .text-primary { color: #b10100 !important; }
 
         .form-control:focus, .form-select:focus {
-            border-color: #90bb13;
+            border-color: #b10100;
             box-shadow: 0 0 0 0.25rem rgba(144, 187, 19, 0.15);
         }
 
-        .breadcrumb a { color: #90bb13; }
+        .breadcrumb a { color: #b10100; }
     </style>
 
     @yield('meta')

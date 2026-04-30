@@ -2,8 +2,11 @@
 
 @section('title', 'Productos digitales')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Productos digitales'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php $enabled = old('digital_products_enabled', $settings['digital_products_enabled'] ?? '') == '1'; @endphp

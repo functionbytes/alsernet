@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva venta flash')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva venta flash'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.flash-sales.store') }}" method="POST">
         @csrf
         <div class="row g-4 align-items-start">

@@ -2,7 +2,7 @@
 
 namespace Modules\Ecommerce\Tests\Feature\Api\V1\Catalog;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Ecommerce\Models\Brand;
 use Modules\Ecommerce\Models\Product;
 use Modules\Ecommerce\Models\ProductCategory;
@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class CatalogTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_products_index_returns_paginated_list(): void
     {

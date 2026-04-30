@@ -5,17 +5,18 @@ namespace Modules\Ecommerce\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Ecommerce\Enums\OrderAddressType;
 use Modules\Ecommerce\Enums\OrderStatus;
 use Modules\Ecommerce\Events\OrderCreated;
 use Modules\Ecommerce\Models\Customer;
-use Modules\Ecommerce\Models\Discount;
 use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Models\OrderAddress;
 use Modules\Ecommerce\Models\OrderHistory;
 use Modules\Ecommerce\Models\OrderItem;
 use Modules\Ecommerce\Services\CartService;
+use Modules\Ecommerce\Services\DiscountService;
 use Modules\Ecommerce\Services\OrderStockService;
 use Modules\Ecommerce\Services\ShippingService;
 use Modules\Ecommerce\Services\TaxService;
@@ -29,6 +30,7 @@ class CheckoutController extends Controller
         protected TaxService $taxService,
         protected PaymentGatewayManager $gatewayManager,
         protected OrderStockService $orderStockService,
+        protected DiscountService $discountService,
     ) {}
 
     public function index(): View|RedirectResponse
@@ -112,21 +114,13 @@ class CheckoutController extends Controller
 
         $total = $subtotal + $shipping + $tax + $fee;
 
-        $discountAmount = 0.0;
         $couponCode = $validated['coupon_code'] ?? null;
-        $discount = null;
+        $discountResult = $couponCode
+            ? $this->discountService->applyCoupon($couponCode, $subtotal)
+            : ['success' => false, 'amount' => 0.0, 'free_shipping' => false];
 
-        if ($couponCode) {
-            $discount = Discount::query()
-                ->where('code', $couponCode)
-                ->where('is_active', true)
-                ->first();
-
-            if ($discount && ! $discount->isExpired()) {
-                $discountAmount = $discount->calculateDiscount($subtotal);
-                $total = max(0, $total - $discountAmount);
-            }
-        }
+        $discountAmount = $discountResult['success'] ? $discountResult['amount'] : 0.0;
+        $total = max(0, $total - $discountAmount);
 
         $customer = auth('ecommerce')->user();
         if (! $customer) {
@@ -141,69 +135,73 @@ class CheckoutController extends Controller
             );
         }
 
-        $order = Order::query()->create([
-            'customer_id' => $customer->id,
-            'status' => OrderStatus::PENDING,
-            'sub_total' => $subtotal,
-            'tax_amount' => $tax,
-            'shipping_amount' => $shipping,
-            'discount_amount' => $discountAmount,
-            'coupon_code' => $couponCode,
-            'total' => $total,
-            'payment_method' => $paymentMethod,
-            'payment_status' => 'pending',
-            'customer_note' => $request->input('note'),
-        ]);
-
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem->product;
-
-            OrderItem::query()->create([
-                'order_id' => $order->id,
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'product_image' => $product->featured_image,
-                'qty' => $cartItem->qty,
-                'price' => $product->final_price,
-                'total' => $product->final_price * $cartItem->qty,
+        $order = DB::transaction(function () use ($cartItems, $customer, $subtotal, $tax, $shipping, $discountAmount, $couponCode, $total, $paymentMethod, $request, $discountResult, $validated) {
+            $order = Order::query()->create([
+                'customer_id' => $customer->id,
+                'status' => OrderStatus::PENDING,
+                'sub_total' => $subtotal,
+                'tax_amount' => $tax,
+                'shipping_amount' => $shipping,
+                'discount_amount' => $discountAmount,
+                'coupon_code' => $couponCode,
+                'total' => $total,
+                'payment_method' => $paymentMethod,
+                'payment_status' => 'pending',
+                'customer_note' => $request->input('note'),
             ]);
 
-            if ($product->with_storehouse_management) {
-                $product->decrement('quantity', $cartItem->qty);
-                if ($product->quantity <= 0) {
-                    $product->update(['stock_status' => 'out_of_stock']);
+            foreach ($cartItems as $cartItem) {
+                $product = $cartItem->product;
+
+                OrderItem::query()->create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'product_image' => $product->featured_image,
+                    'qty' => $cartItem->qty,
+                    'price' => $product->final_price,
+                    'total' => $product->final_price * $cartItem->qty,
+                ]);
+
+                if ($product->with_storehouse_management) {
+                    $product->decrement('quantity', $cartItem->qty);
+                    if ($product->quantity <= 0) {
+                        $product->update(['stock_status' => 'out_of_stock']);
+                    }
                 }
             }
-        }
 
-        OrderAddress::query()->create([
-            'order_id' => $order->id,
-            'type' => OrderAddressType::SHIPPING->value,
-            'name' => $validated['name'],
-            'phone' => $validated['phone'] ?? null,
-            'email' => $validated['email'],
-            'address' => $validated['address'],
-            'city' => $validated['city'],
-            'state' => $validated['region'] ?? null,
-            'country' => $validated['country'],
-            'zip_code' => $validated['zip_code'] ?? null,
-            'country_id' => $validated['country_id'] ?? null,
-            'state_id' => $validated['state_id'] ?? null,
-            'city_id' => $validated['city_id'] ?? null,
-        ]);
+            OrderAddress::query()->create([
+                'order_id' => $order->id,
+                'type' => OrderAddressType::SHIPPING->value,
+                'name' => $validated['name'],
+                'phone' => $validated['phone'] ?? null,
+                'email' => $validated['email'],
+                'address' => $validated['address'],
+                'city' => $validated['city'],
+                'state' => $validated['region'] ?? null,
+                'country' => $validated['country'],
+                'zip_code' => $validated['zip_code'] ?? null,
+                'country_id' => $validated['country_id'] ?? null,
+                'state_id' => $validated['state_id'] ?? null,
+                'city_id' => $validated['city_id'] ?? null,
+            ]);
 
-        OrderHistory::query()->create([
-            'order_id' => $order->id,
-            'user_id' => null,
-            'action' => 'create_order',
-            'description' => 'Orden creada desde la tienda.',
-        ]);
+            OrderHistory::query()->create([
+                'order_id' => $order->id,
+                'user_id' => null,
+                'action' => 'create_order',
+                'description' => 'Orden creada desde la tienda.',
+            ]);
 
-        if ($discount && $discountAmount > 0) {
-            $discount->increment('total_used');
-        }
+            if ($discountResult['success'] && $discountAmount > 0 && isset($discountResult['discount'])) {
+                $discountResult['discount']->increment('total_used');
+            }
 
-        OrderCreated::dispatch($order);
+            OrderCreated::dispatch($order);
+
+            return $order;
+        });
 
         if ($this->gatewayManager->has($paymentMethod)) {
             $gateway = $this->gatewayManager->get($paymentMethod);

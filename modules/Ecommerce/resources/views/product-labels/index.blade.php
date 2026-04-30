@@ -2,9 +2,11 @@
 
 @section('title', 'Etiquetas de producto')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Etiquetas de producto'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

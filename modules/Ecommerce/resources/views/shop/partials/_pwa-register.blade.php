@@ -30,7 +30,7 @@ function showInstallBanner() {
                 <strong style="display:block;font-size:14px;margin-bottom:2px">Instala nuestra app</strong>
                 <small style="opacity:0.8">Acceso rápido y offline</small>
             </div>
-            <button id="pwa-install-btn" style="background:#90bb13;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer">Instalar</button>
+            <button id="pwa-install-btn" style="background:#b10100;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer">Instalar</button>
             <button id="pwa-dismiss-btn" style="background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;padding:4px 8px">&times;</button>
         </div>
     `;

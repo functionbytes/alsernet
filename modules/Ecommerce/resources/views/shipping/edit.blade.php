@@ -2,8 +2,11 @@
 
 @section('title', 'Editar metodo de envio')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar metodo de envio'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.shipping.update', $shipping) }}" method="POST">

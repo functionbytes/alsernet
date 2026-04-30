@@ -2,9 +2,11 @@
 
 @section('title', 'Editar conjunto de atributos')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar conjunto de atributos'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

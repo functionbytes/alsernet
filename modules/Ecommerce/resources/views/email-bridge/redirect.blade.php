@@ -13,7 +13,7 @@
         .card { max-width: 440px; width: calc(100% - 32px); margin: 16px; background: #fff; padding: 32px 28px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); text-align: center; }
         h1 { color: #333; margin: 0 0 12px; font-size: 22px; }
         p { color: #666; line-height: 1.55; margin: 12px 0; }
-        .btn { display: inline-block; background: #90bb13; color: #fff !important; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; margin: 12px 4px; }
+        .btn { display: inline-block; background: #b10100; color: #fff !important; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; margin: 12px 4px; }
         .btn-secondary { background: transparent; color: #666 !important; border: 1px solid #ddd; }
     </style>
 </head>

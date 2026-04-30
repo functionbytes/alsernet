@@ -40,4 +40,14 @@ class ResetPasswordRequest extends BaseApiRequest
             'password' => 'contraseña',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'token' => ['description' => 'Token recibido por correo.', 'example' => 'abc123xyz'],
+            'email' => ['description' => 'Correo electrónico de la cuenta.', 'example' => 'maria@ejemplo.com'],
+            'password' => ['description' => 'Nueva contraseña (mín 8 caracteres).', 'example' => 'NuevaPass456'],
+            'password_confirmation' => ['description' => 'Confirmación de la nueva contraseña.', 'example' => 'NuevaPass456'],
+        ];
+    }
 }

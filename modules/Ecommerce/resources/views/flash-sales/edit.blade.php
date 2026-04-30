@@ -2,9 +2,11 @@
 
 @section('title', 'Editar venta flash')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar venta flash'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.flash-sales.update', $flashSale) }}" method="POST">
         @csrf @method('PUT')
         <div class="row g-4 align-items-start">

@@ -10,8 +10,20 @@ use Modules\Ecommerce\Http\Resources\Api\V1\ProductResource;
 use Modules\Ecommerce\Models\Brand;
 use Modules\Ecommerce\Models\Product;
 
+/**
+ * @group Catálogo - Marcas
+ *
+ * Listado de marcas y sus productos. Acceso público.
+ */
 class BrandController extends BaseApiController
 {
+    /**
+     * Listar marcas
+     *
+     * Devuelve la lista paginada de marcas publicadas con conteo de productos.
+     *
+     * @unauthenticated
+     */
     public function index(): JsonResponse
     {
         $brands = Brand::query()
@@ -24,6 +36,15 @@ class BrandController extends BaseApiController
         return $this->paginated($brands, BrandResource::class);
     }
 
+    /**
+     * Detalle de marca con productos
+     *
+     * Devuelve la marca con la lista paginada de sus productos.
+     *
+     * @unauthenticated
+     *
+     * @urlParam slug string required Slug de la marca. Example: nike
+     */
     public function show(string $slug): JsonResponse
     {
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();

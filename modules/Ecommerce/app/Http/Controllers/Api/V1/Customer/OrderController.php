@@ -17,8 +17,21 @@ use Modules\Ecommerce\Models\CustomerAddress;
 use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Services\CheckoutService;
 
+/**
+ * @group Pedidos
+ *
+ * Creación, consulta y cancelación de pedidos del cliente autenticado.
+ */
 class OrderController extends BaseApiController
 {
+    /**
+     * Listar pedidos
+     *
+     * Devuelve los pedidos del cliente paginados, opcionalmente filtrados por estado.
+     *
+     * @queryParam filter[status] string Filtrar por estado. Valores: pending,processing,completed,cancelled. Example: completed
+     * @queryParam per_page integer Items por página. Example: 15
+     */
     public function index(Request $request): JsonResponse
     {
         $orders = Order::query()
@@ -34,6 +47,13 @@ class OrderController extends BaseApiController
         return $this->paginated($orders, OrderResource::class);
     }
 
+    /**
+     * Detalle de pedido
+     *
+     * Devuelve el detalle completo del pedido incluyendo ítems y direcciones.
+     *
+     * @urlParam order integer required ID del pedido. Example: 42
+     */
     public function show(Order $order): JsonResponse
     {
         if ($order->customer_id !== auth()->id()) {
@@ -45,6 +65,14 @@ class OrderController extends BaseApiController
         return $this->ok(new OrderDetailResource($order));
     }
 
+    /**
+     * Crear pedido
+     *
+     * Procesa el carrito actual y crea un pedido. El carrito queda vacío al completar.
+     * Usar la cabecera `Idempotency-Key` para evitar pedidos duplicados por reintentos de red.
+     *
+     * @header Idempotency-Key string UUID único para idempotencia. Example: 550e8400-e29b-41d4-a716-446655440000
+     */
     public function store(CreateOrderRequest $request, CheckoutService $checkout): JsonResponse
     {
         $customer = $request->user();
@@ -118,6 +146,13 @@ class OrderController extends BaseApiController
         return $this->created(new OrderDetailResource($order));
     }
 
+    /**
+     * Cancelar pedido
+     *
+     * Cancela un pedido que aún esté en estado `pending` o `processing`.
+     *
+     * @urlParam order integer required ID del pedido. Example: 42
+     */
     public function cancel(Order $order): JsonResponse
     {
         if ($order->customer_id !== auth()->id()) {

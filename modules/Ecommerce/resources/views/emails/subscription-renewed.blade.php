@@ -13,7 +13,7 @@
 </table>
 
 <p style="text-align:center;margin-top:24px;">
-    <a href="{{ route('account.subscriptions.index') }}" style="color:#90bb13;font-weight:600;">Gestionar mis suscripciones &rarr;</a>
+    <a href="{{ route('account.subscriptions.index') }}" style="color:#b10100;font-weight:600;">Gestionar mis suscripciones &rarr;</a>
 </p>
 
 <p style="margin-top:20px;font-size:13px;color:#666;">

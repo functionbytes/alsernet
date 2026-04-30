@@ -2,9 +2,11 @@
 
 @section('title', 'Comparativa de período')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Reportes'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     {{-- Report navigation --}}
@@ -99,7 +101,7 @@
                         {
                             label: 'Período actual',
                             data: current.map(p => p.revenue),
-                            borderColor: '#90bb13',
+                            borderColor: '#b10100',
                             backgroundColor: 'rgba(144,187,19,0.08)',
                             fill: true,
                             tension: 0.3,

@@ -2,8 +2,11 @@
 
 @section('title', 'Nueva marca')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva marca'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.brands.store') }}" method="POST">

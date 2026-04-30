@@ -2,9 +2,11 @@
 
 @section('title', 'Preguntas y respuestas')
 
-@section('content')
-@include('core::components.card', ['title' => 'Ecommerce - Preguntas y Respuestas'])
+@section('page_header')
+    @include('core::components.card', ['title' => 'Ecommerce - Preguntas y Respuestas'])
+@endsection
 
+@section('content')
 <div class="widget-content">
     @include('core::components.alerts')
 

@@ -13,7 +13,7 @@
 
     {{-- PWA --}}
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#90bb13">
+    <meta name="theme-color" content="#b10100">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Tienda') }}">
@@ -29,10 +29,10 @@
     <style>
         :root {
             --font-text: 'Poppins', sans-serif;
-            --color-brand: #90bb13;
-            --primary-color: #90bb13;
+            --color-brand: #b10100;
+            --primary-color: #b10100;
             --color-brand-2: #7da210;
-            --color-primary: #90bb13;
+            --color-primary: #b10100;
             --color-secondary: #41506b;
             --color-warning: #ffb300;
             --color-danger: #ff3551;
@@ -132,8 +132,8 @@
             object-fit: cover;
             display: block;
         }
-        .thumb-btn:hover { border-color: #90bb13 !important; }
-        .thumb-btn.active { border-color: #90bb13 !important; border-width: 2px !important; }
+        .thumb-btn:hover { border-color: #b10100 !important; }
+        .thumb-btn.active { border-color: #b10100 !important; border-width: 2px !important; }
         @media (max-width: 767px) {
             .product-thumbnails {
                 flex-wrap: nowrap !important;
@@ -239,7 +239,7 @@
             align-items: center;
             justify-content: center;
         }
-        .stepper-item.active .stepper-circle { background: #90bb13; color: #fff; }
+        .stepper-item.active .stepper-circle { background: #b10100; color: #fff; }
         .stepper-line {
             flex: 1 1 60px;
             height: 2px;
@@ -249,16 +249,16 @@
             max-width: 100px;
         }
         /* Brand color override */
-        .text-brand, .product-price ins span, .primary-color { color: #90bb13 !important; }
-        .btn-primary, .bg-primary { background-color: #90bb13 !important; border-color: #90bb13 !important; }
+        .text-brand, .product-price ins span, .primary-color { color: #b10100 !important; }
+        .btn-primary, .bg-primary { background-color: #b10100 !important; border-color: #b10100 !important; }
         .btn-primary:hover, .btn-primary:focus { background-color: #7da210 !important; border-color: #7da210 !important; }
-        .pro-count.blue { background-color: #90bb13 !important; }
-        .btn-outline-primary { color: #90bb13; border-color: #90bb13; }
-        .btn-outline-primary:hover { background: #90bb13; color: #fff; }
-        .text-primary { color: #90bb13 !important; }
-        a { color: #90bb13; }
+        .pro-count.blue { background-color: #b10100 !important; }
+        .btn-outline-primary { color: #b10100; border-color: #b10100; }
+        .btn-outline-primary:hover { background: #b10100; color: #fff; }
+        .text-primary { color: #b10100 !important; }
+        a { color: #b10100; }
         a:hover { color: #7da210; }
-        .input-search-product:focus { border-color: #90bb13 !important; }
+        .input-search-product:focus { border-color: #b10100 !important; }
 
         /* Hero banner */
         .hero-slide { min-height: 400px; display: flex; align-items: center; }
@@ -310,7 +310,7 @@
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
-                background: #90bb13;
+                background: #b10100;
                 color: #fff;
                 border: none;
                 border-radius: 6px;
@@ -323,11 +323,11 @@
 
         /* Accessibility: focus visible */
         *:focus-visible {
-            outline: 3px solid #90bb13 !important;
+            outline: 3px solid #b10100 !important;
             outline-offset: 2px !important;
         }
         button:focus, a:focus, input:focus, select:focus, textarea:focus {
-            outline: 3px solid #90bb13;
+            outline: 3px solid #b10100;
             outline-offset: 2px;
         }
         .sr-only {

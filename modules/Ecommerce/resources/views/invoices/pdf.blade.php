@@ -13,24 +13,24 @@
         .header { display: table; width: 100%; margin-bottom: 30px; }
         .header-left { display: table-cell; width: 60%; vertical-align: top; }
         .header-right { display: table-cell; width: 40%; vertical-align: top; text-align: right; }
-        .company-name { font-size: 22px; font-weight: bold; color: #90bb13; margin-bottom: 4px; }
+        .company-name { font-size: 22px; font-weight: bold; color: #b10100; margin-bottom: 4px; }
         .company-sub { font-size: 11px; color: #666; }
         .invoice-title { font-size: 28px; font-weight: bold; color: #333; letter-spacing: 2px; }
         .invoice-code { font-size: 13px; color: #666; margin-top: 4px; }
 
         /* Divider */
-        .divider { border: none; border-top: 2px solid #90bb13; margin: 20px 0; }
+        .divider { border: none; border-top: 2px solid #b10100; margin: 20px 0; }
 
         /* Info blocks */
         .info-row { display: table; width: 100%; margin-bottom: 25px; }
         .info-block { display: table-cell; width: 50%; vertical-align: top; }
         .info-block-right { display: table-cell; width: 50%; vertical-align: top; text-align: right; }
-        .info-label { font-size: 10px; font-weight: bold; color: #90bb13; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .info-label { font-size: 10px; font-weight: bold; color: #b10100; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
         .info-value { font-size: 12px; color: #333; line-height: 1.6; }
 
         /* Table */
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        thead th { background-color: #90bb13; color: #fff; padding: 9px 10px; text-align: left; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        thead th { background-color: #b10100; color: #fff; padding: 9px 10px; text-align: left; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         thead th.text-right { text-align: right; }
         tbody tr:nth-child(even) { background-color: #f8f8f8; }
         tbody td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 12px; color: #333; }
@@ -42,9 +42,9 @@
         .totals-row { display: table; width: 100%; border-bottom: 1px solid #eee; }
         .totals-label { display: table-cell; padding: 5px 10px; font-size: 12px; color: #555; }
         .totals-value { display: table-cell; padding: 5px 10px; font-size: 12px; color: #333; text-align: right; }
-        .totals-total { border-top: 2px solid #90bb13; margin-top: 4px; }
+        .totals-total { border-top: 2px solid #b10100; margin-top: 4px; }
         .totals-total .totals-label { font-size: 14px; font-weight: bold; color: #333; }
-        .totals-total .totals-value { font-size: 14px; font-weight: bold; color: #90bb13; }
+        .totals-total .totals-value { font-size: 14px; font-weight: bold; color: #b10100; }
 
         /* Status badge */
         .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; }

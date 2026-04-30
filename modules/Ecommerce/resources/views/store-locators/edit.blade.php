@@ -2,8 +2,11 @@
 
 @section('title', 'Editar ubicacion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar ubicacion'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.store-locators.update', $storeLocator) }}" method="POST">

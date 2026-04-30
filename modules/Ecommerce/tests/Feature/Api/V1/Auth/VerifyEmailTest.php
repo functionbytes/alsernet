@@ -2,7 +2,7 @@
 
 namespace Modules\Ecommerce\Tests\Feature\Api\V1\Auth;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 use Modules\Ecommerce\Events\CustomerEmailVerified;
@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class VerifyEmailTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_verify_email_with_valid_token(): void
     {

@@ -2,8 +2,11 @@
 
 @section('title', 'Venta flash')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Venta flash'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.ecommerce.flash-sale.update') }}" method="POST">

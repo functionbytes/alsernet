@@ -2,8 +2,11 @@
 
 @section('title', 'Nueva opcion global')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva opcion global'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.global-options.store') }}" method="POST" id="option-form">

@@ -2,9 +2,11 @@
 
 @section('title', 'Nuevo atributo de especificacion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nuevo atributo de especificacion'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.specification-attributes.store') }}" method="POST">
         @csrf
         <div class="row g-4 align-items-start">

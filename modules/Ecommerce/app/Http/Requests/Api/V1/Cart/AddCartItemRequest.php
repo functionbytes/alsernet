@@ -29,4 +29,13 @@ class AddCartItemRequest extends BaseApiRequest
             'qty.min' => 'La cantidad mínima es 1.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'product_id' => ['description' => 'ID del producto.', 'example' => 42],
+            'qty' => ['description' => 'Cantidad a agregar.', 'example' => 2],
+            'options' => ['description' => 'Opciones del producto (talla, color, etc.).', 'example' => ['size' => 'M', 'color' => 'azul']],
+        ];
+    }
 }

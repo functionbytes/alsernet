@@ -2,9 +2,11 @@
 
 @section('title', 'Logs de webhooks')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Logs de webhooks'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

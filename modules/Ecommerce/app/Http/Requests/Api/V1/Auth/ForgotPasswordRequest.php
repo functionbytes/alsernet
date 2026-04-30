@@ -32,4 +32,11 @@ class ForgotPasswordRequest extends BaseApiRequest
             'email' => 'correo electrónico',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'email' => ['description' => 'Correo electrónico registrado.', 'example' => 'maria@ejemplo.com'],
+        ];
+    }
 }

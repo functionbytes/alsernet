@@ -2,9 +2,11 @@
 
 @section('title', 'Editar bundle')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Editar bundle'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.bundles.update', $bundle) }}" method="POST">
         @csrf @method('PUT')
         <div class="row g-4 align-items-start">

@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
         .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; }
-        .header { background: #90bb13; padding: 24px; text-align: center; }
+        .header { background: #b10100; padding: 24px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 22px; }
         .content { padding: 24px; }
         .content p { margin-bottom: 12px; line-height: 1.6; }

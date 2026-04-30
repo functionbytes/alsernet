@@ -2,8 +2,11 @@
 
 @section('title', 'Monedas')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Monedas'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.ecommerce.currencies.update') }}" method="POST">

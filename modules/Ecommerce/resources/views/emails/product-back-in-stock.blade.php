@@ -8,14 +8,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
         .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; }
-        .header { background: #90bb13; padding: 24px; text-align: center; }
+        .header { background: #b10100; padding: 24px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 22px; }
         .content { padding: 24px; }
         .content p { margin-bottom: 12px; line-height: 1.6; }
         .product-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin: 20px 0; }
         .product-box h2 { font-size: 18px; margin-bottom: 8px; color: #333; }
-        .product-box .price { font-size: 20px; color: #90bb13; font-weight: bold; }
-        .btn { display: inline-block; background: #90bb13; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-weight: bold; font-size: 15px; margin: 16px 0; }
+        .product-box .price { font-size: 20px; color: #b10100; font-weight: bold; }
+        .btn { display: inline-block; background: #b10100; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-weight: bold; font-size: 15px; margin: 16px 0; }
         .footer { background: #f5f5f5; padding: 16px; text-align: center; font-size: 12px; color: #888; }
         .footer p { margin: 2px 0; }
     </style>

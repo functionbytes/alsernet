@@ -2,9 +2,11 @@
 
 @section('title', 'Nuevo grupo de especificaciones')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nuevo grupo de especificaciones'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.specification-groups.store') }}" method="POST">
         @csrf
         <div class="row g-4 align-items-start">

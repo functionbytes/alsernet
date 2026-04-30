@@ -32,4 +32,16 @@ class CreateOrderRequest extends BaseApiRequest
             'payment_method.required' => 'El método de pago es obligatorio.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'shipping_address_id' => ['description' => 'ID de la dirección de envío del cliente.', 'example' => 3],
+            'billing_address_id' => ['description' => 'ID de la dirección de facturación (opcional, usa la de envío si se omite).', 'example' => 3],
+            'shipping_method' => ['description' => 'Método de envío seleccionado.', 'example' => 'standard'],
+            'payment_method' => ['description' => 'Método de pago seleccionado.', 'example' => 'wompi'],
+            'coupon_code' => ['description' => 'Código de cupón de descuento (opcional).', 'example' => 'VERANO20'],
+            'customer_note' => ['description' => 'Nota especial para el pedido (opcional).', 'example' => 'Dejar en recepción'],
+        ];
+    }
 }

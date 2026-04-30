@@ -2,8 +2,11 @@
 
 @section('title', 'Nueva página legal')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva página legal'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.legal-pages.store') }}" method="POST">

@@ -2,8 +2,11 @@
 
 @section('title', 'General')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - General'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.ecommerce.update') }}" method="POST">

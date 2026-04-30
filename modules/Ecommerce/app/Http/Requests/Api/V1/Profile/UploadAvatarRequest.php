@@ -34,4 +34,11 @@ class UploadAvatarRequest extends BaseApiRequest
             'file' => 'archivo',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'avatar' => ['description' => 'Imagen de perfil (JPG/PNG/GIF, máx 2MB).', 'example' => '(binary file)'],
+        ];
+    }
 }

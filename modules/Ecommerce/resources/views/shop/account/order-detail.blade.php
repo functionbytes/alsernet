@@ -32,11 +32,11 @@
     margin-bottom: 8px;
     transition: all 0.3s ease;
 }
-.timeline-step.completed .timeline-icon { background: #90bb13; color: #fff; }
+.timeline-step.completed .timeline-icon { background: #b10100; color: #fff; }
 .timeline-step.current .timeline-icon {
     background: #fff;
-    color: #90bb13;
-    border: 3px solid #90bb13;
+    color: #b10100;
+    border: 3px solid #b10100;
     box-shadow: 0 0 0 4px rgba(144, 187, 19, 0.2);
     animation: pulse-current 2s infinite;
 }
@@ -54,7 +54,7 @@
     min-width: 30px;
     transition: background 0.3s;
 }
-.timeline-connector.completed { background: #90bb13; }
+.timeline-connector.completed { background: #b10100; }
 @media (max-width: 575px) {
     .timeline-step { min-width: 80px; }
     .timeline-icon { width: 36px; height: 36px; font-size: 1rem; }

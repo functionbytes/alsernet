@@ -48,4 +48,17 @@ class RegisterCustomerRequest extends BaseApiRequest
             'accepts_terms' => 'términos y condiciones',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Nombre completo del cliente.', 'example' => 'María García'],
+            'email' => ['description' => 'Correo electrónico único.', 'example' => 'maria@ejemplo.com'],
+            'password' => ['description' => 'Contraseña mínimo 8 caracteres.', 'example' => 'MiPassword123'],
+            'password_confirmation' => ['description' => 'Confirmación de la contraseña.', 'example' => 'MiPassword123'],
+            'phone' => ['description' => 'Teléfono de contacto.', 'example' => '+57 300 123 4567'],
+            'device_name' => ['description' => 'Nombre identificador del dispositivo.', 'example' => 'iPhone de María'],
+            'accepts_terms' => ['description' => 'Aceptación de términos y condiciones.', 'example' => true],
+        ];
+    }
 }

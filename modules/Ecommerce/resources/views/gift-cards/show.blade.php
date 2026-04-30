@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle gift card')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Gift card'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="row g-4">

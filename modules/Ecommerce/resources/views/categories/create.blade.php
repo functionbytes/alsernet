@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva categoria')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva categoria'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.categories.store') }}" method="POST">

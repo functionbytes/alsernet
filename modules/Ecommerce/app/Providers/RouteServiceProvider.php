@@ -16,9 +16,7 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map(): void
     {
-        // Legacy api.php disabled — superseded by api-mobile.php (Mobile API v1).
-        // To re-enable for non-mobile clients, uncomment the line below.
-        // $this->mapApiRoutes();
+        $this->mapApiRoutes();
         $this->mapApiMobileRoutes();
         $this->mapWebRoutes();
     }

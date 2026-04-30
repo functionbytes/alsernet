@@ -2,8 +2,11 @@
 
 @section('title', 'Nuevo metodo de envio')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nuevo metodo de envio'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.shipping.store') }}" method="POST">

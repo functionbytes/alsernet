@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva coleccion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nueva coleccion'])
+@endsection
 
+@section('content')
     <form action="{{ route('ecommerce.collections.store') }}" method="POST">
         @csrf
         <div class="row g-4 align-items-start">

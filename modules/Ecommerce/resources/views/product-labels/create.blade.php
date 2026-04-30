@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva etiqueta')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nueva etiqueta'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         <form action="{{ route('ecommerce.product-labels.store') }}" method="POST">
             @csrf
@@ -31,11 +33,11 @@
                             <div class="mb-3">
                                 <label class="form-label">Color de fondo</label>
                                 <div class="d-flex align-items-center gap-2">
-                                    <input type="color" id="color_picker" value="{{ old('color', '#90bb13') }}"
+                                    <input type="color" id="color_picker" value="{{ old('color', '#b10100') }}"
                                         class="form-control form-control-color flex-shrink-0">
                                     <input type="text" name="color" id="color_hex"
                                         class="form-control @error('color') is-invalid @enderror"
-                                        placeholder="#90bb13" value="{{ old('color', '#90bb13') }}">
+                                        placeholder="#b10100" value="{{ old('color', '#b10100') }}">
                                 </div>
                                 @error('color')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
@@ -81,7 +83,7 @@
                             <p class="text-muted small mb-3">Asi se vera la etiqueta en los productos.</p>
                             <div class="d-flex align-items-center gap-2">
                                 <span id="label_preview" class="badge rounded-pill px-3 py-2"
-                                    style="background-color: #90bb13; color: #ffffff; font-size: 0.9rem;">
+                                    style="background-color: #b10100; color: #ffffff; font-size: 0.9rem;">
                                     Etiqueta
                                 </span>
                             </div>
@@ -108,7 +110,7 @@
     }
 
     function updatePreview() {
-        var bg   = isValidHex(colorHex.value) ? colorHex.value : '#90bb13';
+        var bg   = isValidHex(colorHex.value) ? colorHex.value : '#b10100';
         var text = isValidHex(textHex.value)  ? textHex.value  : '#ffffff';
         var name = labelName.value.trim() || 'Etiqueta';
         preview.style.backgroundColor = bg;

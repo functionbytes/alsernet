@@ -2,9 +2,11 @@
 
 @section('title', 'Importar productos')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Importar productos'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="card">

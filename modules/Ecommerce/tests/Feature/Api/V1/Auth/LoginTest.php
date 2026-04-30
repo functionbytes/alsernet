@@ -2,7 +2,7 @@
 
 namespace Modules\Ecommerce\Tests\Feature\Api\V1\Auth;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Modules\Ecommerce\Enums\CustomerStatus;
 use Modules\Ecommerce\Models\Customer;
@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_customer_can_login_with_valid_credentials(): void
     {

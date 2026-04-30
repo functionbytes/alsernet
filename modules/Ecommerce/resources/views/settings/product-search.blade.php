@@ -2,8 +2,11 @@
 
 @section('title', 'Búsqueda de productos')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Búsqueda de productos'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php $priceFilter = old('search_filter_price', $settings['search_filter_price'] ?? '') == '1'; @endphp

@@ -2,9 +2,11 @@
 
 @section('title', 'Tablas de especificaciones')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Tablas de especificaciones'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

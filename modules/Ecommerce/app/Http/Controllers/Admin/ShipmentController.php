@@ -14,6 +14,11 @@ use Modules\Ecommerce\Models\Shipment;
 
 class ShipmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Shipment::class, 'shipment');
+    }
+
     public function index(Request $request): View
     {
         $shipments = Shipment::query()
@@ -53,6 +58,7 @@ class ShipmentController extends Controller
 
     public function addHistory(StoreShipmentHistoryRequest $request, Shipment $shipment): RedirectResponse
     {
+        $this->authorize('update', $shipment);
         $shipment->histories()->create([
             'description' => $request->validated('description'),
             'user_id' => auth()->id(),
@@ -63,6 +69,7 @@ class ShipmentController extends Controller
 
     public function updateStatus(Request $request, Shipment $shipment): RedirectResponse
     {
+        $this->authorize('update', $shipment);
         $validated = $request->validate([
             'status' => ['required', 'string'],
         ]);
@@ -74,6 +81,7 @@ class ShipmentController extends Controller
 
     public function generateDeliveryToken(Shipment $shipment): JsonResponse
     {
+        $this->authorize('update', $shipment);
         if (! $shipment->delivery_token) {
             $shipment->update([
                 'delivery_token' => Str::random(32),

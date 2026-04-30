@@ -2,9 +2,11 @@
 
 @section('title', 'Factura ' . ($invoice->code ?? '#' . $invoice->id))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Comprobante'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     @php
@@ -67,7 +69,7 @@
                 </div>
             </div>
 
-            <hr class="border-2" style="border-color:#90bb13!important">
+            <hr class="border-2" style="border-color:#b10100!important">
 
             {{-- Datos de la factura --}}
             <div class="row g-3 mb-4">

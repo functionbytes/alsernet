@@ -7,5 +7,5 @@
     z-index: 99999; text-decoration: none;
     transition: top 0.2s;
 }
-.skip-link:focus { top: 0; color: #fff; outline: 3px solid #90bb13; }
+.skip-link:focus { top: 0; color: #fff; outline: 3px solid #b10100; }
 </style>

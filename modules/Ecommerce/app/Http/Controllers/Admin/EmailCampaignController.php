@@ -12,10 +12,15 @@ use Modules\Ecommerce\Services\CustomerSegmentService;
 
 class EmailCampaignController extends Controller
 {
-    public function __construct(private readonly CustomerSegmentService $segments) {}
+    public function __construct(private readonly CustomerSegmentService $segments)
+    {
+        $this->authorize('email-campaign.manage');
+        $this->authorizeResource(EmailCampaign::class, 'campaign');
+    }
 
     public function index(): View
     {
+        $this->authorize('email-campaign.manage');
         $campaigns = EmailCampaign::query()->latest()->paginate(20);
 
         return view('ecommerce::email-campaigns.index', compact('campaigns'));
@@ -23,6 +28,7 @@ class EmailCampaignController extends Controller
 
     public function create(): View
     {
+        $this->authorize('email-campaign.manage');
         $segmentCounts = [
             'all' => $this->segments->countSegment('all'),
             'vip' => $this->segments->countSegment('vip'),
@@ -36,6 +42,7 @@ class EmailCampaignController extends Controller
 
     public function store(StoreEmailCampaignRequest $request): RedirectResponse
     {
+        $this->authorize('email-campaign.manage');
         $validated = $request->validated();
 
         EmailCampaign::query()->create(array_merge($validated, [
@@ -49,6 +56,8 @@ class EmailCampaignController extends Controller
 
     public function send(EmailCampaign $campaign): RedirectResponse
     {
+        $this->authorize('email-campaign.manage');
+        $this->authorize('update', $campaign);
         if (! in_array($campaign->status, ['draft', 'scheduled'])) {
             return back()->with('error', 'Solo se pueden enviar campañas en estado borrador o programado.');
         }
@@ -60,6 +69,7 @@ class EmailCampaignController extends Controller
 
     public function destroy(EmailCampaign $campaign): RedirectResponse
     {
+        $this->authorize('email-campaign.manage');
         $campaign->delete();
 
         return back()->with('success', 'Campaña eliminada exitosamente.');

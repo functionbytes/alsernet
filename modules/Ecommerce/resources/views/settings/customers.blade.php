@@ -2,8 +2,11 @@
 
 @section('title', 'Clientes')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Clientes'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php

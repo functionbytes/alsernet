@@ -83,7 +83,7 @@ class EcommerceAbandonedCartTemplatesSeeder extends Seeder
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
 
-    <div style="background: #90bb13; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
+    <div style="background: #b10100; padding: 24px; text-align: center; border-radius: 6px 6px 0 0;">
         <h1 style="color: #fff; margin: 0; font-size: 22px;">¡Tu carrito te está esperando!</h1>
     </div>
 
@@ -104,7 +104,7 @@ class EcommerceAbandonedCartTemplatesSeeder extends Seeder
 
         <div style="text-align: center; margin: 28px 0;">
             <a href="{CART_RECOVER_URL}"
-               style="display: inline-block; background: #90bb13; color: #fff; text-decoration: none;
+               style="display: inline-block; background: #b10100; color: #fff; text-decoration: none;
                       padding: 14px 36px; border-radius: 6px; font-size: 16px; font-weight: bold;">
                 Completar mi compra
             </a>
@@ -131,7 +131,7 @@ HTML;
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
 
-    <h1 style="color: #90bb13; font-size: 22px; margin-bottom: 8px;">Tu carrito te está esperando</h1>
+    <h1 style="color: #b10100; font-size: 22px; margin-bottom: 8px;">Tu carrito te está esperando</h1>
 
     <p>Hola <strong>{CUSTOMER_NAME}</strong>,</p>
     <p>Notamos que dejaste artículos en tu carrito. ¡Puedes completar tu compra en cualquier momento!</p>
@@ -148,7 +148,7 @@ HTML;
 
     <div style="text-align: center; margin: 24px 0;">
         <a href="{CART_RECOVER_URL}"
-           style="display: inline-block; background: #90bb13; color: #fff; text-decoration: none;
+           style="display: inline-block; background: #b10100; color: #fff; text-decoration: none;
                   padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Ir a mi carrito
         </a>

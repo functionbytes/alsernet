@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
         .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; }
-        .header { background: #90bb13; padding: 24px; text-align: center; }
+        .header { background: #b10100; padding: 24px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 22px; }
         .content { padding: 24px; }
         .content p { margin-bottom: 12px; line-height: 1.6; }
@@ -17,7 +17,7 @@
         .order-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: top; }
         .order-table td.text-right { text-align: right; }
         .total-row td { font-weight: bold; border-top: 2px solid #e0e0e0; border-bottom: none; font-size: 15px; }
-        .cta-button { display: block; width: fit-content; margin: 24px auto; background: #90bb13; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold; text-align: center; }
+        .cta-button { display: block; width: fit-content; margin: 24px auto; background: #b10100; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold; text-align: center; }
         .footer { background: #f5f5f5; padding: 16px; text-align: center; font-size: 12px; color: #888; }
         .footer p { margin: 2px 0; }
     </style>

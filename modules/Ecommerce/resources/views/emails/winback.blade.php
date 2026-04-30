@@ -9,6 +9,6 @@
 </div>
 
 <p style="text-align:center;margin-top:24px;">
-    <a href="{{ url('/tienda') }}" style="background:#90bb13;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;">Volver a la tienda</a>
+    <a href="{{ url('/tienda') }}" style="background:#b10100;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;">Volver a la tienda</a>
 </p>
 @endcomponent

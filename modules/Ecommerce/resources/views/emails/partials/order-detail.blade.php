@@ -50,7 +50,7 @@
         @endif
         <tr>
             <td colspan="3" style="padding:10px 12px;text-align:right;font-weight:bold;font-size:15px;border-top:2px solid #e0e0e0;">Total</td>
-            <td style="padding:10px 12px;text-align:right;font-weight:bold;font-size:15px;border-top:2px solid #e0e0e0;color:#90bb13;">
+            <td style="padding:10px 12px;text-align:right;font-weight:bold;font-size:15px;border-top:2px solid #e0e0e0;color:#b10100;">
                 ${{ number_format($order->total, 2) }}
             </td>
         </tr>

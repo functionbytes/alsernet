@@ -2,8 +2,11 @@
 
 @section('title', 'Nuevo impuesto')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Nuevo impuesto'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('ecommerce.taxes.store') }}" method="POST">

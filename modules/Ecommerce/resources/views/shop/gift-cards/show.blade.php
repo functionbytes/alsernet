@@ -21,7 +21,7 @@
 
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header p-4" style="background: linear-gradient(135deg, #90bb13 0%, #7da210 100%);">
+                    <div class="card-header p-4" style="background: linear-gradient(135deg, #b10100 0%, #7da210 100%);">
                         <div class="text-white text-center">
                             <i class="fas fa-gift fa-3x mb-3"></i>
                             <h3 class="fw-bold mb-1">{{ __('Gift Card') }}</h3>

@@ -11,8 +11,22 @@ use Modules\Ecommerce\Models\Order;
 use Modules\Ecommerce\Models\Product;
 use Modules\Ecommerce\Models\Review;
 
+/**
+ * @group Reseñas
+ *
+ * Lectura pública de reseñas. Creación y edición requieren autenticación y compra verificada.
+ */
 class ReviewController extends BaseApiController
 {
+    /**
+     * Listar reseñas de un producto
+     *
+     * Devuelve las reseñas aprobadas de un producto, ordenadas por más recientes.
+     *
+     * @unauthenticated
+     *
+     * @urlParam product string required Slug del producto. Example: camiseta-polo-azul
+     */
     public function index(Product $product): JsonResponse
     {
         $reviews = Review::query()
@@ -24,6 +38,14 @@ class ReviewController extends BaseApiController
         return $this->paginated($reviews, ReviewResource::class);
     }
 
+    /**
+     * Crear reseña
+     *
+     * Crea una reseña para un producto. El cliente debe haber completado una orden con ese producto.
+     * La reseña queda en estado `pending` hasta que un administrador la apruebe.
+     *
+     * @urlParam product string required Slug del producto. Example: camiseta-polo-azul
+     */
     public function store(StoreReviewRequest $request, Product $product): JsonResponse
     {
         $customer = $request->user();
@@ -57,8 +79,17 @@ class ReviewController extends BaseApiController
         return $this->created(new ReviewResource($review));
     }
 
+    /**
+     * Actualizar reseña
+     *
+     * Edita una reseña propia. Solo es posible dentro de los 7 días posteriores a su creación.
+     */
     public function update(UpdateReviewRequest $request, Review $review): JsonResponse
     {
+        if ($review->customer_id !== auth()->id()) {
+            return $this->errorResponse('No autorizado.', 'FORBIDDEN', 403);
+        }
+
         // Allow edits only within 7 days of creation
         if ($review->created_at->diffInDays(now()) > 7) {
             return $this->errorResponse('Ya no puedes editar esta reseña.', 'REVIEW_LOCKED', 422);
@@ -69,6 +100,11 @@ class ReviewController extends BaseApiController
         return $this->ok(new ReviewResource($review->fresh()));
     }
 
+    /**
+     * Eliminar reseña
+     *
+     * Elimina una reseña propia permanentemente.
+     */
     public function destroy(Review $review): JsonResponse
     {
         if ($review->customer_id !== auth()->id()) {

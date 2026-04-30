@@ -138,11 +138,12 @@ Route::middleware(['accept-language', 'auth:sanctum', 'customer', 'throttle:api-
         Route::get('orders/{order}/payments/{payment}', [PaymentController::class, 'status'])->name('orders.payments.status');
 
         // Reviews CRUD (verified buyer for store)
-        Route::post('products/{product}/reviews', [ReviewController::class, 'store'])->name('products.reviews.store');
+        Route::post('products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('products.reviews.store');
         Route::put('reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
         Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     });
 
     // Recently viewed (relación con auth user)
     Route::get('me/recently-viewed', [RecentlyViewedController::class, 'index'])->name('api.v1.me.recently-viewed');
+    Route::post('me/recently-viewed/{product}', [RecentlyViewedController::class, 'track'])->name('api.v1.me.recently-viewed.track');
 });

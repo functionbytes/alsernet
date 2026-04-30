@@ -10,8 +10,18 @@ use Modules\Ecommerce\Http\Resources\Api\V1\PaymentMethodResource;
 use Modules\Ecommerce\Models\Order;
 use Modules\EcommercePayment\Services\PaymentGatewayManager;
 
+/**
+ * @group Pagos
+ *
+ * Métodos de pago disponibles e iniciación de pagos para pedidos.
+ */
 class PaymentController extends BaseApiController
 {
+    /**
+     * Métodos de pago disponibles
+     *
+     * Devuelve los métodos de pago habilitados en la tienda (Wompi, COD, transferencia bancaria, etc.).
+     */
     public function methods(Request $request): JsonResponse
     {
         $manager = app(PaymentGatewayManager::class);
@@ -23,6 +33,17 @@ class PaymentController extends BaseApiController
         return $this->ok(PaymentMethodResource::collection($gateways)->toArray($request));
     }
 
+    /**
+     * Iniciar pago de un pedido
+     *
+     * Genera la URL de pago o instrucciones según el canal elegido.
+     * Para Wompi: abre la URL en un WebView o navegador externo.
+     * Para COD/transferencia: devuelve las instrucciones directamente.
+     *
+     * @urlParam order integer required ID del pedido. Example: 42
+     *
+     * @header Idempotency-Key string UUID único para idempotencia. Example: 550e8400-e29b-41d4-a716-446655440000
+     */
     public function initiate(InitiatePaymentRequest $request, Order $order): JsonResponse
     {
         if ($order->customer_id !== auth()->id()) {
@@ -55,6 +76,14 @@ class PaymentController extends BaseApiController
         ]);
     }
 
+    /**
+     * Estado de pago de un pedido
+     *
+     * Consulta el estado actual del pago. El cliente hace polling desde la app después de volver del WebView de pago.
+     *
+     * @urlParam order integer required ID del pedido. Example: 42
+     * @urlParam payment string required ID del pago (puede ser cualquier valor, se ignora actualmente). Example: 1
+     */
     public function status(Order $order, $payment): JsonResponse
     {
         if ($order->customer_id !== auth()->id()) {

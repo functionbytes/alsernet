@@ -33,7 +33,7 @@
 
 <style>
 .welcome-popup-sidebar {
-    background: linear-gradient(135deg, #90bb13, #7da210);
+    background: linear-gradient(135deg, #b10100, #7da210);
     min-height: 360px;
     border-radius: 4px 0 0 4px;
 }

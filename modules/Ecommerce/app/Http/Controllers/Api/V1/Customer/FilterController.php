@@ -11,8 +11,21 @@ use Modules\Ecommerce\Models\Brand;
 use Modules\Ecommerce\Models\Product;
 use Modules\Ecommerce\Models\ProductCategory;
 
+/**
+ * @group Catálogo - Filtros
+ *
+ * Opciones de filtrado disponibles (marcas, categorías, rango de precios). Acceso público.
+ */
 class FilterController extends BaseApiController
 {
+    /**
+     * Opciones de filtrado
+     *
+     * Devuelve todas las opciones disponibles para filtrar productos: marcas, categorías y rango de precios.
+     * Respuesta cacheada 10 minutos por locale.
+     *
+     * @unauthenticated
+     */
     public function index(): JsonResponse
     {
         $payload = Cache::remember('mobile-api:filters:'.app()->getLocale(), 600, function () {

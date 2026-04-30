@@ -22,4 +22,12 @@ class UpdateReviewRequest extends BaseApiRequest
             'comment' => ['sometimes', 'string', 'min:5', 'max:2000'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'star' => ['description' => 'Nueva calificación (opcional).', 'example' => 4],
+            'comment' => ['description' => 'Texto actualizado de la reseña (opcional).', 'example' => 'Actualizo mi reseña, sigue siendo muy bueno.'],
+        ];
+    }
 }

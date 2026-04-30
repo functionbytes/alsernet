@@ -2,8 +2,11 @@
 
 @section('title', 'Devoluciones')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Devoluciones'])
+@endsection
+
+@section('content')
     @include('core::components.alerts')
 
     @php

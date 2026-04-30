@@ -37,4 +37,13 @@ class LoginCustomerRequest extends BaseApiRequest
             'device_name' => 'nombre del dispositivo',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'email' => ['description' => 'Correo electrónico registrado.', 'example' => 'maria@ejemplo.com'],
+            'password' => ['description' => 'Contraseña de la cuenta.', 'example' => 'MiPassword123'],
+            'device_name' => ['description' => 'Nombre del dispositivo para el token.', 'example' => 'iPhone de María'],
+        ];
+    }
 }

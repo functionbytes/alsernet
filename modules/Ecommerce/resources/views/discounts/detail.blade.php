@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle de descuento')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Detalle de descuento'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 
