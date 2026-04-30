@@ -55,7 +55,7 @@
                     <h6 class="fw-bold mb-3 border-bottom pb-2">Ejemplos rápidos</h6>
                     <p class=" text-muted mb-1">Cambiar color primario:</p>
                     <pre class="small bg-light p-2 rounded mb-3" style="font-size: 0.78rem;">:root {
-  --primary-color: #90bb13;
+  --primary-color: #b10100;
 }</pre>
 
                     <p class=" text-muted mb-1">Ocultar un elemento:</p>

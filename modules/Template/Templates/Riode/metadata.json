@@ -92,7 +92,7 @@
     },
     "design_tokens": {
         "primary_color_original": "#26c (azul Riode) o #d26e4b (terracota por demo)",
-        "primary_color_alsernet": "#90bb13",
+        "primary_color_alsernet": "#b10100",
         "font_base": "Poppins",
         "font_display_by_vertical": {
             "beauty": "Jost",

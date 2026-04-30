@@ -2,9 +2,11 @@
 
 @section('title', 'Importar plantilla desde ZIP')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar plantilla desde ZIP'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -17,7 +19,7 @@
                     <div class="mb-4 text-center">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
                              style="width: 80px; height: 80px; background: rgba(144, 187, 19, 0.1);">
-                            <i class="fas fa-file-zipper fa-3x" style="color: #90bb13;"></i>
+                            <i class="fas fa-file-zipper fa-3x" style="color: #b10100;"></i>
                         </div>
                         <h5 class="fw-bold">Importar plantilla desde ZIP</h5>
                         <p class="text-muted mb-0">
@@ -142,7 +144,7 @@
 @push('styles')
 <style>
     .form-control:focus {
-        border-color: #90bb13;
+        border-color: #b10100;
         box-shadow: 0 0 0 0.2rem rgba(144, 187, 19, 0.15);
     }
 </style>

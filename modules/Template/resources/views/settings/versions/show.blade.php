@@ -2,9 +2,11 @@
 
 @section('page_title', "Versión " . $templateVersion->version)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => "Versión " . $templateVersion->version])
+@endsection
 
+@section('content')
     <div class="page-wrapper">
         <div class="container-xl">
             @include('core::components.alerts')

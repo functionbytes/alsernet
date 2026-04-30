@@ -110,7 +110,7 @@ class RiodeEffectsShortcodes
             return view('riode::shortcodes.svg-float', compact('attrs', 'content'))->render();
         }, [
             'description' => 'SVG decorativo con morphing animado de path. Soporta imagen de fondo, imagen sobrepuesta y badge/logo. Self-closing.',
-            'example' => '[svg-float svg-path="M0,70V0h70v70H0z M50.7,30.4c..." delta="2.8" speed="2" image="/img/product.png" fill="#90bb13"]',
+            'example' => '[svg-float svg-path="M0,70V0h70v70H0z M50.7,30.4c..." delta="2.8" speed="2" image="/img/product.png" fill="#b10100"]',
             'attributes' => [
                 'svg-path' => 'Atributo "d" del path SVG (requerido)',
                 'delta' => 'Intensidad del morphing 0–3 (default: 1)',

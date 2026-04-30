@@ -11,7 +11,7 @@
 
 Template basado en la plantilla Riode (D-Themes) de ThemeForest. Provee 35 shortcodes específicos cubriendo todas las categorías: contenido, estructura, utility, media, efectos y marketplace.
 
-Color primario `#26c` o `#d26e4b` original sustituido por `#90bb13` (verde Alsernet).
+Color primario `#26c` o `#d26e4b` original sustituido por `#b10100` (verde Alsernet).
 
 ## Cómo activar
 
@@ -158,7 +158,7 @@ Ver `tokens.css` para variables CSS completas.
 
 | Original Riode | Alsernet (sustituye) | Variable CSS |
 |----------------|----------------------|--------------|
-| `#26c` (azul) o `#d26e4b` (terracota) | **`#90bb13`** (verde) | `--color-primary` |
+| `#26c` (azul) o `#d26e4b` (terracota) | **`#b10100`** (verde) | `--color-primary` |
 
 ### Fonts
 
@@ -233,7 +233,7 @@ php artisan test modules/Template/Templates/Riode/Tests/Feature/RiodeContentShor
 - ✅ Bootstrap 5.3 nativo
 - ✅ jQuery + AJAX (NO Livewire/React/Inertia/Alpine)
 - ✅ NO inline styles (excepto excepciones documentadas)
-- ✅ Color primario `#90bb13` (Alsernet)
+- ✅ Color primario `#b10100` (Alsernet)
 - ✅ Multi-idioma con `__()`
 - ✅ Tests Feature happy path + edge cases
 - ✅ `loading="lazy"` y dimensiones explícitas en imágenes

@@ -2,9 +2,11 @@
 
 @section('page_title', "Comparar versiones")
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Comparar versiones'])
+@endsection
 
+@section('content')
     <div class="page-wrapper">
         <div class="container-xl">
             @include('core::components.alerts')

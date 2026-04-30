@@ -2,9 +2,11 @@
 
 @section('page_title', __('template::template.view'))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => $template->name])
+@endsection
 
+@section('content')
     <div class="page-wrapper">
         <div class="container-xl">
             @include('core::components.alerts')

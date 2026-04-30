@@ -2,9 +2,11 @@
 
 @section('page_title', __('template::template.version_history'))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => __('template::template.version_history')])
+@endsection
 
+@section('content')
     <div class="page-wrapper">
         <div class="container-xl">
             @include('core::components.alerts')

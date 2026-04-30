@@ -37,8 +37,9 @@
     ])->filter()->implode(' ');
 
     // Parse rendered icon-box items (content is already compiled by the shortcode callback)
+    // Match only the top-level icon-box opening tags, not icon-box-content or other derivatives
     $children = array_filter(
-        array_map('trim', preg_split('/(?=<(?:div|a) class="icon-box)/', $content) ?: []),
+        array_map('trim', preg_split('/(?=<(?:div|a) class="icon-box\s)/', $content) ?: []),
         fn ($c) => str_contains($c, 'icon-box')
     );
 

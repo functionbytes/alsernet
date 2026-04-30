@@ -2,9 +2,11 @@
 
 @section('title', 'Menus')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestion de menus'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

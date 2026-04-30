@@ -2,9 +2,11 @@
 
 @section('page_title', 'Editar menú')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar menú: ' . $menu->name])
+@endsection
+
+@section('content')
 
     <div class="widget-content">
         <form id="form-menu" action="{{ route('settings.menus.update', $menu) }}" method="POST">

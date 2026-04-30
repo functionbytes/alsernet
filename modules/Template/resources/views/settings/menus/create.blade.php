@@ -2,9 +2,11 @@
 
 @section('title', 'Crear menú')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Crear menú'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

@@ -1,7 +1,7 @@
 /* ============================================================================
    RIODE TEMPLATE — Design Tokens
    ----------------------------------------------------------------------------
-   Variables CSS adaptadas al brand Alsernet (#90bb13 sustituye #26c original).
+   Variables CSS adaptadas al brand Alsernet (#b10100 sustituye #26c original).
 
    Uso: Las views Blade del template usan var(--color-X) que apuntan aquí.
    Se carga automáticamente cuando el template está activo.
@@ -11,7 +11,7 @@
     /* ────────────────────────────────────────────────────────────────────
        BRAND COLORS — Alsernet (sustituye color original Riode #26c o #d26e4b)
        ──────────────────────────────────────────────────────────────────── */
-    --color-primary: #90bb13;
+    --color-primary: #b10100;
     --color-primary-hover: #7da010;
     --color-primary-light: #d3e8a8;
     --color-primary-dark: #5e7d0c;

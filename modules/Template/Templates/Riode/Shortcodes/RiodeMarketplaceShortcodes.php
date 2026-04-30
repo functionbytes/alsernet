@@ -50,6 +50,10 @@ class RiodeMarketplaceShortcodes
                 : $this->parseManualImages($attrs, $limit);
 
             if ($items === null) {
+                if ($source === 'manual') {
+                    return '';
+                }
+
                 return view('riode::shortcodes.instagram-feed', [
                     'attrs' => $attrs,
                     'items' => [],
@@ -197,6 +201,8 @@ class RiodeMarketplaceShortcodes
             if (trim($content) === '') {
                 return '';
             }
+
+            $content = $this->compiler->compile($content);
 
             return view('riode::shortcodes.category-column', compact('attrs', 'content'))->render();
         }, [

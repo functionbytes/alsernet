@@ -2,9 +2,11 @@
 
 @section('page_title', isset($template) ? __('template::template.edit') : __('template::template.create'))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => isset($template) ? __('template::template.edit') : __('template::template.create')])
+@endsection
 
+@section('content')
     <div class="page-wrapper">
         <div class="container-xl">
             @include('core::components.alerts')
