@@ -2,9 +2,11 @@
 
 @section('title', 'Automatizaciones')
 
-@section('content')
-@include('core::components.card', ['title' => 'Automatizaciones'])
+@section('page_header')
+    @include('core::components.card', ['title' => 'Automatizaciones'])
+@endsection
 
+@section('content')
 <div class="widget-content searchable-container list">
     @include('core::components.alerts')
 

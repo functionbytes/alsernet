@@ -11,6 +11,11 @@ use Modules\HelpdeskTickets\Models\TicketCategory;
 
 class TicketCannedRepliesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.settings');
+    }
+
     /**
      * Display a listing of ticket canned replies.
      */

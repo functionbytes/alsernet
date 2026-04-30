@@ -2,9 +2,11 @@
 
 @section('title', 'Editar automatizacion')
 
-@section('content')
-@include('core::components.card', ['title' => 'Editar automatizacion'])
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar automatizacion'])
+@endsection
 
+@section('content')
 <div class="row g-3">
     <div class="col-12 col-lg-8">
         <div class="card">

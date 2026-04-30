@@ -14,6 +14,7 @@ use Modules\HelpdeskTickets\Events\TicketSlaBreached;
 use Modules\HelpdeskTickets\Events\TicketSlaNearBreach;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
+use Modules\HelpdeskTickets\Listeners\RecalculateSlaPolicy;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Listeners\RunAiAutoClassify;
 use Modules\HelpdeskTickets\Listeners\RunAiSentimentAnalysis;
@@ -53,6 +54,7 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
         TicketStatusChanged::class => [
             RecordTicketHistory::class,
             RunAutomationsOnTicketStatusChanged::class,
+            RecalculateSlaPolicy::class,
         ],
         MessageAdded::class => [
             UpdateTicketLastActivity::class,

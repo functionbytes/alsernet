@@ -12,6 +12,11 @@ use Modules\HelpdeskTickets\Models\TicketGroup;
 
 class TicketGroupsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.settings');
+    }
+
     /**
      * Display a listing of ticket groups.
      */

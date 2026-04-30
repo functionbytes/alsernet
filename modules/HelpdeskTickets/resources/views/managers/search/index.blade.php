@@ -2,9 +2,11 @@
 
 @section('title', 'Busqueda avanzada - Helpdesk')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Busqueda avanzada'])
+@endsection
 
+@section('content')
     <div class="row g-3">
         {{-- Filters sidebar --}}
         <div class="col-12 col-lg-3">

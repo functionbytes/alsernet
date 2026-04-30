@@ -4,9 +4,11 @@
 
 @section('title', $isEdit ? 'Editar ticket recurrente' : 'Nuevo ticket recurrente')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => $isEdit ? 'Editar ticket recurrente' : 'Nuevo ticket recurrente'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

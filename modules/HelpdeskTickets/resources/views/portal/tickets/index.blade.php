@@ -1,4 +1,4 @@
-@extends('helpdesk::portal.layout')
+@extends('helpdesktickets::portal.layout')
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">

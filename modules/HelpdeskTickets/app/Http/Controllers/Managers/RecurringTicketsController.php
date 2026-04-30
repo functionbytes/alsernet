@@ -5,8 +5,9 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Managers\StoreRecurringTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Managers\UpdateRecurringTicketRequest;
 use Modules\HelpdeskTickets\Models\Priority;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
@@ -47,11 +48,9 @@ class RecurringTicketsController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreRecurringTicketRequest $request): RedirectResponse
     {
-        $this->authorize('helpdesk.tickets.create');
-
-        $validated = $this->validatedData($request);
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active', true);
 
         RecurringTicket::create($validated);
@@ -73,11 +72,9 @@ class RecurringTicketsController extends Controller
         ]);
     }
 
-    public function update(Request $request, RecurringTicket $recurringTicket): RedirectResponse
+    public function update(UpdateRecurringTicketRequest $request, RecurringTicket $recurringTicket): RedirectResponse
     {
-        $this->authorize('helpdesk.tickets.update');
-
-        $validated = $this->validatedData($request);
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
         $recurringTicket->update($validated);
@@ -108,22 +105,5 @@ class RecurringTicketsController extends Controller
         $recurringTicket->update(['is_active' => ! $recurringTicket->is_active]);
 
         return back()->with('success', __('helpdesk::helpdesk.messages.recurring_toggled'));
-    }
-
-    /** @return array<string, mixed> */
-    private function validatedData(Request $request): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'category_id' => ['nullable', 'exists:helpdesk_ticket_categories,id'],
-            'priority_id' => ['nullable', 'exists:helpdesk_priorities,id'],
-            'assignee_id' => ['nullable', 'exists:users,id'],
-            'frequency' => ['required', 'in:daily,weekly,monthly,custom'],
-            'cron_expression' => ['nullable', 'string', 'max:100'],
-            'next_run_at' => ['nullable', 'date'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
     }
 }

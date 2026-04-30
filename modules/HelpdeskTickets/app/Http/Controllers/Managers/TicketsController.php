@@ -17,6 +17,8 @@ use Modules\HelpdeskTickets\Events\NewTicketMessage;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketMessageReceived;
 use Modules\HelpdeskTickets\Events\TicketTyping;
+use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -451,13 +453,9 @@ class TicketsController extends Controller
      *
      * POST /manager/helpdesk/tickets/{ticket}/merge
      */
-    public function merge(Request $request, Ticket $ticket): RedirectResponse
+    public function merge(MergeTicketRequest $request, Ticket $ticket): RedirectResponse
     {
-        $this->authorize('helpdesk.tickets.update');
-
-        $validated = $request->validate([
-            'merge_into_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id', 'different:'.$ticket->id],
-        ]);
+        $validated = $request->validated();
 
         $targetTicket = Ticket::findOrFail($validated['merge_into_id']);
 
@@ -590,14 +588,9 @@ class TicketsController extends Controller
     /**
      * Link two tickets together
      */
-    public function linkTicket(Request $request, Ticket $ticket): RedirectResponse
+    public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse
     {
-        $this->authorize('helpdesk.tickets.update');
-
-        $validated = $request->validate([
-            'linked_ticket_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id'],
-            'link_type' => ['nullable', 'in:related,duplicate_of,blocks,blocked_by'],
-        ]);
+        $validated = $request->validated();
 
         if ($validated['linked_ticket_id'] == $ticket->id) {
             return back()->withErrors(['linked_ticket_id' => 'No puedes enlazar un ticket consigo mismo.']);
@@ -782,5 +775,49 @@ class TicketsController extends Controller
     public function smartReplies(Ticket $ticket, TicketAiService $ai): JsonResponse
     {
         return response()->json(['suggestions' => $ai->smartReplySuggestions($ticket)]);
+    }
+
+    /**
+     * Return ticket detail as JSON for the bandeja ticket modal.
+     */
+    public function details(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('helpdesk.tickets.view');
+
+        $ticket->load(['customer', 'status', 'category', 'assignee']);
+
+        $priorityColors = [
+            'urgent' => 'danger',
+            'high' => 'warning',
+            'normal' => 'info',
+            'low' => 'success',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+                'title' => $ticket->title ?? $ticket->subject,
+                'description' => $ticket->description,
+                'priority' => $ticket->priority,
+                'priority_color' => $priorityColors[$ticket->priority] ?? 'secondary',
+                'status' => $ticket->status?->name,
+                'status_color' => $ticket->status?->color ?? '#6c757d',
+                'status_open' => (bool) $ticket->status?->is_open,
+                'category' => $ticket->category?->name,
+                'assignee' => $ticket->assignee
+                    ? ['id' => $ticket->assignee->id, 'name' => $ticket->assignee->name]
+                    : null,
+                'customer' => $ticket->customer
+                    ? ['id' => $ticket->customer->id, 'name' => $ticket->customer->name]
+                    : null,
+                'created_at' => $ticket->created_at?->toIso8601String(),
+                'created_at_human' => $ticket->created_at?->diffForHumans(),
+                'sla_due_at' => $ticket->sla_resolution_due_at?->toIso8601String(),
+                'sla_human' => $ticket->sla_resolution_due_at?->diffForHumans(),
+                'url' => route('manager.helpdesk.tickets.show', $ticket),
+            ],
+        ]);
     }
 }

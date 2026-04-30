@@ -11,6 +11,11 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 
 class ReportsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.view');
+    }
+
     public function index(): View
     {
         $thirtyDaysAgo = now()->subDays(30);

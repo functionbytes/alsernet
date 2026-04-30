@@ -2,9 +2,11 @@
 
 @section('title', isset($template) ? 'Editar plantilla' : 'Nueva plantilla')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => isset($template) ? 'Editar plantilla' : 'Nueva plantilla'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

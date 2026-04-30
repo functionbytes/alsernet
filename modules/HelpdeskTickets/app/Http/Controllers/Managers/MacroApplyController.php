@@ -12,7 +12,9 @@ class MacroApplyController extends Controller
 {
     public function __construct(
         private readonly MacroExecutor $executor
-    ) {}
+    ) {
+        $this->middleware('can:helpdesk.tickets.update');
+    }
 
     public function list(): JsonResponse
     {

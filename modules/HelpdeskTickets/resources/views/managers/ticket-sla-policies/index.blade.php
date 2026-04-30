@@ -2,9 +2,11 @@
 
 @section('title', 'Políticas SLA')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Políticas SLA'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -166,7 +168,7 @@
                                     <td class="text-center">
                                         <div class="dropdown">
                                             <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                                <i class="fas fa-ellipsis-vertical"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>

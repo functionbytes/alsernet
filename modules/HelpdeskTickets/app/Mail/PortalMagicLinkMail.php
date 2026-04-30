@@ -29,7 +29,7 @@ class PortalMagicLinkMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'helpdesk::emails.portal-magic-link',
+            view: 'helpdesktickets::emails.portal-magic-link',
         );
     }
 }

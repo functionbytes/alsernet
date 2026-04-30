@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreMacroRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateMacroRequest;
@@ -11,6 +12,11 @@ use Modules\HelpdeskTickets\Models\Macro;
 
 class MacrosController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.settings');
+    }
+
     public function index(Request $request): View
     {
         $query = Macro::query();

@@ -4,10 +4,17 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketViewRequest;
+use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketViewRequest;
 use Modules\HelpdeskTickets\Models\TicketView;
 
 class TicketViewsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.settings');
+    }
+
     /**
      * Display a listing of ticket views.
      */
@@ -51,17 +58,9 @@ class TicketViewsController extends Controller
     /**
      * Store a newly created view.
      */
-    public function store(Request $request)
+    public function store(StoreTicketViewRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'filters' => 'nullable|array',
-            'sort_by' => 'nullable|string|max:100',
-            'sort_direction' => 'nullable|in:asc,desc',
-            'is_shared' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['user_id'] = auth()->id();
         $validated['is_shared'] = $request->boolean('is_shared');
@@ -91,22 +90,14 @@ class TicketViewsController extends Controller
     /**
      * Update the specified view.
      */
-    public function update(Request $request, TicketView $view)
+    public function update(UpdateTicketViewRequest $request, TicketView $view)
     {
         // Prevent editing system views
         if ($view->is_system) {
             return back()->with('error', 'No se pueden editar las vistas del sistema.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'filters' => 'nullable|array',
-            'sort_by' => 'nullable|string|max:100',
-            'sort_direction' => 'nullable|in:asc,desc',
-            'is_shared' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_shared'] = $request->boolean('is_shared');
         $validated['is_default'] = $request->boolean('is_default');

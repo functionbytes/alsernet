@@ -2,9 +2,11 @@
 
 @section('title', 'Editar ticket #' . $ticket->ticket_number)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar ticket #' . $ticket->ticket_number])
+@endsection
+
+@section('content')
 
     @if($ticket->isClosed())
         <div class="alert alert-warning mb-3">

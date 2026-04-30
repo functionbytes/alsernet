@@ -286,7 +286,7 @@
                                     <td class="text-center" style="border: none; vertical-align: middle;">
                                         <div class="dropdown">
                                             <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                                <i class="fas fa-ellipsis-vertical"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>

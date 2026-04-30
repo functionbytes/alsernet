@@ -11,6 +11,11 @@ use Modules\HelpdeskTickets\Models\Ticket;
 
 class BulkTicketsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.manage');
+    }
+
     /**
      * Handle bulk ticket operations.
      *

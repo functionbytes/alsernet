@@ -14,6 +14,11 @@ use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 
 class TicketCategoriesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:helpdesk.tickets.settings');
+    }
+
     /**
      * Display a listing of ticket categories.
      */
