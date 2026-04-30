@@ -9,7 +9,7 @@
     <div style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08);">
 
         {{-- Header --}}
-        <div style="background-color: #90bb13; padding: 24px 32px;">
+        <div style="background-color: #b10100; padding: 24px 32px;">
             <p style="color: #ffffff; font-size: 13px; margin: 0; opacity: .85;">
                 {{ config('app.name') }}
             </p>
@@ -31,7 +31,7 @@
             @endif
 
             <a href="{{ $page->url }}"
-               style="display: inline-block; background-color: #90bb13; color: #ffffff; padding: 12px 28px;
+               style="display: inline-block; background-color: #b10100; color: #ffffff; padding: 12px 28px;
                       text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px;">
                 Leer más
             </a>

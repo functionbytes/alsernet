@@ -217,7 +217,7 @@
         function renderTags() {
             $('#ve-tags-container').children().remove();
             getTags().forEach(function (tag) {
-                var $chip = $('<span style="display:inline-flex;align-items:center;gap:3px;background:#90bb13;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;">'
+                var $chip = $('<span style="display:inline-flex;align-items:center;gap:3px;background:#b10100;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;">'
                     + $('<span>').text(tag).html()
                     + '<i class="fa-solid fa-times ve-tag-remove" style="cursor:pointer;font-size:9px;margin-left:2px;" data-tag="' + $('<span>').text(tag).html() + '"></i>'
                     + '</span>');

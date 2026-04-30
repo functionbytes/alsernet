@@ -2,9 +2,11 @@
 
 @section('title', 'Exportar paginas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Exportar paginas'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

@@ -10,7 +10,7 @@ class PageCategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'Servicios',  'slug' => 'servicios', 'color' => '#90bb13'],
+            ['name' => 'Servicios',  'slug' => 'servicios', 'color' => '#b10100'],
             ['name' => 'Blog',       'slug' => 'blog',      'color' => '#13C672'],
             ['name' => 'Legal',      'slug' => 'legal',     'color' => '#6c757d'],
             ['name' => 'Nosotros',   'slug' => 'nosotros',  'color' => '#FA896B'],

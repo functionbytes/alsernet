@@ -41,7 +41,7 @@ class AboutUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-medal fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-medal fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Calidad certificada</h5>
             <p class="text-muted mb-0">Trabajamos exclusivamente con materiales y proveedores que cumplen las más altas normas del sector.</p>
@@ -50,7 +50,7 @@ class AboutUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-handshake fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-handshake fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Atención personal</h5>
             <p class="text-muted mb-0">Cada proyecto recibe atención individualizada desde el primer contacto hasta la instalación final.</p>
@@ -59,7 +59,7 @@ class AboutUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-shield-halved fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-shield-halved fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Garantía total</h5>
             <p class="text-muted mb-0">Respaldamos todos nuestros trabajos con garantía de fabricante y servicio postventa dedicado.</p>
@@ -74,19 +74,19 @@ class AboutUsPageSeeder extends Seeder
     <div class="container">
       <div class="row g-4 text-center">
         <div class="col-6 col-md-3">
-          <div class="display-4 fw-bold" style="color:#90bb13">1.500+</div>
+          <div class="display-4 fw-bold" style="color:#b10100">1.500+</div>
           <div class="text-muted fw-semibold mt-1">Proyectos realizados</div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="display-4 fw-bold" style="color:#90bb13">25</div>
+          <div class="display-4 fw-bold" style="color:#b10100">25</div>
           <div class="text-muted fw-semibold mt-1">Años de experiencia</div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="display-4 fw-bold" style="color:#90bb13">98%</div>
+          <div class="display-4 fw-bold" style="color:#b10100">98%</div>
           <div class="text-muted fw-semibold mt-1">Clientes satisfechos</div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="display-4 fw-bold" style="color:#90bb13">12</div>
+          <div class="display-4 fw-bold" style="color:#b10100">12</div>
           <div class="text-muted fw-semibold mt-1">Técnicos especializados</div>
         </div>
       </div>

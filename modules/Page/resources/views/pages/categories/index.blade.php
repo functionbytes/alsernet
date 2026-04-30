@@ -2,9 +2,11 @@
 
 @section('title', 'Categorias de paginas')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Categorias de paginas'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')

@@ -18,7 +18,7 @@ window.veBlocks = [
         name: 'Hero con imagen',
         category: 'sections',
         icon: '<i class="fa-solid fa-panorama fa-lg"></i>',
-        html: `<section class="py-5" style="background: #90bb13; color: white;">
+        html: `<section class="py-5" style="background: #b10100; color: white;">
   <div class="container">
     <div class="row align-items-center">
       <div class="col-md-6">

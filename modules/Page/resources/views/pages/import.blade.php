@@ -2,9 +2,11 @@
 
 @section('title', 'Importar paginas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar paginas'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

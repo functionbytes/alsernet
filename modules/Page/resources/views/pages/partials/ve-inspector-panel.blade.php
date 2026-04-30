@@ -1807,7 +1807,7 @@
     cursor:pointer; transition:all .15s;
 }
 .ve-sc-tab:hover { background:#ebebeb; }
-.ve-sc-tab.active { background:#90bb13; color:#fff; border-color:#90bb13; }
+.ve-sc-tab.active { background:#b10100; color:#fff; border-color:#b10100; }
 .ve-sc-item-card { border:1px solid #e8e8e8; border-radius:6px; margin-bottom:6px; overflow:hidden; }
 .ve-sc-item-card.ve-sc-item-collapsed .ve-sc-item-body { display:none; }
 .ve-sc-item-header {
@@ -1817,13 +1817,13 @@
 .ve-sc-drag-handle { cursor:grab; color:#bbb; font-size:11px; flex-shrink:0; }
 .ve-sc-drag-handle:active { cursor:grabbing; }
 .ve-sc-item-toggle { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
-.ve-sc-item-toggle:hover { color:#90bb13; }
+.ve-sc-item-toggle:hover { color:#b10100; }
 .ve-sc-item-label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ve-sc-item-delete { font-size:11px; opacity:.6; flex-shrink:0; }
 .ve-sc-item-delete:hover { opacity:1; }
 .ve-sc-item-body { padding:6px 8px; }
 .ve-sc-item-body .ve-field { margin-bottom:6px; }
-.ve-sc-sortable-placeholder { height:36px; border:2px dashed #90bb13; border-radius:6px; margin-bottom:6px; background:#f0f8e0; }
+.ve-sc-sortable-placeholder { height:36px; border:2px dashed #b10100; border-radius:6px; margin-bottom:6px; background:#f0f8e0; }
 #ve-sc-items-list.ui-sortable .ve-sc-drag-handle { color:#ccc; }
 #ve-sc-items-list.ui-sortable .ve-sc-drag-handle:hover { color:#888; }
 /* Footer: apply full-width + grouped secondary buttons */
@@ -1848,7 +1848,7 @@
 .ve-sc-toolbar-btn:hover { background:#ebebeb; color:#333; }
 /* Duplicate button */
 .ve-sc-item-dupe { font-size:11px; opacity:.5; flex-shrink:0; }
-.ve-sc-item-dupe:hover { opacity:1; color:#90bb13 !important; }
+.ve-sc-item-dupe:hover { opacity:1; color:#b10100 !important; }
 /* Image preview */
 .ve-sc-image-wrap { display:flex; flex-direction:column; gap:4px; }
 .ve-sc-img-preview { min-height:0; }
@@ -1862,12 +1862,12 @@
 /* ── Improvement 13: Bootstrap quick classes chips ──────────────── */
 .ve-bs-chip { display:inline-block; padding:1px 7px; font-size:10px; background:#f0f0f0; border-radius:10px; cursor:pointer; border:1px solid #ddd; user-select:none; transition:all .15s; }
 .ve-bs-chip:hover { background:#e0e0e0; }
-.ve-bs-chip.active { background:#90bb13; color:#fff; border-color:#90bb13; }
+.ve-bs-chip.active { background:#b10100; color:#fff; border-color:#b10100; }
 .ve-bs-cat-label { font-size:9px; color:#999; text-transform:uppercase; letter-spacing:.5px; margin:4px 0 2px; }
 
 /* ── Improvement 14: Unit toggle ────────────────────────────────── */
 .ve-unit-toggle { cursor:pointer; user-select:none; }
-.ve-unit-toggle:hover { background:#e9ecef; color:#90bb13; }
+.ve-unit-toggle:hover { background:#e9ecef; color:#b10100; }
 
 /* ── Improvement A: Attrs search ───────────────────────────────── */
 .ve-sc-attrs-search-wrap { position:sticky; top:0; background:#fff; z-index:1; padding-bottom:4px; }
@@ -2582,7 +2582,7 @@
         }
         if (type === 'color') {
             const hex     = /^#[0-9a-fA-F]{6}$/.test(val) ? val : '#000000';
-            const swatches = ['#90bb13','#13C672','#FA896B','#FEC90F','#1e1e2e','#ffffff','#f4f6f8','#333333'];
+            const swatches = ['#b10100','#13C672','#FA896B','#FEC90F','#1e1e2e','#ffffff','#f4f6f8','#333333'];
             const swatchHtml = '<div class="ve-brand-palette">' +
                 swatches.map(function (c) {
                     return '<div class="ve-brand-swatch" style="background:' + c + '" data-color="' + c + '" title="' + c + '"></div>';

@@ -2,9 +2,11 @@
 
 @section('page_title', 'Analytics — ' . $page->title)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Analytics: ' . $page->title])
+@endsection
+
+@section('content')
 
     <div class="widget-content">
 

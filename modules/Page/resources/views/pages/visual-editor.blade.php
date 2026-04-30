@@ -100,7 +100,7 @@
             color: #333;
         }
         .ve-snippet-item:hover { background: #e9ecef; border-color: #dee2e6; }
-        .ve-snippet-item.active { background: #90bb13; color: #fff; border-color: #7aa310; }
+        .ve-snippet-item.active { background: #b10100; color: #fff; border-color: #7aa310; }
         .ve-snippets-editor {
             flex: 1;
             display: flex;
@@ -119,8 +119,8 @@
             font-size: 11px; color: #555; gap: 4px; padding: 4px;
         }
         .ve-icon-cell i { font-size: 20px; color: #444; }
-        .ve-icon-cell:hover { background: #f0f5e6; border-color: #90bb13; }
-        .ve-icon-cell:hover i { color: #90bb13; }
+        .ve-icon-cell:hover { background: #f0f5e6; border-color: #b10100; }
+        .ve-icon-cell:hover i { color: #b10100; }
         .ve-icon-cell span { font-size: 9px; text-align: center; overflow: hidden; white-space: nowrap; max-width: 56px; text-overflow: ellipsis; }
 
         /* ── Quick Actions Bar — fijo al viewport, a la derecha del sidebar.
@@ -214,7 +214,7 @@
         #ve-canvas-wrap.ve-wireframe #ve-preview-frame { filter: grayscale(1) contrast(0.4) brightness(1.5); }
         #ve-canvas-wrap.ve-wireframe::after {
             content: 'WIREFRAME'; position: absolute; top: 8px; right: 12px;
-            font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #90bb13;
+            font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #b10100;
             pointer-events: none; z-index: 99;
         }
     </style>
@@ -271,7 +271,7 @@
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#e9ecef">Gris</button></li>
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#1a1a1a">Oscuro</button></li>
                         <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="#ffffff">Blanco</button></li>
-                        <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="repeating-#90bb13">Cuadrícula</button></li>
+                        <li><button class="dropdown-item ve-canvas-bg-btn" data-bg="repeating-#b10100">Cuadrícula</button></li>
                     </ul>
                 </div>
                 <button type="button" class="ve-ibtn" id="btn-fullscreen-preview" title="Pantalla completa">
@@ -5345,7 +5345,7 @@
             var styleTag = frame.contentDocument.createElement('style');
             styleTag.id = 've-pseudo-state-style';
             styleTag.textContent = state === 'hover'
-                ? '.ve-pseudo-hover { outline: 2px dashed #90bb13 !important; }'
+                ? '.ve-pseudo-hover { outline: 2px dashed #b10100 !important; }'
                 : '.ve-pseudo-focus { outline: 2px solid #0ea5e9 !important; }';
             frame.contentDocument.head.appendChild(styleTag);
         } else if (el && state === 'base') {
@@ -6179,7 +6179,7 @@ window.veLoadCodeMirror = (function () {
         if (!query && !typeF) {
             var recent = getRecentMedia();
             if (recent.length) {
-                var $recentLabel = $('<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#90bb13;text-transform:uppercase;letter-spacing:1px;padding:2px 0 4px;">Recientes</div>');
+                var $recentLabel = $('<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#b10100;text-transform:uppercase;letter-spacing:1px;padding:2px 0 4px;">Recientes</div>');
                 $grid.append($recentLabel);
                 recent.forEach(function (url) {
                     var fname = url.split('/').pop().split('?')[0];
@@ -7045,14 +7045,14 @@ window.veLoadCodeMirror = (function () {
         var dir = $('#ve-gradient-direction').val();
         var c1 = $('#ve-gradient-color1').val();
         var c2 = $('#ve-gradient-color2').val();
-        $('#ve-gradient-preview').css('background', '#90bb13');
+        $('#ve-gradient-preview').css('background', '#b10100');
     }
     $(document).on('input change', '#ve-gradient-direction, #ve-gradient-color1, #ve-gradient-color2', updateGradientPreview);
     $(document).on('click', '#btn-apply-gradient', function() {
         var dir = $('#ve-gradient-direction').val();
         var c1 = $('#ve-gradient-color1').val();
         var c2 = $('#ve-gradient-color2').val();
-        var val = '#90bb13';
+        var val = '#b10100';
         var frame = document.getElementById('ve-preview-frame');
         if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 've-apply-styles', styles: { 'background': val } }, '*');
         if (window.veToast) window.veToast('Gradiente aplicado', 'success');
@@ -9001,7 +9001,7 @@ window.veLoadCodeMirror = (function () {
         var bg = $(this).data('bg');
         $('#ve-canvas-wrap').css('background', bg);
         $('#btn-grid-overlay-top').closest('.dropdown').prev('#btn-canvas-bg')
-            .find('i').css('color', bg === '#ffffff' || !bg ? '' : '#90bb13');
+            .find('i').css('color', bg === '#ffffff' || !bg ? '' : '#b10100');
         localStorage.setItem('ve-canvas-bg', bg);
     });
     // Restore canvas bg on load
@@ -9971,8 +9971,8 @@ window.veLoadCodeMirror = (function () {
         $target: null,
         dragging: false,
         // Brand palette — 8 colores + transparente + add button
-        brandColor:   '#90bb13',
-        swatchColors: ['#90bb13','#18181b','#ffffff','#f4f4f5','#dc2626','#d97706','#16a34a','#2563eb']
+        brandColor:   '#b10100',
+        swatchColors: ['#b10100','#18181b','#ffffff','#f4f4f5','#dc2626','#d97706','#16a34a','#2563eb']
     };
 
     function hsvToHex(h, s, v) {
@@ -10058,7 +10058,7 @@ window.veLoadCodeMirror = (function () {
         $('#ve-acp-preview-fill').css('background', rgba);
         // Alpha bar background
         $('#ve-acp-alpha').css('background',
-            '#90bb13, rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + '))');
+            '#b10100, rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + '))');
     }
 
     function syncInputs() {

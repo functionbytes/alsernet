@@ -2,9 +2,11 @@
 
 @section('page_title', 'Versión v' . $version->version_number . ' — ' . $page->title)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Versiones'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

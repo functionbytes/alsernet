@@ -2,10 +2,11 @@
 
 @section('page_title', 'Editar página')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar página: ' . $page->title])
+@endsection
 
+@section('content')
 
     {{-- Página bloqueada por otro usuario --}}
     <div id="lockAlert" class="alert alert-warning alert-dismissible fade show" style="display:none;">

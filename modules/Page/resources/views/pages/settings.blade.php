@@ -2,9 +2,11 @@
 
 @section('page_title', 'Configuracion de páginas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuracion de páginas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

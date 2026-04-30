@@ -569,8 +569,8 @@ class VisualEditorController extends Controller
 .ve-sel      { outline: 2px solid #b10100 !important; outline-offset: 1px !important; }
 .ve-ctx      { outline: 2px solid #FA896B !important; outline-offset: 1px !important; }
 .ve-multi    { outline: 2px solid #fd7e14 !important; outline-offset: 1px !important; }
-.ve-sc-active{ outline: 2px dashed #90bb13 !important; outline-offset: 4px !important; }
-@keyframes veScFlash { 0%{outline-color:#90bb13;outline-width:2px} 40%{outline-color:#13C672;outline-width:4px} 100%{outline-color:#90bb13;outline-width:2px} }
+.ve-sc-active{ outline: 2px dashed #b10100 !important; outline-offset: 4px !important; }
+@keyframes veScFlash { 0%{outline-color:#b10100;outline-width:2px} 40%{outline-color:#13C672;outline-width:4px} 100%{outline-color:#b10100;outline-width:2px} }
 .ve-sc-flash { animation: veScFlash .55s ease-out; }
 .ve-quick-bar { position:absolute; display:inline-flex; gap:1px; padding:4px; background:#18181b; border:1px solid rgba(255,255,255,.08); border-radius:8px; box-shadow:0 12px 28px rgba(0,0,0,.25); z-index:99999; pointer-events:auto; font-family:'Inter',sans-serif; }
 .ve-quick-bar button { width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:5px; color:#d4d4d8; font-size:11.5px; cursor:pointer; transition:background .1s,color .1s; }
@@ -1742,10 +1742,10 @@ class VisualEditorController extends Controller
         if (!_veHoverOverlay) {
             _veHoverOverlay = document.createElement('div');
             _veHoverOverlay.id = 've-hover-overlay';
-            _veHoverOverlay.style.cssText = 'position:fixed;pointer-events:none;z-index:9997;border:1px dashed #90bb13;background:rgba(144,187,19,0.05);transition:all .1s;';
+            _veHoverOverlay.style.cssText = 'position:fixed;pointer-events:none;z-index:9997;border:1px dashed #b10100;background:rgba(144,187,19,0.05);transition:all .1s;';
             var hoverLabel = document.createElement('div');
             hoverLabel.id = 've-hover-label';
-            hoverLabel.style.cssText = 'position:absolute;top:-20px;left:0;background:#90bb13;color:#fff;padding:1px 5px;font-size:10px;white-space:nowrap;border-radius:2px;font-family:monospace;';
+            hoverLabel.style.cssText = 'position:absolute;top:-20px;left:0;background:#b10100;color:#fff;padding:1px 5px;font-size:10px;white-space:nowrap;border-radius:2px;font-family:monospace;';
             _veHoverOverlay.appendChild(hoverLabel);
             document.body.appendChild(_veHoverOverlay);
         }

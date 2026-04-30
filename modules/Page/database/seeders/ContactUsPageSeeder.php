@@ -41,7 +41,7 @@ class ContactUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-phone fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-phone fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Teléfono</h5>
             <p class="text-muted mb-1">Lun a Vie, 9:00 - 18:00</p>
@@ -51,7 +51,7 @@ class ContactUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-envelope fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-envelope fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Email</h5>
             <p class="text-muted mb-1">Respondemos en 24h</p>
@@ -61,7 +61,7 @@ class ContactUsPageSeeder extends Seeder
         <div class="col-12 col-md-4">
           <div class="card h-100 border-0 shadow-sm p-4">
             <div class="mb-3">
-              <i class="fas fa-location-dot fa-2x" style="color:#90bb13"></i>
+              <i class="fas fa-location-dot fa-2x" style="color:#b10100"></i>
             </div>
             <h5 class="fw-bold">Oficina</h5>
             <p class="text-muted mb-1">Visítanos sin cita previa</p>

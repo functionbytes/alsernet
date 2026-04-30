@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('description')->nullable();
-            $table->string('color', 7)->default('#90bb13');
+            $table->string('color', 7)->default('#b10100');
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
         });
