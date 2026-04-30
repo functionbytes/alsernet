@@ -1,8 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Estado del sistema'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')
