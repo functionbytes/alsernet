@@ -11,7 +11,7 @@
         body { background-color: #f8f9fa; }
         .navbar-brand { font-weight: 600; }
         .ticket-message { border-left: 4px solid #dee2e6; padding-left: 1rem; margin-bottom: 1rem; }
-        .ticket-message.from-customer { border-color: #90bb13; }
+        .ticket-message.from-customer { border-color: #b10100; }
         .ticket-message.from-agent { border-color: #0d6efd; }
     </style>
 </head>

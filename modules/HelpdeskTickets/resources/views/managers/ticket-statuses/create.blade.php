@@ -73,9 +73,9 @@
                         <div class="mb-3">
                             <label class="control-label col-form-label">Color <span class="text-danger">*</span></label>
                             <div class="d-flex align-items-center gap-2">
-                                <input type="color" name="color" class="form-control form-control-color" value="{{ old('color', '#90bb13') }}" id="colorPicker">
-                                <input type="text" id="colorHex" class="form-control" value="{{ old('color', '#90bb13') }}" readonly style="max-width: 120px;">
-                                <div id="colorPreview" class="border rounded" style="width: 50px; height: 50px; background-color: {{ old('color', '#90bb13') }};"></div>
+                                <input type="color" name="color" class="form-control form-control-color" value="{{ old('color', '#b10100') }}" id="colorPicker">
+                                <input type="text" id="colorHex" class="form-control" value="{{ old('color', '#b10100') }}" readonly style="max-width: 120px;">
+                                <div id="colorPreview" class="border rounded" style="width: 50px; height: 50px; background-color: {{ old('color', '#b10100') }};"></div>
                             </div>
                             <small class="form-text text-muted">Color de identificación del estado</small>
                             @error('color')
@@ -89,7 +89,7 @@
                             <label class="control-label col-form-label">Colores sugeridos</label>
                             <small class="d-block text-muted mb-2">Haz clic en cualquier color para aplicarlo rápidamente</small>
                             <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-sm color-preset" data-color="#90bb13" style="background-color: #90bb13; width: 40px; height: 40px; border-radius: 8px;"></button>
+                                <button type="button" class="btn btn-sm color-preset" data-color="#b10100" style="background-color: #b10100; width: 40px; height: 40px; border-radius: 8px;"></button>
                                 <button type="button" class="btn btn-sm color-preset" data-color="#13C672" style="background-color: #13C672; width: 40px; height: 40px; border-radius: 8px;"></button>
                                 <button type="button" class="btn btn-sm color-preset" data-color="#FA896B" style="background-color: #FA896B; width: 40px; height: 40px; border-radius: 8px;"></button>
                                 <button type="button" class="btn btn-sm color-preset" data-color="#FEC90F" style="background-color: #FEC90F; width: 40px; height: 40px; border-radius: 8px;"></button>

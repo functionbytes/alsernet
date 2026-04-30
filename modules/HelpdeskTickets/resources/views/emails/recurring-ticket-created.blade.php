@@ -5,7 +5,7 @@
     <title>Recurring ticket created</title>
 </head>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #90bb13; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
+    <div style="background: #b10100; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
         <h2 style="margin: 0;">Recurring ticket created</h2>
     </div>
     <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
@@ -33,7 +33,7 @@
             </tr>
         </table>
         <p style="text-align: center; margin: 20px 0;">
-            <a href="{{ $ticketUrl }}" style="background: #90bb13; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+            <a href="{{ $ticketUrl }}" style="background: #b10100; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
                 View ticket #{{ $ticket->ticket_number }}
             </a>
         </p>

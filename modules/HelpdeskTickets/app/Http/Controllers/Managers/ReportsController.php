@@ -38,7 +38,7 @@ class ReportsController extends Controller
                     ->map(fn ($s) => [
                         'label' => $s->name,
                         'value' => $s->tickets_count,
-                        'color' => $s->color ?? '#90bb13',
+                        'color' => $s->color ?? '#b10100',
                     ]),
 
                 'by_priority' => Ticket::selectRaw('priority, COUNT(*) as total')

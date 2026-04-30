@@ -19,7 +19,7 @@
                 <p style="text-align: center; margin: 0 0 24px;">
                     <a
                         href="{{ url('/portal/auth/' . $token) }}"
-                        style="display: inline-block; background-color: #90bb13; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px;"
+                        style="display: inline-block; background-color: #b10100; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px;"
                     >
                         Log in to portal
                     </a>

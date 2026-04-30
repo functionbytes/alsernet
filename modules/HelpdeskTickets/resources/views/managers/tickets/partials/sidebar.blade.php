@@ -36,7 +36,7 @@
             <li class="list-group-item border-0 p-0 mx-9">
                 <a class="d-flex align-items-center gap-6 list-group-item-action text-dark px-3 py-8 mb-1 rounded-1"
                    href="{{ route('manager.helpdesk.tickets.index', ['category' => $category->id]) }}">
-                    <i class="{{ $category->icon ?? 'fas fa-tag' }} fs-5" style="color: {{ $category->color ?? '#90bb13' }}"></i>{{ $category->name }}
+                    <i class="{{ $category->icon ?? 'fas fa-tag' }} fs-5" style="color: {{ $category->color ?? '#b10100' }}"></i>{{ $category->name }}
                 </a>
             </li>
         @empty

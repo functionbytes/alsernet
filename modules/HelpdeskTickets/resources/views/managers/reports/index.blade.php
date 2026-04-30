@@ -123,7 +123,7 @@
     const D = @json($data);
 
     const COLORS = {
-        primary: '#90bb13',
+        primary: '#b10100',
         success: '#13C672',
         warning: '#FEC90F',
         danger:  '#FA896B',

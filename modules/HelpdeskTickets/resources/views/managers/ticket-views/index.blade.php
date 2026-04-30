@@ -149,7 +149,7 @@
                                     </td>
                                     <td class="align-middle">
                                         <div class="d-flex align-items-center gap-2">
-                                            <i class="{{ $view->icon ?? 'fas fa-eye' }}" style="color: {{ $view->color ?? '#90bb13' }}; font-size: 24px;"></i>
+                                            <i class="{{ $view->icon ?? 'fas fa-eye' }}" style="color: {{ $view->color ?? '#b10100' }}; font-size: 24px;"></i>
                                         </div>
                                     </td>
                                     <td>
