@@ -2,10 +2,11 @@
 
 @section('page_title', 'Editar Plantilla: ' . ($translation->subject ?? $template->name))
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', ['title' => 'Editor de Plantilla de Email'])
+@endsection
+
+@section('content')
 
     @include('mailer::partials.alerts')
 

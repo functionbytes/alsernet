@@ -2,19 +2,20 @@
 
 @section('page_title', 'Crear Componente de email')
 
+@section('page_header')
+    @include('core::components.card', [
+    'title' => 'Crear Componente de email',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Configuración', 'url' => ''],
+    ['label' => 'Componentes', 'url' => route('mailers.components.index')],
+    ['label' => 'Crear', 'active' => true]
+    ]
+    ])
+@endsection
+
 @section('content')
 <div class="px-3">
-
-    {{-- Breadcrumb Card --}}
-    @include('core::components.card', [
-        'title' => 'Crear Componente de email',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'Configuración', 'url' => ''],
-            ['label' => 'Componentes', 'url' => route('mailers.components.index')],
-            ['label' => 'Crear', 'active' => true]
-        ]
-    ])
 
     @include('mailer::partials.alerts')
 

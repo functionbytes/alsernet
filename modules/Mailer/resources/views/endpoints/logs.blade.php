@@ -2,10 +2,12 @@
 
 @section('title', 'Logs de Endpoint')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Logs de Requests'])
+@endsection
+
 @section('content')
     @php use Modules\Mailer\Enums\EndpointLogStatus; @endphp
-
-    @include('core::components.card', ['title' => 'Logs de Requests'])
 
     <div class="widget-content searchable-container list">
 

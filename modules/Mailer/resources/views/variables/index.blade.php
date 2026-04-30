@@ -2,17 +2,18 @@
 
 @section('page_title', 'Variables de Email')
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Variables de email',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'Configuración', 'url' => ''],
-            ['label' => 'Variables de email', 'active' => true]
-        ]
+    'title' => 'Variables de email',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Configuración', 'url' => ''],
+    ['label' => 'Variables de email', 'active' => true]
+    ]
     ])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

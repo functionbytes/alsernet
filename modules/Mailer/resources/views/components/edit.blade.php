@@ -2,12 +2,13 @@
 
 @section('page_title', 'Editar Componente: ' . $component->subject)
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Editor de Componente de Email'
+    'title' => 'Editor de Componente de Email'
     ])
+@endsection
+
+@section('content')
 
     @include('mailer::partials.alerts')
 

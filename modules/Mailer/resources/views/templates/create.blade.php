@@ -2,12 +2,13 @@
 
 @section('page_title', 'Crear Plantilla de Email')
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Crear Nueva Plantilla de Email',
+    'title' => 'Crear Nueva Plantilla de Email',
     ])
+@endsection
+
+@section('content')
 
     @include('mailer::partials.alerts')
 

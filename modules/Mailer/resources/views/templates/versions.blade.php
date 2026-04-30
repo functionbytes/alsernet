@@ -2,11 +2,13 @@
 
 @section('page_title', 'Historial de versiones: ' . $template->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Historial de versiones — ' . $template->name,
+    'title' => 'Historial de versiones — ' . $template->name,
     ])
+@endsection
+
+@section('content')
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">

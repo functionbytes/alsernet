@@ -2,9 +2,11 @@
 
 @section('title', 'Documentación de Endpoints')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Documentación de Endpoints'])
+@endsection
+
+@section('content')
 
     <div class="widget-content">
         @include('core::components.alerts')

@@ -2,9 +2,11 @@
 
 @section('title', 'Plantillas de email')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Plantillas de email'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

@@ -2,13 +2,13 @@
 
 @section('page_title', 'Preview - ' . $template->name)
 
+@section('page_header')
+    @include('core::components.card', [
+    'title' => 'Vista Previa de Plantilla'
+    ])
+@endsection
+
 @section('content')
-
-        {{-- Breadcrumb Card --}}
-        @include('core::components.card', [
-            'title' => 'Vista Previa de Plantilla'
-        ])
-
 
         {{-- Preview Content --}}
         <div class="row g-3">
