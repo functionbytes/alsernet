@@ -2,9 +2,11 @@
 
 @section('title', 'Gestión de almacenamiento')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestión de almacenamiento'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

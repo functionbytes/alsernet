@@ -2,9 +2,11 @@
 
 @section('page_title', 'Editar disco de almacenamiento')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar disco de almacenamiento'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
