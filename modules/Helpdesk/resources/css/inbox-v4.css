@@ -163,7 +163,7 @@ body:has(.inbox-v4) .mc-content {
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #f97316, #db2777);
+    background: linear-gradient(135deg, #18181b, #52525b);
     color: #fff;
     display: grid;
     place-items: center;
@@ -645,14 +645,14 @@ body:has(.inbox-v4) .mc-content {
     position: relative;
     flex-shrink: 0;
 }
-.bv-av.c1 { background: linear-gradient(135deg, #f97316, #db2777); }
-.bv-av.c2 { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
-.bv-av.c3 { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
-.bv-av.c4 { background: linear-gradient(135deg, #10b981, #059669); }
-.bv-av.c5 { background: linear-gradient(135deg, #ec4899, #f43f5e); }
-.bv-av.c6 { background: linear-gradient(135deg, #3b82f6, #6366f1); }
-.bv-av.c7 { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.bv-av.c8 { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.bv-av.c1 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c2 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c3 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c4 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c5 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c6 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c7 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c8 { background: linear-gradient(135deg, #18181b, #52525b); }
 
 .bv-av .badge-ch {
     position: absolute;
@@ -824,7 +824,7 @@ body:has(.inbox-v4) .mc-content {
     place-items: center;
     font-size: 13.5px;
     font-weight: 700;
-    background: linear-gradient(135deg, #f97316, #db2777);
+    background: linear-gradient(135deg, #18181b, #52525b);
     position: relative;
     flex-shrink: 0;
 }
@@ -1137,7 +1137,7 @@ body:has(.inbox-v4) .mc-content {
     place-items: center;
     font-size: 22px;
     font-weight: 700;
-    background: linear-gradient(135deg, #f97316, #db2777);
+    background: linear-gradient(135deg, #18181b, #52525b);
     margin: -32px auto 12px;
     border: 3px solid var(--bv-bg-panel);
     box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
@@ -2303,7 +2303,7 @@ body:has(.inbox-v4) .mc-content {
 .bv-right-avatar {
     width: 56px; height: 56px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f97316, #db2777);
+    background: linear-gradient(135deg, #18181b, #52525b);
     color: #fff; font-size: 18px; font-weight: 800;
     display: grid; place-items: center;
     border: 3px solid var(--bv-bg-panel);
@@ -2582,7 +2582,7 @@ body:has(.inbox-v4) .mc-content {
 /* ── Pill dot variants ──────────────────────────────────────────── */
 .bv-dot-success  { background: var(--bv-success); }
 .bv-dot-warning  { background: var(--bv-warning); }
-.bv-dot-agent    { background: linear-gradient(135deg, #f97316, #db2777); }
+.bv-dot-agent    { background: linear-gradient(135deg, #18181b, #52525b); }
 
 /* ── Pill chevron ───────────────────────────────────────────────── */
 .bv-pill-chev {
@@ -6043,6 +6043,87 @@ mark.bv-search-hit.bv-search-current {
     box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.35);
 }
 
+/* Right-panel: Pedidos */
+.bv-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 16px;
+}
+.bv-order-card {
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: background 0.12s ease;
+}
+.bv-order-card:hover { background: rgba(0,0,0,0.02); }
+
+/* Right-panel: Archivos */
+.bv-files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 8px;
+    padding: 8px 16px;
+}
+.bv-file-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    aspect-ratio: 1;
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--bv-text);
+    font-size: 10px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    position: relative;
+    padding: 6px;
+}
+.bv-file-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--bv-primary, #b10100);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.bv-file-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+.bv-file-card i {
+    font-size: 28px;
+    color: var(--bv-text-soft, #6b7280);
+}
+.bv-file-card .bv-file-name {
+    font-size: 9px;
+    line-height: 1.2;
+    text-align: center;
+    word-break: break-word;
+    color: var(--bv-text-soft, #6b7280);
+    position: relative;
+    z-index: 1;
+}
+.bv-file-card[data-bv-file-type="image"] .bv-file-name,
+.bv-file-card[data-bv-file-type="image"] .bv-file-meta {
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.bv-file-card .bv-file-meta {
+    font-size: 8px;
+    opacity: 0.7;
+    position: relative;
+    z-index: 1;
+}
+
 /* Typing indicator (otro usuario escribiendo) */
 .bv-typing-ind {
     position: sticky;
@@ -6097,7 +6178,7 @@ mark.bv-search-hit.bv-search-current {
     width: 24px;
     height: 24px;
     border: 3px solid rgba(0, 0, 0, 0.12);
-    border-top-color: var(--bv-primary, #90bb13);
+    border-top-color: var(--bv-primary, #b10100);
     border-radius: 50%;
     animation: bv-spin 0.8s linear infinite;
 }
@@ -7313,3 +7394,153 @@ mark.bv-search-hit.bv-search-current {
     width: 12px;
     text-align: center;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Typography & Spacing UTILITIES — para reemplazar inline styles
+   en vistas helpdesk customers / agents / helpcenter / reports
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* Font sizes */
+.bv-text-9     { font-size: 9px; }
+.bv-text-10    { font-size: 10px; }
+.bv-text-11    { font-size: 11px; }
+.bv-text-12    { font-size: 12px; }
+.bv-text-13    { font-size: 13px; }
+.bv-text-tiny  { font-size: .6rem; }
+.bv-text-small { font-size: .65rem; }
+.bv-text-base  { font-size: 1rem; }
+.bv-text-2xl   { font-size: 1.5rem; }
+.bv-text-4xl   { font-size: 4rem; }
+
+/* Color helpers (preset semánticos) */
+.bv-text-strong  { color: var(--bv-text); }
+.bv-text-soft    { color: var(--bv-text-soft); }
+.bv-text-muted   { color: var(--bv-text-muted); }
+.bv-text-success { color: var(--bv-success, #10b981); }
+.bv-text-warning { color: var(--bv-warning, #f59e0b); }
+.bv-text-danger  { color: var(--bv-danger, #ef4444); }
+.bv-text-info    { color: var(--bv-info, #3b82f6); }
+
+/* Combinaciones frecuentes (más usadas) */
+.bv-text-hint        { font-size: 11.5px; color: var(--bv-text-muted); }
+.bv-text-muted-12    { font-size: 12px;   color: var(--bv-text-muted); }
+.bv-text-muted-11    { font-size: 11px;   color: var(--bv-text-muted); }
+.bv-text-success-12  { font-size: 12px;   color: var(--bv-success, #10b981); }
+.bv-text-success-9   { font-size: 9px;    color: var(--bv-success, #10b981); margin-left: 3px; }
+.bv-text-faded-10    { font-size: 10px;   opacity: .4; }
+.bv-text-uppercase-meta { font-size: 10px; color: var(--bv-text-muted); text-transform: uppercase; margin-left: auto; letter-spacing: .04em; }
+
+/* Opacity */
+.bv-opacity-30 { opacity: .3; }
+.bv-opacity-40 { opacity: .4; }
+
+/* Display */
+.bv-d-inline { display: inline; }
+.bv-d-flex   { display: flex; }
+.bv-d-block  { display: block; }
+.bv-d-grid   { display: grid; }
+
+/* Padding-y utilities */
+.bv-py-16 { padding: 16px 0; }
+.bv-py-32 { padding: 32px 0; }
+.bv-py-40 { padding: 40px 0; }
+
+/* Width / Height utilities */
+.bv-w-16    { width: 16px; }
+.bv-h-10    { height: 10px; }
+.bv-max-w-200 { max-width: 200px; }
+.bv-max-w-420 { max-width: 420px; margin-left: auto; margin-right: auto; }
+.bv-max-h-120 { max-height: 120px; }
+
+/* Image cover */
+.bv-img-cover { object-fit: cover; }
+
+/* Avatar sizes adicionales */
+.bv-av-44 { width: 44px; height: 44px; font-size: 18px; }
+.bv-icon-circle-64 {
+    width: 64px;
+    height: 64px;
+    background: var(--bv-bg-subtle, #f5f6f8);
+    color: var(--bv-accent, #b10100);
+    font-weight: 600;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+/* Categoria icon dinámica (color desde data) */
+.bv-cat-icon--dynamic { color: var(--bv-cat-color, var(--bv-accent, #b10100)); }
+
+/* Info box (caja gris con borde-radius para mensajes contextuales) */
+.bv-info-box {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--bv-text-soft);
+    background: var(--bv-bg-subtle);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+/* Card foot (separador con padding) */
+.bv-card-foot {
+    padding: 12px 14px;
+    border-top: 1px solid var(--bv-border);
+}
+
+/* Error box (padding + danger) */
+.bv-error-box {
+    padding: 16px;
+    color: var(--bv-danger, #ef4444);
+    font-size: 12px;
+}
+
+/* Input reset (textarea/input transparente) */
+.bv-input-bare {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    flex: 1;
+    font-size: 12.5px;
+    color: var(--bv-text);
+    font-family: inherit;
+}
+.bv-input-bare:focus { outline: 0; }
+
+/* Status badge dinámico (color desde data via custom property) */
+.bv-status-badge--dynamic {
+    background-color: var(--bv-status-color, var(--bv-bg-subtle));
+    min-width: 70px;
+    text-align: center;
+}
+.bv-ticket-badge--dynamic {
+    background: color-mix(in srgb, var(--bv-status-color, currentColor) 12%, transparent);
+    color: var(--bv-status-color, var(--bv-text));
+}
+
+/* Avatar / icono circular sizes adicionales */
+.bv-icon-circle-32 {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+}
+.bv-icon-circle-36 { width: 36px; height: 36px; flex-shrink: 0; }
+.bv-icon-circle-48 { width: 48px; height: 48px; }
+.bv-icon-circle-64-soft {
+    width: 64px;
+    height: 64px;
+    background: var(--bv-bg-subtle, #f5f6f8);
+}
+.bv-icon-circle-72 { width: 72px; height: 72px; font-size: 1.6rem; }
+.bv-w-32 { width: 32px; }
+
+/* Star rating opacidad condicional */
+.bv-star-faded { opacity: .3; }
+
+/* Progress bar dinamica (data-driven width via CSS variable) */
+.bv-progress-fill--dynamic { width: var(--bv-progress-pct, 0%); }

@@ -81,11 +81,11 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <input type="color" name="color" id="colorPicker"
                                                class="form-control form-control-color @error('color') is-invalid @enderror"
-                                               value="{{ old('color', '#90bb13') }}">
+                                               value="{{ old('color', '#b10100') }}">
                                         <input type="text" id="colorHex" class="form-control"
-                                               value="{{ old('color', '#90bb13') }}" readonly>
+                                               value="{{ old('color', '#b10100') }}" readonly>
                                         <div id="colorPreview" class="border rounded flex-shrink-0"
-                                             style="width:38px;height:38px;background-color:{{ old('color', '#90bb13') }};"></div>
+                                             style="width:38px;height:38px;background-color:{{ old('color', '#b10100') }};"></div>
                                     </div>
                                     @error('color')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -97,7 +97,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Colores sugeridos</label>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
+                                        @foreach(['#b10100','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
                                             <button type="button" class="btn btn-sm color-preset rounded-circle border-0"
                                                     data-color="{{ $c }}"
                                                     title="{{ $c }}"

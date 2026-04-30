@@ -14,7 +14,7 @@ export function TestWidget() {
             gap: '20px'
         }}>
             <div style={{
-                background: '#90bb13',
+                background: '#b10100',
                 padding: '20px',
                 borderRadius: '8px',
                 color: 'white'
@@ -35,7 +35,7 @@ export function TestWidget() {
             </div>
 
             <button style={{
-                background: '#90bb13',
+                background: '#b10100',
                 color: 'white',
                 padding: '12px',
                 border: 'none',

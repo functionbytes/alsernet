@@ -227,13 +227,13 @@ function AppearanceEditorTab({ appearance, setAppearance }: any) {
             <input
               type="color"
               className="form-control form-control-color"
-              value={appearance.primary_color || '#90bb13'}
+              value={appearance.primary_color || '#b10100'}
               onChange={(e) => handleColorChange('primary_color', e.target.value)}
             />
             <input
               type="text"
               className="form-control"
-              value={appearance.primary_color || '#90bb13'}
+              value={appearance.primary_color || '#b10100'}
               onChange={(e) => handleColorChange('primary_color', e.target.value)}
             />
           </div>

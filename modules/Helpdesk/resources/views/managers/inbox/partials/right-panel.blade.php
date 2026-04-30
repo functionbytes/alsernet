@@ -39,6 +39,54 @@
         // Activity events
         $rpEvents = $rpConvo ? $rpConvo->events()->latest()->limit(20)->get() : collect();
 
+        // Pedidos del cliente (Ecommerce module)
+        $rpOrders = collect();
+        if ($rpCust && class_exists(\Modules\Ecommerce\Models\Order::class)) {
+            try {
+                $rpOrders = \Modules\Ecommerce\Models\Order::query()
+                    ->where('customer_id', $rpCust->id)
+                    ->latest('created_at')
+                    ->limit(20)
+                    ->get();
+            } catch (\Throwable $e) {
+                $rpOrders = collect();
+            }
+        }
+
+        // Archivos: extraer attachments de los items de TODAS las conversaciones del cliente
+        $rpFiles = collect();
+        if ($rpCust) {
+            $convIds = \Modules\Helpdesk\Models\Conversation::where('customer_id', $rpCust->id)->pluck('id');
+            $items = \Modules\Helpdesk\Models\ConversationItem::query()
+                ->whereIn('conversation_id', $convIds)
+                ->whereNotNull('attachment_urls')
+                ->latest('created_at')
+                ->limit(60)
+                ->get();
+            foreach ($items as $item) {
+                $urls = $item->attachment_urls ?? [];
+                $metas = $item->metadata['attachments'] ?? [];
+                foreach ($urls as $idx => $url) {
+                    $meta = $metas[$idx] ?? [];
+                    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                    $type = $meta['type'] ?? (
+                        in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image'
+                        : (in_array($ext, ['mp4','mov','webm']) ? 'video'
+                        : (in_array($ext, ['mp3','ogg','wav','oga','m4a']) ? 'audio'
+                        : 'document'))
+                    );
+                    $rpFiles->push((object) [
+                        'url' => $url,
+                        'name' => $meta['name'] ?? basename(parse_url($url, PHP_URL_PATH)),
+                        'size' => $meta['size'] ?? null,
+                        'type' => $type,
+                        'ext' => $ext,
+                        'created_at' => $item->created_at,
+                    ]);
+                }
+            }
+        }
+
         // Event icon map
         $rpEventIcons = [
             'status_change'   => 'fas fa-circle-dot',
@@ -254,11 +302,35 @@
 
         {{-- ── Tab: Pedidos ── --}}
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="orders">
-            <div class="bv-tab-empty">
-                <i class="far fa-cart-shopping"></i>
-                <div class="bv-tab-empty-title">Sin pedidos vinculados</div>
-                <div class="bv-tab-empty-sub">No hay pedidos asociados a este cliente</div>
-            </div>
+            @if($rpOrders->isEmpty())
+                <div class="bv-tab-empty">
+                    <i class="far fa-cart-shopping"></i>
+                    <div class="bv-tab-empty-title">Sin pedidos vinculados</div>
+                    <div class="bv-tab-empty-sub">No hay pedidos asociados a este cliente</div>
+                </div>
+            @else
+                <div class="bv-orders-list">
+                    @foreach($rpOrders as $order)
+                        @php
+                            $orderTotal = $order->total ?? $order->grand_total ?? 0;
+                            $orderStatus = $order->status?->name ?? $order->status_name ?? $order->status ?? 'Pendiente';
+                            $orderStatusColor = is_object($order->status ?? null) ? ($order->status->color ?? 'secondary') : 'secondary';
+                            $itemsCount = method_exists($order, 'items') ? $order->items()->count() : ($order->items_count ?? 0);
+                        @endphp
+                        <div class="bv-order-card">
+                            <div class="bv-card-head-row">
+                                <span class="bv-id-mono-sm">#{{ $order->order_number ?? $order->reference ?? $order->id }}</span>
+                                <span class="bv-ticket-badge bv-ticket-badge-{{ $orderStatusColor }}">{{ $orderStatus }}</span>
+                            </div>
+                            <div class="bv-ticket-title">{{ $order->title ?? ($itemsCount . ' producto' . ($itemsCount === 1 ? '' : 's')) }}</div>
+                            <div class="bv-ticket-meta">
+                                {{ $order->created_at?->translatedFormat('d M Y') }} ·
+                                <strong>{{ number_format((float) $orderTotal, 2, ',', '.') }} €</strong>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
         {{-- ── Tab: Archivos ── --}}
@@ -271,10 +343,38 @@
                 <button class="bv-files-filter" data-bv-files-filter="document"><i class="far fa-file-lines"></i> Documentos</button>
             </div>
             <div class="bv-files-grid" id="bv-files-grid">
-                <div class="bv-tab-empty">
-                    <i class="far fa-folder-open"></i>
-                    <div class="bv-tab-empty-title">Sin archivos</div>
-                </div>
+                @if($rpFiles->isEmpty())
+                    <div class="bv-tab-empty">
+                        <i class="far fa-folder-open"></i>
+                        <div class="bv-tab-empty-title">Sin archivos</div>
+                    </div>
+                @else
+                    @php
+                        $rpDocIcons = ['pdf' => 'fa-file-pdf', 'doc' => 'fa-file-word', 'docx' => 'fa-file-word', 'xls' => 'fa-file-excel', 'xlsx' => 'fa-file-excel', 'ppt' => 'fa-file-powerpoint', 'pptx' => 'fa-file-powerpoint', 'zip' => 'fa-file-zipper', 'csv' => 'fa-file-csv', 'txt' => 'fa-file-lines'];
+                    @endphp
+                    @foreach($rpFiles as $f)
+                        <a href="{{ $f->url }}" target="_blank" rel="noopener"
+                           class="bv-file-card"
+                           data-bv-file-type="{{ $f->type }}"
+                           title="{{ $f->name }}">
+                            @if($f->type === 'image')
+                                <img src="{{ $f->url }}" alt="{{ $f->name }}" loading="lazy">
+                            @elseif($f->type === 'video')
+                                <i class="far fa-circle-play"></i>
+                            @elseif($f->type === 'audio')
+                                <i class="fas fa-volume-high"></i>
+                            @else
+                                <i class="far {{ $rpDocIcons[$f->ext] ?? 'fa-file' }}"></i>
+                            @endif
+                            <div class="bv-file-name">{{ \Illuminate\Support\Str::limit($f->name, 18) }}</div>
+                            <div class="bv-file-meta">
+                                @if($f->size)
+                                    {{ round($f->size / 1024) }} KB
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                @endif
             </div>
         </div>
 

@@ -22,7 +22,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width: 48px; height: 48px; background-color: #f5f6f8; color: #90bb13; font-weight: 600; font-size: 1rem;">
+                                 style="width: 48px; height: 48px; background-color: #f5f6f8; color: #b10100; font-weight: 600; font-size: 1rem;">
                                 {{ strtoupper(substr($member->firstname, 0, 1) . substr($member->lastname, 0, 1)) }}
                             </div>
                             <div>
@@ -517,8 +517,8 @@ $(document).ready(function() {
 }
 
 .group-card .form-check-input:checked {
-    background-color: #90bb13;
-    border-color: #90bb13;
+    background-color: #b10100;
+    border-color: #b10100;
 }
 
 /* Groups counter */

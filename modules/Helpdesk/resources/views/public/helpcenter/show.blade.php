@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-<div style="background:#90bb13;" class="py-3 px-0">
+<div style="background:#b10100;" class="py-3 px-0">
     <div class="container">
         <a href="{{ route('helpcenter.index') }}" class="text-white text-decoration-none small">
             <i class="fas fa-arrow-left me-1"></i> Volver al centro de ayuda

@@ -221,7 +221,7 @@
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
                                                 <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                                     style="width: 36px; height: 36px; background-color: #f5f6f8; color: #90bb13; font-weight: 600; font-size: 0.85rem;">
+                                                     style="width: 36px; height: 36px; background-color: #f5f6f8; color: #b10100; font-weight: 600; font-size: 0.85rem;">
                                                     {{ strtoupper(substr($member->firstname, 0, 1) . substr($member->lastname, 0, 1)) }}
                                                 </div>
                                                 <div>

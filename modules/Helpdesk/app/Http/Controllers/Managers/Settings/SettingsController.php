@@ -145,7 +145,7 @@ class SettingsController extends Controller
             'hide_launcher' => false,
 
             // Widget - Style
-            'primary_color' => '#90bb13',
+            'primary_color' => '#b10100',
             'secondary_color' => '#ffffff',
             'header_title' => 'Chat de Soporte',
             'show_dark_mode_preview' => true,

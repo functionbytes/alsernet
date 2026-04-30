@@ -18,7 +18,7 @@
             <div class="col-md-4">
                 <label class="form-label" for="primary_color">Color primario</label>
                 <input type="color" class="form-control form-control-color w-100" id="primary_color" name="primary_color"
-                    value="{{ old('primary_color', $backups['primary_color'] ?? '#90bb13') }}">
+                    value="{{ old('primary_color', $backups['primary_color'] ?? '#b10100') }}">
             </div>
             <div class="col-md-4">
                 <label class="form-label" for="secondary_color">Color secundario</label>

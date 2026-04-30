@@ -5,7 +5,7 @@
   --color-primary-100: #d9f0c7;
   --color-primary-200: #bfe6a1;
   --color-primary-300: #a5db7a;
-  --color-primary-400: #90bb13;
+  --color-primary-400: #b10100;
   --color-primary-500: #7ca30f;
   --color-primary-600: #698b0c;
   --color-primary-700: #567309;
@@ -332,7 +332,7 @@
 }
 
 .form-control:focus {
-    border-color: #90bb13;
+    border-color: #b10100;
 }
 
 .form-footer {

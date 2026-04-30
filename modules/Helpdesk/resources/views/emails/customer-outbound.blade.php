@@ -14,7 +14,7 @@
 
                     {{-- Header --}}
                     <tr>
-                        <td style="background:#90bb13;padding:24px 32px;">
+                        <td style="background:#b10100;padding:24px 32px;">
                             <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">
                                 {{ config('app.name') }}
                             </p>

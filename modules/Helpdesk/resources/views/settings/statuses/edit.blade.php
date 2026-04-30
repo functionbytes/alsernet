@@ -95,7 +95,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Colores sugeridos</label>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        @foreach(['#90bb13','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
+                                        @foreach(['#b10100','#13C672','#FA896B','#FEC90F','#539BFF','#8E44AD','#E74C3C','#95A5A6'] as $c)
                                             <button type="button" class="btn btn-sm color-preset rounded-circle border-0"
                                                     data-color="{{ $c }}"
                                                     title="{{ $c }}"

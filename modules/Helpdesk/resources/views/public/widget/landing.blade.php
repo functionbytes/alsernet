@@ -24,7 +24,7 @@
 
 
         .chat-landing .sidebar{
-            background: linear-gradient(135deg, #90bb13 0%, #7a9e10 100%);
+            background: linear-gradient(135deg, #b10100 0%, #7a9e10 100%);
         }
 
 
@@ -86,7 +86,7 @@
             }
 
             .chat-container {
-                background: linear-gradient(135deg, #90bb13 0%, #7a9e10 100%);
+                background: linear-gradient(135deg, #b10100 0%, #7a9e10 100%);
             }
         }
 

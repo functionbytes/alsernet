@@ -206,7 +206,7 @@
                                                     <div class="d-flex flex-wrap gap-1">
                                                         @foreach($group->users->take(4) as $user)
                                                             <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                                                 style="width: 32px; height: 32px; background-color: {{ $user->pivot->conversation_priority === 'primary' ? '#f5f6f8' : '#f5f6f8' }}; color: {{ $user->pivot->conversation_priority === 'primary' ? '#90bb13' : '#90bb13' }}; font-size: 0.7rem; font-weight: 600;"
+                                                                 style="width: 32px; height: 32px; background-color: {{ $user->pivot->conversation_priority === 'primary' ? '#f5f6f8' : '#f5f6f8' }}; color: {{ $user->pivot->conversation_priority === 'primary' ? '#b10100' : '#b10100' }}; font-size: 0.7rem; font-weight: 600;"
                                                                  title="{{ $user->full_name }} ({{ $user->pivot->conversation_priority === 'primary' ? 'Primario' : 'Backup' }})">
                                                                 {{ strtoupper(substr($user->firstname, 0, 1) . substr($user->lastname, 0, 1)) }}
                                                             </div>

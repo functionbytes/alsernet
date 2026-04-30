@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background: #f8f9fa; }
-        .helpcenter-hero { background: #90bb13; color: #fff; padding: 60px 0 40px; }
+        .helpcenter-hero { background: #b10100; color: #fff; padding: 60px 0 40px; }
         .helpcenter-hero input { border: none; border-radius: 30px; padding: 12px 20px; font-size: 1rem; }
         .article-card { transition: box-shadow .2s; }
         .article-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.1); }

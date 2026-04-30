@@ -116,9 +116,9 @@
     --bv-accent-fg: #ffffff;
 }
 
-/* Acento del proyecto (#90bb13 según CLAUDE.md) — opcional */
+/* Acento del proyecto (#b10100 según CLAUDE.md) — opcional */
 .inbox-v4[data-accent="brand"] {
-    --bv-accent:    #90bb13;
+    --bv-accent:    #b10100;
     --bv-accent-fg: #ffffff;
 }
 
@@ -173,7 +173,7 @@
    Asignación automática vía hash del nombre o ID
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-    --bv-av-c1: linear-gradient(135deg, #f97316, #db2777);  /* naranja → rosa */
+    --bv-av-c1: linear-gradient(135deg, #18181b, #52525b);  /* naranja → rosa */
     --bv-av-c2: linear-gradient(135deg, #8b5cf6, #6366f1);  /* púrpura → indigo */
     --bv-av-c3: linear-gradient(135deg, #06b6d4, #0ea5e9);  /* cian → azul */
     --bv-av-c4: linear-gradient(135deg, #10b981, #059669);  /* esmeralda */
@@ -350,15 +350,15 @@
 
 /* ═══ CUSTOMIZACIÓN POR PROYECTO ═══════════════════════════════════════════
    Aquí puedes sobreescribir cualquier token por marca/proyecto.
-   Ejemplo: usar el verde corporativo del proyecto Alsernet (#90bb13)
+   Ejemplo: usar el verde corporativo del proyecto Alsernet (#b10100)
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* Descomentar y editar para personalizar:
 
 .inbox-v4 {
-    --bv-brand-bg: #90bb13;
+    --bv-brand-bg: #b10100;
     --bv-brand-fg: #ffffff;
-    --bv-accent: #90bb13;
+    --bv-accent: #b10100;
     --bv-accent-fg: #ffffff;
 }
 

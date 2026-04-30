@@ -102,7 +102,7 @@
                   @if($article->hasMedia('featured_image'))
                     <div class="mb-2">
                       <img src="{{ $article->getFirstMediaUrl('featured_image', 'thumb') }}"
-                           class="img-thumbnail" style="max-width: 200px;">
+                           class="img-thumbnail bv-max-w-200">
                       <p class="text-muted mt-1">Imagen actual - sube una nueva para reemplazarla</p>
                     </div>
                   @endif

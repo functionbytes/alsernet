@@ -42,7 +42,7 @@ export function ChatBubbleLauncher({ onToggle, isOpen }: ChatBubbleLauncherProps
                 style={{
                     width: '60px',
                     height: '60px',
-                    backgroundColor: settings.primary_color || '#90bb13',
+                    backgroundColor: settings.primary_color || '#b10100',
                     transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                 }}
                 aria-label={isOpen ? 'Close chat' : 'Open chat'}
