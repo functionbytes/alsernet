@@ -2,9 +2,11 @@
 
 @section('page_title', 'Suscriptores del newsletter')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Suscriptores del newsletter'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
