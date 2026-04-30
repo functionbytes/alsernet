@@ -2,9 +2,11 @@
 
 @section('title', 'Configuracion de cache')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuracion de cache'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form id="form-cache-settings" method="POST" action="{{ route('settings.cache.update') }}">
