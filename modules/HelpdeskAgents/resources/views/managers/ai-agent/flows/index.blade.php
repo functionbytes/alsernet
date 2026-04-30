@@ -2,9 +2,11 @@
 
 @section('title', 'Flujos de IA')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Flujos de IA'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

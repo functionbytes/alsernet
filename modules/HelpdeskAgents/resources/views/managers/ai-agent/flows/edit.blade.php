@@ -2,9 +2,11 @@
 
 @section('title', 'Editar flujo: ' . $flow->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar flujo'])
+@endsection
+
+@section('content')
 
     @php
         $statusColor = match($flow->status) {

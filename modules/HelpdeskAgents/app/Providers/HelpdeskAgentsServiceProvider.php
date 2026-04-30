@@ -8,10 +8,14 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\HelpdeskAgents\Models\AgentShift;
 use Modules\HelpdeskAgents\Models\AiAgent;
 use Modules\HelpdeskAgents\Models\AiAgentFlow;
+use Modules\HelpdeskAgents\Models\OncallRotation;
+use Modules\HelpdeskAgents\Policies\AgentShiftPolicy;
 use Modules\HelpdeskAgents\Policies\AiAgentFlowPolicy;
 use Modules\HelpdeskAgents\Policies\AiAgentPolicy;
+use Modules\HelpdeskAgents\Policies\OncallRotationPolicy;
 use Modules\HelpdeskAgents\Services\PromptSanitizer;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -51,6 +55,14 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
         if (class_exists(AiAgentFlow::class) && class_exists(AiAgentFlowPolicy::class)) {
             Gate::policy(AiAgentFlow::class, AiAgentFlowPolicy::class);
         }
+
+        if (class_exists(AgentShift::class) && class_exists(AgentShiftPolicy::class)) {
+            Gate::policy(AgentShift::class, AgentShiftPolicy::class);
+        }
+
+        if (class_exists(OncallRotation::class) && class_exists(OncallRotationPolicy::class)) {
+            Gate::policy(OncallRotation::class, OncallRotationPolicy::class);
+        }
     }
 
     protected function registerConfig(): void
@@ -80,6 +92,15 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
             Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
                 ->prefix('panel/helpdesk')
                 ->group($managersRoutes);
+        }
+
+        $settingsRoutes = module_path($this->moduleName, 'routes/settings.php');
+
+        if (file_exists($settingsRoutes)) {
+            Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
+                ->prefix('panel/settings/helpdesk')
+                ->name('settings.helpdesk.')
+                ->group($settingsRoutes);
         }
     }
 
@@ -114,6 +135,13 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
                     'icon' => 'fas fa-robot',
                     'permission' => 'helpdesk.aiagents.view',
                 ],
+            ],
+        ]);
+
+        NavService::registerSidebar('settings', [
+            'title' => 'Agentes',
+            'items' => [
+                ['label' => 'Turnos y guardias', 'route' => 'settings.helpdesk.schedule.index', 'permission' => 'helpdesk.schedule.view'],
             ],
         ]);
     }
